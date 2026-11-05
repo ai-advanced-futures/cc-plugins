@@ -35,8 +35,8 @@ You can also ask for the audit in plain words. The skill `grounded-synthesis-aud
 
 ### Outputs
 
-- The gap report: a Markdown file with a summary, a section for each source, the top missing facts, and the sources that were not analyzed.
-- `handoff.json`: the result for a caller (`schema_version: "1"`). It has the status, the path of the gap report, the path of the session folder, and a `warnings` array. The array lists the sources that the plugin skipped.
+- The gap report: a Markdown file with a summary, a section for each source, the top missing facts, the facts with no verdict, and the sources that were not analyzed.
+- `handoff.json`: the result for a caller (`schema_version: "1"`). It has the status (`ok`, `partial` or `failed`), the fact count that the run used (`invocation.key_facts_per_source`), the path of the gap report, the path of the session folder, and a `warnings` array. The array names each source that the plugin skipped, each source with no fact file or no coverage file, and each fact with no verdict. When the array names a source or a fact, the status is `partial`.
 - The session folder: `${GROUNDED_SYNTHESIS_HOME:-$HOME/.cache/grounded-synthesis-sessions}/<session_id>/`. It holds the fact files and the coverage files. It holds facts from your source files. Each run deletes the session folders that are older than 30 days. It deletes only folders with a uuid4 name, and it skips symbolic links.
 
 ## Start the audit from an agent

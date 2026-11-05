@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.3
+
+- The gap report names each source with no fact file or no coverage file (in `## Sources not analyzed`) and each fact with no verdict (in the new `## Facts with no verdict`). The status is then `partial`, not `ok`.
+- `summary.facts_checked` counts the facts with no verdict.
+- The orchestrator clamps `key_facts_per_source` at Step 1 and writes it into `session.json`. `invocation.key_facts_per_source` of the handoff holds the clamped value of the run, not always 12.
+
 ## 0.4.2
 
 - The README names the job `grounded-synthesis` of the CI workflow `.github/workflows/ci.yml`. One workflow replaces the workflow file of this plugin. The plugin behavior does not change.

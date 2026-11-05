@@ -37,7 +37,7 @@ Make a `session_id` (uuid4). Run this command. It deletes session folders older 
 uv run ${CLAUDE_PLUGIN_ROOT}/lib/session_paths.py --resolve '{session_id}' --sweep-days 30
 ```
 
-Write `session.json` in that folder with `{session_id, draft_path, source_paths, session_dir, started_at}`.
+Clamp `key_facts_per_source` to `FACTS_PER_SOURCE_BOUNDS` of `lib/constants.py` (`[8, 20]`). If you clamp it, print a one-line notice. Then write `session.json` in that folder with `{session_id, draft_path, source_paths, session_dir, started_at, key_facts_per_source}`. `key_facts_per_source` is the clamped value.
 
 ### Step 2 — Validate the sources
 
@@ -51,7 +51,7 @@ Add each source that is not OK to the `sources_skipped` array of `session.json` 
 
 ### Step 3 — Wave 1: fact extraction
 
-Clamp `key_facts_per_source` to `FACTS_PER_SOURCE_BOUNDS` of `lib/constants.py` (`[8, 20]`). If you clamp it, print a one-line notice. Then, in ONE message, make one `Agent` call for each valid source with `subagent_type: grounded-synthesis:fact-extractor`. Send each call `{session_id, source_index, source_path, fact_count_target, session_dir_absolute}`, where `fact_count_target` is the clamped `key_facts_per_source`. The agent writes `{session_dir_absolute}/source-{i}-facts.json` and returns a one-line summary.
+In ONE message, make one `Agent` call for each valid source with `subagent_type: grounded-synthesis:fact-extractor`. Send each call `{session_id, source_index, source_path, fact_count_target, session_dir_absolute}`, where `fact_count_target` is the `key_facts_per_source` of `session.json`. The agent writes `{session_dir_absolute}/source-{i}-facts.json` and returns a one-line summary.
 
 `source_index` is 0-based: the first source is `0`. The `source_id` field inside a fact file is 1-based (`src1`, `src2`).
 
@@ -61,7 +61,7 @@ Clamp `key_facts_per_source` to `FACTS_PER_SOURCE_BOUNDS` of `lib/constants.py` 
 uv run ${CLAUDE_PLUGIN_ROOT}/lib/fact_schema.py --validate-session '{session_dir_absolute}'
 ```
 
-Read the JSON from stdout. If no fact file is valid, write `handoff.json` with `status: "failed"` and `failure_reason: "all fact files malformed"` into `{output_dir_override}` (or into `{session_dir_absolute}` if there is no override). Then end with `DONE: grounded-synthesis FAILED: all fact files malformed`. If some are valid, add the malformed sources to `sources_skipped` in `session.json` and continue with the valid files. `gap_report.py` turns them into `warnings` in the handoff.
+Read the JSON from stdout. If no fact file is valid, write `handoff.json` with `status: "failed"` and `failure_reason: "all fact files malformed"` into `{output_dir_override}` (or into `{session_dir_absolute}` if there is no override). Then end with `DONE: grounded-synthesis FAILED: all fact files malformed`. If some are valid, add the malformed sources to `sources_skipped` in `session.json`, each as `{"path": "<source_path>", "reason": "<validation error>"}` as in Step 2, and continue with the valid files. `gap_report.py` turns them into `warnings` in the handoff.
 
 ### Step 5 — Wave 2: coverage check
 
