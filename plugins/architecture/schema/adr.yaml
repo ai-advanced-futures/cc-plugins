@@ -1,0 +1,185 @@
+# The source of the ADR front matter contract.
+#
+# Two generated files come from this one:
+#   templates/verbatim/schemas/adr.schema.json   the schema that adr_lint.py reads
+#   schema/adr.slots.json                        the slot vocabulary
+# Run scripts/gen-schema.sh after you change this file, and commit both outputs.
+#
+# Two rules hold for every change:
+#   Never write a plain `any_of` without `range: Any`. LinkML then adds a
+#   sibling `type: string`, and a real validator rejects a list.
+#   Never generate with `include_null=False`. The flatten step gives a wrong
+#   result on that output.
+id: https://ai-advanced-futures.github.io/cc-plugins/adr
+name: adr
+title: ADR front matter
+description: The front matter contract of one architecture decision record.
+default_range: string
+default_prefix: adr
+prefixes:
+  linkml: https://w3id.org/linkml/
+  adr: https://ai-advanced-futures.github.io/cc-plugins/adr/
+imports:
+  - linkml:types
+  - ../../knowledge/schema/base
+
+types:
+  IsoDate:
+    typeof: string
+    pattern: '^\d{4}-\d{2}-\d{2}$'
+  AdrRef:
+    typeof: string
+    # DEF-1: a date-only pattern here gave a false `schema-type` on every
+    # sequential corpus. The id scheme is checked in code, by the rule
+    # `reference-pattern`, which knows which scheme the corpus uses.
+    pattern: '^(?:.*\/)?.+\.md$'
+  DocRef:
+    typeof: string
+    pattern: '^(?:.*\/)?.+\.md(?:#.+)?$'
+  AreaSlug:
+    typeof: string
+    pattern: '^[a-z][a-z0-9-]*$'
+
+enums:
+  AdrLifecycle:
+    permissible_values:
+      proposed:
+      accepted:
+      deprecated:
+      superseded:
+  ModelStatus:
+    permissible_values:
+      modeled:
+      out-of-scope:
+      black-box:
+
+slots:
+  area:
+    range: AreaSlug
+  lifecycle:
+    description: The ADR lifecycle. status holds the OKF value of the lifecycle (A13).
+    range: AdrLifecycle
+    required: true
+  date:
+    range: IsoDate
+    required: true
+  amended:
+    range: IsoDate
+  supersedes:
+    description: This ADR replaces the target. A `# partial` comment means that the two are in force.
+    inverse: superseded_by
+    annotations:
+      stored_inverse: true
+      target_kind: adr
+      walk_order: 1
+    range: Any
+    any_of:
+      - range: AdrRef
+      - range: AdrRef
+        multivalued: true
+  superseded_by:
+    description: The target replaces this ADR.
+    inverse: supersedes
+    annotations:
+      stored_inverse: true
+      target_kind: adr
+      walk_order: 1
+    range: Any
+    any_of:
+      - range: AdrRef
+      - range: AdrRef
+        multivalued: true
+  amends:
+    description: This ADR changes one part of the target, and the target stays in force.
+    inverse: amended_by
+    annotations:
+      stored_inverse: true
+      target_kind: adr
+      walk_order: 2
+    range: Any
+    any_of:
+      - range: AdrRef
+      - range: AdrRef
+        multivalued: true
+  amended_by:
+    description: The target changes one part of this ADR.
+    inverse: amends
+    annotations:
+      stored_inverse: true
+      target_kind: adr
+      walk_order: 2
+    range: Any
+    any_of:
+      - range: AdrRef
+      - range: AdrRef
+        multivalued: true
+  refines:
+    description: This ADR narrows the target and does not change it.
+    annotations:
+      stored_inverse: false
+      target_kind: adr
+      walk_order: 4
+    range: Any
+    any_of:
+      - range: AdrRef
+      - range: AdrRef
+        multivalued: true
+  deviates_from:
+    description: This ADR does not obey the target. The target can be a document or a URL, so it has no pattern.
+    annotations:
+      stored_inverse: false
+      target_kind: mixed
+      walk_order: 3
+    range: Any
+    any_of:
+      - range: string
+      - range: string
+        multivalued: true
+  related:
+    description: A different record that gives context. It carries no rule.
+    annotations:
+      stored_inverse: false
+      target_kind: mixed
+      walk_order: 6
+    range: DocRef
+    multivalued: true
+  parent_spec:
+    description: The specification that this ADR comes from.
+    annotations:
+      stored_inverse: false
+      target_kind: doc
+      walk_order: 5
+    range: DocRef
+  evidence:
+    description: Dated measurements that support the decision.
+    multivalued: true
+  model:
+    description: The architecture model element that this decision affects.
+    range: Model
+    inlined: true
+  model_status:
+    alias: status
+    range: ModelStatus
+    required: true
+  element:
+  reason:
+
+classes:
+  Any:
+    class_uri: linkml:Any
+  Adr:
+    tree_root: true
+    slots: [type, title, description, area, status, lifecycle, date, amended, supersedes,
+            superseded_by, amends, amended_by, refines, deviates_from, related,
+            parent_spec, evidence, model, generated, verified, protected]
+    slot_usage:
+      type:
+        equals_string: adr
+      title:
+        minimum_cardinality: 1
+      description:
+        description: One line of 30 words or fewer, in the words of the task.
+      status:
+        required: true
+  Model:
+    slots: [model_status, element, reason]

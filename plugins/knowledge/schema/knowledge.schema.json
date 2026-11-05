@@ -1,0 +1,579 @@
+{
+    "$defs": {
+        "Concept": {
+            "additionalProperties": false,
+            "description": "An idea, a metric, a formula, or a framework.",
+            "properties": {
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "sources": {
+                    "items": {
+                        "$ref": "#/$defs/SourceRef"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "stale_after": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "Concept",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type"
+            ],
+            "title": "Concept",
+            "type": "object"
+        },
+        "Entity": {
+            "additionalProperties": false,
+            "description": "A named organization, publication, body, or person.",
+            "properties": {
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "entity_kind": {
+                    "$ref": "#/$defs/EntityKind"
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "sources": {
+                    "items": {
+                        "$ref": "#/$defs/SourceRef"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "stale_after": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "Entity",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type"
+            ],
+            "title": "Entity",
+            "type": "object"
+        },
+        "EntityKind": {
+            "description": "",
+            "enum": [
+                "organization",
+                "person",
+                "publication",
+                "framework-body"
+            ],
+            "title": "EntityKind",
+            "type": "string"
+        },
+        "OkfStamp": {
+            "additionalProperties": false,
+            "description": "One actor and one time.",
+            "properties": {
+                "at": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$",
+                    "type": "string"
+                },
+                "by": {
+                    "pattern": "^(human:[A-Za-z0-9._-]+|process:[A-Za-z0-9._-]+|[A-Za-z0-9._-]+/[A-Za-z0-9._-]+)$",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "by",
+                "at"
+            ],
+            "title": "OkfStamp",
+            "type": "object"
+        },
+        "OkfStatus": {
+            "description": "",
+            "enum": [
+                "draft",
+                "stable",
+                "deprecated"
+            ],
+            "title": "OkfStatus",
+            "type": "string"
+        },
+        "OpenQuestion": {
+            "additionalProperties": false,
+            "description": "A question that the graph cannot answer yet.",
+            "properties": {
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "sources": {
+                    "items": {
+                        "$ref": "#/$defs/SourceRef"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "OpenQuestion",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type"
+            ],
+            "title": "OpenQuestion",
+            "type": "object"
+        },
+        "Source": {
+            "additionalProperties": false,
+            "description": "A page about one raw source document.",
+            "properties": {
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "resource": {
+                    "description": "The raw file of the source, relative to the container, or a URL.",
+                    "type": "string"
+                },
+                "source_kind": {
+                    "$ref": "#/$defs/SourceKind"
+                },
+                "source_published": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "Source",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "resource"
+            ],
+            "title": "Source",
+            "type": "object"
+        },
+        "SourceKind": {
+            "description": "",
+            "enum": [
+                "report",
+                "research-report",
+                "article",
+                "paper",
+                "survey",
+                "dataset",
+                "transcript"
+            ],
+            "title": "SourceKind",
+            "type": "string"
+        },
+        "SourceRef": {
+            "additionalProperties": false,
+            "description": "One source of a page.",
+            "properties": {
+                "id": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "last_modified": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "resource": {
+                    "pattern": "^([a-z][a-z0-9-]*:)?/[^/\\s]\\S*\\.md$",
+                    "type": "string"
+                },
+                "title": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "resource"
+            ],
+            "title": "SourceRef",
+            "type": "object"
+        },
+        "Synthesis": {
+            "additionalProperties": false,
+            "description": "A page that joins several pages into one answer.",
+            "properties": {
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "sources": {
+                    "items": {
+                        "$ref": "#/$defs/SourceRef"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "Synthesis",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type"
+            ],
+            "title": "Synthesis",
+            "type": "object"
+        }
+    },
+    "$id": "https://ai-advanced-futures.github.io/cc-plugins/knowledge",
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "additionalProperties": false,
+    "metamodel_version": "1.11.0",
+    "title": "knowledge",
+    "type": "object",
+    "version": null
+}
+

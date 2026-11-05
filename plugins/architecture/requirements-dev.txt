@@ -1,0 +1,7 @@
+# Build and test only. No runtime script installs this file.
+# adr_lint.py, adr_index.py, adr_new.py and adr_migrate.py stay runnable with
+# bare python3. LinkML writes the shipped JSON Schema. See scripts/gen-schema.sh.
+linkml==1.11.1
+pytest
+jsonschema
+pyyaml

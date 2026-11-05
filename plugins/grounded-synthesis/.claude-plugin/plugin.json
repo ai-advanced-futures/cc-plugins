@@ -1,0 +1,19 @@
+{
+  "name": "grounded-synthesis",
+  "displayName": "grounded-synthesis",
+  "version": "0.4.2",
+  "description": "Audit a draft against its primary source files. Find the facts that a source holds and the draft does not, and write a gap report.",
+  "author": {
+    "name": "ai-advanced-futures"
+  },
+  "homepage": "https://github.com/ai-advanced-futures/cc-plugins",
+  "repository": "https://github.com/ai-advanced-futures/cc-plugins",
+  "keywords": [
+    "synthesis",
+    "auditing",
+    "verification",
+    "qa",
+    "drafting",
+    "source-truth"
+  ]
+}

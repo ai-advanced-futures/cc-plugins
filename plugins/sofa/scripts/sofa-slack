@@ -1,0 +1,353 @@
+#!/usr/bin/env python3
+"""sofa-slack: the Slack app of a sofa team.
+
+  manifest --name PREFIX --repo OWNER/NAME
+           Print the app manifest (JSON). The user pastes it in "Create New App",
+           "From a manifest". Exit 2 when a value breaks a length or character rule.
+  icon-check FILE
+           Exit 0 and print "ok WxH" when FILE is a square PNG from 512 to 2000
+           pixels (the size rule of Slack for an app icon). Else exit 1 and print why.
+  icon-find
+           Print 1 line for each PNG file of the repository whose name holds logo,
+           icon, brand, avatar or mark: "ok WxH PATH" when it fits, else "no WHY PATH".
+  whoami   Call auth.test with the bot token. Print only "ok", the team and the bot name.
+  post --text-file FILE [--thread TS] [--channel NAME]
+           Post the text of FILE as the app (chat.postMessage with the bot token) to the
+           channel of section 1 (Slack) of docs/adlc.md, or to NAME. --thread TS posts a
+           reply in the thread TS. Print 1 JSON line: {"channel": ID, "ts": TS}. Exit 1
+           with "not posted as the app" when the reply has no message.bot_id. Exit 2, with
+           no Slack call, when the last part of the path of FILE is a symbolic link, FILE
+           is not a regular file, is larger than 40000 bytes, or holds the bot token. A
+           link in a folder of the path is followed (O_NOFOLLOW checks the last part only).
+
+The token comes from readiness.slack_token: the environment, else the env block of
+.claude/settings.local.json. It is never printed. The base URL of the Slack API is
+SOFA_SLACK_API (default https://slack.com/api/), so a test can use a fake API. The token
+goes to that URL, so only https://slack.com/api/ and an http address on this computer
+(127.0.0.1, localhost, ::1) are allowed, and a redirect stops the call.
+
+Exit code: 0 on success, 1 on a failed check or a Slack error (for post: also no channel in
+docs/adlc.md, and a channel that the bot cannot post to), 2 on a usage error or a value that
+breaks a rule, 3 when there is no bot token (the fix is /sofa:setup).
+"""
+
+import argparse
+import errno
+import json
+import os
+import re
+import stat
+import struct
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
+from pathlib import Path
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import readiness as rd  # noqa: E402
+
+# Each Slack method that a script of this plugin calls with the bot token, and the bot
+# scopes that it needs. The manifest scopes are the union of these lists, so a scope
+# that no method needs is not in the manifest. A call that needs a new scope adds its
+# method here.
+METHOD_SCOPES = {
+    "auth.test": [],
+    "chat.postMessage": ["chat:write"],
+    "conversations.list": ["channels:read", "groups:read"],
+    "conversations.members": ["channels:read", "groups:read"],
+    "users.list": ["users:read"],
+}
+
+NAME_MAX = 35          # display_information.name
+DESCRIPTION_MAX = 140  # display_information.description
+BOT_NAME_MAX = 80      # features.bot_user.display_name
+BOT_NAME_CHARS = re.compile(r"^[a-z0-9._-]+$")
+REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+
+ICON_MIN, ICON_MAX = 512, 2000
+ICON_NAME_WORDS = ("logo", "icon", "brand", "avatar", "mark")
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+
+SLACK_API = "https://slack.com/api/"
+# The most bytes of a text file that post sends. Slack cuts a text of more than 40000 characters,
+# and 40000 bytes of UTF-8 are at most 40000 characters.
+TEXT_FILE_MAX_BYTES = 40000
+LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
+
+
+class Fail(Exception):
+    def __init__(self, message, code=1):
+        super().__init__(message)
+        self.code = code
+
+
+# ---------------------------------------------------------------- manifest
+
+def scopes():
+    return sorted({s for needed in METHOD_SCOPES.values() for s in needed})
+
+
+def build_manifest(prefix, repo):
+    if not REPO_RE.match(repo):
+        raise Fail(f"--repo must be OWNER/NAME, got {repo!r}", 2)
+    name = f"{prefix} sofa"
+    if len(name) > NAME_MAX:
+        raise Fail(f"the app name {name!r} has {len(name)} characters; Slack allows {NAME_MAX}. Use a shorter team prefix", 2)
+    bot = f"{prefix.lower()}-sofa"
+    if not BOT_NAME_CHARS.match(bot) or len(bot) > BOT_NAME_MAX:
+        raise Fail(f"the bot name {bot!r} must have only a-z, 0-9, '-', '_' and '.', and at most {BOT_NAME_MAX} characters. "
+                   "Use another team prefix", 2)
+    description = f"The sofa team of {repo}. It posts the questions and the digests of the team for its humans."
+    if len(description) > DESCRIPTION_MAX:
+        raise Fail(f"the description has {len(description)} characters; Slack allows {DESCRIPTION_MAX}. Use a shorter repository name", 2)
+    return {
+        "_metadata": {"major_version": 1, "minor_version": 1},
+        "display_information": {"name": name, "description": description},
+        "features": {"bot_user": {"display_name": bot, "always_online": False}},
+        "oauth_config": {"scopes": {"bot": scopes()}},
+        "settings": {"org_deploy_enabled": False, "socket_mode_enabled": False, "token_rotation_enabled": False},
+    }
+
+
+def cmd_manifest(args):
+    print(json.dumps(build_manifest(args.name, args.repo), indent=2))
+
+
+# ---------------------------------------------------------------- icon
+
+def icon_problem(path):
+    """None when the file is a PNG that Slack takes as an app icon, else the reason. Also the size."""
+    try:
+        with open(path, "rb") as f:
+            head = f.read(24)
+    except OSError as e:
+        return None, None, f"cannot read the file: {e.strerror}"
+    if len(head) < 24 or head[:8] != PNG_SIGNATURE or head[12:16] != b"IHDR":
+        return None, None, "not a PNG file"
+    width, height = struct.unpack(">II", head[16:24])
+    size = f"{width}x{height}"
+    if width != height:
+        return width, height, f"{size} is not square"
+    if not ICON_MIN <= width <= ICON_MAX:
+        return width, height, f"{size} is outside {ICON_MIN}x{ICON_MIN} to {ICON_MAX}x{ICON_MAX}"
+    return width, height, None
+
+
+def cmd_icon_check(args):
+    width, height, problem = icon_problem(args.file)
+    if problem:
+        raise Fail(f"{problem}. A Slack app icon is a square PNG from {ICON_MIN}x{ICON_MIN} to {ICON_MAX}x{ICON_MAX} pixels")
+    print(f"ok {width}x{height}")
+
+
+def cmd_icon_find(args):
+    root = Path(args.root)
+    rc, out = rd.run(["git", "-C", str(root), "ls-files", "*.png"])
+    if rc != 0:
+        raise Fail("not a git repository")
+    for rel in out.splitlines():
+        if not any(word in Path(rel).name.lower() for word in ICON_NAME_WORDS):
+            continue
+        path = root / rel
+        if path.is_symlink() or not path.is_file():
+            continue  # a link or a named pipe in the repository: opening it can read outside the repository or wait with no end
+        width, height, problem = icon_problem(path)
+        print(f"no {problem} {rel}" if problem else f"ok {width}x{height} {rel}")
+
+
+# ---------------------------------------------------------------- Slack
+
+def bot_token(root):
+    token = rd.slack_token(root)
+    if not token:
+        raise Fail("no SLACK_BOT_TOKEN in the environment or in .claude/settings.local.json. Run /sofa:setup (step 5)", 3)
+    if not token.startswith("xoxb-"):
+        raise Fail("SLACK_BOT_TOKEN is not a bot token (it must start with xoxb-). Run /sofa:setup (step 5)", 3)
+    return token
+
+
+def api_base():
+    """The base URL of the Slack API. The token goes to this URL, so only Slack or this computer is allowed."""
+    base = os.environ.get("SOFA_SLACK_API", SLACK_API)
+    try:
+        url = urllib.parse.urlsplit(base)
+        host, port = url.hostname, url.port
+    except ValueError:
+        raise Fail(f"SOFA_SLACK_API is not a valid URL: {base!r}", 2)
+    if base.rstrip("/") == SLACK_API.rstrip("/") and port is None:
+        return SLACK_API
+    if url.scheme == "http" and host in LOOPBACK_HOSTS and not url.username:
+        return base
+    raise Fail("SOFA_SLACK_API must be https://slack.com/api/ or an http address on this computer "
+               "(127.0.0.1, localhost or ::1), because the bot token goes to it", 2)
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    """urllib keeps the Authorization header on a redirect, so a redirect would send the token to another host."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise Fail(f"Slack answered with a redirect (HTTP {code}). The call stops, because the bot token must go to 1 host only")
+
+
+class SlackError(Fail):
+    """Slack answered with ok false. error is the error code of Slack."""
+
+    def __init__(self, method, error):
+        super().__init__(f"{method}: {error}")
+        self.error = error
+
+
+def slack_call(token, method, params=None):
+    base = api_base()
+    req = urllib.request.Request(base.rstrip("/") + "/" + method, data=urllib.parse.urlencode(params or {}).encode(),
+                                 method="POST", headers={"Authorization": f"Bearer {token}"})
+    try:
+        with urllib.request.build_opener(NoRedirect).open(req, timeout=20) as resp:
+            data = json.load(resp)
+    except (urllib.error.URLError, ValueError) as e:
+        raise Fail(f"{method}: no answer from Slack ({type(e).__name__})")
+    if not data.get("ok"):
+        raise SlackError(method, data.get("error", "unknown error"))
+    return data
+
+
+def cmd_whoami(args):
+    data = slack_call(bot_token(args.root), "auth.test")
+    print(f"ok team={data.get('team', '')} bot={data.get('user', '')}")
+
+
+# ---------------------------------------------------------------- post
+
+THREAD_TS_RE = re.compile(r"^\d{1,12}\.\d{1,9}$")
+
+
+def adlc_channel(root):
+    """The channel of section 1 (Slack) of docs/adlc.md, or None when there is none."""
+    repo = rd.Repo(root)
+    if not repo.adlc.exists():
+        return None
+    value = rd.first_token(repo.setup_values().get("Slack", ""))
+    return None if not value or value.lower() == "none" or value.startswith("<") else value
+
+
+def find_channel_id(token, name):
+    """The ID of the channel NAME among the channels that the bot can see, or None."""
+    cursor = ""
+    while True:
+        page = slack_call(token, "conversations.list", {"types": "public_channel,private_channel", "limit": 1000,
+                                                        "exclude_archived": "true", "cursor": cursor})
+        for channel in page.get("channels", []):
+            if channel.get("name") == name:
+                return channel["id"]
+        cursor = page.get("response_metadata", {}).get("next_cursor", "")
+        if not cursor:
+            return None
+
+
+def invite_fix(token, name):
+    """The fix for a bot that is not in the channel: the user types /invite in the channel."""
+    try:
+        bot = slack_call(token, "auth.test").get("user") or "<bot name>"
+    except Fail:
+        bot = "<bot name>"
+    return f"Fix: type /invite @{bot} in #{name}"
+
+
+def read_text_file(name):
+    """The text of a small regular file. Refuse a symbolic link, a file that is not regular, and a file
+    over TEXT_FILE_MAX_BYTES (counted in bytes). Open once and use fstat on the open file, so the file cannot
+    change between the check and the read. O_NONBLOCK keeps the open of a named pipe from waiting."""
+    try:
+        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    except OSError as e:
+        if e.errno == errno.ELOOP:
+            raise Fail(f"--text-file {name!r} is a symbolic link; nothing is posted", 2)
+        raise Fail(f"--text-file {name!r} is not a readable text file", 2)
+    try:
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode):
+            raise Fail(f"--text-file {name!r} is not a readable text file: it is not a regular file", 2)
+        if info.st_size > TEXT_FILE_MAX_BYTES:
+            raise Fail(f"--text-file {name!r} is larger than {TEXT_FILE_MAX_BYTES} bytes; nothing is posted", 2)
+        with os.fdopen(fd, "rb") as fh:  # fdopen takes the fd: closing fh closes it
+            fd = -1
+            data = fh.read(TEXT_FILE_MAX_BYTES + 1)
+    except OSError:
+        raise Fail(f"--text-file {name!r} is not a readable text file", 2)
+    finally:
+        if fd >= 0:
+            os.close(fd)
+    if len(data) > TEXT_FILE_MAX_BYTES:
+        raise Fail(f"--text-file {name!r} is larger than {TEXT_FILE_MAX_BYTES} bytes; nothing is posted", 2)
+    try:
+        return data.decode("utf-8")
+    except UnicodeDecodeError:
+        raise Fail(f"--text-file {name!r} is not a readable text file", 2)
+
+
+def cmd_post(args):
+    token = bot_token(args.root)
+    text = read_text_file(args.text_file)
+    if not text.strip():
+        raise Fail("the text file is empty", 2)
+    if token in text:
+        raise Fail("the text file holds the bot token; nothing is posted", 2)
+    if args.thread and not THREAD_TS_RE.match(args.thread):
+        raise Fail(f"--thread must be a Slack message time stamp such as 1700000000.000100, got {args.thread!r}", 2)
+    name = (args.channel or adlc_channel(args.root) or "").lstrip("#")
+    if not name:
+        raise Fail("no Slack channel: section 1 (Slack) of docs/adlc.md has none. Give --channel NAME")
+    channel_id = find_channel_id(token, name)
+    if channel_id is None:
+        raise Fail(f"the bot cannot see #{name}. {invite_fix(token, name)}")
+    params = {"channel": channel_id, "text": text}
+    if args.thread:
+        params["thread_ts"] = args.thread
+    try:
+        reply = slack_call(token, "chat.postMessage", params)
+    except SlackError as e:
+        if e.error == "not_in_channel":
+            raise Fail(f"{e}. {invite_fix(token, name)}")
+        raise
+    if not (reply.get("message") or {}).get("bot_id"):
+        raise Fail("not posted as the app: the reply of Slack has no message.bot_id")
+    print(json.dumps({"channel": reply.get("channel", channel_id), "ts": reply.get("ts", "")}))
+
+
+# ---------------------------------------------------------------- main
+
+def main():
+    parser = argparse.ArgumentParser(prog="sofa-slack", description=__doc__.split("\n\n")[0])
+    sub = parser.add_subparsers(dest="command", required=True)
+    p = sub.add_parser("manifest")
+    p.add_argument("--name", required=True, help="the team prefix of docs/adlc.md")
+    p.add_argument("--repo", required=True, help="OWNER/NAME")
+    p.set_defaults(run=cmd_manifest)
+    p = sub.add_parser("icon-check")
+    p.add_argument("file")
+    p.set_defaults(run=cmd_icon_check)
+    p = sub.add_parser("icon-find")
+    p.add_argument("--root", default=".")
+    p.set_defaults(run=cmd_icon_find)
+    p = sub.add_parser("whoami")
+    p.add_argument("--root", default=".")
+    p.set_defaults(run=cmd_whoami)
+    p = sub.add_parser("post")
+    p.add_argument("--text-file", required=True, help="a file with the text to post")
+    p.add_argument("--thread", help="the time stamp of the message to reply to")
+    p.add_argument("--channel", help="the channel name (default: Slack of docs/adlc.md)")
+    p.add_argument("--root", default=".")
+    p.set_defaults(run=cmd_post)
+    args = parser.parse_args()
+    try:
+        args.run(args)
+    except Fail as e:
+        print(f"sofa-slack: {e}", file=sys.stderr)
+        return e.code
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

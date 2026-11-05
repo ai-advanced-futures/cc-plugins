@@ -1,0 +1,7 @@
+# The public marketplace repository holds a release. Local state never belongs in it.
+.claude/settings.local.json
+.sofa/
+.env
+__pycache__/
+*.pyc
+.DS_Store

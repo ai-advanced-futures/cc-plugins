@@ -1,0 +1,322 @@
+# The one source of the ddd page types, fields, closed lists, and edge rules.
+#
+# Two generated files come from this one:
+#   schema/domain.schema.json   the JSON Schema of rule E2
+#   schema/domain.slots.json    the key order, the ID prefixes, and the edge rules
+# Run scripts/gen-schema.sh after you change this file, and commit both outputs.
+#
+# Annotations, read by scripts/gen_slots.py:
+#   class  id_prefix      the ID prefix of the page type, as in TERM-01
+#   class  directory      the bundle directory of the page type
+#   slot   targets        the page types that the edge can point to
+#   slot   target_kinds   for a Term target, the permitted values of `kind`
+#   slot   acyclic        true when the edge must not make a cycle (rule E6)
+#   slot   distinct       true when a list must not name one page two times
+#   slot   inverse_label  the label of the derived line in the LINKS block
+id: https://ai-advanced-futures.github.io/cc-plugins/ddd
+name: ddd
+title: ddd domain bundle pages
+description: The frontmatter of each page type of the ddd domain bundle.
+default_range: string
+default_prefix: ddd
+prefixes:
+  linkml: https://w3id.org/linkml/
+  ddd: https://ai-advanced-futures.github.io/cc-plugins/ddd/
+imports:
+  - linkml:types
+  - ../../knowledge/schema/base
+
+types:
+  PageRef:
+    typeof: string
+    description: A bundle-relative page path, as in /terms/TERM-01.md.
+    pattern: '^/[a-z]+/[A-Z]+-\d{2,}\.md$'
+  PageId:
+    typeof: string
+    pattern: '^[A-Z]+-\d{2,}$'
+  Timestamp:
+    typeof: string
+    description: An ISO 8601 time with an explicit UTC offset.
+    pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$'
+
+enums:
+  Confidence:
+    permissible_values:
+      high:
+      medium:
+      low:
+  Subdomain:
+    permissible_values:
+      core:
+      supporting:
+      generic:
+  Pattern:
+    permissible_values:
+      shared-kernel:
+      customer-supplier:
+      conformist:
+      anti-corruption-layer:
+      open-host-service:
+      published-language:
+      separate-ways:
+  TermKind:
+    permissible_values:
+      entity:
+      value-object:
+      domain-service:
+      role:
+      command:
+      policy:
+      concept:
+  QuestionState:
+    permissible_values:
+      open:
+      resolved:
+  QuestionKind:
+    permissible_values:
+      conflict:
+      hotspot:
+      gap:
+  SourceKind:
+    permissible_values:
+      file:
+      url:
+      slack:
+      transcript:
+      bundle-page:
+      code:
+      other:
+
+slots:
+  subdomain:
+    range: Subdomain
+  external:
+    range: boolean
+  big_ball_of_mud:
+    range: boolean
+  owner:
+  patterns:
+    multivalued: true
+    required: true
+    minimum_cardinality: 1
+    range: Pattern
+  kind:
+  avoid:
+    multivalued: true
+  initial:
+    range: boolean
+  state:
+    range: QuestionState
+  resource:
+  source_kind:
+    range: SourceKind
+  content_hash:
+    pattern: '^sha256:[0-9a-f]{64}$'
+  cursor:
+  analyzed_at:
+    range: Timestamp
+  context:
+    range: PageRef
+    annotations:
+      targets: Context
+      inverse_label: holds
+  between:
+    range: PageRef
+    multivalued: true
+    required: true
+    minimum_cardinality: 2
+    maximum_cardinality: 2
+    annotations:
+      targets: Context
+      distinct: true
+      inverse_label: related by
+  upstream:
+    range: PageRef
+    annotations:
+      targets: Context
+      inverse_label: upstream of
+  contains:
+    range: PageRef
+    multivalued: true
+    annotations:
+      targets: Term
+      target_kinds: entity value-object
+      acyclic: true
+      inverse_label: contained by
+  references:
+    range: PageRef
+    multivalued: true
+    annotations:
+      targets: Aggregate
+      inverse_label: referenced by
+  emits:
+    range: PageRef
+    multivalued: true
+    annotations:
+      targets: Event
+      inverse_label: emitted by
+  triggered_by:
+    range: PageRef
+    multivalued: true
+    annotations:
+      targets: Term Event
+      target_kinds: command policy
+      inverse_label: triggers
+  translates_to:
+    range: PageRef
+    multivalued: true
+    annotations:
+      targets: Term Aggregate Event
+      inverse_label: translated from
+  about:
+    range: PageRef
+    multivalued: true
+    required: true
+    minimum_cardinality: 1
+    annotations:
+      targets: Context Relationship Term Aggregate Event Question Source
+      inverse_label: asked about by
+  sources:
+    range: SourceRef
+    multivalued: true
+    inlined_as_list: true
+    annotations:
+      targets: Source
+      inverse_label: cited by
+  confidence:
+    range: Confidence
+  id:
+    required: true
+    range: PageId
+
+classes:
+  SourceRef:
+    description: One OKF sources[] entry. The id is the ID of a Source page.
+    slots: [id, resource]
+    slot_usage:
+      resource:
+        required: true
+  Context:
+    description: A bounded context.
+    annotations:
+      id_prefix: CONTEXT
+      directory: contexts
+    slots: [type, title, description, status, tags, aliases, subdomain, external,
+            big_ball_of_mud, owner, sources, confidence, generated, verified, protected]
+    slot_usage:
+      type:
+        equals_string: Context
+      title:
+        required: true
+      description:
+        required: true
+      status:
+        required: true
+  Relationship:
+    description: The integration between two bounded contexts.
+    annotations:
+      id_prefix: RELATIONSHIP
+      directory: relationships
+    slots: [type, title, description, status, tags, aliases, patterns, between,
+            upstream, sources, confidence, generated, verified, protected]
+    slot_usage:
+      type:
+        equals_string: Relationship
+      title:
+        required: true
+      description:
+        required: true
+      status:
+        required: true
+  Term:
+    description: One word of the ubiquitous language of a context.
+    annotations:
+      id_prefix: TERM
+      directory: terms
+    slots: [type, title, description, status, tags, aliases, kind, avoid, context,
+            translates_to, sources, confidence, generated, verified, protected]
+    slot_usage:
+      type:
+        equals_string: Term
+      title:
+        required: true
+      description:
+        required: true
+      status:
+        required: true
+      kind:
+        range: TermKind
+        required: true
+  Aggregate:
+    description: A consistency boundary with one root entity.
+    annotations:
+      id_prefix: AGGREGATE
+      directory: aggregates
+    slots: [type, title, description, status, tags, aliases, avoid, context, contains,
+            references, emits, translates_to, sources, confidence, generated, verified, protected]
+    slot_usage:
+      type:
+        equals_string: Aggregate
+      title:
+        required: true
+      description:
+        required: true
+      status:
+        required: true
+  Event:
+    description: A domain event, named in the past tense.
+    annotations:
+      id_prefix: EVENT
+      directory: events
+    slots: [type, title, description, status, tags, aliases, initial, avoid, context,
+            triggered_by, translates_to, sources, confidence, generated, verified, protected]
+    slot_usage:
+      type:
+        equals_string: Event
+      title:
+        required: true
+      description:
+        required: true
+      status:
+        required: true
+  Question:
+    description: An open or resolved question about the model.
+    annotations:
+      id_prefix: QUESTION
+      directory: questions
+    slots: [type, title, description, status, tags, aliases, state, kind, about,
+            sources, confidence, generated, verified, protected]
+    slot_usage:
+      type:
+        equals_string: Question
+      title:
+        required: true
+      description:
+        required: true
+      status:
+        required: true
+      state:
+        required: true
+      kind:
+        range: QuestionKind
+        required: true
+  Source:
+    description: One file, URL, Slack channel, transcript, or page of another bundle.
+    annotations:
+      id_prefix: SOURCE
+      directory: sources
+    slots: [type, title, description, status, tags, aliases, resource, source_kind,
+            content_hash, cursor, analyzed_at, confidence, generated, verified, protected]
+    slot_usage:
+      type:
+        equals_string: Source
+      title:
+        required: true
+      description:
+        required: true
+      status:
+        required: true
+      resource:
+        required: true
+      source_kind:
+        required: true

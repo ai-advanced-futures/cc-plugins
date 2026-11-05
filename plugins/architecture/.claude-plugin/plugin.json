@@ -1,0 +1,23 @@
+{
+  "name": "architecture",
+  "displayName": "architecture",
+  "version": "1.0.8",
+  "description": "The architecture decisions of a repository as an OKF graph on the brain standard: architecture:setup makes or migrates the corpus, architecture:learn writes one ADR, architecture:ask answers from past decisions, and /architecture:check reviews a diff against them.",
+  "author": {
+    "name": "Yassel Piloto",
+    "email": "yasselpiloto@gmail.com"
+  },
+  "homepage": "https://github.com/ai-advanced-futures/cc-plugins",
+  "repository": "https://github.com/ai-advanced-futures/cc-plugins",
+  "dependencies": ["knowledge"],
+  "keywords": [
+    "adr",
+    "architecture",
+    "decisions",
+    "records",
+    "corpus",
+    "lint",
+    "index",
+    "scaffold"
+  ]
+}

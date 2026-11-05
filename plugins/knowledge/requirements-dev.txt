@@ -1,0 +1,8 @@
+# Build and test only. knowledge.py and knowledge_graph.py need pyyaml and
+# jsonschema at run time (their PEP 723 header). gen-schema.sh reads the
+# linkml pin from this file.
+jsonschema
+linkml==1.11.1
+linkml-runtime==1.11.1
+pytest
+pyyaml

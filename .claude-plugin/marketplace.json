@@ -1,0 +1,85 @@
+{
+  "name": "cc-plugins",
+  "owner": {
+    "name": "ai-advanced-futures",
+    "email": "pilo@aireadyfuture.com"
+  },
+  "metadata": {
+    "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
+    "version": "2.1.0"
+  },
+  "plugins": [
+    {
+      "name": "architecture",
+      "description": "The architecture decisions of a repository as an OKF graph on the brain standard: architecture:setup makes or migrates the corpus, architecture:learn writes one ADR, architecture:ask answers from past decisions, and /architecture:check reviews a diff against them.",
+      "source": "./plugins/architecture",
+      "strict": false
+    },
+    {
+      "name": "business-domain",
+      "description": "The domain model of a repository as one OKF graph on the brain standard: bounded contexts, terms, aggregates, events, and relationships, with business-domain:setup, business-domain:learn, and business-domain:ask, and a hook that runs regen and both checks",
+      "source": "./plugins/business-domain",
+      "strict": false
+    },
+    {
+      "name": "product",
+      "description": "Product discovery and roadmap planning in two OKF graphs on the brain standard: one page for each requirement and each work item, typed links, product:setup, product:learn, product:ask, and a script that assigns IDs, checks the graph, and finds requirement drift",
+      "source": "./plugins/product",
+      "strict": false
+    },
+    {
+      "name": "system-design",
+      "description": "The architecture of a repository as one OKF graph on the brain standard, with system-design:setup, system-design:learn, and system-design:ask. It replaces the system-design skill of the product plugin.",
+      "source": "./plugins/system-design",
+      "strict": false
+    },
+    {
+      "name": "thinktank",
+      "description": "Structured multi-agent strategic analysis and Socratic deliberation for optimal implementation decisions",
+      "source": "./plugins/thinktank",
+      "strict": false
+    },
+    {
+      "name": "relay",
+      "description": "Multi-agent orchestration toolkit — ACPX dispatch + adversarial refinement loops, layered on superpowers.",
+      "source": "./plugins/relay",
+      "strict": false
+    },
+    {
+      "name": "code-review",
+      "description": "Bootstraps a repo-tailored PR review system (contract + per-concern lens skills) into any repo via /code-review:setup, executes it with a repo-agnostic reviewing-prs orchestrator plus lifecycle skills, guides engineers through a PR with the read-only /code-review:hitl walkthrough, and walks one PR chunk by chunk in a pane with /code-review:review-pane.",
+      "source": "./plugins/code-review",
+      "strict": false
+    },
+    {
+      "name": "knowledge",
+      "description": "The base of every brain: the brain standard, the generic OKF knowledge graph, the registry of graphs, the general check, and the generic skills knowledge:setup, knowledge:learn, knowledge:ask, and knowledge:forget. It was the wiki plugin.",
+      "source": "./plugins/knowledge",
+      "strict": false
+    },
+    {
+      "name": "prompt",
+      "description": "Measures any prompt, skill, command, agent or plugin against the prompt engineering principles in its reference file, then shrinks it. Counts instructions rather than tokens, runs ten checks in code, cites a rule identifier per finding, and proves the revision moved the count.",
+      "source": "./plugins/prompt",
+      "strict": false
+    },
+    {
+      "name": "status",
+      "description": "A Nord status bar (below the prompt in a terminal, in a band above it in the desktop app): the model, the context, a prompt cache pill (cold, or warm with the time left and the hit percent), the 7-day limit, the folder, the worktree and the git branch.",
+      "source": "./plugins/status",
+      "strict": false
+    },
+    {
+      "name": "sofa",
+      "description": "Software factory: a team of Claude Code background sessions that build a product from the PRD and roadmap of a repository.",
+      "source": "./plugins/sofa",
+      "strict": false
+    },
+    {
+      "name": "grounded-synthesis",
+      "description": "Audit a draft against its primary source files. Find the facts that a source holds and the draft does not, and write a gap report.",
+      "source": "./plugins/grounded-synthesis",
+      "strict": false
+    }
+  ]
+}

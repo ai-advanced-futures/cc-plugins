@@ -1,0 +1,7 @@
+# Build and test only. system_design.py needs pyyaml and jsonschema at run
+# time (its PEP 723 header). gen-schema.sh reads the linkml pin from this file.
+jsonschema
+linkml==1.11.1
+linkml-runtime==1.11.1
+pytest
+pyyaml

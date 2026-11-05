@@ -1,0 +1,222 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "amended": {
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "type": "string"
+    },
+    "amended_by": {
+      "anyOf": [
+        {
+          "pattern": "^(?:.*\\/)?.+\\.md$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "pattern": "^(?:.*\\/)?.+\\.md$",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "amends": {
+      "anyOf": [
+        {
+          "pattern": "^(?:.*\\/)?.+\\.md$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "pattern": "^(?:.*\\/)?.+\\.md$",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "area": {
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "type": "string"
+    },
+    "date": {
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "type": "string"
+    },
+    "description": {
+      "pattern": "^[^\\n]+$",
+      "type": "string"
+    },
+    "deviates_from": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "evidence": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "generated": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$",
+          "type": "string"
+        },
+        "by": {
+          "pattern": "^(human:[A-Za-z0-9._-]+|process:[A-Za-z0-9._-]+|[A-Za-z0-9._-]+/[A-Za-z0-9._-]+)$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "by",
+        "at"
+      ],
+      "type": "object"
+    },
+    "lifecycle": {
+      "enum": [
+        "proposed",
+        "accepted",
+        "deprecated",
+        "superseded"
+      ],
+      "type": "string"
+    },
+    "model": {
+      "additionalProperties": false,
+      "properties": {
+        "element": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "modeled",
+            "out-of-scope",
+            "black-box"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "type": "object"
+    },
+    "parent_spec": {
+      "pattern": "^(?:.*\\/)?.+\\.md(?:#.+)?$",
+      "type": "string"
+    },
+    "protected": {
+      "type": "boolean"
+    },
+    "refines": {
+      "anyOf": [
+        {
+          "pattern": "^(?:.*\\/)?.+\\.md$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "pattern": "^(?:.*\\/)?.+\\.md$",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "related": {
+      "items": {
+        "pattern": "^(?:.*\\/)?.+\\.md(?:#.+)?$",
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "stable",
+        "deprecated"
+      ],
+      "type": "string"
+    },
+    "superseded_by": {
+      "anyOf": [
+        {
+          "pattern": "^(?:.*\\/)?.+\\.md$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "pattern": "^(?:.*\\/)?.+\\.md$",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "supersedes": {
+      "anyOf": [
+        {
+          "pattern": "^(?:.*\\/)?.+\\.md$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "pattern": "^(?:.*\\/)?.+\\.md$",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "type": {
+      "const": "adr",
+      "type": "string"
+    },
+    "verified": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$",
+            "type": "string"
+          },
+          "by": {
+            "pattern": "^(human:[A-Za-z0-9._-]+|process:[A-Za-z0-9._-]+|[A-Za-z0-9._-]+/[A-Za-z0-9._-]+)$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "by",
+          "at"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "type",
+    "status",
+    "lifecycle",
+    "date"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,78 @@
+# The shared slots of every brain (standard section 4).
+#
+# Each brain schema imports this file at build time with
+#   imports: [linkml:types, ../../knowledge/schema/base]
+# and never defines a name that this file defines. A brain narrows a slot of
+# this file only with slot_usage. Only `type` is required here: the general
+# check enforces the other required fields of the standard.
+id: https://ai-advanced-futures.github.io/cc-plugins/knowledge/base
+name: okf_base
+title: The shared slots of every brain
+description: >-
+  The OKF v0.2 fields, the provenance, the aliases, the protect flag, and the
+  actor forms that every brain shares.
+default_range: string
+default_prefix: okf
+prefixes:
+  linkml: https://w3id.org/linkml/
+  okf: https://ai-advanced-futures.github.io/cc-plugins/knowledge/okf/
+imports:
+  - linkml:types
+
+types:
+  OkfActor:
+    typeof: string
+    description: An OKF section 7 actor - human:<login>, <producer>/<version>, or process:<id>.
+    pattern: '^(human:[A-Za-z0-9._-]+|process:[A-Za-z0-9._-]+|[A-Za-z0-9._-]+/[A-Za-z0-9._-]+)$'
+  OkfTimestamp:
+    typeof: string
+    description: An ISO 8601 time with an explicit UTC offset.
+    pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$'
+
+enums:
+  OkfStatus:
+    permissible_values:
+      draft:
+      stable:
+      deprecated:
+
+classes:
+  OkfStamp:
+    description: One actor and one time.
+    attributes:
+      by:
+        range: OkfActor
+        required: true
+      at:
+        range: OkfTimestamp
+        required: true
+
+slots:
+  type:
+    description: The OKF page type.
+    required: true
+  title:
+    description: The page title.
+  description:
+    description: One line, in the words of the brain.
+    pattern: '^[^\n]+$'
+  status:
+    description: The OKF lifecycle of the page.
+    range: OkfStatus
+  tags:
+    multivalued: true
+  generated:
+    description: The last meaningful change.
+    range: OkfStamp
+    inlined: true
+  verified:
+    description: Each confirmation by a person.
+    range: OkfStamp
+    multivalued: true
+    inlined_as_list: true
+  aliases:
+    description: Old titles, merged IDs, and old ID forms.
+    multivalued: true
+  protected:
+    description: True stops forget. Only a person sets it.
+    range: boolean

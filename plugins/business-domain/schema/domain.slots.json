@@ -1,0 +1,274 @@
+{
+  "statuses": [
+    "draft",
+    "stable",
+    "deprecated"
+  ],
+  "types": {
+    "Context": {
+      "prefix": "CONTEXT",
+      "directory": "contexts",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "aliases",
+        "subdomain",
+        "external",
+        "big_ball_of_mud",
+        "owner",
+        "sources",
+        "confidence",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Relationship": {
+      "prefix": "RELATIONSHIP",
+      "directory": "relationships",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "aliases",
+        "patterns",
+        "between",
+        "upstream",
+        "sources",
+        "confidence",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Term": {
+      "prefix": "TERM",
+      "directory": "terms",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "aliases",
+        "kind",
+        "avoid",
+        "context",
+        "translates_to",
+        "sources",
+        "confidence",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Aggregate": {
+      "prefix": "AGGREGATE",
+      "directory": "aggregates",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "aliases",
+        "avoid",
+        "context",
+        "contains",
+        "references",
+        "emits",
+        "translates_to",
+        "sources",
+        "confidence",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Event": {
+      "prefix": "EVENT",
+      "directory": "events",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "aliases",
+        "initial",
+        "avoid",
+        "context",
+        "triggered_by",
+        "translates_to",
+        "sources",
+        "confidence",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Question": {
+      "prefix": "QUESTION",
+      "directory": "questions",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "aliases",
+        "state",
+        "kind",
+        "about",
+        "sources",
+        "confidence",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Source": {
+      "prefix": "SOURCE",
+      "directory": "sources",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "aliases",
+        "resource",
+        "source_kind",
+        "content_hash",
+        "cursor",
+        "analyzed_at",
+        "confidence",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    }
+  },
+  "edges": {
+    "context": {
+      "targets": [
+        "Context"
+      ],
+      "kinds": [],
+      "multivalued": false,
+      "acyclic": false,
+      "distinct": false,
+      "inverse_label": "holds"
+    },
+    "between": {
+      "targets": [
+        "Context"
+      ],
+      "kinds": [],
+      "multivalued": true,
+      "acyclic": false,
+      "distinct": true,
+      "inverse_label": "related by"
+    },
+    "upstream": {
+      "targets": [
+        "Context"
+      ],
+      "kinds": [],
+      "multivalued": false,
+      "acyclic": false,
+      "distinct": false,
+      "inverse_label": "upstream of"
+    },
+    "contains": {
+      "targets": [
+        "Term"
+      ],
+      "kinds": [
+        "entity",
+        "value-object"
+      ],
+      "multivalued": true,
+      "acyclic": true,
+      "distinct": false,
+      "inverse_label": "contained by"
+    },
+    "references": {
+      "targets": [
+        "Aggregate"
+      ],
+      "kinds": [],
+      "multivalued": true,
+      "acyclic": false,
+      "distinct": false,
+      "inverse_label": "referenced by"
+    },
+    "emits": {
+      "targets": [
+        "Event"
+      ],
+      "kinds": [],
+      "multivalued": true,
+      "acyclic": false,
+      "distinct": false,
+      "inverse_label": "emitted by"
+    },
+    "triggered_by": {
+      "targets": [
+        "Term",
+        "Event"
+      ],
+      "kinds": [
+        "command",
+        "policy"
+      ],
+      "multivalued": true,
+      "acyclic": false,
+      "distinct": false,
+      "inverse_label": "triggers"
+    },
+    "translates_to": {
+      "targets": [
+        "Term",
+        "Aggregate",
+        "Event"
+      ],
+      "kinds": [],
+      "multivalued": true,
+      "acyclic": false,
+      "distinct": false,
+      "inverse_label": "translated from"
+    },
+    "about": {
+      "targets": [
+        "Context",
+        "Relationship",
+        "Term",
+        "Aggregate",
+        "Event",
+        "Question",
+        "Source"
+      ],
+      "kinds": [],
+      "multivalued": true,
+      "acyclic": false,
+      "distinct": false,
+      "inverse_label": "asked about by"
+    },
+    "sources": {
+      "targets": [
+        "Source"
+      ],
+      "kinds": [],
+      "multivalued": true,
+      "acyclic": false,
+      "distinct": false,
+      "inverse_label": "cited by"
+    }
+  }
+}

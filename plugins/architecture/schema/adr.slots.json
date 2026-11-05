@@ -1,0 +1,211 @@
+{
+  "key_order": [
+    "type",
+    "title",
+    "description",
+    "area",
+    "status",
+    "lifecycle",
+    "date",
+    "amended",
+    "supersedes",
+    "superseded_by",
+    "amends",
+    "amended_by",
+    "refines",
+    "deviates_from",
+    "related",
+    "parent_spec",
+    "evidence",
+    "model",
+    "generated",
+    "verified",
+    "protected"
+  ],
+  "statuses": [
+    "draft",
+    "stable",
+    "deprecated"
+  ],
+  "lifecycles": [
+    "proposed",
+    "accepted",
+    "deprecated",
+    "superseded"
+  ],
+  "model_statuses": [
+    "modeled",
+    "out-of-scope",
+    "black-box"
+  ],
+  "slots": {
+    "type": {
+      "multivalued": false,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    },
+    "title": {
+      "multivalued": false,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    },
+    "description": {
+      "multivalued": false,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    },
+    "area": {
+      "multivalued": false,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    },
+    "status": {
+      "multivalued": false,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    },
+    "lifecycle": {
+      "multivalued": false,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    },
+    "date": {
+      "multivalued": false,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    },
+    "amended": {
+      "multivalued": false,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    },
+    "supersedes": {
+      "multivalued": true,
+      "inlined": false,
+      "inverse": "superseded_by",
+      "stored_inverse": true,
+      "target_kind": "adr",
+      "walk_order": 1
+    },
+    "superseded_by": {
+      "multivalued": true,
+      "inlined": false,
+      "inverse": "supersedes",
+      "stored_inverse": true,
+      "target_kind": "adr",
+      "walk_order": 1
+    },
+    "amends": {
+      "multivalued": true,
+      "inlined": false,
+      "inverse": "amended_by",
+      "stored_inverse": true,
+      "target_kind": "adr",
+      "walk_order": 2
+    },
+    "amended_by": {
+      "multivalued": true,
+      "inlined": false,
+      "inverse": "amends",
+      "stored_inverse": true,
+      "target_kind": "adr",
+      "walk_order": 2
+    },
+    "refines": {
+      "multivalued": true,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": false,
+      "target_kind": "adr",
+      "walk_order": 4
+    },
+    "deviates_from": {
+      "multivalued": true,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": false,
+      "target_kind": "mixed",
+      "walk_order": 3
+    },
+    "related": {
+      "multivalued": true,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": false,
+      "target_kind": "mixed",
+      "walk_order": 6
+    },
+    "parent_spec": {
+      "multivalued": false,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": false,
+      "target_kind": "doc",
+      "walk_order": 5
+    },
+    "evidence": {
+      "multivalued": true,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    },
+    "model": {
+      "multivalued": false,
+      "inlined": true,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    },
+    "generated": {
+      "multivalued": false,
+      "inlined": true,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    },
+    "verified": {
+      "multivalued": true,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    },
+    "protected": {
+      "multivalued": false,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    }
+  }
+}

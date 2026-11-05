@@ -1,0 +1,21 @@
+# The dev and CI dependencies of the product plugin.
+#
+# linkml is pinned to the exact version that wrote the committed
+# schema/product.schema.json. tests/test_schema_generated.py compares the
+# committed bytes against a fresh generator run, so an unpinned generator
+# turns that test red on an unrelated pull request.
+#
+# scripts/gen-schema.sh and the job product of .github/workflows/ci.yml both read the pin from
+# this file. It has one home, so the generator that wrote the committed
+# schema and the one CI installs cannot drift apart.
+#
+# linkml-runtime is pinned too. linkml accepts any linkml-runtime 1.x, and
+# linkml-runtime writes the metamodel_version field of the generated schema.
+# linkml-runtime 1.12.0 changed that field, and the schema test failed on
+# every pull request. Install this whole file before you regenerate the
+# schema. An install of the linkml pin alone gets the latest linkml-runtime.
+jsonschema
+linkml==1.11.1
+linkml-runtime==1.11.1
+pytest
+pyyaml

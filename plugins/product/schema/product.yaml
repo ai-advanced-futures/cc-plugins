@@ -1,0 +1,472 @@
+id: https://404pilo.dev/prd/product
+name: prd-product
+title: prd plugin product and roadmap bundles
+description: >-
+  One schema for the two OKF v0.2 bundles that the prd plugin writes:
+  docs/product/prd/ and docs/product/roadmap/. It is the one place that
+  defines each type, each field, each closed list, and each permitted
+  relationship target. prdlib/schema.py validates page frontmatter against
+  product.schema.json, which gen-schema.sh generates from this file.
+license: Apache-2.0
+default_range: string
+default_prefix: prd
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  prd: https://404pilo.dev/prd/
+  dcterms: http://purl.org/dc/terms/
+  oslc_cm: http://open-services.net/ns/cm#
+  oslc_promcode: http://open-services.net/ns/promcode#
+  sro: https://w3id.org/sro#
+
+imports:
+  - linkml:types
+  - ../../knowledge/schema/base
+
+types:
+  PrdPath:
+    typeof: string
+    description: A bundle-relative path inside the PRD bundle.
+    pattern: '^/[a-z-]+/[A-Z]+-[0-9]{2,}\.md$'
+  RoadmapPath:
+    typeof: string
+    description: A bundle-relative path inside the roadmap bundle.
+    pattern: '^/[a-z-]+/[A-Z]+-[0-9A-Za-z-]+\.md$'
+  CrossBundlePath:
+    typeof: string
+    description: A PRD target named from the roadmap bundle.
+    pattern: '^prd:/[a-z-]+/[A-Z]+-[0-9]{2,}\.md$'
+  Actor:
+    typeof: string
+    description: human:<login>, agent:<id>, or process:<id>.
+    pattern: '^(human|agent|process):[A-Za-z0-9._-]+$'
+
+enums:
+  WorkState:
+    permissible_values:
+      backlog:
+      ready:
+      claimed:
+      in_progress:
+      in_review:
+      blocked:
+      done:
+      released:
+      cancelled:
+  NeedKind:
+    permissible_values:
+      job:
+      pain:
+      outcome:
+  ScopeKind:
+    permissible_values:
+      release:
+      non-goal:
+      release-criterion:
+  MetricRole:
+    permissible_values:
+      north-star:
+      kpi:
+      counter:
+  KanoClass:
+    permissible_values:
+      must-be:
+      performance:
+      delighter:
+  RiskKind:
+    permissible_values:
+      risk:
+      assumption:
+  Priority:
+    permissible_values:
+      must:
+      should:
+      could:
+      wont:
+  Size:
+    permissible_values:
+      S:
+      M:
+      L:
+  RunOutcome:
+    # The spec names the `outcome` field but not its values. `not-checked`
+    # is a run in which no check ran: no criterion, or no declared check.
+    permissible_values:
+      passed:
+      failed:
+      not-checked:
+      abandoned:
+
+slots:
+  resource:
+    description: A URL or a bundle path (OKF section 6.2).
+  sources:
+    range: OkfSource
+    multivalued: true
+    inlined_as_list: true
+  usage_window:
+    range: UsageWindow
+    inlined: true
+  stale_after:
+    description: An ISO 8601 date or time.
+  created:
+  updated:
+  lenses:
+    range: LensCoverage
+    inlined: true
+    multivalued: true
+  primary:
+    range: boolean
+  kind:
+  role:
+    range: MetricRole
+  kano:
+    range: KanoClass
+  target:
+  validation:
+  decided_at:
+  alternatives:
+    multivalued: true
+  serves:
+    range: PrdPath
+    multivalued: true
+  addresses:
+    range: PrdPath
+    multivalued: true
+  depends_on:
+    range: PrdPath
+    multivalued: true
+  includes:
+    range: ScopeInclude
+    inlined: true
+    multivalued: true
+  measures:
+    range: PrdPath
+    multivalued: true
+  guards:
+    range: PrdPath
+    multivalued: true
+  threatens:
+    range: PrdPath
+    multivalued: true
+  constrains:
+    range: PrdPath
+    multivalued: true
+    description: Empty means the full product.
+  about:
+    range: PrdPath
+    multivalued: true
+  supersedes:
+    range: PrdPath
+  state:
+    range: WorkState
+    exact_mappings: [oslc_cm:state]
+  size:
+    range: Size
+    description: Stories only. It replaces the v3 estimate.
+  target_date:
+  planned_start_date:
+    exact_mappings: [oslc_promcode:plannedStartDate]
+  planned_end_date:
+    exact_mappings: [oslc_promcode:plannedEndDate]
+  actual_start_date:
+    description: Set by prd.py state at the first change to in_progress.
+    exact_mappings: [oslc_promcode:actualStartDate]
+  actual_end_date:
+    description: Set by prd.py state at the change to done or released.
+    exact_mappings: [oslc_promcode:actualEndDate]
+  owner:
+    range: Actor
+    exact_mappings: [dcterms:contributor]
+  parent:
+    range: RoadmapPath
+    description: A work item of a higher level. No cycle.
+    exact_mappings: [oslc_cm:parent, oslc_promcode:isPartOf]
+  blocked_by:
+    range: RoadmapPath
+    multivalued: true
+  milestone:
+    range: RoadmapPath
+  discovered_from:
+    range: RoadmapPath
+  item:
+    range: RoadmapPath
+    required: true
+  traces:
+    range: Trace
+    inlined: true
+    multivalued: true
+  drifted:
+    range: CrossBundlePath
+    multivalued: true
+    description: Each trace target whose hash changed. Only a person clears it.
+  github:
+    range: GithubWorkItem
+  claim:
+    range: Claim
+  check:
+    multivalued: true
+    description: An argv list. prd.py run-checks runs it with no shell.
+  check_declared_by:
+    range: Actor
+  agent:
+    range: Actor
+  started_at:
+  ended_at:
+  outcome:
+    range: RunOutcome
+  spec:
+    description: >-
+      The spec file that builds this Story, as a path from the repository
+      root, or the word `none` when the Story needs no build.
+  pull_request:
+  commit:
+  results:
+    range: RunResult
+    inlined: true
+    multivalued: true
+
+classes:
+  OkfSource:
+    description: One source of a page (OKF section 5).
+    attributes:
+      resource:
+        required: true
+      id:
+      title:
+      author:
+      usage_count:
+        range: integer
+      last_modified:
+
+  UsageWindow:
+    attributes:
+      from:
+      to:
+
+  LensCoverage:
+    description: One entry of the `lenses` map of product.md.
+    attributes:
+      lens:
+        key: true
+      status:
+      updated:
+
+  ScopeInclude:
+    description: One entry of `includes` on a Scope page.
+    attributes:
+      to:
+        range: PrdPath
+        required: true
+      priority:
+        range: Priority
+        required: true
+
+  Page:
+    abstract: true
+    description: Every page carries the OKF fields.
+    slots: [type, title, description, status, tags, generated, verified, aliases,
+            protected, resource, sources, usage_window, stale_after]
+
+  Product:
+    is_a: Page
+    description: product.md. The only PRD page with no ID.
+    slots: [created, updated, lenses]
+
+  ClosedItems:
+    is_a: Page
+    description: A generated closed.md. It has no ID.
+
+  Problem:
+    is_a: Page
+
+  Persona:
+    is_a: Page
+    slots: [primary]
+
+  Need:
+    is_a: Page
+    description: A job, a pain, or a wanted outcome of a persona.
+    slots: [kind, serves]
+    slot_usage:
+      kind:
+        range: NeedKind
+        required: true
+      serves:
+        required: true
+
+  Journey:
+    is_a: Page
+    slots: [serves]
+    slot_usage:
+      serves:
+        required: true
+
+  Capability:
+    is_a: Page
+    slots: [kano, addresses, depends_on]
+    slot_usage:
+      addresses:
+        required: true
+
+  Scope:
+    is_a: Page
+    slots: [kind, includes]
+    slot_usage:
+      kind:
+        range: ScopeKind
+        required: true
+
+  Metric:
+    is_a: Page
+    slots: [role, target, measures, guards]
+    slot_usage:
+      role:
+        required: true
+
+  Business:
+    is_a: Page
+    slots: [serves]
+
+  GTM:
+    is_a: Page
+    slots: [serves]
+
+  Risk:
+    is_a: Page
+    slots: [kind, validation, threatens]
+    slot_usage:
+      kind:
+        range: RiskKind
+        required: true
+
+  Constraint:
+    is_a: Page
+    slots: [constrains]
+
+  Decision:
+    is_a: Page
+    slots: [decided_at, alternatives, about, supersedes]
+
+  Question:
+    is_a: Page
+    description: 'status: draft is open. status: stable is answered.'
+    slots: [about]
+
+  Trace:
+    description: One entry of `traces`. The hash is of the target body.
+    attributes:
+      to:
+        range: CrossBundlePath
+        required: true
+      hash:
+        pattern: '^[0-9a-f]{6}$'
+        required: true
+
+  Claim:
+    description: The lease of one agent on one work item.
+    attributes:
+      by:
+        range: Actor
+        required: true
+      at:
+        required: true
+      lease_expires_at:
+        required: true
+      heartbeat_at:
+
+  GithubProject:
+    description: The `github` field of the Project page. All keys are optional
+      until phase 3.
+    attributes:
+      owner:
+      number:
+        range: integer
+      node_id:
+
+  GithubSynced:
+    description: The value of a two-direction field at the last sync.
+    attributes:
+      state:
+        range: WorkState
+      owner:
+        range: Actor
+
+  GithubWorkItem:
+    description: The `github` field of a work item. A page with no `github`
+      field is not pushed.
+    attributes:
+      node_id:
+      number:
+        range: integer
+      url:
+      synced:
+        range: GithubSynced
+      pushed_hash:
+        pattern: '^[0-9a-f]{6}$'
+
+  RunResult:
+    attributes:
+      criterion:
+        range: RoadmapPath
+        required: true
+      exit_code:
+        range: integer
+      commit:
+
+  Project:
+    is_a: Page
+    description: Exactly one page. One roadmap bundle is one GitHub Project.
+    slots: [github]
+    slot_usage:
+      github:
+        range: GithubProject
+
+  Milestone:
+    is_a: Page
+    description: A container. It has no parent and no state.
+    slots: [target_date, traces, drifted]
+
+  WorkItem:
+    abstract: true
+    is_a: Page
+    description: Epic, Feature, Story, and Task share this field set.
+    slots: [state, parent, blocked_by, milestone, owner, discovered_from,
+            planned_start_date, planned_end_date,
+            actual_start_date, actual_end_date,
+            github, claim, traces, drifted]
+    slot_usage:
+      state:
+        required: true
+
+  Epic:
+    is_a: WorkItem
+
+  Feature:
+    is_a: WorkItem
+
+  Story:
+    is_a: WorkItem
+    slots: [size, spec]
+    slot_usage:
+      spec:
+        pattern: '^(none|.+\.md)$'
+    exact_mappings: [sro:Story]
+
+  Task:
+    is_a: WorkItem
+
+  AcceptanceCriterion:
+    is_a: Page
+    description: The criterion text, its work item, and an optional check.
+    slots: [item, check, check_declared_by]
+    slot_usage:
+      check_declared_by:
+        pattern: '^human:[A-Za-z0-9._-]+$'
+    exact_mappings: [sro:AcceptanceCriterion]
+
+  Run:
+    is_a: Page
+    description: One agent execution. Written one time, then read-only.
+    slots: [item, agent, started_at, ended_at, outcome, spec, pull_request,
+            commit, results]

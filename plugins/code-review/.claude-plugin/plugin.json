@@ -1,0 +1,22 @@
+{
+  "name": "code-review",
+  "displayName": "code-review",
+  "version": "1.2.1",
+  "types": "./types/index.d.ts",
+  "description": "Bootstraps a repo-tailored PR review system, executes contract-aware reviews and lifecycle skills, guides engineers through read-only Human in the Loop PR walkthroughs, and walks one PR chunk by chunk in a pane with /code-review:review-pane.",
+  "author": {
+    "name": "Yassel Piloto",
+    "email": "yasselpiloto@gmail.com"
+  },
+  "homepage": "https://github.com/ai-advanced-futures/cc-plugins",
+  "repository": "https://github.com/ai-advanced-futures/cc-plugins",
+  "keywords": [
+    "pr",
+    "review",
+    "github",
+    "workflow",
+    "bootstrap",
+    "contract",
+    "relay"
+  ]
+}

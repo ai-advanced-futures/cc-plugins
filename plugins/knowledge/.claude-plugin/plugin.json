@@ -1,0 +1,13 @@
+{
+  "name": "knowledge",
+  "displayName": "knowledge",
+  "version": "1.4.6",
+  "description": "The base of every brain: the brain standard, the generic OKF knowledge graph, the registry of graphs, the general check, and the generic skills knowledge:setup, knowledge:learn, knowledge:ask, and knowledge:forget. It was the wiki plugin.",
+  "author": {
+    "name": "Yassel Piloto",
+    "email": "yasselpiloto@gmail.com"
+  },
+  "homepage": "https://github.com/ai-advanced-futures/cc-plugins",
+  "repository": "https://github.com/ai-advanced-futures/cc-plugins",
+  "keywords": ["knowledge", "okf", "graph", "brain", "registry", "ask", "learn", "forget"]
+}

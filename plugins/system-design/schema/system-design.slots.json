@@ -1,0 +1,494 @@
+{
+  "statuses": [
+    "draft",
+    "stable",
+    "deprecated"
+  ],
+  "areas": [
+    "quality",
+    "context",
+    "strategy",
+    "building-blocks",
+    "data",
+    "contracts",
+    "conventions",
+    "deployment"
+  ],
+  "anchors": {
+    "quality": "quality-scenarios",
+    "context": "context",
+    "strategy": "solution-strategy",
+    "building-blocks": "building-blocks",
+    "data": "data-and-ownership",
+    "contracts": "contracts",
+    "conventions": "crosscutting-conventions",
+    "deployment": "deployment"
+  },
+  "types": {
+    "System": {
+      "prefix": null,
+      "directory": "",
+      "fixed": "system.md",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "design_state",
+        "version",
+        "prd_tree",
+        "session",
+        "destination",
+        "out_of_scope",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Area": {
+      "prefix": null,
+      "directory": "areas",
+      "fixed": "areas/*.md",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "area",
+        "area_state",
+        "anchor",
+        "decisions",
+        "retired_keys",
+        "open_rows",
+        "fog",
+        "approaches",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Component": {
+      "prefix": "COMPONENT",
+      "directory": "components",
+      "fixed": null,
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "slug",
+        "kind",
+        "areas",
+        "resource",
+        "runtime_service_name",
+        "uses",
+        "part_of",
+        "deployed_to",
+        "governed_by",
+        "realizes",
+        "satisfies",
+        "used_by",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Interface": {
+      "prefix": "INTERFACE",
+      "directory": "interfaces",
+      "fixed": null,
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "direction",
+        "mechanism",
+        "style",
+        "versioning",
+        "definition",
+        "provided_by",
+        "consumed_by",
+        "governed_by",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "DataEntity": {
+      "prefix": "DATA",
+      "directory": "data",
+      "fixed": null,
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "owned_by",
+        "stored_in",
+        "accessed_by",
+        "governed_by",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "QualityScenario": {
+      "prefix": "SCENARIO",
+      "directory": "scenarios",
+      "fixed": null,
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "quality",
+        "subcharacteristic",
+        "scenario_kind",
+        "source",
+        "stimulus",
+        "environment",
+        "artifact",
+        "response",
+        "response_measure",
+        "importance",
+        "risk_rating",
+        "cites",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Convention": {
+      "prefix": "CONVENTION",
+      "directory": "conventions",
+      "fixed": null,
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "rule",
+        "applies_to",
+        "governed_by",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "TechnicalRisk": {
+      "prefix": "TECHRISK",
+      "directory": "risks",
+      "fixed": null,
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "risk_kind",
+        "failure",
+        "mitigation",
+        "acceptance",
+        "threatens",
+        "about",
+        "assumes",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Deferred": {
+      "prefix": "DEFERRED",
+      "directory": "deferred",
+      "fixed": null,
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "area",
+        "reason",
+        "trigger",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Assumption": {
+      "prefix": "ASSUMPTION",
+      "directory": "assumptions",
+      "fixed": null,
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "area",
+        "decision",
+        "inferred_from",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "DeploymentNode": {
+      "prefix": "NODE",
+      "directory": "nodes",
+      "fixed": null,
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "environment",
+        "node_kind",
+        "technology",
+        "part_of",
+        "regions",
+        "governed_by",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "GlossaryTerm": {
+      "prefix": "GLOSSARY",
+      "directory": "glossary",
+      "fixed": null,
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "same_as",
+        "related_terms",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    }
+  },
+  "edges": {
+    "decisions.adr": {
+      "targets": [
+        "adr:adr"
+      ],
+      "multivalued": false,
+      "acyclic": false,
+      "inverse_label": null
+    },
+    "approaches.scenario": {
+      "targets": [
+        "QualityScenario"
+      ],
+      "multivalued": false,
+      "acyclic": false,
+      "inverse_label": "approach in"
+    },
+    "approaches.adr": {
+      "targets": [
+        "adr:adr"
+      ],
+      "multivalued": false,
+      "acyclic": false,
+      "inverse_label": null
+    },
+    "uses.to": {
+      "targets": [
+        "Component"
+      ],
+      "multivalued": false,
+      "acyclic": false,
+      "inverse_label": "used by"
+    },
+    "uses.via": {
+      "targets": [
+        "Interface"
+      ],
+      "multivalued": false,
+      "acyclic": false,
+      "inverse_label": "used by"
+    },
+    "part_of": {
+      "targets": [
+        "Component",
+        "DeploymentNode"
+      ],
+      "multivalued": false,
+      "acyclic": true,
+      "inverse_label": "contains"
+    },
+    "deployed_to": {
+      "targets": [
+        "DeploymentNode"
+      ],
+      "multivalued": true,
+      "acyclic": false,
+      "inverse_label": "runs"
+    },
+    "governed_by": {
+      "targets": [
+        "adr:adr",
+        "Convention"
+      ],
+      "multivalued": true,
+      "acyclic": false,
+      "inverse_label": "governs"
+    },
+    "realizes": {
+      "targets": [
+        "prd:Capability"
+      ],
+      "multivalued": true,
+      "acyclic": false,
+      "inverse_label": null
+    },
+    "satisfies": {
+      "targets": [
+        "QualityScenario"
+      ],
+      "multivalued": true,
+      "acyclic": false,
+      "inverse_label": "satisfied by"
+    },
+    "used_by": {
+      "targets": [
+        "prd:Persona"
+      ],
+      "multivalued": true,
+      "acyclic": false,
+      "inverse_label": null
+    },
+    "provided_by": {
+      "targets": [
+        "Component"
+      ],
+      "multivalued": false,
+      "acyclic": false,
+      "inverse_label": "provides"
+    },
+    "consumed_by": {
+      "targets": [
+        "Component"
+      ],
+      "multivalued": true,
+      "acyclic": false,
+      "inverse_label": "consumes"
+    },
+    "owned_by": {
+      "targets": [
+        "Component"
+      ],
+      "multivalued": false,
+      "acyclic": false,
+      "inverse_label": "owns"
+    },
+    "stored_in": {
+      "targets": [
+        "Component"
+      ],
+      "multivalued": false,
+      "acyclic": false,
+      "inverse_label": "stores"
+    },
+    "accessed_by.component": {
+      "targets": [
+        "Component"
+      ],
+      "multivalued": false,
+      "acyclic": false,
+      "inverse_label": "accesses"
+    },
+    "artifact": {
+      "targets": [
+        "Component",
+        "System"
+      ],
+      "multivalued": true,
+      "acyclic": false,
+      "inverse_label": "constrained by"
+    },
+    "cites": {
+      "targets": [
+        "prd:Constraint",
+        "prd:Metric"
+      ],
+      "multivalued": false,
+      "acyclic": false,
+      "inverse_label": null
+    },
+    "applies_to": {
+      "targets": [
+        "Component"
+      ],
+      "multivalued": true,
+      "acyclic": false,
+      "inverse_label": "obeys"
+    },
+    "threatens": {
+      "targets": [
+        "QualityScenario"
+      ],
+      "multivalued": true,
+      "acyclic": false,
+      "inverse_label": "threatened by"
+    },
+    "about": {
+      "targets": [
+        "adr:adr",
+        "Component"
+      ],
+      "multivalued": true,
+      "acyclic": false,
+      "inverse_label": "risk"
+    },
+    "assumes": {
+      "targets": [
+        "Assumption"
+      ],
+      "multivalued": true,
+      "acyclic": false,
+      "inverse_label": "assumed by"
+    },
+    "same_as": {
+      "targets": [
+        "ddd:Term"
+      ],
+      "multivalued": false,
+      "acyclic": false,
+      "inverse_label": null
+    },
+    "related_terms": {
+      "targets": [
+        "GlossaryTerm"
+      ],
+      "multivalued": true,
+      "acyclic": false,
+      "inverse_label": "related to"
+    }
+  }
+}

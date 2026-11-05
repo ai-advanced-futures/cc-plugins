@@ -1,0 +1,19 @@
+# The dev and CI dependencies of the business-domain plugin.
+#
+# linkml is pinned to the exact version that wrote the committed
+# schema/domain.schema.json. tests/test_schema_generated.py compares the
+# committed bytes with a fresh run of scripts/gen-schema.sh, so an unpinned
+# generator turns that test red on an unrelated pull request.
+#
+# scripts/gen-schema.sh and the job business-domain of .github/workflows/ci.yml both read the pin from
+# this file.
+#
+# linkml-runtime is pinned too: linkml==1.11.1 alone accepts any
+# linkml-runtime 1.x, and linkml-runtime writes the schema's
+# metamodel_version field, so an unpinned runtime turns the byte test
+# red on a runtime release that this branch never touched.
+jsonschema
+linkml==1.11.1
+linkml-runtime==1.11.1
+pytest
+pyyaml

@@ -1,0 +1,47 @@
+cc-plugins
+Copyright 2026 Amadeo General Partners
+
+This product is licensed under the Apache License, Version 2.0. See LICENSE.
+The Apache License applies to each plugin and skill in this repository. No
+plugin has a license of its own.
+
+It includes material from these third parties. Their licenses apply to that
+material, and the Apache License does not replace them.
+
+1. superpowers, by Jesse Vincent (https://github.com/obra/superpowers), MIT License.
+   The relay plugin ports agents and coordinators from it, with changes.
+   The MIT notice for that material:
+
+   Copyright (c) 2025 Jesse Vincent
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+2. ddd-design, by Luis F. Amadeo, MIT License.
+   The business-domain plugin takes rules and one heuristic from it, with changes.
+   The MIT notice is in plugins/business-domain/NOTICE.
+
+3. Google developer documentation style guide, by Google LLC
+   (https://developers.google.com/style), Creative Commons Attribution 4.0
+   International License (https://creativecommons.org/licenses/by/4.0/).
+   The skills skills/doc-style and plugins/product/skills/google-style paraphrase
+   its rules, with changes. Each of the two skills states this at its top.
+
+4. grounded-synthesis, by ai-advanced-futures, MIT License.
+   The grounded-synthesis plugin ports it, with changes.
+   The MIT notice is in plugins/grounded-synthesis/NOTICE.

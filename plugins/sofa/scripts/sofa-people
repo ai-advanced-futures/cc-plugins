@@ -1,0 +1,550 @@
+#!/usr/bin/env python3
+"""sofa-people: the human team of a sofa repository, in the knowledge brain.
+
+  draft  Gather the people from GitHub collaborators, CODEOWNERS, git log and the
+         Slack channel of docs/adlc.md. Print 1 status line for each source, then
+         1 row for each person. The human confirms the rows; nothing is written.
+  add    Write a confirmed batch (a JSON file) into the knowledge brain: 1 new raw
+         file, 1 Source page, 1 Entity page for each person (entity_kind person,
+         structured tags), and the hub page "The human team" that links each person.
+  list   Print the person pages. --owns AREA prints only the owners of a decision area.
+
+A person page keeps its data in tags, because the knowledge schema permits no
+other keys on an Entity:
+  person, role:<role>, owns:<area>, escalates-to:<slug or none>, slack:<handle>,
+  slack-id:<Slack user ID>, github:<login>
+The page format is in references/human-team.md. readiness.py, in this folder,
+holds the functions that read the pages, so both scripts read them the same way.
+
+Exit code: 0 on success, 2 on a usage error, 1 on all other errors.
+"""
+
+import argparse
+import itertools
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import urllib.parse
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from datetime import date
+from pathlib import Path
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import readiness as rd  # noqa: E402
+
+HUB_SLUG = "the-human-team"
+
+
+class Fail(Exception):
+    """An error that stops the command with exit code 1."""
+
+
+# ---------------------------------------------------------------- helpers
+
+def slugify(text):
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+
+
+def repo_root(path):
+    return Path(rd.git_root(path) or path).resolve()
+
+
+def brain_path(root):
+    """The bundle folder of the knowledge brain, from .claude/knowledge.json."""
+    path = rd.knowledge_path(root)
+    if not path:
+        raise Fail("the knowledge graph is not in .claude/knowledge.json. Run /knowledge:setup first.")
+    bundle = root / path
+    if not bundle.is_dir():
+        raise Fail(f"the knowledge bundle {bundle} does not exist.")
+    return bundle
+
+
+def adlc_value(root, key):
+    """A value of section 1 of docs/adlc.md, or None when the file or the value is missing."""
+    repo = rd.Repo(root)
+    if not repo.adlc.exists():
+        return None
+    value = rd.first_token(repo.setup_values().get(key, ""))
+    return value if value and not value.startswith("<") else None
+
+
+def find_save_code(flag):
+    """The knowledge save code: --kg, then $SOFA_KNOWLEDGE_GRAPH, then the installed knowledge plugin."""
+    if flag:
+        candidates = [("--kg", Path(flag))]
+    elif os.environ.get("SOFA_KNOWLEDGE_GRAPH"):
+        candidates = [("SOFA_KNOWLEDGE_GRAPH", Path(os.environ["SOFA_KNOWLEDGE_GRAPH"]))]
+    else:
+        record = Path.home() / ".claude" / "plugins" / "installed_plugins.json"
+        plugins = rd.read_json(record).get("plugins", {}) if record.exists() else {}
+        candidates = [(f"{name} {install.get('version', '')}".strip(),
+                       Path(install.get("installPath", "")) / "scripts" / "knowledge_graph.py")
+                      for name, installs in plugins.items() if name.split("@")[0] == "knowledge"
+                      for install in installs]
+    path = next((p for _, p in candidates if p.is_file()), None)
+    if path is None:
+        tried = ", ".join(f"{label}: {p}" for label, p in candidates) or "no knowledge plugin in installed_plugins.json"
+        raise Fail(f"no knowledge save code found ({tried}). Install the knowledge plugin, or give --kg.")
+    if not shutil.which("uv"):
+        raise Fail("uv is not on the PATH, and the knowledge save code runs with uv.")
+    return path
+
+
+class SaveCode:
+    def __init__(self, script, root, by):
+        self.cmd = ["uv", "run", "--quiet", str(script), "--root", str(root)]
+        self.by = by
+
+    def run(self, *args, check=True):
+        out = subprocess.run(self.cmd + list(args), capture_output=True, text=True)
+        if check and out.returncode != 0:
+            raise Fail(f"knowledge_graph.py {' '.join(args[:2])} failed: {(out.stderr or out.stdout).strip()}")
+        return out
+
+    def write(self, *args):
+        """Run a write command; return the page path that it prints."""
+        return self.run(*args, "--by", self.by).stdout.strip()
+
+
+# ---------------------------------------------------------------- draft
+
+def gh_json(args):
+    out = subprocess.run(["gh", "api", *args], capture_output=True, text=True)
+    if out.returncode != 0:
+        lines = (out.stderr or out.stdout).strip().splitlines()
+        raise Fail(lines[-1] if lines else "gh failed")
+    return json.loads(out.stdout or "null")
+
+
+def slack_api(token, method, params):
+    url = f"https://slack.com/api/{method}?{urllib.parse.urlencode(params)}"
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        data = json.load(resp)
+    if not data.get("ok"):
+        raise Fail(f"{method}: {data.get('error')}")
+    return data
+
+
+def slack_pages(token, method, params, key):
+    """Each item of a paginated Slack list."""
+    cursor = ""
+    while True:
+        page = slack_api(token, method, {**params, "cursor": cursor})
+        yield from page[key]
+        cursor = page.get("response_metadata", {}).get("next_cursor", "")
+        if not cursor:
+            return
+
+
+GITHUB_QUERY = """query($owner: String!, $name: String!, $endCursor: String) {
+  repository(owner: $owner, name: $name) {
+    collaborators(first: 100, after: $endCursor) {
+      edges { permission node { login name } }
+      pageInfo { hasNextPage endCursor } } } }"""
+
+
+def src_github(root, repo, fixtures):
+    if fixtures:
+        return json.loads((fixtures / "github.json").read_text("utf-8"))
+    if not repo or "/" not in repo:
+        raise Fail("no repository (give --github owner/repo, or set Repository in docs/adlc.md)")
+    owner, name = repo.split("/", 1)
+    out = subprocess.run(["gh", "api", "graphql", "--paginate", "-f", f"query={GITHUB_QUERY}",
+                          "-F", f"owner={owner}", "-F", f"name={name}"], capture_output=True, text=True)
+    if out.returncode != 0:
+        lines = (out.stderr or out.stdout).strip().splitlines()
+        raise Fail(lines[-1] if lines else "gh api graphql failed")
+    rows = []
+    # --paginate prints 1 JSON object for each page, one after another.
+    for page in json_stream(out.stdout):
+        for edge in page["data"]["repository"]["collaborators"]["edges"]:
+            rows.append({"login": edge["node"]["login"], "name": edge["node"]["name"] or "",
+                         "role_name": edge["permission"].lower()})
+    return rows
+
+
+def json_stream(text):
+    """Each JSON object of a text that holds several, one after another."""
+    decoder, i = json.JSONDecoder(), 0
+    while True:
+        while i < len(text) and text[i].isspace():
+            i += 1
+        if i == len(text):
+            return
+        obj, i = decoder.raw_decode(text, i)
+        yield obj
+
+
+def src_codeowners(root, fixtures):
+    paths = [fixtures / "CODEOWNERS"] if fixtures else [root / r for r in ("CODEOWNERS", ".github/CODEOWNERS",
+                                                                          "docs/CODEOWNERS")]
+    path = next((p for p in paths if p.exists()), None)
+    if path is None:
+        raise Fail("no CODEOWNERS file")
+    owners = set()
+    for line in path.read_text("utf-8").splitlines():
+        if line.strip() and not line.lstrip().startswith("#"):
+            owners.update(t[1:] for t in line.split()[1:] if t.startswith("@") and "/" not in t)
+    return sorted(owners)
+
+
+def src_git(root, fixtures):
+    if fixtures:
+        text = (fixtures / "git.log").read_text("utf-8")
+    else:
+        out = subprocess.run(["git", "log", "--since=180.days", "--format=%an%x09%ae"], cwd=root,
+                             capture_output=True, text=True)
+        if out.returncode != 0:
+            raise Fail(out.stderr.strip())
+        text = out.stdout
+    counts = {}
+    for line in text.splitlines():
+        name, _, email = line.partition("\t")
+        if not name or "[bot]" in name or name.lower().endswith("bot") or email.startswith("noreply@"):
+            continue
+        counts[(name, email.lower())] = counts.get((name, email.lower()), 0) + 1
+    return [{"name": n, "email": e, "commits": c} for (n, e), c in counts.items()]
+
+
+def src_slack(root, channel, fixtures):
+    if fixtures:
+        return json.loads((fixtures / "slack.json").read_text("utf-8"))
+    if not channel or channel.lower() == "none":
+        raise Fail("no Slack channel in docs/adlc.md")
+    token = rd.slack_token(root)
+    if not token:
+        raise Fail("no SLACK_BOT_TOKEN in the environment or in .claude/settings.local.json")
+    name = channel.lstrip("#")
+    channels = slack_pages(token, "conversations.list",
+                           {"types": "public_channel,private_channel", "limit": 1000, "exclude_archived": "true"},
+                           "channels")
+    chan_id = next((c["id"] for c in channels if c["name"] == name), None)
+    if chan_id is None:
+        raise Fail(f"the bot cannot see #{name}. Invite the bot; a private channel also needs groups:read")
+    members = set(slack_pages(token, "conversations.members", {"channel": chan_id, "limit": 1000}, "members"))
+    return [u for u in slack_pages(token, "users.list", {"limit": 200}, "members") if u["id"] in members]
+
+
+def github_login_from_email(email):
+    match = re.match(r"^(?:\d+\+)?([^@]+)@users\.noreply\.github\.com$", email)
+    return match.group(1) if match else None
+
+
+def merge(sources):
+    """Join the rows of all sources into people. Join only on an equal login, email or lowercase name."""
+    people = []
+
+    def upsert(source, login=None, email=None, names=()):
+        names = [n for n in names if n]
+        person = next((p for p in people
+                       if (login and login.lower() in p["_logins"]) or (email and email.lower() in p["_emails"])
+                       or any(n.lower() in p["_names"] for n in names)), None)
+        if person is None:
+            person = {"name": "", "github": "", "slack": "", "slack_id": "", "seen_in": [],
+                      "_logins": set(), "_emails": set(), "_names": set()}
+            people.append(person)
+        if login:
+            person["_logins"].add(login.lower())
+            person["github"] = person["github"] or login
+        if email:
+            person["_emails"].add(email.lower())
+        for n in names:
+            person["_names"].add(n.lower())
+            person["name"] = person["name"] or n
+        if source not in person["seen_in"]:
+            person["seen_in"].append(source)
+        return person
+
+    for row in sources.get("github", []):
+        person = upsert("github", login=row["login"], names=(row.get("name"),))
+        if row.get("role_name"):
+            person["github_role"] = row["role_name"]
+    for login in sources.get("codeowners", []):
+        upsert("codeowners", login=login)
+    for row in sources.get("git", []):
+        person = upsert("git", login=github_login_from_email(row["email"]), email=row["email"], names=(row["name"],))
+        person["commits"] = person.get("commits", 0) + row["commits"]
+    for user in sources.get("slack", []):
+        if user.get("is_bot") or user.get("deleted") or user.get("id") == "USLACKBOT":
+            continue
+        profile = user.get("profile", {})
+        person = upsert("slack", names=(user.get("real_name") or profile.get("real_name"), profile.get("display_name")))
+        person["slack"] = "@" + (profile.get("display_name") or user.get("real_name") or user.get("name", ""))
+        person["slack_id"] = user.get("id", "")
+    for person in people:
+        person["name"] = person["name"] or person["github"]
+        for key in ("_logins", "_emails", "_names"):
+            del person[key]
+    return people
+
+
+def cmd_draft(args):
+    root = repo_root(args.repo)
+    fixtures = Path(args.fixtures) if args.fixtures else None
+    repo = args.github or adlc_value(root, "Repository")
+    channel = args.channel or adlc_value(root, "Slack")
+    calls = {"github": lambda: src_github(root, repo, fixtures),
+             "codeowners": lambda: src_codeowners(root, fixtures),
+             "git": lambda: src_git(root, fixtures),
+             "slack": lambda: src_slack(root, channel, fixtures)}
+    # GitHub and Slack wait on the network, so the 4 sources run at the same time.
+    with ThreadPoolExecutor(len(calls)) as pool:
+        futures = {name: pool.submit(call) for name, call in calls.items()}
+    gathered, status = {}, []
+    for name, future in futures.items():
+        try:
+            gathered[name] = future.result()
+            status.append({"source": name, "status": "ok", "count": len(gathered[name])})
+        except (Fail, OSError, ValueError, KeyError) as exc:
+            status.append({"source": name, "status": "unavailable", "cause": str(exc)})
+    people = merge(gathered)
+    try:
+        known = rd.person_pages(brain_path(root))
+    except Fail:
+        known = []
+    slugs = {k["slug"] for k in known}
+    logins = {k["github"].lower() for k in known if k.get("github")}
+    for p in people:
+        p["known"] = slugify(p["name"]) in slugs or (p["github"] or "").lower() in logins
+    if args.json:
+        print(json.dumps({"sources": status, "people": people}, indent=2))
+        return 0
+    for s in status:
+        print(f"source {s['source']}: {s['status']}" + (f" ({s['count']})" if s["status"] == "ok" else f": {s['cause']}"))
+    print()
+    print("| Name | GitHub | Slack | Seen in | Known page |")
+    print("|---|---|---|---|---|")
+    for p in people:
+        print(f"| {p['name']} | {p['github'] or '-'} | {p['slack'] or '-'} | {', '.join(p['seen_in'])} | "
+              f"{'yes' if p['known'] else 'no'} |")
+    return 0
+
+
+# ---------------------------------------------------------------- add
+
+def person_tags(p, targets):
+    """The tags of a person page. `targets` maps escalates_to to the slug of a page (escalation_targets)."""
+    tags = ["person", f"role:{p['role']}", *(f"owns:{area}" for area in p["owns"]),
+            f"escalates-to:{targets[slugify(p.get('escalates_to') or 'none')]}"]
+    return tags + [f"{key.replace('_', '-')}:{p[key]}" for key in ("slack", "slack_id", "github") if p.get(key)]
+
+
+def yaml_list(items):
+    return "[" + ", ".join(json.dumps(i) for i in items) + "]"
+
+
+def yaml_sources(paths):
+    return "[" + ", ".join(f"{{resource: {path}}}" for path in dict.fromkeys(paths)) + "]"
+
+
+def find_page(p, known):
+    """The known page of person p: by the slug field, then by an alias (GitHub login, Slack handle), then by name."""
+    if p.get("slug"):
+        return next((k for k in known if k["slug"] == slugify(p["slug"])), None)
+    for handle in (p.get("github"), p.get("slack")):
+        page = next((k for k in known if handle and handle.lower() in (a.lower() for a in k["aliases"])), None)
+        if page:
+            return page
+    return next((k for k in known if k["slug"] == slugify(p["name"])), None)
+
+
+ACTOR_RE = re.compile(r"(human|agent):[A-Za-z0-9._-]+")
+HUMAN_RE = re.compile(r"human:[A-Za-z0-9._-]+")
+
+
+def plugin_version():
+    """The version of this plugin: .claude-plugin/plugin.json is next to scripts/, also in the installed folder."""
+    manifest = Path(__file__).resolve().parent.parent / ".claude-plugin" / "plugin.json"
+    return json.loads(manifest.read_text("utf-8"))["version"]
+
+
+def check_actor(by, confirmed_by):
+    """Return (writer, confirmer): the generated.by value, and the login of the person who confirmed.
+
+    An agent never writes a human: actor (DECISION-03), so an agent session gives
+    --by agent:<id> with --confirmed-by, and the page records the plugin code as writer.
+    """
+    if not ACTOR_RE.fullmatch(by):
+        raise Fail(f"--by {by!r} must be agent:<session name> or human:<login>")
+    if by.startswith("agent:"):
+        if not confirmed_by:
+            raise Fail("--by agent:<id> needs --confirmed-by human:<login>, the person who confirmed the batch")
+        writer = f"sofa/{plugin_version()}"
+    else:
+        if os.environ.get("CLAUDE_CODE_CHILD_SESSION"):
+            raise Fail("an agent session writes its own actor: give --by agent:<session name> "
+                       "and --confirmed-by human:<login>")
+        writer = by
+    confirmer = confirmed_by or by
+    if not HUMAN_RE.fullmatch(confirmer):
+        raise Fail(f"--confirmed-by {confirmer!r} must be human:<login>")
+    return writer, confirmer.split(":", 1)[1]
+
+
+def escalation_targets(batch, known):
+    """Each accepted escalates_to value, as a slug, mapped to the slug of the page of that person.
+
+    A batch person who has a page already (found by slug, alias or name) keeps the slug of that page.
+    A new person gets the slug of the name, which is the slug that the new page gets.
+    """
+    targets = {"none": "none", **{k["slug"]: k["slug"] for k in known}}
+    for p in batch:
+        if not p.get("name"):
+            continue
+        page = (find_page(p, known) or {}).get("slug") or slugify(p["name"])
+        targets[slugify(p["name"])] = page
+        targets[page] = page
+        if p.get("slug"):
+            targets[slugify(p["slug"])] = page
+    return targets
+
+
+def check_batch(batch, known):
+    if not isinstance(batch, list) or not batch:
+        raise Fail("the batch must be a JSON list with 1 or more people")
+    targets = escalation_targets(batch, known)
+    for i, p in enumerate(batch, 1):
+        missing = [k for k in ("name", "role", "owns", "escalates_to") if k not in p]
+        if missing:
+            raise Fail(f"person {i} has no {', '.join(missing)}")
+        if not isinstance(p["owns"], list):
+            raise Fail(f"person {i}: owns must be a list")
+        if p.get("slug") and find_page(p, known) is None:
+            raise Fail(f"person {i}: slug {p['slug']!r} names no page of the brain; give no slug for a new person")
+        if slugify(p["escalates_to"] or "none") not in targets:
+            raise Fail(f"person {i}: escalates_to {p['escalates_to']!r} is not a person of the batch or the brain, "
+                       f"and not none")
+
+
+def confirmation(confirmer, day, by):
+    """The sentence that names the person who confirmed, and the agent session that wrote the batch."""
+    text = f"Confirmed by {confirmer} on {day}."
+    return f"{text} Written by {by}." if by.startswith("agent:") else text
+
+
+def raw_text(batch, day, confirmer, by):
+    lines = ["# The human team", "", confirmation(confirmer, day, by), ""]
+    for p in batch:
+        lines += [f"## {p['name']}", "", f"- Role: {p['role']}",
+                  f"- Decisions owned: {', '.join(p['owns']) or 'none'}",
+                  f"- Escalates to: {p.get('escalates_to') or 'none'}"]
+        lines += [f"- {label}: {p[key]}" for key, label in
+                  (("slack", "Slack handle"), ("slack_id", "Slack user ID"), ("github", "GitHub login")) if p.get(key)]
+        lines.append("")
+    return "\n".join(lines)
+
+
+def cmd_add(args):
+    root = repo_root(args.repo)
+    bundle = brain_path(root)
+    batch = json.loads(Path(args.batch).read_text("utf-8"))
+    known = rd.person_pages(bundle)
+    writer, confirmer = check_actor(args.by, args.confirmed_by)
+    check_batch(batch, known)
+    targets = escalation_targets(batch, known)
+    kg = SaveCode(find_save_code(args.kg), root, writer)
+    day = args.date or date.today().isoformat()
+
+    # 1 new raw file for each batch, because a raw file never changes after a Source page cites it.
+    raw_dir = bundle.parent / "raw"
+    raw_dir.mkdir(exist_ok=True)
+    suffix = lambda n: "" if n == 1 else f"-{n}"  # noqa: E731
+    n = next(n for n in itertools.count(1) if not (raw_dir / f"{day}-human-team{suffix(n)}.md").exists())
+    raw = raw_dir / f"{day}-human-team{suffix(n)}.md"
+    raw.write_text(raw_text(batch, day, confirmer, args.by), "utf-8")
+    source = "/sources/" + Path(kg.write(
+        "new", "Source", "--title", f"The human team, {day}" + ("" if n == 1 else f" ({n})"),
+        "--description", f"The people of the human team. {confirmation(confirmer, day, args.by)}",
+        "--set", f"resource=raw/{raw.name}")).name
+
+    hub = f"/synthesis/{HUB_SLUG}.md"
+    people = []
+    for item in batch:
+        page = find_page(item, known) or {}
+        # An update keeps the handles that the batch does not give, so a later lookup by alias still works.
+        p = {**{k: page[k] for k in ("slack", "slack_id", "github") if page.get(k)},
+             **{k: v for k, v in item.items() if v not in (None, "")}}
+        aliases = list(dict.fromkeys([*page.get("aliases", []), *(a for a in (p.get("github"), p.get("slack")) if a)]))
+        description = (f"{p['role']}. Owns {', '.join(p['owns']) or 'no decision area'}. "
+                       f"Escalates to {p.get('escalates_to') or 'no one'}.")
+        # The person page cites the hub too, so the hub has a page that links to it (rule G4).
+        fields = ["entity_kind=person", f"tags={yaml_list(person_tags(p, targets))}",
+                  f"sources={yaml_sources([*page.get('sources', []), source, hub])}",
+                  *([f"aliases={yaml_list(aliases)}"] if aliases else [])]
+        if page:
+            kg.write("set", page["slug"], f"description={json.dumps(description)}", *fields)
+            people.append(f"/entities/{page['slug']}.md")
+        else:
+            path = kg.write("new", "Entity", "--title", p["name"], "--description", description,
+                            *itertools.chain.from_iterable(("--set", f) for f in fields))
+            people.append(f"/entities/{Path(path).name}")
+
+    hub_sources = [source, *people]
+    if (bundle / "synthesis" / f"{HUB_SLUG}.md").is_file():
+        old = rd.frontmatter(bundle / "synthesis" / f"{HUB_SLUG}.md").get("sources", [])
+        kg.write("set", HUB_SLUG, f"sources={yaml_sources([*old, *hub_sources])}")
+    else:
+        kg.write("new", "Synthesis", "--title", "The human team",
+                 "--description", "Each person of the human team: role, decisions owned, escalation, Slack handle.",
+                 "--set", f"sources={yaml_sources(hub_sources)}")
+
+    check = kg.run("check", check=False)
+    print(f"raw: {raw.relative_to(root)}")
+    print(f"source: {source}")
+    print(f"people: {', '.join(Path(p).stem for p in people)}")
+    print((check.stdout + check.stderr).strip())
+    return 0 if check.returncode == 0 else 1
+
+
+# ---------------------------------------------------------------- list
+
+def cmd_list(args):
+    people = rd.person_pages(brain_path(repo_root(args.repo)))
+    if args.owns:
+        people = [p for p in people if args.owns in p["owns"]]
+    if args.json:
+        print(json.dumps(people, indent=2))
+        return 0
+    for p in people:
+        print(f"{p['slug']}\t{p.get('role', '-')}\towns {','.join(p['owns']) or '-'}\t"
+              f"escalates to {p.get('escalates_to', '-')}\t{p.get('slack', '-')}\t{p.get('slack_id', '-')}")
+    return 0
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog="sofa-people", description="The human team of a sofa repository.")
+    parser.add_argument("--repo", default=".", help="a folder in the repository (default: .)")
+    sub = parser.add_subparsers(dest="command", required=True)
+    p = sub.add_parser("draft", help="gather the people from GitHub, CODEOWNERS, git log and Slack")
+    p.add_argument("--github", help="owner/repo (default: Repository of docs/adlc.md)")
+    p.add_argument("--channel", help="Slack channel (default: Slack of docs/adlc.md)")
+    p.add_argument("--fixtures", help="a folder with github.json, CODEOWNERS, git.log and slack.json (tests)")
+    p.add_argument("--json", action="store_true")
+    p = sub.add_parser("add", help="write a confirmed batch into the knowledge brain")
+    p.add_argument("--batch", required=True, help="a JSON list of people")
+    p.add_argument("--by", required=True,
+                   help="the actor of the session: agent:<session name>, or human:<login> for a person in a terminal")
+    p.add_argument("--confirmed-by", help="the person who confirmed the batch, human:<login> "
+                                          "(necessary with --by agent:<id>)")
+    p.add_argument("--kg", help="path of knowledge_graph.py (default: $SOFA_KNOWLEDGE_GRAPH, then the installed plugin)")
+    p.add_argument("--date", help="YYYY-MM-DD (default: today)")
+    p = sub.add_parser("list", help="print the person pages")
+    p.add_argument("--owns", help="only the owners of this decision area")
+    p.add_argument("--json", action="store_true")
+    args = parser.parse_args(argv)
+    try:
+        return {"draft": cmd_draft, "add": cmd_add, "list": cmd_list}[args.command](args)
+    except Fail as exc:
+        print(f"sofa-people: {exc}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

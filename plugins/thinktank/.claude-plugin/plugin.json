@@ -1,0 +1,12 @@
+{
+  "name": "thinktank",
+  "version": "1.1.2",
+  "description": "Structured multi-agent strategic analysis and Socratic deliberation for optimal implementation decisions",
+  "author": {
+    "name": "404pilo",
+    "email": "404.pilo.code@gmail.com"
+  },
+  "homepage": "https://github.com/ai-advanced-futures/cc-plugins",
+  "repository": "https://github.com/ai-advanced-futures/cc-plugins",
+  "keywords": ["analysis", "strategy", "debate", "multi-agent", "decision-making"]
+}

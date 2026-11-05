@@ -1,0 +1,77 @@
+---
+name: setup
+description: 'Configure a repository for a sofa team, 1 item at a time: runs sofa:readiness, then fixes each missing item with the user. Idempotent: run it any time, for example to add Slack or a scanner later. Use when the user says "sofa setup", "set up sofa", "configure sofa", "add slack to sofa".'
+disable-model-invocation: true
+metadata:
+  internal: true
+---
+
+# setup — make the repository ready for sofa
+
+Run it any time. It only fixes what `sofa:readiness` reports as `missing` or `wrong`, so a second run on a ready repository changes nothing.
+
+## Step 1 — Check
+
+Run the `sofa:readiness` skill. Keep its table. If all items are `ok`, tell the user and stop.
+
+## Step 2 — Fix 1 item at a time
+
+Use the `osaat` way: for each item that is not `ok`, in the order of the table (blocking items first), show the item, the fix, and what the fix changes. Do the fix only after the user agrees. After each fix, run the check of that item again, and show the new status. The user can skip an item.
+
+There are 4 kinds of fix:
+
+- **The skill does it** (a script or a file change): add `.sofa/` to `.git/info/exclude`; `scripts/sofa-state init`; `knowledge.py registry add <name> --path <path>` for a brain folder that exists but is not registered; install the scheduler cron line (step 4); write `docs/adlc.md` (step 3).
+- **The user runs a command** (built-in commands and `disable-model-invocation` skills that you cannot run): show the command with the `$ ` prefix on its own line, wait for the user to say it is done, then check again. Examples: `/init`, `/config` (autocompact, project instructions), `/advisor`, `/code-review:setup` (the review contract; it writes files in the working tree, so land them on `main` as the next kind of fix says), `/auto-mode-setup`, `/knowledge:setup`, `/architecture:setup`, `/system-design:setup`, `/business-domain:setup`, `/product:setup`, `gh auth login`, `claude plugin install <plugin>@<marketplace>`.
+- **A change in the repository** (a router `CLAUDE.md`, a `.gitignore` line, a project `verify` skill): make it in a worktree, open a PR, and tell the user. On a repository with a running team, send it to the orchestrator as a `TASK` for the designer instead.
+- **Setup installs a program** that a setup step needs and the machine does not have: show the command and how long it takes, ask, run it after the user agrees, then check the program (`<program> --version`). Install from a pinned version, and only when the install tool is on the machine. With no install tool, show the exact step to get it and wait until the program is there. `jag` is the first program of this kind (step 4). Do not use this kind for `gh` or Node.js: they stay "the user runs a command".
+
+Missing skills: install them with `npx skills add <owner>/<repo> -a claude-code` into the repository (no `-g`), so the team of every machine has the same skills. Missing plugins: show `claude plugin install` commands.
+
+## Step 3 — The setup questions (only when `docs/adlc.md` is missing or a value is a `<...>` placeholder)
+
+Ask with `AskUserQuestion`, at most 4 questions at a time. Skip a question that the repository already answers.
+
+1. Team prefix for session names.
+2. Risk appetite: `mvp` (pre-release, move fast), `early customers`, `established` (many customers).
+3. Board tool: GitHub Projects, Linear, Jira, files, none.
+4. Environments: for each one (dev, staging, prod), how to reach it, how to deploy, where the logs and metrics are. `none` is a valid answer.
+5. Tools per role: security (`built-in`, semgrep, snyk, ...), code quality (`built-in`, sonarqube, ...), monitoring, feedback source, ux tool (`none`, sentry, posthog).
+6. Healthy window (default `24h`).
+7. Slack: a channel, or `none` (step 5).
+8. Changes to the roles, models, efforts, output styles or counts in the template.
+9. Repository rules: secrets, private data, who approves destructive actions.
+
+Copy `<skill folder>/templates/ADLC.md` to `docs/adlc.md`, fill section 1 and the first row of section 9 from the answers. No machine value and no `<...>` placeholder stays. Land it on `main` with a worktree, a PR and a squash merge.
+
+## Step 4 — The scheduler
+
+1. Find jag with `command -v jag`. If it finds nothing, install it (the fourth kind of fix in step 2) with the command in `references/roles/scheduler.md`:
+   - If `command -v cargo` finds `cargo`: show the command and the source (`https://github.com/ai-ready-future/jag`), and say that it builds from source in some minutes, that `cargo` runs the build scripts of jag and of its dependencies, and that it needs Rust 1.99 or later (`rustc --version`). If `rustc` is older, and `rustup` is on the machine, show `$ rustup toolchain install 1.99.0` and run the command with `cargo +1.99.0 install` in place of `cargo install`, after the user agrees. Ask. Run it after the user agrees, then check `jag --version`. Run no other `jag` command here, because the model key of jag is not a part of this step.
+   - If there is no `cargo`: show the command and the step to get `cargo`, and wait. Go to item 2 after `command -v jag` finds jag, because the cron line needs the jag folder.
+2. Show the cron line of `references/roles/scheduler.md` with the machine values filled in (that file lists them, with `<jag folder>` from item 1, and the rule for a folder that is not safe to write into the line). Make sure that Claude Code trusts the main folder and that `bg-watch` is installed; if not, tell the user the step.
+3. After the user agrees, add it with `(crontab -l 2>/dev/null; echo "<line>") | crontab -`, only if `crontab -l` has no `bg-watch check` line yet.
+4. If `crontab -l` has a `bg-watch check` line whose `PATH` has no folder with `jag` (`sofa:readiness` shows `scheduler-path` as `wrong`), show the old line and the new line (with `<jag folder>`), and change the line after the user agrees.
+
+## Step 5 — Slack (optional, any time)
+
+Do these in order. The script `<skill folder>/scripts/sofa-slack` does the checks.
+
+1. The user installs the Slack plugin (`$ claude plugin install slack@claude-plugins-official`), because `hitl` and `requests` read Slack with it.
+2. Run `sofa-slack manifest --name <team prefix> --repo <owner/name>` and show the JSON. The user opens the Slack app page, selects "Create New App", then "From a manifest", picks the workspace, and pastes the JSON. The manifest holds the name and the scopes. Slack refuses a manifest that is not valid, and tells the user why.
+3. The icon. Run `sofa-slack icon-find`. Use the first line that starts with `ok`. If there is none, run the `canvas-design` skill to make a square PNG of 1024 × 1024 pixels from the repository name, and save it as `.sofa/slack-app-icon.png` in the main folder (git ignores it). Run `sofa-slack icon-check` on the file. If it fails, make the icon 1 time more, then tell the user the size that Slack needs. If `canvas-design` is not installed, show its install command, as "Missing skills" in step 2 says (`anthropics/skills`). Tell the user the path of the file and where to upload it: the app settings, "Basic Information", "Display Information".
+4. The user selects "Install to Workspace" and copies the "Bot User OAuth Token" (it starts with `xoxb-`).
+5. The token goes in the environment (`SLACK_BOT_TOKEN`) or in `.claude/settings.local.json` under `env`. Run `git check-ignore .claude/settings.local.json` first: if it prints nothing, add the file to `.gitignore`. The token stays out of the repository and out of all output, because transcripts and PRs are not private.
+6. Run `sofa-slack whoami`. It shows only `ok`, the team and the bot name. If it exits with code 3, do item 5 again. If it exits with code 1, show its error line (for example `invalid_auth`), and do items 4 and 5 again. Go to item 7 only after `ok`.
+7. The user types `/invite @<bot name>` in the channel.
+8. Write the channel into section 1 (`Slack`) through a PR.
+9. Write a test message to a file, and post it with `sofa-slack post --text-file <file>`. If it exits with code 1 and `not_in_channel` or `cannot see`, the user does item 7 again. Ask the user to react with ✅, and check the reaction with the `slack:*` tools.
+
+## Step 6 — The human team
+
+The outcome: 1 person page for each person of the human team in the `knowledge` brain, from 1 confirmed table, in 1 PR, with 0 knowledge check errors. The user types only corrections, because `<skill folder>/scripts/sofa-people draft` already gathers what GitHub, git and Slack know. Show each `unavailable` source with its cause.
+
+Interview the user and write the batch as `<skill folder>/references/human-team.md` says. On a running team, send the batch to the orchestrator as a `TASK` for scribe instead of the PR.
+
+## Step 7 — Report
+
+Run `sofa:readiness` again and show the table. List the items the user skipped.

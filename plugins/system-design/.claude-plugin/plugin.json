@@ -1,0 +1,14 @@
+{
+  "name": "system-design",
+  "displayName": "system-design",
+  "version": "0.2.7",
+  "description": "The architecture of a repository as one OKF graph on the brain standard: components, interfaces, data entities, quality scenarios, conventions, risks, deferred decisions, assumptions, deployment nodes, and a glossary, with system-design:setup, system-design:learn, and system-design:ask. It replaces /product:system-design.",
+  "author": {
+    "name": "Yassel Piloto",
+    "email": "yasselpiloto@gmail.com"
+  },
+  "homepage": "https://github.com/ai-advanced-futures/cc-plugins",
+  "repository": "https://github.com/ai-advanced-futures/cc-plugins",
+  "dependencies": ["knowledge"],
+  "keywords": ["architecture", "system-design", "c4", "arc42", "okf", "knowledge-graph", "adr"]
+}

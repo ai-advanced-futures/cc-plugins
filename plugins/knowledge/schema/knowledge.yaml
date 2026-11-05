@@ -1,0 +1,104 @@
+# The generic graph: the five wiki types on the base (spec section 7.2).
+# Pages keep their slug names (assumption A1). Run scripts/gen-schema.sh after
+# a change, and commit schema/knowledge.schema.json.
+id: https://ai-advanced-futures.github.io/cc-plugins/knowledge
+name: knowledge
+title: The generic knowledge graph
+description: The frontmatter of the five page types of the generic graph.
+default_range: string
+default_prefix: knowledge
+prefixes:
+  linkml: https://w3id.org/linkml/
+  knowledge: https://ai-advanced-futures.github.io/cc-plugins/knowledge/
+imports:
+  - linkml:types
+  - base
+
+types:
+  SourceLink:
+    typeof: string
+    description: A bundle path such as /sources/x.md, or a <graph>:/<path> link.
+    pattern: '^([a-z][a-z0-9-]*:)?/[^/\s]\S*\.md$'
+  DateText:
+    typeof: string
+    pattern: '^\d{4}-\d{2}-\d{2}$'
+
+enums:
+  SourceKind:
+    permissible_values:
+      report:
+      research-report:
+      article:
+      paper:
+      survey:
+      dataset:
+      transcript:
+  EntityKind:
+    permissible_values:
+      organization:
+      person:
+      publication:
+      framework-body:
+
+classes:
+  SourceRef:
+    description: One source of a page.
+    attributes:
+      id:
+      resource:
+        range: SourceLink
+        required: true
+      title:
+      last_modified:
+        range: DateText
+  Source:
+    description: A page about one raw source document.
+    slots: [type, title, description, status, tags, resource, source_published, source_kind,
+            aliases, generated, verified, protected]
+    slot_usage:
+      type:
+        equals_string: Source
+      resource:
+        required: true
+  Entity:
+    description: A named organization, publication, body, or person.
+    slots: [type, title, description, status, tags, entity_kind, aliases, sources, stale_after,
+            generated, verified, protected]
+    slot_usage:
+      type:
+        equals_string: Entity
+  Concept:
+    description: An idea, a metric, a formula, or a framework.
+    slots: [type, title, description, status, tags, aliases, sources, stale_after, generated,
+            verified, protected]
+    slot_usage:
+      type:
+        equals_string: Concept
+  Synthesis:
+    description: A page that joins several pages into one answer.
+    slots: [type, title, description, status, tags, aliases, sources, generated, verified, protected]
+    slot_usage:
+      type:
+        equals_string: Synthesis
+  OpenQuestion:
+    description: A question that the graph cannot answer yet.
+    slots: [type, title, description, status, tags, aliases, sources, generated, verified, protected]
+    slot_usage:
+      type:
+        equals_string: OpenQuestion
+
+slots:
+  resource:
+    description: The raw file of the source, relative to the container, or a URL.
+  source_published:
+    range: DateText
+  source_kind:
+    range: SourceKind
+  entity_kind:
+    range: EntityKind
+  sources:
+    range: SourceRef
+    multivalued: true
+    inlined_as_list: true
+  stale_after:
+    range: DateText

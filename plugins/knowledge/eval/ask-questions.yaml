@@ -1,0 +1,20 @@
+# The ask evaluation (spec section 11, A19). Each question runs 3 times in a
+# headless Claude Code session on the project of fixture_project.py. A run
+# passes when the answer cites each page of `expect` and the walk reads fewer
+# than half the pages of the graphs. A question passes when 2 runs pass.
+questions:
+  - skill: product:ask
+    question: Which capability lets the buyer pay fast?
+    expect: [prd:/capabilities/CAPABILITY-01.md]
+  - skill: business-domain:ask
+    question: Which system design glossary entry names the same concept as the Invoice term?
+    expect: [system-design:/glossary/GLOSSARY-01.md]  # [inferred] crosses into system-design, so business-domain:ask's own read order cannot answer it
+  - skill: architecture:ask
+    question: Which capability does the decision to use Postgres for invoices support?
+    expect: [prd:/capabilities/CAPABILITY-01.md]  # [inferred] crosses into system-design then prd, so architecture:ask's own corpus cannot answer it
+  - skill: system-design:ask
+    question: Which component realizes the capability to take card payments?
+    expect: [system-design:/components/COMPONENT-01.md]
+  - skill: knowledge:ask
+    question: How does billing work across the product and the design?
+    expect: [knowledge:/synthesis/how-billing-works.md]

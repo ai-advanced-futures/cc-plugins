@@ -1,0 +1,187 @@
+# Changelog
+
+## 1.4.6
+
+### Changed
+- The tests and the docs name the job `knowledge` of the CI workflow `.github/workflows/ci.yml`. One workflow replaces the workflow file of this plugin. The plugin behavior does not change.
+
+## 1.4.5
+
+### Fixed
+- The hook runs its steps only when a Bash command runs `knowledge_graph.py`. Before, any command that held the file name, even in a quoted text, started the steps. The hook now looks for the script in command position, and it removes each quoted span first. The hook also ignores a heredoc body and a `#` comment. The time of the check grows in line with the length of the command. A quoted script path, or a script path in a variable, does not start the hook.
+
+## 1.4.4
+
+### Changed
+- The marketplace is now `cc-plugins`, in the public repository `ai-advanced-futures/cc-plugins`. The plugin ID is `knowledge@cc-plugins`. The homepage and the repository fields point at the public repository, and the install lines and the issue links name it. Install the plugins again from the new marketplace.
+
+## 1.4.3
+
+### Changed
+- The schema `id` and prefix URLs of `base.yaml` and `knowledge.yaml` name the public repository, `cc-plugins`.
+
+## 1.4.2
+
+### Changed
+- `knowledge:ask`: an answer that does not come from the walk, for example from a
+  grep of the files, starts with the exact first line `not a graph walk: grep fallback`.
+- `knowledge:neighbor-judge` has the tool `Read` only. Its steps read the current
+  node and never search, so `Grep` and `Glob` are removed.
+
+## 1.4.1
+
+### Changed
+- The hook runs its steps only when a file of the graph changed. A Bash command
+  that runs `knowledge_graph.py` and changes no file (for example `check` or
+  `resolve`) now gives no output and starts no step.
+- The hook shows each `K-size` warning only for a page that changed in this
+  call. It adds one line, `K-size warnings on pages that did not change: <N>.`,
+  for the others. Each other `WARN` and `SKIP` line stays.
+- `knowledge_graph.py` writes the change list `<git dir>/knowledge-changed`:
+  the paths (relative to the git root) of each file that `new`, `set`, `body`,
+  `link`, `unlink`, `remove`, `regen`, `log`, and `upgrade` write or delete.
+  The hook takes the list with one `mv`. `KNOWLEDGE_NO_CHANGE_LIST=1` turns the
+  list off. Outside a git repository there is no list and no error.
+- When a Bash command leaves no change list (for example, `git` failed), the
+  hook checks everything and shows every warning, as before 1.4.1. A run that
+  changed no file leaves an empty list, and the hook then ends with no output.
+- When `knowledge_graph.py` cannot write the change list, it prints one `WARN`
+  line on stderr. The exit code does not change.
+- A write that does not use the save code (for example `sed -i`) is not in the
+  list. The hook still checks the file of an `Edit` or a `Write`.
+
+## 1.4.0
+
+### Added
+- `knowledge_graph.py body KEY --file PATH [--append] [--by ACTOR]` writes the
+  text of a page above its `LINKS` block. `--file -` reads standard input.
+  With no `--append`, the text replaces the text above the block. With
+  `--append`, the text goes after the current text, after one empty line.
+  `body` keeps the frontmatter, writes `generated`, and lets `regen` write the
+  block again. It exits 2 for empty text, a missing file, and text that holds a
+  `LINKS` marker. It exits 1 when the key has no page. It changes a protected
+  page, as `set` does.
+
+### Fixed
+- A key of `set`, `body`, `link`, `unlink`, `remove`, and `resolve` that leaves
+  the bundle (`..`), or a page that is a symbolic link out of the bundle, now
+  gives no page (exit 1). Before, `remove` could delete a file outside the
+  bundle and `set` could change one.
+
+### Changed
+- The `learn` skill writes each page text with `body`. A direct edit, with its
+  Report entry, is only for a change that no command of the save code can make.
+
+## 1.3.1
+
+### Changed
+- `knowledge_graph.py link` now adds a full `sources` entry: `id` (the file
+  name of the target with no `.md`), `resource`, `title`, and `last_modified`
+  (the date of `generated.at` of the target). Before, the entry had only
+  `resource`, so a footnote such as `[^2026-11-02-x]` did not match a source.
+- `link` reads the target, as the `K-link` check does. When it cannot read the
+  target (no file, no cache of a remote graph, or no `title` or `generated.at`),
+  it exits 1 and writes nothing. Before, it wrote the entry anyway.
+- A link path that leaves the bundle (`..`) or a symbolic link that leaves it
+  is not a file of the graph. `link`, `resolve`, and the checks do not read it.
+- `regen` escapes `\`, `[`, `]`, `<`, `>`, and the backtick in a title that it
+  writes as the label of a markdown link (the `LINKS` blocks and the indexes).
+- An entry with the same `resource` stays as it is. To repair an old entry that
+  has only `resource`, run `unlink`, then `link`.
+
+## 1.3.0
+
+### Added
+- `knowledge_graph.py new` has the option `--slug SLUG`. It names the page
+  file. A slug that is not lowercase letters, digits, and single hyphens
+  makes `new` exit with 2 and write nothing.
+
+### Changed
+- A Source page with a `resource` that starts with `raw/` now has the base
+  name of its raw file. `raw/2026-11-02-x.pdf` gives `sources/2026-11-02-x.md`.
+  Before, the slug came from the title. `--slug` wins over the base name.
+- When the slug is taken or retired, `new` says to give `--slug` or another
+  title.
+- The `learn` skill links each page to the Source file name that `new` printed.
+- A slug with a final newline is not valid. `new` refuses it, and the general
+  check reports a page file with such a name.
+- `new` refuses a page path that is a symbolic link (also a dangling one), and
+  a type folder that is a symbolic link. Before, `new` could write through a
+  dangling link to a file outside the repository.
+
+## 1.2.1
+
+### Changed
+- The notes of 1.2.0 did not say this about `move`: when `AGENTS.md`, `raw/`,
+  or `bundle/` of the graph is a symbolic link, or a folder in the path of the
+  new folder is one, `move` refuses and changes nothing. `move` has done this
+  since 1.2.0.
+
+## 1.2.0
+
+### Changed
+- The default folder of the generic graph is now `docs/knowledge/`. It was
+  `docs/wiki/`. A new graph is written to `docs/knowledge/bundle/`.
+- A graph that is in `docs/wiki/` continues to work, because each command reads
+  the path from `.claude/knowledge.json`.
+
+### Added
+- `knowledge_graph.py move --to <container>` moves `AGENTS.md`, `raw/`, and
+  `bundle/` to a new folder, with no data loss, and undoes the move on an
+  error.
+- `/knowledge:setup` finds a graph in the old default folder `docs/wiki/` and
+  offers to move it to `docs/knowledge/`.
+
+## 1.1.3
+
+### Changed
+- The skill prompts and the `neighbor-judge` agent prompt are shorter. Each
+  prohibition that stays now gives its reason. Duplicate rules are removed.
+  The steps and the outputs of each skill stay the same.
+
+## 1.1.2
+
+### Fixed
+- `knowledge:checking` runs one brain check for each pair of plugin and save
+  code, not one for each graph. `prd` and `roadmap` share one check.
+- Brain standard section 9: the hook starts for a Bash command that runs the
+  save script, and uses the git root of the session folder.
+
+## 1.1.1
+
+### Changed
+- The display name is now lowercase: `knowledge`.
+
+## 1.1.0
+
+### Changed
+- Moved to ai-advanced-futures/cc-plugins-library. Install the plugin with
+  `claude plugin install knowledge@cc-plugins-library`.
+
+## 1.0.0
+
+### Changed
+- The `wiki` plugin is now `knowledge`. Remove `wiki` and install `knowledge`.
+- `/wiki:setup` and `scaffolding-okf-wikis` are now `knowledge:setup`.
+  `/wiki:ask` and `answering-from-okf-wikis` are now `knowledge:ask`.
+  `/wiki:ingest` is now `knowledge:learn`.
+- The plugin no longer copies `check_okf.py`, `check_links.py`,
+  `regen_indexes.py`, and their tests into a project. The general check
+  (`knowledge.py check`) replaces them.
+- The registry entry `knowledge` in `.claude/knowledge.json` replaces
+  `.claude/wiki.json`. `knowledge:setup` migrates an old wiki.
+
+### Added
+- The brain standard: `standard/brain-standard.md`.
+- The base LinkML schema (`schema/base.yaml`) and the schema of the generic
+  graph (`schema/knowledge.yaml`).
+- `knowledge.py`: the registry, link resolution, the remote cache,
+  navigation, the walk state of an ask, the general check, the forget plan,
+  and writes to a remote graph.
+- `knowledge_graph.py`: the save code of the generic graph.
+- `knowledge:forget`, the hidden `knowledge:checking`, the Haiku agent
+  `knowledge:neighbor-judge`, and the PostToolUse hook.
+- The skills install: `skills/knowledge/`, built by
+  `scripts/build-knowledge-skills.py`, with `knowledge-runtime` and one
+  `knowledge-<skill>` for each skill. `probe-plugin.sh` also finds the
+  `<brain>-runtime` skill of a skills install.

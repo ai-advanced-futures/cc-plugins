@@ -1,0 +1,457 @@
+# The page types of the system-design graph (spec section 8.2).
+#
+# Two generated files come from this one:
+#   schema/system-design.schema.json   the JSON Schema of rule E2
+#   schema/system-design.slots.json    the types, the areas, and the edges
+# Run scripts/gen-schema.sh after a change, and commit both outputs.
+#
+# Annotations, read by scripts/gen_slots.py:
+#   class  id_prefix      the ID prefix of the page type
+#   class  directory      the folder of the page type
+#   class  fixed          the fixed file name of a page with no ID
+#   slot   targets        the page types that a link can point to; <graph>:<Type>
+#                         for a page of another graph
+#   slot   acyclic        true when the link must not make a cycle
+#   slot   inverse_label  the label of the derived line in the LINKS block
+#   enum   anchor         the old heading slug of an area
+id: https://ai-advanced-futures.github.io/cc-plugins/system-design
+name: system_design
+title: The system-design graph
+description: >-
+  The frontmatter of each page type of the system-design graph. The types come
+  from research section 3 on the shared base. Mapping notes: the backstage
+  ontology is a draft, and the arc42 IRI is a documentation IRI. The ArchiMate
+  mappings of the sync, async, and event styles are close mappings by our
+  reading. One provider for each Interface, data owned by a Component, and the
+  failure scenarios (arc42 tip 10-7) are rules of this profile, not of a source.
+default_range: string
+default_prefix: sd
+prefixes:
+  linkml: https://w3id.org/linkml/
+  sd: https://ai-advanced-futures.github.io/cc-plugins/system-design/
+  c4: https://meta.linked.archi/c4/onto#
+  structurizr: https://meta.linked.archi/c4/structurizr#
+  calm: https://calm.finos.org/release/1.2/meta/core.json#
+  archimate: https://meta.linked.archi/archimate4/onto#
+  iso25010: https://meta.linked.archi/iso25010#
+  arc42: https://docs.arc42.org/
+  backstage: https://meta.linked.archi/backstage/onto#
+imports:
+  - linkml:types
+  - ../../knowledge/schema/base
+
+types:
+  ComponentLink:
+    typeof: string
+    pattern: '^/components/COMPONENT-\d{2,}\.md$'
+  InterfaceLink:
+    typeof: string
+    pattern: '^/interfaces/INTERFACE-\d{2,}\.md$'
+  ScenarioLink:
+    typeof: string
+    pattern: '^/scenarios/SCENARIO-\d{2,}\.md$'
+  AssumptionLink:
+    typeof: string
+    pattern: '^/assumptions/ASSUMPTION-\d{2,}\.md$'
+  NodeOrComponentLink:
+    typeof: string
+    pattern: '^/(components/COMPONENT|nodes/NODE)-\d{2,}\.md$'
+  NodeLink:
+    typeof: string
+    pattern: '^/nodes/NODE-\d{2,}\.md$'
+  GlossaryLink:
+    typeof: string
+    pattern: '^/glossary/GLOSSARY-\d{2,}\.md$'
+  ArtifactLink:
+    typeof: string
+    pattern: '^/(system\.md|components/COMPONENT-\d{2,}\.md)$'
+  GovernedByLink:
+    typeof: string
+    pattern: '^(adr:/\S+\.md|/conventions/CONVENTION-\d{2,}\.md)$'
+  AboutLink:
+    typeof: string
+    pattern: '^(adr:/\S+\.md|/components/COMPONENT-\d{2,}\.md)$'
+  AdrLink:
+    typeof: string
+    pattern: '^adr:/\S+\.md$'
+  CapabilityLink:
+    typeof: string
+    pattern: '^prd:/capabilities/CAPABILITY-\d{2,}\.md$'
+  CitationLink:
+    typeof: string
+    pattern: '^prd:/(constraints/CONSTRAINT|metrics/METRIC)-\d{2,}\.md$'
+  PersonaLink:
+    typeof: string
+    pattern: '^prd:/personas/PERSONA-\d{2,}\.md$'
+  DomainTermLink:
+    typeof: string
+    pattern: '^ddd:/\S+\.md$'
+  ResourceValue:
+    typeof: string
+    description: An absolute URL or a bundle path (OKF section 6.2, verifier 1).
+    pattern: '^(https?://\S+|/\S+)$'
+  DecisionKey:
+    typeof: string
+    pattern: '^[a-z-]+-\d+$'
+  DecisionSource:
+    typeof: string
+    pattern: '^(adr|human:[A-Za-z0-9._-]+, \d{4}-\d{2}-\d{2})$'
+  OneLine:
+    typeof: string
+    pattern: '^[^|\n]+$'
+  Slug:
+    typeof: string
+    pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+
+enums:
+  AreaSlug:
+    description: The eight areas, in blocking order.
+    permissible_values:
+      quality:
+        annotations:
+          anchor: quality-scenarios
+      context:
+        annotations:
+          anchor: context
+      strategy:
+        annotations:
+          anchor: solution-strategy
+      building-blocks:
+        annotations:
+          anchor: building-blocks
+      data:
+        annotations:
+          anchor: data-and-ownership
+      contracts:
+        annotations:
+          anchor: contracts
+      conventions:
+        annotations:
+          anchor: crosscutting-conventions
+      deployment:
+        annotations:
+          anchor: deployment
+  AreaState:
+    permissible_values: {decided: {}, deferred: {}, open: {}, fog: {}, not-applicable: {}}
+  DesignState:
+    permissible_values: {draft: {}, accepted: {}}
+  ComponentKind:
+    permissible_values: {service: {}, ui: {}, cli: {}, library: {}, job: {}, data-store: {}, queue: {}, external: {}}
+  EdgeStyle:
+    description: Close to ArchiMate Serving (sync), Flow (async), and Triggering (event), by our reading.
+    permissible_values: {sync: {}, async: {}, event: {}}
+  InterfaceDirection:
+    permissible_values: {inbound: {}, outbound: {}, internal: {}}
+  InterfaceMechanism:
+    permissible_values: {openapi: {}, asyncapi: {}, graphql: {}, grpc: {}, event-schema: {}, cli: {}, file: {}, library-call: {}, other: {}}
+  AccessMode:
+    permissible_values: {read: {}, write: {}}
+  QualityCharacteristic:
+    description: ISO/IEC 25010:2023 (quality.arc42.org). usability and portability are the 2011 names.
+    permissible_values:
+      functional-suitability: {}
+      performance-efficiency: {}
+      compatibility: {}
+      interaction-capability: {description: Close to iso25010 Usability (2011).}
+      reliability: {}
+      security: {}
+      maintainability: {}
+      flexibility: {description: Close to iso25010 Portability (2011).}
+      safety: {description: No mapping in the 2011 ontology.}
+      usability: {description: The 2011 name. Accepted as an alias.}
+      portability: {description: The 2011 name. Accepted as an alias.}
+  ScenarioKind:
+    description: failure comes from arc42 tip 10-7 and the SEI availability scenarios.
+    permissible_values: {usage: {}, change: {}, failure: {}}
+  Rating:
+    permissible_values: {H: {}, M: {}, L: {}}
+  RiskKind:
+    permissible_values: {risk: {}, tech-debt: {}, non-risk: {}}
+  Environment:
+    permissible_values: {production: {}, staging: {}, development: {}, other: {}}
+  NodeKind:
+    permissible_values: {host: {}, vm: {}, container-runtime: {}, serverless: {}, managed-service: {}, infrastructure: {}}
+
+classes:
+  OutOfScope:
+    slots: [item, reason]
+    slot_usage: {item: {required: true}, reason: {required: true}}
+  DecisionRow:
+    slots: [key, binds, adr, source]
+    slot_usage:
+      key: {required: true}
+      binds: {required: true, range: OneLine}
+      source: {required: true, range: DecisionSource}
+  FogItem:
+    slots: [key, question, report]
+    slot_usage: {key: {required: true}, question: {required: true}}
+  Approach:
+    slots: [scenario, approach, adr]
+    slot_usage: {scenario: {required: true}, approach: {required: true}}
+  Use:
+    slots: [to, style, via, technology, note]
+    slot_usage: {to: {required: true}, style: {required: true}}
+  DataAccess:
+    slots: [component, access]
+    slot_usage: {component: {required: true}, access: {required: true}}
+  System:
+    description: The system in scope and the root of the design.
+    annotations: {fixed: system.md, directory: ""}
+    exact_mappings: [c4:SoftwareSystem]
+    close_mappings: [calm:system, backstage:System]
+    slots: [type, title, description, status, tags, design_state, version, prd_tree, session,
+            destination, out_of_scope, aliases, generated, verified, protected]
+    slot_usage: {type: {equals_string: System}, design_state: {required: true}}
+  Area:
+    description: One design area (an arc42 section, an ISO 42010 view).
+    annotations: {fixed: "areas/*.md", directory: areas}
+    slots: [type, title, description, status, tags, area, area_state, anchor, decisions,
+            retired_keys, open_rows, fog, approaches, aliases, generated, verified, protected]
+    slot_usage: {type: {equals_string: Area}, area: {required: true}, area_state: {required: true}}
+  Component:
+    description: A runnable or storable building block, or an outside system with kind external.
+    annotations: {id_prefix: COMPONENT, directory: components}
+    exact_mappings: [c4:Container]
+    close_mappings: [backstage:Component]
+    slots: [type, title, description, status, tags, slug, kind, areas, resource, runtime_service_name,
+            uses, part_of, deployed_to, governed_by, realizes, satisfies, used_by, aliases, generated,
+            verified, protected]
+    slot_usage:
+      type: {equals_string: Component}
+      kind: {required: true}
+      areas: {required: true}
+      part_of: {range: ComponentLink}
+  Interface:
+    description: A contract at a boundary. One provider is a rule of this profile.
+    annotations: {id_prefix: INTERFACE, directory: interfaces}
+    close_mappings: [backstage:API]
+    slots: [type, title, description, status, tags, direction, mechanism, style, versioning,
+            definition, provided_by, consumed_by, governed_by, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Interface}
+      direction: {required: true}
+      mechanism: {required: true}
+      style: {required: true}
+      provided_by: {required: true}
+      consumed_by: {required: true}
+  DataEntity:
+    description: A shared data entity with one owning component (a rule of this profile).
+    annotations: {id_prefix: DATA, directory: data}
+    close_mappings: [backstage:Resource]
+    slots: [type, title, description, status, tags, owned_by, stored_in, accessed_by, governed_by,
+            aliases, generated, verified, protected]
+    slot_usage: {type: {equals_string: DataEntity}, owned_by: {required: true}}
+  QualityScenario:
+    description: One SEI six-part quality attribute scenario with ATAM ratings and one PRD citation.
+    annotations: {id_prefix: SCENARIO, directory: scenarios}
+    close_mappings: [calm:controls]
+    slots: [type, title, description, status, tags, quality, subcharacteristic, scenario_kind, source,
+            stimulus, environment, artifact, response, response_measure, importance, risk_rating, cites,
+            aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: QualityScenario}
+      quality: {required: true}
+      scenario_kind: {required: true}
+      source: {required: true}
+      stimulus: {required: true}
+      environment: {required: true}
+      artifact: {required: true}
+      response: {required: true}
+      response_measure: {required: true}
+      importance: {required: true}
+      cites: {required: true}
+  Convention:
+    description: One crosscutting rule that a spec can obey (arc42 section 8).
+    annotations: {id_prefix: CONVENTION, directory: conventions}
+    close_mappings: [calm:decorator, calm:controls]
+    slots: [type, title, description, status, tags, rule, applies_to, governed_by, aliases, generated,
+            verified, protected]
+    slot_usage: {type: {equals_string: Convention}, rule: {required: true}}
+  TechnicalRisk:
+    description: A failure that a test can show, technical debt, or an ATAM non-risk (arc42 section 11).
+    annotations: {id_prefix: TECHRISK, directory: risks}
+    slots: [type, title, description, status, tags, risk_kind, failure, mitigation, acceptance,
+            threatens, about, assumes, aliases, generated, verified, protected]
+    slot_usage: {type: {equals_string: TechnicalRisk}, risk_kind: {required: true}}
+  Deferred:
+    description: A decision left to a later spec, with its reason and its trigger.
+    annotations: {id_prefix: DEFERRED, directory: deferred}
+    slots: [type, title, description, status, tags, area, reason, trigger, aliases, generated,
+            verified, protected]
+    slot_usage: {type: {equals_string: Deferred}, area: {required: true}, reason: {required: true},
+                 trigger: {required: true}}
+  Assumption:
+    description: A decision inferred from a code convention.
+    annotations: {id_prefix: ASSUMPTION, directory: assumptions}
+    slots: [type, title, description, status, tags, area, decision, inferred_from, aliases, generated,
+            verified, protected]
+    slot_usage: {type: {equals_string: Assumption}, decision: {required: true}, inferred_from: {required: true}}
+  DeploymentNode:
+    description: A place where components run.
+    annotations: {id_prefix: NODE, directory: nodes}
+    close_mappings: [structurizr:DeploymentNode]
+    slots: [type, title, description, status, tags, environment, node_kind, technology, part_of,
+            regions, governed_by, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: DeploymentNode}
+      environment: {range: Environment, required: true}
+      node_kind: {required: true}
+      part_of: {range: NodeLink}
+  GlossaryTerm:
+    description: A technical term of the system. same_as links a domain term of the ddd graph.
+    annotations: {id_prefix: GLOSSARY, directory: glossary}
+    slots: [type, title, description, status, tags, same_as, related_terms, aliases, generated,
+            verified, protected]
+    slot_usage: {type: {equals_string: GlossaryTerm}}
+
+slots:
+  design_state: {range: DesignState}
+  version: {range: integer}
+  prd_tree: {}
+  session: {}
+  destination: {}
+  out_of_scope: {range: OutOfScope, multivalued: true, inlined_as_list: true}
+  item: {}
+  reason: {}
+  area: {range: AreaSlug}
+  area_state: {range: AreaState}
+  anchor: {}
+  decisions: {range: DecisionRow, multivalued: true, inlined_as_list: true}
+  key: {range: DecisionKey}
+  binds: {}
+  adr:
+    range: AdrLink
+    annotations: {targets: "adr:adr"}
+  source: {}
+  retired_keys: {range: DecisionKey, multivalued: true}
+  open_rows: {multivalued: true}
+  fog: {range: FogItem, multivalued: true, inlined_as_list: true}
+  question: {}
+  report: {}
+  approaches: {range: Approach, multivalued: true, inlined_as_list: true}
+  scenario:
+    range: ScenarioLink
+    annotations: {targets: QualityScenario, inverse_label: approach in}
+  approach: {}
+  slug: {range: Slug}
+  kind: {range: ComponentKind}
+  areas: {range: AreaSlug, multivalued: true}
+  resource: {range: ResourceValue}
+  runtime_service_name: {}
+  uses:
+    range: Use
+    multivalued: true
+    inlined_as_list: true
+    close_mappings: [c4:uses, calm:connects]
+  to:
+    range: ComponentLink
+    annotations: {targets: Component, inverse_label: used by}
+  style: {range: EdgeStyle}
+  via:
+    range: InterfaceLink
+    annotations: {targets: Interface, inverse_label: used by}
+  technology: {}
+  note: {}
+  part_of:
+    range: NodeOrComponentLink
+    close_mappings: [calm:composed-of]
+    annotations: {targets: "Component DeploymentNode", acyclic: true, inverse_label: contains}
+  deployed_to:
+    range: NodeLink
+    multivalued: true
+    close_mappings: [calm:deployed-in, structurizr:deployedOn]
+    annotations: {targets: DeploymentNode, inverse_label: runs}
+  governed_by:
+    range: GovernedByLink
+    multivalued: true
+    annotations: {targets: "adr:adr Convention", inverse_label: governs}
+  realizes:
+    range: CapabilityLink
+    multivalued: true
+    close_mappings: [archimate:Realization]
+    annotations: {targets: "prd:Capability"}
+  satisfies:
+    range: ScenarioLink
+    multivalued: true
+    annotations: {targets: QualityScenario, inverse_label: satisfied by}
+  used_by:
+    range: PersonaLink
+    multivalued: true
+    annotations: {targets: "prd:Persona"}
+  direction: {range: InterfaceDirection}
+  mechanism: {range: InterfaceMechanism}
+  versioning: {}
+  definition: {range: ResourceValue}
+  provided_by:
+    range: ComponentLink
+    close_mappings: [backstage:providesAPI]
+    annotations: {targets: Component, inverse_label: provides}
+  consumed_by:
+    range: ComponentLink
+    multivalued: true
+    close_mappings: [backstage:consumesAPI]
+    annotations: {targets: Component, inverse_label: consumes}
+  owned_by:
+    range: ComponentLink
+    annotations: {targets: Component, inverse_label: owns}
+  stored_in:
+    range: ComponentLink
+    annotations: {targets: Component, inverse_label: stores}
+  accessed_by:
+    range: DataAccess
+    multivalued: true
+    inlined_as_list: true
+    close_mappings: [archimate:Access]
+  component:
+    range: ComponentLink
+    annotations: {targets: Component, inverse_label: accesses}
+  access: {range: AccessMode}
+  quality: {range: QualityCharacteristic}
+  subcharacteristic: {}
+  scenario_kind: {range: ScenarioKind}
+  stimulus: {}
+  environment: {}
+  artifact:
+    range: ArtifactLink
+    multivalued: true
+    annotations: {targets: "Component System", inverse_label: constrained by}
+  response: {}
+  response_measure: {}
+  importance: {range: Rating}
+  risk_rating: {range: Rating}
+  cites:
+    range: CitationLink
+    annotations: {targets: "prd:Constraint prd:Metric"}
+  rule: {}
+  applies_to:
+    range: ComponentLink
+    multivalued: true
+    annotations: {targets: Component, inverse_label: obeys}
+  risk_kind: {range: RiskKind}
+  failure: {}
+  mitigation: {}
+  acceptance: {}
+  threatens:
+    range: ScenarioLink
+    multivalued: true
+    annotations: {targets: QualityScenario, inverse_label: threatened by}
+  about:
+    range: AboutLink
+    multivalued: true
+    annotations: {targets: "adr:adr Component", inverse_label: risk}
+  assumes:
+    range: AssumptionLink
+    multivalued: true
+    annotations: {targets: Assumption, inverse_label: assumed by}
+  trigger: {}
+  decision: {}
+  inferred_from: {description: A path relative to the repository root.}
+  node_kind: {range: NodeKind}
+  regions: {multivalued: true}
+  same_as:
+    range: DomainTermLink
+    annotations: {targets: "ddd:Term"}
+  related_terms:
+    range: GlossaryLink
+    multivalued: true
+    annotations: {targets: GlossaryTerm, inverse_label: related to}

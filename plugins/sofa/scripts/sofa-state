@@ -1,0 +1,627 @@
+#!/usr/bin/env python3
+"""sofa-state: the SQLite state store of sofa.
+
+Many sessions write at the same time, so the database runs in WAL mode with a
+busy timeout. Each command creates the schema when it is not there.
+
+Database path: --db PATH, else $SOFA_STATE_DB, else <main folder>/.sofa/state.db.
+Exit code: 0 on success, 2 on a usage error, 1 on all other errors.
+"""
+
+import argparse
+import json
+import os
+import random
+import sqlite3
+import subprocess
+import sys
+import time
+from datetime import datetime, timedelta, timezone
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS sessions (
+    name TEXT PRIMARY KEY, id TEXT, role TEXT, model TEXT,
+    state TEXT, item TEXT, since TEXT, last_heartbeat TEXT, free_since TEXT,
+    colour TEXT);
+CREATE TABLE IF NOT EXISTS items (
+    id TEXT PRIMARY KEY, state TEXT, pr TEXT, branch TEXT, worktree TEXT,
+    waits_for TEXT, session TEXT, picked_up_at TEXT, released_at TEXT, updated_at TEXT);
+CREATE TABLE IF NOT EXISTS trips (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, item TEXT, from_role TEXT, to_role TEXT, at TEXT);
+CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT, from_name TEXT, to_name TEXT,
+    subject TEXT, at TEXT);
+CREATE TABLE IF NOT EXISTS decisions (
+    id TEXT PRIMARY KEY, story TEXT, level TEXT, confidence TEXT, reversibility TEXT,
+    visibility TEXT, decided_by TEXT, summary TEXT, at TEXT, vetoed_at TEXT);
+CREATE TABLE IF NOT EXISTS interactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, story TEXT, kind TEXT, by_whom TEXT, at TEXT);
+CREATE TABLE IF NOT EXISTS asks (
+    id TEXT PRIMARY KEY, story TEXT, priority TEXT, opened_at TEXT, closed_at TEXT);
+CREATE TABLE IF NOT EXISTS usage (
+    session TEXT, item TEXT, tokens INTEGER, at TEXT, UNIQUE(session, item));
+CREATE TABLE IF NOT EXISTS heartbeats (name TEXT, at TEXT);
+CREATE TABLE IF NOT EXISTS queue (position INTEGER PRIMARY KEY, item TEXT);
+CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
+"""
+
+INTERACTION_KINDS = ["ask", "answer", "veto", "request", "defect"]
+
+
+class UsageError(Exception):
+    """A bad argument that argparse cannot catch."""
+
+
+def now_iso():
+    """Return the current UTC time as ISO-8601 with second precision."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def norm_iso(text):
+    """Return TEXT in the one timestamp format of this store, as UTC."""
+    if text is None:
+        return now_iso()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    dt = datetime.fromisoformat(text)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+# argparse names the type in its error line, so the name must read well.
+norm_iso.__name__ = "ISO-8601 time"
+
+
+def parse_iso(text):
+    """Return the datetime of a stored timestamp, or None."""
+    if not text:
+        return None
+    return datetime.strptime(text, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+
+
+def main_folder():
+    """The main folder of the repository: the parent of the common .git folder.
+
+    The same folder in the main checkout and in each worktree. Raises
+    subprocess.CalledProcessError outside a git repository.
+    """
+    common = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                            capture_output=True, text=True, check=True).stdout.strip()
+    if os.path.basename(common) == ".git":
+        return os.path.dirname(common)
+    return subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True,
+                          text=True, check=True).stdout.strip()
+
+
+def db_path(arg):
+    """Find the database path from the flag, the environment or the main folder."""
+    if arg:
+        return arg
+    if os.environ.get("SOFA_STATE_DB"):
+        return os.environ["SOFA_STATE_DB"]
+    folder = os.path.join(main_folder(), ".sofa")
+    os.makedirs(folder, exist_ok=True)
+    return os.path.join(folder, "state.db")
+
+
+def open_db(path):
+    """Open the database for many writers and create the schema."""
+    con = sqlite3.connect(path, timeout=5)
+    con.row_factory = sqlite3.Row
+    # busy_timeout must be set first: the change to WAL needs an exclusive lock.
+    con.execute("PRAGMA busy_timeout=5000")
+    con.execute("PRAGMA journal_mode=WAL")
+    con.executescript(SCHEMA)
+    # A store from an earlier version has no sessions.colour column.
+    if "colour" not in [row[1] for row in con.execute("PRAGMA table_info(sessions)")]:
+        con.execute("ALTER TABLE sessions ADD COLUMN colour TEXT")
+    return con
+
+
+def blank_to_none(value):
+    """An empty string clears a field; None keeps the old value."""
+    return None if value == "" else value
+
+
+# --- sessions ---
+
+def cmd_session_upsert(con, a):
+    """Insert or update a session. `since` changes only with the state."""
+    at = a.at
+    con.execute("""
+        INSERT INTO sessions (name, id, role, model, state, item, since, free_since)
+        VALUES (:name, :id, :role, :model, COALESCE(:state, 'live'), :item, :at, NULL)
+        ON CONFLICT(name) DO UPDATE SET
+            id = excluded.id,
+            role = excluded.role,
+            model = COALESCE(excluded.model, sessions.model),
+            state = COALESCE(:state, sessions.state),
+            item = COALESCE(excluded.item, sessions.item),
+            since = CASE WHEN :state IS NOT NULL AND :state IS NOT sessions.state
+                         THEN excluded.since ELSE sessions.since END,
+            free_since = CASE WHEN excluded.item IS NOT NULL THEN NULL ELSE sessions.free_since END
+    """, dict(name=a.name, id=a.id, role=a.role, model=a.model,
+              state=a.state, item=a.item, at=at))
+    con.commit()
+
+
+def cmd_session_free(con, a):
+    """Set the session item to NULL and record when it became free."""
+    con.execute("UPDATE sessions SET item = NULL, free_since = ? WHERE name = ?", (a.at, a.name))
+    con.commit()
+
+
+def cmd_session_colour(con, a):
+    """Record the colour that /color set in the session. A row is created when it is not there."""
+    con.execute("INSERT INTO sessions (name, state, since) VALUES (?, 'live', ?) "
+                "ON CONFLICT(name) DO NOTHING", (a.name, a.at))
+    con.execute("UPDATE sessions SET colour = ? WHERE name = ?", (a.colour, a.name))
+    con.commit()
+
+
+def cmd_session_heartbeat(con, a):
+    """Record a heartbeat. A session row is created when it is not there."""
+    con.execute("INSERT INTO sessions (name, state, since) VALUES (?, 'live', ?) "
+                "ON CONFLICT(name) DO NOTHING", (a.name, a.at))
+    con.execute("UPDATE sessions SET last_heartbeat = ? WHERE name = ?", (a.at, a.name))
+    con.execute("INSERT INTO heartbeats (name, at) VALUES (?, ?)", (a.name, a.at))
+    con.commit()
+
+
+def cmd_session_list(con, a):
+    """Print all sessions."""
+    rows = con.execute("SELECT * FROM sessions ORDER BY name").fetchall()
+    emit(rows, a.json, ["name", "id", "role", "model", "state", "item", "since",
+                        "last_heartbeat", "free_since", "colour"])
+
+
+# --- items ---
+
+def cmd_item_set(con, a):
+    """Insert or update an item. Omitted flags keep the old value; '' clears it."""
+    con.execute("""
+        INSERT INTO items (id, state, pr, branch, worktree, waits_for, session,
+                           picked_up_at, released_at, updated_at)
+        VALUES (:id, :state, :pr, :branch, :worktree, :waits_for, :session,
+                :at, CASE WHEN :state = 'released' THEN :at END, :at)
+        ON CONFLICT(id) DO UPDATE SET
+            state = excluded.state,
+            pr = CASE WHEN :pr_given THEN excluded.pr ELSE items.pr END,
+            branch = CASE WHEN :branch_given THEN excluded.branch ELSE items.branch END,
+            worktree = CASE WHEN :worktree_given THEN excluded.worktree ELSE items.worktree END,
+            waits_for = CASE WHEN :waits_for_given THEN excluded.waits_for ELSE items.waits_for END,
+            session = CASE WHEN :session_given THEN excluded.session ELSE items.session END,
+            released_at = CASE WHEN excluded.state = 'released'
+                               THEN COALESCE(items.released_at, excluded.updated_at)
+                               ELSE items.released_at END,
+            updated_at = excluded.updated_at
+    """, dict(id=a.id, state=a.state, at=a.at,
+              pr=blank_to_none(a.pr), pr_given=a.pr is not None,
+              branch=blank_to_none(a.branch), branch_given=a.branch is not None,
+              worktree=blank_to_none(a.worktree), worktree_given=a.worktree is not None,
+              waits_for=blank_to_none(a.waits_for), waits_for_given=a.waits_for is not None,
+              session=blank_to_none(a.session), session_given=a.session is not None))
+    con.commit()
+
+
+def cmd_item_trip(con, a):
+    """Record one hand-over of an item between two roles."""
+    con.execute("INSERT INTO trips (item, from_role, to_role, at) VALUES (?, ?, ?, ?)",
+                (a.id, a.from_role, a.to_role, a.at))
+    con.commit()
+
+
+# --- messages ---
+
+def cmd_message_log(con, a):
+    """Record the header of a message. The body is never stored."""
+    con.execute("INSERT INTO messages (type, from_name, to_name, subject, at) VALUES (?, ?, ?, ?, ?)",
+                (a.type, a.from_name, a.to_name, a.subject, a.at))
+    con.commit()
+
+
+# --- decisions ---
+
+def cmd_decision_log(con, a):
+    """Insert or replace a decision."""
+    con.execute("""
+        INSERT INTO decisions (id, story, level, confidence, reversibility, visibility,
+                               decided_by, summary, at, vetoed_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+        ON CONFLICT(id) DO UPDATE SET
+            story = excluded.story, level = excluded.level, confidence = excluded.confidence,
+            reversibility = excluded.reversibility, visibility = excluded.visibility,
+            decided_by = excluded.decided_by, summary = excluded.summary, at = excluded.at
+    """, (a.id, a.story, a.level, a.confidence, a.reversibility, a.visibility,
+          a.by, a.summary, a.at))
+    con.commit()
+
+
+def cmd_decision_veto(con, a):
+    """Mark a decision as vetoed."""
+    cur = con.execute("UPDATE decisions SET vetoed_at = ? WHERE id = ?", (a.at, a.id))
+    con.commit()
+    if cur.rowcount == 0:
+        raise UsageError(f"no decision with id {a.id}")
+
+
+def cmd_decision_list(con, a):
+    """Print decisions, with filters on story and time."""
+    sql, args = "SELECT * FROM decisions WHERE 1=1", []
+    if a.story:
+        sql += " AND story = ?"
+        args.append(a.story)
+    if a.since:
+        sql += " AND at >= ?"
+        args.append(a.since)
+    rows = con.execute(sql + " ORDER BY at, id", args).fetchall()
+    emit(rows, a.json, ["id", "story", "level", "confidence", "reversibility", "visibility",
+                        "decided_by", "at", "vetoed_at", "summary"])
+
+
+# --- asks ---
+
+def cmd_ask_open(con, a):
+    """Open an ask to hitl."""
+    con.execute("INSERT INTO asks (id, story, priority, opened_at, closed_at) VALUES (?, ?, ?, ?, NULL) "
+                "ON CONFLICT(id) DO UPDATE SET story = excluded.story, priority = excluded.priority",
+                (a.id, a.story, a.priority, a.at))
+    con.commit()
+
+
+def cmd_ask_close(con, a):
+    """Close an ask."""
+    cur = con.execute("UPDATE asks SET closed_at = ? WHERE id = ? AND closed_at IS NULL", (a.at, a.id))
+    con.commit()
+    if cur.rowcount == 0:
+        raise UsageError(f"no open ask with id {a.id}")
+
+
+def cmd_ask_list(con, a):
+    """Print all asks."""
+    rows = con.execute("SELECT * FROM asks ORDER BY opened_at, id").fetchall()
+    emit(rows, a.json, ["id", "story", "priority", "opened_at", "closed_at"])
+
+
+# --- interactions, usage, queue, kv ---
+
+def cmd_interaction_log(con, a):
+    """Record one human interaction on a story."""
+    con.execute("INSERT INTO interactions (story, kind, by_whom, at) VALUES (?, ?, ?, ?)",
+                (a.story, a.kind, a.by, a.at))
+    con.commit()
+
+
+def cmd_usage_set(con, a):
+    """Set the token count of a session on an item."""
+    con.execute("INSERT INTO usage (session, item, tokens, at) VALUES (?, ?, ?, ?) "
+                "ON CONFLICT(session, item) DO UPDATE SET tokens = excluded.tokens, at = excluded.at",
+                (a.session, a.item, a.tokens, a.at))
+    con.commit()
+
+
+def cmd_queue_set(con, a):
+    """Replace the queue with the given items, in order."""
+    with con:
+        con.execute("DELETE FROM queue")
+        con.executemany("INSERT INTO queue (position, item) VALUES (?, ?)",
+                        list(enumerate(a.items, start=1)))
+
+
+def cmd_queue_list(con, a):
+    """Print the queue, one item per line."""
+    for row in con.execute("SELECT item FROM queue ORDER BY position"):
+        print(row["item"])
+
+
+def cmd_kv_set(con, a):
+    """Set one key."""
+    con.execute("INSERT INTO kv (key, value) VALUES (?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (a.key, a.value))
+    con.commit()
+
+
+def cmd_kv_get(con, a):
+    """Print one value. Exit 1 when the key is not there."""
+    row = con.execute("SELECT value FROM kv WHERE key = ?", (a.key,)).fetchone()
+    if row is None:
+        raise UsageError(f"no key {a.key}")
+    print(row["value"])
+
+
+# --- metrics, report, prune ---
+
+def story_metrics(con, story):
+    """Compute the metrics of one story."""
+    one = lambda sql, *args: con.execute(sql, args).fetchone()[0]
+    closed_asks = one("SELECT COUNT(*) FROM asks WHERE story = ? AND closed_at IS NOT NULL", story)
+    ask_inter = one("SELECT COUNT(*) FROM interactions WHERE story = ? AND kind = 'ask'", story)
+    item = con.execute("SELECT picked_up_at, released_at FROM items WHERE id = ?", (story,)).fetchone()
+    picked = item["picked_up_at"] if item else None
+    released = item["released_at"] if item else None
+    cycle = None
+    if picked and released:
+        hours = (parse_iso(released) - parse_iso(picked)).total_seconds() / 3600
+        cycle = round(hours, 1)
+    return {
+        "story": story,
+        "hitl_questions": closed_asks + ask_inter,
+        "autonomous_decisions": one("SELECT COUNT(*) FROM decisions WHERE story = ? "
+                                    "AND decided_by != 'hitl' AND vetoed_at IS NULL", story),
+        "review_defects": one("SELECT COUNT(*) FROM interactions WHERE story = ? AND kind = 'defect'", story),
+        "trips": one("SELECT COUNT(*) FROM trips WHERE item = ?", story),
+        "picked_up_at": picked,
+        "released_at": released,
+        "cycle_hours": cycle,
+    }
+
+
+def cmd_metrics(con, a):
+    """Print the metrics of one story."""
+    m = story_metrics(con, a.story)
+    if a.json:
+        print(json.dumps(m))
+        return
+    for key, value in m.items():
+        print(f"{key}: {'' if value is None else value}")
+
+
+def age(text, now):
+    """Return a short age such as 5m or 2h, or '-' when there is no time."""
+    dt = parse_iso(text)
+    if dt is None:
+        return "-"
+    seconds = max(0, int((now - dt).total_seconds()))
+    if seconds < 60:
+        return f"{seconds}s"
+    if seconds < 3600:
+        return f"{seconds // 60}m"
+    if seconds < 86400:
+        return f"{seconds // 3600}h"
+    return f"{seconds // 86400}d"
+
+
+def cmd_report(con, a):
+    """Print the dashboard: sessions, items, open asks, queue, recent decisions."""
+    now = parse_iso(a.at)
+    day_ago = (now - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    sessions = con.execute("SELECT * FROM sessions ORDER BY name").fetchall()
+    items = con.execute("SELECT * FROM items ORDER BY id").fetchall()
+    asks = con.execute("SELECT * FROM asks WHERE closed_at IS NULL ORDER BY opened_at").fetchall()
+    queue = [r["item"] for r in con.execute("SELECT item FROM queue ORDER BY position")]
+    decisions = con.execute("SELECT * FROM decisions WHERE at >= ? ORDER BY at", (day_ago,)).fetchall()
+    if a.json:
+        print(json.dumps({
+            "sessions": [dict(r, heartbeat_age=age(r["last_heartbeat"], now)) for r in sessions],
+            "items": [dict(r) for r in items],
+            "open_asks": [dict(r) for r in asks],
+            "queue": queue,
+            "decisions_24h": [dict(r) for r in decisions],
+        }))
+        return
+    print("sessions")
+    table([[s["name"], s["role"], s["state"], s["item"], age(s["last_heartbeat"], now)] for s in sessions],
+          ["name", "role", "state", "item", "beat"])
+    print("\nitems")
+    table([[i["id"], i["state"], i["pr"], i["session"], i["waits_for"]] for i in items],
+          ["id", "state", "pr", "session", "waits"])
+    print("\nopen asks")
+    table([[k["id"], k["story"], k["priority"], age(k["opened_at"], now)] for k in asks],
+          ["id", "story", "prio", "age"])
+    print("\nqueue")
+    print("  " + (" ".join(queue) if queue else "(empty)"))
+    print("\ndecisions (24h)")
+    table([[d["id"], d["story"], d["decided_by"], "veto" if d["vetoed_at"] else "", d["summary"]]
+           for d in decisions], ["id", "story", "by", "veto", "summary"])
+
+
+def cmd_prune(con, a):
+    """Remove heartbeats and messages older than N days."""
+    limit = (parse_iso(a.at) - timedelta(days=a.days)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    with con:
+        con.execute("DELETE FROM heartbeats WHERE at < ?", (limit,))
+        con.execute("DELETE FROM messages WHERE at < ?", (limit,))
+
+
+# --- output helpers ---
+
+def table(rows, header, width=28):
+    """Print rows as aligned text columns. Each cell is cut at WIDTH."""
+    if not rows:
+        print("  (none)")
+        return
+    cells = [[("" if c is None else str(c))[:width] for c in r] for r in [header] + rows]
+    widths = [max(len(r[i]) for r in cells) for i in range(len(header))]
+    for r in cells:
+        print("  " + "  ".join(c.ljust(w) for c, w in zip(r, widths)).rstrip())
+
+
+def emit(rows, as_json, columns):
+    """Print rows as JSON or as a text table with the given columns."""
+    if as_json:
+        print(json.dumps([dict(r) for r in rows]))
+        return
+    table([[r[c] for c in columns] for r in rows], columns)
+
+
+# --- argument parsing ---
+
+def build_parser():
+    """Build the argparse tree. --db and --at are accepted before and after the command words."""
+    def add_common(parser, default):
+        parser.add_argument("--db", default=default,
+                            help="database path (else $SOFA_STATE_DB, else <main folder>/.sofa/state.db)")
+        parser.add_argument("--at", type=norm_iso, default=default,
+                            help="time to record, ISO-8601 (default: now, UTC)")
+
+    # SUPPRESS on the leaf copy keeps a value given before the command words.
+    common = argparse.ArgumentParser(add_help=False)
+    add_common(common, argparse.SUPPRESS)
+
+    p = argparse.ArgumentParser(prog="sofa-state", description="The SQLite state store of sofa.")
+    add_common(p, None)
+    top = p.add_subparsers(dest="cmd", required=True, metavar="COMMAND")
+
+    def leaf(parent, name, func, help_text):
+        sp = parent.add_parser(name, parents=[common], help=help_text, description=help_text)
+        sp.set_defaults(func=func)
+        return sp
+
+    def group(name, help_text):
+        g = top.add_parser(name, help=help_text, description=help_text)
+        return g.add_subparsers(dest="sub", required=True, metavar="ACTION")
+
+    leaf(top, "init", lambda con, a: None, "create the schema when it is not there")
+
+    s = group("session", "sessions of the fleet")
+    sp = leaf(s, "upsert", cmd_session_upsert, "insert or update a session")
+    sp.add_argument("--name", required=True)
+    sp.add_argument("--id", required=True)
+    sp.add_argument("--role", required=True)
+    sp.add_argument("--model")
+    sp.add_argument("--state", choices=["live", "stopped"],
+                    help="live on insert when omitted; kept on update when omitted")
+    sp.add_argument("--item", help="item the session works on; clears free_since")
+    sp = leaf(s, "free", cmd_session_free, "set the item to NULL and free_since to now")
+    sp.add_argument("--name", required=True)
+    sp = leaf(s, "colour", cmd_session_colour, "record the colour that /color set in the session")
+    sp.add_argument("--name", required=True)
+    sp.add_argument("--colour", required=True)
+    sp = leaf(s, "heartbeat", cmd_session_heartbeat, "record a heartbeat")
+    sp.add_argument("--name", required=True)
+    sp = leaf(s, "list", cmd_session_list, "print all sessions")
+    sp.add_argument("--json", action="store_true")
+
+    i = group("item", "work items (stories, features)")
+    sp = leaf(i, "set", cmd_item_set, "insert or update an item; an empty value clears a field")
+    sp.add_argument("--id", required=True)
+    sp.add_argument("--state", required=True)
+    sp.add_argument("--pr")
+    sp.add_argument("--branch")
+    sp.add_argument("--worktree")
+    sp.add_argument("--waits-for", dest="waits_for")
+    sp.add_argument("--session")
+    sp = leaf(i, "trip", cmd_item_trip, "record a hand-over between two roles")
+    sp.add_argument("--id", required=True)
+    sp.add_argument("--from", dest="from_role", required=True)
+    sp.add_argument("--to", dest="to_role", required=True)
+
+    m = group("message", "message headers")
+    sp = leaf(m, "log", cmd_message_log, "record a message header (never the body)")
+    sp.add_argument("--type", required=True)
+    sp.add_argument("--from", dest="from_name", required=True)
+    sp.add_argument("--to", dest="to_name", required=True)
+    sp.add_argument("--subject", required=True)
+
+    d = group("decision", "decisions per story")
+    sp = leaf(d, "log", cmd_decision_log, "record a decision")
+    sp.add_argument("--id", required=True)
+    sp.add_argument("--story", required=True)
+    sp.add_argument("--level", required=True)
+    sp.add_argument("--confidence", required=True)
+    sp.add_argument("--reversibility", required=True)
+    sp.add_argument("--visibility", required=True)
+    sp.add_argument("--by", required=True, help="who decided, for example decision-judge or hitl")
+    sp.add_argument("--summary", required=True)
+    sp = leaf(d, "veto", cmd_decision_veto, "mark a decision as vetoed")
+    sp.add_argument("--id", required=True)
+    sp = leaf(d, "list", cmd_decision_list, "print decisions")
+    sp.add_argument("--story")
+    sp.add_argument("--since", type=norm_iso, help="ISO-8601 lower bound")
+    sp.add_argument("--json", action="store_true")
+
+    k = group("ask", "asks to hitl")
+    sp = leaf(k, "open", cmd_ask_open, "open an ask")
+    sp.add_argument("--id", required=True)
+    sp.add_argument("--story", required=True)
+    sp.add_argument("--priority", required=True)
+    sp = leaf(k, "close", cmd_ask_close, "close an ask")
+    sp.add_argument("--id", required=True)
+    sp = leaf(k, "list", cmd_ask_list, "print all asks")
+    sp.add_argument("--json", action="store_true")
+
+    n = group("interaction", "human interactions per story")
+    sp = leaf(n, "log", cmd_interaction_log, "record one interaction")
+    sp.add_argument("--story", required=True)
+    sp.add_argument("--kind", required=True, choices=INTERACTION_KINDS)
+    sp.add_argument("--by", required=True)
+
+    u = group("usage", "tokens per session per item")
+    sp = leaf(u, "set", cmd_usage_set, "set the token count")
+    sp.add_argument("--session", required=True)
+    sp.add_argument("--item", required=True)
+    sp.add_argument("--tokens", required=True, type=int)
+
+    q = group("queue", "the item queue")
+    sp = leaf(q, "set", cmd_queue_set, "replace the queue")
+    sp.add_argument("items", nargs="*", metavar="ITEM")
+    leaf(q, "list", cmd_queue_list, "print the queue in order")
+
+    v = group("kv", "key-value pairs")
+    sp = leaf(v, "set", cmd_kv_set, "set a key")
+    sp.add_argument("key")
+    sp.add_argument("value")
+    sp = leaf(v, "get", cmd_kv_get, "print a value; exit 1 when the key is not there")
+    sp.add_argument("key")
+
+    sp = leaf(top, "metrics", cmd_metrics, "print the metrics of one story")
+    sp.add_argument("--story", required=True)
+    sp.add_argument("--json", action="store_true")
+
+    sp = leaf(top, "report", cmd_report, "print the dashboard tables")
+    sp.add_argument("--json", action="store_true")
+
+    sp = leaf(top, "prune", cmd_prune, "remove heartbeats and messages older than N days")
+    sp.add_argument("--days", required=True, type=int)
+    return p
+
+
+LOCK_TRIES = 25
+
+
+def run_with_retry(a):
+    """Open the database and run the command. Try again when the database is locked.
+
+    The busy timeout covers most waits. It does not cover the moment the file is
+    created: until WAL is on, SQLite can return "locked" at once to avoid a
+    deadlock between two connections in rollback mode. Each command commits only
+    at its end, so a new try does not write a row twice.
+    """
+    path = db_path(a.db)
+    for n in range(LOCK_TRIES):
+        try:
+            con = open_db(path)
+            try:
+                a.func(con, a)
+                return
+            finally:
+                con.close()
+        except sqlite3.OperationalError as e:
+            locked = "locked" in str(e) or "busy" in str(e)
+            if not locked or n == LOCK_TRIES - 1:
+                raise
+            time.sleep(random.uniform(0.02, 0.1 * (n + 1)))
+
+
+def main(argv=None):
+    """Run one command. Return the exit code."""
+    a = build_parser().parse_args(argv)
+    if a.at is None:
+        a.at = now_iso()
+    try:
+        run_with_retry(a)
+    except UsageError as e:
+        print(f"sofa-state: {e}", file=sys.stderr)
+        return 1
+    except subprocess.CalledProcessError:
+        print("sofa-state: not in a git repository; give --db or set SOFA_STATE_DB", file=sys.stderr)
+        return 1
+    except (sqlite3.Error, OSError) as e:
+        print(f"sofa-state: {e}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

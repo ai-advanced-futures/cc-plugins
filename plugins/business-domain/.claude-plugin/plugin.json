@@ -1,0 +1,13 @@
+{
+  "name": "business-domain",
+  "version": "1.0.5",
+  "description": "The domain model of a repository as one OKF graph on the brain standard: bounded contexts, terms, aggregates, events, and relationships, with business-domain:setup, business-domain:learn, and business-domain:ask, and a hook that runs regen and both checks",
+  "dependencies": ["knowledge"],
+  "author": {
+    "name": "404pilo Platform Engineering",
+    "email": "404.pilo.code@gmail.com"
+  },
+  "homepage": "https://github.com/ai-advanced-futures/cc-plugins",
+  "repository": "https://github.com/ai-advanced-futures/cc-plugins",
+  "keywords": ["ddd", "domain-driven-design", "bounded-context", "ubiquitous-language", "aggregate", "domain-event", "okf", "knowledge-graph"]
+}
