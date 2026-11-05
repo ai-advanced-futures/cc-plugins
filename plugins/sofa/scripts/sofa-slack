@@ -38,7 +38,8 @@ goes to that URL, so only https://slack.com/api/ and an http address on this com
 (127.0.0.1, localhost, ::1) are allowed, and a redirect stops the call.
 
 Exit code: 0 on success, 1 on a failed check or a Slack error (for post, replies and
-reactions: also no channel in docs/adlc.md, and a channel that the bot cannot see; for
+reactions: also no channel in docs/adlc.md, a channel that the bot cannot see, and a list
+that does not end: more than 50 pages, or a cursor that Slack gave 2 times; for
 whoami: also a missing scope), 2 on a usage error or a value that breaks a rule, 3 when there
 is no bot token (the fix is /sofa:setup).
 """
@@ -256,7 +257,13 @@ def cmd_whoami(args):
 
 # ---------------------------------------------------------------- post
 
-THREAD_TS_RE = re.compile(r"^\d{1,12}\.\d{1,9}$")
+THREAD_TS_RE = re.compile(r"\d{1,12}\.\d{1,9}")
+
+
+def check_ts(option, value):
+    """Exit 2 unless VALUE is, in full, a Slack message time stamp. fullmatch refuses a final new line."""
+    if not THREAD_TS_RE.fullmatch(value):
+        raise Fail(f"{option} must be a Slack message time stamp such as 1700000000.000100, got {value!r}", 2)
 
 
 def adlc_channel(root):
@@ -270,16 +277,11 @@ def adlc_channel(root):
 
 def find_channel_id(token, name):
     """The ID of the channel NAME among the channels that the bot can see, or None."""
-    cursor = ""
-    while True:
-        page = slack_call(token, "conversations.list", {"types": "public_channel,private_channel", "limit": 1000,
-                                                        "exclude_archived": "true", "cursor": cursor})
-        for channel in page.get("channels", []):
-            if channel.get("name") == name:
-                return channel["id"]
-        cursor = page.get("response_metadata", {}).get("next_cursor", "")
-        if not cursor:
-            return None
+    params = {"types": "public_channel,private_channel", "limit": 1000, "exclude_archived": "true"}
+    for channel in slack_pages(token, "conversations.list", params, "channels"):
+        if channel.get("name") == name:
+            return channel["id"]
+    return None
 
 
 def invite_fix(token, name):
@@ -341,8 +343,8 @@ def cmd_post(args):
         raise Fail("the text file is empty", 2)
     if token in text:
         raise Fail("the text file holds the bot token; nothing is posted", 2)
-    if args.thread and not THREAD_TS_RE.match(args.thread):
-        raise Fail(f"--thread must be a Slack message time stamp such as 1700000000.000100, got {args.thread!r}", 2)
+    if args.thread:
+        check_ts("--thread", args.thread)
     name, channel_id = resolve_channel(token, args)
     params = {"channel": channel_id, "text": text}
     if args.thread:
@@ -374,14 +376,9 @@ def slack_pages(token, method, params, key):
         if not cursor:
             return
         if cursor in sent:
-            raise Fail(f"{method}: Slack gave the same cursor 2 times; the read stops")
+            raise Fail(f"{method}: Slack gave the same cursor 2 times; the search stops")
         sent.add(cursor)
-    raise Fail(f"{method}: more than {MAX_PAGES} pages; the read stops")
-
-
-def check_ts(option, value):
-    if not THREAD_TS_RE.fullmatch(value):
-        raise Fail(f"{option} must be a Slack message time stamp such as 1700000000.000100, got {value!r}", 2)
+    raise Fail(f"{method}: more than {MAX_PAGES} pages; the search stops")
 
 
 def read_call(token, name, run):
