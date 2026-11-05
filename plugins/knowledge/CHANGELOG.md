@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.8
+
+### Changed
+- `knowledge:ask` writes each command in full in each Bash call, so it runs in zsh and in bash, and it writes no wrapper file and no helper file. The walk state template is `/tmp/knowledge-walk.XXXXXX`, so it works with the `mktemp` of macOS.
+
 ## 1.4.7
 
 ### Changed
