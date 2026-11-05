@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.7
+
+### Changed
+- `knowledge:ask` reads each page and each manifest with the Read tool. Step 1, Step 2, and Step 3 get the path with `$K resolve`, then read that file with the Read tool, not with `cat`, `grep` or another shell command. A test of the skill fails when a step does not name the Read tool.
+
 ## 1.4.6
 
 ### Changed

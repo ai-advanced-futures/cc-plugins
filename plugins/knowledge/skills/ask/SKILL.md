@@ -20,7 +20,8 @@ after the person says yes.
    "Give me a question. Run `/knowledge:ask <your question>`."
 2. Run `$K registry list`. When it exits 2 or prints nothing, stop with:
    "This project has no knowledge graph. Run `/knowledge:setup`, or the setup of a brain."
-3. For each graph, read its `manifest.md` (`$K resolve <graph>:/manifest.md`).
+3. For each graph, get the path of its manifest with
+   `$K resolve <graph>:/manifest.md`, then read that file with the Read tool.
    Read `answers` and `ask_skill`.
 4. Select the start nodes:
    - When the ask skill of a brain called this procedure, use its start nodes.
@@ -39,7 +40,8 @@ Do these steps again and again:
 
 1. Run `$K walk next --state "$STATE"`. Exit 1 means that no node is waiting:
    go to Step 4.
-2. Find the file of the node with `$K resolve <node>`, and read that one file.
+2. Get the path of the node with `$K resolve <node>`, then read that one file
+   with the Read tool, not with `cat`, `grep` or another shell command.
 3. Run `$K walk candidates --state "$STATE" <node>`. Each row is one neighbor
    that is not done and not waiting.
 4. Dispatch one `knowledge:neighbor-judge` subagent. Give it the question, the
@@ -53,7 +55,8 @@ Do these steps again and again:
 
 ## Step 3: enter another graph
 
-When a kept node is in another graph, read the manifest of that graph. When
+When a kept node is in another graph, get the path of its manifest with
+`$K resolve <graph>:/manifest.md`, and read that file with the Read tool. When
 the skill of its `ask_skill.plugin` is in your skill list, load it with the
 Skill tool for its shortcuts, and give it the state file. When not, continue
 with this procedure (D25). A node in a remote graph resolves through the cache
