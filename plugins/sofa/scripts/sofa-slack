@@ -11,6 +11,9 @@
            Print 1 line for each PNG file of the repository whose name holds logo,
            icon, brand, avatar or mark: "ok WxH PATH" when it fits, else "no WHY PATH".
   whoami   Call auth.test with the bot token. Print only "ok", the team and the bot name.
+           Compare the scopes of the token (the x-oauth-scopes header of the reply) with
+           the manifest scopes. When a scope is missing, print "missing scopes: ..." and
+           the steps to install the app again, and exit 1.
   post --text-file FILE [--thread TS] [--channel NAME]
            Post the text of FILE as the app (chat.postMessage with the bot token) to the
            channel of section 1 (Slack) of docs/adlc.md, or to NAME. --thread TS posts a
@@ -19,6 +22,14 @@
            no Slack call, when the last part of the path of FILE is a symbolic link, FILE
            is not a regular file, is larger than 40000 bytes, or holds the bot token. A
            link in a folder of the path is followed (O_NOFOLLOW checks the last part only).
+  replies --thread TS [--oldest TS] [--channel NAME]
+           Read the thread TS as the app (conversations.replies with the bot token), and
+           follow each next_cursor. Print 1 JSON line for each message: ts, user, bot_id
+           (when Slack gives it) and text. --oldest TS prints only the messages after TS
+           (the thread parent too is dropped when it is not after TS).
+  reactions --ts TS [--channel NAME]
+           Read the reactions of the message TS as the app (reactions.get with the bot
+           token). Print 1 JSON line for each reaction: name, count and users.
 
 The token comes from readiness.slack_token: the environment, else the env block of
 .claude/settings.local.json. It is never printed. The base URL of the Slack API is
@@ -26,9 +37,10 @@ SOFA_SLACK_API (default https://slack.com/api/), so a test can use a fake API. T
 goes to that URL, so only https://slack.com/api/ and an http address on this computer
 (127.0.0.1, localhost, ::1) are allowed, and a redirect stops the call.
 
-Exit code: 0 on success, 1 on a failed check or a Slack error (for post: also no channel in
-docs/adlc.md, and a channel that the bot cannot post to), 2 on a usage error or a value that
-breaks a rule, 3 when there is no bot token (the fix is /sofa:setup).
+Exit code: 0 on success, 1 on a failed check or a Slack error (for post, replies and
+reactions: also no channel in docs/adlc.md, and a channel that the bot cannot see; for
+whoami: also a missing scope), 2 on a usage error or a value that breaks a rule, 3 when there
+is no bot token (the fix is /sofa:setup).
 """
 
 import argparse
@@ -42,6 +54,7 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+from decimal import Decimal
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -57,6 +70,8 @@ METHOD_SCOPES = {
     "chat.postMessage": ["chat:write"],
     "conversations.list": ["channels:read", "groups:read"],
     "conversations.members": ["channels:read", "groups:read"],
+    "conversations.replies": ["channels:history", "groups:history"],
+    "reactions.get": ["reactions:read"],
     "users.list": ["users:read"],
 }
 
@@ -191,30 +206,51 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise Fail(f"Slack answered with a redirect (HTTP {code}). The call stops, because the bot token must go to 1 host only")
 
 
+SETUP_FIX = "Fix: type /sofa:setup, and do step 5 item 6 (it installs the app again with the new scopes)"
+
+
 class SlackError(Fail):
     """Slack answered with ok false. error is the error code of Slack."""
 
-    def __init__(self, method, error):
-        super().__init__(f"{method}: {error}")
+    def __init__(self, method, error, needed=""):
+        if error == "missing_scope":
+            needed_text = f" (needed: {needed})" if needed else ""
+            super().__init__(f"{method}: {error}{needed_text}. {SETUP_FIX}")
+        else:
+            super().__init__(f"{method}: {error}")
         self.error = error
 
 
-def slack_call(token, method, params=None):
+def slack_call(token, method, params=None, headers=None):
+    """Call a Slack method with the bot token and return the JSON of the reply. When headers is a dict, the
+    headers of the reply go into it, with lower case names."""
     base = api_base()
     req = urllib.request.Request(base.rstrip("/") + "/" + method, data=urllib.parse.urlencode(params or {}).encode(),
                                  method="POST", headers={"Authorization": f"Bearer {token}"})
     try:
         with urllib.request.build_opener(NoRedirect).open(req, timeout=20) as resp:
             data = json.load(resp)
+            if headers is not None:
+                headers.update({k.lower(): v for k, v in resp.headers.items()})
     except (urllib.error.URLError, ValueError) as e:
         raise Fail(f"{method}: no answer from Slack ({type(e).__name__})")
     if not data.get("ok"):
-        raise SlackError(method, data.get("error", "unknown error"))
+        raise SlackError(method, data.get("error", "unknown error"), str(data.get("needed", "")))
     return data
 
 
 def cmd_whoami(args):
-    data = slack_call(bot_token(args.root), "auth.test")
+    headers = {}
+    data = slack_call(bot_token(args.root), "auth.test", headers=headers)
+    given = headers.get("x-oauth-scopes")
+    if given is not None:
+        missing = sorted(set(scopes()) - {s.strip() for s in given.split(",")})
+        if missing:
+            raise Fail(f"missing scopes: {', '.join(missing)}. The app needs them for the calls of this plugin. "
+                       "Fix: in the app settings, open \"App Manifest\", paste the new output of "
+                       "`sofa-slack manifest`, and save. Then open \"Install App\", select \"Reinstall to Workspace\", "
+                       "and allow the new scopes. Then run `sofa-slack whoami` again. If it says invalid_auth, "
+                       "copy the \"Bot User OAuth Token\" again (/sofa:setup, step 5, items 4 and 5)")
     print(f"ok team={data.get('team', '')} bot={data.get('user', '')}")
 
 
@@ -253,6 +289,17 @@ def invite_fix(token, name):
     except Fail:
         bot = "<bot name>"
     return f"Fix: type /invite @{bot} in #{name}"
+
+
+def resolve_channel(token, args):
+    """The name and the ID of the channel of --channel, else of docs/adlc.md. Fail when there is none or the bot cannot see it."""
+    name = (args.channel or adlc_channel(args.root) or "").lstrip("#")
+    if not name:
+        raise Fail("no Slack channel: section 1 (Slack) of docs/adlc.md has none. Give --channel NAME")
+    channel_id = find_channel_id(token, name)
+    if channel_id is None:
+        raise Fail(f"the bot cannot see #{name}. {invite_fix(token, name)}")
+    return name, channel_id
 
 
 def read_text_file(name):
@@ -296,12 +343,7 @@ def cmd_post(args):
         raise Fail("the text file holds the bot token; nothing is posted", 2)
     if args.thread and not THREAD_TS_RE.match(args.thread):
         raise Fail(f"--thread must be a Slack message time stamp such as 1700000000.000100, got {args.thread!r}", 2)
-    name = (args.channel or adlc_channel(args.root) or "").lstrip("#")
-    if not name:
-        raise Fail("no Slack channel: section 1 (Slack) of docs/adlc.md has none. Give --channel NAME")
-    channel_id = find_channel_id(token, name)
-    if channel_id is None:
-        raise Fail(f"the bot cannot see #{name}. {invite_fix(token, name)}")
+    name, channel_id = resolve_channel(token, args)
     params = {"channel": channel_id, "text": text}
     if args.thread:
         params["thread_ts"] = args.thread
@@ -314,6 +356,75 @@ def cmd_post(args):
     if not (reply.get("message") or {}).get("bot_id"):
         raise Fail("not posted as the app: the reply of Slack has no message.bot_id")
     print(json.dumps({"channel": reply.get("channel", channel_id), "ts": reply.get("ts", "")}))
+
+
+# ---------------------------------------------------------------- read
+
+MAX_PAGES = 50
+
+
+def slack_pages(token, method, params, key):
+    """Yield the items of the list KEY of each page of METHOD, and follow next_cursor. Stop with a failure after
+    MAX_PAGES pages, and when Slack gives a cursor that was sent already."""
+    cursor, sent = "", set()
+    for _ in range(MAX_PAGES):
+        page = slack_call(token, method, dict(params, cursor=cursor) if cursor else params)
+        yield from page.get(key, [])
+        cursor = (page.get("response_metadata") or {}).get("next_cursor", "")
+        if not cursor:
+            return
+        if cursor in sent:
+            raise Fail(f"{method}: Slack gave the same cursor 2 times; the read stops")
+        sent.add(cursor)
+    raise Fail(f"{method}: more than {MAX_PAGES} pages; the read stops")
+
+
+def check_ts(option, value):
+    if not THREAD_TS_RE.fullmatch(value):
+        raise Fail(f"{option} must be a Slack message time stamp such as 1700000000.000100, got {value!r}", 2)
+
+
+def read_call(token, name, run):
+    """Run RUN() for a read. A bot that is not in the channel gets the /invite fix."""
+    try:
+        return run()
+    except SlackError as e:
+        if e.error in ("not_in_channel", "channel_not_found"):
+            raise Fail(f"{e}. {invite_fix(token, name)}")
+        raise
+
+
+def cmd_replies(args):
+    token = bot_token(args.root)
+    check_ts("--thread", args.thread)
+    if args.oldest:
+        check_ts("--oldest", args.oldest)
+    name, channel_id = resolve_channel(token, args)
+    params = {"channel": channel_id, "ts": args.thread, "limit": 200}
+    if args.oldest:
+        params["oldest"] = args.oldest
+    # list() reads each page before the first line prints, so a failure on page 2 prints no half answer.
+    messages = read_call(token, name, lambda: list(slack_pages(token, "conversations.replies", params, "messages")))
+    if args.oldest:
+        # Slack can return the thread parent when it is older than "oldest". The caller wants only the newer messages.
+        messages = [m for m in messages if Decimal(m.get("ts") or "0") > Decimal(args.oldest)]
+    for m in messages:
+        line = {"ts": m.get("ts", ""), "user": m.get("user", "")}
+        if m.get("bot_id"):
+            line["bot_id"] = m["bot_id"]
+        line["text"] = m.get("text", "")
+        print(json.dumps(line, ensure_ascii=False))
+
+
+def cmd_reactions(args):
+    token = bot_token(args.root)
+    check_ts("--ts", args.ts)
+    name, channel_id = resolve_channel(token, args)
+    reply = read_call(token, name, lambda: slack_call(token, "reactions.get",
+                                                      {"channel": channel_id, "timestamp": args.ts, "full": "true"}))
+    for r in (reply.get("message") or {}).get("reactions", []):
+        print(json.dumps({"name": r.get("name", ""), "count": r.get("count", 0), "users": r.get("users", [])},
+                         ensure_ascii=False))
 
 
 # ---------------------------------------------------------------- main
@@ -340,6 +451,17 @@ def main():
     p.add_argument("--channel", help="the channel name (default: Slack of docs/adlc.md)")
     p.add_argument("--root", default=".")
     p.set_defaults(run=cmd_post)
+    p = sub.add_parser("replies")
+    p.add_argument("--thread", required=True, help="the time stamp of the first message of the thread")
+    p.add_argument("--oldest", help="read only the messages after this time stamp")
+    p.add_argument("--channel", help="the channel name (default: Slack of docs/adlc.md)")
+    p.add_argument("--root", default=".")
+    p.set_defaults(run=cmd_replies)
+    p = sub.add_parser("reactions")
+    p.add_argument("--ts", required=True, help="the time stamp of the message")
+    p.add_argument("--channel", help="the channel name (default: Slack of docs/adlc.md)")
+    p.add_argument("--root", default=".")
+    p.set_defaults(run=cmd_reactions)
     args = parser.parse_args()
     try:
         args.run(args)

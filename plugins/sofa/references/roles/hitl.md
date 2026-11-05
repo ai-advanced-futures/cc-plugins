@@ -16,11 +16,11 @@ Use `AskUserQuestion` in this session. The user opens this session with `claude 
 
 ## With Slack
 
-The Slack plugin is installed and the bot token is set (`/sofa:setup`, step 5). The channel is the one in section 1.
+The bot token is set (`/sofa:setup`, step 5). The channel is the one in section 1.
 
-- Post only with `<skill folder>/scripts/sofa-slack post --text-file <file> [--thread <ts>]`, never with a `slack:*` tool that sends a message, because a post as the user does not notify the user. Write the text to a file in your temp folder first. The script prints `{"channel": "<id>", "ts": "<ts>"}`: keep the `ts` as the thread ID. Read the threads and the reactions with the `slack:*` tools.
-- If `sofa-slack post` exits with code 3, or with code 1 and the error `not_in_channel` or `cannot see`, send `BLOCKED · user step` with the fix that the script printed (`/sofa:setup`, or `/invite @<bot name>` in the channel), and post nothing. Do not post with another tool, because that post comes under the name of the user. On any other exit code 1, send `BLOCKED · team` with the line that the script printed.
-- Exit code 2: the text file or the `--thread` value is wrong. Correct it and post 1 time more. A second exit 2 is a `BLOCKED · team` with the line that the script printed.
+- Post only with `<skill folder>/scripts/sofa-slack post --text-file <file> [--thread <ts>]`, never with a `slack:*` tool that sends a message, because a post as the user does not notify the user. Write the text to a file in your temp folder first. The script prints `{"channel": "<id>", "ts": "<ts>"}`: keep the `ts` as the thread ID. Read each thread with `<skill folder>/scripts/sofa-slack replies --thread <ts> [--oldest <last seen>]`, and the reactions of 1 message with `sofa-slack reactions --ts <ts>`. Each line of output is 1 JSON object. Never read with a `slack:*` tool.
+- If `sofa-slack post`, `replies` or `reactions` exits with code 3, or with code 1 and the error `not_in_channel`, `cannot see` or `missing_scope`, send `BLOCKED · user step` with the fix that the script printed (`$ /sofa:setup` for a missing token or scope, or `/invite @<bot name>` in the channel), and post nothing. Do not post with another tool, because that post comes under the name of the user. On any other exit code 1, send `BLOCKED · team` with the line that the script printed.
+- Exit code 2: the text file or a time stamp (`--thread`, `--oldest` or `--ts`) is wrong. Correct it and run the command 1 time more. A second exit 2 is a `BLOCKED · team` with the line that the script printed.
 - Post each card as a top-level message in the channel. The first line is `ASK · <question id>`. The humans talk in the thread.
 - Poll the open threads with `/loop 3m`. Keep `last seen` per thread in the state store (`sofa-state kv set hitl.<thread> <ts>`). A tick with no new message sends nothing.
 - On each new message, pick 1 action:

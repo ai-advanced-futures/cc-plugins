@@ -56,15 +56,15 @@ Copy `<skill folder>/templates/ADLC.md` to `docs/adlc.md`, fill section 1 and th
 
 Do these in order. The script `<skill folder>/scripts/sofa-slack` does the checks.
 
-1. The user installs the Slack plugin (`$ claude plugin install slack@claude-plugins-official`), because `hitl` and `requests` read Slack with it.
+1. The user installs the Slack plugin (`$ claude plugin install slack@claude-plugins-official`), because `requests` reads Slack with it until STORY-34. `hitl` does not need it: it posts and reads as the app.
 2. Run `sofa-slack manifest --name <team prefix> --repo <owner/name>` and show the JSON. The user opens the Slack app page, selects "Create New App", then "From a manifest", picks the workspace, and pastes the JSON. The manifest holds the name and the scopes. Slack refuses a manifest that is not valid, and tells the user why.
 3. The icon. Run `sofa-slack icon-find`. Use the first line that starts with `ok`. If there is none, run the `canvas-design` skill to make a square PNG of 1024 × 1024 pixels from the repository name, and save it as `.sofa/slack-app-icon.png` in the main folder (git ignores it). Run `sofa-slack icon-check` on the file. If it fails, make the icon 1 time more, then tell the user the size that Slack needs. If `canvas-design` is not installed, show its install command, as "Missing skills" in step 2 says (`anthropics/skills`). Tell the user the path of the file and where to upload it: the app settings, "Basic Information", "Display Information".
 4. The user selects "Install to Workspace" and copies the "Bot User OAuth Token" (it starts with `xoxb-`).
 5. The token goes in the environment (`SLACK_BOT_TOKEN`) or in `.claude/settings.local.json` under `env`. Run `git check-ignore .claude/settings.local.json` first: if it prints nothing, add the file to `.gitignore`. The token stays out of the repository and out of all output, because transcripts and PRs are not private.
-6. Run `sofa-slack whoami`. It shows only `ok`, the team and the bot name. If it exits with code 3, do item 5 again. If it exits with code 1, show its error line (for example `invalid_auth`), and do items 4 and 5 again. Go to item 7 only after `ok`.
+6. Run `sofa-slack whoami`. It shows only `ok`, the team and the bot name. If it exits with code 3, do item 5 again. If it exits with code 1 and `missing scopes:`, the app was made from an older manifest. The user opens the app settings, "App Manifest", pastes the new output of `sofa-slack manifest`, and saves. Then the user selects "Install App", "Reinstall to Workspace", and allows the new scopes. Run `sofa-slack whoami` again. If it says `invalid_auth`, copy the "Bot User OAuth Token" again (items 4 and 5). On any other exit code 1, show its error line (for example `invalid_auth`), and do items 4 and 5 again. Go to item 7 only after `ok`.
 7. The user types `/invite @<bot name>` in the channel.
 8. Write the channel into section 1 (`Slack`) through a PR.
-9. Write a test message to a file, and post it with `sofa-slack post --text-file <file>`. If it exits with code 1 and `not_in_channel` or `cannot see`, the user does item 7 again. Ask the user to react with ✅, and check the reaction with the `slack:*` tools.
+9. Write a test message to a file, and post it with `sofa-slack post --text-file <file>`. If it exits with code 1 and `not_in_channel` or `cannot see`, the user does item 7 again. Ask the user to react with ✅ on the test message, and check the reaction with `sofa-slack reactions --ts <ts of the post>`.
 
 ## Step 6 — The human team
 
