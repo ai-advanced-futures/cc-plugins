@@ -89,3 +89,8 @@ material, and the Apache License does not replace them.
 15. product-finance, by Luis F. Amadeo, MIT License.
     The product-finance plugin ports it, with changes.
     The MIT notice is in plugins/product-finance/NOTICE.
+
+16. architecture (version 2.10.2), by Luis F. Amadeo, MIT License.
+    The architecture-assess plugin is a port of it, with changes.
+    It is not the architecture plugin of this repository.
+    The MIT notice is in plugins/architecture-assess/NOTICE.
