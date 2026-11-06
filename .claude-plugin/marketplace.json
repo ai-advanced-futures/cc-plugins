@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.7.0"
+    "version": "2.8.0"
   },
   "plugins": [
     {
@@ -115,6 +115,12 @@
       "name": "strategic-partnerships",
       "description": "Find, design and decide on partnerships in a software ecosystem. Runs six phases: readiness, partner candidates, deal structure, technical integration, revenue model, and a go or no-go recommendation.",
       "source": "./plugins/strategic-partnerships",
+      "strict": false
+    },
+    {
+      "name": "corporate-development",
+      "description": "Run an M&A pipeline on one target company: readiness, sourcing, assessment, operational and financial due diligence, integration plan, and a go or no-go recommendation.",
+      "source": "./plugins/corporate-development",
       "strict": false
     }
   ]

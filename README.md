@@ -38,6 +38,7 @@ claude plugin install <name>@cc-plugins
 | `ux-hci-design` | Guide a person through UX design with the Design Thinking phases: research, personas, journey maps, design concepts, wireframes, and evaluation, with built-in accessibility (WCAG 2.2) and AI interaction guidelines. |
 | `data-strategy` | Assess the data strategy of a software company: business alignment, the data platform, and the data product portfolio. Write a strategy report, a platform ADR, and a data roadmap. |
 | `strategic-partnerships` | Find, design and decide on partnerships in a software ecosystem. Runs six phases: readiness, partner candidates, deal structure, technical integration, revenue model, and a go or no-go recommendation. |
+| `corporate-development` | Run an M&A pipeline on one target company: readiness, sourcing, assessment, operational and financial due diligence, integration plan, and a go or no-go recommendation. |
 
 ## Skills
 

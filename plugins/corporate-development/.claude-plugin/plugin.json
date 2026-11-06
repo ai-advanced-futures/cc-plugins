@@ -1,0 +1,23 @@
+{
+  "name": "corporate-development",
+  "displayName": "corporate-development",
+  "version": "0.19.0",
+  "description": "Run an M&A deal from the readiness of the buyer to the final recommendation. Seven phases with a gate at each phase: sourcing, assessment, due diligence, integration planning and decision.",
+  "author": {
+    "name": "ai-advanced-futures"
+  },
+  "keywords": [
+    "mergers-and-acquisitions",
+    "due-diligence",
+    "deal-sourcing",
+    "target-assessment",
+    "operational-due-diligence",
+    "financial-due-diligence",
+    "integration-planning",
+    "buy-then-build",
+    "corporate-development",
+    "deal-evaluation"
+  ],
+  "homepage": "https://github.com/ai-advanced-futures/cc-plugins",
+  "repository": "https://github.com/ai-advanced-futures/cc-plugins"
+}

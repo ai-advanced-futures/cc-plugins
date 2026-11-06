@@ -1,0 +1,45 @@
+corporate-development plugin
+
+This plugin is a port of the `corporate-development` plugin, version
+0.18.0, in a private repository of ai-advanced-futures
+(plugins/corporate-development/). Luis F. Amadeo wrote it. It is under
+the MIT license. This plugin takes the whole plugin from it, with these
+changes:
+
+  - It removes the parts for a mission runner of the source repository:
+    the mode check, the `automated` field, the `pipeline_result.json`
+    handoff, and the text about them.
+  - It removes the plugin adapter (the package `corporate_development/plugins`,
+    `operational_dd/plugin_integrator.py`, and their test).
+  - It removes the slide generation text and the other plugin names that
+    this marketplace does not have.
+  - It moves each skill to `skills/<group>-<name>/SKILL.md`, and gives each
+    agent and each command the frontmatter that Claude Code needs.
+  - The commands ask the person. The agents ask nothing. An agent that needs
+    an answer writes a questions file, and the command asks.
+  - It adds `uv` script headers to the two scripts, a changelog, and the
+    file `docs/pipeline-inputs.md`.
+  - It moves the tests of the folder `tests/integration` to `tests/unit/flows`.
+  - It rewrites the README and the architecture decision record.
+
+MIT License
+
+Copyright (c) 2026 Luis F. Amadeo
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
