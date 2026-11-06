@@ -300,7 +300,7 @@
         },
         "Component": {
             "additionalProperties": false,
-            "description": "A runnable or storable building block, or an outside system with kind external.",
+            "description": "A runnable or persistent building block, or an outside system with kind external.",
             "properties": {
                 "aliases": {
                     "description": "Old titles, merged IDs, and old ID forms.",

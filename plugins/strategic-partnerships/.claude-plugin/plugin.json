@@ -1,0 +1,19 @@
+{
+  "name": "strategic-partnerships",
+  "displayName": "strategic-partnerships",
+  "version": "2.1.0",
+  "description": "Assess the readiness of a software company, find and rank partner candidates, structure the deal, design the integration, model the revenue, and give a go or no-go recommendation.",
+  "author": {
+    "name": "ai-advanced-futures"
+  },
+  "homepage": "https://github.com/ai-advanced-futures/cc-plugins",
+  "repository": "https://github.com/ai-advanced-futures/cc-plugins",
+  "keywords": [
+    "partnerships",
+    "strategy",
+    "business-model",
+    "ecosystem",
+    "analysis",
+    "monetization"
+  ]
+}

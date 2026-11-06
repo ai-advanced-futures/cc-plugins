@@ -209,7 +209,7 @@ classes:
             retired_keys, open_rows, fog, approaches, aliases, generated, verified, protected]
     slot_usage: {type: {equals_string: Area}, area: {required: true}, area_state: {required: true}}
   Component:
-    description: A runnable or storable building block, or an outside system with kind external.
+    description: A runnable or persistent building block, or an outside system with kind external.
     annotations: {id_prefix: COMPONENT, directory: components}
     exact_mappings: [c4:Container]
     close_mappings: [backstage:Component]

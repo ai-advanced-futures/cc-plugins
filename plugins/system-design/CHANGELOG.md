@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.8
+
+### Changed
+- The description of the `Component` class in the schema uses the word "persistent" in place of a word that a private-name check matched. The schema files `system-design.yaml` and `system-design.schema.json` change by this one word. The plugin behavior does not change.
+
 ## 0.2.7
 
 ### Changed
