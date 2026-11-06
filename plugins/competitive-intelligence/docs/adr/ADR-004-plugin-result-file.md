@@ -2,6 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-31
+**Amended:** 2026-11-06
 **Author:** Luis F. Amadeo
 **Plugin:** competitive-intelligence 1.6.0 (amended 1.7.0)
 
@@ -22,9 +23,9 @@ Four facts of this plugin shaped the adoption:
 
 1. **Adopt the standard.** `discover` and `analyze` write one result file to `.competitive-intelligence/results/` at the end of every run. This includes a partial run, a halted run, and a run of a person (R1). `result-file.json` names the writer and the defaults registry. `questions/discover.json` and `questions/analyze.json` list the inputs. Each question in the skill carries its `[q: <input>]` id.
 
-2. **Two thin runners are the routes.** `agents/discover-runner.md` and `agents/analyze-runner.md` read the skill file and follow its body. Each has the `## Plugin-run block` section. A runner asks the person nothing: it takes each answer from the answers file of the block (amended 1.7.0: a subagent cannot ask a question). A person who runs `/competitive-intelligence:discover` uses the skill, and the skill asks the questions.
+2. **The skill is the route.** A coach calls the skill `competitive-intelligence:discover` or `competitive-intelligence:analyze` with the `Skill` tool, in the conversation of the coach. The arguments are the `plugin-run` block, or the path of a file that holds it. The `## Plugin-run block` section of the skill reads the block. In a plugin run, the skill asks the person nothing and shows no checkpoint: it takes each answer from the answers file of the block, and it starts the phase agents itself. A person who runs `/competitive-intelligence:discover` uses the same skill, and the skill asks the questions. No agent of this plugin starts an agent, because a subagent cannot limit the agent types that it starts (D-212, STORY-118).
 
-3. **One writer for both skills.** The `## Result file` section of `agents/deliverable-generator.md` holds the rules for both skills. Each runner, and each skill that a person runs, reads that section and writes the file. When the full run dispatches the deliverable generator as Phase 6, the generator writes no result file.
+3. **One writer for both skills.** The `## Result file` section of `agents/deliverable-generator.md` holds the rules for both skills. Each skill reads that section and writes the file, in a plugin run and in a person's run. When the full run dispatches the deliverable generator as Phase 6, the generator writes no result file.
 
 4. **A session for each run.** A coach run uses the session `.competitive-intelligence/<run_id>/`. It reads an earlier session only through `inputs_from`. The `detail` of each result names a file in that session, such as `.competitive-intelligence/acme-0007/intelligence-data.json`. It never names a file at the folder root.
 
@@ -37,6 +38,8 @@ Four facts of this plugin shaped the adoption:
 ## Consequences
 
 - A coach can run either skill with answers and read one checked file back.
+- A plugin run uses the context of the coach and has each tool of the session of the coach, as a person's run does.
+- The build of STORY-118 removes the 2 runner agents `agents/discover-runner.md` and `agents/analyze-runner.md`, and the text that names them.
 - The tests in `tests/unit/test_plugin_result_contract.py` hold both skills to the rules through `tests/plugin_result/conformance.py`. The fixtures in `tests/fixtures/plugin-result/` are real result files from test runs.
 - `analysis_mode` is not marked as a default. It shapes the framing of the synthesis and the deliverables (`agents/lens-executor.md`), and neither skill runs them.
 - Stale unfinished sessions stay in the folder, as they did before, because the sweep never ran.
