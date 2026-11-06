@@ -1,0 +1,104 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "competitive-intelligence:discover",
+  "questions": [
+    {
+      "input": "market",
+      "question": "Which product, market or feature should the analysis cover?",
+      "type": "text"
+    },
+    {
+      "input": "trigger",
+      "question": "What led to this analysis?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "feature_decision",
+          "label": "A decision on whether to build a feature"
+        },
+        {
+          "value": "competitor_response",
+          "label": "A competitor's move, such as a launch"
+        },
+        {
+          "value": "strategic_planning",
+          "label": "A full review of the market"
+        },
+        {
+          "value": "monitoring",
+          "label": "A regular update"
+        }
+      ]
+    },
+    {
+      "input": "scope",
+      "question": "How wide should the analysis be?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "full_market",
+          "label": "The full market"
+        },
+        {
+          "value": "specific_segment",
+          "label": "One segment of the market"
+        },
+        {
+          "value": "single_competitor",
+          "label": "One competitor"
+        },
+        {
+          "value": "specific_feature",
+          "label": "One feature or capability"
+        }
+      ],
+      "default": "full_market"
+    },
+    {
+      "input": "analysis_mode",
+      "question": "Is the analysis for internal decisions or for sales positioning?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "strategic_planning",
+          "label": "Internal decisions: honest about weaknesses"
+        },
+        {
+          "value": "sales_enablement",
+          "label": "Sales positioning: framed for customers"
+        }
+      ],
+      "default": "strategic_planning"
+    },
+    {
+      "input": "depth",
+      "question": "How deep should the analysis go?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "quick_scan",
+          "label": "A quick scan of the key findings"
+        },
+        {
+          "value": "standard",
+          "label": "Standard depth"
+        },
+        {
+          "value": "comprehensive",
+          "label": "Every lens, in full detail"
+        }
+      ],
+      "default": "standard"
+    },
+    {
+      "input": "available_data",
+      "question": "What evidence about the competitors do you have, such as battle cards, win or loss reports or customer feedback, and where are the files?",
+      "type": "text"
+    },
+    {
+      "input": "competitors",
+      "question": "Which competitors must the analysis include?",
+      "type": "text"
+    }
+  ]
+}

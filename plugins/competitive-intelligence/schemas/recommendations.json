@@ -1,0 +1,142 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude-code.marketplace/plugins/competitive-intelligence/schemas/recommendations.json",
+  "title": "Strategic Recommendations",
+  "description": "Confidence-weighted strategic recommendations and tactical actions based on competitive intelligence analysis",
+  "type": "object",
+  "required": ["strategic_recommendations", "tactical_actions"],
+  "properties": {
+    "strategic_recommendations": {
+      "type": "array",
+      "description": "High-level strategic recommendations",
+      "items": {
+        "type": "object",
+        "required": [
+          "recommendation",
+          "rationale",
+          "priority",
+          "confidence",
+          "evidence"
+        ],
+        "properties": {
+          "recommendation": {
+            "type": "string",
+            "description": "The strategic recommendation"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Why this recommendation is being made"
+          },
+          "priority": {
+            "type": "string",
+            "description": "Priority level",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "confidence": {
+            "type": "string",
+            "description": "Confidence in this recommendation",
+            "enum": ["high", "medium", "low", "speculative"]
+          },
+          "evidence": {
+            "type": "array",
+            "description": "Evidence supporting this recommendation (references to other modules)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "competitive-ecosystem.json",
+                "jtbd-analysis.json",
+                "forces-analysis.json",
+                "value-analysis.json",
+                "strategic-analysis.json",
+                "technology-disruption.json",
+                "loss-churn-analysis.json",
+                "swot-analysis.json"
+              ]
+            },
+            "minItems": 1
+          },
+          "estimated_impact": {
+            "type": "string",
+            "description": "Expected impact of implementing this recommendation"
+          },
+          "risks": {
+            "type": "array",
+            "description": "Risks associated with this recommendation",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dependencies": {
+            "type": "array",
+            "description": "What needs to happen first",
+            "items": {
+              "type": "string"
+            }
+          },
+          "timeline": {
+            "type": "string",
+            "description": "Suggested timeline",
+            "enum": ["immediate", "short_term", "medium_term", "long_term"]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "tactical_actions": {
+      "type": "array",
+      "description": "Specific tactical actions to take",
+      "items": {
+        "type": "object",
+        "required": ["action", "timeline"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Specific action to take"
+          },
+          "timeline": {
+            "type": "string",
+            "description": "When to take this action",
+            "enum": ["immediate", "this_week", "this_month", "this_quarter"]
+          },
+          "owner": {
+            "type": "string",
+            "description": "Who should own this action"
+          },
+          "estimated_effort": {
+            "type": "string",
+            "description": "Estimated effort",
+            "enum": ["low", "medium", "high"]
+          },
+          "success_criteria": {
+            "type": "string",
+            "description": "How to measure success"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "monitoring_recommendations": {
+      "type": "array",
+      "description": "What to monitor going forward",
+      "items": {
+        "type": "object",
+        "properties": {
+          "what_to_monitor": {
+            "type": "string",
+            "description": "What should be monitored"
+          },
+          "frequency": {
+            "type": "string",
+            "description": "How often to monitor",
+            "enum": ["daily", "weekly", "monthly", "quarterly"]
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Why this monitoring is important"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

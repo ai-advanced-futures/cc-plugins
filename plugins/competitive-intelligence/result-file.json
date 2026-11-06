@@ -1,0 +1,59 @@
+{
+  "schema": "plugin-result-adoption/1",
+  "plugin": "competitive-intelligence",
+  "commands": {
+    "competitive-intelligence:discover": {
+      "writer": "agents/deliverable-generator.md"
+    },
+    "competitive-intelligence:analyze": {
+      "writer": "agents/deliverable-generator.md"
+    }
+  },
+  "defaults": [
+    {
+      "command": [
+        "competitive-intelligence:discover"
+      ],
+      "input": "depth",
+      "marker": "depth = standard",
+      "file": "agents/context-analyst.md",
+      "anchor": "when nobody gives a depth, use `depth = standard`"
+    },
+    {
+      "command": [
+        "competitive-intelligence:discover"
+      ],
+      "input": "scope",
+      "marker": "scope = full_market",
+      "file": "agents/context-analyst.md",
+      "anchor": "when nobody gives a scope, use `scope = full_market`"
+    },
+    {
+      "command": [
+        "competitive-intelligence:discover"
+      ],
+      "input": "available_data",
+      "marker": "research returned nothing: agent inference",
+      "file": "agents/intelligence-gatherer.md",
+      "anchor": "3. Agent inference: when both above return empty results (mark as SPECULATIVE confidence)"
+    },
+    {
+      "command": [
+        "competitive-intelligence:analyze"
+      ],
+      "input": "analysis_purpose",
+      "marker": "analysis_purpose = strategic_planning",
+      "file": "skills/analyze/SKILL.md",
+      "anchor": "When nobody gives a purpose, use `analysis_purpose = strategic_planning`"
+    },
+    {
+      "command": [
+        "competitive-intelligence:analyze"
+      ],
+      "input": "available_data",
+      "marker": "research returned nothing: agent inference",
+      "file": "skills/analyze/SKILL.md",
+      "anchor": "A lens finding with no source is agent inference: mark it `speculative`."
+    }
+  ]
+}

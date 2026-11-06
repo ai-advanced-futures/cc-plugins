@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude-code.marketplace/plugins/competitive-intelligence/schemas/swot-analysis.json",
+  "title": "SWOT Analysis",
+  "description": "Evidence-based SWOT analysis relative to competitors",
+  "type": "object",
+  "required": ["strengths", "weaknesses", "opportunities", "threats"],
+  "properties": {
+    "strengths": {
+      "type": "array",
+      "description": "Competitive strengths",
+      "items": {
+        "type": "object",
+        "required": ["strength", "evidence", "confidence"],
+        "properties": {
+          "strength": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "description": "Evidence supporting this strength",
+            "items": {
+              "type": "string"
+            }
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["high", "medium", "low", "speculative"]
+          },
+          "relative_to": {
+            "type": "array",
+            "description": "Competitors this is a strength against",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "weaknesses": {
+      "type": "array",
+      "description": "Competitive weaknesses",
+      "items": {
+        "type": "object",
+        "required": ["weakness", "evidence", "confidence"],
+        "properties": {
+          "weakness": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["high", "medium", "low", "speculative"]
+          },
+          "relative_to": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "impact": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          }
+        }
+      }
+    },
+    "opportunities": {
+      "type": "array",
+      "description": "Market opportunities",
+      "items": {
+        "type": "object",
+        "required": ["opportunity", "rationale"],
+        "properties": {
+          "opportunity": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "size": {
+            "type": "string",
+            "enum": ["large", "medium", "small"]
+          },
+          "timeline": {
+            "type": "string",
+            "enum": ["immediate", "short_term", "medium_term", "long_term"]
+          }
+        }
+      }
+    },
+    "threats": {
+      "type": "array",
+      "description": "Competitive threats",
+      "items": {
+        "type": "object",
+        "required": ["threat", "source", "severity"],
+        "properties": {
+          "threat": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "description": "Source of threat (competitor, tech, market)"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "likelihood": {
+            "type": "string",
+            "enum": ["very_likely", "likely", "possible", "unlikely"]
+          },
+          "timeline": {
+            "type": "string",
+            "enum": ["immediate", "near_term", "mid_term", "long_term"]
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

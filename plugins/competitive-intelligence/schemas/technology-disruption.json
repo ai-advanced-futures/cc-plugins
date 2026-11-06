@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude-code.marketplace/plugins/competitive-intelligence/schemas/technology-disruption.json",
+  "title": "Technology Disruption Assessment",
+  "description": "AI and technology disruption risk assessment",
+  "type": "object",
+  "required": ["disruption_assessment"],
+  "properties": {
+    "disruption_assessment": {
+      "type": "object",
+      "required": ["job_replaceability", "overall_risk"],
+      "properties": {
+        "job_replaceability": {
+          "type": "string",
+          "description": "Can AI/tech replace the job",
+          "enum": ["full", "partial", "minimal", "none"]
+        },
+        "feature_commoditization": {
+          "type": "array",
+          "description": "Features at risk of commoditization",
+          "items": {
+            "type": "object",
+            "properties": {
+              "feature": {
+                "type": "string"
+              },
+              "risk_level": {
+                "type": "string",
+                "enum": ["high", "medium", "low"]
+              },
+              "timeline": {
+                "type": "string",
+                "enum": ["immediate", "near_term", "mid_term", "long_term"]
+              }
+            }
+          }
+        },
+        "diy_enablement": {
+          "type": "object",
+          "description": "Can AI enable DIY solutions",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "overall_risk": {
+          "type": "string",
+          "description": "Overall technology disruption risk",
+          "enum": ["critical", "high", "medium", "low", "minimal"]
+        }
+      }
+    },
+    "ai_platforms": {
+      "type": "array",
+      "description": "Specific AI platforms assessed",
+      "items": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "threat_level": {
+            "type": "string",
+            "enum": ["high", "medium", "low"]
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.2.0"
+    "version": "2.3.0"
   },
   "plugins": [
     {
@@ -85,6 +85,12 @@
       "name": "aiml",
       "description": "Help a software engineer build an AI or ML feature, from the choice of approach (LLM, classical ML or hybrid) through design, plan, simulation, code scaffold, training guidance, evaluation and MLOps.",
       "source": "./plugins/aiml",
+      "strict": false
+    },
+    {
+      "name": "competitive-intelligence",
+      "description": "Map the competitors of a market, gather public facts about them, and analyze one competitor through six lenses. Writes a SWOT, recommendations, and a result file for business-case.",
+      "source": "./plugins/competitive-intelligence",
       "strict": false
     }
   ]

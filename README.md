@@ -33,6 +33,7 @@ claude plugin install <name>@cc-plugins
 | `sofa` | Software factory: a team of Claude Code background sessions that build a product from the PRD and roadmap of a repository. |
 | `grounded-synthesis` | Audit a draft against its primary source files. Find the facts that a source holds and the draft does not, and write a gap report. |
 | `aiml` | Help a software engineer build an AI or ML feature, from the choice of approach (LLM, classical ML or hybrid) through design, plan, simulation, code scaffold, training guidance, evaluation and MLOps. |
+| `competitive-intelligence` | Map the competitors of a market, gather public facts about them, and analyze one competitor through six lenses. Writes a SWOT, recommendations, and a result file for business-case. |
 
 ## Skills
 

@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude-code.marketplace/plugins/competitive-intelligence/schemas/value-analysis.json",
+  "title": "Economic Value Analysis",
+  "description": "Economic value to customer (EVC) comparison",
+  "type": "object",
+  "required": ["competitors"],
+  "properties": {
+    "competitors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["competitor_id", "value_drivers"],
+        "properties": {
+          "competitor_id": {
+            "type": "string"
+          },
+          "value_drivers": {
+            "type": "object",
+            "properties": {
+              "time_savings": {
+                "type": "object",
+                "properties": {
+                  "hours_saved": {
+                    "type": "number"
+                  },
+                  "value_per_hour": {
+                    "type": "number"
+                  },
+                  "annual_value": {
+                    "type": "number"
+                  }
+                }
+              },
+              "error_reduction": {
+                "type": "object",
+                "properties": {
+                  "error_rate_reduction": {
+                    "type": "number"
+                  },
+                  "cost_per_error": {
+                    "type": "number"
+                  },
+                  "annual_value": {
+                    "type": "number"
+                  }
+                }
+              },
+              "revenue_impact": {
+                "type": "object",
+                "properties": {
+                  "revenue_increase": {
+                    "type": "number"
+                  },
+                  "annual_value": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          },
+          "total_annual_value": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

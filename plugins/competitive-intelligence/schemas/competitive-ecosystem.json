@@ -1,0 +1,197 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude-code.marketplace/plugins/competitive-intelligence/schemas/competitive-ecosystem.json",
+  "title": "Competitive Ecosystem Map",
+  "description": "Multi-dimensional mapping of the competitive landscape with threat assessment and categorization",
+  "type": "object",
+  "required": ["competitors", "ecosystem_summary"],
+  "properties": {
+    "competitors": {
+      "type": "array",
+      "description": "List of all mapped competitors",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type",
+          "jtbd_alternative",
+          "threat_level",
+          "stage",
+          "market_overlap",
+          "tech_disruption_risk"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this competitor",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "name": {
+            "type": "string",
+            "description": "Competitor name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Competitor type",
+            "enum": ["direct", "indirect", "substitute", "potential"]
+          },
+          "jtbd_alternative": {
+            "type": "string",
+            "description": "How they serve the JTBD",
+            "enum": [
+              "product_solution",
+              "service_solution",
+              "diy_approach",
+              "consume_workaround",
+              "not_doing_job"
+            ]
+          },
+          "threat_level": {
+            "type": "string",
+            "description": "Overall threat assessment",
+            "enum": ["high", "medium", "low"]
+          },
+          "stage": {
+            "type": "string",
+            "description": "Market stage",
+            "enum": ["emerging", "growth", "mature", "declining"]
+          },
+          "market_overlap": {
+            "type": "number",
+            "description": "Market overlap percentage (0.0 to 1.0)",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "tech_disruption_risk": {
+            "type": "string",
+            "description": "Technology disruption risk level",
+            "enum": ["high", "medium", "low", "none"]
+          },
+          "description": {
+            "type": "string",
+            "description": "Brief description of competitor"
+          },
+          "website": {
+            "type": "string",
+            "description": "Competitor website",
+            "format": "uri"
+          },
+          "key_features": {
+            "type": "array",
+            "description": "Key features or capabilities",
+            "items": {
+              "type": "string"
+            }
+          },
+          "business_model": {
+            "type": "string",
+            "description": "Primary business model"
+          },
+          "confidence": {
+            "type": "string",
+            "description": "Confidence in this assessment",
+            "enum": ["high", "medium", "low", "speculative"]
+          },
+          "data_sources": {
+            "type": "array",
+            "description": "Sources for this competitor data",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "ecosystem_summary": {
+      "type": "object",
+      "description": "Summary statistics of the ecosystem",
+      "required": [
+        "total_competitors",
+        "direct_count",
+        "indirect_count",
+        "substitute_count",
+        "high_threat_count"
+      ],
+      "properties": {
+        "total_competitors": {
+          "type": "integer",
+          "description": "Total number of competitors mapped",
+          "minimum": 0
+        },
+        "direct_count": {
+          "type": "integer",
+          "description": "Number of direct competitors",
+          "minimum": 0
+        },
+        "indirect_count": {
+          "type": "integer",
+          "description": "Number of indirect competitors",
+          "minimum": 0
+        },
+        "substitute_count": {
+          "type": "integer",
+          "description": "Number of substitute solutions",
+          "minimum": 0
+        },
+        "potential_count": {
+          "type": "integer",
+          "description": "Number of potential future competitors",
+          "minimum": 0
+        },
+        "high_threat_count": {
+          "type": "integer",
+          "description": "Number of high threat competitors",
+          "minimum": 0
+        },
+        "medium_threat_count": {
+          "type": "integer",
+          "description": "Number of medium threat competitors",
+          "minimum": 0
+        },
+        "low_threat_count": {
+          "type": "integer",
+          "description": "Number of low threat competitors",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "ai_platforms": {
+      "type": "array",
+      "description": "AI platforms assessed as competitive threats",
+      "items": {
+        "type": "object",
+        "required": ["name", "capability", "threat_level"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "AI platform name"
+          },
+          "capability": {
+            "type": "string",
+            "description": "What capability they provide"
+          },
+          "threat_level": {
+            "type": "string",
+            "description": "Threat level from this platform",
+            "enum": ["high", "medium", "low", "none"]
+          },
+          "job_replaceability": {
+            "type": "string",
+            "description": "Can AI replace the job",
+            "enum": ["full", "partial", "minimal", "none"]
+          },
+          "timeline": {
+            "type": "string",
+            "description": "Timeline for threat materialization",
+            "enum": ["immediate", "near_term", "mid_term", "long_term"]
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

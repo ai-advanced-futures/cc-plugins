@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude-code.marketplace/plugins/competitive-intelligence/schemas/forces-analysis.json",
+  "title": "Forces Analysis",
+  "description": "Switching dynamics analysis (Push/Pull/Anxiety/Habit)",
+  "type": "object",
+  "required": ["competitors"],
+  "properties": {
+    "competitors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["competitor_id", "forces"],
+        "properties": {
+          "competitor_id": {
+            "type": "string"
+          },
+          "forces": {
+            "type": "object",
+            "required": ["push", "pull", "anxiety", "habit"],
+            "properties": {
+              "push": {
+                "type": "array",
+                "description": "Push forces (problems with current solution)",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "pull": {
+                "type": "array",
+                "description": "Pull forces (attraction to new solution)",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "anxiety": {
+                "type": "array",
+                "description": "Anxieties about switching",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "habit": {
+                "type": "array",
+                "description": "Habits keeping them with current solution",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "net_force": {
+            "type": "string",
+            "description": "Overall switching likelihood",
+            "enum": ["high_switch", "moderate_switch", "low_switch", "unlikely_switch"]
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

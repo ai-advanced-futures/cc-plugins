@@ -1,0 +1,27 @@
+# Execution plans (keep local for reference, don't commit)
+docs/EXECUTION_PLAN_*.md
+docs/TESTING_REPORT_*.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

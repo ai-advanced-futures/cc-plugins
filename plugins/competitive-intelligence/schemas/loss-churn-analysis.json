@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude-code.marketplace/plugins/competitive-intelligence/schemas/loss-churn-analysis.json",
+  "title": "Loss/Churn Analysis",
+  "description": "Win/loss and customer churn pattern analysis",
+  "type": "object",
+  "required": ["analysis_available"],
+  "properties": {
+    "analysis_available": {
+      "type": "boolean",
+      "description": "Whether loss/churn data is available"
+    },
+    "win_loss_patterns": {
+      "type": "array",
+      "description": "Win/loss patterns by competitor",
+      "items": {
+        "type": "object",
+        "properties": {
+          "competitor_id": {
+            "type": "string"
+          },
+          "losses_to_competitor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "wins_from_competitor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "common_reasons_lost": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "common_reasons_won": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "churn_patterns": {
+      "type": "object",
+      "description": "Customer churn patterns",
+      "properties": {
+        "total_churn_analyzed": {
+          "type": "integer"
+        },
+        "churn_to_competitors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "competitor_id": {
+                "type": "string"
+              },
+              "churn_count": {
+                "type": "integer"
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "insights": {
+      "type": "array",
+      "description": "Key insights from win/loss data",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

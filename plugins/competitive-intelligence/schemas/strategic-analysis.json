@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude-code.marketplace/plugins/competitive-intelligence/schemas/strategic-analysis.json",
+  "title": "Strategic Positioning Analysis",
+  "description": "Business model, competitive positioning, and moats analysis",
+  "type": "object",
+  "required": ["competitors"],
+  "properties": {
+    "competitors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["competitor_id", "business_model", "positioning"],
+        "properties": {
+          "competitor_id": {
+            "type": "string"
+          },
+          "business_model": {
+            "type": "string",
+            "description": "Primary business model"
+          },
+          "positioning": {
+            "type": "string",
+            "description": "Market positioning strategy"
+          },
+          "moats": {
+            "type": "array",
+            "description": "Competitive moats (7 Powers framework)",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "scale_economies",
+                    "network_effects",
+                    "counter_positioning",
+                    "switching_costs",
+                    "branding",
+                    "cornered_resource",
+                    "process_power"
+                  ]
+                },
+                "strength": {
+                  "type": "string",
+                  "enum": ["strong", "moderate", "weak"]
+                },
+                "description": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "vulnerabilities": {
+            "type": "array",
+            "description": "Strategic vulnerabilities",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

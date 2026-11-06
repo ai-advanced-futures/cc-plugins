@@ -49,3 +49,7 @@ material, and the Apache License does not replace them.
 5. aiml, by Luis F. Amadeo, MIT License.
    The aiml plugin ports it, with changes.
    The MIT notice is in plugins/aiml/NOTICE.
+
+6. competitive-intelligence, by Luis F. Amadeo, MIT License.
+   The competitive-intelligence plugin ports it, with changes.
+   The MIT notice is in plugins/competitive-intelligence/NOTICE.

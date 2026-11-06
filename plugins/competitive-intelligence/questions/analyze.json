@@ -1,0 +1,17 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "competitive-intelligence:analyze",
+  "questions": [
+    {"input": "competitor", "question": "Which competitor should the analysis cover?", "type": "text"},
+    {"input": "offering", "question": "Which product of yours should the analysis compare with this competitor?", "type": "text"},
+    {"input": "analysis_purpose", "question": "What is the analysis for?", "type": "choice",
+     "options": [
+       {"value": "strategic_planning", "label": "Planning: a full and honest view"},
+       {"value": "competitive_deal", "label": "A deal against this competitor: positioning"},
+       {"value": "threat_assessment", "label": "Their strengths and the threat they pose"},
+       {"value": "opportunity_finding", "label": "Their weaknesses and the openings they leave"}
+     ],
+     "default": "strategic_planning"},
+    {"input": "available_data", "question": "What evidence about this competitor do you have, such as lost deals, churned customers or battle cards, and where are the files?", "type": "text"}
+  ]
+}

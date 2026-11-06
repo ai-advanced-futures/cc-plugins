@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude-code.marketplace/plugins/competitive-intelligence/schemas/jtbd-analysis.json",
+  "title": "JTBD Performance Analysis",
+  "description": "Job step performance comparison across competitors",
+  "type": "object",
+  "required": ["job_statement", "job_steps", "competitor_performance"],
+  "properties": {
+    "job_statement": {
+      "type": "string",
+      "description": "The job to be done statement"
+    },
+    "job_steps": {
+      "type": "array",
+      "description": "Universal job steps",
+      "items": {
+        "type": "object",
+        "required": ["step_number", "step_name", "needs"],
+        "properties": {
+          "step_number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "step_name": {
+            "type": "string"
+          },
+          "needs": {
+            "type": "array",
+            "description": "Customer needs for this step",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "competitor_performance": {
+      "type": "array",
+      "description": "Performance by competitor",
+      "items": {
+        "type": "object",
+        "required": ["competitor_id", "overall_score", "step_scores"],
+        "properties": {
+          "competitor_id": {
+            "type": "string"
+          },
+          "overall_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "step_scores": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["step_number", "score", "gaps"],
+              "properties": {
+                "step_number": {
+                  "type": "integer"
+                },
+                "score": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10
+                },
+                "gaps": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

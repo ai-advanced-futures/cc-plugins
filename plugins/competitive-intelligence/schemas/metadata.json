@@ -1,0 +1,176 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude-code.marketplace/plugins/competitive-intelligence/schemas/metadata.json",
+  "title": "Competitive Intelligence Analysis Metadata",
+  "description": "Metadata about the competitive intelligence analysis session, including configuration, sources, and confidence levels",
+  "type": "object",
+  "required": [
+    "version",
+    "generated_at",
+    "analysis_context",
+    "phases_executed",
+    "lenses_applied",
+    "data_sources",
+    "overall_confidence"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version (semantic versioning)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "examples": ["1.0.0"]
+    },
+    "generated_at": {
+      "type": "string",
+      "description": "Timestamp when analysis was generated (ISO 8601)",
+      "format": "date-time",
+      "examples": ["2026-01-22T10:00:00Z"]
+    },
+    "analysis_context": {
+      "type": "object",
+      "description": "Context that configured this analysis",
+      "required": ["trigger", "analysis_mode", "scope"],
+      "properties": {
+        "trigger": {
+          "type": "string",
+          "description": "What triggered this analysis",
+          "enum": [
+            "feature_decision",
+            "competitor_response",
+            "strategic_planning",
+            "monitoring"
+          ]
+        },
+        "analysis_mode": {
+          "type": "string",
+          "description": "Analysis mode (affects objectivity)",
+          "enum": ["strategic_planning", "sales_enablement"]
+        },
+        "scope": {
+          "type": "string",
+          "description": "Scope of competitive analysis",
+          "enum": [
+            "single_competitor",
+            "competitor_segment",
+            "full_market",
+            "specific_feature"
+          ]
+        },
+        "timeline": {
+          "type": "string",
+          "description": "Timeline for analysis",
+          "enum": ["immediate", "quarterly", "annual"]
+        }
+      }
+    },
+    "phases_executed": {
+      "type": "array",
+      "description": "Which workflow phases were executed",
+      "items": {
+        "type": "string",
+        "enum": [
+          "context_discovery",
+          "ecosystem_mapping",
+          "intelligence_gathering",
+          "multi_lens_analysis",
+          "synthesis",
+          "deliverable_generation"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "lenses_applied": {
+      "type": "array",
+      "description": "Which analytical lenses were applied",
+      "items": {
+        "type": "string",
+        "enum": [
+          "jtbd_performance",
+          "forces",
+          "economic_value",
+          "strategic_positioning",
+          "technology_disruption",
+          "loss_churn"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "data_sources": {
+      "type": "array",
+      "description": "All data sources used in analysis",
+      "items": {
+        "type": "object",
+        "required": ["type", "confidence"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type of data source",
+            "enum": ["web", "file", "user_provided", "plugin"]
+          },
+          "url": {
+            "type": "string",
+            "description": "URL for web sources",
+            "format": "uri"
+          },
+          "file_path": {
+            "type": "string",
+            "description": "File path for file sources"
+          },
+          "plugin_name": {
+            "type": "string",
+            "description": "Plugin name for plugin sources"
+          },
+          "accessed_at": {
+            "type": "string",
+            "description": "When source was accessed (ISO 8601)",
+            "format": "date-time"
+          },
+          "confidence": {
+            "type": "string",
+            "description": "Confidence in this source",
+            "enum": ["high", "medium", "low", "speculative"]
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes about this source"
+          }
+        }
+      }
+    },
+    "overall_confidence": {
+      "type": "string",
+      "description": "Overall confidence in this analysis",
+      "enum": ["high", "medium", "low", "speculative"]
+    },
+    "warnings": {
+      "type": "array",
+      "description": "Warnings about analysis limitations",
+      "items": {
+        "type": "string"
+      }
+    },
+    "plugin_consumption_guide": {
+      "type": "object",
+      "description": "Guidelines for consuming plugins",
+      "properties": {
+        "compatible_plugins": {
+          "type": "array",
+          "description": "Plugins that can consume these outputs",
+          "items": {
+            "type": "string"
+          }
+        },
+        "suggested_handoffs": {
+          "type": "array",
+          "description": "Suggested plugin handoffs",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
