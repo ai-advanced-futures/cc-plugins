@@ -4,6 +4,7 @@
 **Date:** 2026-02-24
 **Updated:** 2026-02-28 (thin coordinator, parallel waves, definitions as the source of truth, integrity hardening)
 **Updated:** 2026-11-05 (port to this marketplace: the run order, the optional tools)
+**Updated:** 2026-11-06 (STORY-177: the score and band come from truth_tier_validator.py; band choice holds the output)
 
 ---
 
@@ -61,7 +62,7 @@ Each claim gets a tier when the agent writes it.
 | 4 | STRATEGIC_INTENT | Direction stated, not funded | "Our vision is" |
 | 5 | SPECULATION | No evidence | Blocked. It never appears. |
 
-The integrity score is `(total_claims - tier_5_blocked) / total_claims`. The floor is 0.60. The target is 0.85.
+The integrity score is `(total_claims - tier_5_blocked) / total_claims`. The floor is 0.60. The target is 0.85. `scripts/truth_tier_validator.py` computes the score and its band (`floor`, `choice`, `pass`). The orchestrator runs it between the 2 dispatches of each integrity pass. The integrity agent has no shell tool and does not count the score.
 
 ### Scripts for exact work
 
@@ -149,9 +150,10 @@ The file `scripts/gtm_constants.py` holds the agent name lists and the integrity
 
 ### Integrity hardening
 
-- When the person overrides a score from 0.60 to 0.84, the integrity agent runs again with `override_flag=true`. It writes the drafts, with the Tier 5 claims removed, to `gtm-output/`.
-- A score below 0.60 always stops the run.
-- The consolidated audit runs only when all four audits exist and all scores are 0.60 or more.
+- A score from 0.60 to 0.84 (band `choice`) writes no file to `gtm-output/`. The flag `completion_flags.<agent>_integrity` stays false until the person chooses rerun or override.
+- When the person overrides a score from 0.60 to 0.84, the integrity agent runs again in phase `write` with `override_flag=true`. It writes the drafts, with the Tier 5 claims removed, to `gtm-output/`.
+- A score below 0.60 (band `floor`) always stops the run.
+- The consolidated audit runs only when all four audits exist and no band is `floor` (a band `choice` counts only after its override).
 - A superlative with no source is Tier 5. It is blocked.
 
 ---

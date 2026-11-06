@@ -57,7 +57,7 @@ C4Container
   Rel(orchestrator, open, "Writes it and ends with OPEN: when a choice is open")
   Rel(commands, open, "Reads it, asks the person, starts the orchestrator again")
   Rel(content, ctx, "Write drafts and completion_flags")
-  Rel(integrity, scripts, "Scores with truth_tier_validator and the floor and target of gtm_constants")
+  Rel(orchestrator, scripts, "Runs truth_tier_validator between the 2 dispatches of each integrity pass")
   Rel(runners, commands, "Read the command file and follow its body")
   Rel(runners, content, "Follow the Result file section of the writer agent")
   Rel(scgate, scripts, "Classifies the cliff with the sales_comp_gate emitter")
@@ -69,7 +69,7 @@ C4Container
 ## Notes
 
 - The orchestrator is a thin coordinator. It reads only `completion_flags` and one short `completion_log` line of each agent. It never reads artifact content.
-- The integrity agent is the only writer to `gtm-output/`. It gates each artifact on the integrity score. The floor is 0.60 and the target is 0.85. Both values come from `gtm_constants`.
+- The integrity agent is the only writer to `gtm-output/`. It gates each artifact on the band that `truth_tier_validator.py` writes. The floor is 0.60 and the target is 0.85. Both values come from `gtm_constants`.
 - The deepest chain of agents is `/gtm:run`, then `gtm:orchestrator`, then a content agent or the integrity agent. That is two layers below the main conversation.
 - No agent asks the person a question. The commands and the skills ask.
 - The three runners dispatch no agent and publish nothing. A person's run of a marketing command writes the same result file as a coach's run.

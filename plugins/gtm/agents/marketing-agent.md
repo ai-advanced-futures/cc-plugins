@@ -253,7 +253,7 @@ A run whose answers give the product and `self_serve` only, then a run whose ans
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.7.1",
+  "plugin_version": "1.8.0",
   "command": "gtm:marketing:launch",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -305,7 +305,7 @@ A run whose answers give the product and `self_serve` only, then a run whose ans
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.7.1",
+  "plugin_version": "1.8.0",
   "command": "gtm:marketing:launch",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",

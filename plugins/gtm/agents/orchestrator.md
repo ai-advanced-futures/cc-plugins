@@ -123,20 +123,31 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
      → proceed when all dispatched Wave 0 agents are complete (skip entirely if none dispatched)
      → knowledge-agent can end with OPEN: .gtm/open-questions.json (see OPEN QUESTIONS below)
 
-   NOTE — Integrity-agent dispatch parameter: pass target_agent as a field in the Agent call
-   prompt: {"target_agent": "brand"}. Valid values: "brand" | "marketing" | "sales" | "funnel".
-   If target_agent is missing or invalid, integrity-agent will HALT and report an error before proceeding.
+   INTEGRITY PASS of <agent> (brand | marketing | sales | funnel), 3 steps:
+     1. Agent call to integrity-agent with this prompt: {"target_agent": "<agent>", "phase": "audit"}
+     2. Run this command alone, with nothing before or after it (no cd, no ;, no echo $?):
+          uv run ${CLAUDE_PLUGIN_ROOT}/scripts/truth_tier_validator.py --root '<project>' --agent <agent>
+        (<project> as in step 3.) The script writes integrity_score and band into
+        .gtm/audit/<agent>-integrity.json and prints 1 line. The Bash tool shows "Exit code <n>" for an exit
+        that is not 0. With no such line, the exit is 0.
+        → Exit 0: go to step 3.
+        → Each other result (a refused call, an exit that is not 0): do not count the score yourself.
+          A score counted by hand is not a score. Do not do step 3, and leave completion_flags.<agent>_integrity false.
+          Add "integrity pass of <agent> not scored: truth_tier_validator.py did not run" and the output to
+          _meta.execution_log. Stop the run, say this in the reply, and end with `DONE: gtm`.
+     3. Agent call to integrity-agent with this prompt: {"target_agent": "<agent>", "phase": "write"}
 
    Wave 1 — brand identity (sequential — identity anchor):
      → Agent call to brand-agent
      → read completion_flags.brand == true
-     → Agent call to integrity-agent with parameter: target_agent="brand"
+     → INTEGRITY PASS of brand
      → read completion_flags.brand_integrity == true
 
    Wave 2 — demand generation (parallel — MQL pre-seeding enables this):
      → ONE message with TWO Agent calls: marketing-agent AND sales-agent
-     → when both calls return, send ONE message with TWO Agent calls:
-         integrity-agent(target_agent="marketing") AND integrity-agent(target_agent="sales")
+     → when both calls return, do the INTEGRITY PASS of marketing and of sales together: step 1 as
+       ONE message with TWO Agent calls, step 2 for marketing and then for sales (1 command at a time),
+       and step 3 as ONE message with TWO Agent calls
      → NOTE: The 2 agents of each pair run at the same time, and both change gtm-context.json.
        Each agent changes only its own keys with the Edit tool, and never writes the whole
        file with the Write tool.
@@ -149,7 +160,7 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
    Wave 3 — funnel reconciliation (sequential — reconciler):
      → Agent call to funnel-agent
      → read completion_flags.funnel == true
-     → Agent call to integrity-agent with parameter: target_agent="funnel"
+     → INTEGRITY PASS of funnel
      → read completion_flags.funnel_integrity == true
 
    Final — session summary to user:
@@ -159,24 +170,32 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
    Mode 2 — Direct Command (/gtm:marketing:brand, /gtm:sales:pitch, etc.):
    → Load gtm-context.json
    → Route to specific agent (agents are self-contained in direct command mode)
-   → Dispatch integrity-agent after the content agent completes (target_agent = the command agent)
+   → Do the INTEGRITY PASS of the command agent after the content agent completes
    → NOTE: Mode 2 bypasses wave orchestration — no wave flag check, no dispatched_agents
      tracking, no cross-wave dependencies. Each command is a single agent + single integrity pass.
    → Set completion_flags.{agent} = true and completion_flags.{agent}_integrity = true on success
 
    Mode 3 — Resume Session (resume: true):
    → Read gtm-context.json.completion_flags
+   → If .gtm/open-questions.json holds integrity_score and options, and breach_choice has no key for
+     its agent: the question is still open. Dispatch no agent, and end the reply with
+     OPEN: .gtm/open-questions.json
    → Apply breach_choice (see FLOOR BREACH HANDLING)
    → Skip agents where completion_flags == true
    → Re-dispatch only incomplete agents
    → Resume from the start of the first incomplete wave
 
 9. FLOOR BREACH HANDLING:
-   - If any integrity-agent returns completion_flags.{agent}_integrity == false:
-       → Read gtm-context.json.error_log.{agent}_integrity for breach details
-       → Score < 0.60: stop. Offer no override. Dispatch no further agent.
+   Bands of the integrity score (truth_tier_validator.py writes `band`):
+   - floor: integrity_score under 0.60. No file in gtm-output/, and no override.
+   - choice: integrity_score 0.60 to 0.84. No file in gtm-output/, and completion_flags.<agent>_integrity stays false, until the person chooses rerun or override.
+   - pass: integrity_score 0.85 and more. The files go to gtm-output/, and completion_flags.<agent>_integrity is true.
+   - If completion_flags.{agent}_integrity == false after step 3 of an INTEGRITY PASS:
+       → Read band and integrity_score from .gtm/audit/{agent}-integrity.json, and the top issues from
+         gtm-context.json.error_log.{agent}_integrity
+       → Band floor: stop. Offer no override. Dispatch no further agent.
          Report the score and top issues in the reply. Write no question file.
-       → Score 0.60–0.84: the person must choose. You cannot ask. Do this:
+       → Band choice: the person must choose. You cannot ask. Do this:
            1. Write .gtm/open-questions.json:
               {"agent": "{agent}", "integrity_score": X, "top_issues": [...],
                "options": ["rerun", "override"]}
@@ -185,16 +204,16 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
        → /gtm:run asks the person and dispatches this agent again with resume: true and
          breach_choice: {"{agent}": "rerun"} or {"{agent}": "override"}.
    - On resume, for each key of breach_choice:
-       → "rerun": re-run {agent}-agent with revised inputs, then its integrity pass
-       → "override" (score 0.60–0.84 only):
+       → "rerun": re-run {agent}-agent with revised inputs, then its INTEGRITY PASS
+       → "override" (band choice only):
          → Tier 5 claims: already removed by integrity-agent; do not restore them
-         → Re-dispatch integrity-agent with override_flag=true to WRITE Tier-5-cleaned drafts to gtm-output/
-           (cleaned drafts already exist in .gtm/working/{agent}/ from the first run — override promotes them)
+         → Agent call to integrity-agent with this prompt: {"target_agent": "{agent}", "phase": "write", "override_flag": true}
+           It writes the Tier-5-cleaned drafts of .gtm/working/{agent}/ to gtm-output/. Do no new phase audit,
+           and do not run the script again, because the person chose for this score.
          → integrity-agent adds caution banner to each promoted artifact: "⚠️ integrity_score: [X] — below target 0.85"
-         → Set completion_flags.{agent}_integrity = true after promotion completes
-         → Overwrite .gtm/audit/{agent}-integrity-BREACH.json with the Write tool with {"status": "resolved"} (state is now pass-with-caveat, not breach). No tool of yours deletes a file.
+         → integrity-agent sets completion_flags.{agent}_integrity = true after promotion completes
        → Overwrite .gtm/open-questions.json with the Write tool with {"status": "answered"} after the choice is applied. /gtm:run reads this file only after an OPEN line, and each new OPEN question overwrites it.
-   - Read only error_log for breach info. Do not read agent output content.
+   - For breach info, read only error_log and the band and integrity_score of the audit file. Do not read agent output content.
 
 10. OPEN QUESTIONS FROM OTHER AGENTS:
     - If an agent ends with the line OPEN: .gtm/open-questions.json, stop the waves and end
@@ -219,7 +238,8 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
 - Before you use a dispatch value that a prior session may hold, check the existing `gtm-context.json`.
 - Run `integrity-agent` after each content agent in Mode 1. Only the orchestrator starts it, so the order of the audits stays fixed.
 - If MCP servers are offline, log this and tell the user in the summary which data sources are limited.
-- On floor breach (integrity_score < 0.60), report it in the reply at once and dispatch no further wave.
+- On band floor (integrity_score under 0.60), report it in the reply at once and dispatch no further wave.
+- Only truth_tier_validator.py gives integrity_score and band. A score counted by hand is not a score.
 
 ## Completion signal
 

@@ -33,9 +33,10 @@ Where:
 
 ## Thresholds
 
-- **Floor: 0.60** — Below this, return artifact to calling agent for revision. Do NOT deliver to user.
-  Set `floor_breached: true` in `truth-tier-audit.json` when score falls below this threshold.
-- **Target: 0.85+** — Acceptable quality threshold for artifact delivery
+- **Floor: 0.60** — Below this, the band is `floor`. No file goes to `gtm-output/`, and there is no override.
+  `truth_tier_validator.py` sets `floor_breached: true` in `.gtm/audit/{agent}-integrity.json`.
+- **Choice: 0.60 to 0.84** — The band is `choice`. No file goes to `gtm-output/` until the person chooses rerun or override.
+- **Target: 0.85+** — The band is `pass`. The files go to `gtm-output/`.
 
 ## What Does NOT Affect Score
 
@@ -51,5 +52,5 @@ A low integrity score means too many claims were fabricated (Tier 5) and had to 
 
 ## Implementation
 
-`scripts/truth_tier_validator.py` — `TruthTierValidator.audit()` computes this score.
+`scripts/truth_tier_validator.py` computes this score and its band. The orchestrator runs it with `--root '<project>' --agent <agent>` between the 2 dispatches of each integrity pass.
 See `truth-tiers.md` for the full tier classification system.

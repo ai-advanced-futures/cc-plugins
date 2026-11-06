@@ -1,10 +1,33 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+"""Score the claims of one integrity audit.
+
+Run it by its path. It puts its own plugin folder on sys.path, never the cwd:
+    uv run "${CLAUDE_PLUGIN_ROOT}/scripts/truth_tier_validator.py" --root <project> --agent <agent>
+
+It reads .gtm/audit/<agent>-integrity.json, which holds a list `claims`. It adds
+`integrity_score`, `total_claims`, `tier5_blocked`, `by_tier`, `floor_breached`,
+`band` and `scored_by`, and writes the file back. The band is "floor" below
+INTEGRITY_FLOOR, "choice" below INTEGRITY_TARGET, and "pass" above. It prints one
+line and exits 0. Exit 2: the file cannot be read or does not hold valid claims.
+"""
 from __future__ import annotations
 
+import argparse
+import json
 import re
+import sys
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+if __package__ in (None, ""):  # run by path: uv run "<plugin root>/scripts/<file>.py"
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # its own package, never the cwd
+
+from scripts.gtm_constants import INTEGRITY_AGENTS, INTEGRITY_FLOOR, INTEGRITY_TARGET  # noqa: E402
 
 
 class TruthTier(Enum):
@@ -120,3 +143,62 @@ class TruthTierValidator:
             integrity_score=round(score, 2),
             blocked_count=blocked,
         )
+
+
+def band(score: float) -> str:
+    """The band of an integrity score: "floor", "choice" or "pass"."""
+    if score < INTEGRITY_FLOOR:
+        return "floor"
+    if score < INTEGRITY_TARGET:
+        return "choice"
+    return "pass"
+
+
+def score_audit(data: Any) -> dict[str, Any]:
+    """Add the 7 score keys to an audit document. Raise ValueError when the claims are not valid."""
+    if not isinstance(data, dict) or not isinstance(data.get("claims"), list):
+        raise ValueError("the audit must be an object with a list `claims`")
+    for number, claim in enumerate(data["claims"]):
+        if not isinstance(claim, dict) or not isinstance(claim.get("text"), str):
+            raise ValueError(f"claims[{number}] must be an object with a string `text`")
+        evidence = claim.get("evidence")
+        if evidence is not None and not isinstance(evidence, dict):
+            raise ValueError(f"claims[{number}].evidence must be an object or null")
+    report = TruthTierValidator().audit(data["claims"])
+    by_tier = {f"tier_{tier.value}": 0 for tier in TruthTier if tier is not TruthTier.SPECULATION}
+    by_tier["tier_5_blocked"] = 0
+    for result in report.tier_results:
+        key = "tier_5_blocked" if result.blocked else f"tier_{result.tier.value}"
+        by_tier[key] += 1
+    name = band(report.integrity_score)
+    data.update(
+        integrity_score=report.integrity_score,
+        total_claims=len(report.claims),
+        tier5_blocked=report.blocked_count,
+        by_tier=by_tier,
+        floor_breached=name == "floor",
+        band=name,
+        scored_by="truth_tier_validator.py",
+    )
+    return data
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="truth_tier_validator.py", description="Score one integrity audit file.")
+    parser.add_argument("--root", required=True, help="the project root")
+    parser.add_argument("--agent", required=True, choices=INTEGRITY_AGENTS)
+    args = parser.parse_args(argv)
+    path = Path(args.root) / ".gtm" / "audit" / f"{args.agent}-integrity.json"
+    try:
+        data = score_audit(json.loads(path.read_text(encoding="utf-8")))
+        path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    except (OSError, ValueError) as error:
+        print(f"truth_tier_validator.py: {path}: {error}")
+        return 2
+    print(f"{args.agent}: integrity_score {data['integrity_score']:.2f}, band {data['band']} "
+          f"({data['tier5_blocked']} of {data['total_claims']} claims blocked)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

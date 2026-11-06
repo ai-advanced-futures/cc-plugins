@@ -5,7 +5,7 @@ SHELL := /bin/bash
 TIER ?=
 
 # A tier is the first part of a test name: orchestrator (the orchestrator agent with resume fields: a resume after
-# a floor question, a resume when each flag is true, a floor under 0.60), command (/gtm:run --scan-codebase).
+# a floor question, a resume when each flag is true, the 3 bands of the integrity score), command (/gtm:run --scan-codebase).
 PYTEST := GTM_ITEST=1 uv run --quiet --no-project --with-requirements requirements-dev.txt python -m pytest tests/integration -m integration -rs
 
 .PHONY: itest

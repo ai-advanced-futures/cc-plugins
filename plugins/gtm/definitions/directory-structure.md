@@ -35,7 +35,7 @@ for final file names. See that file for the complete list.
 
 | File | Written by | Contents |
 |------|-----------|----------|
-| `{agent}-truth-tier-audit.json` | integrity-agent | Per-claim tier results, integrity score, blocked count |
+| `{agent}-integrity.json` | integrity-agent (the claims and the issues) and `truth_tier_validator.py` (the score keys) | Claims, issues, integrity score, band, blocked count |
 | `{agent}-integrity-BREACH.json` | integrity-agent | Created on floor breach; overwritten with `{"status": "resolved"}` on override or re-pass |
 
 ## Key Invariants

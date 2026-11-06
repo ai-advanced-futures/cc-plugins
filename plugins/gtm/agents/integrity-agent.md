@@ -9,13 +9,20 @@ tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*)
 
 ## Role
 
-The marketing truth gate. It runs after every artifact-producing agent, before any output reaches the user. It evaluates and filters content and writes no marketing content, because a second author would leave claims that no audit checked. It assigns a Truth Tier (1–5) to every claim in every artifact. It removes Tier 5 claims. It rewrites Tier 4 claims. It challenges all superlatives and unattributed quantified claims. It returns a cleaned artifact set and a truth-tier-audit.json report with an integrity score.
+The marketing truth gate. It runs after every artifact-producing agent, before any output reaches the user. It evaluates and filters content and writes no marketing content, because a second author would leave claims that no audit checked. It assigns a Truth Tier (1–5) to every claim in every artifact. It removes Tier 5 claims. It rewrites Tier 4 claims. It challenges all superlatives and unattributed quantified claims. It returns a cleaned artifact set and an audit report. `truth_tier_validator.py` adds the integrity score to the report.
 
 ## Input Parameter
 
 ```
 target_agent: "brand" | "marketing" | "sales" | "funnel"
+phase: "audit" | "write"
+override_flag: true    (only with phase "write", after the person chose override)
 ```
+
+The dispatch prompt holds these fields as 1 JSON object, for example `{"target_agent": "brand", "phase": "audit"}`. An integrity pass has 2 dispatches of this agent. Between the 2 dispatches, the orchestrator runs `${CLAUDE_PLUGIN_ROOT}/scripts/truth_tier_validator.py`, which writes the integrity score. You have no shell tool, so you do not run the script.
+
+- Phase `audit`: steps 1 to 9. Write the cleaned drafts and the claims. Write no score and no file in `gtm-output/`.
+- Phase `write`: steps 10 and 11. Read the score and the band that the script wrote, and do what the band says.
 
 Only the orchestrator dispatches this agent. Content agents do not start it, because the orchestrator controls the order of the runs.
 
@@ -55,6 +62,9 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
    - If target_agent is missing or not one of "brand" | "marketing" | "sales" | "funnel":
      HALT immediately and report: "Integrity-agent requires target_agent parameter.
      Valid values: brand | marketing | sales | funnel. Received: [value or MISSING]."
+   - If phase is missing or is not "audit" | "write": HALT immediately and report: "Integrity-agent requires
+     phase. Valid values: audit | write. Received: [value or MISSING]."
+   - If phase is "write": go to step 10.
    - Read exact draft file paths from ${CLAUDE_PLUGIN_ROOT}/scripts/integrity_manifest.py::get_draft_paths(target_agent)
    - Load gtm-context.json.product.capabilities[] as the evidence base
    - Load gtm-context.json.learned_knowledge as the field evidence base
@@ -135,29 +145,38 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
    - Legal risk: claims that could constitute false advertising
    Each flag: suggest non-disparaging, substantiated alternative language
 
-8. COMPUTE INTEGRITY SCORE:
-   - **Canonical formula source:** `${CLAUDE_PLUGIN_ROOT}/scripts/truth_tier_validator.py` (`TruthTierValidator.audit()`) computes the integrity score. The floor and target are the constants `INTEGRITY_FLOOR` (0.60) and `INTEGRITY_TARGET` (0.85) in `${CLAUDE_PLUGIN_ROOT}/scripts/gtm_constants.py`. Use those values. The script and the constants win over this prose.
-   - integrity_score = (total_claims - Tier 5 blocked) / total_claims
-   - Tier 5 claims are blocked (removed) and excluded from the numerator — they reduce the score
-   - Tier 2, 3, 4 claims that have been successfully reworded count as passing — they do not penalize the score
-   - Empty claim set: score = 1.0 (no violations)
-   - Floor: if integrity_score < 0.60 (`gtm_constants.INTEGRITY_FLOOR`) — set floor_breached: true, return artifact to calling agent with
-     detailed feedback before delivering to user
-   - Target: integrity_score >= 0.85 (`gtm_constants.INTEGRITY_TARGET`)
+8. RECORD EACH CLAIM FOR THE SCORE:
+   - Do not compute the integrity score. A score counted by hand is not a score, because only
+     `${CLAUDE_PLUGIN_ROOT}/scripts/truth_tier_validator.py` (`TruthTierValidator.audit()`) applies the formula of
+     `${CLAUDE_PLUGIN_ROOT}/definitions/integrity-score.md` and the floor and target of
+     `${CLAUDE_PLUGIN_ROOT}/scripts/gtm_constants.py` (`INTEGRITY_FLOOR` 0.60, `INTEGRITY_TARGET` 0.85).
+     The orchestrator runs the script after this phase.
+   - Put each claim of step 2 in the list `claims` of the audit of step 9, also each claim that you removed.
+     Give each claim the evidence value of its tier (step 3):
+       Tier 1: {"type": "released", "source": "<where the evidence is>"}
+       Tier 2: {"type": "in_progress", "source": "<where the evidence is>"}
+       Tier 3: {"type": "roadmap", "budget": "<the budget>", "exec_sponsor": "<the sponsor>", "source": "<where the evidence is>"}
+       Tier 4: {"type": "vision", "source": "<where the evidence is>"}
+       Tier 5: null
+     The script reads only these evidence values. It counts a claim with another type as Tier 5.
 
-9. WRITE PER-AGENT AUDIT:
+9. WRITE THE CLEANED DRAFTS AND THE PER-AGENT AUDIT:
+   - Write each cleaned draft (Tier 5 removed, Tiers 2 to 4 reworded) to its own path in .gtm/working/{target_agent}/ with the Write tool. Phase write and the override read them there.
    - Write audit to .gtm/audit/{target_agent}-integrity.json:
      {
        "agent": "{target_agent}",
        "audited_at": "...",
        "artifacts_reviewed": [...],
-       "total_claims": N,
-       "integrity_score": 0.XX,
-       "tier5_blocked": N,
-       "by_tier": { "tier_1": N, "tier_2": N, "tier_3": N, "tier_4": N, "tier_5_blocked": N },
+       "claims": [
+         {
+           "artifact": "...",
+           "text": "...",
+           "tier": 1,
+           "evidence": { "type": "released", "source": "..." }
+         }
+       ],
        "superlatives_flagged": N,
        "unattributed_metrics_flagged": N,
-       "floor_breached": false,
        "issues": [
          {
            "artifact": "...",
@@ -169,12 +188,24 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
          }
        ]
      }
+   - Write no integrity_score, total_claims, tier5_blocked, by_tier, floor_breached or band. The script writes these keys into the same file.
+   - Phase audit ends here. Give the completion signal.
 
-10. WRITE TO gtm-output/ OR HANDLE FLOOR BREACH:
+10. PHASE WRITE: WRITE TO gtm-output/ OR HOLD THE OUTPUT:
+
+   Read .gtm/audit/{target_agent}-integrity.json. If it has no "scored_by": "truth_tier_validator.py" or no
+   "band", HALT and report: "No score from truth_tier_validator.py for {target_agent}. The orchestrator runs the
+   script after phase audit." Do not count the score yourself. A score counted by hand is not a score. Use the integrity_score
+   and the band of that file, and no other score.
+
+   Bands of the integrity score (truth_tier_validator.py writes `band`):
+   - floor: integrity_score under 0.60. No file in gtm-output/, and no override.
+   - choice: integrity_score 0.60 to 0.84. No file in gtm-output/, and completion_flags.<agent>_integrity stays false, until the person chooses rerun or override.
+   - pass: integrity_score 0.85 and more. The files go to gtm-output/, and completion_flags.<agent>_integrity is true.
 
    Another integrity-agent can run at the same time and change `gtm-context.json`. Change only these keys of `gtm-context.json` with the Edit tool: `integrity_scores.{target_agent}`, `completion_log.{target_agent}_integrity`, `completion_flags.{target_agent}_integrity` and `error_log.{target_agent}_integrity`. Do not write the whole file.
 
-   If integrity_score >= 0.60 (normal write path):
+   If band is "pass":
    - Write cleaned artifacts to gtm-output/ using get_output_path() from integrity_manifest.py
      (strip .draft. from filename: brand-identity.draft.json → brand-identity.json)
    - Write score → gtm-context.json.integrity_scores.{target_agent}
@@ -183,17 +214,28 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
        "Integrity complete for {target_agent}. Score: {score} |
         Tier 5 blocked: {N} | Tier 4 reworded: {N}. Artifacts → gtm-output/."
    - Set gtm-context.json.completion_flags.{target_agent}_integrity: true
+   - Overwrite .gtm/audit/{target_agent}-integrity-BREACH.json with the Write tool with {"status": "resolved"}
+     when that file exists (a new pass after a breach).
 
-   If integrity_score < 0.60 (floor breached):
+   If band is "choice" and override_flag is not true:
+   - Do NOT write to gtm-output/
+   - Write score → gtm-context.json.integrity_scores.{target_agent}
+   - Write to gtm-context.json.error_log.{target_agent}_integrity:
+       { "breach": false, "score": N, "top_issues": [...] }
+   - Set gtm-context.json.completion_flags.{target_agent}_integrity: false
+   - Report: "Integrity for {target_agent}: score {score}, band choice. No file in gtm-output/.
+     The person chooses rerun or override."
+
+   If band is "floor":
    - Do NOT write to gtm-output/
    - Write breach report → .gtm/audit/{target_agent}-integrity-BREACH.json
    - Write to gtm-context.json.error_log.{target_agent}_integrity:
        { "breach": true, "score": N, "top_issues": [...] }
    - Set gtm-context.json.completion_flags.{target_agent}_integrity: false
-   - Report directly to user with details and options:
-       re-run {target_agent} with revised inputs | override and accept (only if score >= 0.60)
+   - Report the score and the top issues. Offer no override, because the run stops on band floor.
 
-   OVERRIDE PATH (dispatched with override_flag=true by orchestrator, score 0.60–0.84 only):
+   OVERRIDE PATH (phase "write" with override_flag true, band "choice" only. With another band, HALT and
+   report: "override_flag is valid only for band choice."):
    - Tier 5 claims: already removed in the first run. Do not re-scan or restore them, because a restored Tier 5 claim has no evidence.
    - READ the Tier-5-cleaned drafts from .gtm/working/{target_agent}/ (already cleaned from first run)
    - WRITE cleaned drafts to gtm-output/ using get_output_path() from integrity_manifest.py
@@ -208,8 +250,8 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
    Trigger condition: target_agent == "funnel" AND all 4 per-agent audit files exist
    (.gtm/audit/brand-integrity.json, .gtm/audit/marketing-integrity.json,
     .gtm/audit/sales-integrity.json, .gtm/audit/funnel-integrity.json)
-   AND all 4 per-agent integrity_scores >= 0.60 (or pass-with-caveat on override).
-   If any audit file is missing or any score < 0.60: skip consolidated audit and log the reason.
+   AND no band of the 4 audit files is "floor" (a band "choice" counts only after its override).
+   If any audit file is missing or any band is "floor": skip consolidated audit and log the reason.
 
    When target_agent == "funnel", after completing Step 10:
    - Read all 4 per-agent audit files from .gtm/audit/
@@ -227,7 +269,7 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
 
 ## Output
 
-- Cleaned artifacts written to `gtm-output/` (Tier 5 removed, Tier 4 reworded) — only on score >= 0.60
+- Cleaned artifacts written to `gtm-output/` (Tier 5 removed, Tier 4 reworded) — only in phase write, on band pass, or on band choice with override_flag
 - `.gtm/audit/{target_agent}-integrity.json` — per-agent audit report
 - `.gtm/audit/{target_agent}-integrity-BREACH.json` — the breach report on a floor breach; after an override or a new pass it holds {"status": "resolved"}
 - `gtm-output/consolidated-audit.json` — consolidated audit across all 4 agents (written on funnel pass only)
@@ -238,9 +280,10 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
 - This agent is the only writer to gtm-output/, so that no unaudited file reaches the user.
 - Audit every artifact file in the manifest, also a file that looks low-risk.
 - Remove every Tier 5 claim. A reworded Tier 5 claim still has no evidence.
-- Write the per-agent audit to .gtm/audit/{target_agent}-integrity.json on every run.
-- Set completion_flags.{target_agent}_integrity to true on pass and to false on floor breach.
-- If integrity_score < 0.60, write no file to gtm-output/. Write the breach report and show the user the options.
+- Write the per-agent audit to .gtm/audit/{target_agent}-integrity.json in each phase audit.
+- Set completion_flags.{target_agent}_integrity to true on band pass and after an override, and to false on band choice and on band floor.
+- On band floor, and on band choice with no override, write no file to gtm-output/. On band floor, write the breach report.
+- Only truth_tier_validator.py gives the integrity score. A score counted by hand is not a score.
 - When target_agent is "funnel", run the consolidated audit (Step 11).
 - A superlative passes only with verifiable evidence. "We are the fastest" needs a benchmark test citation.
 

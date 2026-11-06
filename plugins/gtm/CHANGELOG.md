@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.8.0
+
+- The integrity score comes from `scripts/truth_tier_validator.py`, not from the model. An integrity pass has 3 steps: the integrity agent audits (phase `audit`), the orchestrator runs the script, and the integrity agent writes (phase `write`). The script writes `integrity_score`, `band` and 5 more keys into `.gtm/audit/<agent>-integrity.json` (STORY-177).
+- 3 bands. Band `floor` (under 0.60) stops the run. Band `choice` (0.60 to 0.84) writes no file to `gtm-output/` and keeps the integrity flag false until the person chooses rerun or override. Band `pass` (0.85 and more) writes the files. Before, a score from 0.60 to 0.84 wrote the files.
+- When the script does not run, the run writes no score, logs the reason, and stops.
+- A resume with an open question runs no agent.
+- ADR-001 records the change. New tests: `test_integrity_bands.py`, `test_truth_tier_validator_cli.py`, and 4 live tests.
+
 ## 1.7.1
 
 - The `run-id` form of `scripts/result_name.py` and the `run_id` of a file name use the `_RUN_ID` pattern of the result-file checker: 4 to 64 of a-z, 0-9 and `-`, with a-z or 0-9 first and last. A value such as `Run_1`, `ab` or `a..b` now exits 2, as the checker refuses it (STORY-164). The command part keeps the plain-name rule.
