@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.9.0
+
+This version gives each agent a short list of tools, and it moves a plugin run from 2 runner agents into the skills (STORY-118, issue 470).
+
+- The intelligence gatherer had no `tools:` list, so it had each tool of the session, with each MCP tool. Now it has `Read, Write, Grep, Glob, WebSearch, WebFetch`. It has no MCP tool.
+- The MCP research server is now called by the skill `discover` or `competitive-intelligence`, which has the tools of the session. The skill writes the results to `research-notes.json` in the session folder and gives the gatherer the dispatch field `research_notes`. With no server, the gatherer uses `WebSearch` and `WebFetch`, as before.
+- The classifier agent has `Read, Write, WebFetch`. It had `Bash(uv run *)`, which does not limit the program. It writes `vendor-archetype-input.json` and ends with the line `INPUT: <path>`. The skill `vendor-archetype-classify` now runs the emitter (its `allowed-tools` line is `Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)`), reads the handoff file, and shows the state.
+- The agents `discover-runner` and `analyze-runner` are removed. A coach now calls the skill `competitive-intelligence:discover` or `competitive-intelligence:analyze` with the `Skill` tool. The arguments are the `plugin-run` block, or 1 line that is the path of a file that holds the block. The section `## Plugin-run block` of each skill holds the rules of a plugin run: no question, no checkpoint, each answer from the answers file, the `run_id` check, the session folder and `session.json`, and the halt. The skill starts the phase agents itself, so no agent of this plugin has `Agent` or `Bash`.
+- A plugin run now happens in the conversation of the coach, so it has each tool of that session, as a person's run does (ADR-004, D-212).
+- A new test fails on each agent with no `tools:` list, on each `Bash` entry (`Bash(uv run *)` too), and on each `Agent` entry.
+- The README, ADR-001, and the C4 diagrams name the skills as the route of a plugin run.
+
 ## 1.8.0
 
 This version adds the competitive-intelligence brain: the save code and the schema. It is the first of two parts. The hook, the skills, and the `ingest` steps come in the next version.

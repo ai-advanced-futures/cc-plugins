@@ -1,11 +1,14 @@
 ---
 name: vendor-archetype-classify
 description: Classifies the current pricing of a vendor into one of the 5 canonical agentic-pricing archetypes. Use when the person wants to know which archetype the pricing page of a vendor maps to, or wants to refresh the Wave 1 vendor registry.
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
 ---
 
 # Vendor Archetype Classification
 
-This skill classifies the current pricing model of a vendor into one of the five canonical vendor archetypes (JustKeenAI v2.1 Chapter 1). You run in the main conversation, so you ask the person. The agent `competitive-intelligence:vendor-archetype-classifier-agent` cannot ask.
+This skill classifies the current pricing model of a vendor into one of the five canonical vendor archetypes (JustKeenAI v2.1 Chapter 1). You run in the main conversation, so you ask the person and you run the program. The agent `competitive-intelligence:vendor-archetype-classifier-agent` cannot ask and has no shell.
+
+Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py <args>`, one command per Bash call. Never run inline code in any language, and write every file with the Write tool, because only this plugin's scripts run with no question to the person.
 
 ## When to use
 
@@ -15,13 +18,15 @@ This skill classifies the current pricing model of a vendor into one of the five
 ## How it works
 
 1. Ask the person for the vendor name and its pricing page with `AskUserQuestion`, unless the person already gave them. The page is a URL or a pasted text. For a registry refresh, read `${CLAUDE_PLUGIN_ROOT}/definitions/wave1-vendors.json`, ask which vendors to refresh, and use the `vendor_name` and `pricing_page_url` of each.
-2. Dispatch `competitive-intelligence:vendor-archetype-classifier-agent` with the `Agent` tool. Give it `vendor_name`, and `pricing_page_url` or `pricing_page_text`. Wait for it to finish.
-3. The agent extracts seven boolean pricing signals from the vendor's pricing page.
-4. The deterministic Python classifier (`scripts/vendor_archetype_classifier.py`) maps the signals to one of: `pure_outcome_absorbed`, `hybrid_platform_outcome`, `pure_per_seat` (+ `seat_anchor`), `hybrid_seat_meter`, `pure_passthrough`.
-5. The emitter writes `.competitive-intelligence/vendor-archetype-classification.json` (the federation artifact, `audience: mixed`) and a handoff file.
+2. Dispatch `competitive-intelligence:vendor-archetype-classifier-agent` with the `Agent` tool. Give it `vendor_name`, and `pricing_page_url` or `pricing_page_text`. Wait for it to finish. For a registry refresh, dispatch it for one vendor, run steps 4 to 6 for that vendor, and only then dispatch it for the next one, because each vendor uses the same input file.
+3. The agent extracts seven boolean pricing signals from the pricing page of the vendor, writes them to `.competitive-intelligence/vendor-archetype-input.json`, and ends with the line `INPUT: .competitive-intelligence/vendor-archetype-input.json`. If it reports a gap, show the gap to the person and stop.
+4. Run the emitter on the input file, from the project folder, on its own:
+   `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/vendor_archetype_emitter.py --input .competitive-intelligence/vendor-archetype-input.json --output-dir .`
+   When the script fails to import a package, show a gap that names the missing package and stop. Make up no output, because the handoff file must come from the emitter.
+5. The deterministic Python classifier (`scripts/vendor_archetype_classifier.py`, which the emitter calls) maps the signals to one of: `pure_outcome_absorbed`, `hybrid_platform_outcome`, `pure_per_seat` (+ `seat_anchor`), `hybrid_seat_meter`, `pure_passthrough`. The emitter writes `.competitive-intelligence/vendor-archetype-classification.json` (the federation artifact, `audience: mixed`) and a handoff file.
 6. Read `.competitive-intelligence/vendor-archetype-handoff.json`. Show the person the `state`. For `success`, show the archetype and the `best_in_class_pattern`. For `blocked` or `error`, show the `reason`.
 
-If the agent reports a gap (no pricing page, or a package that the emitter cannot import), show the gap to the person and stop.
+If the agent reports a gap (no pricing page), show the gap to the person and stop.
 
 Take the archetype from the classifier output, because the classifier is a deterministic script.
 

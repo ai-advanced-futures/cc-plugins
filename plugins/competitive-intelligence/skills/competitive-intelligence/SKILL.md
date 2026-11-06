@@ -5,7 +5,7 @@ description: Runs the full competitive analysis in 6 phases, from the first ques
 
 # Competitive intelligence: the full run
 
-Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py <args>`, one command per Bash call. Never run inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc), never write a script of your own and run it, and write every file with the Write tool, never with a shell command, because the shell grant of a runner covers only `git rev-parse`, `date` and `uv run`.
+Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py <args>`, one command per Bash call. Never run inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc), never write a script of your own and run it, and write every file with the Write tool, never with a shell command, because only this plugin's scripts run with no question to the person.
 Run every agent you dispatch in the foreground and wait for it to finish.
 This plugin's root is `${CLAUDE_PLUGIN_ROOT}`; wherever a file you read writes `${CLAUDE_PLUGIN_ROOT}`, use that path.
 Ask a number or a free-text input as a text question with `AskUserQuestion` [q: none], 1 question for each call, or offer options that are real values; never offer an option that only says to type, such as "Type amount", "Type it", "Enter figures" or "List them", because a person who picks such an option gives no value.
@@ -80,7 +80,7 @@ Offer Skip for a lens only, because a phase cannot be skipped.
 
 ### 2. Phases 1 to 3: discover
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/discover/SKILL.md` and follow its steps 1 to 7, because step 0 here did its step 0 and this skill writes no result file (its steps 8 and 9).
+Read `${CLAUDE_PLUGIN_ROOT}/skills/discover/SKILL.md` and follow its steps 1 to 7, because step 0 here did its step 0 and this skill writes no result file (its steps 8 and 9). Its step 6 calls the MCP research server first, when the session has one, and gives the gatherer the dispatch field `research_notes`: do that here too, before you dispatch `competitive-intelligence:intelligence-gatherer`.
 After each phase, add its name to `phases_complete` in `session.json`, set `current_phase`, add the checkpoint to `checkpoints_passed`, and log the decision to `execution-log.md`.
 
 ### 3. Phase 4: multi-lens analysis

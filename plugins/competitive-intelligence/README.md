@@ -83,9 +83,9 @@ The skills start the agents with the `Agent` tool. An agent asks you nothing, be
 | `lens-executor` | Sonnet | Phase 4: read each lens skill and follow it, one layer after the other. |
 | `synthesizer` | Opus | Phase 5: write the SWOT and the recommendations. |
 | `deliverable-generator` | Sonnet | Phase 6: write the deliverables. It also holds the rules of the result file. |
-| `discover-runner` | Sonnet | Run `discover` for a coach with the answers of a `plugin-run` block. |
-| `analyze-runner` | Sonnet | Run `analyze` for a coach with the answers of a `plugin-run` block. |
-| `vendor-archetype-classifier-agent` | Sonnet | Find the pricing signals of one vendor and run the classifier. |
+| `vendor-archetype-classifier-agent` | Sonnet | Find the pricing signals of one vendor and write the input file. The skill runs the classifier. |
+
+Each agent has a short list of tools. No agent has `Bash` or `Agent`: a skill runs each program and starts each agent. The intelligence gatherer has only `Read`, `Write`, `Grep`, `Glob`, `WebSearch` and `WebFetch`.
 
 When an agent needs an answer in the middle of a run, it writes `open-questions.json` in the session folder and returns `QUESTIONS: <path>`. The skill asks the questions and starts the agent again.
 
@@ -127,7 +127,7 @@ Only `scripts/ci_graph.py` writes the graph. Do not edit a page by hand. The com
 
 ## Run for a coach
 
-The `business-case` coach starts `competitive-intelligence:discover-runner` and `competitive-intelligence:analyze-runner` with a `plugin-run` block. The block has the fields `command`, `automated`, `answers_path`, `case`, `run_id`, and `inputs_from`. A runner asks nothing. It takes each answer from the answers file, and it uses the default in `result-file.json` for each answer that is missing. Then it writes the result file. `questions/discover.json` and `questions/analyze.json` list the inputs of each skill. ADR-004 gives the details.
+The `business-case` coach calls the skill `competitive-intelligence:discover` or `competitive-intelligence:analyze` with the `Skill` tool. The arguments are a `plugin-run` block, or 1 line that is the path of a file that holds the block. The block has the fields `command`, `automated`, `answers_path`, `case`, `run_id`, and `inputs_from`. In a plugin run, the skill asks nothing and shows no checkpoint. It takes each answer from the answers file, and it uses the default in `result-file.json` for each answer that is missing. It starts the phase agents itself. Then it writes the result file. The run happens in the conversation of the coach, so it has each tool of that session. `questions/discover.json` and `questions/analyze.json` list the inputs of each skill. ADR-004 gives the details.
 
 ## Configuration
 
@@ -135,7 +135,7 @@ The plugin needs no setting, no environment variable, and no MCP server. You con
 
 - **Analysis parameters.** Phase 1 collects the trigger, the scope, the analysis mode, the depth, and the evidence. It writes them to `context-config.json`. The trigger sets the lens priority. The analysis mode changes only the framing.
 - **Session files.** Each run writes to its own folder `.competitive-intelligence/<session>/`. The plugin deletes a file in `.competitive-intelligence/` only when `ci_graph.py ingest` has written the file into pages.
-- **Optional MCP research server.** The intelligence gatherer uses an MCP research server when you added one. Without one, it uses `WebSearch` and `WebFetch`. The plugin starts no outside service. To add a server, run `claude mcp add`. Servers such as Klue or Crayon are options for later. See ADR-001.
+- **Optional MCP research server.** When you added an MCP research server, the skill `discover` or `competitive-intelligence` calls it for each Tier 1 and Tier 2 competitor before phase 3, and writes the results to `research-notes.json` in the session folder. The intelligence gatherer reads that file. The gatherer has no MCP tool of its own. Without a server, it uses `WebSearch` and `WebFetch`. The plugin starts no outside service. To add a server, run `claude mcp add`. Servers such as Klue or Crayon are options for later. See ADR-001.
 
 ## Privacy
 

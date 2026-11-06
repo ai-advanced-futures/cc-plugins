@@ -6,10 +6,24 @@ allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
 
 # /competitive-intelligence:analyze
 
-Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py <args>`, one command per Bash call. Never run inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc), never write a script of your own and run it, and write every file with the Write tool, never with a shell command.
-Run every agent you dispatch in the foreground and wait for it to finish; never run one in the background (`run_in_background: true`) before the result file is written.
+Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py <args>`, one command per Bash call. Never run inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc), never write a script of your own and run it, and write every file with the Write tool, never with a shell command, because only this plugin's scripts run with no question to the person.
+Run every agent you dispatch in the foreground and wait for it to finish; never run one in the background (`run_in_background: true`) before the result file is written, because the result file needs the output of each agent.
 This plugin's root is `${CLAUDE_PLUGIN_ROOT}`; wherever a file you read writes `${CLAUDE_PLUGIN_ROOT}`, use that path.
-Ask a number or a free-text input as a text question with `AskUserQuestion` [q: none], 1 question for each call, or offer options that are real values; never offer an option that only says to type, such as "Type amount", "Type it", "Enter figures" or "List them".
+Ask a number or a free-text input as a text question with `AskUserQuestion` [q: none], 1 question for each call, or offer options that are real values; never offer an option that only says to type, such as "Type amount", "Type it", "Enter figures" or "List them", because a person who picks such an option gives no value.
+
+## Plugin-run block
+
+A run is a plugin run when the arguments of this skill hold a fenced block with the info string `plugin-run`, or when the arguments are 1 line that is the path of a file that holds that block (read the block from that file with the Read tool). Another plugin calls this skill with the `Skill` tool in its own conversation. The block holds `command`, `automated`, `answers_path`, `case`, `run_id` and `inputs_from`. With no block, this is a person's run: skip this section, and ask the person as the steps say.
+
+In a plugin run, you cannot ask the person, so the answers file gives each answer. In a plugin run of `competitive-intelligence:analyze`:
+
+- Read the answers file at `answers_path` and use its `competitive-intelligence:analyze` section. A value it gives replaces the default for that input. Each answer has `settled_by`. A value with `settled_by: person` is a source of type `person`; a value with `settled_by: recommended` is a source of type `default`. When an input has no answer, use the default of `${CLAUDE_PLUGIN_ROOT}/result-file.json` and record it in `defaults`.
+- The arguments are not the `competitor`: the answers file gives it. Do not call `AskUserQuestion` [q: none] and do not show a checkpoint: skip the questions of steps 1 and 2, the checkpoint of step 6, and the question "Retry, Skip or Cancel?" (skip the lens).
+- `automated: true` in the invocation block wins over any config file's automation setting, so the run skips the checkpoint.
+- Read an earlier run's files only through `inputs_from`; with no entry for `competitive-intelligence`, read no earlier session and do not offer to run discover first, because `inputs_from` is the only list of earlier runs and you cannot ask. `case` goes in `run.case`, and `run_id` goes in `run.run_id` and in the file name.
+- The session folder is `.competitive-intelligence/<run_id>/`, when the `run_id` passes the check of step 0, under the git root, and it holds every file of the skill.
+- When the answers give no `competitor`, run only step 0 and step 8, and write the result file with the halt gap.
+- The run ends with the result file written to `.competitive-intelligence/results/` by the rules of `agents/deliverable-generator.md`. The last line of your reply is the path of the result file.
 
 ## Purpose
 
@@ -46,8 +60,11 @@ You run in the main conversation, so you ask the person. You read each lens skil
 ```markdown
 0. READ THE START TIME AND THE VERSION:
    - Run `date -u +%Y-%m-%dT%H:%M:%SZ` on its own and keep it as `started_at`, and keep the `version` of `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`. When a `date` call is denied or fails, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py now` on its own and use its output as that time. The result file needs both.
-   - The session folder `{session}` is the `run_id` in a plugin run (after the check of the runner, step 1), and `started_at` written as `YYYYMMDDTHHMMSSZ` in a person's run. In a person's run, `run_id` is absent, whatever the session folder is called.
+   - Run `git rev-parse --show-toplevel` on its own. Its output is the git root. When it fails, the git root is the working directory.
+   - In a plugin run, check the `run_id`. When it holds a `'`, it is not a plain name: do not put it in a command, because a `'` ends the quotes and the shell runs the rest of the value. Else run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py run-id '<run_id>'` on its own. When the `run_id` holds a `'` or the command exits 2, continue with no `run_id`, as a person's run does. The session folder is the one of a person's run, the result file has no `run.run_id` and no `-<run_id>` in its name, and it records the gap `{"kind": "risk", "label": "run_id", "why": "the run_id of the plugin-run block is not a plain name; the run used none"}`. The answers file and the `automated` rule stay. A halt writes this gap too.
+   - The session folder `{session}` is the `run_id` in a plugin run with a `run_id` that passed the check above, and `started_at` written as `YYYYMMDDTHHMMSSZ` in a person's run. In a person's run, `run_id` is absent, whatever the session folder is called.
    - Every lens skill this skill follows gets `session_id` = `{session}` and `data_dir` = `.competitive-intelligence/{session}/` under the git root.
+   - In a plugin run, write `session.json` in that folder: `session_id`, `mode`, `started_at`, `run_id` and `case`, `lenses_complete: []` and `lens_failures: {}`. Record each finished lens in `lenses_complete`, and each lens that did not run in `lens_failures` with the reason.
 
 1. ORIENT:
    - Check if competitor exists in ecosystem mapping (in both .competitive-intelligence/ and .competitive-intel/, newest file first)

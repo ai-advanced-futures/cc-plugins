@@ -61,7 +61,7 @@ Split the plugin into three layers:
 
 ### Decision 1: Agent Pipeline Architecture (1.0.0, amended 1.7.0)
 
-The plugin has nine agents with clear role boundaries. Six agents run the phases. Two runners route a coach to the result file (ADR-004). One agent classifies vendor pricing (ADR-002).
+The plugin has seven agents with clear role boundaries. Six agents run the phases. One agent classifies vendor pricing (ADR-002). A coach reaches the result file through the skills `discover` and `analyze` (ADR-004), and no agent starts an agent *(amended STORY-118)*.
 
 | Agent | Model | Role |
 |-------|-------|------|
@@ -71,9 +71,7 @@ The plugin has nine agents with clear role boundaries. Six agents run the phases
 | lens-executor | sonnet | Phase 4: thin coordinator that reads the 6 lens skills and follows them across 4 execution layers |
 | synthesizer | opus | Phase 5: cross-lens integration, SWOT, confidence-weighted recommendations |
 | deliverable-generator | sonnet | Phase 6: AI-native artifacts (JSON, Python scripts), human artifacts, and the rules of the result file |
-| discover-runner | sonnet | Route for a coach: follows `discover` with the answers of a `plugin-run` block |
-| analyze-runner | sonnet | Route for a coach: follows `analyze` with the answers of a `plugin-run` block |
-| vendor-archetype-classifier-agent | sonnet | Extracts the pricing signals of one vendor and runs the classifier |
+| vendor-archetype-classifier-agent | sonnet | Extracts the pricing signals of one vendor and writes the input file. The skill runs the classifier |
 
 Every agent uses the sonnet model, except the synthesizer, which uses opus *(amended 1.3.0)*. The synthesizer is the last analysis step and the only consumer of the full data (Decision 5). It writes the final SWOT and recommendations that the person reads, so the role-tier rule for the synthesis role applies (opus). The individual lenses stay on sonnet, because the reasoning of a lens fits the capability of sonnet at this problem size.
 
@@ -171,7 +169,7 @@ Trigger/mode taxonomy:
 **Failure rule.** When a phase or a lens fails two times:
 - A skill asks the person: Retry, Skip (a lens only), or Cancel.
 - The lens executor marks a lens that fails two times `skipped`, writes the reason in `lens_failures`, and goes on. A reduced analysis is better than none.
-- A runner writes the result file with a gap for the phase that failed.
+- A plugin run of a skill writes the result file with a gap for the phase that failed.
 - A phase that fails is fatal for the full run, because the phases depend on each other. A skipped phase damages every later phase.
 
 **Rationale:** A subagent cannot ask a question, and a coach has no person to answer. The skill is the one place that knows whether a person is present. The agents have one rule: ask nothing and use the dispatch fields.
@@ -210,7 +208,7 @@ A skill or an agent runs a plugin script as `uv run ${CLAUDE_PLUGIN_ROOT}/script
 
 - **Confidence regression testing** — `confidence_scoring.py` gives deterministic outputs. The pytest suite checks the propagation rules and the override logic with no LLM.
 - **Lens independence** — Each lens skill reads from disk and writes to disk. To add a 7th lens, add a SKILL.md file and a step in the lens executor. No other agent changes.
-- **Coach plugins** — A coach runs `discover-runner` or `analyze-runner` with a `plugin-run` block and reads one checked result file.
+- **Coach plugins** — A coach calls the skill `discover` or `analyze` with a `plugin-run` block and reads one checked result file.
 - **Context preservation** — Phase 1 decisions (scope, competitor priorities, confidence thresholds) are in context-config.json on disk. Each later agent reads them fresh, and compaction cannot remove them.
 - **Concurrent session support** — One folder for each run lets runs go in parallel with no file conflicts.
 
