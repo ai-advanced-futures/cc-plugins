@@ -2,6 +2,12 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.3.1 - 2026-11-06
+
+- The skill `ux-design` runs the reviewers in the foreground, waits for each of them, and checks each findings file before it starts `ux-evaluator`.
+- Each reviewer writes `<output_dir>/reviews/<reviewer>/findings.json` with the list under the key `findings` (the usability reviewer used another key before).
+- `ux-evaluator` stops with `MISSING_REVIEW: <reviewer> <path>` and writes no report when a findings file is missing. The skill shows the line and stops.
+
 ## 1.3.0 - 2026-11-05
 
 This version is the port of the plugin to the cc-plugins marketplace (STORY-73).

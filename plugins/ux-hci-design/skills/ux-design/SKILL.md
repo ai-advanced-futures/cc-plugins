@@ -405,23 +405,27 @@ Output: wireframes.json, interaction_patterns.json
 
 A subagent cannot limit the agent types that it starts: Claude Code ignores a type list inside `Agent(...)` in an agent file. So you start the reviewers in the main conversation, and `ux-evaluator` has no `Agent` tool.
 
-**Step 1.** Start the reviewers with the `Agent` tool, all in one message, so they run in parallel. Give each one the 4 dispatch fields. Its `output_dir` is `<output_dir>/reviews/<reviewer>`:
+**Step 1.** Start the reviewers with the `Agent` tool, all in one message, so they run in parallel. Run them in the foreground and wait for each of them. Do not run a reviewer in the background, because the evaluator needs the findings file of each reviewer. If Claude Code runs a reviewer in the background, wait for its completion notice. Give each one the 4 dispatch fields. Its `output_dir` is `<output_dir>/reviews/<reviewer>`, and it writes its findings to `<output_dir>/reviews/<reviewer>/findings.json`:
 - `ux-hci-design:accessibility-reviewer` (always): `method_file` `${CLAUDE_PLUGIN_ROOT}/skills/accessibility-audit/SKILL.md`
 - `ux-hci-design:usability-reviewer` (always): `method_file` `${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md`
 - `ux-hci-design:ai-hci-reviewer` (only when `has_ai_features` in `.ux-config.json` is true): `method_file` `${CLAUDE_PLUGIN_ROOT}/skills/ai-hci-audit/SKILL.md`
 
 Each reviewer returns the paths of the files that it wrote.
 
+**Before Step 2.** Start Step 2 only after each reviewer of Step 1 has returned, and after you handled each `open-questions.md` of a reviewer (see the end of this phase). Read each `open-questions.md` and each findings file with the `Read` tool, one file at a time, and run each command on its own, with no loop, because a command with a loop or a variable is refused. When you dispatch a reviewer again with the answers, run it in the foreground too, and wait for it. Then read `<output_dir>/reviews/<reviewer>/findings.json` of each reviewer of Step 1. If a file is not there, or it has no list `findings`, do not start the evaluator. Tell the person "The reviewer <reviewer> wrote no findings file <path>. The evaluation stopped.", and stop.
+
 **Step 2.** Start the evaluator:
 ```
 Dispatch agent: ux-hci-design:ux-evaluator
 Context: Project context, weighting profile
-Input: wireframes.json, interaction_patterns.json, and the findings paths of Step 1
+Input: wireframes.json, interaction_patterns.json, and the findings file of each reviewer of Step 1 (<output_dir>/reviews/<reviewer>/findings.json)
 Output: evaluation_report.json
 method_file: ${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md
 ```
 
 The evaluator normalizes the severity, calculates the UX health score with contextual weighting, and writes the prioritized recommendations. When a reviewer wrote `open-questions.md`, handle it as in the dispatch protocol above.
+
+**After Step 2.** If the evaluator returns a line that starts with `MISSING_REVIEW:`, show the line to the person and stop. Do not write the report in the main conversation, because a report with a missing domain gives a wrong UX health score.
 
 **Skill References:**
 - `${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md`

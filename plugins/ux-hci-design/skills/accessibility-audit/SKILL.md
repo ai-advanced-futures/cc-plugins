@@ -452,6 +452,8 @@ Don't auto-dismiss critical info
 
 ### Evaluation Report
 
+The reviewer writes this object to `<output_dir>/findings.json`. The list of findings is under the key `findings`.
+
 ```json
 {
   "framework": "wcag",
@@ -487,7 +489,7 @@ Accessibility audit is complete when:
 
 ---
 
-**Dispatched by**: UX Evaluator
+**Started by**: the skill ux-design (the agent ux-evaluator reads the findings)
 **Framework**: WCAG 2.2 Level AA
 **Output**: Accessibility findings for synthesis
 **Agent**: accessibility-reviewer

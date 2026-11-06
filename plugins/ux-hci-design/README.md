@@ -1,6 +1,6 @@
 # ux-hci-design
 
-**Version:** 1.3.0
+**Version:** 1.3.1
 **Author:** Luis F. Amadeo (the original plugin). ai-advanced-futures ported it to this marketplace.
 **License:** MIT (see `NOTICE`)
 
@@ -93,7 +93,7 @@ A skill starts an agent as `ux-hci-design:<agent>`. An agent cannot ask the pers
 | `usability-reviewer` | Test | Nielsen heuristics and Rams principles |
 | `ai-hci-reviewer` | Test | Microsoft 18 Guidelines (only when the product has AI features) |
 
-No agent has the tool Agent. The skill `ux-design` starts the 3 reviewers in the main conversation, and then the agent `ux-evaluator`. Claude Code ignores a type list inside `Agent(...)` in an agent file, so this is the way to limit the agents that start. The agent `ux-prototype-builder` has the tool Skill, for the optional plugin below. No agent has the tool Bash.
+No agent has the tool Agent. The skill `ux-design` starts the 3 reviewers in the main conversation, waits for each of them, and then starts the agent `ux-evaluator`. Each reviewer writes `.ux-artifacts/reviews/<reviewer>/findings.json`. Claude Code ignores a type list inside `Agent(...)` in an agent file, so this is the way to limit the agents that start. The agent `ux-prototype-builder` has the tool Skill, for the optional plugin below. No agent has the tool Bash.
 
 ## Optional: tailwind-plus
 

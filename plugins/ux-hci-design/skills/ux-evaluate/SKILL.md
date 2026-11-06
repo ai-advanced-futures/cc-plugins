@@ -101,7 +101,7 @@ The skill `ux-design` starts these domain reviewers, based on artifact context:
 ```markdown
 ## Finding Normalization
 
-1. Collect findings from each reviewer
+1. Read the findings file of each reviewer: `<output_dir>/reviews/<reviewer>/findings.json`, the list under the key `findings`
 2. Normalize severity scales (0-4)
 3. Deduplicate overlapping findings
 4. Link findings to specific components

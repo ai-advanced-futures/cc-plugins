@@ -156,7 +156,7 @@ UX Design Orchestrator (/ux-hci-design:ux-design skill)
 | Medium | Best practice |
 | Low | Enhancement |
 
-**Output**: Accessibility findings for `ux-evaluator`
+**Output**: `<output_dir>/findings.json` (key `findings`), for `ux-evaluator`
 
 ---
 
@@ -178,7 +178,7 @@ UX Design Orchestrator (/ux-hci-design:ux-design skill)
 - Reliability score
 - Respect score
 
-**Output**: AI-HCI findings for `ux-evaluator`
+**Output**: `<output_dir>/findings.json` (key `findings`), for `ux-evaluator`
 
 ---
 
@@ -213,7 +213,7 @@ UX Design Orchestrator (/ux-hci-design:ux-design skill)
 | 3 | Major |
 | 4 | Catastrophe |
 
-**Output**: Usability findings for `ux-evaluator`
+**Output**: `<output_dir>/findings.json` (key `findings`), for `ux-evaluator`
 
 ---
 

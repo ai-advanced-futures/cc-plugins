@@ -19,6 +19,8 @@ The caller gives you these fields:
 
 You cannot ask the person a question. When you need an answer, write the open questions to `<output_dir>/open-questions.md` and return.
 
+Write your findings to `<output_dir>/findings.json`: 1 JSON object in the format of "Output Format" below, with the list of findings under the key `findings`. Write no other JSON file.
+
 When you finish, return the absolute path of each file that you wrote. The agent UX Evaluator reads those files.
 
 ## Purpose

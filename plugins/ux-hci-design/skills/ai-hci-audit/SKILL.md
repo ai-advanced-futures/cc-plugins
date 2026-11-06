@@ -464,6 +464,8 @@ trust_score = (
 
 ### Evaluation Report
 
+The reviewer writes this object to `<output_dir>/findings.json`. The list of findings is under the key `findings`.
+
 ```json
 {
   "framework": "microsoft_18_guidelines",
@@ -539,7 +541,7 @@ AI-HCI audit is complete when:
 
 ---
 
-**Dispatched by**: UX Evaluator
+**Started by**: the skill ux-design (the agent ux-evaluator reads the findings)
 **Framework**: Microsoft 18 Guidelines for Human-AI Interaction
 **Output**: AI-HCI findings for synthesis
 **Agent**: ai-hci-reviewer
