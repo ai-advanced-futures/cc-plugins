@@ -504,6 +504,23 @@ class Phase4FinancialDD(Phase):
             reasoning=reasoning
         )
 
+    @staticmethod
+    def _engine_income_keys(raw: dict) -> dict:
+        """Return raw with each engine key of the income statement, also when raw gives another name.
+
+        The names come from StatementParser.INCOME_STATEMENT_SYNONYMS, the list of the file path, so
+        `cost_of_goods_sold` gives `cogs`. The engine key wins, then the first name of the list.
+        """
+        data = dict(raw)
+        for key, names in StatementParser.INCOME_STATEMENT_SYNONYMS.items():
+            if key in data:
+                continue
+            for name in names:
+                if name in raw:
+                    data[key] = raw[name]
+                    break
+        return data
+
     def run(self, inputs: PhaseInput) -> PhaseOutput:
         """Execute Phase 4 financial due diligence with manually provided statements.
 
@@ -517,7 +534,7 @@ class Phase4FinancialDD(Phase):
             return self._run_with_file_input(inputs)
 
         # MANUAL INPUT WORKFLOW
-        income_data = inputs.user_input.get("income_statement", {})
+        income_data = self._engine_income_keys(inputs.user_input.get("income_statement", {}))
         balance_data = inputs.user_input.get("balance_sheet", {})
 
         # Parse dates

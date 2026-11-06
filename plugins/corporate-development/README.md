@@ -28,7 +28,7 @@ If the inputs are ready in a folder, run:
 /corporate-development:pipeline --data-dir <folder>
 ```
 
-The command asks nothing. It reads `<folder>/pipeline_inputs.json`.
+The command asks nothing. It reads `<folder>/pipeline_inputs.json`. That file holds 1 object for each phase: `{"phase_0": {...}, "phase_1": {...}, ..., "phase_6": {...}}`, with the fields of `docs/pipeline-inputs.md`. The file `tests/fixtures/pipeline_inputs.json` is an example.
 
 To run one phase alone, use the command of the phase:
 
@@ -95,7 +95,7 @@ Phase 6 combines the scores: operational 30%, financial 25%, strategic fit 20%, 
 
 The agents ask the person nothing. Only the commands ask.
 
-If a phase agent needs an answer, it writes `handoffs/phase_<N>_questions.md` and no handoff. The orchestrator stops and returns the summary with `stopped_at` and `questions_path`. The command `pipeline` reads the questions, asks them, adds the answers to `pipeline_inputs.json`, and starts the orchestrator again. The orchestrator skips each phase that has a handoff file.
+If a phase agent needs an answer, it writes `handoffs/phase_<N>_questions.md` and no handoff. The orchestrator stops and returns the summary with `stopped_at` and `questions_path`. The command `pipeline` reads the questions file of the phase that stopped (and of the other parallel phase when Phase 3 and Phase 4 both asked), asks the questions, adds the answers to `pipeline_inputs.json`, and starts the orchestrator again. The orchestrator skips each phase that has a handoff file.
 
 To run all phases again, delete the folder `.corporate-development/targets/<slug>/handoffs/` and run the command.
 
@@ -207,7 +207,7 @@ C4Container
 
 ## Engine command line
 
-The scripts run the engine with the full input in one JSON file. They need `uv`:
+The scripts run the engine with the full input in one JSON file. The input of a script is 1 flat object with the fields of all phases and no `phase_N` key. It is not the shape of `pipeline_inputs.json`. To make it from a `pipeline_inputs.json`, take the object of `phase_0` with no `company_name`, and add the objects of `phase_1` to `phase_6` to it. The engine then reads the `company_name` of the target. The scripts need `uv`:
 
 ```bash
 uv run ${CLAUDE_PLUGIN_ROOT}/scripts/run_pipeline.py <input_file.json>

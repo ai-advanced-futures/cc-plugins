@@ -45,7 +45,7 @@ Reads `pipeline_inputs.json` from the specified folder. The command asks nothing
 | 1 — Deal Sourcing | `target_markets` (list), `strategic_focus`, `budget_range` |
 | 2 — Target Assessment | `company_name` + one of: `industry` or `strategic_motivation` |
 | 3 — Operational DD | `company_name` + dimension objects: `team`, `technology`, `product`, `operations`, `market_position` |
-| 4 — Financial DD | `company_name`, `income_statement` (revenue/COGS/opex/net_income), `balance_sheet` (assets/liabilities/equity) |
+| 4 — Financial DD | `company_name`, `income_statement` (`revenue`, `cogs`, `operating_expenses`, `interest_expense`, `tax_expense`; Phase 4 computes the net income), `balance_sheet` (assets/liabilities/equity) |
 | 5 — Integration Planning | Derived from Phase 3+4 handoffs (`operational_health`, `financial_health`) — no extra user input |
 | 6 — Deal Decision | Synthesized from full handoff chain — no extra user input |
 

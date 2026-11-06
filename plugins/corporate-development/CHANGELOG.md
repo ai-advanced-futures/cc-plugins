@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.19.1
+
+- The command `pipeline` reads only the open questions files in a questions round: the file of `questions_path`, and the file of the other parallel phase when Phase 3 and Phase 4 both asked. An old questions file of another phase does not come back.
+- Phase 4 reads the income statement keys of the engine (`cogs`, `interest_expense`, `tax_expense`). It also reads the other names of a key from `StatementParser.INCOME_STATEMENT_SYNONYMS`, so `cost_of_goods_sold` gives `cogs`. `docs/pipeline-inputs.md` and the `execution-pipeline` skill name the engine keys and ask for no net income.
+- The README gives the 2 input shapes: the `phase_N` objects of `pipeline_inputs.json`, and the flat object of a script.
+
 ## 0.19.0
 
 First version in this marketplace. It is a port of the plugin from commit `c2a329f` of a private repository. The versions 0.1.0 to 0.18.0 came before the port.

@@ -87,8 +87,10 @@ With no dimension object, the phase returns CONDITIONAL and sets `phase_3_not_as
 Required:
 
 - `company_name`: the name of the target.
-- `income_statement`: an object with `revenue`, `cost_of_goods_sold`, `operating_expenses` and `net_income`. All values are numbers for one year.
-- `balance_sheet`: an object with 14 numeric line items: `cash`, `accounts_receivable`, `inventory`, `other_current_assets`, `ppe_net`, `intangibles`, `other_assets`, `accounts_payable`, `accrued_expenses`, `current_debt`, `other_current_liabilities`, `long_term_debt`, `other_liabilities`, `equity`.
+- `income_statement`: an object with `revenue`, `cogs`, `operating_expenses`, `interest_expense` and `tax_expense`. Optional: `depreciation`, `amortization`, `owners_compensation`, `period_start` and `period_end`.
+  `cogs` is the cost of goods sold. The dates are ISO dates (the default is the year 2025). Phase 4 computes the net income from these numbers, so give no net income. Phase 4 also reads the other names of a key that `StatementParser.INCOME_STATEMENT_SYNONYMS` gives, for example `cost_of_goods_sold` for `cogs`. When the object has 2 names of 1 key, the name of the list above wins.
+- `balance_sheet`: an object with 14 numeric line items: `cash`, `accounts_receivable`, `inventory`, `other_current_assets`, `ppe_net`, `intangibles`, `other_assets`, `accounts_payable`, `accrued_expenses`, `current_debt`, `other_current_liabilities`, `long_term_debt`, `other_liabilities`, `equity`. Optional: `as_of_date`.
+  `as_of_date` is an ISO date (the default is 2025-12-31).
 
 Optional, and they make the result more exact:
 

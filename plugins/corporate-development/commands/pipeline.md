@@ -22,9 +22,11 @@ Run the complete M&A pipeline (Phase 0 to Phase 6) for one target. Each phase ru
    - Without it: ask the intake questions, 1 phase at a time and not more than 4 questions in 1 call. Write the answers to `.corporate-development/targets/<slug>/pipeline_inputs.json`.
 5. Dispatch the agent `corporate-development:pipeline-orchestrator` with the fields `company_name`, `slug` and `inputs_path`.
 6. Read the summary that the agent returns.
-   - If `questions_path` is set, read each file `handoffs/phase_*_questions.md` of the target (`.corporate-development/targets/<slug>/`). Ask the questions. Add each answer to the object of the phase that asked: the number N in `phase_N_questions.md` names it. That phase wrote no handoff, so it runs again on the answers. Dispatch the agent again with the same 3 fields. The agent skips each phase that has a handoff file. Repeat until `questions_path` is null. If the same questions file comes back 2 times with no change, stop and show it to the person.
+   - If `questions_path` is set, read the file of `questions_path`. When `stopped_at` is Phase 3 or Phase 4, also read the questions file of the other of these 2 phases, if it exists and that phase has no handoff file (`handoffs/phase_N_questions.md` is answered when `handoffs/phase_N_handoff.json` exists). Read no other questions file: the questions file of another phase is old, because that phase ran on its answers or did not run in this round. Ask the questions. Add each answer to the object of the phase that asked: the number N in `phase_N_questions.md` names it. That phase wrote no handoff, so it runs again on the answers. Dispatch the agent again with the same 3 fields. The agent skips each phase that has a handoff file. Repeat until `questions_path` is null. If the same questions file comes back 2 times with no change, stop and show it to the person.
    - If the reply has `FAILED`, show the reply and stop.
    - Else show the person the gates of the phases, the final gate, and the paths of the artifacts.
+
+Read a questions file of the target only in step 6, and only an open one. Before step 5, read no questions file.
 
 To run all phases again, delete the folder `.corporate-development/targets/<slug>/handoffs/` and run the command.
 
