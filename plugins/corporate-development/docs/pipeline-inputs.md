@@ -1,6 +1,6 @@
 # Pipeline inputs
 
-This file lists the input fields of each phase of the pipeline. The command `/corporate-development:pipeline` asks for these fields. The agent `pipeline-orchestrator` gives each phase its fields from `pipeline_inputs.json`.
+This file lists the input fields of each phase of the pipeline. The command `/corporate-development:pipeline` asks for these fields. The command `pipeline` gives each phase agent its fields from `pipeline_inputs.json`.
 
 ## Slug rule
 
@@ -10,13 +10,15 @@ The slug is the folder name of the target. Make it from the company name:
 slug = company_name.lower().replace(" ", "-").replace("/", "-").replace("_", "-")
 ```
 
-Remove any hyphen at the end. Examples: "Acme Corp" gives `acme-corp`. "123/XYZ Holdings" gives `123-xyz-holdings`. Use the same slug in all paths of the same target.
+Then remove each character that is not `a-z`, `0-9` or `-`. Join each run of `-` into 1. Remove a `-` at the start and at the end. Cut the slug to 64 characters, and remove a `-` at the end again. Examples: "Acme Corp" gives `acme-corp`. "123/XYZ Holdings" gives `123-xyz-holdings`. "Acme, Inc." gives `acme-inc`. Use the same slug in all paths of the same target.
+
+A slug must match `[a-z0-9][a-z0-9-]{0,63}`. When the result is empty, stop with this message and ask for the name again: `the company name gives no slug: write it with the letters a-z or the digits 0-9`.
 
 ## Files
 
 | Path | Holds |
 |---|---|
-| `.corporate-development/targets/<slug>/pipeline_inputs.json` | The inputs of all phases. The file holds 1 object for each phase: `{"phase_0": {...}, "phase_1": {...}, ...}`. The orchestrator gives a phase agent only its own object. `company_name` is in the object of each phase that needs it: the buyer in `phase_0`, the target in the other phases. |
+| `.corporate-development/targets/<slug>/pipeline_inputs.json` | The inputs of all phases. The file holds 1 object for each phase: `{"phase_0": {...}, "phase_1": {...}, ...}`. The command gives a phase agent only its own object. `company_name` is in the object of each phase that needs it: the buyer in `phase_0`, the target in the other phases. |
 | `.corporate-development/targets/<slug>/phase_<N>_<name>/` | The artifacts of phase N. |
 | `.corporate-development/targets/<slug>/handoffs/phase_<N>_handoff.json` | The handoff of phase N. |
 | `.corporate-development/targets/<slug>/handoffs/phase_<N>_questions.md` | The questions of phase N, when an input is missing. |
@@ -100,7 +102,7 @@ Optional, and they make the result more exact:
 
 ## Phase 5: Integration Planning
 
-The orchestrator builds these inputs from the handoffs of Phase 3 and Phase 4. Required:
+The command `pipeline` builds these inputs from the handoffs of Phase 3 and Phase 4. Required:
 
 - `company_name`: the name of the target.
 - `target_company`: the name of the company that buys.

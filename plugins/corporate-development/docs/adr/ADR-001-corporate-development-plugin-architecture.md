@@ -30,7 +30,7 @@ Constraints:
 ## Decision Drivers
 
 - **Start small:** Build the 7-phase pipeline first. Add parallel runs and context isolation when the phase logic is proven.
-- **Agents orchestrate agents:** The `pipeline-orchestrator` agent dispatches each phase to its own agent. Each phase has a fresh context window.
+- **One agent for each phase:** The command `pipeline`, in the main conversation, starts each phase in its own agent. Each phase has a fresh context window. No agent starts an agent.
 - **A person decides:** A gate is a recommendation. A person approves each major step.
 - **Cheap, exact scoring:** Python engines do all scoring. Agents do the reasoning and the narrative.
 - **Structured handoffs:** Each phase feeds the next with a small handoff. Phase 6 combines the full chain.
@@ -85,10 +85,9 @@ The gate values are `GO`, `CONDITIONAL` and `NO_GO`. `docs/methodologies/gate-th
 #### Run order
 
 1. The command `pipeline` reads `docs/pipeline-inputs.md`. It asks the intake questions, 1 phase at a time, and writes `pipeline_inputs.json`. With `--data-dir`, it asks nothing.
-2. The command dispatches `pipeline-orchestrator` with `company_name`, `slug` and `inputs_path`.
-3. The orchestrator runs in file-based mode. It dispatches Phase 0 to a `general-purpose` agent. It dispatches Phase 1, Phase 2, Phase 3, Phase 4, Phase 5 and Phase 6 to the phase agents. It runs Phase 3 and Phase 4 in one message with 2 `Agent` calls. It skips each phase that has a handoff file.
-4. A phase agent that needs an answer writes `handoffs/phase_<N>_questions.md` and no handoff. The orchestrator stops and returns the summary with `stopped_at` and `questions_path`. The command asks, adds the answers to `pipeline_inputs.json`, and dispatches the orchestrator again.
-5. The orchestrator returns the `PipelineResult.to_summary()` JSON and ends with `DONE: corporate-development`.
+2. The command starts the phase agents in file-based mode: `readiness-assessor` for Phase 0, then `deal-sourcer`, `target-assessor`, `operational-auditor`, `financial-analyst`, `integration-planner` and `deal-advisor`. It starts Phase 3 and Phase 4 in one message with 2 `Agent` calls. It skips each phase that has a handoff file.
+3. A phase agent that needs an answer writes `handoffs/phase_<N>_questions.md` and no handoff. The command starts no later phase, asks, adds the answers to `pipeline_inputs.json`, and runs the phases again.
+4. The command shows the `PipelineResult.to_summary()` form of the result.
 
 Only the commands ask the person. No agent has the `AskUserQuestion` tool.
 
@@ -96,7 +95,7 @@ Only the commands ask the person. No agent has the `AskUserQuestion` tool.
 
 | Agent | Model | Tools | Role |
 |-------|-------|-------|------|
-| `pipeline-orchestrator` | sonnet | Read, Write, Glob, Agent | Routes the 7 phases, runs Phase 3 and Phase 4 in parallel |
+| `readiness-assessor` | sonnet | Read, Write, Glob, Grep | Phase 0 acquisition readiness |
 | `deal-sourcer` | sonnet | Read, Write, Glob, Grep, WebSearch | Phase 1 sourcing and qualification |
 | `target-assessor` | sonnet | Read, Write, Glob, Grep, WebSearch | Phase 2 strategic fit |
 | `operational-auditor` | sonnet | Read, Write, Glob, Grep, Skill | Phase 3 operational due diligence |
@@ -138,7 +137,7 @@ corporate_development/
 }
 ```
 
-A handoff is about 1 KB. The orchestrator holds at most 7 handoffs (about 7 KB). The full artifacts stay on disk. The orchestrator opens an artifact only when the person asks.
+A handoff is about 1 KB. The command holds at most 7 handoffs (about 7 KB). The full artifacts stay on disk. The command opens an artifact only when the person asks.
 
 #### Phase 3 and Phase 4 in parallel
 
@@ -160,9 +159,9 @@ The agent layer dispatches both phases in one message with 2 `Agent` calls.
 ### Positive
 
 - **Testable scoring:** The tests cover the phase scoring formulas. The gate logic has regression tests.
-- **Small context:** The orchestrator context stays near 10 KB for any deal.
+- **Small context:** The handoffs in the main conversation stay near 10 KB for any deal.
 - **Parallel due diligence:** Phase 3 and Phase 4 run at the same time in both layers.
-- **One result:** The orchestrator returns one `PipelineResult.to_summary()`.
+- **One result:** The command shows one `PipelineResult.to_summary()`.
 - **Safe failure:** A missing handoff file gives CONDITIONAL, and not NO_GO. A crash of an agent is logged and the pipeline continues. A missing optional plugin is skipped.
 - **Two entry points:** `run_pipeline()` and `run_investigation()` are in `main.py`.
 - **Questions without a stop:** A phase agent writes its questions to a file. The command asks, and the run continues from the saved handoffs.

@@ -32,6 +32,6 @@ Apply the method of the command and the skill. Take every input from the dispatc
 
 If an input is missing, write one question for each missing input to the questions file, write no handoff, and return a line `QUESTIONS: <path of the questions file>`.
 
-Else write the artifacts and the PhaseHandoff JSON (the shape is in the section "PhaseHandoff schema" of `${CLAUDE_PLUGIN_ROOT}/agents/pipeline-orchestrator.md`), and return the gate and the path of the handoff file.
+Else write the artifacts and the PhaseHandoff JSON (the shape is in `${CLAUDE_PLUGIN_ROOT}/docs/phase-handoff.md`), and return the gate and the path of the handoff file.
 
 The optional plugins `product-finance` and `tech-budget` help with the financial and cost calculations when Claude Code has them. The report names each optional plugin that it did not use.

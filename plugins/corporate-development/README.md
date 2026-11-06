@@ -20,7 +20,7 @@ Run all 7 phases for one target:
 /corporate-development:pipeline
 ```
 
-The command asks the intake questions, 1 phase at a time. It writes the answers to `.corporate-development/targets/<slug>/pipeline_inputs.json`. Then it starts the agent `pipeline-orchestrator`. That agent runs each phase in its own agent. Phase 3 and Phase 4 run in parallel. The agent returns one summary with the gates, the scores and the paths of the artifacts.
+The command asks the intake questions, 1 phase at a time. It writes the answers to `.corporate-development/targets/<slug>/pipeline_inputs.json`. Then it starts the phase agents, in the main conversation. Each phase runs in its own agent. Phase 3 and Phase 4 run in parallel. The command shows one summary with the gates, the scores and the paths of the artifacts.
 
 If the inputs are ready in a folder, run:
 
@@ -49,7 +49,7 @@ A command that runs alone runs in the main conversation and asks you the questio
 
 | Phase | Name | Agent |
 |---|---|---|
-| 0 | Acquisition Readiness | `general-purpose` agent that reads `commands/readiness.md` |
+| 0 | Acquisition Readiness | `readiness-assessor` |
 | 1 | Deal Sourcing | `deal-sourcer` |
 | 2 | Target Assessment | `target-assessor` |
 | 3 | Operational Due Diligence | `operational-auditor` |
@@ -95,7 +95,7 @@ Phase 6 combines the scores: operational 30%, financial 25%, strategic fit 20%, 
 
 The agents ask the person nothing. Only the commands ask.
 
-If a phase agent needs an answer, it writes `handoffs/phase_<N>_questions.md` and no handoff. The orchestrator stops and returns the summary with `stopped_at` and `questions_path`. The command `pipeline` reads the questions file of the phase that stopped (and of the other parallel phase when Phase 3 and Phase 4 both asked), asks the questions, adds the answers to `pipeline_inputs.json`, and starts the orchestrator again. The orchestrator skips each phase that has a handoff file.
+If a phase agent needs an answer, it writes `handoffs/phase_<N>_questions.md` and no handoff. The command `pipeline` starts no later phase. It reads the questions file of the phase that stopped (and of the other parallel phase when Phase 3 and Phase 4 both asked), asks the questions, adds the answers to `pipeline_inputs.json`, and runs the phases again. It skips each phase that has a handoff file.
 
 To run all phases again, delete the folder `.corporate-development/targets/<slug>/handoffs/` and run the command.
 
@@ -151,7 +151,8 @@ A phase uses an optional plugin only when Claude Code has it. If the plugin is n
 
 - The engine makes no network call.
 - `WebSearch` in `deal-sourcer` and `target-assessor` can send the name of the target to a search service.
-- `Skill` in `operational-auditor` and `deal-advisor` hands deal data to an optional plugin.
+- `Skill` in `operational-auditor` and `deal-advisor` hands deal data to an optional plugin. The limit is a rule in the text of the agent: `operational-auditor` starts only `tech-contracts:review`, and `deal-advisor` starts only `tech-contracts:review` and `tech-contracts:audit`. Claude Code gives no way to limit `Skill` to named skills in a subagent, so the rule is a prompt rule only. A document of the target could still make an agent start another skill. This risk is accepted.
+- No agent has `Bash`, `Agent` or `WebFetch`. No agent starts an agent. The command `pipeline` starts the phase agents.
 - The files in `.corporate-development/` can hold financial and personal data of the target. Do not commit them to a public repository.
 
 ## Architecture
@@ -191,16 +192,14 @@ C4Container
     Person(practitioner, "M&A Practitioner")
 
     Container_Boundary(cdPlugin, "corporate-development") {
-        Container(commands, "Commands", "Markdown", "8 commands. They ask the questions. The command pipeline starts the orchestrator.")
-        Container(pipelineOrch, "pipeline-orchestrator", "Agent / Markdown", "Routes the phases. Runs Phase 3 and Phase 4 in parallel. Passes handoff files of about 1 KB.")
-        Container(phaseAgents, "Phase agents", "Agents / Markdown", "6 agents, 1 for each of the phases 1 to 6. Phase 0 uses a general-purpose agent.")
+        Container(commands, "Commands", "Markdown", "8 commands. They ask the questions. The command pipeline starts the phase agents, runs Phase 3 and Phase 4 in parallel, and passes handoff files of about 1 KB.")
+        Container(phaseAgents, "Phase agents", "Agents / Markdown", "7 agents, 1 for each of the phases 0 to 6.")
         Container(engine, "Computation engine", "Python / Pydantic", "Scoring, gate logic and artifact generation. Started by scripts/run_pipeline.py.")
         Container(artifacts, "Artifacts", "JSON / Markdown / CSV", "Files in .corporate-development/targets/<slug>/.")
     }
 
     Rel(practitioner, commands, "Runs", "/corporate-development:<command>")
-    Rel(commands, pipelineOrch, "Starts", "company_name, slug, inputs_path")
-    Rel(pipelineOrch, phaseAgents, "Dispatches", "1 agent for each phase")
+    Rel(commands, phaseAgents, "Starts", "1 agent for each phase")
     Rel(phaseAgents, artifacts, "Write the artifacts and the handoffs")
     Rel(engine, artifacts, "Writes the artifacts")
 ```

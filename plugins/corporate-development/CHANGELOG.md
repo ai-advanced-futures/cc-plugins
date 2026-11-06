@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.20.0
+
+- The command `pipeline` starts the phase agents in the main conversation. The agent `pipeline-orchestrator` is removed, because a subagent cannot start an agent.
+- Add the agent `readiness-assessor` for Phase 0. No agent starts a `general-purpose` agent now. The command gives it `assessment_date`, because the agent has no tool that gives the date.
+- Move the handoff schema, the engine key maps and the integration terms to `docs/phase-handoff.md`. The phase agents read this file.
+- Give each agent a narrow tool list: no agent has `Agent` or `Bash`. `operational-auditor` and `deal-advisor` keep `Skill`, with a rule in their text that names the skills they may start.
+- Add `check_slug` and `make_slug` to `TargetManager`. A slug must match `[a-z0-9][a-z0-9-]{0,63}`. The slug rule in `docs/pipeline-inputs.md` removes each other character, cuts the slug to 64 characters, and stops on an empty slug.
+- Add `tests/unit/test_agent_grants.py`.
+
 ## 0.19.1
 
 - The command `pipeline` reads only the open questions files in a questions round: the file of `questions_path`, and the file of the other parallel phase when Phase 3 and Phase 4 both asked. An old questions file of another phase does not come back.

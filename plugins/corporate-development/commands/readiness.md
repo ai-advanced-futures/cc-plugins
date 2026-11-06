@@ -314,7 +314,7 @@ After completing Phase 0 readiness assessment:
 
 ## Method for a phase agent
 
-The pipeline runs this command in a `general-purpose` agent that cannot ask the person. That agent takes the inputs from `phase_inputs` (`company_name`, `ceo_readiness`, `strategic_targets`, `organizational_capacity`, `financial_readiness`, `governance`) and skips each step that asks a question. It writes the artifacts to `.corporate-development/targets/{slug}/phase_0_readiness/` and the handoff to `.corporate-development/targets/{slug}/handoffs/phase_0_handoff.json`. The shape of the handoff is in the section "PhaseHandoff schema" of `${CLAUDE_PLUGIN_ROOT}/agents/pipeline-orchestrator.md`. If an input is missing, it writes `.corporate-development/targets/{slug}/handoffs/phase_0_questions.md` with one question for each missing input, writes no handoff, and returns a line `QUESTIONS: <path>`.
+The pipeline runs this command in the agent `readiness-assessor`, which cannot ask the person. That agent takes the inputs from `phase_inputs` (`company_name`, `ceo_readiness`, `strategic_targets`, `organizational_capacity`, `financial_readiness`, `governance`) and `assessment_date` from the dispatch (the date of today, `YYYY-MM-DD`), and skips each step that asks a question. It writes the artifacts to `.corporate-development/targets/{slug}/phase_0_readiness/` and the handoff to `.corporate-development/targets/{slug}/handoffs/phase_0_handoff.json`. The shape of the handoff is in `${CLAUDE_PLUGIN_ROOT}/docs/phase-handoff.md`. If an input is missing, it writes `.corporate-development/targets/{slug}/handoffs/phase_0_questions.md` with one question for each missing input, writes no handoff, and returns a line `QUESTIONS: <path>`.
 
 ## Related Skills
 
@@ -333,7 +333,7 @@ Use these plugins only when Claude Code has them:
 
 ## Agent
 
-This command has no agent file. Run alone, it runs in the main conversation and asks the questions. In the full pipeline, the **pipeline-orchestrator** agent dispatches a `general-purpose` agent for Phase 0, and that agent reads this file.
+Run alone, this command runs in the main conversation and asks the questions. In the full pipeline, the command `pipeline` starts the agent **readiness-assessor** for Phase 0, and that agent reads this file.
 
 ## Success Factors
 

@@ -27,7 +27,7 @@ Runs the complete corporate development pipeline from Phase 0 (Acquisition Readi
 The command will:
 1. Ask for the target company name
 2. Ask the intake questions, 1 phase at a time, and save the answers to `pipeline_inputs.json`
-3. Dispatch the `pipeline-orchestrator` agent
+3. Start the phase agents in the main conversation (the command does this)
 
 ### Data folder (for repeat runs)
 
@@ -35,7 +35,7 @@ The command will:
 /corporate-development:pipeline --data-dir .corporate-development/targets/acme-corp/
 ```
 
-Reads `pipeline_inputs.json` from the specified folder. The command asks nothing and dispatches the agent at once. The input fields are in `${CLAUDE_PLUGIN_ROOT}/docs/pipeline-inputs.md`.
+Reads `pipeline_inputs.json` from the specified folder. The command asks nothing and starts the phase agents at once. The input fields are in `${CLAUDE_PLUGIN_ROOT}/docs/pipeline-inputs.md`.
 
 ## Phase Input Summary
 
@@ -123,7 +123,7 @@ See `${CLAUDE_PLUGIN_ROOT}/docs/methodologies/gate-thresholds.md` for per-phase 
 ## Used By
 
 - Command: `/corporate-development:pipeline`
-- Agent: `pipeline-orchestrator`
+- Agents: the 7 phase agents, started by the command (`readiness-assessor` for Phase 0)
 - Programmatic: `main.run_pipeline(user_input)` → `PipelineResult.to_summary()`
 
 ## Related Skills
