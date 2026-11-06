@@ -4,6 +4,13 @@ All notable changes to the pricing plugin will be documented in this file.
 
 The first heading is the version in `.claude-plugin/plugin.json`. A test checks that they agree.
 
+## 1.12.0
+
+- The pricing commands quote `run_id` and the JSON arguments. The pricer checks the `run_id` as the runner does, and `price-runner.md` quotes the plugin path. Each JSON argument has the rule to write each `'` as `'\''` (STORY-160).
+- The session-start hook says that a jtbd result exists. It prints no file name.
+- When the calculator cannot run, the run stops. It computes no figure, writes no price file, writes the result file with the gap `Pricing calculator`, and ends with `BLOCKED: pricing calculator <function>: <reason>`. The old rule to work the figure out by hand is gone (STORY-157).
+- New script `scripts/jtbd_newest.py` finds the newest jtbd result in the main conversation. A dispatched agent reads only the file that `inputs_from` or the new dispatch field `jtbd_result` names, and lists no folder. It takes `jtbd_result` only as a plain name in that folder, with no `..`; else it records a gap and uses Path B.
+
 ## 1.11.0
 
 - This plugin now lives in the marketplace `cc-plugins`. It ports the private plugin at version 1.10.1.

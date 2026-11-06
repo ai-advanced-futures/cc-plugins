@@ -1,6 +1,6 @@
 {
   "name": "pricing",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "description": "Find the right price for an AI product. Classify a feature, compute its price from willingness to pay and cost, design Good, Better, and Best packages, and audit a price.",
   "author": {
     "name": "ai-advanced-futures"

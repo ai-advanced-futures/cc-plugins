@@ -34,14 +34,14 @@ for path in sorted(pathlib.Path(sys.argv[1]).glob("*.json")):
     if isinstance(results, list) and any(
         isinstance(r, dict) and r.get("kind") == "willingness_to_pay" for r in results
     ):
-        found = str(path)
+        found = "yes"
 print(found)
 PY
 )
 fi
 
 if [[ -n "$jtbd_result" ]]; then
-    msgs+=("PRICING: jtbd result found (${jtbd_result}) — Path A pricing available once you confirm the run.")
+    msgs+=("PRICING: jtbd result found in ${JTBD_NEW_DIR}/results/ — Path A pricing available once you confirm the run.")
 else
     if [[ -f "${JTBD_DIR}/wtp-validation.json" ]]; then
         msgs+=("PRICING: ${JTBD_DIR}/wtp-validation.json found — Path A pricing available.")

@@ -8,7 +8,7 @@ audience: internal
 
 # New Offering Pricer Agent
 
-Read files with the Read tool, never with a shell command, because the Bash grant covers only the plugin scripts. Do not list a folder, because only the file that `inputs_from` names belongs to this run: read only that file, and record a gap for any other file that the run needed.
+Read files with the Read tool, never with a shell command, because the Bash grant covers only the plugin scripts. Do not list a folder, because only the file that `inputs_from` or `jtbd_result` names belongs to this run: read only that file, and record a gap for any other file that the run needed.
 
 Your role: you are the new-offering pricer. Your task is to price one new feature or offering, end to end; done means the output files of Step 8 are written.
 
@@ -63,7 +63,7 @@ if Q2 = Yes AND Q3 = No AND Q4 = No → AUTONOMOUS (conservative) → Path C-Aut
 
 **Block without a jtbd entry.** When the block's `inputs_from` has no `jtbd-market-discovery` entry, read no jtbd file and use Path B.
 
-**No block (a person's run).** Read the newest file in `.jtbd-market-discovery/results/` (by `run.finished_at`) that holds a `willingness_to_pay` result. Only when that folder holds no such file, fall back to the old folder's files `.jtbd/wtp-validation.json`, `.jtbd/evc-analysis.json` and `.jtbd/opportunity-scores.json`. Never read a file at the top level of `.jtbd-market-discovery/`.
+**No block (a person's run).** List no folder: read only the jtbd file that the run finds with the plugin script or is given. In the main conversation (a person ran `/pricing:price`), run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_newest.py"` on its own. It prints the path of the newest file in `.jtbd-market-discovery/results/` (by `run.finished_at`) that holds a `willingness_to_pay` result, or nothing. As a dispatched agent, take the path that the dispatch gives as `jtbd_result` only when it matches `.jtbd-market-discovery/results/<name>.json` with `<name>` of A-Z, a-z, 0-9, `.`, `_` and `-`, and no `..`: the caller finds it with the same command. Read only that file. When the dispatch gives a `jtbd_result` that does not match, read no jtbd file, record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "jtbd_result is not a plain name in .jtbd-market-discovery/results/"}` and use Path B. Only when the command prints nothing, or the dispatch gives no `jtbd_result`, fall back to the old folder's files `.jtbd/wtp-validation.json`, `.jtbd/evc-analysis.json` and `.jtbd/opportunity-scores.json`. When the command is refused or exits with a code that is not 0, read no jtbd file, record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "jtbd result search did not run"}` and use Path B. Never read a file at the top level of `.jtbd-market-discovery/`.
 
 Confirm the run with the person before you use it for Path A. If you can call `AskUserQuestion`, ask whether this is the run to use, naming its `run.subject`, `run.finished_at` and `run.case` (for the old folder's files, their paths) [q: confirm_jtbd_run]. On "no", use Path B. If you cannot call it (you run as a dispatched subagent), name the chosen file in your output and use Path B: the price is not validated. Never choose a run silently. The confirmation applies only to a person's run with no block. With a block, a matching jtbd entry gives Path A with no confirmation: the coach chose the run. `confirm_jtbd_run` set to `false` in the answers file gives Path B. The gate runs once per run: a later run of the `price` skill reuses its choice and asks no second time. With `automated: true` and no block, Mode Detection skips the confirmation, so the price is Path B and never validated.
 
@@ -84,6 +84,8 @@ Determine the right pricing axis before setting the price.
 ### 5. Run `price` Skill
 
 Apply the formula (Path A or B based on branch check in Step 2).
+
+When the `price` skill stops at the calculator (its Step 6), stop here too: run no later step, write no file of Steps 7 and 8, and end your reply with its `BLOCKED: pricing calculator` line.
 
 Key outputs:
 - `right_price` with `confidence_tier` ("validated" or "estimated")
@@ -190,7 +192,7 @@ Run only this plugin's own scripts, as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/<f
 The run writes one result file at the end of every run: a finished run, a partial one and a halt, interactive or automated.
 
 **Where.** Result files go in `.pricing/results/` under the git root.
-Run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py" <finished_at> <command> '<run.subject>' <run_id>` on its own, after `run.subject` is written and `finished_at` is read, and leave out `<run_id>` when the run has none. Put `run.subject` in single quotes, with each `'` in it written as `'\''`. Its output is the file name: use it as printed.
+Run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py" <finished_at> <command> '<run.subject>' '<run_id>'` on its own, after `run.subject` is written and `finished_at` is read, and leave out `'<run_id>'` when the run has none. Put `run.subject` in single quotes, with each `'` in it written as `'\''`. Put `run_id` in single quotes too: the check of **Top level** lets no `'` through. Its output is the file name: use it as printed.
 When the name call is denied or fails, set `run.subject` to `name call denied` and name the file `<finished_at as YYYYMMDDTHHMMSSZ>-<command part>-name-call-denied-<run_id>.json`, where `<command part>` is `price`, leaving out `-<run_id>` when the run has none; never build a name from another subject.
 In that file, record the gap `{"kind": "<a result kind of this command>", "label": "File name", "why": "name call denied; subject: <the subject the run would have written>"}`.
 A denied or failed tool call never ends the run without the result file: write it with what the run has, and record each result a denied call kept from the run as a gap whose `why` names that call.
@@ -201,7 +203,7 @@ Take every time from `date -u +%Y-%m-%dT%H:%M:%SZ`. `started_at` is the time the
 When a `date` call is denied or fails, run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py" now` on its own and use its output as that time.
 
 **Top level.** `schema` is `"plugin-result/1"`, `plugin` is `"pricing"`, `plugin_version` is the `version` in `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` (read it from that file, since an example holds an older version), and `command` is `"pricing:price"`. `run` holds `started_at`, `finished_at`, `mode`, `subject` (the `offering`, in plain words), `case`, `run_id` and `answers` (the `answers_path`).
-`case` and `run_id` come from the block, in a halt too. With no plugin-run block, leave out `case`, `run_id` and `answers`; never take them from a file the run read, because they belong to the run that wrote the block. `run.mode` is `automated` only when a plugin-run block is present, and `interactive` otherwise. Leave out a key that has no value.
+`case` and `run_id` come from the block, in a halt too. Check the `run_id` before a command or a folder name uses it. When the `run_id` holds a `'`, it is not a plain name: do not put it in a command, because a `'` ends the quotes and the shell runs the rest of the value. Else run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py" run-id '<run_id>'` on its own. When the `run_id` holds a `'` or the command exits 2, continue with no `run_id`: leave out `run.run_id` and `-<run_id>`, and record the gap `{"kind": "launch_price", "label": "run_id", "why": "the run_id of the plugin-run block is not a plain name; the run used none"}`. A run of `agents/price-runner.md` did this check in its step 1: use that result. With no plugin-run block, leave out `case`, `run_id` and `answers`; never take them from a file the run read, because they belong to the run that wrote the block. `run.mode` is `automated` only when a plugin-run block is present, and `interactive` otherwise. Leave out a key that has no value.
 `run` holds only `started_at`, `finished_at`, `mode` and `subject` and, under a plugin-run block, `case`, `run_id` and `answers`; put no other key in it.
 
 **Results.** Each result has `id`, `kind`, `label`, `value`, `sources`, `method`, `rests_on_default`, `defaults`, `confidence` and `detail`, and `unit` and `period` where its kind needs them. `id` is `<kind>-<n>`, where `n` counts 1, 2, 3 and on through the whole file, so no two results share an `id`. Copy each number and sentence from the run's files as written.
@@ -264,6 +266,7 @@ An input of the markers table that the answers file does not give counts as `def
 - No price: `{"kind": "launch_price", "label": "Launch price", "why": "<the reason>"}`, such as a required input with no answer, the commodity stop, or a reclassified fully agentic price.
 - No tier placement: `{"kind": "package", "label": "Packages", "why": "<the reason>"}`.
 - A halt writes `"results": []` and one gap: `{"kind": "launch_price", "label": "Launch price", "why": "offering required for a plugin run"}`. Its `subject` is `"no offering given"`.
+- A calculator stop (`price.md` Step 6) writes `"results": []` and one gap: `{"kind": "launch_price", "label": "Pricing calculator", "why": "pricing calculator <function>: <reason>"}`.
 
 A Path B run that rests on every default its path uses (some results shown):
 
@@ -271,7 +274,7 @@ A Path B run that rests on every default its path uses (some results shown):
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.11.0",
+  "plugin_version": "1.12.0",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",
@@ -326,7 +329,7 @@ A Path A run whose jtbd willingness to pay rests on expert estimates, so the pri
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.11.0",
+  "plugin_version": "1.12.0",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T11:00:00Z",
@@ -371,7 +374,7 @@ A Path B run whose jtbd willingness to pay had no `period`, so the gate refused 
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.11.0",
+  "plugin_version": "1.12.0",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-11-02T09:00:00Z",
@@ -415,7 +418,7 @@ A Path C-autonomous run (one result shown):
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.11.0",
+  "plugin_version": "1.12.0",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T12:00:00Z",
@@ -459,7 +462,7 @@ A Path C-fully-agentic run whose answers file gave the margin (`settled_by: pers
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.11.0",
+  "plugin_version": "1.12.0",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T13:00:00Z",

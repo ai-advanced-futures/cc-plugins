@@ -51,7 +51,7 @@ You run as a subagent and cannot ask the person. Take each answer from the dispa
         uv run "${CLAUDE_PLUGIN_ROOT}/scripts/bounded_safety_check.py" perplexity-class 4.0
         ```
 
-        When the script fails to import a package, stop and report a gap that names the missing package; a made-up output would look like a real result.
+        When the call is refused, exits with a code that is not 0, or prints no result, stop and report a gap that names the call and its message; a made-up output would look like a real result.
 
         Examples:
         - `harvey-hebbia-evenup` and ratio 4.0 → `harvey-hebbia-evenup 4.0`
@@ -70,7 +70,9 @@ You run as a subagent and cannot ask the person. Take each answer from the dispa
     uv run "${CLAUDE_PLUGIN_ROOT}/scripts/telemetry_effective_cost.py" '{"archetype": "<archetype>", "headline_price": <hp>, "p75": <p75>, "p95": <p95>, "present_amplifiers": [...], "telemetry_path": "<archetype_baseline_telemetry_path>"}'
     ```
 
-    When the script fails to import a package, stop and report a gap that names the missing package; a made-up output would look like a real result.
+    Before you build the command, test each value for a `'`, and write each `'` as `'\''`, because a `'` ends the quotes and the shell runs the rest of the value.
+
+    When the call is refused, exits with a code that is not 0, or prints no result, stop and report a gap that names the call and its message; a made-up output would look like a real result.
 
     `p75`, `p95` and `present_amplifiers` are the composite from step 2. Write `"telemetry_path": null` when there is no telemetry file: the script then uses the inferred baseline. The script prints `<data_source> <median> <p95>`, then `raw_baseline <value>`. The raw baseline is the value before amplification. It goes to sensitivity_matrix. Use the raw baseline, not r.median_effective_per_interaction: that value is already amplified.
 

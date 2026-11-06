@@ -61,7 +61,7 @@ Returns `PathCFullyAgenticPriced` or `PathCFullyAgenticReclassified` (discrimina
 3. **Step 1** — Collect inputs for the determined path
 4. **Step 2** — Path A gate: the jtbd result in `.jtbd-market-discovery/results/` named by `inputs_from` (or, in a person's run, the newest, confirmed; with none there, `.jtbd/wtp-validation.json`)
 5. **Step 2b** — Path A reference price: `alternative_price`, asked only when Path A uses no customer value
-6. **Step 3** — Compute with `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/pricing_calculator.py" <function> '<JSON arguments>'` When the script fails to import a package, work the figure out from the formula stated in the command, with no code at all, and end each result's `method` with: Computed by the model from the formula stated in the command; no script ran. With no script, when the margin floor is above WTP_max, write the floor warning yourself, in the calculator's words: Below margin floor: the price is capped at the highest willingness to pay (<WTP_max>), which is below the margin floor (<MARGIN_FLOOR>), so the offering does not clear its margin floor at this willingness to pay.
+6. **Step 3** — Compute with `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/pricing_calculator.py" <function> '<JSON arguments>'` with each `'` in a value written as `'\''`. When the calculator cannot run, stop as `price.md` Step 6 says: compute no figure yourself, write no price file, write the result file with its gap, and end the reply with the line `BLOCKED: pricing calculator <function>: <reason>`.
 7. **Step 4** — Apply fear signal checks (accuracy < 0.8 → AI_MULTIPLIER = 1.0)
 8. **Step 5** — Compute MOAT_MULTIPLIER (Helmer 7 Powers)
 9. **Step 6** — Compute MARGIN_FLOOR

@@ -49,6 +49,8 @@ An agent runs as a subagent. It cannot ask the person. It takes each answer from
 | `new-offering-pricer` | `offering` |
 | `pricing-auditor` | `feature_list` |
 
+A dispatch with no `plugin-run` block can give `jtbd_result`: the path of the jtbd result to use, in `.jtbd-market-discovery/results/`. The caller finds it with `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_newest.py"`.
+
 The file has this shape:
 
 ```json
@@ -116,6 +118,10 @@ The calculations run in `scripts/pricing_calculator.py`. The skill runs it with 
 ```bash
 uv run "${CLAUDE_PLUGIN_ROOT}/scripts/pricing_calculator.py" <function> '<JSON object of arguments>'
 ```
+
+Write each `'` in a value as `'\''`.
+
+When the calculator cannot run, the run stops and computes no figure: see `skills/price/price.md` Step 6.
 
 ## Classification of features
 
