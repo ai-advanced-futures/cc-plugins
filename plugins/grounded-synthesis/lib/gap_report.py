@@ -377,12 +377,32 @@ def _build_handoff(
 # ---------------------------------------------------------------------------
 
 
+def _count(n: int, word: str) -> str:
+    """'1 source', '2 sources'."""
+    return f"{n} {word}" if n == 1 else f"{n} {word}s"
+
+
+def audit_line(summary: dict, report_path: Path, handoff_path: Path | None) -> str:
+    """The last line of an audit. Each count comes from the summary of handoff.json."""
+    parts = [
+        f"Checked {_count(summary['facts_checked'], 'fact')} across "
+        f"{_count(summary['sources_analyzed'], 'source')}",
+        f"{summary['facts_missing']} missing",
+    ]
+    if summary["sources_skipped"]:
+        parts.append(f"{_count(summary['sources_skipped'], 'source')} not analyzed")
+    parts.append(f"report at {report_path}")
+    if handoff_path is not None:
+        parts.append(f"handoff at {handoff_path}")
+    return "; ".join(parts)
+
+
 def build_gap_report(
     session_dir: str,
     output_path: str | None = None,
     emit_handoff: bool = False,
     output_dir_override: str | None = None,
-) -> None:
+) -> str | None:
     """Assemble the gap report from per-source coverage JSON files.
 
     Reads session.json, all source-*-facts.json and source-*-coverage.json files
@@ -462,7 +482,7 @@ def build_gap_report(
             handoff_path.write_text(
                 json.dumps(handoff, indent=2), encoding="utf-8"
             )
-        return
+        return None
 
     # Load per-source data and build fact lookup
     per_source_data: list[dict] = []
@@ -547,17 +567,18 @@ def build_gap_report(
     gap_report_path.parent.mkdir(parents=True, exist_ok=True)
     gap_report_path.write_text(markdown, encoding="utf-8")
 
-    # Emit handoff.json if requested
+    # The handoff and the last line of the audit use the same summary dict.
+    handoff = _build_handoff(
+        report_data,
+        per_source_data,
+        output_path=gap_report_path,
+        status=status,
+    )
     if emit_handoff:
-        handoff = _build_handoff(
-            report_data,
-            per_source_data,
-            output_path=gap_report_path,
-            status=status,
-        )
         handoff_path.write_text(
             json.dumps(handoff, indent=2), encoding="utf-8"
         )
+    return audit_line(handoff["summary"], gap_report_path, handoff_path if emit_handoff else None)
 
 
 # ---------------------------------------------------------------------------
@@ -604,10 +625,12 @@ if __name__ == "__main__":
         ),
     )
     args = parser.parse_args()
-    build_gap_report(
+    line = build_gap_report(
         session_dir=args.session,
         output_path=args.output,
         emit_handoff=args.emit_handoff,
         output_dir_override=args.output_dir_override,
     )
+    if line:
+        print(line)
     sys.exit(0)

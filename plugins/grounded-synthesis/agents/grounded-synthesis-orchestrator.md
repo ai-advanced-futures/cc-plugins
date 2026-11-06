@@ -65,7 +65,7 @@ Read the JSON from stdout. If no fact file is valid, write `handoff.json` with `
 
 ### Step 5 — Wave 2: coverage check
 
-In ONE message, make one `Agent` call for each index in the `valid` array of Step 4 with `subagent_type: grounded-synthesis:coverage-checker`. Send each call `{session_id, source_index, draft_path, session_dir_absolute}`. The agent writes `{session_dir_absolute}/source-{i}-coverage.json`.
+In ONE message, make one `Agent` call for each index in the `valid` array of Step 4 with `subagent_type: grounded-synthesis:coverage-checker`. Send each call `{session_id, source_index, draft_path, session_dir_absolute}`. The agent writes `{session_dir_absolute}/source-{i}-coverage.json`. Its 1-line answer only tells you that it wrote the file. It is not a source of a count.
 
 ### Step 6 — Assemble the report
 
@@ -83,10 +83,10 @@ The handoff goes to `{output_dir_override}/handoff.json` if `output_dir_override
 
 On failure in Wave 2 or in the assembly: write `handoff.json` with `status: "failed"`, a `failure_reason`, and a null `outputs.gap_report_path` to that path. Then end with `DONE: grounded-synthesis FAILED: <reason>`.
 
-On success: end with these lines.
+The assembly failed when the command of Step 6 exits with a code that is not 0. When it exits with 0 and prints no line that starts with `Checked `, it found no coverage file and wrote the failed `handoff.json` itself: do not write that file again, because a second write would replace the reason that `gap_report.py` recorded, and end with `DONE: grounded-synthesis FAILED: no coverage files`.
+
+On success: the command of Step 6 prints 1 line that starts with `Checked `. The line gives the counts of the `summary` of `handoff.json`, the report path, and the handoff path (`{output_dir_override}/handoff.json` if `output_dir_override` is set). Do not write a count of your own, and do not take a count from the answer of a sub-agent, because a count that is not from the files can disagree with them. End with that line, with no change, then an empty line and this line:
 
 ```
-Checked {N} facts across {S} sources; {M} missing; report at {report_path}; handoff at {output_dir_override}/handoff.json if output_dir_override is set, otherwise {session_dir_absolute}/handoff.json
-
 DONE: grounded-synthesis
 ```

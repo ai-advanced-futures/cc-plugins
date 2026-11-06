@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.4
+
+- The last line of an audit gives the counts of the gap report. `lib/gap_report.py` prints it from the `summary` of `handoff.json`, so the line and the file give the same counts. A count of 1 is singular ("1 source"). The line names the sources not analyzed when there is one.
+- The orchestrator ends with that line, with no change. It takes no count from the answer of a sub-agent.
+- The coverage-checker returns `Wrote source-{i}-coverage.json` with no count.
+
 ## 0.4.3
 
 - The gap report names each source with no fact file or no coverage file (in `## Sources not analyzed`) and each fact with no verdict (in the new `## Facts with no verdict`). The status is then `partial`, not `ok`.
