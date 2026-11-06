@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.9.1
+
+- `result_name.py run-id` refuses the names that the plugin uses at the top of `.competitive-intelligence/` (`results`, `monitoring-history`, a `.json` file, and the name of a person's session, with case ignored), and exits 3 when the session folder of the `run_id` exists. A plugin run with such a `run_id` that the check refuses (exit 2) goes on with no `run_id`. A plugin run whose session folder exists (exit 3) halts with a gap and writes nothing in that folder (#549, STORY-144).
+
 ## 1.9.0
 
 This version gives each agent a short list of tools, and it moves a plugin run from 2 runner agents into the skills (STORY-118, issue 470).

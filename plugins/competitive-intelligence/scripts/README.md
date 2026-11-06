@@ -8,7 +8,7 @@ Two scripts have a command line. A skill or an agent runs them with `uv`. Each s
 
 | Script | What it does | Packages |
 |---|---|---|
-| `result_name.py` | Prints the file name of a result file, or the time of now. It also checks that a `run_id` and a command part are plain names (`run-id <value>`). | none |
+| `result_name.py` | Prints the file name of a result file, or the time of now. It also checks that a `run_id` and a command part are plain names. `run-id <value>` also refuses (exit 2) a name that the plugin uses in `.competitive-intelligence/`, and exits 3 when the session folder of the value exists. | none |
 | `vendor_archetype_emitter.py` | Classifies one vendor and writes the artifact and the handoff file. | `jsonschema` |
 
 ```bash
