@@ -1,12 +1,12 @@
 # product-finance — C4 Context and Container Diagrams
 
-**Plugin:** product-finance v0.11.0
+**Plugin:** product-finance v0.12.0
 
 ## C4 Context
 
 ```mermaid
 C4Context
-    title product-finance Plugin Context (v0.11.0)
+    title product-finance Plugin Context (v0.12.0)
 
     Person(engineer, "Product Engineer", "Asks financial questions during product development")
     Person(cfo, "CFO / Finance Lead", "Reviews unit economics, AI ROI, cost-coverage analysis")
@@ -14,7 +14,7 @@ C4Context
     System(product_finance, "product-finance", "AI-aware financial intelligence: unit economics, AI ROI, cost-coverage")
 
     System_Ext(pricing, "pricing plugin", "Writes agentic-pricing-diagnosis.json and cost-amplifier-readout.json")
-    System_Ext(jtbd, "jtbd-market-discovery plugin", "Writes result files that discover reads")
+    System_Ext(jtbd, "jtbd-market-discovery plugin", "Keeps the jtbd graph that discover reads")
     System_Ext(business_case, "business-case plugin", "Dispatches the runners and reads the result files")
 
     Rel(engineer, product_finance, "Runs commands", "/product-finance:unit-economics, /product-finance:ai-economics, /product-finance:feature-roi")
@@ -22,14 +22,14 @@ C4Context
     Rel(business_case, product_finance, "Dispatches a runner", "plugin-run block with answers_path")
     Rel(product_finance, business_case, "Writes a result file", ".product-finance/results/")
     Rel(pricing, product_finance, "Gives input files", "agentic-pricing-diagnosis.json + cost-amplifier-readout.json")
-    Rel(jtbd, product_finance, "Gives result files", ".jtbd-market-discovery/results/")
+    Rel(product_finance, jtbd, "Reads the jtbd graph", "scripts/jtbd_read.py")
 ```
 
 ## C4 Container
 
 ```mermaid
 C4Container
-    title product-finance Plugin Containers (v0.11.0)
+    title product-finance Plugin Containers (v0.12.0)
 
     Person(engineer, "Engineer / CFO", "")
 

@@ -4,7 +4,7 @@
 **Date:** 2026-11-01
 **Author:** Luis F. Amadeo (Chief Agentic Officer)
 **Adopts:** the repository standard for the plugin result file (repo ADR-001)
-**Plugin:** product-finance v0.8.0, amended in v0.9.0 and v0.11.0
+**Plugin:** product-finance v0.8.0, amended in v0.9.0, v0.11.0 and v0.12.0
 
 ---
 
@@ -18,7 +18,7 @@ Five facts shaped the adoption:
 2. In the spike, `feature-roi` made up a build cost and a revenue because the answers gave none.
 3. The cost-coverage readout script could not run from an installed plugin folder: it needs the plugin root on the path, `pydantic` and `jsonschema`. The spike's runner wrote the readout by hand.
 4. Three commands told the model to run `uv run python -m scripts.<name>`, which runs code from the working folder.
-5. `discover` and `setup` read jtbd data from the old `.jtbd/` folder only. The amendment below replaces this read.
+5. `discover` and `setup` read jtbd data from the first result files of jtbd only. The amendments below replace this read.
 
 ## Decision
 
@@ -34,29 +34,31 @@ Five facts shaped the adoption:
 
 6. **The cost-coverage math moved to a standard-library command.** `scripts/cost_coverage_core.py` holds the constants and the math as plain functions and a command line with the readout script's flags. It needs only Python's standard library. `cost_coverage_readout.py` wraps the same functions in its pydantic models and still checks the Charter schema. The command prints one JSON line with the readout path and `coverage_ratio`, the headline price divided by the base scenario's effective cost per interaction, which the result copies as written. A test runs the command with `-I -S` from another folder and holds its output byte-identical to the pydantic serializer's.
 
-7. **jtbd reads take the new folder first (O6). Superseded by the amendment below.** Every reader of a jtbd file names `.jtbd-market-discovery/` first and falls back to `.jtbd/`. `market_sizing_calculator.py` records the jtbd file it read, not a fixed old path. The amendment below replaces this decision for every reader in this plugin: no `.jtbd/` read is left.
+7. **jtbd reads take the new folder first (O6). Superseded by the amendment below.** Every reader of a jtbd file names the new result folder of jtbd first and falls back to the old one. `market_sizing_calculator.py` records the jtbd file it read, not a fixed old path. The amendments below replace this decision for every reader in this plugin: no read of an old folder is left.
 
 ## Consequences
 
 - A coach can run any of the five commands with an answers file and read one result file that marks each default. A plugin run with few answers produces fewer results and more gaps, never a made-up figure.
 - `feature-roi` with no answers recommends "DON'T BUILD": no revenue is counted unless the person says so.
 - Known limit: the figures of `discover`, `feature-roi` and `unit-economics` are worked out by the model in every plugin run, and those of `ai-economics` whenever `uv` cannot run its script. Each such result says so in its `method`. Two runs on one answers file gave different returns (639% and 684%) because the command left the ramp shape and the discount period open; both are now stated. `market_sizing_calculator.py` is a standard-library calculator; standard-library calculators for the other commands, as `cost_coverage_core.py` is for cost-coverage, are a follow-up. Only `cost-coverage` computes by code everywhere.
-- The `discover` read of two files jtbd never writes was filed in the ledger. The amendment below fixes it.
+- The `discover` read of two files jtbd never writes was filed in the ledger. The amendments below fix it.
 - Five more agent files. The C4 diagram counts them.
 
 ## Amendment (plan 4 part B): every jtbd read names a file jtbd writes
 
 **Date:** 2026-11-02.
 
-**Context.** `discover` read `market-analysis.json` or `discovery-report.json` from `.jtbd-market-discovery/`, else from `.jtbd/`. jtbd writes neither file, so market sizing never got the true job's segments or willingness to pay. A plugin run read no jtbd file at all.
+**Superseded in part.** Decisions 1 and 2 now read the jtbd graph: see the amendment of STORY-91 below. Decisions 3 and 4 stay.
+
+**Context.** `discover` read `market-analysis.json` or `discovery-report.json` from the result folder of jtbd, else from the old folder of jtbd. jtbd writes neither file, so market sizing never got the true job's segments or willingness to pay. A plugin run read no jtbd file at all.
 
 **Decision.**
 
 1. **A plugin run** reads only the `result_file` of the `inputs_from` entry whose `plugin` is `jtbd-market-discovery`, and only when its `run.run_id` and `run.case` match the entry and the block. Otherwise it records a `customer_segment` gap and sizes the market from the answers. Each result that uses a jtbd value copies that jtbd result's `sources` and `defaults` and cites it.
-2. **A person's run** reads the newest file in `.jtbd-market-discovery/results/` (by `run.finished_at`) that holds a `customer_segment` or `willingness_to_pay` result. It passes that file to the calculator as `--jtbd-data`, and the calculator records only its path.
+2. **A person's run** reads the newest result file of jtbd (by `run.finished_at`) that holds a `customer_segment` or `willingness_to_pay` result. It passes that file to the calculator as `--jtbd-data`, and the calculator records only its path.
 3. **The merge rule.** A person's run sets `willingness_to_pay` and `wtp_source` on the person's segment of the same name in `.product-finance/assumptions.json`. It never replaces a value the person wrote. It names a jtbd segment that has no match, and does not add it. jtbd's willingness to pay is monthly, so the yearly value is 12 times it.
-4. **No fallback to the old `.jtbd/` folder.** Result files began in plan 4 part A, which writes them only to `.jtbd-market-discovery/results/`. No version of jtbd wrote `market-analysis.json` or `discovery-report.json` in either folder. So an old-folder read can find nothing that jtbd wrote, and decision 7's fallback does not apply to this read.
-5. **A total check holds the rule.** `test_no_jtbd_path_names_a_file_jtbd_does_not_write` scans every product-finance file except the ADRs, the README and the tests. It ignores the one sentence that bans the `.jtbd/` folder, and the `.product-finance/` paths of this plugin's own files. A jtbd path may name only `.jtbd-market-discovery/` or its `results/` folder. A line that names `market-analysis.json` or `discovery-report.json` after the word jtbd fails.
+4. **No fallback to the old folder.** Result files began in plan 4 part A. No version of jtbd wrote `market-analysis.json` or `discovery-report.json` in either folder. So an old-folder read can find nothing that jtbd wrote, and decision 7's fallback does not apply to this read.
+5. **A total check holds the rule.** The test `test_no_old_jtbd_output.py` (STORY-91) replaces the first check. It scans every product-finance file, the tests too, for a path of an old jtbd output folder. A line that names `market-analysis.json` or `discovery-report.json` after the word jtbd also fails.
 
 **Consequences.** A person who wrote their own willingness to pay keeps it when a jtbd result arrives. A person with no segment of a jtbd segment's name sees that segment named, and adds it themselves if they want it. A jtbd run from before part A gives `discover` nothing, because it wrote no result file.
 
@@ -75,3 +77,24 @@ Five facts shaped the adoption:
 4. **The handoff file is gone.** Only one outside tool read the handoff file. The readout `.product-finance/<engagement_id>/cost-coverage-readout.json` and the result file stay.
 
 **Consequences.** A subagent run of a command with a missing answer gives a gap, where it gave a question before. business-case reads the gaps and asks the person.
+
+
+## Amendment (STORY-91): every jtbd read is a read of the jtbd graph
+
+**Date:** 2026-11-06.
+
+**Context.** The jtbd plugin now keeps what it finds in a knowledge graph. It writes no result file into a folder of the project. The graph has a save code, `scripts/jtbd_graph.py`, and the jtbd plugin gives it as the read interface. A reader that opens an old result file finds nothing.
+
+**Decision.**
+
+1. **One script reads the graph.** `scripts/jtbd_read.py` finds the jtbd plugin, runs `pages` and `results` of its save code, writes the printed document into a file of `.product-finance/`, and prints one line. The prompt files run it and read that file. The tests give it a fixture graph.
+2. **The script finds the save code with `scripts/probe-plugin.sh`.** The file is a byte copy of the file in the other plugins of this repository. It changes only with them. The script runs the save code with the Python that `PRODUCT_FINANCE_JTBD_PYTHON` names, else with `uv run`. The plugin gets no `dependencies` key, because the jtbd plugin is optional.
+3. **A person's run** lists the `Run` pages and walks them from the newest `finished_at`. It reads the first run that holds a `customer_segment` or a `willingness_to_pay` result. When two such runs end at the same time, it names both and reads neither.
+4. **A plugin run** keeps the `Run` pages with the `run_id` of the `inputs_from` entry and the `case` of the block. It reads the run only when exactly one page fits. It opens no `result_file` of the entry. It only names that path in `cites`.
+5. **The file goes in a folder of this plugin.** The name follows `scripts/result_name.py`. The folder is `.product-finance/upstream/` in a person's run and `.product-finance/<run_id>/upstream/` in a plugin run. The folder is never `.product-finance/results/`, because a reader of that folder takes each file there for a result of this plugin.
+6. **`wtp_source` and `--jtbd-data` name that file.** The "Found JTBD analysis" line names the `Run` page too. The calculator does not change.
+7. **No graph, no plugin, no run.** The script prints `NO-JTBD: <reason>`, writes no file, and exits 0. A person's run of `discover` then sizes the market from the answers. A plugin run records the `customer_segment` gap. `setup` asks the Phase 4 question again, with only `manual` and `skip`.
+8. **The script stays inside the project.** It writes only inside `.product-finance/`. It starts the save code with the argument list, never through a shell. The prompt files test each value before it goes into a command.
+9. **The old paths are gone.** No file of this plugin names the old output folders of jtbd. `test_no_old_jtbd_output.py` holds the rule.
+
+**Consequences.** A project with no jtbd graph, or with no jtbd plugin, gets a plain line and a run with no jtbd input. A project with a graph gets the segments and the prices of its newest fitting run. The CI job of this plugin installs the packages of the jtbd plugin, because the tests run its real save code.

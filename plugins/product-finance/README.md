@@ -56,7 +56,7 @@ To run a command with no questions, copy `templates/auto-config.template.json` t
 ### Discovery and analysis
 
 #### `/product-finance:discover`
-Market sizing and opportunity assessment. It reads the result files of the jtbd-market-discovery plugin for market data.
+Market sizing and opportunity assessment. It reads the jtbd graph of the jtbd-market-discovery plugin for market data.
 
 **Use when:** you start a product or feature and need the size of the opportunity.
 
@@ -154,7 +154,7 @@ Five commands write a result file for other plugins: `discover`, `feature-roi`, 
 
 ### With the jtbd-market-discovery plugin
 
-Run the jtbd-market-discovery plugin first. Then run `/product-finance:discover`. The command reads the result files in `.jtbd-market-discovery/results/`.
+Run the jtbd-market-discovery plugin first. Then run `/product-finance:discover`. The command reads the jtbd graph of the project through `scripts/jtbd_read.py`, and writes the run it reads into `.product-finance/upstream/`. `scripts/probe-plugin.sh` finds the jtbd plugin. It is a byte copy of the same file in the other plugins, and it changes only with them. When the project has no jtbd plugin, no jtbd graph, or no fitting run, the command shows a `NO-JTBD:` line and sizes the market from your answers.
 
 ### Alone
 

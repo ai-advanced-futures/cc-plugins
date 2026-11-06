@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.0
+
+- **feat:** `discover` and `setup` read the jtbd graph of the project. The new script `scripts/jtbd_read.py` finds the jtbd plugin, runs its save code, and writes the jtbd run as a file in `.product-finance/upstream/`. A plugin run writes it in `.product-finance/<run_id>/upstream/`.
+- **feat:** a person's run reads the newest jtbd run that holds a segment or a willingness-to-pay result. A plugin run reads the jtbd run with the `run_id` of its `inputs_from` entry and the `case` of its block.
+- **feat:** when the project has no jtbd plugin, no jtbd graph, or no fitting run, the script prints a `NO-JTBD:` line with the reason. `discover` then sizes the market from your answers. `setup` asks the market-sizing question again, with only the options `manual` and `skip`.
+- **change:** the plugin has `scripts/probe-plugin.sh`, a byte copy of the file in the other plugins of this repository.
+- **change:** no file of the plugin names an old output folder of the jtbd plugin. `wtp_source` and `--jtbd-data` name the file in `.product-finance/upstream/`.
+- **change:** `setup` can run the scripts of this plugin without a question.
+
 ## 0.11.0
 
 This is the first version in this repository. Versions 0.1.0 to 0.10.1 came before the port, from commit `c2a329f` of a private repository.

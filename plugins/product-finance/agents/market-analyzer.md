@@ -768,7 +768,7 @@ A defaults run of `product-finance:discover`, then the same run with `sdr_annual
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.11.0",
+  "plugin_version": "0.12.0",
   "command": "product-finance:discover",
   "run": {
     "started_at": "2026-11-01T09:00:00Z",
@@ -864,7 +864,7 @@ A defaults run of `product-finance:discover`, then the same run with `sdr_annual
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.11.0",
+  "plugin_version": "0.12.0",
   "command": "product-finance:discover",
   "run": {
     "started_at": "2026-11-01T09:00:00Z",

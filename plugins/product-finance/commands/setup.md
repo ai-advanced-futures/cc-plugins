@@ -1,6 +1,9 @@
 ---
 description: Guided onboarding to collect baseline financial assumptions for product finance analysis
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
 ---
+
+Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py ...`, one command per Bash call. The grant of this command covers only those scripts, so run no inline code in any language, and write every file with the Write tool.
 
 ## Auto-config
 
@@ -191,7 +194,12 @@ Collect **fully-loaded costs** (salary + benefits + overhead = typically 1.5-2x 
 - `skip` - Skip for now (can add later)
 
 #### If `jtbd`:
-- Find the jtbd result file as **Person run** in `commands/discover.md` says.
+- Read the jtbd graph as **Person run** in `commands/discover.md` says.
+- On a `NO-JTBD:` line, show that line, and then ask this question again with only the options `manual` and `skip`:
+
+  **Question:** "Do you have market sizing data?"
+
+  Follow the option the person picks.
 - Show each jtbd segment with its monthly willingness to pay, and ask the person to confirm each one.
 - A confirmed segment becomes one of the person's own segments in `segments` of `.product-finance/assumptions.json`, and then the merge in **Person run** of `commands/discover.md` applies.
 - Store only the segment's `segment_name`: the merge sets its `willingness_to_pay` to 12 times the monthly value, and its `wtp_source` to the accepted file's path.
@@ -557,7 +565,7 @@ Product status: existing
   - ARR: $1,500,000
   - Customers: 350
 
-Market sizing: jtbd (segments confirmed from a result in .jtbd-market-discovery/results/; no market size)
+Market sizing: jtbd (segments confirmed from the jtbd graph; no market size)
 
 Team: skip
 

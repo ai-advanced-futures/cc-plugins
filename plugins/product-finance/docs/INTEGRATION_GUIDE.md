@@ -12,16 +12,16 @@ This guide covers how to integrate the Product Finance plugin with other Claude 
 
 ## JTBD Plugin Integration
 
-The JTBD plugin (`jtbd-market-discovery`) writes its findings as result files in `.jtbd-market-discovery/results/`. A result of kind `customer_segment` names a segment. A result of kind `willingness_to_pay` gives a monthly price for one segment, named in `value.segment`.
+The JTBD plugin (`jtbd-market-discovery`) keeps its findings in a knowledge graph. A result of kind `customer_segment` names a segment. A result of kind `willingness_to_pay` gives a monthly price for one segment, named in `value.segment`.
 
-`/product-finance:discover` reads one of these files:
+`/product-finance:discover` and `/product-finance:setup` read that graph only through `scripts/jtbd_read.py`. The script finds the jtbd plugin with `scripts/probe-plugin.sh`, runs its save code, and writes one jtbd run as a file in `.product-finance/upstream/` (`.product-finance/<run_id>/upstream/` in a plugin run):
 
-- **A person's run** reads the newest result file that holds a segment or a willingness-to-pay result. It sets the willingness to pay on the person's segments of the same name, and never replaces a value the person wrote.
-- **A plugin run** reads only the result file that its `inputs_from` entry names.
+- **A person's run** reads the newest jtbd run that holds a segment or a willingness-to-pay result. It sets the willingness to pay on the person's segments of the same name, and never replaces a value the person wrote.
+- **A plugin run** reads only the jtbd run with the `run_id` of its `inputs_from` entry and the `case` of its block.
 
 The **Person run** and **Plugin run** sections of `commands/discover.md` hold the exact rules. The ACV of a segment is 12 times its monthly willingness to pay.
 
-When no jtbd result is found, `/discover` sizes the market from the person's answers.
+When the project has no jtbd plugin, no jtbd graph, or no fitting run, the script prints a `NO-JTBD:` line with the reason and writes no file. `/discover` then sizes the market from the person's answers. A plugin run records the gap `customer_segment`. `/setup` asks the market-sizing question again, with only the options `manual` and `skip`.
 
 ---
 

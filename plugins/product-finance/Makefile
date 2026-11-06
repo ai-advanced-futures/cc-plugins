@@ -5,7 +5,7 @@ SHELL := /bin/bash
 TIER ?=
 
 # A tier is the first part of a test name: runner (a caller starts unit-economics-runner with a plugin-run block),
-# discover (/product-finance:discover with a jtbd result), setup (/product-finance:setup with the jtbd option).
+# discover (/product-finance:discover with a jtbd graph), setup (/product-finance:setup with the jtbd option).
 # -p no:cacheprovider: the text scans of tests/unit read each file of the plugin, and a .pytest_cache makes them fail.
 PYTEST := PRODUCT_FINANCE_ITEST=1 uv run --quiet --no-project --with-requirements requirements-dev.txt python -m pytest tests/integration -m integration -rs -p no:cacheprovider
 

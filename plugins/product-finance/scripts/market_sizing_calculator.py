@@ -990,8 +990,7 @@ def load_jtbd_data(jtbd_file_path: Path) -> Optional[Dict[str, Any]]:
     """Load JTBD market analysis data if available.
 
     Args:
-        jtbd_file_path: Path to a jtbd-market-discovery result file
-            (`.jtbd-market-discovery/results/*.json`)
+        jtbd_file_path: Path to a jtbd result document that `scripts/jtbd_read.py` wrote
 
     Returns:
         JTBD data dictionary or None if file doesn't exist or is malformed
@@ -1519,7 +1518,7 @@ def main() -> None:
     )
 
     parser.add_argument("--assumptions", type=str, required=True, help="Path to assumptions JSON file")  # noqa: E501
-    parser.add_argument("--jtbd-data", type=str, help="Path to a jtbd-market-discovery result file (`.jtbd-market-discovery/results/*.json`) (optional)")  # noqa: E501
+    parser.add_argument("--jtbd-data", type=str, help="Path to a jtbd result document that scripts/jtbd_read.py wrote (optional)")  # noqa: E501
     parser.add_argument("--output", type=str, required=True, help="Path to output discovery-report.json file")  # noqa: E501
     parser.add_argument("--output-md", type=str, help="Path to output discovery-report.md file (optional)")  # noqa: E501
 

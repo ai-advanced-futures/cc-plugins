@@ -69,7 +69,7 @@ The discover command performs comprehensive discovery stage financial analysis t
 
 The discover command uses a **smart integration strategy**:
 
-1. **Check for JTBD data:** In a person's run only, if a jtbd result exists, import it as **Person run** below says
+1. **Check for JTBD data:** In a person's run only, if the jtbd graph holds a result, import it as **Person run** below says
 2. **Fill gaps interactively:** Prompt for any missing financial data
 3. **Validate assumptions:** Cross-check JTBD insights with financial reality
 4. **Enrich with benchmarks:** Add industry-standard CAC and conversion rates
@@ -78,9 +78,13 @@ The discover command uses a **smart integration strategy**:
 
 ### Plugin run
 
-A plugin run reads only the `result_file` of the `inputs_from` entry whose `plugin` is `jtbd-market-discovery`. It uses that file only when its `run.run_id` equals the entry's `run_id` and its `run.case` equals the block's `case`. Otherwise, and when the file is missing or is not JSON, it records the gap `{"kind": "customer_segment", "label": "Customer segments from jtbd", "why": "<the reason>"}` and sizes the market from the answers alone. With no jtbd entry, it reads no jtbd file. It then records no gap.
+A plugin run reads the jtbd graph only through `scripts/jtbd_read.py`, and only for the `inputs_from` entry whose `plugin` is `jtbd-market-discovery`. With no jtbd entry, it reads no jtbd data. It then records no gap.
 
-The `result_file` path is relative to the git root. A file that is JSON but holds no `customer_segment` result is also the gap above, with the reason.
+Test each value before it goes into the command. The `run_id` of the entry must pass `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py run-id '<run_id>'`. The `case` must have 1 to 100 characters, and each one must be A-Z, a-z, 0-9, `.`, `_`, `-` or `/`. A value that holds a `'` fails: do not put it in a command. When a value fails, run nothing and record the gap below, with that reason.
+
+Run this command on its own: `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_read.py run --run-id '<the run_id of the entry>' --case '<the case of the block>' --out-dir .product-finance/<the run_id of the block>/upstream`. With no run folder, use `--out-dir .product-finance/upstream`.
+
+The last line of its output is `JTBD: <file> <Run page>` or `NO-JTBD: <reason>`. On a `JTBD:` line, read the file with the Read tool: it holds the jtbd run with that `run_id` and that `case`. The run opens no `result_file` of the entry; it only names that path in `cites`. On a `NO-JTBD:` line, and when the file holds no `customer_segment` result, record the gap `{"kind": "customer_segment", "label": "Customer segments from jtbd", "why": "<the reason>"}` and size the market from the answers alone. The reason is the text after `NO-JTBD: `.
 
 When the run uses the file, its `customer_segment` results are the segments of Phase 3. The answers still size the market in Phase 2. When the answers also give `segments` or `target_acv`, the answers win, and the result copies no jtbd source for that value.
 
@@ -88,7 +92,9 @@ A segment's ACV comes from the one `willingness_to_pay` result whose `value.segm
 
 ### Person run
 
-In `discover`, a person's run reads a jtbd result only at the `post_jtbd` stage; `setup`'s `jtbd` option reads it when the person picks that option. It reads the newest file in `.jtbd-market-discovery/results/` (by `run.finished_at`) that holds a `customer_segment` or `willingness_to_pay` result, and names it in the "Found JTBD analysis" line. It reads no `.jtbd/` file. It checks no `run_id` or `case`. Skip a file that is not JSON, and name it. Skip a file that has no `run.finished_at`. When the two newest files have the same `run.finished_at`, name both files and read neither. The file the run reads is the accepted file. With no accepted file, show no "Found JTBD analysis" line, leave out `--jtbd-data`, and size the market from the answers.
+In `discover`, a person's run reads a jtbd result only at the `post_jtbd` stage; `setup`'s `jtbd` option reads it when the person picks that option. It runs `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_read.py latest --out-dir .product-finance/upstream` on its own. The script reads the jtbd graph, and writes the newest jtbd run that holds a `customer_segment` or `willingness_to_pay` result as a file. It reads no file of another plugin. It checks no `run_id` or `case`. When 2 jtbd runs end at the same time, it names both and reads neither.
+
+The last line of its output is `JTBD: <file> <Run page>` or `NO-JTBD: <reason>`. Show each `SKIP:` line before it. On a `JTBD:` line, read the file with the Read tool. It is the accepted file. Name the Run page and the file in the "Found JTBD analysis" line. On a `NO-JTBD:` line, show that line, show no "Found JTBD analysis" line, leave out `--jtbd-data`, and size the market from the answers.
 
 The person's segments are the list the calculator reads: the top-level `segments` and the `market.target_segments` of `.product-finance/assumptions.json`, merged by `segment_name`, the top-level fields winning field by field. Names match when they are equal after trimming spaces and ignoring case. A segment's willingness to pay comes from the `willingness_to_pay` result whose `value.segment` names it. If more than one result names it, name the conflict and set none. Take the result's `point`, else the middle of its `low` and `high`, else the one bound it gives. A value with `period` `month` is 12 times that value a year; a value with `period` `year` is used as written.
 
@@ -162,11 +168,11 @@ A value answered in this run is a `person` source, though it is read from `.prod
 - `refresh` - Updating existing discovery analysis
 
 **If `post_jtbd`:**
-- In a person's run only, read the jtbd result as **Person run** says
-- If found, display: "Found JTBD analysis: <file>. Importing segments and willingness to pay..." and the unmatched jtbd segment names
+- In a person's run only, read the jtbd graph as **Person run** says
+- If found, display: "Found JTBD analysis: <Run page> (<file>). Importing segments and willingness to pay..." and the unmatched jtbd segment names
 - Continue with Phase 2: a jtbd result gives no market size
 
-**If `pre_jtbd` or file not found:**
+**If `pre_jtbd` or no jtbd input:**
 - Continue with manual market sizing in Phase 2
 
 ### Phase 2: Market Sizing (Manual Mode)
@@ -753,7 +759,7 @@ Structured data for downstream analysis:
       "acquisition_difficulty": "medium",
       "revenue_opportunity": 180000000,
       "willingness_to_pay": 12000,
-      "wtp_source": ".jtbd-market-discovery/results/20261102T101500Z-discover-acme-acme-0001.json"
+      "wtp_source": ".product-finance/upstream/20261102T101500Z-discover-acme-acme-0001.json"
     },
     {
       "segment_name": "Mid-Market Tech",
@@ -846,7 +852,7 @@ Structured data for downstream analysis:
   },
   "jtbd_integration": {
     "data_imported": true,
-    "source_file": ".jtbd-market-discovery/results/20261102T101500Z-discover-acme-acme-0001.json",
+    "source_file": ".product-finance/upstream/20261102T101500Z-discover-acme-acme-0001.json",
     "segments_imported": 2,
     "wtp_data_available": true
   },
@@ -1194,7 +1200,7 @@ Stakeholder-ready markdown report:
 
 ## JTBD Integration Summary
 
-**Data Source:** the jtbd result file the run read, in `.jtbd-market-discovery/results/`
+**Data Source:** the file that `scripts/jtbd_read.py` wrote for the jtbd run, in an `upstream` folder of `.product-finance/`
 
 **Segments Imported:** 2 customer segments with WTP data
 
@@ -1343,7 +1349,7 @@ Blended Metrics:
 
 JTBD Integration
 ----------------
-✅ Imported segment data from .jtbd-market-discovery/results/<file>
+✅ Imported segment data from .product-finance/upstream/<file>
 ✅ 2 customer segments with WTP data
 ✅ Pricing validated against willingness-to-pay research
 
@@ -1393,7 +1399,7 @@ Next Steps
 **Data Collection Strategy:**
 1. **Check for existing data first:**
    - Look for `.product-finance/assumptions.json`
-   - In a person's run only, look for the jtbd result that **Person run** names
+   - In a person's run only, read the jtbd graph as **Person run** says
    - Pre-fill any available data
 
 2. **Smart prompting:**
@@ -1432,7 +1438,7 @@ In a person's run, call `scripts/market_sizing_calculator.py` with the collected
 uv run ${CLAUDE_PLUGIN_ROOT}/scripts/market_sizing_calculator.py --assumptions .product-finance/assumptions.json --output .product-finance/discovery-report.json --jtbd-data <jtbd file>
 ```
 
-In a person's run only, pass `--jtbd-data` the jtbd result file that **Person run** read, else leave the option out. When the script exits with any code other than 0 and 3, whether it stops before it reads the file or after, work the figures out with the formulas above, with no code at all, and end each result's `method` with: Computed by the model from the formula stated in the command; no script ran. An exit with code 3 is not that case: follow **Calculator run**. A plugin run reads no `assumptions.json`, so it works the figures out with the formulas above.
+In a person's run only, pass `--jtbd-data` the file that `scripts/jtbd_read.py` wrote (**Person run**), else leave the option out. When the script exits with any code other than 0 and 3, whether it stops before it reads the file or after, work the figures out with the formulas above, with no code at all, and end each result's `method` with: Computed by the model from the formula stated in the command; no script ran. An exit with code 3 is not that case: follow **Calculator run**. A plugin run reads no `assumptions.json`, so it works the figures out with the formulas above.
 
 **JTBD Integration Logic:**
 
@@ -1504,7 +1510,7 @@ else:
 **Scenario:** Post-JTBD analysis, have WTP data
 
 **Flow:**
-1. In a person's run only, the discover command detects a jtbd result in `.jtbd-market-discovery/results/`
+1. In a person's run only, the discover command reads the jtbd graph with `scripts/jtbd_read.py`
 2. Sets the willingness to pay of 3 segments: $8K, $18K, $35K
 3. User confirms/adjusts segment data
 4. User estimates CAC for 3 channels: Inbound ($600), PLG ($400), Outbound ($5K)
@@ -1555,7 +1561,7 @@ else:
 ## References
 
 - **Schema:** `templates/assumptions.json` - Market and segment data structure
-- **JTBD Integration:** `.jtbd-market-discovery/results/` - segment and willingness-to-pay results
+- **JTBD Integration:** the jtbd graph, read with `scripts/jtbd_read.py` - segment and willingness-to-pay results
 - **Methodology:** `BRAINSTORMING.md` - TAM/SAM/SOM framework and CAC estimation
 - **Benchmarks:** Industry-standard CAC by channel and LTV:CAC ratios
 
@@ -1590,7 +1596,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/agents/market-analyzer.md` and follow it in this ses
 
 **Upstream:**
 - `/product-finance:setup` provides baseline assumptions and pricing
-- jtbd-market-discovery writes segment and willingness-to-pay results to `.jtbd-market-discovery/results/`
+- jtbd-market-discovery keeps segment and willingness-to-pay results in its knowledge graph
 
 **Downstream:**
 - `/product-finance:feature-roi` uses SOM and CAC for feature prioritization
@@ -1599,7 +1605,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/agents/market-analyzer.md` and follow it in this ses
 
 **Data Flow:**
 - Reads from `.product-finance/assumptions.json`
-- In a person's run, reads the jtbd result that **Person run** accepts; a plugin run reads the one **Plugin run** names
+- In a person's run, reads the jtbd run that **Person run** accepts; a plugin run reads the one **Plugin run** names
 - Writes to `.product-finance/discovery-report.json`
 - Updates `.product-finance/assumptions.json` with market data
 
