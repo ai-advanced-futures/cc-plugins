@@ -75,7 +75,7 @@ Orchestrate the 6 analytical lenses in dependency order, enable cascading insigh
    **Layer 1 (JTBD runs first, alone):**
 
    Run: `${CLAUDE_PLUGIN_ROOT}/skills/lenses-jtbd-performance/SKILL.md`
-   Await: "DONE: lens-jtbd"
+   The lens is done when you write its line `DONE: lens-jtbd`.
    Update session.json lenses_complete: add "jtbd" if successful
 
    **Layer 2 (Forces, then Economic Value, after JTBD):**
@@ -83,7 +83,7 @@ Orchestrate the 6 analytical lenses in dependency order, enable cascading insigh
    Run in this order:
      A: `${CLAUDE_PLUGIN_ROOT}/skills/lenses-forces-analysis/SKILL.md`
      B: `${CLAUDE_PLUGIN_ROOT}/skills/lenses-economic-value/SKILL.md`
-   Await: "DONE: lens-forces" and "DONE: lens-economic-value"
+   Each lens is done when you write its line: `DONE: lens-forces` and `DONE: lens-economic-value`.
    Update session.json lenses_complete: add the names of the lenses that completed
 
    **Layer 3 (Strategic, then Technology):**
@@ -91,13 +91,13 @@ Orchestrate the 6 analytical lenses in dependency order, enable cascading insigh
    Run in this order:
      A: `${CLAUDE_PLUGIN_ROOT}/skills/lenses-strategic-positioning/SKILL.md`
      B: `${CLAUDE_PLUGIN_ROOT}/skills/lenses-technology-disruption/SKILL.md`
-   Await: "DONE: lens-strategic" and "DONE: lens-technology"
+   Each lens is done when you write its line: `DONE: lens-strategic` and `DONE: lens-technology`.
    Update session.json lenses_complete: add the names of the lenses that completed
 
    **Layer 4 (Loss/Churn validates all, runs last):**
 
    Run: `${CLAUDE_PLUGIN_ROOT}/skills/lenses-loss-churn/SKILL.md`
-   Await: "DONE: lens-loss-churn"
+   The lens is done when you write its line `DONE: lens-loss-churn`.
    Update session.json lenses_complete: add "loss-churn" if successful
 
 4. INTELLIGENT CASCADING:

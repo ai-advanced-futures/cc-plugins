@@ -96,8 +96,7 @@ If a phase fails two times, the skill asks you: Retry, Skip (a lens only), or Ca
 - The answers that you give to the questions.
 - The evidence files that you name in `available_data`, such as battle cards, win and loss reports, and customer feedback.
 - The public web, through the search and fetch tools of Claude Code.
-- Optional: the output files of the `jtbd-market-discovery` plugin. The plugin uses them as job-step data. When there are none, the run goes on without them.
-- Optional: the data of the `product-finance` plugin, for the economic value lens.
+- Optional: the output files of the `jtbd-market-discovery` plugin, when you name them in `available_data`. When there are none, the run goes on without them.
 
 ## Outputs
 

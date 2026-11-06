@@ -10,7 +10,7 @@ The skill `competitive-intelligence` points to this file. The skill runs in the 
 | Dispatch | The `Agent` tool, with the full name `competitive-intelligence:<agent>`. The answers go in as dispatch fields. Every agent gets `session_id` and `data_dir`. `data_dir` is `.competitive-intelligence/{session}/` under the git root. |
 | Wait | The agent ends with its `DONE:` line. Then the skill reads the summary file of the phase and shows it at the checkpoint. |
 | No answer | When `AskUserQuestion` is not available [q: none], or the person gives no answer, the input is left out of the dispatch and the agent uses its own default. At a checkpoint with no answer, the choice is Proceed. |
-| Change | When the person picks Adjust, Refine, Add competitors, Reclassify or Gather more, the skill asks what to change in one chat message. It dispatches the same agent again with the dispatch field `adjustments` set to the words of the person. The agent overwrites its output files. |
+| Change | When the person picks Adjust, Refine, Add competitors, Reclassify or Gather more, the skill asks what to change with `AskUserQuestion` [q: none], as a text question. It dispatches the same agent again with the dispatch field `adjustments` set to the words of the person. The agent overwrites its output files. |
 
 ## Checkpoint options
 
@@ -25,7 +25,7 @@ When an agent returns an error, or writes no output file:
 
 1. The skill logs the failure to `execution-log.md` in `data_dir`, with the time, the phase and a short summary of the error.
 2. The skill dispatches the agent again one time with the same fields.
-3. When it fails a second time, the skill asks with `AskUserQuestion` [q: none]: "Phase [X] failed twice. Retry, Skip or Cancel?"
+3. When it fails a second time, the skill asks with `AskUserQuestion` [q: none]: "Phase [X] failed twice. Retry or Cancel?" For a lens only, the skill also offers Skip.
 
 | Answer | Effect |
 |---|---|
@@ -37,8 +37,8 @@ The lens executor handles the failure of one lens by itself. It marks a lens tha
 
 ## Open questions of an agent
 
-When an agent needs an answer that it does not have, it writes `open-questions.json` in `data_dir` and returns `QUESTIONS: <path>` as its last line. It does not return `DONE:`. A `text` question is asked in a chat message.
+When an agent needs an answer that it does not have, it writes `open-questions.json` in `data_dir` and returns `QUESTIONS: <path>` as its last line. It does not return `DONE:`. A `text` question is asked with `AskUserQuestion` [q: none], 1 question for each call.
 
 ## session.json
 
-`current_phase` is one of `context`, `ecosystem`, `intelligence`, `lens-analysis`, `synthesis` or `deliverables`. `session.json` replaces the older `state.json` and `session-metadata.json`; those two files are not used.
+`current_phase` is one of `context`, `ecosystem`, `intelligence`, `lens-analysis`, `synthesis` or `deliverables`. `session.json` replaces the older `state.json`. The deliverable generator still writes `session-metadata.json` (`agents/deliverable-generator.md:318`).

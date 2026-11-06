@@ -155,7 +155,6 @@ You run in the main conversation, so you ask the person. The agents ask nothing.
    - .competitive-intelligence/{session}/context-config.json
    - .competitive-intelligence/{session}/competitive-ecosystem.json
    - .competitive-intelligence/{session}/intelligence-data.json
-   - .competitive-intelligence/{session}/metadata.json
 
    Next Steps:
    - Run full analysis: /competitive-intelligence:competitive-intelligence
@@ -171,7 +170,7 @@ You run in the main conversation, so you ask the person. The agents ask nothing.
 
 At a checkpoint, do as the person answers:
 - **Proceed**: go to the next step.
-- **Adjust scope**, **Change mode**, **Add competitors**, **Reclassify** or **Gather more**: ask what to change in one chat message. Dispatch the same agent again with the dispatch field `adjustments` set to the words of the person. The agent overwrites its output files.
+- **Adjust scope**, **Change mode**, **Add competitors**, **Reclassify** or **Gather more**: ask what to change with AskUserQuestion [q: none], as a text question. Dispatch the same agent again with the dispatch field `adjustments` set to the words of the person. The agent overwrites its output files.
 - **Accept gaps**: go to the next step. Keep the gaps in the summary.
 - **Cancel**: stop and tell the person which files exist.
 
@@ -203,7 +202,6 @@ If an agent returns an error or writes no output file:
 - `.competitive-intelligence/{session}/context-config.json` - Analysis configuration
 - `.competitive-intelligence/{session}/competitive-ecosystem.json` - Competitor map
 - `.competitive-intelligence/{session}/intelligence-data.json` - Gathered data
-- `.competitive-intelligence/{session}/metadata.json` - Sources and confidence
 - `.competitive-intelligence/results/` - The result file
 
 ## Philosophy

@@ -346,18 +346,17 @@ Different contexts emphasize different lenses:
 
 **Primary Command:**
 ```
-/competitive-intel
+/competitive-intelligence:competitive-intelligence
 ```
 Launches guided dialogue to determine context, scope, and approach
 
 **Specialized Commands (as context becomes understood):**
 ```
-/competitive-intel:discover          # Full ecosystem mapping
-/competitive-intel:analyze [name]    # Deep dive on specific competitor
-/competitive-intel:validate [feature] # Feature validation context
-/competitive-intel:respond [threat]   # Competitive response context
-/competitive-intel:monitor           # Ongoing monitoring update
-/competitive-intel:update [previous]  # Update previous analysis
+/competitive-intelligence:discover          # Full ecosystem mapping
+/competitive-intelligence:analyze [name]    # Deep dive on specific competitor
+/competitive-intelligence:validate [feature] # Feature validation context
+/competitive-intelligence:respond [threat]   # Competitive response context
+/competitive-intelligence:monitor           # Ongoing monitoring update
 ```
 
 **Contextual Suggestions:**

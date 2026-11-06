@@ -32,7 +32,7 @@ Turn the answers of the person into an analysis configuration that optimizes len
 - `trigger`: what triggered the analysis.
 - `scope`: the scope of the analysis.
 - `analysis_mode`: `strategic_planning` or `sales_enablement`.
-- `depth`: `quick`, `standard` or `comprehensive`.
+- `depth`: `quick_scan`, `standard` or `comprehensive`.
 - `available_data`: the data that the person has.
 - `adjustments`: the words of the person. When it is set, apply it and overwrite your output files.
 
@@ -41,7 +41,7 @@ Turn the answers of the person into an analysis configuration that optimizes len
 ```markdown
 1. ORIENT:
    - Check for existing analyses in both .competitive-intelligence/ and .competitive-intel/, newest file first
-   - Check for JTBD plugin outputs (jtbd-analysis.json)
+   - Check for the output files of the `jtbd-market-discovery` plugin that `available_data` names
    - Check for user-provided files (battle cards, reports)
    - Note available context
 

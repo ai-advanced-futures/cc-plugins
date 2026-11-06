@@ -21,7 +21,7 @@ This skill classifies the current pricing model of a vendor into one of the five
 5. The emitter writes `.competitive-intelligence/vendor-archetype-classification.json` (the federation artifact, `audience: mixed`) and a handoff file.
 6. Read `.competitive-intelligence/vendor-archetype-handoff.json`. Show the person the `state`. For `success`, show the archetype and the `best_in_class_pattern`. For `blocked` or `error`, show the `reason`.
 
-If the agent returns `QUESTIONS: <path>`, read the file and ask each question. Then dispatch the agent again with the answers added as dispatch fields.
+If the agent reports a gap (no pricing page, or a package that the emitter cannot import), show the gap to the person and stop.
 
 Take the archetype from the classifier output, because the classifier is a deterministic script.
 
