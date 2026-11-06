@@ -8,7 +8,7 @@ Two scripts have a command line. A skill or an agent runs them with `uv`. Each s
 
 | Script | What it does | Packages |
 |---|---|---|
-| `result_name.py` | Prints the file name of a result file, or the time of now. | none |
+| `result_name.py` | Prints the file name of a result file, or the time of now. It also checks that a `run_id` and a command part are plain names (`run-id <value>`). | none |
 | `vendor_archetype_emitter.py` | Classifies one vendor and writes the artifact and the handoff file. | `jsonschema` |
 
 ```bash

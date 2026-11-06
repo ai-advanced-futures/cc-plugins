@@ -33,7 +33,7 @@ You run in the main conversation, so you ask the person. The agents ask nothing.
 ```markdown
 0. READ THE START TIME AND THE VERSION:
    - Run `date -u +%Y-%m-%dT%H:%M:%SZ` on its own and keep it as `started_at`, and keep the `version` of `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`. When a `date` call is denied or fails, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py now` on its own and use its output as that time. The result file needs both.
-   - The session folder `{session}` is the `run_id` in a plugin run, and `started_at` written as `YYYYMMDDTHHMMSSZ` in a person's run. In a person's run, `run_id` is absent, whatever the session folder is called.
+   - The session folder `{session}` is the `run_id` in a plugin run (after the check of the runner, step 1), and `started_at` written as `YYYYMMDDTHHMMSSZ` in a person's run. In a person's run, `run_id` is absent, whatever the session folder is called.
    - Every agent this skill dispatches gets `session_id` = `{session}` and `data_dir` = `.competitive-intelligence/{session}/` under the git root.
 
 1. ORIENT:

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.1
+
+- `result_name.py` refuses a `run_id` or a command part that is not a plain name. A plugin run with such a `run_id` runs with no `run_id` and records a gap.
+
 ## 1.7.0
 
 This version ports the plugin to this marketplace.
