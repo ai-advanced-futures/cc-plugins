@@ -1,0 +1,255 @@
+{
+  "statuses": [
+    "draft",
+    "stable",
+    "deprecated"
+  ],
+  "types": {
+    "Run": {
+      "prefix": "RUN",
+      "directory": "runs",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "command",
+        "subject",
+        "session_id",
+        "run_id",
+        "case",
+        "mode",
+        "answers",
+        "started_at",
+        "finished_at",
+        "plugin_version",
+        "ratings_source",
+        "evc_inputs",
+        "wtp_verdict",
+        "gaps",
+        "input_run",
+        "top_outcomes",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Job": {
+      "prefix": "JOB",
+      "directory": "jobs",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "market_area",
+        "validation",
+        "frequency",
+        "frequency_per_year",
+        "importance_estimate",
+        "time_baseline_minutes",
+        "time_by_phase",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "JobStep": {
+      "prefix": "STEP",
+      "directory": "steps",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "phase",
+        "job",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Outcome": {
+      "prefix": "OUTCOME",
+      "directory": "outcomes",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "need_id",
+        "action",
+        "variable",
+        "rank",
+        "importance",
+        "satisfaction",
+        "gap",
+        "opportunity_score",
+        "opportunity_category",
+        "annual_evc",
+        "evc_breakdown",
+        "step",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Segment": {
+      "prefix": "SEGMENT",
+      "directory": "segments",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "segment_id",
+        "size_percent",
+        "size_count",
+        "characteristics",
+        "demographics",
+        "strategic_priority",
+        "annual_evc",
+        "job",
+        "top_outcomes",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "WtpValidation": {
+      "prefix": "WTP",
+      "directory": "wtp",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "confidence_level",
+        "sample_size",
+        "cleaned_median",
+        "cleaned_mean",
+        "optimal_price_point",
+        "acceptable_range",
+        "validated_wtp",
+        "wtp_range",
+        "annual_wtp",
+        "annual_evc",
+        "wtp_to_evc_ratio",
+        "competitor_avg",
+        "verdict",
+        "segment",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Result": {
+      "prefix": "RESULT",
+      "directory": "results",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "kind",
+        "label",
+        "value",
+        "unit",
+        "period",
+        "result_sources",
+        "sources",
+        "method",
+        "rests_on_default",
+        "defaults",
+        "confidence",
+        "about",
+        "cites",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    }
+  },
+  "edges": {
+    "input_run": {
+      "targets": [
+        "Run"
+      ],
+      "multivalued": false,
+      "inverse_label": "input of"
+    },
+    "top_outcomes": {
+      "targets": [
+        "Outcome"
+      ],
+      "multivalued": true,
+      "inverse_label": "top outcome of"
+    },
+    "run": {
+      "targets": [
+        "Run"
+      ],
+      "multivalued": false,
+      "inverse_label": "wrote"
+    },
+    "job": {
+      "targets": [
+        "Job"
+      ],
+      "multivalued": false,
+      "inverse_label": "used by"
+    },
+    "step": {
+      "targets": [
+        "JobStep"
+      ],
+      "multivalued": false,
+      "inverse_label": "has outcome"
+    },
+    "segment": {
+      "targets": [
+        "Segment"
+      ],
+      "multivalued": false,
+      "inverse_label": "priced by"
+    },
+    "about": {
+      "targets": [
+        "Job",
+        "JobStep",
+        "Outcome",
+        "Segment",
+        "WtpValidation"
+      ],
+      "multivalued": false,
+      "inverse_label": "result about"
+    },
+    "cites": {
+      "targets": [
+        "Result"
+      ],
+      "multivalued": true,
+      "inverse_label": "cited by"
+    }
+  }
+}

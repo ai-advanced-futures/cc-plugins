@@ -1,0 +1,223 @@
+# The page types of the jtbd graph (STORY-87 spec, rows 6, 10 and 14, and the Design section).
+#
+# Two generated files come from this one:
+#   schema/jtbd.schema.json   the JSON Schema of rule J-schema
+#   schema/jtbd.slots.json    the types and the edges
+# Run scripts/gen-schema.sh after a change, and commit both outputs.
+#
+# Annotations, read by scripts/gen_slots.py:
+#   class  id_prefix      the ID prefix of the page type
+#   class  directory      the folder of the page type
+#   slot   targets        the page types that a link can point to
+#   slot   inverse_label  the label of the derived line in the LINKS block
+id: https://ai-advanced-futures.github.io/cc-plugins/jtbd-market-discovery
+name: jtbd
+title: The jtbd graph
+description: >-
+  The frontmatter of each page type of the jtbd graph. A page holds the fields that a
+  reader or a link needs. A value that a Result page holds is not on the page of its item.
+default_range: string
+default_prefix: jtbd
+prefixes:
+  linkml: https://w3id.org/linkml/
+  jtbd: https://ai-advanced-futures.github.io/cc-plugins/jtbd-market-discovery/
+imports:
+  - linkml:types
+  - ../../knowledge/schema/base
+
+types:
+  RunLink:
+    typeof: string
+    pattern: '^/runs/RUN-\d{2,}\.md$'
+  JobLink:
+    typeof: string
+    pattern: '^/jobs/JOB-\d{2,}\.md$'
+  StepLink:
+    typeof: string
+    pattern: '^/steps/STEP-\d{2,}\.md$'
+  OutcomeLink:
+    typeof: string
+    pattern: '^/outcomes/OUTCOME-\d{2,}\.md$'
+  SegmentLink:
+    typeof: string
+    pattern: '^/segments/SEGMENT-\d{2,}\.md$'
+  ResultLink:
+    typeof: string
+    pattern: '^/results/RESULT-\d{2,}\.md$'
+  AboutLink:
+    typeof: string
+    pattern: '^/(jobs/JOB|steps/STEP|outcomes/OUTCOME|segments/SEGMENT|wtp/WTP)-\d{2,}\.md$'
+
+enums:
+  RunMode:
+    permissible_values: {interactive: {}, automated: {}}
+  ResultKind:
+    permissible_values: {job: {}, job_step: {}, opportunity_score: {}, customer_value: {}, customer_segment: {}, willingness_to_pay: {}}
+
+classes:
+  AnyValue:
+    description: Any YAML value. The value of a result keeps the shape of the result file.
+    class_uri: linkml:Any
+  Run:
+    description: "One run of discover or wtp-check, or one quick validation."
+    annotations: {id_prefix: RUN, directory: runs}
+    slots: [type, title, description, status, tags, command, subject, session_id, run_id, case, mode, answers, started_at, finished_at, plugin_version, ratings_source, evc_inputs, wtp_verdict, gaps, input_run, top_outcomes, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Run}
+      command: {required: true}
+  Job:
+    description: "The job of a run, with its effort."
+    annotations: {id_prefix: JOB, directory: jobs}
+    slots: [type, title, description, status, tags, market_area, validation, frequency, frequency_per_year, importance_estimate, time_baseline_minutes, time_by_phase, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Job}
+      run: {required: true}
+  JobStep:
+    description: "One step of the job map."
+    annotations: {id_prefix: STEP, directory: steps}
+    slots: [type, title, description, status, tags, phase, job, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: JobStep}
+      job: {required: true}
+      run: {required: true}
+  Outcome:
+    description: "One desired outcome (a need), with its score and value."
+    annotations: {id_prefix: OUTCOME, directory: outcomes}
+    slots: [type, title, description, status, tags, need_id, action, variable, rank, importance, satisfaction, gap, opportunity_score, opportunity_category, annual_evc, evc_breakdown, step, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Outcome}
+      step: {required: true}
+      run: {required: true}
+  Segment:
+    description: "One customer segment."
+    annotations: {id_prefix: SEGMENT, directory: segments}
+    slots: [type, title, description, status, tags, segment_id, size_percent, size_count, characteristics, demographics, strategic_priority, annual_evc, job, top_outcomes, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Segment}
+      job: {required: true}
+      run: {required: true}
+  WtpValidation:
+    description: "The willingness to pay of one segment, after the validation layers."
+    annotations: {id_prefix: WTP, directory: wtp}
+    slots: [type, title, description, status, tags, confidence_level, sample_size, cleaned_median, cleaned_mean, optimal_price_point, acceptable_range, validated_wtp, wtp_range, annual_wtp, annual_evc, wtp_to_evc_ratio, competitor_avg, verdict, segment, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: WtpValidation}
+      segment: {required: true}
+      run: {required: true}
+  Result:
+    description: "One entry of the result file of a run."
+    annotations: {id_prefix: RESULT, directory: results}
+    slots: [type, title, description, status, tags, kind, label, value, unit, period, result_sources, sources, method, rests_on_default, defaults, confidence, about, cites, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Result}
+      kind: {required: true}
+      label: {required: true}
+      run: {required: true}
+
+slots:
+  about:
+    range: AboutLink
+    annotations: {targets: "Job JobStep Outcome Segment WtpValidation", inverse_label: result about}
+  acceptable_range:
+    range: float
+    multivalued: true
+  action: {}
+  annual_evc: {range: float}
+  annual_wtp: {range: float}
+  answers:
+    range: AnyValue
+  case: {}
+  characteristics:
+    range: AnyValue
+  cites:
+    range: ResultLink
+    multivalued: true
+    annotations: {targets: "Result", inverse_label: cited by}
+  cleaned_mean: {range: float}
+  cleaned_median: {range: float}
+  command: {}
+  competitor_avg: {range: float}
+  confidence: {}
+  confidence_level: {}
+  defaults:
+    multivalued: true
+  demographics:
+    range: AnyValue
+  evc_breakdown:
+    range: AnyValue
+  evc_inputs:
+    range: AnyValue
+  finished_at: {}
+  frequency: {}
+  frequency_per_year: {range: float}
+  gap: {range: float}
+  gaps:
+    range: AnyValue
+    multivalued: true
+  importance: {range: float}
+  importance_estimate: {range: float}
+  input_run:
+    range: RunLink
+    annotations: {targets: "Run", inverse_label: input of}
+  job:
+    range: JobLink
+    annotations: {targets: "Job", inverse_label: used by}
+  kind: {range: ResultKind}
+  label: {}
+  market_area: {}
+  method: {}
+  mode: {range: RunMode}
+  need_id: {}
+  opportunity_category: {}
+  opportunity_score: {range: float}
+  optimal_price_point: {range: float}
+  period: {}
+  phase: {}
+  plugin_version: {}
+  rank: {range: integer}
+  ratings_source: {}
+  rests_on_default: {range: boolean}
+  result_sources:
+    range: AnyValue
+    multivalued: true
+  run:
+    range: RunLink
+    annotations: {targets: "Run", inverse_label: wrote}
+  run_id: {}
+  sample_size: {range: integer}
+  satisfaction: {range: float}
+  segment:
+    range: SegmentLink
+    annotations: {targets: "Segment", inverse_label: priced by}
+  segment_id: {}
+  session_id: {}
+  size_count: {range: integer}
+  size_percent: {range: float}
+  sources:
+    range: AnyValue
+    multivalued: true
+  started_at: {}
+  step:
+    range: StepLink
+    annotations: {targets: "JobStep", inverse_label: has outcome}
+  strategic_priority: {}
+  subject: {}
+  time_baseline_minutes: {range: float}
+  time_by_phase:
+    range: AnyValue
+  top_outcomes:
+    range: OutcomeLink
+    multivalued: true
+    annotations: {targets: "Outcome", inverse_label: top outcome of}
+  unit: {}
+  validated_wtp: {range: float}
+  validation: {}
+  value:
+    range: AnyValue
+  variable: {}
+  verdict: {}
+  wtp_range:
+    range: float
+    multivalued: true
+  wtp_to_evc_ratio: {range: float}
+  wtp_verdict: {}

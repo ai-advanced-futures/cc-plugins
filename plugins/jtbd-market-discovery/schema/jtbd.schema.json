@@ -1,0 +1,1165 @@
+{
+    "$defs": {
+        "AnyValue": {
+            "additionalProperties": true,
+            "description": "Any YAML value. The value of a result keeps the shape of the result file.",
+            "title": "AnyValue",
+            "type": [
+                "null",
+                "boolean",
+                "object",
+                "number",
+                "string"
+            ]
+        },
+        "Job": {
+            "additionalProperties": false,
+            "description": "The job of a run, with its effort.",
+            "properties": {
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "frequency": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "frequency_per_year": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "importance_estimate": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "market_area": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "run": {
+                    "pattern": "^/runs/RUN-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "time_baseline_minutes": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "time_by_phase": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/AnyValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "Job",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "validation": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "run"
+            ],
+            "title": "Job",
+            "type": "object"
+        },
+        "JobStep": {
+            "additionalProperties": false,
+            "description": "One step of the job map.",
+            "properties": {
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "job": {
+                    "pattern": "^/jobs/JOB-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "phase": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "run": {
+                    "pattern": "^/runs/RUN-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "JobStep",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "job",
+                "run"
+            ],
+            "title": "JobStep",
+            "type": "object"
+        },
+        "OkfStamp": {
+            "additionalProperties": false,
+            "description": "One actor and one time.",
+            "properties": {
+                "at": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$",
+                    "type": "string"
+                },
+                "by": {
+                    "pattern": "^(human:[A-Za-z0-9._-]+|process:[A-Za-z0-9._-]+|[A-Za-z0-9._-]+/[A-Za-z0-9._-]+)$",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "by",
+                "at"
+            ],
+            "title": "OkfStamp",
+            "type": "object"
+        },
+        "OkfStatus": {
+            "description": "",
+            "enum": [
+                "draft",
+                "stable",
+                "deprecated"
+            ],
+            "title": "OkfStatus",
+            "type": "string"
+        },
+        "Outcome": {
+            "additionalProperties": false,
+            "description": "One desired outcome (a need), with its score and value.",
+            "properties": {
+                "action": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "annual_evc": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "evc_breakdown": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/AnyValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "gap": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "importance": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "need_id": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "opportunity_category": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "opportunity_score": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "rank": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "run": {
+                    "pattern": "^/runs/RUN-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "satisfaction": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "step": {
+                    "pattern": "^/steps/STEP-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "Outcome",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "variable": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "step",
+                "run"
+            ],
+            "title": "Outcome",
+            "type": "object"
+        },
+        "Result": {
+            "additionalProperties": false,
+            "description": "One entry of the result file of a run.",
+            "properties": {
+                "about": {
+                    "pattern": "^/(jobs/JOB|steps/STEP|outcomes/OUTCOME|segments/SEGMENT|wtp/WTP)-\\d{2,}\\.md$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "cites": {
+                    "items": {
+                        "pattern": "^/results/RESULT-\\d{2,}\\.md$",
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "confidence": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "defaults": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "kind": {
+                    "$ref": "#/$defs/ResultKind"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "period": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "rests_on_default": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "result_sources": {
+                    "items": {
+                        "$ref": "#/$defs/AnyValue"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "run": {
+                    "pattern": "^/runs/RUN-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "sources": {
+                    "items": {
+                        "$ref": "#/$defs/AnyValue"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "Result",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "unit": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "value": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/AnyValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "kind",
+                "label",
+                "run"
+            ],
+            "title": "Result",
+            "type": "object"
+        },
+        "ResultKind": {
+            "description": "",
+            "enum": [
+                "job",
+                "job_step",
+                "opportunity_score",
+                "customer_value",
+                "customer_segment",
+                "willingness_to_pay"
+            ],
+            "title": "ResultKind",
+            "type": "string"
+        },
+        "Run": {
+            "additionalProperties": false,
+            "description": "One run of discover or wtp-check, or one quick validation.",
+            "properties": {
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "answers": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/AnyValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "case": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "command": {
+                    "type": "string"
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "evc_inputs": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/AnyValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "finished_at": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "gaps": {
+                    "items": {
+                        "$ref": "#/$defs/AnyValue"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "input_run": {
+                    "pattern": "^/runs/RUN-\\d{2,}\\.md$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "mode": {
+                    "$ref": "#/$defs/RunMode"
+                },
+                "plugin_version": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "ratings_source": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "run_id": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "session_id": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "started_at": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "subject": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "top_outcomes": {
+                    "items": {
+                        "pattern": "^/outcomes/OUTCOME-\\d{2,}\\.md$",
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "Run",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "wtp_verdict": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "command"
+            ],
+            "title": "Run",
+            "type": "object"
+        },
+        "RunMode": {
+            "description": "",
+            "enum": [
+                "interactive",
+                "automated"
+            ],
+            "title": "RunMode",
+            "type": "string"
+        },
+        "Segment": {
+            "additionalProperties": false,
+            "description": "One customer segment.",
+            "properties": {
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "annual_evc": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "characteristics": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/AnyValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "demographics": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/AnyValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "job": {
+                    "pattern": "^/jobs/JOB-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "run": {
+                    "pattern": "^/runs/RUN-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "segment_id": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "size_count": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "size_percent": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "strategic_priority": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "top_outcomes": {
+                    "items": {
+                        "pattern": "^/outcomes/OUTCOME-\\d{2,}\\.md$",
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "Segment",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "job",
+                "run"
+            ],
+            "title": "Segment",
+            "type": "object"
+        },
+        "WtpValidation": {
+            "additionalProperties": false,
+            "description": "The willingness to pay of one segment, after the validation layers.",
+            "properties": {
+                "acceptable_range": {
+                    "items": {
+                        "type": "number"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "annual_evc": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "annual_wtp": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "cleaned_mean": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "cleaned_median": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "competitor_avg": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "confidence_level": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "optimal_price_point": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "run": {
+                    "pattern": "^/runs/RUN-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "sample_size": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "segment": {
+                    "pattern": "^/segments/SEGMENT-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "WtpValidation",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "validated_wtp": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                },
+                "verdict": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "wtp_range": {
+                    "items": {
+                        "type": "number"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "wtp_to_evc_ratio": {
+                    "type": [
+                        "number",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "segment",
+                "run"
+            ],
+            "title": "WtpValidation",
+            "type": "object"
+        }
+    },
+    "$id": "https://ai-advanced-futures.github.io/cc-plugins/jtbd-market-discovery",
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "additionalProperties": false,
+    "metamodel_version": "1.11.0",
+    "title": "jtbd",
+    "type": "object",
+    "version": null
+}
+

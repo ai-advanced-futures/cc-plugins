@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.0
+
+The plugin has a brain of the knowledge standard: one graph in `docs/jtbd/`. This version has the schema, the save code and the brain check. The skills `setup`, `learn` and `ask`, the hook, and the write flow of the agents come in the next version.
+
+- `schema/jtbd.yaml` has 7 page types: `Run`, `Job`, `JobStep`, `Outcome`, `Segment`, `WtpValidation` and `Result`. `scripts/gen-schema.sh` makes the JSON files from it.
+- `scripts/jtbd_graph.py` is the save code. The operations of the standard are `init`, `upgrade`, `new`, `set`, `body`, `link`, `unlink`, `remove`, `resolve`, `regen`, `check` and `log`.
+- `write-run` writes all pages of one run from the session folder and the result file. It runs `init` when the project has no graph. A `wtp-check` run links to the `discover` run that it read. A halt before a session writes one `Run` page.
+- `results` prints the `Result` pages of one run in the shape of a result file. `pages` prints the pages of one type.
+- The brain check has the rules `J-schema`, `J-run`, `J-tree`, `J-score`, `J-rank`, `J-finished`, `J-result` and `J-once`.
+- `plugin.json` names the plugin `knowledge` as a dependency. `scripts/probe-plugin.sh` is a copy of the file in `system-design`.
+
 ## 1.6.0
 
 First version in this repository. Versions 1.0.0 to 1.5.1 came before it, from commit c2a329f of a private repository.

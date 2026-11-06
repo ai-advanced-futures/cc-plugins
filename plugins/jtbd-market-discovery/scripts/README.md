@@ -13,6 +13,20 @@ This directory contains Python scripts for quantitative analysis in the Jobs To 
 
 ---
 
+## The brain: `jtbd_graph.py` and `jtbdlib/`
+
+The runs of the plugin are saved as pages in `docs/jtbd/`. `jtbd_graph.py` is the only code that writes them. Run it with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root <project> <operation>`.
+
+- The standard operations: `init`, `upgrade`, `new`, `set`, `body`, `link`, `unlink`, `remove`, `resolve`, `regen`, `check` and `log`.
+- `write-run --result-file F [--session-dir D] [--by ACTOR]` writes all pages of one run. It runs `init` first when the project has no graph. It prints one JSON object with the path of each page.
+- `results (--run KEY | --run-id R | --latest) [--command C] [--case C]` prints the `Result` pages of one run in the shape of a result file.
+- `pages TYPE [--run KEY]` prints the pages of one type.
+- Exit code 0 means done, 1 means a data error or a failed check, and 2 means wrong input.
+- `gen-schema.sh` makes `schema/jtbd.schema.json` and `schema/jtbd.slots.json` from `schema/jtbd.yaml`. Run it after each change of the schema.
+- `probe-plugin.sh` is a copy of the file in `plugins/system-design/scripts`. The copy must stay the same, byte for byte. A test of the `knowledge` plugin compares the copies.
+
+---
+
 ## Scripts (To Be Implemented in Phase 2)
 
 ### Core Analysis Scripts

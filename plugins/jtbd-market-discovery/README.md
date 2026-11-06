@@ -2,11 +2,17 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.6.0
+**Version:** 1.7.0
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.6.0
+## What's New in v1.7.0
+
+- The plugin has a brain: a graph of pages in `docs/jtbd/`. The save code is `scripts/jtbd_graph.py`.
+- `jtbd_graph.py write-run` writes the pages of one run: the job, the steps, the outcomes, the segments, the willingness to pay, and the results. `results` and `pages` read them back.
+- `jtbd_graph.py check` is the brain check. The skills that write the pages come in the next version.
+
+## What Was New in v1.6.0
 
 - Three skills replace the three commands: `discover`, `quick-validate` and `wtp-check`.
 - The skills ask you the questions. A subagent cannot ask, so the orchestrator writes a questions file and stops. The `discover` skill asks you, then starts the orchestrator again.
