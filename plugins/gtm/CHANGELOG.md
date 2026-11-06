@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.1
+
+- The `run-id` form of `scripts/result_name.py` and the `run_id` of a file name use the `_RUN_ID` pattern of the result-file checker: 4 to 64 of a-z, 0-9 and `-`, with a-z or 0-9 first and last. A value such as `Run_1`, `ab` or `a..b` now exits 2, as the checker refuses it (STORY-164). The command part keeps the plain-name rule.
+- A new test compares the pattern of the script with the pattern of the checker, and compares the answers of the 2 for 5 values.
+
 ## 1.7.0
 
 This version ports the plugin to this marketplace.

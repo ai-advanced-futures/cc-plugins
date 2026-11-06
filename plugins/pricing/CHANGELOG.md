@@ -4,6 +4,11 @@ All notable changes to the pricing plugin will be documented in this file.
 
 The first heading is the version in `.claude-plugin/plugin.json`. A test checks that they agree.
 
+## 1.12.2
+
+- The `run-id` form of `scripts/result_name.py` and the `run_id` of a file name use the `_RUN_ID` pattern of the result-file checker: 4 to 64 of a-z, 0-9 and `-`, with a-z or 0-9 first and last. A value such as `Run_1`, `ab` or `a..b` now exits 2, as the checker refuses it (STORY-164). The command part keeps the plain-name rule.
+- A new test compares the pattern of the script with the pattern of the checker, and compares the answers of the 2 for 5 values.
+
 ## 1.12.1
 
 - A person's run of pricing states no confirmation that the person did not give. The session-start hook only says that a jtbd result exists. A confirmation in a dispatch prompt changes nothing: the pricer reads the file, names it in its reply, and uses Path B (STORY-171).

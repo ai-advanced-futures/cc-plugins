@@ -276,7 +276,7 @@ A Path B run that rests on every default its path uses (some results shown):
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.12.1",
+  "plugin_version": "1.12.2",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",
@@ -331,7 +331,7 @@ A Path A run whose jtbd willingness to pay rests on expert estimates, so the pri
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.12.1",
+  "plugin_version": "1.12.2",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T11:00:00Z",
@@ -376,7 +376,7 @@ A Path B run whose jtbd willingness to pay had no `period`, so the gate refused 
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.12.1",
+  "plugin_version": "1.12.2",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-11-02T09:00:00Z",
@@ -420,7 +420,7 @@ A Path C-autonomous run (one result shown):
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.12.1",
+  "plugin_version": "1.12.2",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T12:00:00Z",
@@ -464,7 +464,7 @@ A Path C-fully-agentic run whose answers file gave the margin (`settled_by: pers
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.12.1",
+  "plugin_version": "1.12.2",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T13:00:00Z",
