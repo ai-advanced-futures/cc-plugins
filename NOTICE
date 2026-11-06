@@ -94,3 +94,7 @@ material, and the Apache License does not replace them.
     The architecture-assess plugin is a port of it, with changes.
     It is not the architecture plugin of this repository.
     The MIT notice is in plugins/architecture-assess/NOTICE.
+
+17. business-case, by ai-advanced-futures, MIT License.
+    The business-case plugin ports it, with changes.
+    The MIT notice is in plugins/business-case/NOTICE.

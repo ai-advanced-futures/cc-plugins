@@ -1,0 +1,477 @@
+{
+  "version": "1.1.0",
+  "estimated_share_threshold": 0.3,
+  "items": [
+    {
+      "id": "BC-OFFERING",
+      "title": "The one offering",
+      "section": "offering",
+      "lens": "scope",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-OFFERING.M1",
+        "text": "The case names one offering and says what it is. A case that names no offering, or more than one, does not meet this item. Evidence that counts: the offering line at the top of the case and the offering section."
+      }
+    },
+    {
+      "id": "BC-JOBS",
+      "title": "Jobs to be done",
+      "section": "problem",
+      "lens": "problem",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-JOBS.M1",
+        "text": "The case states one or more jobs the customer needs done. It states each job as the outcome the customer wants, not as a feature. Evidence that counts: customer interviews, observation or support records that show each job."
+      }
+    },
+    {
+      "id": "BC-NEED-EVIDENCE",
+      "title": "Evidence of need",
+      "section": "problem",
+      "lens": "problem",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-NEED-EVIDENCE.M1",
+        "text": "The case shows that customers have the need. It cites at least one source the funder can check, such as interviews, survey results, usage data or lost-deal records. Evidence that counts: an evidence page for each source, with its date and method. The proposer's opinion alone does not count."
+      }
+    },
+    {
+      "id": "BC-WHY-NOW",
+      "title": "Why now",
+      "section": "problem",
+      "lens": "problem",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-WHY-NOW.M1",
+        "text": "The case states why the funder should fund the offering now rather than later. Evidence that counts: a dated source for the reason, such as a market shift, a customer deadline or a competitor's move."
+      }
+    },
+    {
+      "id": "BC-CUSTOMER-TYPES",
+      "title": "Customer types",
+      "section": "customers",
+      "lens": "personas",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-CUSTOMER-TYPES.M2",
+        "text": "The case names each customer type. For each type it says who buys and who uses the offering; one person can do both. For a B2B or both-markets case, it names one or more target segments by company size: enterprise, mid-market, or small and medium businesses (SMB). It states the size band of each, in employees or annual revenue. It names the segments it rules out, or says it rules out none and why. The choice is recorded in the strategic decisions register, under Who. Evidence that counts: research, sales or usage records that show each type exists."
+      }
+    },
+    {
+      "id": "BC-JOURNEYS",
+      "title": "Customer journeys",
+      "section": "journeys",
+      "lens": "journeys",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-JOURNEYS.M1",
+        "text": "The case describes, step by step, how a customer does the job today and how the job runs with the offering. It does this for at least one customer type. Evidence that counts: interviews, observation or usage records of how customers do the job today. Before launch, the journey with the offering needs no evidence of use."
+      }
+    },
+    {
+      "id": "BC-MARKET-SIZE",
+      "title": "Market size: TAM, SAM and SOM",
+      "section": "market",
+      "lens": "go-to-market",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-MARKET-SIZE.M1",
+        "text": "The case states three market figures, each with its unit. The total addressable market (TAM) is everyone who could buy. The serviceable available market (SAM) is the part this offering can reach. The serviceable obtainable market (SOM) is the part it can realistically win. Evidence that counts: an evidence page for each figure that names its source or its calculation inputs."
+      }
+    },
+    {
+      "id": "BC-GROWTH-MOTION",
+      "title": "Growth motion",
+      "section": "market",
+      "lens": "go-to-market",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-GROWTH-MOTION.M1",
+        "text": "The case says how the offering grows: sales-led, customer-led or product-led, or a mix it names. Evidence that counts: the way the customer types buy today, or results from a trial of the motion."
+      }
+    },
+    {
+      "id": "BC-COMPETITION",
+      "title": "Competition, existing and emerging",
+      "section": "competition",
+      "lens": "go-to-market",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-COMPETITION.M1",
+        "text": "The case names the existing competitors and the emerging ones, and says what each one offers. Evidence that counts: a dated source for each competitor, such as its product page, an analyst report or a lost-deal record."
+      }
+    },
+    {
+      "id": "BC-ALTERNATIVES",
+      "title": "Alternatives to buying",
+      "section": "competition",
+      "lens": "go-to-market",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-ALTERNATIVES.M1",
+        "text": "The case names what customers do today instead of buying any product, such as a manual process, an in-house tool or nothing. Evidence that counts: interviews, observation or customer records that show each alternative in use."
+      }
+    },
+    {
+      "id": "BC-DIFFERENTIATION",
+      "title": "Differentiation",
+      "section": "competition",
+      "lens": "go-to-market",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-DIFFERENTIATION.M1",
+        "text": "The case states what this offering does that the named competitors and alternatives do not. Evidence that counts: customer feedback, test results or a comparison with named competitors."
+      }
+    },
+    {
+      "id": "BC-RIGHT-TO-WIN",
+      "title": "Right to win",
+      "section": "competition",
+      "lens": "go-to-market",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-RIGHT-TO-WIN.M1",
+        "text": "The case states why this organisation can win. It names an asset, skill, channel, data set or relationship that competitors lack. Evidence that counts: a record of that asset, such as existing customers, a channel agreement or past delivery."
+      }
+    },
+    {
+      "id": "BC-WTP",
+      "title": "Willingness to pay",
+      "section": "pricing",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-WTP.M1",
+        "text": "The case states what customers will pay and how the proposer found this out. Methods include price tests, price interviews and prices paid for comparable products. Evidence that counts: an evidence page with the method and the date. A price the proposer chose without customer input does not count."
+      }
+    },
+    {
+      "id": "BC-PRICING-LAUNCH",
+      "title": "Price at launch",
+      "section": "pricing",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-PRICING-LAUNCH.M1",
+        "text": "The case states the launch price and its unit, such as per seat, per use or per account. Evidence that counts: the willingness-to-pay evidence or the comparable prices that support the figure."
+      }
+    },
+    {
+      "id": "BC-PRICING-EVOLUTION",
+      "title": "How pricing changes after launch",
+      "section": "pricing",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-PRICING-EVOLUTION.M1",
+        "text": "The case states how the price or the price model changes after launch. Evidence that counts: the evidence behind each planned change, or its entry in the assumptions register."
+      }
+    },
+    {
+      "id": "BC-PACKAGING",
+      "title": "Packaging",
+      "section": "pricing",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-PACKAGING.M1",
+        "text": "The case states what each package contains. A case with one package says so. Evidence that counts: customer research or usage data that supports the packages."
+      }
+    },
+    {
+      "id": "BC-GTM",
+      "title": "Go-to-market plan",
+      "section": "go-to-market",
+      "lens": "go-to-market",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-GTM.M1",
+        "text": "The case states the target customers for year one and the channels that reach them. Evidence that counts: channel results, pipeline records or a plan for each channel."
+      }
+    },
+    {
+      "id": "BC-PRODUCT-MARKETING",
+      "title": "Product marketing",
+      "section": "go-to-market",
+      "lens": "go-to-market",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-PRODUCT-MARKETING.M1",
+        "text": "The case states the main message to the customer and the proof points behind it. Evidence that counts: the customer evidence each message rests on, such as interview quotes or test results."
+      }
+    },
+    {
+      "id": "BC-FORECAST-Y1",
+      "title": "Year-one bookings and revenue by quarter",
+      "section": "forecast",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-FORECAST-Y1.M2",
+        "text": "Each quarter of months 1 to 12 has settled revenue and booking figures in the financial figures file, each split into new and expansion. A quarter is months 1 to 3, 4 to 6, 7 to 9 or 10 to 12, counted from the Start month. A settled figure is one whose entry in `finance.json` `figures` has `settled` true. A case that states in its text that it has no existing base needs no expansion figures: its expansion is zero. Evidence that counts: an evidence page for each input behind the figures, with its grade."
+      }
+    },
+    {
+      "id": "BC-SCENARIOS",
+      "title": "Scenarios and sensitivity",
+      "section": "forecast",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": true,
+      "computed": true,
+      "met_test": {
+        "id": "BC-SCENARIOS.M2",
+        "text": "Code computes NPV and payback for the base case and at least one other scenario. The case also names each input the sensitivity test varies, with its range and an evidence page. Evidence that counts: finance.json."
+      }
+    },
+    {
+      "id": "BC-ASSUMPTIONS",
+      "title": "Assumptions register",
+      "section": "assumptions",
+      "lens": "risks-assumptions",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-ASSUMPTIONS.M1",
+        "text": "The case has an assumptions register. For each assumption it states the assumed value and its evidence grade: primary, secondary or estimated. Evidence that counts: the register itself."
+      }
+    },
+    {
+      "id": "BC-FIN-BASIS",
+      "title": "Financial basis",
+      "section": "financials",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-FIN-BASIS.M2",
+        "text": "The case states all five parts of its financial basis: the discount rate, the horizon, the currency, the start month and the cost assumptions. Each part has a value written in the case. A blank line or a default value does not count. Evidence that counts: the five labelled lines in the financials section."
+      }
+    },
+    {
+      "id": "BC-COST-BUILD",
+      "title": "Cost to build",
+      "section": "financials",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-COST-BUILD.M1",
+        "text": "The case states the cost to build the offering up to launch, with the inputs behind the figure. Evidence that counts: an evidence page for each input, such as a staffing plan, rates or quotes."
+      }
+    },
+    {
+      "id": "BC-COST-DELIVER-OPERATE",
+      "title": "Cost to deliver and operate",
+      "section": "financials",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-COST-DELIVER-OPERATE.M1",
+        "text": "The case states the cost to deliver and operate the offering after launch, per unit or per period. Evidence that counts: an evidence page for each input, such as current bills, vendor quotes or staffing plans."
+      }
+    },
+    {
+      "id": "BC-RUN-COST-AI",
+      "title": "Run cost, including AI inference",
+      "section": "financials",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-RUN-COST-AI.M1",
+        "text": "The case states the run cost of the offering. When the offering uses AI, the run cost includes the cost of AI inference. A case whose offering uses no AI says so. Evidence that counts: vendor price pages, measured usage or a load test."
+      }
+    },
+    {
+      "id": "BC-INVESTMENT",
+      "title": "Investment asked",
+      "section": "financials",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-INVESTMENT.M1",
+        "text": "The case states the total investment it asks for and what the investment pays for. Evidence that counts: the cost figures that make up the total, each with its evidence page."
+      }
+    },
+    {
+      "id": "BC-UNIT-ECONOMICS-B2B",
+      "title": "Unit economics (B2B)",
+      "section": "financials",
+      "lens": "business-model",
+      "applies_to": "B2B",
+      "needs_code_arithmetic": true,
+      "met_test": {
+        "id": "BC-UNIT-ECONOMICS-B2B.M1",
+        "text": "The inputs are stated: price per account per period, cost to serve one account, cost to acquire one account, and churn rate or customer lifetime. Each input has an evidence page. The judge does not compute the result; code computes it in a later rubric version."
+      }
+    },
+    {
+      "id": "BC-UNIT-ECONOMICS-B2C",
+      "title": "Unit economics (B2C)",
+      "section": "financials",
+      "lens": "business-model",
+      "applies_to": "B2C",
+      "needs_code_arithmetic": true,
+      "met_test": {
+        "id": "BC-UNIT-ECONOMICS-B2C.M1",
+        "text": "The inputs are stated: revenue per user per period, cost to serve one user, cost to acquire one user, and churn or retention rate. Each input has an evidence page. The judge does not compute the result; code computes it in a later rubric version."
+      }
+    },
+    {
+      "id": "BC-PAYBACK-CASH",
+      "title": "Payback and cash",
+      "section": "financials",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "computed": true,
+      "met_test": {
+        "id": "BC-PAYBACK-CASH.M2",
+        "text": "Code computes a base-case payback: a month, or not within the horizon. No outflow to pay back does not meet this test. A growth-first case may also state one terminal value, with its method and its evidence. Evidence that counts: finance.json."
+      }
+    },
+    {
+      "id": "BC-FIGURES-COMPLETE",
+      "title": "Every money amount captured",
+      "section": "financials",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "computed": true,
+      "met_test": {
+        "id": "BC-FIGURES-COMPLETE.M1",
+        "text": "Every money amount in the money sections is covered by a confirmed figure in the financial figures file. Evidence that counts: finance.json."
+      }
+    },
+    {
+      "id": "BC-DO-NOTHING",
+      "title": "Do-nothing baseline",
+      "section": "baseline",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-DO-NOTHING.M1",
+        "text": "The case states what happens to revenue and cost if the organisation does not build the offering, over the horizon of its financial basis. Where the case gives figures for the offering, the baseline gives figures too. Evidence that counts: market or customer evidence for the trend the baseline assumes."
+      }
+    },
+    {
+      "id": "BC-CANNIBALISATION",
+      "title": "Cannibalisation",
+      "section": "baseline",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-CANNIBALISATION.M1",
+        "text": "The case states whether the offering takes revenue from the organisation's existing products, and how much. A case that expects none says so. Evidence that counts: sales or usage data for the existing products, or the overlap of their customers with this offering's customers."
+      }
+    },
+    {
+      "id": "BC-OPPORTUNITY-COST",
+      "title": "Opportunity cost",
+      "section": "baseline",
+      "lens": "business-model",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-OPPORTUNITY-COST.M1",
+        "text": "The case names the best other use of the same money and people, and what that use would return. Evidence that counts: the plan or the estimate for that other use."
+      }
+    },
+    {
+      "id": "BC-KPIS",
+      "title": "Business and product KPIs",
+      "section": "success",
+      "lens": "success-metrics",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-KPIS.M1",
+        "text": "The case states business KPIs, such as revenue or paying customers. It also states product or job KPIs, such as how often customers do the job. Evidence that counts: the source of each KPI's current value, or a statement that no value exists yet."
+      }
+    },
+    {
+      "id": "BC-OKRS",
+      "title": "OKRs",
+      "section": "success",
+      "lens": "success-metrics",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-OKRS.M1",
+        "text": "The case states at least one objective with measurable key results. Evidence that counts: the key results as written in the case."
+      }
+    },
+    {
+      "id": "BC-CAPABILITIES",
+      "title": "Capabilities the organisation has",
+      "section": "execution",
+      "lens": "risks-assumptions",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-CAPABILITIES.M1",
+        "text": "The case states the skills the offering needs and which of them the organisation has today. Evidence that counts: named teams, past delivery, or a hiring or partner plan."
+      }
+    },
+    {
+      "id": "BC-RISKS",
+      "title": "Key risks",
+      "section": "execution",
+      "lens": "risks-assumptions",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-RISKS.M1",
+        "text": "The case lists the key risks to the offering. Evidence that counts: the source of each risk, such as research, past delivery or a competitor's move."
+      }
+    },
+    {
+      "id": "BC-KILL-CRITERIA",
+      "title": "Kill criteria",
+      "section": "funding",
+      "lens": "risks-assumptions",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-KILL-CRITERIA.M1",
+        "text": "The case states measurable conditions under which the work stops. Evidence that counts: each condition as written, tied to a KPI or a forecast figure."
+      }
+    },
+    {
+      "id": "BC-TRANCHES",
+      "title": "Tranche funding",
+      "section": "funding",
+      "lens": "risks-assumptions",
+      "applies_to": "both",
+      "needs_code_arithmetic": false,
+      "met_test": {
+        "id": "BC-TRANCHES.M1",
+        "text": "The case splits the investment into stages. For each stage it states the amount and the criteria the stage before must meet to release it. Evidence that counts: each stage as written, with its criteria."
+      }
+    }
+  ]
+}

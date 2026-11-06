@@ -1,0 +1,593 @@
+{
+  "schema": "business-case-plugin-map/1",
+  "version": "1.0.0",
+  "plugins": {
+    "jtbd-market-discovery": {
+      "min_version": "1.7.0",
+      "commands": {
+        "jtbd-market-discovery:discover": {
+          "route": "jtbd-market-discovery:orchestrator",
+          "coach_runs": true,
+          "reads_from": [],
+          "kinds": [
+            "job",
+            "job_step",
+            "opportunity_score",
+            "customer_value",
+            "customer_segment",
+            "willingness_to_pay"
+          ],
+          "phases": [
+            1,
+            2,
+            3,
+            4,
+            8
+          ],
+          "never_set": []
+        },
+        "jtbd-market-discovery:wtp-check": {
+          "route": "jtbd-market-discovery:wtp-check-runner",
+          "coach_runs": true,
+          "reads_from": [
+            "jtbd-market-discovery:discover"
+          ],
+          "kinds": [
+            "willingness_to_pay",
+            "customer_value"
+          ],
+          "phases": [
+            9
+          ],
+          "never_set": []
+        }
+      }
+    },
+    "pricing": {
+      "min_version": "1.11.0",
+      "commands": {
+        "pricing:price": {
+          "route": "pricing:price-runner",
+          "coach_runs": true,
+          "reads_from": [
+            "jtbd-market-discovery:wtp-check"
+          ],
+          "kinds": [
+            "launch_price",
+            "package"
+          ],
+          "phases": [],
+          "never_set": [
+            "confirm_jtbd_run"
+          ]
+        }
+      }
+    },
+    "competitive-intelligence": {
+      "min_version": "1.9.1",
+      "commands": {
+        "competitive-intelligence:discover": {
+          "route": "competitive-intelligence:discover",
+          "coach_runs": true,
+          "reads_from": [],
+          "kinds": [
+            "competitor",
+            "alternative",
+            "timing_reason",
+            "differentiator",
+            "risk"
+          ],
+          "phases": [],
+          "never_set": []
+        },
+        "competitive-intelligence:analyze": {
+          "route": "competitive-intelligence:analyze",
+          "coach_runs": true,
+          "reads_from": [],
+          "kinds": [
+            "differentiator",
+            "risk"
+          ],
+          "phases": [],
+          "never_set": []
+        }
+      }
+    },
+    "product-finance": {
+      "min_version": "0.11.0",
+      "commands": {
+        "product-finance:discover": {
+          "route": "product-finance:discover-runner",
+          "coach_runs": true,
+          "reads_from": [
+            "jtbd-market-discovery:discover"
+          ],
+          "kinds": [
+            "market_size",
+            "unit_economics",
+            "customer_segment"
+          ],
+          "phases": [],
+          "never_set": []
+        },
+        "product-finance:feature-roi": {
+          "route": "product-finance:feature-roi-runner",
+          "coach_runs": true,
+          "reads_from": [],
+          "kinds": [
+            "build_cost",
+            "operating_cost",
+            "feature_roi"
+          ],
+          "phases": [],
+          "never_set": []
+        },
+        "product-finance:unit-economics": {
+          "route": "product-finance:unit-economics-runner",
+          "coach_runs": true,
+          "reads_from": [],
+          "kinds": [
+            "unit_economics"
+          ],
+          "phases": [],
+          "never_set": []
+        },
+        "product-finance:ai-economics": {
+          "route": "product-finance:ai-economics-runner",
+          "coach_runs": true,
+          "reads_from": [],
+          "kinds": [
+            "ai_run_cost",
+            "operating_cost"
+          ],
+          "phases": [],
+          "never_set": []
+        },
+        "product-finance:cost-coverage": {
+          "route": "product-finance:cost-coverage-runner",
+          "coach_runs": false,
+          "reads_from": [],
+          "kinds": [
+            "cost_coverage"
+          ],
+          "phases": [],
+          "never_set": []
+        }
+      }
+    },
+    "gtm": {
+      "min_version": "1.7.0",
+      "commands": {
+        "gtm:marketing:launch": {
+          "route": "gtm:marketing-launch-runner",
+          "coach_runs": true,
+          "reads_from": [],
+          "kinds": [
+            "channel",
+            "growth_motion"
+          ],
+          "phases": [],
+          "never_set": []
+        },
+        "gtm:marketing:brand": {
+          "route": "gtm:marketing-brand-runner",
+          "coach_runs": true,
+          "reads_from": [],
+          "kinds": [
+            "message",
+            "proof_point"
+          ],
+          "phases": [],
+          "never_set": []
+        },
+        "gtm:marketing:funnel": {
+          "route": "gtm:marketing-funnel-runner",
+          "coach_runs": true,
+          "reads_from": [],
+          "kinds": [
+            "channel"
+          ],
+          "phases": [],
+          "never_set": []
+        }
+      }
+    },
+    "value-ip": {
+      "min_version": "1.3.1",
+      "commands": {
+        "value-ip:analyze": {
+          "route": "value-ip:analyze-runner",
+          "coach_runs": false,
+          "reads_from": [],
+          "kinds": [
+            "differentiator",
+            "right_to_win"
+          ],
+          "phases": [],
+          "never_set": []
+        }
+      }
+    }
+  },
+  "ceilings": [
+    {
+      "command": "jtbd-market-discovery:discover",
+      "kind": "job",
+      "max": "secondary"
+    },
+    {
+      "command": "gtm:marketing:launch",
+      "kind": "channel",
+      "max": "estimated"
+    },
+    {
+      "command": "gtm:marketing:launch",
+      "kind": "growth_motion",
+      "max": "estimated"
+    },
+    {
+      "command": "gtm:marketing:brand",
+      "kind": "message",
+      "max": "estimated"
+    },
+    {
+      "command": "gtm:marketing:brand",
+      "kind": "proof_point",
+      "max": "estimated"
+    },
+    {
+      "command": "gtm:marketing:funnel",
+      "kind": "channel",
+      "max": "estimated"
+    }
+  ],
+  "kinds": {
+    "job": [
+      "BC-JOBS"
+    ],
+    "job_step": [
+      "BC-JOBS"
+    ],
+    "customer_need": [
+      "BC-NEED-EVIDENCE"
+    ],
+    "opportunity_score": [
+      "BC-NEED-EVIDENCE"
+    ],
+    "customer_segment": [
+      "BC-CUSTOMER-TYPES"
+    ],
+    "journey_step": [
+      "BC-JOURNEYS"
+    ],
+    "market_size": [
+      "BC-MARKET-SIZE"
+    ],
+    "growth_motion": [
+      "BC-GROWTH-MOTION"
+    ],
+    "willingness_to_pay": [
+      "BC-WTP"
+    ],
+    "customer_value": [
+      "BC-WTP"
+    ],
+    "launch_price": [
+      "BC-PRICING-LAUNCH"
+    ],
+    "package": [
+      "BC-PACKAGING"
+    ],
+    "pricing_change": [
+      "BC-PRICING-EVOLUTION"
+    ],
+    "competitor": [
+      "BC-COMPETITION"
+    ],
+    "alternative": [
+      "BC-ALTERNATIVES"
+    ],
+    "differentiator": [
+      "BC-DIFFERENTIATION"
+    ],
+    "build_cost": [
+      "BC-COST-BUILD"
+    ],
+    "operating_cost": [
+      "BC-COST-DELIVER-OPERATE"
+    ],
+    "ai_run_cost": [
+      "BC-RUN-COST-AI"
+    ],
+    "unit_economics": [
+      "BC-UNIT-ECONOMICS-B2B",
+      "BC-UNIT-ECONOMICS-B2C"
+    ],
+    "cost_coverage": [
+      "BC-UNIT-ECONOMICS-B2B",
+      "BC-UNIT-ECONOMICS-B2C"
+    ],
+    "channel": [
+      "BC-GTM"
+    ],
+    "message": [
+      "BC-PRODUCT-MARKETING"
+    ],
+    "proof_point": [
+      "BC-PRODUCT-MARKETING"
+    ],
+    "right_to_win": [
+      "BC-RIGHT-TO-WIN"
+    ],
+    "timing_reason": [
+      "BC-WHY-NOW"
+    ],
+    "risk": [
+      "BC-RISKS"
+    ],
+    "do_nothing": [
+      "BC-DO-NOTHING"
+    ],
+    "cannibalisation": [
+      "BC-CANNIBALISATION"
+    ],
+    "opportunity_cost": [
+      "BC-OPPORTUNITY-COST"
+    ],
+    "kpi": [
+      "BC-KPIS"
+    ],
+    "capability": [
+      "BC-CAPABILITIES"
+    ],
+    "feature_roi": []
+  },
+  "items": {
+    "BC-OFFERING": {
+      "owner": "coach",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-JOBS": {
+      "owner": "case-job-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-NEED-EVIDENCE": {
+      "owner": "case-job-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-WHY-NOW": {
+      "owner": "case-baseline-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-CUSTOMER-TYPES": {
+      "owner": "case-job-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-JOURNEYS": {
+      "owner": "case-job-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-MARKET-SIZE": {
+      "owner": "case-market-analyst",
+      "contributors": [],
+      "after": [
+        "BC-JOBS"
+      ],
+      "owns_inputs": {}
+    },
+    "BC-GROWTH-MOTION": {
+      "owner": "case-market-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-COMPETITION": {
+      "owner": "case-competition-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-ALTERNATIVES": {
+      "owner": "case-competition-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-DIFFERENTIATION": {
+      "owner": "case-competition-analyst",
+      "contributors": [
+        "case-strategy-analyst"
+      ],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-RIGHT-TO-WIN": {
+      "owner": "case-strategy-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-WTP": {
+      "owner": "case-pricing-analyst",
+      "contributors": [],
+      "after": [
+        "BC-MARKET-SIZE"
+      ],
+      "owns_inputs": {}
+    },
+    "BC-PRICING-LAUNCH": {
+      "owner": "case-pricing-analyst",
+      "contributors": [],
+      "after": [
+        "BC-WTP"
+      ],
+      "owns_inputs": {}
+    },
+    "BC-PRICING-EVOLUTION": {
+      "owner": "case-pricing-analyst",
+      "contributors": [],
+      "after": [
+        "BC-PRICING-LAUNCH"
+      ],
+      "owns_inputs": {}
+    },
+    "BC-PACKAGING": {
+      "owner": "case-pricing-analyst",
+      "contributors": [],
+      "after": [
+        "BC-WTP"
+      ],
+      "owns_inputs": {}
+    },
+    "BC-GTM": {
+      "owner": "case-gtm-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-PRODUCT-MARKETING": {
+      "owner": "case-gtm-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-FORECAST-Y1": {
+      "owner": "finance-engine",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-SCENARIOS": {
+      "owner": "finance-engine",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-ASSUMPTIONS": {
+      "owner": "coach",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-FIN-BASIS": {
+      "owner": "coach",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-COST-BUILD": {
+      "owner": "case-finance-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-COST-DELIVER-OPERATE": {
+      "owner": "case-finance-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-RUN-COST-AI": {
+      "owner": "case-finance-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-INVESTMENT": {
+      "owner": "finance-engine",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-UNIT-ECONOMICS-B2B": {
+      "owner": "case-finance-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-UNIT-ECONOMICS-B2C": {
+      "owner": "case-finance-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-PAYBACK-CASH": {
+      "owner": "finance-engine",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-FIGURES-COMPLETE": {
+      "owner": "finance-engine",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-DO-NOTHING": {
+      "owner": "case-baseline-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-CANNIBALISATION": {
+      "owner": "case-baseline-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-OPPORTUNITY-COST": {
+      "owner": "case-baseline-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-KPIS": {
+      "owner": "case-baseline-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-OKRS": {
+      "owner": "coach",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-CAPABILITIES": {
+      "owner": "case-baseline-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-RISKS": {
+      "owner": "case-baseline-analyst",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-KILL-CRITERIA": {
+      "owner": "coach",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    },
+    "BC-TRANCHES": {
+      "owner": "coach",
+      "contributors": [],
+      "after": [],
+      "owns_inputs": {}
+    }
+  }
+}

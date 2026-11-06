@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:plugin-result:1",
+  "title": "Plugin result file, version 1",
+  "description": "One file a plugin writes when a run ends. This schema cannot state the rules below, so plugin_result_check.py checks them and names each by its id. R-DEFAULT: rests_on_default is true exactly when a source has type default or defaults is not empty. R-IDS: the id of each result is unique in the file. R-KIND: the kind of each result and each gap is in kinds.json. R-VALUE: value, unit and period of each result match the entry for its kind in kinds.json. R-EMPTY: a file with no results lists at least one gap. R-TIME: finished_at is not before started_at. R-NAME: the file name equals the name built from finished_at, command, subject and run_id.",
+  "type": "object",
+  "required": ["schema", "plugin", "plugin_version", "command", "run", "results", "gaps"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "plugin-result/1" },
+    "plugin": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "plugin_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "command": { "type": "string", "pattern": "^[a-z0-9-]+(:[a-z0-9-]+)+$" },
+    "run": { "$ref": "#/$defs/run" },
+    "results": { "type": "array", "items": { "$ref": "#/$defs/result" } },
+    "gaps": { "type": "array", "items": { "$ref": "#/$defs/gap" } }
+  },
+  "$defs": {
+    "run": {
+      "type": "object",
+      "required": ["started_at", "finished_at", "mode", "subject"],
+      "additionalProperties": false,
+      "properties": {
+        "started_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$" },
+        "finished_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$" },
+        "mode": { "type": "string", "enum": ["interactive", "automated"] },
+        "subject": { "type": "string", "minLength": 1 },
+        "case": { "type": "string", "minLength": 1 },
+        "run_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,62}[a-z0-9]$" },
+        "answers": { "type": "string", "minLength": 1 }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["type", "ref", "date"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "type": "string", "enum": ["customer_data", "published", "person", "model", "default"] },
+        "ref": { "type": "string", "minLength": 1 },
+        "date": { "type": ["string", "null"], "pattern": "^[0-9]{4}(-[0-9]{2}(-[0-9]{2})?)?$" }
+      }
+    },
+    "cite": {
+      "type": "object",
+      "required": ["file", "result_id"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "type": "string", "minLength": 1 },
+        "result_id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "result": {
+      "type": "object",
+      "required": ["id", "kind", "label", "value", "sources", "method", "rests_on_default", "defaults"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "value": {},
+        "unit": { "type": "string", "minLength": 1 },
+        "period": { "type": "string", "minLength": 1 },
+        "sources": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/source" } },
+        "method": { "type": "string", "minLength": 1 },
+        "rests_on_default": { "type": "boolean" },
+        "defaults": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "confidence": { "type": "string", "minLength": 1 },
+        "detail": { "type": "string", "minLength": 1 },
+        "cites": { "type": "array", "items": { "$ref": "#/$defs/cite" } }
+      }
+    },
+    "gap": {
+      "type": "object",
+      "required": ["kind", "label", "why"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "why": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

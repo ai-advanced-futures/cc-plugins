@@ -1,0 +1,5 @@
+# Test dependencies for the business-case plugin.
+# The job business-case of .github/workflows/ci.yml installs this file, then runs
+# `pytest tests/ -q -rs` from plugins/business-case. lib/ itself uses only the standard library.
+pytest>=7,<9
+pyyaml>=6

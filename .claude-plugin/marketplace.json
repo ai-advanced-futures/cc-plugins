@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.13.0"
+    "version": "2.14.0"
   },
   "plugins": [
     {
@@ -151,6 +151,12 @@
       "name": "architecture-assess",
       "description": "Assess an existing software architecture, design a new one, review one decision, check agentic delivery readiness, and classify the cost of a new agentic feature. Saves each decision through the architecture plugin and each design page through the system-design plugin.",
       "source": "./plugins/architecture-assess",
+      "strict": false
+    },
+    {
+      "name": "business-case",
+      "description": "Coach a thin business case into one a funder can trust. Check it against a rubric, fill each gap, plan evidence runs of other plugins, work out the numbers from the figures you confirm, and have an independent review check the case. Use build.",
+      "source": "./plugins/business-case",
       "strict": false
     }
   ]

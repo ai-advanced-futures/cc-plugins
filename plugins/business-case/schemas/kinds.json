@@ -1,0 +1,568 @@
+{
+  "schema": "plugin-result-kinds/1",
+  "version": "1.1.0",
+  "kinds": {
+    "ai_run_cost": {
+      "definition": "The cost of the AI runs behind the offering over a stated period.",
+      "value": {
+        "type": "number"
+      },
+      "unit": "required",
+      "period": "required"
+    },
+    "alternative": {
+      "definition": "What the customer does today instead of this offering.",
+      "value": {
+        "type": "string"
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "build_cost": {
+      "definition": "The one-time cost to build the offering.",
+      "value": {
+        "type": "number"
+      },
+      "unit": "required",
+      "period": "none"
+    },
+    "cannibalisation": {
+      "definition": "Revenue or usage the new offering takes from an existing one.",
+      "value": {
+        "type": "string"
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "capability": {
+      "definition": "A capability the business must have or build to deliver the offering.",
+      "value": {
+        "type": "string"
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "channel": {
+      "definition": "A way to reach customers.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "year_one_target": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "competitor": {
+      "definition": "A company the customer could choose instead.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "class": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "indirect",
+              "substitute"
+            ]
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "class"
+        ],
+        "additionalProperties": false
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "cost_coverage": {
+      "definition": "How far revenue covers cost.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "coverage_ratio": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "coverage_ratio"
+        ],
+        "additionalProperties": false
+      },
+      "unit": "none",
+      "period": "optional"
+    },
+    "customer_need": {
+      "definition": "A need the customer has at one step of a job.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "need": {
+            "type": "string"
+          },
+          "step": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "need"
+        ],
+        "additionalProperties": false
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "customer_segment": {
+      "definition": "A group of customers who share needs.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "share": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "customer_value": {
+      "definition": "The economic value the customer gets, over a stated period.",
+      "value": {
+        "type": "number"
+      },
+      "unit": "required",
+      "period": "required"
+    },
+    "differentiator": {
+      "definition": "A way the offering differs from the alternatives that the customer values.",
+      "value": {
+        "type": "string"
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "do_nothing": {
+      "definition": "What happens to the business if it does nothing.",
+      "value": {
+        "type": "string"
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "feature_roi": {
+      "definition": "Return on one feature, with the recommendation that follows.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "roi_percentage": {
+            "type": "number"
+          },
+          "recommendation": {
+            "type": "string"
+          },
+          "payback_months": {
+            "type": "number"
+          },
+          "npv": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "roi_percentage",
+          "recommendation"
+        ],
+        "additionalProperties": false
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "growth_motion": {
+      "definition": "How the company wins customers.",
+      "value": {
+        "type": "string",
+        "enum": [
+          "sales-led",
+          "customer-led",
+          "product-led"
+        ]
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "job": {
+      "definition": "A job the customer is trying to get done, in the customer's words.",
+      "value": {
+        "type": "string"
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "job_step": {
+      "definition": "One step of a job, in order.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "integer"
+          },
+          "step": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order",
+          "step"
+        ],
+        "additionalProperties": false
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "journey_step": {
+      "definition": "One step of the customer's path, today and with the offering.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "integer"
+          },
+          "today": {
+            "type": "string"
+          },
+          "with_offering": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order",
+          "today"
+        ],
+        "additionalProperties": false
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "kpi": {
+      "definition": "A measure that shows whether the offering is working, with its target.",
+      "value": {
+        "type": "string"
+      },
+      "unit": "optional",
+      "period": "optional"
+    },
+    "launch_price": {
+      "definition": "The price to launch at, with the unit it is charged in and the pricing path.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "price": {
+            "type": "number"
+          },
+          "pricing_unit": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C-autonomous",
+              "C-fully-agentic"
+            ]
+          }
+        },
+        "required": [
+          "price",
+          "pricing_unit",
+          "path"
+        ],
+        "additionalProperties": false
+      },
+      "unit": "required",
+      "period": "optional"
+    },
+    "market_size": {
+      "definition": "Total, serviceable and obtainable market, with a currency unit.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "tam": {
+            "type": "number"
+          },
+          "sam": {
+            "type": "number"
+          },
+          "som": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "tam",
+          "sam",
+          "som"
+        ],
+        "additionalProperties": false
+      },
+      "unit": "required",
+      "period": "optional"
+    },
+    "message": {
+      "definition": "A statement meant for a customer or a market.",
+      "value": {
+        "type": "string"
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "operating_cost": {
+      "definition": "The running cost of the offering over a stated period.",
+      "value": {
+        "type": "number"
+      },
+      "unit": "required",
+      "period": "required"
+    },
+    "opportunity_cost": {
+      "definition": "What the business gives up by funding this instead of the next best option.",
+      "value": {
+        "type": "string"
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "opportunity_score": {
+      "definition": "How important a need is, how well it is met, and the score that follows.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "need": {
+            "type": "string"
+          },
+          "importance": {
+            "type": "number"
+          },
+          "satisfaction": {
+            "type": "number"
+          },
+          "score": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "need",
+          "importance",
+          "satisfaction",
+          "score"
+        ],
+        "additionalProperties": false
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "package": {
+      "definition": "A named bundle of what the customer gets.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "contents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "contents"
+        ],
+        "additionalProperties": false
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "pricing_change": {
+      "definition": "A change to a price or a pricing rule that the run recommends.",
+      "value": {
+        "type": "string"
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "proof_point": {
+      "definition": "A claim backed by evidence.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "claim": {
+            "type": "string"
+          },
+          "truth_tier": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "claim"
+        ],
+        "additionalProperties": false
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "right_to_win": {
+      "definition": "Why this team can win in this market and others cannot copy it quickly.",
+      "value": {
+        "type": "string"
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "risk": {
+      "definition": "Something that can go wrong, and what it would cost.",
+      "value": {
+        "type": "string"
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "timing_reason": {
+      "definition": "A reason the market is ready now.",
+      "value": {
+        "type": "string"
+      },
+      "unit": "none",
+      "period": "none"
+    },
+    "unit_economics": {
+      "definition": "Customer acquisition and lifetime figures. At least one figure is present.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "cac": {
+            "type": "number"
+          },
+          "ltv": {
+            "type": "number"
+          },
+          "ltv_cac": {
+            "type": "number"
+          },
+          "payback_months": {
+            "type": "number"
+          },
+          "churn": {
+            "type": "number"
+          },
+          "arpa": {
+            "type": "number"
+          }
+        },
+        "required": [],
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": [
+              "cac"
+            ]
+          },
+          {
+            "required": [
+              "ltv"
+            ]
+          },
+          {
+            "required": [
+              "ltv_cac"
+            ]
+          },
+          {
+            "required": [
+              "payback_months"
+            ]
+          },
+          {
+            "required": [
+              "churn"
+            ]
+          },
+          {
+            "required": [
+              "arpa"
+            ]
+          }
+        ]
+      },
+      "unit": "required",
+      "period": "optional"
+    },
+    "willingness_to_pay": {
+      "definition": "What customers will pay: a point, a range or both.",
+      "value": {
+        "type": "object",
+        "properties": {
+          "point": {
+            "type": "number"
+          },
+          "low": {
+            "type": "number"
+          },
+          "high": {
+            "type": "number"
+          },
+          "segment": {
+            "type": "string"
+          }
+        },
+        "required": [],
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": [
+              "point"
+            ]
+          },
+          {
+            "required": [
+              "low"
+            ]
+          },
+          {
+            "required": [
+              "high"
+            ]
+          }
+        ]
+      },
+      "unit": "required",
+      "period": "optional"
+    }
+  }
+}
