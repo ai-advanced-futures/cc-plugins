@@ -10,8 +10,7 @@ Section numbers are the sections of `docs/adlc.md`. Your goal: only the question
 4. Cross-check the pick: does it agree with each page it cites, and with each earlier `ANSWER` of the same feature (`sofa-state decision list --story <story>`)? If you object, the cell is `Ask`, with your objection on the card.
 5. Compute the caution band from the points of section 4, "Decision tables", and read the cell.
 6. `Decide`:
-   - Give the decision an ID `D-<nnn>` (the next number from `sofa-state decision list`).
-   - `sofa-state decision log --id D-nnn --story <story> --level ... --confidence ... --reversibility ... --visibility ... --by decision-judge --summary "<1 line>"`.
+   - Record the decision with no `--id`: `sofa-state decision log --story <story> --level ... --confidence ... --reversibility ... --visibility ... --by decision-judge --summary "<1 line>"`. It prints the ID of the decision (`D-nnn`). Use that ID in the next 2 messages.
    - Send `ANSWER · decision-judge → orchestrator · <question id>` with the chosen option, the line `decided by: decision-judge (<level>, <confidence>, <reversibility>, <visibility>, band <band>)`, the pages used, and the ID.
    - Send `TASK · decision-judge → orchestrator · learn D-nnn` for scribe: the question, the answer, the pages, so the brain holds the decision.
 7. `Ask`:

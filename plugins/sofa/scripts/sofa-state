@@ -5,13 +5,15 @@ Many sessions write at the same time, so the database runs in WAL mode with a
 busy timeout. Each command creates the schema when it is not there.
 
 Database path: --db PATH, else $SOFA_STATE_DB, else <main folder>/.sofa/state.db.
-Exit code: 0 on success, 2 on a usage error, 1 on all other errors.
+Exit code: 0 on success; 2 on a bad argument (argparse) and when `decision log` refuses
+its arguments; 1 on all other errors.
 """
 
 import argparse
 import json
 import os
 import random
+import re
 import sqlite3
 import subprocess
 import sys
@@ -49,7 +51,11 @@ INTERACTION_KINDS = ["ask", "answer", "veto", "request", "defect"]
 
 
 class UsageError(Exception):
-    """A bad argument that argparse cannot catch."""
+    """A bad argument that argparse cannot catch. `code` is the exit code."""
+
+    def __init__(self, message, code=1):
+        super().__init__(message)
+        self.code = code
 
 
 def now_iso():
@@ -223,19 +229,46 @@ def cmd_message_log(con, a):
 
 # --- decisions ---
 
+DECISION_ID_RE = re.compile(r"D-([0-9]+)")
+
+INSERT_DECISION = """
+    INSERT INTO decisions (id, story, level, confidence, reversibility, visibility,
+                           decided_by, summary, at, vetoed_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+"""
+
+ON_ID_CONFLICT_UPDATE = """
+    ON CONFLICT(id) DO UPDATE SET
+        story = excluded.story, level = excluded.level, confidence = excluded.confidence,
+        reversibility = excluded.reversibility, visibility = excluded.visibility,
+        decided_by = excluded.decided_by, summary = excluded.summary, at = excluded.at
+"""
+
+
+def next_decision_id(con):
+    """Return D-<n>: n is 1 more than the highest D-<n> id in the store, with 3 digits at least."""
+    numbers = [int(m.group(1)) for row in con.execute("SELECT id FROM decisions")
+               if (m := DECISION_ID_RE.fullmatch(row[0] or ""))]
+    return f"D-{max(numbers, default=0) + 1:03d}"
+
+
 def cmd_decision_log(con, a):
-    """Insert or replace a decision."""
-    con.execute("""
-        INSERT INTO decisions (id, story, level, confidence, reversibility, visibility,
-                               decided_by, summary, at, vetoed_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
-        ON CONFLICT(id) DO UPDATE SET
-            story = excluded.story, level = excluded.level, confidence = excluded.confidence,
-            reversibility = excluded.reversibility, visibility = excluded.visibility,
-            decided_by = excluded.decided_by, summary = excluded.summary, at = excluded.at
-    """, (a.id, a.story, a.level, a.confidence, a.reversibility, a.visibility,
-          a.by, a.summary, a.at))
+    """Record a decision and print its id. With no --id, take the next free id."""
+    if a.replace and not a.id:
+        raise UsageError("--replace needs --id", code=2)
+    # The write lock comes before the read, so no other writer takes the same id.
+    con.execute("BEGIN IMMEDIATE")
+    decision_id = a.id or next_decision_id(con)
+    old = con.execute("SELECT story FROM decisions WHERE id = ?", (decision_id,)).fetchone()
+    if old and not a.replace:
+        raise UsageError(f"decision {decision_id} exists (story {old['story']}); give no --id "
+                         "to take the next free id, or --replace to write over it", code=2)
+    # Only --replace writes over a row. A plain insert fails on an id that exists.
+    sql = INSERT_DECISION + (ON_ID_CONFLICT_UPDATE if a.replace else "")
+    con.execute(sql, (decision_id, a.story, a.level, a.confidence, a.reversibility,
+                      a.visibility, a.by, a.summary, a.at))
     con.commit()
+    print(decision_id)
 
 
 def cmd_decision_veto(con, a):
@@ -515,8 +548,9 @@ def build_parser():
     sp.add_argument("--subject", required=True)
 
     d = group("decision", "decisions per story")
-    sp = leaf(d, "log", cmd_decision_log, "record a decision")
-    sp.add_argument("--id", required=True)
+    sp = leaf(d, "log", cmd_decision_log, "record a decision and print its id")
+    sp.add_argument("--id", help="the id; with no --id, the next free D-<n>")
+    sp.add_argument("--replace", action="store_true", help="write over the decision with this --id")
     sp.add_argument("--story", required=True)
     sp.add_argument("--level", required=True)
     sp.add_argument("--confidence", required=True)
@@ -613,7 +647,7 @@ def main(argv=None):
         run_with_retry(a)
     except UsageError as e:
         print(f"sofa-state: {e}", file=sys.stderr)
-        return 1
+        return e.code
     except subprocess.CalledProcessError:
         print("sofa-state: not in a git repository; give --db or set SOFA_STATE_DB", file=sys.stderr)
         return 1
