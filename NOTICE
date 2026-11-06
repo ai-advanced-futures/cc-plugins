@@ -61,3 +61,7 @@ material, and the Apache License does not replace them.
 8. ux-hci-design, by Luis F. Amadeo, MIT License.
    The ux-hci-design plugin is a port of it, with changes.
    The MIT notice is in plugins/ux-hci-design/NOTICE.
+
+9. data-strategy, by Luis F. Amadeo, MIT License.
+   The data-strategy plugin ports it, with changes.
+   The MIT notice is in plugins/data-strategy/NOTICE.

@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.5.0"
+    "version": "2.6.0"
   },
   "plugins": [
     {
@@ -103,6 +103,12 @@
       "name": "ux-hci-design",
       "description": "Guide a person through UX design with the Design Thinking phases: research, personas, journey maps, design concepts, wireframes, and evaluation, with built-in accessibility (WCAG 2.2) and AI interaction guidelines.",
       "source": "./plugins/ux-hci-design",
+      "strict": false
+    },
+    {
+      "name": "data-strategy",
+      "description": "Assess the data strategy of a software company: business alignment, the data platform, and the data product portfolio. Write a strategy report, a platform ADR, and a data roadmap.",
+      "source": "./plugins/data-strategy",
       "strict": false
     }
   ]
