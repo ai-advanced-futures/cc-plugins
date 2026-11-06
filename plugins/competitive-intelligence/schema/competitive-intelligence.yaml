@@ -1,0 +1,375 @@
+# The page types of the competitive-intelligence graph (STORY-88 spec, row 8 and table "Page types").
+#
+# Two generated files come from this one:
+#   schema/competitive-intelligence.schema.json   the JSON Schema of rule CI-schema
+#   schema/competitive-intelligence.slots.json    the types and the edges
+# Run scripts/gen-schema.sh after a change, and commit both outputs.
+#
+# Annotations, read by scripts/gen_slots.py:
+#   class  id_prefix      the ID prefix of the page type
+#   class  directory      the folder of the page type
+#   slot   targets        the page types that a link can point to
+#   slot   inverse_label  the label of the derived line in the LINKS block
+#   slot   record         the fields of the item that have no slot of their own (any value)
+id: https://ai-advanced-futures.github.io/cc-plugins/competitive-intelligence
+name: competitive_intelligence
+title: The competitive-intelligence graph
+description: >-
+  The frontmatter of each page type of the competitive-intelligence graph. A page holds the
+  fields that a reader or a link needs. The field record holds the other fields of the item,
+  so that the view command gives the file of the run back with no lost field.
+default_range: string
+default_prefix: ci
+prefixes:
+  linkml: https://w3id.org/linkml/
+  ci: https://ai-advanced-futures.github.io/cc-plugins/competitive-intelligence/
+imports:
+  - linkml:types
+  - ../../knowledge/schema/base
+
+types:
+  RunLink:
+    typeof: string
+    pattern: '^/runs/RUN-\d{2,}\.md$'
+  MarketLink:
+    typeof: string
+    pattern: '^/markets/MARKET-\d{2,}\.md$'
+  CompetitorLink:
+    typeof: string
+    pattern: '^/competitors/COMPETITOR-\d{2,}\.md$'
+  SourceLink:
+    typeof: string
+    pattern: '^/sources/SOURCE-\d{2,}\.md$'
+  OfferLink:
+    typeof: string
+    pattern: '^/offers/OFFER-\d{2,}\.md$'
+  LensLink:
+    typeof: string
+    pattern: '^/lenses/LENS-\d{2,}\.md$'
+  ChangeLink:
+    typeof: string
+    pattern: '^/changes/CHANGE-\d{2,}\.md$'
+  ThreatLink:
+    typeof: string
+    pattern: '^/threats/THREAT-\d{2,}\.md$'
+  ResultLink:
+    typeof: string
+    pattern: '^/results/RESULT-\d{2,}\.md$'
+  AboutLink:
+    typeof: string
+    pattern: '^/(competitors/COMPETITOR|findings/FINDING|swot/SWOT)-\d{2,}\.md$'
+  FindingLink:
+    typeof: string
+    pattern: '^/findings/FINDING-\d{2,}\.md$'
+  FindingOrLensLink:
+    typeof: string
+    pattern: '^/(findings/FINDING|lenses/LENS)-\d{2,}\.md$'
+  FindingSwotLensLink:
+    typeof: string
+    pattern: '^/(findings/FINDING|swot/SWOT|lenses/LENS)-\d{2,}\.md$'
+  FindingSwotRecommendationLink:
+    typeof: string
+    pattern: '^/(findings/FINDING|swot/SWOT|recommendations/REC)-\d{2,}\.md$'
+  FindingOrSwotLink:
+    typeof: string
+    pattern: '^/(findings/FINDING|swot/SWOT)-\d{2,}\.md$'
+  AnyCiteLink:
+    typeof: string
+    pattern: '^/(findings/FINDING|swot/SWOT|lenses/LENS|recommendations/REC|results/RESULT)-\d{2,}\.md$'
+
+enums:
+  CompetitorType:
+    permissible_values: {direct: {}, indirect: {}, substitute: {}, potential: {}, ai_platform: {}}
+  ThreatLevel:
+    permissible_values: {high: {}, medium: {}, low: {}, none: {}}
+  Stage:
+    permissible_values: {emerging: {}, growth: {}, mature: {}, declining: {}}
+  Confidence:
+    permissible_values: {high: {}, medium: {}, low: {}, speculative: {}}
+  JtbdAlternative:
+    permissible_values: {product_solution: {}, service_solution: {}, diy_approach: {}, consume_workaround: {}, not_doing_job: {}}
+  RiskLevel:
+    permissible_values: {high: {}, medium: {}, low: {}, none: {}}
+  Replaceability:
+    permissible_values: {full: {}, partial: {}, minimal: {}, none: {}}
+  Horizon:
+    permissible_values: {immediate: {}, near_term: {}, mid_term: {}, long_term: {}, short_term: {}, medium_term: {}, this_week: {}, this_month: {}, this_quarter: {}}
+  OwnerKind:
+    permissible_values: {competitor: {}, own: {}}
+  Lens:
+    permissible_values: {jtbd-performance: {}, forces-analysis: {}, economic-value: {}, strategic-positioning: {}, technology-disruption: {}, loss-churn: {}}
+  Quadrant:
+    permissible_values: {strength: {}, weakness: {}, opportunity: {}, threat: {}}
+  Side:
+    permissible_values: {competitor: {}, own: {}}
+  RecKind:
+    permissible_values: {strategic: {}, tactical: {}, monitoring: {}, implication: {}}
+  ResultKind:
+    permissible_values: {competitor: {}, alternative: {}, timing_reason: {}, differentiator: {}, risk: {}}
+  Priority:
+    permissible_values: {critical: {}, high: {}, medium: {}, low: {}}
+
+classes:
+  AnyValue:
+    description: Any YAML value. The record fields keep the shape of the file of the run.
+    class_uri: linkml:Any
+  Run:
+    description: "One run of a command of the plugin."
+    annotations: {id_prefix: RUN, directory: runs}
+    slots: [type, title, description, status, tags, command, subject, run_id, started_at, finished_at, plugin_version, trigger, scope, analysis_mode, depth, available_data, phases_executed, lenses_applied, session_folder, mode, case, answers, overall_confidence, market, record, file_meta, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Run}
+      command: {required: true}
+  Market:
+    description: "A market that a run studies."
+    annotations: {id_prefix: MARKET, directory: markets}
+    slots: [type, title, description, status, tags, name, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Market}
+      name: {required: true}
+  Competitor:
+    description: "A competitor, an alternative, or an AI platform of a market."
+    annotations: {id_prefix: COMPETITOR, directory: competitors}
+    slots: [type, title, description, status, tags, name, website, competitor_type, threat_level, stage, market_overlap, tech_disruption_risk, jtbd_alternative, job_replaceability, timeline, confidence, item_id, market, source_pages, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Competitor}
+      name: {required: true}
+      market: {required: true}
+  Offer:
+    description: "An offer of a competitor, or the own offer."
+    annotations: {id_prefix: OFFER, directory: offers}
+    slots: [type, title, description, status, tags, name, owner_kind, key_features, business_model, competitor, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Offer}
+      name: {required: true}
+  Source:
+    description: "A source of a fact: a URL or a file."
+    annotations: {id_prefix: SOURCE, directory: sources}
+    slots: [type, title, description, status, tags, resource, source_type, date, accessed_at, confidence, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Source}
+      resource: {required: true}
+  Finding:
+    description: "A fact about a competitor, with its confidence."
+    annotations: {id_prefix: FINDING, directory: findings}
+    slots: [type, title, description, status, tags, category, confidence, triangulation, relevance, item_id, competitor, source_pages, offer, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Finding}
+      competitor: {required: true}
+      source_pages: {required: true}
+  Gap:
+    description: "A gap in the facts, or a gap in the answer of a run."
+    annotations: {id_prefix: GAP, directory: gaps}
+    slots: [type, title, description, status, tags, gap_type, item_id, kind, why, competitor, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Gap}
+  LensResult:
+    description: "The result of one lens for one competitor."
+    annotations: {id_prefix: LENS, directory: lenses}
+    slots: [type, title, description, status, tags, lens, competitor, cites, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: LensResult}
+      lens: {required: true}
+      competitor: {required: true}
+      cites: {range: FindingLink}
+  Moat:
+    description: "One moat of a competitor, from the strategic-positioning lens."
+    annotations: {id_prefix: MOAT, directory: moats}
+    slots: [type, title, description, status, tags, competitor, lens_result, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Moat}
+      competitor: {required: true}
+      lens_result: {required: true}
+  SwotItem:
+    description: "One item of a SWOT."
+    annotations: {id_prefix: SWOT, directory: swot}
+    slots: [type, title, description, status, tags, quadrant, side, evidence, confidence, relative_to, impact, rationale, size, timeline, item_source, severity, likelihood, competitor, cites, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: SwotItem}
+      quadrant: {required: true}
+      side: {required: true}
+      cites: {range: FindingOrLensLink}
+  Recommendation:
+    description: "One recommendation, action, or implication."
+    annotations: {id_prefix: REC, directory: recommendations}
+    slots: [type, title, description, status, tags, rec_kind, priority, confidence, timeline, competitor, cites, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Recommendation}
+      rec_kind: {required: true}
+      cites: {range: FindingSwotLensLink}
+  Change:
+    description: "One change at a competitor, found by a monitor run."
+    annotations: {id_prefix: CHANGE, directory: changes}
+    slots: [type, title, description, status, tags, competitor, source_pages, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Change}
+      competitor: {required: true}
+  Threat:
+    description: "One threat that a change makes."
+    annotations: {id_prefix: THREAT, directory: threats}
+    slots: [type, title, description, status, tags, competitor, change, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Threat}
+      competitor: {required: true}
+  Response:
+    description: "One response option to a threat."
+    annotations: {id_prefix: RESPONSE, directory: responses}
+    slots: [type, title, description, status, tags, chosen, threat, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Response}
+      threat: {required: true}
+  Validation:
+    description: "The validation of one feature against the competitors."
+    annotations: {id_prefix: VALIDATION, directory: validations}
+    slots: [type, title, description, status, tags, feature, offer, competitors, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Validation}
+      feature: {required: true}
+  Archetype:
+    description: "The vendor archetype of one competitor."
+    annotations: {id_prefix: ARCHETYPE, directory: archetypes}
+    slots: [type, title, description, status, tags, competitor, source_pages, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Archetype}
+      competitor: {required: true}
+  Summary:
+    description: "The executive summary of a run."
+    annotations: {id_prefix: SUMMARY, directory: summaries}
+    slots: [type, title, description, status, tags, cites, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Summary}
+      cites: {range: FindingSwotRecommendationLink}
+  BattleCard:
+    description: "The battle card for one competitor."
+    annotations: {id_prefix: CARD, directory: battle-cards}
+    slots: [type, title, description, status, tags, competitor, cites, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: BattleCard}
+      competitor: {required: true}
+      cites: {range: FindingOrSwotLink}
+  Result:
+    description: "One entry of the result file of a run."
+    annotations: {id_prefix: RESULT, directory: results}
+    slots: [type, title, description, status, tags, kind, label, value, unit, period, result_sources, sources, method, rests_on_default, defaults, confidence, about, cites, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Result}
+      kind: {required: true, range: ResultKind}
+      label: {required: true}
+      cites: {range: ResultLink}
+
+slots:
+  about:
+    range: AboutLink
+    annotations: {targets: "Competitor Finding SwotItem", inverse_label: result about}
+  accessed_at: {}
+  analysis_mode: {}
+  answers:
+    range: AnyValue
+  available_data:
+    range: AnyValue
+  business_model: {}
+  case: {}
+  category: {}
+  change:
+    range: ChangeLink
+    annotations: {targets: "Change", inverse_label: causes}
+  chosen: {range: boolean}
+  cites:
+    range: AnyCiteLink
+    multivalued: true
+    annotations: {targets: "Finding SwotItem LensResult Recommendation Result", inverse_label: cited by}
+  command: {}
+  competitor:
+    range: CompetitorLink
+    annotations: {targets: "Competitor", inverse_label: tracked in}
+  competitor_type: {range: CompetitorType}
+  competitors:
+    range: CompetitorLink
+    multivalued: true
+    annotations: {targets: "Competitor", inverse_label: validated in}
+  confidence: {range: Confidence}
+  date: {}
+  defaults: {multivalued: true}
+  depth: {}
+  evidence: {multivalued: true}
+  feature: {}
+  file_meta:
+    range: AnyValue
+  finished_at: {}
+  gap_type: {}
+  impact: {range: Priority}
+  item_id: {}
+  item_source: {}
+  job_replaceability: {range: Replaceability}
+  jtbd_alternative: {range: JtbdAlternative}
+  key_features: {multivalued: true}
+  kind: {}
+  label: {}
+  lens: {range: Lens}
+  lens_result:
+    range: LensLink
+    annotations: {targets: "LensResult", inverse_label: holds moat}
+  likelihood: {}
+  market:
+    range: MarketLink
+    annotations: {targets: "Market", inverse_label: studied in}
+  market_overlap: {range: float}
+  method: {}
+  lenses_applied: {multivalued: true}
+  mode: {}
+  name: {}
+  offer:
+    range: OfferLink
+    annotations: {targets: "Offer", inverse_label: offered in}
+  overall_confidence: {}
+  owner_kind: {range: OwnerKind}
+  period: {}
+  phases_executed: {multivalued: true}
+  plugin_version: {}
+  priority: {range: Priority}
+  quadrant: {range: Quadrant}
+  rationale: {}
+  rec_kind: {range: RecKind}
+  record:
+    range: AnyValue
+  relative_to: {multivalued: true}
+  relevance: {multivalued: true}
+  resource: {}
+  rests_on_default: {range: boolean}
+  result_sources:
+    range: AnyValue
+    multivalued: true
+  run:
+    range: RunLink
+    multivalued: true
+    annotations: {targets: "Run", inverse_label: wrote}
+  run_id: {}
+  scope: {}
+  session_folder: {}
+  severity: {range: Priority}
+  side: {range: Side}
+  size: {}
+  source_pages:
+    range: SourceLink
+    multivalued: true
+    annotations: {targets: "Source", inverse_label: supports}
+  source_type: {}
+  sources:
+    range: AnyValue
+    multivalued: true
+  stage: {range: Stage}
+  started_at: {}
+  subject: {}
+  tech_disruption_risk: {range: RiskLevel}
+  threat:
+    range: ThreatLink
+    annotations: {targets: "Threat", inverse_label: answered by}
+  threat_level: {range: ThreatLevel}
+  timeline: {range: Horizon}
+  triangulation: {}
+  trigger: {}
+  unit: {}
+  value:
+    range: AnyValue
+  website: {}
+  why: {}

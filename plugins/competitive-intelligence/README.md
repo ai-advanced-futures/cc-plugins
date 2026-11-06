@@ -112,6 +112,19 @@ Earlier versions wrote to `.competitive-intel/`. The plugin never moves or delet
 
 Other plugins read these files. `pricing`, `gtm`, and `business-case` are the readers.
 
+## The graph
+
+The plugin keeps what it learns in a knowledge graph: `docs/competitive-intelligence/`. The graph has 19 page types: Run, Market, Competitor, Offer, Source, Finding, Gap, LensResult, Moat, SwotItem, Recommendation, Change, Threat, Response, Validation, Archetype, Summary, BattleCard, and Result. The schema is in `schema/`.
+
+Only `scripts/ci_graph.py` writes the graph. Do not edit a page by hand. The commands are `init`, `upgrade`, `new`, `set`, `body`, `link`, `unlink`, `remove`, `resolve`, `regen`, `check`, `log`, `ingest`, `view`, `results`, and `pages`.
+
+- `ingest <session folder> [--result FILE]` writes the pages of a run. It works on a copy of the graph, and it changes the graph only when the check passes. When the check fails, no page changes and no file is removed. When the project has no graph, it makes one and prints `INIT: docs/competitive-intelligence/`. After a good run it removes each file that it wrote into pages. It keeps the files that another plugin still reads (`READER_FILES` in `scripts/cilib/ingest.py`), the state files, and the result files. It writes `pages.json` into the session folder. The file lists the page of each item.
+- `view RUN FILE` builds a session file again from the pages. The new file has the same content as the file that `ingest` read.
+- `results` prints the result file (`plugin-result/1`) of a run from the Result pages. `pages TYPE [--run KEY]` prints the pages of one type as JSON. Neither command writes a file.
+- A page of the type Market, Competitor, Offer, or Source belongs to all runs. It keeps the item of each run under the name of the run, so `view` of an older run shows the data of that run. The fields of the page itself (for example the threat level) hold the data of the latest run.
+
+`bash scripts/gen-schema.sh` makes the schema files again after you change `schema/competitive-intelligence.yaml`. It needs the packages in `requirements-dev.txt`.
+
 ## Run for a coach
 
 The `business-case` coach starts `competitive-intelligence:discover-runner` and `competitive-intelligence:analyze-runner` with a `plugin-run` block. The block has the fields `command`, `automated`, `answers_path`, `case`, `run_id`, and `inputs_from`. A runner asks nothing. It takes each answer from the answers file, and it uses the default in `result-file.json` for each answer that is missing. Then it writes the result file. `questions/discover.json` and `questions/analyze.json` list the inputs of each skill. ADR-004 gives the details.
@@ -121,7 +134,7 @@ The `business-case` coach starts `competitive-intelligence:discover-runner` and 
 The plugin needs no setting, no environment variable, and no MCP server. You configure each run through the questions.
 
 - **Analysis parameters.** Phase 1 collects the trigger, the scope, the analysis mode, the depth, and the evidence. It writes them to `context-config.json`. The trigger sets the lens priority. The analysis mode changes only the framing.
-- **Session files.** Each run writes to its own folder `.competitive-intelligence/<session>/`. The plugin never deletes a file in `.competitive-intelligence/`.
+- **Session files.** Each run writes to its own folder `.competitive-intelligence/<session>/`. The plugin deletes a file in `.competitive-intelligence/` only when `ci_graph.py ingest` has written the file into pages.
 - **Optional MCP research server.** The intelligence gatherer uses an MCP research server when you added one. Without one, it uses `WebSearch` and `WebFetch`. The plugin starts no outside service. To add a server, run `claude mcp add`. Servers such as Klue or Crayon are options for later. See ADR-001.
 
 ## Privacy

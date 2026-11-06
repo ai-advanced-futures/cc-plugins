@@ -1,2 +1,7 @@
-pytest>=8
+# Build and test only. ci_graph.py needs pyyaml and jsonschema at run time
+# (its PEP 723 header). gen-schema.sh reads the linkml pin from this file.
 jsonschema>=4.17.0
+linkml==1.11.1
+linkml-runtime==1.11.1
+pytest>=8
+pyyaml

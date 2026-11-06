@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.8.0
+
+This version adds the competitive-intelligence brain: the save code and the schema. It is the first of two parts. The hook, the skills, and the `ingest` steps come in the next version.
+
+- New script `scripts/ci_graph.py`. It is the only code that writes the graph `docs/competitive-intelligence/`. Its commands are `init`, `upgrade`, `new`, `set`, `body`, `link`, `unlink`, `remove`, `resolve`, `regen`, `check`, `log`, `ingest`, `view`, `results`, and `pages`.
+- New schema in `schema/`. It has 19 page types: Run, Market, Competitor, Offer, Source, Finding, Gap, LensResult, Moat, SwotItem, Recommendation, Change, Threat, Response, Validation, Archetype, Summary, BattleCard, and Result. `scripts/gen-schema.sh` makes the generated files again.
+- New check `ci_graph.py check`. Its rules are CI-schema, CI-id, CI-required, CI-run, CI-duplicate, CI-lens, CI-result, and CI-evidence. It also has CI-link (a link goes to a page that exists, of the right type) and CI-stale (a generated file is not up to date). These 2 rules are not in the design. They report a broken link and an old generated file in the brain check.
+- The schema imports the base schema of the knowledge plugin by a sibling path, and `scripts/gen-schema.sh` gives that path to `scripts/gen_slots.py`. They run only in the marketplace checkout, with `plugins/knowledge` beside this plugin. No installed code reads that path.
+- `ci_graph.py ingest <path> [--result FILE]` writes the pages of a run from its session folder and its result file. It uses a lock, works on a copy of the graph, and changes the graph only when the check passes. It removes each ingested file, except the files that a reader still reads (`READER_FILES`). It writes `pages.json` in the session folder. When the project has no graph, it makes one first and prints `INIT: docs/competitive-intelligence/`.
+- `ci_graph.py view RUN FILE` builds a session file again from the pages. The result is the same as the file that `ingest` read.
+- `ci_graph.py results` prints the `plugin-result/1` file of a run from the Result pages. `ci_graph.py pages TYPE` prints the pages of one type as JSON.
+- A page of the types Market, Competitor, Offer, and Source is shared between runs. It keeps the item of each run under the name of the run, so `view` of an older run shows the data of that run. The fields of the page itself hold the data of the latest run. A file that gives a competitor with no website finds the one competitor of the graph with that name; when 2 or more have the name, `ingest` stops. A run with no market name uses the one market of the graph. An Offer page is for one competitor. The order of 2 ingests does not change the graph: a file with a website finds the page that an earlier file with the same name and no website made, and a run that names its market gives its name to the "Unnamed market" page that an earlier run with no subject made. `ingest` stops, and writes nothing, when no file of the path is one that a handler reads.
+- The CI job `competitive-intelligence` installs the requirements of the knowledge plugin and runs the new tests.
+- The version in `plugin.json`, in `scripts/__init__.py` and in the result-file examples is 1.8.0.
+
 ## 1.7.2
 
 This version fixes the 10 findings and the 3 notes of the review of the port.

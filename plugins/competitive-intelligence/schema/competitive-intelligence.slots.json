@@ -1,0 +1,521 @@
+{
+  "statuses": [
+    "draft",
+    "stable",
+    "deprecated"
+  ],
+  "types": {
+    "Run": {
+      "prefix": "RUN",
+      "directory": "runs",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "command",
+        "subject",
+        "run_id",
+        "started_at",
+        "finished_at",
+        "plugin_version",
+        "trigger",
+        "scope",
+        "analysis_mode",
+        "depth",
+        "available_data",
+        "phases_executed",
+        "lenses_applied",
+        "session_folder",
+        "mode",
+        "case",
+        "answers",
+        "overall_confidence",
+        "market",
+        "record",
+        "file_meta",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Market": {
+      "prefix": "MARKET",
+      "directory": "markets",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "name",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Competitor": {
+      "prefix": "COMPETITOR",
+      "directory": "competitors",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "name",
+        "website",
+        "competitor_type",
+        "threat_level",
+        "stage",
+        "market_overlap",
+        "tech_disruption_risk",
+        "jtbd_alternative",
+        "job_replaceability",
+        "timeline",
+        "confidence",
+        "item_id",
+        "market",
+        "source_pages",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Offer": {
+      "prefix": "OFFER",
+      "directory": "offers",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "name",
+        "owner_kind",
+        "key_features",
+        "business_model",
+        "competitor",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Source": {
+      "prefix": "SOURCE",
+      "directory": "sources",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "resource",
+        "source_type",
+        "date",
+        "accessed_at",
+        "confidence",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Finding": {
+      "prefix": "FINDING",
+      "directory": "findings",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "category",
+        "confidence",
+        "triangulation",
+        "relevance",
+        "item_id",
+        "competitor",
+        "source_pages",
+        "offer",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Gap": {
+      "prefix": "GAP",
+      "directory": "gaps",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "gap_type",
+        "item_id",
+        "kind",
+        "why",
+        "competitor",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "LensResult": {
+      "prefix": "LENS",
+      "directory": "lenses",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "lens",
+        "competitor",
+        "cites",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Moat": {
+      "prefix": "MOAT",
+      "directory": "moats",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "competitor",
+        "lens_result",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "SwotItem": {
+      "prefix": "SWOT",
+      "directory": "swot",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "quadrant",
+        "side",
+        "evidence",
+        "confidence",
+        "relative_to",
+        "impact",
+        "rationale",
+        "size",
+        "timeline",
+        "item_source",
+        "severity",
+        "likelihood",
+        "competitor",
+        "cites",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Recommendation": {
+      "prefix": "REC",
+      "directory": "recommendations",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "rec_kind",
+        "priority",
+        "confidence",
+        "timeline",
+        "competitor",
+        "cites",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Change": {
+      "prefix": "CHANGE",
+      "directory": "changes",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "competitor",
+        "source_pages",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Threat": {
+      "prefix": "THREAT",
+      "directory": "threats",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "competitor",
+        "change",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Response": {
+      "prefix": "RESPONSE",
+      "directory": "responses",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "chosen",
+        "threat",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Validation": {
+      "prefix": "VALIDATION",
+      "directory": "validations",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "feature",
+        "offer",
+        "competitors",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Archetype": {
+      "prefix": "ARCHETYPE",
+      "directory": "archetypes",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "competitor",
+        "source_pages",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Summary": {
+      "prefix": "SUMMARY",
+      "directory": "summaries",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "cites",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "BattleCard": {
+      "prefix": "CARD",
+      "directory": "battle-cards",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "competitor",
+        "cites",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Result": {
+      "prefix": "RESULT",
+      "directory": "results",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "kind",
+        "label",
+        "value",
+        "unit",
+        "period",
+        "result_sources",
+        "sources",
+        "method",
+        "rests_on_default",
+        "defaults",
+        "confidence",
+        "about",
+        "cites",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    }
+  },
+  "edges": {
+    "market": {
+      "targets": [
+        "Market"
+      ],
+      "multivalued": false,
+      "inverse_label": "studied in"
+    },
+    "run": {
+      "targets": [
+        "Run"
+      ],
+      "multivalued": true,
+      "inverse_label": "wrote"
+    },
+    "source_pages": {
+      "targets": [
+        "Source"
+      ],
+      "multivalued": true,
+      "inverse_label": "supports"
+    },
+    "competitor": {
+      "targets": [
+        "Competitor"
+      ],
+      "multivalued": false,
+      "inverse_label": "tracked in"
+    },
+    "offer": {
+      "targets": [
+        "Offer"
+      ],
+      "multivalued": false,
+      "inverse_label": "offered in"
+    },
+    "cites": {
+      "targets": [
+        "Finding",
+        "SwotItem",
+        "LensResult",
+        "Recommendation",
+        "Result"
+      ],
+      "multivalued": true,
+      "inverse_label": "cited by"
+    },
+    "lens_result": {
+      "targets": [
+        "LensResult"
+      ],
+      "multivalued": false,
+      "inverse_label": "holds moat"
+    },
+    "change": {
+      "targets": [
+        "Change"
+      ],
+      "multivalued": false,
+      "inverse_label": "causes"
+    },
+    "threat": {
+      "targets": [
+        "Threat"
+      ],
+      "multivalued": false,
+      "inverse_label": "answered by"
+    },
+    "competitors": {
+      "targets": [
+        "Competitor"
+      ],
+      "multivalued": true,
+      "inverse_label": "validated in"
+    },
+    "about": {
+      "targets": [
+        "Competitor",
+        "Finding",
+        "SwotItem"
+      ],
+      "multivalued": false,
+      "inverse_label": "result about"
+    }
+  }
+}
