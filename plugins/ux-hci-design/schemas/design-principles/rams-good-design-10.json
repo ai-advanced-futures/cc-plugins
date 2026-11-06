@@ -1,0 +1,678 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Dieter Rams' 10 Principles of Good Design",
+  "description": "Dieter Rams' ten principles for good design, developed during his tenure as chief design officer at Braun. These timeless principles emphasize simplicity, honesty, and functionality that transcend aesthetics to define fundamental design quality.",
+  "version": "1.0.0",
+  "author": "Dieter Rams",
+  "year": 1970,
+  "source": "https://www.vitsoe.com/us/about/good-design",
+  "context": "Originally formulated for industrial design, these principles have become foundational for all design disciplines including digital product design, user interface design, and user experience design.",
+  "principles": [
+    {
+      "number": 1,
+      "name": "Good design is innovative",
+      "original_german": "Gutes Design ist innovativ",
+      "short_description": "Innovation and technology are constantly advancing, creating new opportunities for innovative design that develop alongside them.",
+      "detailed_description": "Good design does not simply imitate existing forms. It harnesses technological possibilities and advances alongside them. Innovation is not about novelty for its own sake, but about finding genuinely better solutions to user needs. It requires understanding what is truly new and meaningful versus what is merely fashionable or different.",
+      "key_principles": [
+        "Leverage new technological possibilities meaningfully",
+        "Find genuinely better solutions, not just different ones",
+        "Innovation serves user needs, not novelty for its own sake",
+        "Advance design thinking alongside technological progress",
+        "Question existing solutions and seek improvements"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Does the design leverage current technology in meaningful ways?",
+          "Does it solve problems in genuinely new or better ways?",
+          "Is innovation purposeful rather than arbitrary?",
+          "Does it advance user experience beyond existing solutions?",
+          "Has the design questioned assumptions and found better approaches?"
+        ],
+        "what_to_look_for": [
+          "Meaningful use of new technologies or approaches",
+          "Solutions that genuinely improve on existing patterns",
+          "Innovation that serves user needs, not designer ego",
+          "Advancement beyond mere aesthetic novelty",
+          "Purposeful departure from convention with clear benefits",
+          "Evidence of questioning existing solutions"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Innovation for novelty's sake",
+          "example": "Reinventing standard UI patterns without clear benefit, confusing users",
+          "impact": "Users must relearn familiar interactions without gaining value"
+        },
+        {
+          "issue": "Ignoring technological advances",
+          "example": "Building interfaces that don't leverage modern capabilities like touch, voice, or AI when appropriate",
+          "impact": "Missed opportunities to genuinely improve user experience"
+        },
+        {
+          "issue": "Imitation over innovation",
+          "example": "Copying competitor designs without considering if they're actually optimal",
+          "impact": "Perpetuates suboptimal patterns instead of finding better solutions"
+        },
+        {
+          "issue": "Technology-driven design",
+          "example": "Adding features simply because the technology exists, not because users need them",
+          "impact": "Complexity without corresponding user benefit"
+        }
+      ],
+      "best_practices": [
+        "Understand emerging technologies and their genuine user benefits",
+        "Question existing design patterns and test if improvements are possible",
+        "Innovate with clear purpose tied to user needs",
+        "Balance familiarity with meaningful advancement",
+        "Test innovative approaches to ensure they improve rather than complicate",
+        "Look for opportunities where new technology can solve old problems",
+        "Distinguish between meaningful innovation and superficial novelty"
+      ]
+    },
+    {
+      "number": 2,
+      "name": "Good design makes a product useful",
+      "original_german": "Gutes Design macht ein Produkt brauchbar",
+      "short_description": "A product is bought to be used. It must satisfy not only functional but also psychological and aesthetic criteria.",
+      "detailed_description": "The primary purpose of design is to optimize a product's utility. Good design emphasizes usefulness while disregarding anything that detracts from it. Design must fulfill both practical functionality and the psychological needs of users - products must work well and feel right to use.",
+      "key_principles": [
+        "Optimize utility above all else",
+        "Satisfy both functional and psychological needs",
+        "Remove anything that detracts from usefulness",
+        "Ensure products work well in actual use",
+        "Balance practical function with emotional satisfaction"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Does the design fulfill its primary purpose effectively?",
+          "Are functional requirements met comprehensively?",
+          "Does the design satisfy users' psychological needs?",
+          "Is anything present that detracts from utility?",
+          "Does the product work well in real-world use scenarios?"
+        ],
+        "what_to_look_for": [
+          "Clear primary functionality that serves user needs",
+          "Effective performance of intended tasks",
+          "Psychological satisfaction during use",
+          "Absence of elements that impede utility",
+          "Real-world usability and practicality",
+          "Features that support rather than distract from core purpose"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Form over function",
+          "example": "Beautiful interface that sacrifices usability for aesthetics",
+          "impact": "Users struggle to accomplish tasks despite visual appeal"
+        },
+        {
+          "issue": "Feature bloat",
+          "example": "Adding many features that most users don't need, complicating the core experience",
+          "impact": "Core functionality becomes harder to access and use"
+        },
+        {
+          "issue": "Ignoring user context",
+          "example": "Designing for ideal conditions rather than real-world use scenarios",
+          "impact": "Product fails when used in actual environments"
+        },
+        {
+          "issue": "Psychological needs neglected",
+          "example": "Technically functional but unsatisfying or frustrating to use",
+          "impact": "Users can complete tasks but derive no satisfaction from the experience"
+        }
+      ],
+      "best_practices": [
+        "Prioritize core functionality above all other considerations",
+        "Understand and design for real-world use contexts",
+        "Test usefulness with actual users in realistic scenarios",
+        "Consider both task completion and user satisfaction",
+        "Remove features and elements that don't serve clear user needs",
+        "Ensure psychological comfort and satisfaction during use",
+        "Make primary tasks effortless and efficient"
+      ]
+    },
+    {
+      "number": 3,
+      "name": "Good design is aesthetic",
+      "original_german": "Gutes Design ist ästhetisch",
+      "short_description": "The aesthetic quality of a product is integral to its usefulness because products are used every day and have an effect on people and their well-being.",
+      "detailed_description": "Well-designed products are not only functional but beautiful. Aesthetic quality affects users' well-being and the products we use daily impact our person and our mood. However, only well-executed objects can be beautiful - aesthetics must be grounded in quality execution, not superficial decoration.",
+      "key_principles": [
+        "Aesthetics are integral to usefulness, not separate",
+        "Beauty affects user well-being and experience",
+        "Aesthetic quality must be grounded in execution excellence",
+        "Visual quality reflects and supports functional quality",
+        "Beauty emerges from restraint and precision, not decoration"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Is the design aesthetically pleasing?",
+          "Does the aesthetic support rather than conflict with function?",
+          "Is the visual quality consistent with execution quality?",
+          "Does the aesthetic contribute to user well-being?",
+          "Is beauty achieved through restraint and precision?"
+        ],
+        "what_to_look_for": [
+          "Visual harmony and balance",
+          "Aesthetics that enhance rather than distract from function",
+          "Quality execution in all visual details",
+          "Restraint in decorative elements",
+          "Visual clarity and coherence",
+          "Aesthetics that age well and remain pleasing over time"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Superficial decoration",
+          "example": "Adding visual flourishes that don't serve function or meaning",
+          "impact": "Visual clutter that distracts from content and purpose"
+        },
+        {
+          "issue": "Aesthetic trends over timelessness",
+          "example": "Following current design fads that will quickly feel dated",
+          "impact": "Design ages poorly and requires frequent visual overhauls"
+        },
+        {
+          "issue": "Aesthetics conflicting with function",
+          "example": "Sacrificing readability or usability for visual effect",
+          "impact": "Users struggle with basic tasks despite attractive appearance"
+        },
+        {
+          "issue": "Poor execution quality",
+          "example": "Inconsistent spacing, alignment, or typographic quality",
+          "impact": "Visual design undermines credibility and user confidence"
+        }
+      ],
+      "best_practices": [
+        "Achieve beauty through restraint, proportion, and precision",
+        "Ensure aesthetic choices support functional goals",
+        "Execute all visual details with care and consistency",
+        "Choose timeless aesthetic approaches over temporary trends",
+        "Use visual hierarchy to guide attention meaningfully",
+        "Consider aesthetic impact on long-term user well-being",
+        "Let quality execution create beauty rather than decoration"
+      ]
+    },
+    {
+      "number": 4,
+      "name": "Good design makes a product understandable",
+      "original_german": "Gutes Design macht ein Produkt verständlich",
+      "short_description": "It clarifies the product's structure. Better still, it can make the product clearly express its function by making use of the user's intuition.",
+      "detailed_description": "Good design makes a product self-explanatory. It clarifies structure and function intuitively, leveraging users' existing knowledge and intuition. At best, the product explains itself without requiring instructions - its purpose and operation are immediately apparent through its design.",
+      "key_principles": [
+        "Make structure and function self-evident",
+        "Leverage user intuition and existing knowledge",
+        "Product should explain itself without instructions",
+        "Clarify rather than complicate",
+        "Use design to communicate purpose and operation"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Can users understand what the product does without explanation?",
+          "Is the structure and organization immediately apparent?",
+          "Does the design leverage intuitive patterns and expectations?",
+          "Can users operate the product without instructions?",
+          "Does the design clarify rather than mystify function?"
+        ],
+        "what_to_look_for": [
+          "Self-evident structure and organization",
+          "Intuitive controls and interactions",
+          "Clear communication of purpose and capabilities",
+          "Minimal need for labels or instructions",
+          "Leverage of familiar patterns and mental models",
+          "Progressive disclosure of complexity"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Cryptic interfaces",
+          "example": "Icon-only buttons without clear meaning, requiring users to guess",
+          "impact": "Users cannot discover or understand functionality"
+        },
+        {
+          "issue": "Hidden functionality",
+          "example": "Important features accessible only through obscure gestures or shortcuts",
+          "impact": "Users never discover key capabilities"
+        },
+        {
+          "issue": "Unclear structure",
+          "example": "Navigation and organization that don't match user mental models",
+          "impact": "Users cannot predict where to find things or how to proceed"
+        },
+        {
+          "issue": "Over-reliance on instructions",
+          "example": "Product requires reading manual or tutorial to understand basic operation",
+          "impact": "Barrier to entry and ongoing uncertainty about capabilities"
+        }
+      ],
+      "best_practices": [
+        "Design interfaces that explain themselves through visual structure",
+        "Use familiar patterns that leverage existing user knowledge",
+        "Make important functions visible and discoverable",
+        "Provide clear affordances showing what actions are possible",
+        "Use progressive disclosure to manage complexity without hiding function",
+        "Test comprehension with users who haven't seen the product before",
+        "Minimize reliance on documentation for basic understanding"
+      ]
+    },
+    {
+      "number": 5,
+      "name": "Good design is unobtrusive",
+      "original_german": "Gutes Design ist unaufdringlich",
+      "short_description": "Products fulfilling a purpose are like tools. They are neither decorative objects nor works of art. Their design should therefore be both neutral and restrained, to leave room for the user's self-expression.",
+      "detailed_description": "Good design steps back and lets users focus on their tasks and goals. Products are tools that serve users, not objects that demand attention for themselves. Design should be neutral and restrained, allowing the user's content, work, and self-expression to take center stage. The design facilitates without intruding.",
+      "key_principles": [
+        "Design serves users, not designer ego",
+        "Products are tools, not decorative objects",
+        "Be neutral and restrained in approach",
+        "Allow user content and expression to dominate",
+        "Facilitate without demanding attention"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Does the design step back and let user content dominate?",
+          "Is the interface neutral rather than attention-seeking?",
+          "Does the design facilitate without intruding?",
+          "Can users focus on their tasks rather than the interface?",
+          "Is there room for user self-expression and creativity?"
+        ],
+        "what_to_look_for": [
+          "Neutral, understated visual treatment",
+          "User content prominently featured",
+          "Interface elements that don't compete with content",
+          "Restrained use of color, decoration, and effects",
+          "Design that fades into background during use",
+          "Focus on user needs over design statements"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Attention-seeking design",
+          "example": "Heavy use of animations, gradients, and effects that distract from content",
+          "impact": "Users focus on interface rather than their work"
+        },
+        {
+          "issue": "Designer expression over user needs",
+          "example": "Unique, artistic interfaces that prioritize designer vision over usability",
+          "impact": "Design becomes obstacle rather than tool"
+        },
+        {
+          "issue": "Overwhelming branding",
+          "example": "Heavy branding elements that compete with user content",
+          "impact": "User work is overshadowed by product identity"
+        },
+        {
+          "issue": "Unnecessary embellishment",
+          "example": "Decorative elements that serve no functional purpose",
+          "impact": "Visual noise that detracts from focus and clarity"
+        }
+      ],
+      "best_practices": [
+        "Use neutral colors and restrained visual styling",
+        "Let user content be the star of the interface",
+        "Remove decorative elements that don't serve clear purpose",
+        "Design interfaces that become invisible during use",
+        "Prioritize clarity and simplicity over visual impact",
+        "Test whether design elements facilitate or distract",
+        "Consider design successful when users notice content, not interface"
+      ]
+    },
+    {
+      "number": 6,
+      "name": "Good design is honest",
+      "original_german": "Gutes Design ist ehrlich",
+      "short_description": "It does not make a product appear more innovative, powerful or valuable than it really is. It does not attempt to manipulate the consumer with promises that cannot be kept.",
+      "detailed_description": "Good design is truthful and doesn't make false promises. It doesn't try to manipulate users by appearing more innovative, powerful, or valuable than it actually is. Honest design sets accurate expectations and delivers on them. It respects users by representing capabilities and limitations truthfully.",
+      "key_principles": [
+        "Represent capabilities accurately and truthfully",
+        "Don't manipulate users with false promises",
+        "Set realistic expectations that will be met",
+        "Be transparent about limitations and tradeoffs",
+        "Respect users through honesty"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Does the design accurately represent product capabilities?",
+          "Are user expectations set honestly and met consistently?",
+          "Is there transparency about limitations and tradeoffs?",
+          "Does the design avoid manipulative patterns?",
+          "Are users respected with truthful communication?"
+        ],
+        "what_to_look_for": [
+          "Accurate representation of features and capabilities",
+          "Realistic promises that are delivered upon",
+          "Transparency about limitations and costs",
+          "Absence of deceptive patterns and dark patterns",
+          "Clear, truthful communication throughout",
+          "Consistency between marketing and actual experience"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Deceptive patterns (dark patterns)",
+          "example": "Making cancellation difficult while making signup easy, hiding costs until late",
+          "impact": "Users feel manipulated and lose trust"
+        },
+        {
+          "issue": "Overpromising capabilities",
+          "example": "Marketing features that don't work well or don't exist",
+          "impact": "User disappointment and lost credibility"
+        },
+        {
+          "issue": "Hidden limitations",
+          "example": "Not disclosing important constraints or requirements until after commitment",
+          "impact": "Users make decisions based on incomplete information"
+        },
+        {
+          "issue": "Misleading progress indicators",
+          "example": "Fake progress bars or inflated metrics to appear more capable",
+          "impact": "False sense of progress and eventual user frustration"
+        }
+      ],
+      "best_practices": [
+        "Represent features and capabilities accurately in all communication",
+        "Be transparent about limitations, costs, and tradeoffs upfront",
+        "Avoid dark patterns and manipulative design techniques",
+        "Set conservative expectations and overdeliver rather than overpromise",
+        "Make important information visible before users commit",
+        "Ensure consistency between marketing and actual product experience",
+        "Respect user autonomy and decision-making with complete information"
+      ]
+    },
+    {
+      "number": 7,
+      "name": "Good design is long-lasting",
+      "original_german": "Gutes Design ist langlebig",
+      "short_description": "It avoids being fashionable and therefore never appears antiquated. Unlike fashionable design, it lasts many years even in today's throwaway society.",
+      "detailed_description": "Good design transcends fashion and trends. It is timeless rather than trendy, remaining relevant and effective for years. By avoiding stylistic fads and focusing on fundamental quality, good design doesn't become outdated or appear antiquated. This principle values longevity and sustainability over novelty.",
+      "key_principles": [
+        "Transcend fashion and temporary trends",
+        "Focus on timeless fundamentals over stylistic fads",
+        "Design for long-term relevance and effectiveness",
+        "Value longevity and sustainability",
+        "Avoid design choices that will quickly date"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Will this design remain effective in five or ten years?",
+          "Is the design grounded in timeless principles or current trends?",
+          "Does it avoid stylistic choices that will quickly date?",
+          "Is there focus on fundamental quality over temporary appeal?",
+          "Will users continue to find value over time?"
+        ],
+        "what_to_look_for": [
+          "Timeless visual approach avoiding trendy styles",
+          "Focus on fundamental usability over fashionable patterns",
+          "Design choices based on enduring principles",
+          "Sustainability and long-term value",
+          "Avoidance of elements that will feel dated quickly",
+          "Classic proportions and approaches"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Chasing design trends",
+          "example": "Adopting every new visual trend (flat, material, glassmorphism, etc.) as they emerge",
+          "impact": "Design quickly feels outdated and requires frequent redesigns"
+        },
+        {
+          "issue": "Trend-driven feature additions",
+          "example": "Adding trendy features (blockchain, NFTs) without genuine user value",
+          "impact": "Features become irrelevant as trends fade"
+        },
+        {
+          "issue": "Style over substance",
+          "example": "Prioritizing fashionable appearance over timeless usability",
+          "impact": "Product ages poorly and requires ongoing visual updates"
+        },
+        {
+          "issue": "Technology-driven obsolescence",
+          "example": "Building for current technology without considering evolution",
+          "impact": "Product becomes outdated as technology advances"
+        }
+      ],
+      "best_practices": [
+        "Ground design decisions in timeless principles of clarity and usability",
+        "Avoid stylistic trends that will date the design",
+        "Focus on fundamental user needs that won't change",
+        "Choose classic approaches that have proven lasting value",
+        "Design systems that can evolve without complete reinvention",
+        "Test design longevity by asking 'will this matter in 5 years?'",
+        "Value sustainability and long-term effectiveness over novelty"
+      ]
+    },
+    {
+      "number": 8,
+      "name": "Good design is thorough down to the last detail",
+      "original_german": "Gutes Design ist konsequent bis ins letzte Detail",
+      "short_description": "Nothing must be arbitrary or left to chance. Care and accuracy in the design process show respect for the user.",
+      "detailed_description": "Good design is meticulous and deliberate. Nothing is left to chance or treated arbitrarily. Every detail is considered and executed with care and precision. This thoroughness demonstrates respect for users and contributes to overall quality. Attention to detail distinguishes good design from adequate design.",
+      "key_principles": [
+        "Consider and refine every detail deliberately",
+        "Nothing should be arbitrary or accidental",
+        "Care and precision demonstrate respect for users",
+        "Thoroughness contributes to overall quality perception",
+        "Details matter and accumulate into excellence"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Have all details been deliberately considered and refined?",
+          "Are there arbitrary or unconsidered elements?",
+          "Is there consistency and precision in execution?",
+          "Do details demonstrate care and respect for users?",
+          "Has quality attention been paid to every aspect, visible and invisible?"
+        ],
+        "what_to_look_for": [
+          "Consistent spacing, alignment, and proportions",
+          "Refined typography and visual details",
+          "Deliberate choice in every element",
+          "Polish in micro-interactions and transitions",
+          "Quality in both prominent and subtle details",
+          "Absence of arbitrary or inconsistent elements"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Inconsistent details",
+          "example": "Varying button sizes, spacing, or styling without clear reason",
+          "impact": "Perceived lack of care undermines user confidence"
+        },
+        {
+          "issue": "Arbitrary design choices",
+          "example": "Random spacing values, inconsistent icon styles, varied corner radii",
+          "impact": "Visual chaos and perceived lack of quality"
+        },
+        {
+          "issue": "Neglected edge cases",
+          "example": "Empty states, error conditions, or unusual scenarios poorly designed",
+          "impact": "Quality breaks down when users need it most"
+        },
+        {
+          "issue": "Unpolished interactions",
+          "example": "Jarring transitions, inconsistent animation timing, missing loading states",
+          "impact": "Experience feels rough and unfinished"
+        }
+      ],
+      "best_practices": [
+        "Create and maintain detailed design systems with consistent specifications",
+        "Consider and design for all states and edge cases, not just happy paths",
+        "Refine micro-interactions and transitions with care",
+        "Use consistent spacing, sizing, and styling throughout",
+        "Pay attention to typography details (line height, letter spacing, hierarchy)",
+        "Test thoroughly to catch inconsistencies and oversights",
+        "Treat every detail as important, from error messages to loading states"
+      ]
+    },
+    {
+      "number": 9,
+      "name": "Good design is environmentally friendly",
+      "original_german": "Gutes Design ist umweltfreundlich",
+      "short_description": "Design makes an important contribution to the preservation of the environment. It conserves resources and minimizes physical and visual pollution throughout the lifecycle of the product.",
+      "detailed_description": "Good design considers environmental impact throughout the product lifecycle. It conserves resources, minimizes waste, and reduces both physical and visual pollution. In digital design, this means efficient code, reduced energy consumption, accessibility of features to extend device life, and respect for users' time, attention, and data as precious resources.",
+      "key_principles": [
+        "Minimize resource consumption and waste",
+        "Consider environmental impact throughout product lifecycle",
+        "Respect user resources (time, attention, data, energy)",
+        "Design for longevity and efficiency",
+        "Reduce digital pollution and waste"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Does the design minimize resource consumption?",
+          "Is the code and implementation efficient?",
+          "Does it respect users' time, attention, and data?",
+          "Is the design sustainable and efficient?",
+          "Does it minimize digital waste and pollution?"
+        ],
+        "what_to_look_for": [
+          "Efficient code and optimized performance",
+          "Minimal data usage and energy consumption",
+          "Respect for user time and attention",
+          "Features that extend device lifespan",
+          "Reduced unnecessary processing and requests",
+          "Sustainable design patterns and practices"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Inefficient code and bloated apps",
+          "example": "Large bundle sizes, unnecessary dependencies, unoptimized assets",
+          "impact": "Wasted energy, data, and device resources"
+        },
+        {
+          "issue": "Attention exploitation",
+          "example": "Addictive patterns, infinite scroll, attention-grabbing notifications",
+          "impact": "Waste of users' time and mental resources"
+        },
+        {
+          "issue": "Data waste",
+          "example": "Auto-playing videos, constant background sync, tracking scripts",
+          "impact": "Unnecessary data consumption and energy use"
+        },
+        {
+          "issue": "Planned obsolescence",
+          "example": "Requiring new devices or dropping support for older ones unnecessarily",
+          "impact": "Forces hardware replacement and electronic waste"
+        }
+      ],
+      "best_practices": [
+        "Optimize code, assets, and performance for efficiency",
+        "Minimize data usage and network requests",
+        "Respect user attention as a precious resource",
+        "Design for accessibility across device ages and capabilities",
+        "Implement progressive enhancement for broader device support",
+        "Avoid dark patterns that waste user time and attention",
+        "Use lazy loading and efficient caching strategies",
+        "Consider energy consumption in design and implementation choices"
+      ]
+    },
+    {
+      "number": 10,
+      "name": "Good design is as little design as possible",
+      "original_german": "Gutes Design ist so wenig Design wie möglich",
+      "short_description": "Less, but better. Good design concentrates on the essential aspects, and does not burden with non-essentials. Back to purity, back to simplicity.",
+      "detailed_description": "Good design embraces minimalism and restraint. It concentrates on what is essential and eliminates everything else. This is not about arbitrary removal but about distilling to the essence - removing non-essentials allows the essential to shine. The principle is 'less, but better' - fewer elements of higher quality and purpose.",
+      "key_principles": [
+        "Concentrate on essential aspects only",
+        "Remove non-essential elements deliberately",
+        "Embrace restraint and minimalism with purpose",
+        "Distill to essence rather than add decoration",
+        "Less, but better - fewer, higher-quality elements"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Is every element essential to the core purpose?",
+          "Can anything be removed without losing essential function?",
+          "Does the design concentrate on what truly matters?",
+          "Is there restraint in visual and functional elements?",
+          "Has the design been distilled to its essence?"
+        ],
+        "what_to_look_for": [
+          "Minimal essential elements only",
+          "Clear focus on primary purpose",
+          "Absence of decorative non-essentials",
+          "Restraint in visual treatment",
+          "Simplicity achieved through careful reduction",
+          "Every element serving clear purpose"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Feature creep",
+          "example": "Adding features because they're possible, not because they're needed",
+          "impact": "Core functionality buried under unnecessary complexity"
+        },
+        {
+          "issue": "Visual complexity",
+          "example": "Multiple fonts, colors, styles, and decorative elements",
+          "impact": "Visual noise obscures content and purpose"
+        },
+        {
+          "issue": "Information overload",
+          "example": "Showing all possible information and options simultaneously",
+          "impact": "Users overwhelmed and unable to focus on essentials"
+        },
+        {
+          "issue": "Arbitrary complexity",
+          "example": "Complex workflows when simple ones would suffice",
+          "impact": "Unnecessary friction and cognitive load"
+        }
+      ],
+      "best_practices": [
+        "Continuously question whether each element is truly necessary",
+        "Remove elements that don't serve essential purpose",
+        "Focus ruthlessly on core functionality and primary user needs",
+        "Use progressive disclosure to hide non-essential complexity",
+        "Embrace whitespace and restraint in visual design",
+        "Apply 'less but better' principle - fewer, higher-quality elements",
+        "Test whether removal would lose essential value",
+        "Distill interfaces to their functional and visual essence"
+      ]
+    }
+  ],
+  "usage_guide": {
+    "how_to_apply": [
+      "1. Review each principle and its key concepts",
+      "2. Evaluate your design against evaluation criteria",
+      "3. Identify violations and opportunities for improvement",
+      "4. Apply best practices systematically",
+      "5. Test whether changes improve alignment with principles",
+      "6. Iterate toward designs that embody multiple principles"
+    ],
+    "philosophy": {
+      "overview": "Rams' principles emphasize restraint, honesty, and user-centered simplicity. They argue for design that serves users rather than designers, that is timeless rather than trendy, and that achieves beauty through reduction rather than addition.",
+      "core_values": [
+        "Simplicity over complexity",
+        "Honesty over manipulation",
+        "Longevity over fashion",
+        "Utility over decoration",
+        "Restraint over excess",
+        "Quality over quantity"
+      ],
+      "design_approach": "Start with user needs, add only what is essential, refine every detail, and continuously ask what can be removed without losing value."
+    },
+    "relationship_to_digital_design": {
+      "relevance": "Originally formulated for industrial design, these principles have become foundational for digital product design, user experience design, and interface design.",
+      "applications": [
+        "User interface design - minimalist, functional interfaces",
+        "User experience design - focus on usefulness and clarity",
+        "Design systems - consistency, quality, and restraint",
+        "Content design - honest communication and clarity",
+        "Interaction design - intuitive, unobtrusive interactions"
+      ],
+      "modern_interpretations": [
+        "Environmental friendliness extends to digital sustainability, performance, and respect for user resources",
+        "Innovation encompasses technological possibilities in digital contexts",
+        "Longevity considers digital trends and platform evolution",
+        "Understandability relates to intuitive digital interactions and information architecture"
+      ]
+    },
+    "complementary_frameworks": [
+      "Nielsen's Usability Heuristics - tactical usability guidance",
+      "Don Norman's Design Principles - psychological foundations of interaction",
+      "WCAG Guidelines - accessibility and inclusive design",
+      "Jobs-to-be-Done - understanding user needs and context"
+    ]
+  }
+}

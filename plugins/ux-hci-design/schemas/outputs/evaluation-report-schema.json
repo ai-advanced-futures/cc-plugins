@@ -1,0 +1,641 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude.ai/schemas/ux-hci-design/evaluation-report-schema.json",
+  "title": "UX Evaluation Report Schema",
+  "description": "Schema for heuristic evaluation reports created during the Evaluate phase of UX design. Reports document findings from evaluations using various frameworks (Nielsen, WCAG, AI-HCI, etc.).",
+  "type": "object",
+  "required": ["schema_version", "evaluation"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version of the evaluation report schema",
+      "pattern": "^\\d+\\.\\d+$",
+      "default": "1.0"
+    },
+    "evaluation": {
+      "type": "object",
+      "description": "The evaluation report",
+      "required": ["title", "evaluation_type", "target", "findings"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title of the evaluation",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of the evaluation scope and purpose",
+          "maxLength": 1000
+        },
+        "evaluation_type": {
+          "type": "string",
+          "description": "Type of evaluation performed",
+          "enum": [
+            "heuristic_nielsen",
+            "heuristic_custom",
+            "accessibility_wcag",
+            "ai_hci_microsoft",
+            "cognitive_walkthrough",
+            "expert_review",
+            "comparative_analysis",
+            "design_principles",
+            "multi_framework"
+          ]
+        },
+        "frameworks_used": {
+          "type": "array",
+          "description": "Evaluation frameworks applied (for multi-framework evaluations)",
+          "items": {
+            "type": "string",
+            "enum": [
+              "nielsen-usability-10",
+              "wcag-2.2",
+              "ai-hci-microsoft-18",
+              "rams-good-design-10",
+              "norman-interaction-principles",
+              "custom"
+            ]
+          }
+        },
+        "target": {
+          "type": "object",
+          "description": "What is being evaluated",
+          "required": ["name", "type"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the product, feature, or interface being evaluated"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type of target",
+              "enum": ["website", "mobile_app", "desktop_app", "ai_agent", "voice_interface", "physical_product", "service", "feature", "prototype"]
+            },
+            "version": {
+              "type": "string",
+              "description": "Version of the target being evaluated"
+            },
+            "url": {
+              "type": "string",
+              "description": "URL or location of the target (if applicable)",
+              "format": "uri"
+            },
+            "platform": {
+              "type": "array",
+              "description": "Platforms evaluated",
+              "items": {
+                "type": "string",
+                "enum": ["web", "ios", "android", "desktop_windows", "desktop_mac", "desktop_linux", "other"]
+              }
+            },
+            "scope": {
+              "type": "string",
+              "description": "Specific scope or boundaries of the evaluation"
+            }
+          }
+        },
+        "evaluators": {
+          "type": "array",
+          "description": "Who performed the evaluation",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of the evaluator"
+              },
+              "role": {
+                "type": "string",
+                "description": "Role or expertise (e.g., 'UX Designer', 'Accessibility Specialist', 'HCI Researcher')"
+              },
+              "expertise_level": {
+                "type": "string",
+                "description": "Level of expertise",
+                "enum": ["novice", "intermediate", "expert", "specialist"]
+              }
+            }
+          }
+        },
+        "evaluation_method": {
+          "type": "object",
+          "description": "Details about the evaluation methodology",
+          "properties": {
+            "approach": {
+              "type": "string",
+              "description": "Approach used (e.g., 'Individual then consolidated', 'Collaborative', 'Structured walkthrough')"
+            },
+            "user_scenarios": {
+              "type": "array",
+              "description": "User scenarios or tasks evaluated",
+              "items": {
+                "type": "string"
+              }
+            },
+            "devices_used": {
+              "type": "array",
+              "description": "Devices used during evaluation",
+              "items": {
+                "type": "string"
+              }
+            },
+            "assistive_technologies_tested": {
+              "type": "array",
+              "description": "Assistive technologies tested (for accessibility evaluations)",
+              "items": {
+                "type": "string"
+              }
+            },
+            "duration": {
+              "type": "string",
+              "description": "Total time spent on evaluation"
+            }
+          }
+        },
+        "findings": {
+          "type": "array",
+          "description": "Individual findings from the evaluation",
+          "minItems": 0,
+          "items": {
+            "type": "object",
+            "required": ["finding_id", "title", "severity"],
+            "properties": {
+              "finding_id": {
+                "type": "string",
+                "description": "Unique identifier for this finding",
+                "pattern": "^[A-Z]+-\\d+$"
+              },
+              "title": {
+                "type": "string",
+                "description": "Brief title summarizing the issue",
+                "minLength": 10,
+                "maxLength": 200
+              },
+              "description": {
+                "type": "string",
+                "description": "Detailed description of the issue",
+                "minLength": 20
+              },
+              "severity": {
+                "type": "string",
+                "description": "Severity rating of the issue",
+                "enum": ["critical", "major", "moderate", "minor", "cosmetic"]
+              },
+              "priority": {
+                "type": "string",
+                "description": "Priority for fixing (may differ from severity based on business context)",
+                "enum": ["critical", "high", "medium", "low"]
+              },
+              "heuristic_violated": {
+                "type": "array",
+                "description": "Which heuristics or principles are violated",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "framework": {
+                      "type": "string",
+                      "description": "Framework name"
+                    },
+                    "principle_id": {
+                      "type": "string",
+                      "description": "ID of the principle/heuristic (e.g., 'nielsen-01', 'wcag-1.1.1')"
+                    },
+                    "principle_name": {
+                      "type": "string",
+                      "description": "Name of the principle"
+                    }
+                  }
+                }
+              },
+              "location": {
+                "type": "object",
+                "description": "Where the issue occurs",
+                "properties": {
+                  "page_screen": {
+                    "type": "string",
+                    "description": "Page, screen, or view where issue occurs"
+                  },
+                  "component": {
+                    "type": "string",
+                    "description": "Specific component or element"
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "URL where issue can be found"
+                  },
+                  "screenshot_reference": {
+                    "type": "string",
+                    "description": "Reference to screenshot documenting the issue"
+                  }
+                }
+              },
+              "user_impact": {
+                "type": "object",
+                "description": "Impact on users",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "description": "How this affects users"
+                  },
+                  "affected_users": {
+                    "type": "string",
+                    "description": "Which user groups are affected (e.g., 'All users', 'Screen reader users', 'Mobile users')"
+                  },
+                  "frequency": {
+                    "type": "string",
+                    "description": "How often users encounter this",
+                    "enum": ["constantly", "frequently", "occasionally", "rarely"]
+                  },
+                  "task_impact": {
+                    "type": "string",
+                    "description": "Impact on task completion",
+                    "enum": ["task_failure", "significant_delay", "moderate_difficulty", "minor_annoyance", "no_impact"]
+                  }
+                }
+              },
+              "business_impact": {
+                "type": "object",
+                "description": "Impact on business metrics",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "description": "How this affects business goals"
+                  },
+                  "metrics_affected": {
+                    "type": "array",
+                    "description": "Which metrics might be impacted",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "estimated_impact": {
+                    "type": "string",
+                    "description": "Estimated business impact",
+                    "enum": ["high", "medium", "low", "unknown"]
+                  }
+                }
+              },
+              "reproduction_steps": {
+                "type": "array",
+                "description": "Steps to reproduce the issue",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "context": {
+                "type": "string",
+                "description": "Additional context or circumstances"
+              },
+              "evidence": {
+                "type": "array",
+                "description": "Supporting evidence (references to screenshots, videos, analytics, etc.)",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["screenshot", "video", "analytics", "user_quote", "research_data", "other"]
+                    },
+                    "reference": {
+                      "type": "string",
+                      "description": "Reference to the evidence"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Description of what the evidence shows"
+                    }
+                  }
+                }
+              },
+              "recommendations": {
+                "type": "array",
+                "description": "Recommendations for fixing the issue",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["description"],
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "description": "Recommended solution",
+                      "minLength": 10
+                    },
+                    "rationale": {
+                      "type": "string",
+                      "description": "Why this recommendation addresses the issue"
+                    },
+                    "implementation_complexity": {
+                      "type": "string",
+                      "description": "Estimated complexity to implement",
+                      "enum": ["low", "medium", "high", "very_high"]
+                    },
+                    "example_reference": {
+                      "type": "string",
+                      "description": "Reference to examples or patterns"
+                    },
+                    "expected_outcome": {
+                      "type": "string",
+                      "description": "Expected result after implementing this recommendation"
+                    }
+                  }
+                }
+              },
+              "related_findings": {
+                "type": "array",
+                "description": "IDs of related findings",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "status": {
+                "type": "string",
+                "description": "Current status of this finding",
+                "enum": ["open", "in_progress", "resolved", "wont_fix", "deferred"],
+                "default": "open"
+              },
+              "tags": {
+                "type": "array",
+                "description": "Tags for categorization",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "description": "Overall summary of the evaluation",
+          "properties": {
+            "total_findings": {
+              "type": "integer",
+              "description": "Total number of findings",
+              "minimum": 0
+            },
+            "findings_by_severity": {
+              "type": "object",
+              "description": "Count of findings by severity",
+              "properties": {
+                "critical": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "major": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "moderate": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "minor": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "cosmetic": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "key_insights": {
+              "type": "array",
+              "description": "Key insights from the evaluation",
+              "items": {
+                "type": "string"
+              }
+            },
+            "positive_findings": {
+              "type": "array",
+              "description": "Things that work well",
+              "items": {
+                "type": "string"
+              }
+            },
+            "overall_assessment": {
+              "type": "string",
+              "description": "Overall assessment of the UX quality"
+            }
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "description": "High-level strategic recommendations",
+          "items": {
+            "type": "object",
+            "required": ["recommendation", "priority"],
+            "properties": {
+              "recommendation": {
+                "type": "string",
+                "description": "The recommendation"
+              },
+              "priority": {
+                "type": "string",
+                "description": "Priority level",
+                "enum": ["critical", "high", "medium", "low"]
+              },
+              "rationale": {
+                "type": "string",
+                "description": "Why this is important"
+              },
+              "affected_findings": {
+                "type": "array",
+                "description": "Finding IDs that this recommendation addresses",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "expected_impact": {
+                "type": "string",
+                "description": "Expected impact if implemented"
+              }
+            }
+          }
+        },
+        "next_steps": {
+          "type": "array",
+          "description": "Recommended next steps",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about the evaluation",
+      "properties": {
+        "evaluation_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date the evaluation was conducted"
+        },
+        "report_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date the report was finalized"
+        },
+        "created_by": {
+          "type": "string",
+          "description": "Who created the report"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of this report",
+          "pattern": "^\\d+\\.\\d+$"
+        },
+        "confidentiality": {
+          "type": "string",
+          "description": "Confidentiality level",
+          "enum": ["public", "internal", "confidential", "restricted"]
+        },
+        "project_reference": {
+          "type": "string",
+          "description": "Reference to related project or initiative"
+        },
+        "stakeholders": {
+          "type": "array",
+          "description": "Stakeholders who should review this report",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "description": "Tags for categorization",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "1.0",
+      "evaluation": {
+        "title": "Nielsen Heuristic Evaluation - Mobile App Checkout Flow",
+        "description": "Heuristic evaluation of the mobile checkout experience using Nielsen's 10 Usability Heuristics",
+        "evaluation_type": "heuristic_nielsen",
+        "frameworks_used": ["nielsen-usability-10"],
+        "target": {
+          "name": "ShopEasy Mobile App",
+          "type": "mobile_app",
+          "version": "2.5.0",
+          "platform": ["ios", "android"],
+          "scope": "Checkout flow from cart to order confirmation"
+        },
+        "evaluators": [
+          {
+            "name": "Jane Smith",
+            "role": "Senior UX Designer",
+            "expertise_level": "expert"
+          }
+        ],
+        "evaluation_method": {
+          "approach": "Individual evaluation followed by consolidation",
+          "user_scenarios": [
+            "First-time purchase with new account",
+            "Returning user with saved payment",
+            "Guest checkout"
+          ],
+          "devices_used": ["iPhone 15", "Samsung Galaxy S24"],
+          "duration": "4 hours"
+        },
+        "findings": [
+          {
+            "finding_id": "SHOP-001",
+            "title": "Error messages don't explain how to fix validation issues",
+            "description": "When users enter an invalid credit card number, the error message only says 'Invalid card number' without explaining the correct format or common mistakes.",
+            "severity": "major",
+            "priority": "high",
+            "heuristic_violated": [
+              {
+                "framework": "nielsen-usability-10",
+                "principle_id": "nielsen-09",
+                "principle_name": "Help users recognize, diagnose, and recover from errors"
+              }
+            ],
+            "location": {
+              "page_screen": "Payment Information Screen",
+              "component": "Credit Card Input Field",
+              "screenshot_reference": "screenshot-payment-error.png"
+            },
+            "user_impact": {
+              "description": "Users are unable to understand why their card is rejected and may abandon checkout",
+              "affected_users": "All users entering payment information",
+              "frequency": "occasionally",
+              "task_impact": "significant_delay"
+            },
+            "business_impact": {
+              "description": "Likely contributes to checkout abandonment",
+              "metrics_affected": ["Checkout completion rate", "Cart abandonment rate"],
+              "estimated_impact": "high"
+            },
+            "reproduction_steps": [
+              "Add items to cart",
+              "Proceed to checkout",
+              "Enter payment information with invalid card number (e.g., too few digits)",
+              "Observe error message"
+            ],
+            "recommendations": [
+              {
+                "description": "Replace generic error with specific, actionable message: 'Card number should be 16 digits. You entered 15 digits.'",
+                "rationale": "Specific error messages help users quickly identify and fix the problem",
+                "implementation_complexity": "low",
+                "expected_outcome": "Reduced checkout abandonment due to payment errors"
+              }
+            ],
+            "status": "open",
+            "tags": ["checkout", "error-handling", "payment"]
+          }
+        ],
+        "summary": {
+          "total_findings": 12,
+          "findings_by_severity": {
+            "critical": 1,
+            "major": 4,
+            "moderate": 3,
+            "minor": 3,
+            "cosmetic": 1
+          },
+          "key_insights": [
+            "Error handling is the weakest area, with multiple violations of Nielsen's error recovery heuristic",
+            "System status visibility is generally good, but some loading states are missing"
+          ],
+          "positive_findings": [
+            "Clear visual hierarchy guides users through checkout steps",
+            "Progress indicator shows users where they are in the flow"
+          ],
+          "overall_assessment": "The checkout flow has a solid foundation but needs improvements in error handling and feedback. Critical issues should be addressed before next release."
+        },
+        "recommendations": [
+          {
+            "recommendation": "Implement comprehensive error handling strategy across all input fields",
+            "priority": "critical",
+            "rationale": "Poor error handling is causing checkout abandonment",
+            "affected_findings": ["SHOP-001", "SHOP-003", "SHOP-007"],
+            "expected_impact": "Estimated 5-10% improvement in checkout completion rate"
+          }
+        ],
+        "next_steps": [
+          "Prioritize fixes for critical and major findings",
+          "Conduct usability testing to validate fixes",
+          "Re-evaluate in 4 weeks after implementation"
+        ]
+      },
+      "metadata": {
+        "evaluation_date": "2025-01-20",
+        "report_date": "2025-01-23",
+        "created_by": "UX Team",
+        "version": "1.0",
+        "confidentiality": "internal",
+        "project_reference": "Q1-2025-Checkout-Optimization",
+        "stakeholders": ["Product Team", "Engineering Team", "Design Team"],
+        "tags": ["mobile", "checkout", "heuristic-evaluation"]
+      }
+    }
+  ]
+}

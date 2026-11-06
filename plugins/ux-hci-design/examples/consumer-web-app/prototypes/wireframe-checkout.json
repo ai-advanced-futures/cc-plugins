@@ -1,0 +1,306 @@
+{
+  "schema_version": "1.0",
+  "wireframe": {
+    "wireframe_id": "WF-001",
+    "screen_name": "Express Checkout",
+    "purpose": "Single-page checkout with progressive disclosure",
+    "fidelity": "medium",
+    "platform": "web_responsive",
+    "design_concept_id": "DC-001",
+    "layout": {
+      "type": "single_column",
+      "grid": {
+        "columns": 12,
+        "gutter": "24px",
+        "margins": {
+          "desktop": "64px",
+          "tablet": "32px",
+          "mobile": "16px"
+        }
+      },
+      "regions": [
+        {
+          "region_id": "R-001",
+          "name": "header",
+          "semantic_role": "banner",
+          "position": {
+            "row_start": 1,
+            "row_end": 1,
+            "col_start": 1,
+            "col_end": 12,
+            "sticky": true
+          },
+          "components": ["C-001", "C-002"]
+        },
+        {
+          "region_id": "R-002",
+          "name": "main_content",
+          "semantic_role": "main",
+          "position": {
+            "row_start": 2,
+            "row_end": 2,
+            "col_start": 1,
+            "col_end": 8
+          },
+          "components": ["C-003", "C-004", "C-005", "C-006"]
+        },
+        {
+          "region_id": "R-003",
+          "name": "order_summary",
+          "semantic_role": "complementary",
+          "position": {
+            "row_start": 2,
+            "row_end": 2,
+            "col_start": 9,
+            "col_end": 12,
+            "sticky": true
+          },
+          "components": ["C-007", "C-008"]
+        }
+      ]
+    },
+    "components": [
+      {
+        "component_id": "C-001",
+        "type": "logo",
+        "label": "ShopEasy Logo",
+        "description": "Brand logo linking to homepage",
+        "region_id": "R-001",
+        "state": "default",
+        "content": {
+          "image_alt": "ShopEasy - Return to homepage"
+        },
+        "interaction": {
+          "clickable": true,
+          "focusable": true,
+          "action": "navigate",
+          "navigation_target": "/"
+        },
+        "accessibility": {
+          "role": "link",
+          "aria_label": "ShopEasy homepage"
+        }
+      },
+      {
+        "component_id": "C-002",
+        "type": "progress_indicator",
+        "label": "Checkout Progress",
+        "description": "Shows current step in checkout",
+        "region_id": "R-001",
+        "state": "default",
+        "content": {
+          "steps": ["Shipping", "Payment", "Review"],
+          "current_step": 1
+        },
+        "accessibility": {
+          "role": "navigation",
+          "aria_label": "Checkout progress: Step 1 of 3, Shipping"
+        }
+      },
+      {
+        "component_id": "C-003",
+        "type": "accordion",
+        "label": "Shipping Address",
+        "description": "Collapsible shipping address section",
+        "region_id": "R-002",
+        "state": "expanded",
+        "content": {
+          "heading": "Shipping Address",
+          "helper_text": "Where should we deliver?"
+        },
+        "interaction": {
+          "clickable": true,
+          "focusable": true,
+          "action": "toggle",
+          "keyboard_shortcut": "Enter/Space"
+        },
+        "accessibility": {
+          "role": "region",
+          "aria_expanded": "true",
+          "aria_controls": "shipping-content",
+          "focus_indicator": "2px solid, 3:1 contrast"
+        },
+        "children": ["C-003-a", "C-003-b", "C-003-c"]
+      },
+      {
+        "component_id": "C-003-a",
+        "type": "text_input",
+        "label": "Address Search",
+        "description": "Address autocomplete field",
+        "region_id": "R-002",
+        "state": "default",
+        "content": {
+          "placeholder": "Start typing your address...",
+          "helper_text": "We'll autocomplete as you type"
+        },
+        "interaction": {
+          "focusable": true,
+          "validation": "address_autocomplete"
+        },
+        "accessibility": {
+          "role": "combobox",
+          "aria_label": "Search for your shipping address",
+          "aria_autocomplete": "list",
+          "aria_expanded": "false"
+        }
+      },
+      {
+        "component_id": "C-004",
+        "type": "accordion",
+        "label": "Shipping Options",
+        "description": "Delivery method selection",
+        "region_id": "R-002",
+        "state": "collapsed",
+        "content": {
+          "heading": "Shipping Options",
+          "helper_text": "Choose your delivery speed"
+        },
+        "interaction": {
+          "clickable": true,
+          "focusable": true,
+          "action": "toggle"
+        },
+        "accessibility": {
+          "role": "region",
+          "aria_expanded": "false",
+          "aria_controls": "shipping-options-content"
+        }
+      },
+      {
+        "component_id": "C-005",
+        "type": "accordion",
+        "label": "Payment Method",
+        "description": "Payment information section",
+        "region_id": "R-002",
+        "state": "collapsed",
+        "content": {
+          "heading": "Payment",
+          "helper_text": "How would you like to pay?"
+        },
+        "interaction": {
+          "clickable": true,
+          "focusable": true,
+          "action": "toggle"
+        },
+        "accessibility": {
+          "role": "region",
+          "aria_expanded": "false"
+        },
+        "children": ["C-005-a", "C-005-b"]
+      },
+      {
+        "component_id": "C-005-a",
+        "type": "button_group",
+        "label": "Digital Wallet Options",
+        "description": "Quick payment via digital wallets",
+        "region_id": "R-002",
+        "state": "default",
+        "content": {
+          "options": ["Apple Pay", "Google Pay", "PayPal"]
+        },
+        "accessibility": {
+          "role": "group",
+          "aria_label": "Express payment options"
+        }
+      },
+      {
+        "component_id": "C-006",
+        "type": "trust_badges",
+        "label": "Security Indicators",
+        "description": "Trust signals for secure checkout",
+        "region_id": "R-002",
+        "state": "default",
+        "content": {
+          "badges": ["SSL Secure", "PCI Compliant", "Money Back Guarantee"]
+        },
+        "accessibility": {
+          "role": "img",
+          "aria_label": "Secure checkout: SSL encrypted, PCI compliant, 30-day money back guarantee"
+        }
+      },
+      {
+        "component_id": "C-007",
+        "type": "order_summary",
+        "label": "Order Summary",
+        "description": "Running total and item list",
+        "region_id": "R-003",
+        "state": "default",
+        "content": {
+          "heading": "Order Summary",
+          "items_count_label": "3 items"
+        },
+        "accessibility": {
+          "role": "region",
+          "aria_label": "Order summary: 3 items",
+          "aria_live": "polite"
+        }
+      },
+      {
+        "component_id": "C-008",
+        "type": "button",
+        "label": "Place Order",
+        "description": "Primary action to complete purchase",
+        "region_id": "R-003",
+        "state": "default",
+        "content": {
+          "text": "Place Order",
+          "helper_text": "You won't be charged until you confirm"
+        },
+        "interaction": {
+          "clickable": true,
+          "focusable": true,
+          "action": "submit",
+          "keyboard_shortcut": "Enter"
+        },
+        "accessibility": {
+          "role": "button",
+          "aria_label": "Place your order",
+          "contrast_requirement": "4.5:1",
+          "focus_indicator": "2px solid, 3:1 contrast",
+          "touch_target_size": "44x44px"
+        }
+      }
+    ],
+    "interactions": [
+      {
+        "interaction_id": "INT-001",
+        "trigger": "Address entered",
+        "action": "Auto-expand shipping options",
+        "components": ["C-003", "C-004"]
+      },
+      {
+        "interaction_id": "INT-002",
+        "trigger": "Shipping selected",
+        "action": "Auto-expand payment",
+        "components": ["C-004", "C-005"]
+      }
+    ],
+    "error_states": [
+      {
+        "error_id": "ERR-001",
+        "trigger": "Invalid address",
+        "message": "We couldn't verify this address. Please check and try again.",
+        "component": "C-003-a",
+        "recovery": "Suggest alternatives"
+      }
+    ],
+    "loading_states": [
+      {
+        "state_id": "LOAD-001",
+        "trigger": "Order submission",
+        "component": "C-008",
+        "behavior": "Button shows spinner, text changes to 'Processing...'"
+      }
+    ],
+    "responsive_notes": {
+      "mobile": "Order summary moves below checkout form, sticky CTA at bottom",
+      "tablet": "Two-column layout maintained but narrower",
+      "desktop": "Full three-region layout"
+    }
+  },
+  "metadata": {
+    "created_date": "2025-01-20",
+    "designer": "UX Prototype Builder Agent",
+    "design_concept": "Express Checkout with Progressive Disclosure"
+  }
+}

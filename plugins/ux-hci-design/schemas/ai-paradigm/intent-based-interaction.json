@@ -1,0 +1,381 @@
+{
+  "title": "Intent-Based Interaction Evaluation Framework",
+  "description": "Framework for evaluating systems where interfaces are dynamically generated from user intent. Based on Jakob Nielsen's vision of 'No More User Interface' where AI agents generate interfaces on the fly.",
+  "version": "1.0.0",
+  "thought_leader": {
+    "name": "Jakob Nielsen",
+    "key_insight": "Traditional GUI will be replaced by AI agents that generate interfaces on the fly based on user intent",
+    "paradigm": "No More User Interface",
+    "implication": "We evaluate intent capture and outcome delivery, not static interface elements"
+  },
+  "paradigm_shift": {
+    "from": "User navigates pre-designed interface to accomplish task",
+    "to": "User expresses intent, system generates appropriate interface/response"
+  },
+  "evaluation_dimensions": [
+    {
+      "number": 1,
+      "name": "Intent Capture Fidelity",
+      "description": "How accurately does the system understand what the user wants to accomplish?",
+      "key_aspects": [
+        "Scope capture - understanding the full extent of the request",
+        "Nuance recognition - picking up on subtle requirements",
+        "Context integration - using situational context appropriately",
+        "Ambiguity handling - resolving unclear requests gracefully"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Does the system capture the full scope of user intent?",
+          "Are ambiguities resolved through clarification, not assumption?",
+          "Is implicit intent (context, history, patterns) appropriately factored?",
+          "Can the user refine intent iteratively without starting over?"
+        ],
+        "what_to_look_for": [
+          "Intent disambiguation mechanisms that ask smart questions",
+          "Context-aware intent inference using history and situation",
+          "Intent history and pattern recognition",
+          "Clarification dialogue that narrows without frustrating"
+        ],
+        "anti_patterns": [
+          "Assuming instead of asking when ambiguous",
+          "Ignoring context that would clarify intent",
+          "Requiring complete, perfect specification upfront",
+          "Losing partial intent when user refines"
+        ]
+      },
+      "metrics": [
+        {
+          "name": "intent_match_accuracy",
+          "description": "How often interpreted intent matches actual user intent",
+          "measurement": "Post-hoc user confirmation"
+        },
+        {
+          "name": "clarification_efficiency",
+          "description": "Questions asked vs. ambiguity resolved",
+          "target": "Maximum clarity with minimum questions"
+        },
+        {
+          "name": "implicit_intent_detection_rate",
+          "description": "Successfully inferring unstated but important intent",
+          "example": "User asks for 'meeting notes' - system knows to include action items"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "name": "Interface Generation Appropriateness",
+      "description": "Is the dynamically generated interface optimal for the expressed intent?",
+      "key_aspects": [
+        "Complexity matching - interface complexity matches task complexity",
+        "Modality selection - choosing the right form of interaction",
+        "Progressive generation - building interface as understanding grows",
+        "Minimalism - eliminating unnecessary interface elements"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Does the generated interface match the complexity of the task?",
+          "Is the interface modality appropriate (visual, conversational, mixed)?",
+          "Does the interface adapt as intent evolves?",
+          "Is unnecessary interface eliminated for simple intents?"
+        ],
+        "what_to_look_for": [
+          "Simple tasks get simple interfaces (or no interface)",
+          "Complex tasks get appropriately structured interfaces",
+          "Modality selection logic is appropriate to task",
+          "Real-time interface adaptation as needs become clearer"
+        ],
+        "anti_patterns": [
+          "Same heavyweight interface for all task types",
+          "Forcing visual interface when conversational would suffice",
+          "Static interface that doesn't adapt to evolving intent",
+          "Unnecessary choices and options for simple tasks"
+        ]
+      },
+      "modality_selection": {
+        "conversational": {
+          "when_appropriate": [
+            "Simple queries with direct answers",
+            "Sequential information gathering",
+            "Clarification and refinement dialogs"
+          ],
+          "when_inappropriate": [
+            "Comparing multiple options visually",
+            "Spatial or visual decisions",
+            "Complex data manipulation"
+          ]
+        },
+        "visual_gui": {
+          "when_appropriate": [
+            "Comparing multiple options",
+            "Spatial arrangement or design tasks",
+            "Data visualization and exploration"
+          ],
+          "when_inappropriate": [
+            "Simple yes/no decisions",
+            "Information that fits in a sentence"
+          ]
+        },
+        "hybrid": {
+          "when_appropriate": [
+            "Complex tasks with both information gathering and comparison",
+            "Tasks that benefit from both explanation and visualization"
+          ]
+        }
+      },
+      "metrics": [
+        {
+          "name": "interface_appropriateness_score",
+          "description": "User rating of interface fit for task",
+          "scale": "1-5"
+        },
+        {
+          "name": "modality_match_rate",
+          "description": "How often chosen modality matches user preference",
+          "measurement": "User override rate (lower is better)"
+        },
+        {
+          "name": "adaptation_responsiveness",
+          "description": "Speed and smoothness of interface adaptation",
+          "target": "Seamless, <500ms"
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "name": "Intent-Outcome Continuity",
+      "description": "Is there a clear, traceable path from expressed intent to delivered outcome?",
+      "key_aspects": [
+        "Traceability - user can follow intent to outcome",
+        "Transparency - understanding of how intent was interpreted",
+        "Intervention - ability to correct course during execution",
+        "Alignment - outcome clearly maps to original intent"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Can users understand how their intent led to the outcome?",
+          "Are intermediate steps visible when needed?",
+          "Can users intervene at any point in the intent-to-outcome flow?",
+          "Is the outcome clearly connected to the original intent?"
+        ],
+        "what_to_look_for": [
+          "Intent-outcome traceability on demand",
+          "Progressive disclosure of process (summary first, detail on demand)",
+          "Clear intervention points during execution",
+          "Outcome presentation that references original intent"
+        ],
+        "anti_patterns": [
+          "Black box processing with surprise outcomes",
+          "No explanation of how intent became outcome",
+          "No ability to stop or redirect during processing",
+          "Outcomes that don't obviously relate to intent"
+        ]
+      },
+      "metrics": [
+        {
+          "name": "traceability_score",
+          "description": "User can explain how intent led to outcome",
+          "measurement": "User explanation accuracy"
+        },
+        {
+          "name": "intervention_success_rate",
+          "description": "Successful mid-flow corrections",
+          "target": ">90% when user attempts intervention"
+        },
+        {
+          "name": "outcome_intent_alignment",
+          "description": "User confirms outcome matches intent",
+          "target": ">95%"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "name": "Zero-Interface Opportunities",
+      "description": "When is NO interface the right answer?",
+      "key_aspects": [
+        "Proactive automation - acting without being asked when appropriate",
+        "Background processing - handling tasks silently",
+        "Notification vs. interaction - informing without requiring action",
+        "Appropriate scope - knowing when zero-interface is safe"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Can outcomes be delivered without any interface?",
+          "Does the system proactively accomplish things without requiring interaction?",
+          "Are routine decisions automated appropriately?",
+          "Is the user appropriately notified of background actions?"
+        ],
+        "what_to_look_for": [
+          "Proactive automation of routine, low-risk tasks",
+          "Appropriate boundaries on what's automated",
+          "Transparent notification of background actions",
+          "Easy override when automation isn't wanted"
+        ],
+        "anti_patterns": [
+          "Requiring interaction for completely predictable actions",
+          "Hiding automation when user should know",
+          "Automating high-stakes decisions without safeguards",
+          "No way to disable unwanted automation"
+        ]
+      },
+      "automation_boundaries": {
+        "safe_to_automate": [
+          "Formatting and organization",
+          "Routine notifications",
+          "Data backup and sync",
+          "Low-stakes defaults"
+        ],
+        "require_confirmation": [
+          "Sending external communications",
+          "Financial transactions",
+          "Data deletion",
+          "Public publishing"
+        ],
+        "never_automate": [
+          "Irreversible high-stakes decisions",
+          "Actions with legal implications",
+          "Health and safety critical decisions"
+        ]
+      },
+      "metrics": [
+        {
+          "name": "automation_appropriateness",
+          "description": "User would have done the same thing",
+          "target": ">95% for automated actions"
+        },
+        {
+          "name": "proactive_value_delivery",
+          "description": "Value delivered without user initiating",
+          "measurement": "User appreciation of proactive actions"
+        },
+        {
+          "name": "zero_interface_success_rate",
+          "description": "Background actions that needed no correction",
+          "target": ">98%"
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "name": "Intent Evolution Support",
+      "description": "How well does the system support evolving and changing user intent?",
+      "key_aspects": [
+        "Mid-stream changes - adjusting intent during interaction",
+        "Scope expansion - adding to original intent",
+        "Scope reduction - narrowing focus",
+        "Complete pivots - changing direction entirely"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Can users change their intent mid-interaction without starting over?",
+          "Does partial work persist when intent evolves?",
+          "Is intent history available for reference?",
+          "Can users branch from previous intents?"
+        ],
+        "what_to_look_for": [
+          "Graceful handling of 'actually, I meant...' moments",
+          "Preservation of useful work when intent shifts",
+          "Intent history and branching support",
+          "Natural language intent modification"
+        ],
+        "anti_patterns": [
+          "Forcing restart when intent changes",
+          "Losing all progress on intent modification",
+          "No memory of previous intent attempts",
+          "Rigid interpretation that can't flex"
+        ]
+      },
+      "metrics": [
+        {
+          "name": "intent_modification_success",
+          "description": "Successfully modified intent without restart",
+          "target": ">90%"
+        },
+        {
+          "name": "work_preservation_rate",
+          "description": "Useful work preserved when intent changes",
+          "target": ">80%"
+        }
+      ]
+    }
+  ],
+  "evaluation_methodology": {
+    "instead_of": "Walk through interface screens evaluating each against heuristics",
+    "do_this": [
+      {
+        "step": 1,
+        "action": "Express a range of user intents at different complexity levels",
+        "examples": [
+          "Simple: 'What's the weather?'",
+          "Moderate: 'Plan a trip to Paris next month'",
+          "Complex: 'Help me prepare for a job interview at a tech company'"
+        ]
+      },
+      {
+        "step": 2,
+        "action": "Evaluate how system captures, interprets, and responds to each intent",
+        "criteria": [
+          "Was the intent understood correctly?",
+          "Were appropriate clarifying questions asked?",
+          "Was context used appropriately?"
+        ]
+      },
+      {
+        "step": 3,
+        "action": "Assess whether generated interfaces were appropriate or could be eliminated",
+        "criteria": [
+          "Was the interface complexity appropriate?",
+          "Could a simpler interaction have sufficed?",
+          "Was the modality appropriate?"
+        ]
+      },
+      {
+        "step": 4,
+        "action": "Measure intent-to-value path efficiency",
+        "criteria": [
+          "How direct was the path from intent to outcome?",
+          "Were there unnecessary steps?",
+          "Was value delivered quickly?"
+        ]
+      },
+      {
+        "step": 5,
+        "action": "Test intent refinement and correction flows",
+        "criteria": [
+          "How gracefully did the system handle changes?",
+          "Was previous work preserved?",
+          "Could the user redirect without frustration?"
+        ]
+      }
+    ]
+  },
+  "severity_scale": {
+    "levels": [
+      {
+        "level": 0,
+        "label": "Excellent Intent Handling",
+        "description": "Intent perfectly captured, optimal interface generated, seamless flow to outcome"
+      },
+      {
+        "level": 1,
+        "label": "Good Intent Handling",
+        "description": "Minor clarification needed, appropriate interface, clear path to outcome"
+      },
+      {
+        "level": 2,
+        "label": "Adequate Intent Handling",
+        "description": "Some misinterpretation, interface slightly mismatched, outcome achieved with effort"
+      },
+      {
+        "level": 3,
+        "label": "Poor Intent Handling",
+        "description": "Significant misinterpretation, inappropriate interface, difficult path to outcome"
+      },
+      {
+        "level": 4,
+        "label": "Failed Intent Handling",
+        "description": "Intent not captured, wrong interface, user cannot achieve intended outcome"
+      }
+    ]
+  }
+}

@@ -1,0 +1,249 @@
+{
+  "schema_version": "1.0",
+  "journey_map": {
+    "journey_id": "JM-HC-001",
+    "title": "Healthcare Appointment Scheduling Journey",
+    "persona_id": "P-HC-001",
+    "scenario": "Eleanor needs to schedule a follow-up appointment with her endocrinologist",
+    "goal": "Book an appointment at a convenient time with minimal confusion",
+    "accessibility_context": {
+      "assistive_tech_used": ["Browser zoom 150%"],
+      "environment": "Well-lit home office, quiet",
+      "device": "iPad with keyboard"
+    },
+    "stages": [
+      {
+        "stage_id": "S-001",
+        "name": "Login",
+        "description": "Patient logs into the portal",
+        "touchpoints": ["Login page", "Two-factor authentication"],
+        "actions": [
+          "Enter username/email",
+          "Enter password",
+          "Complete authentication"
+        ],
+        "thoughts": "I hope I remember my password. These verification codes are hard to see.",
+        "emotions": {
+          "feeling": "anxious",
+          "intensity": 6,
+          "description": "Worried about getting locked out"
+        },
+        "accessibility_notes": {
+          "wcag_relevant": ["3.3.8"],
+          "considerations": "No cognitive tests, support password managers",
+          "tested_with": "VoiceOver, keyboard only"
+        },
+        "pain_points": [
+          "Verification code text too small",
+          "Time limit too short for code entry"
+        ],
+        "opportunities": [
+          "Larger verification code display",
+          "Extended time limit option",
+          "Biometric login option"
+        ]
+      },
+      {
+        "stage_id": "S-002",
+        "name": "Navigate to Scheduling",
+        "description": "Find the appointment scheduling section",
+        "touchpoints": ["Dashboard", "Main navigation"],
+        "actions": [
+          "View dashboard",
+          "Find 'Schedule Appointment' option",
+          "Click to start scheduling"
+        ],
+        "thoughts": "Where do I go to make an appointment?",
+        "emotions": {
+          "feeling": "searching",
+          "intensity": 5,
+          "description": "Looking for the right option"
+        },
+        "accessibility_notes": {
+          "wcag_relevant": ["2.4.1", "2.4.6"],
+          "considerations": "Clear navigation, skip links, descriptive headings",
+          "tested_with": "Keyboard navigation, screen reader"
+        },
+        "pain_points": [
+          "Too many options on dashboard",
+          "Scheduling button not prominent enough"
+        ],
+        "opportunities": [
+          "Prominent 'Schedule Appointment' button",
+          "Recent activity shortcuts",
+          "Simplified dashboard for common tasks"
+        ]
+      },
+      {
+        "stage_id": "S-003",
+        "name": "Select Provider",
+        "description": "Choose which doctor to see",
+        "touchpoints": ["Provider selection screen"],
+        "actions": [
+          "View list of providers",
+          "Select Dr. Smith (Endocrinologist)",
+          "Confirm selection"
+        ],
+        "thoughts": "I need to see Dr. Smith for my diabetes check-up.",
+        "emotions": {
+          "feeling": "focused",
+          "intensity": 5,
+          "description": "Task-oriented"
+        },
+        "accessibility_notes": {
+          "wcag_relevant": ["1.4.3", "2.5.8"],
+          "considerations": "High contrast cards, large touch targets",
+          "tested_with": "Low vision simulation"
+        },
+        "pain_points": [
+          "Provider names hard to distinguish",
+          "Specialty not immediately visible"
+        ],
+        "opportunities": [
+          "Clear provider cards with photo, name, specialty",
+          "Show recent providers first",
+          "Filter by specialty"
+        ]
+      },
+      {
+        "stage_id": "S-004",
+        "name": "Select Date & Time",
+        "description": "Choose appointment date and time",
+        "touchpoints": ["Calendar view", "Time slots"],
+        "actions": [
+          "View available dates",
+          "Select preferred date",
+          "Choose time slot"
+        ],
+        "thoughts": "I prefer mornings. Let me find a Tuesday or Thursday.",
+        "emotions": {
+          "feeling": "hopeful",
+          "intensity": 6,
+          "description": "Hoping for convenient time"
+        },
+        "accessibility_notes": {
+          "wcag_relevant": ["2.1.1", "2.4.7", "1.4.1"],
+          "considerations": "Keyboard-navigable calendar, focus visible, not color-only",
+          "tested_with": "Keyboard only, color blind simulation"
+        },
+        "pain_points": [
+          "Calendar navigation confusing",
+          "Available vs unavailable not clear",
+          "Time slots too small to tap"
+        ],
+        "opportunities": [
+          "List view alternative to calendar",
+          "Large, clearly labeled time slots",
+          "Smart suggestions based on preferences"
+        ]
+      },
+      {
+        "stage_id": "S-005",
+        "name": "Provide Visit Reason",
+        "description": "Enter reason for appointment",
+        "touchpoints": ["Visit reason form"],
+        "actions": [
+          "Select or enter visit reason",
+          "Add any notes",
+          "Continue to review"
+        ],
+        "thoughts": "It's just a regular check-up, nothing special.",
+        "emotions": {
+          "feeling": "neutral",
+          "intensity": 4,
+          "description": "Routine task"
+        },
+        "accessibility_notes": {
+          "wcag_relevant": ["3.3.2", "3.3.7"],
+          "considerations": "Clear labels, pre-populated from history",
+          "tested_with": "Screen reader, cognitive load assessment"
+        },
+        "pain_points": [
+          "Have to type reason each time",
+          "Medical terminology confusing"
+        ],
+        "opportunities": [
+          "Pre-populated common reasons",
+          "Plain language options",
+          "Remember previous reasons"
+        ]
+      },
+      {
+        "stage_id": "S-006",
+        "name": "Review & Confirm",
+        "description": "Review appointment details and confirm",
+        "touchpoints": ["Summary screen", "Confirmation dialog"],
+        "actions": [
+          "Review all appointment details",
+          "Make corrections if needed",
+          "Confirm booking"
+        ],
+        "thoughts": "Let me make sure everything is correct before I confirm.",
+        "emotions": {
+          "feeling": "careful",
+          "intensity": 7,
+          "description": "Double-checking important details"
+        },
+        "accessibility_notes": {
+          "wcag_relevant": ["3.3.4", "2.4.6"],
+          "considerations": "Clear summary, easy to edit, reversible",
+          "tested_with": "Cognitive walkthrough"
+        },
+        "pain_points": [
+          "Can't easily go back to change something",
+          "Confirmation button unclear"
+        ],
+        "opportunities": [
+          "Easy edit buttons for each section",
+          "Clear, high-contrast confirm button",
+          "Confirmation before final submission"
+        ]
+      },
+      {
+        "stage_id": "S-007",
+        "name": "Confirmation",
+        "description": "Receive booking confirmation",
+        "touchpoints": ["Confirmation page", "Email", "Calendar option"],
+        "actions": [
+          "View confirmation",
+          "Add to calendar",
+          "Print or save details"
+        ],
+        "thoughts": "Good, it's booked. I should write this down and add it to my calendar.",
+        "emotions": {
+          "feeling": "relieved",
+          "intensity": 8,
+          "description": "Task completed successfully"
+        },
+        "accessibility_notes": {
+          "wcag_relevant": ["2.4.4", "1.3.1"],
+          "considerations": "Print-friendly, clear confirmation number",
+          "tested_with": "Print preview, mobile view"
+        },
+        "pain_points": [
+          "Confirmation number hard to copy",
+          "Print version doesn't format well"
+        ],
+        "opportunities": [
+          "Large, copyable confirmation number",
+          "One-click add to calendar",
+          "Print-optimized summary"
+        ]
+      }
+    ],
+    "metrics": {
+      "current_completion_rate": 0.72,
+      "target_completion_rate": 0.95,
+      "average_time": "8m",
+      "target_time": "5m",
+      "error_rate": 0.15,
+      "target_error_rate": 0.02
+    }
+  },
+  "metadata": {
+    "created_date": "2025-01-20",
+    "data_sources": ["Patient interviews", "Usability testing", "Analytics"],
+    "accessibility_testing": "Conducted with users with disabilities",
+    "confidence_level": "high"
+  }
+}

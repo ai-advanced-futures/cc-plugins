@@ -1,0 +1,543 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude.ai/schemas/ux-hci-design/journey-map-schema.json",
+  "title": "Customer Journey Map Schema",
+  "description": "Schema for customer journey maps created during the Define phase of UX design. Journey maps visualize the end-to-end experience of a user as they interact with a product or service.",
+  "type": "object",
+  "required": ["schema_version", "journey_map"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version of the journey map schema",
+      "pattern": "^\\d+\\.\\d+$",
+      "default": "1.0"
+    },
+    "journey_map": {
+      "type": "object",
+      "description": "The journey map definition",
+      "required": ["title", "persona", "scenario", "stages"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title of the journey map",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of what this journey map covers",
+          "maxLength": 1000
+        },
+        "persona": {
+          "type": "object",
+          "description": "Reference to the persona this journey represents",
+          "required": ["name"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the persona"
+            },
+            "reference": {
+              "type": "string",
+              "description": "Reference or ID to the full persona document"
+            }
+          }
+        },
+        "scenario": {
+          "type": "object",
+          "description": "The specific scenario or use case this journey maps",
+          "required": ["description", "goal"],
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": "Description of the scenario",
+              "minLength": 10
+            },
+            "goal": {
+              "type": "string",
+              "description": "What the user is trying to accomplish",
+              "minLength": 10
+            },
+            "context": {
+              "type": "string",
+              "description": "Context and circumstances surrounding this journey"
+            },
+            "triggers": {
+              "type": "array",
+              "description": "What triggers or initiates this journey",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "journey_type": {
+          "type": "string",
+          "description": "Type of journey being mapped",
+          "enum": ["current_state", "future_state", "ideal_state", "service_blueprint", "day_in_life"]
+        },
+        "time_scope": {
+          "type": "string",
+          "description": "Time span covered by this journey (e.g., '30 minutes', '1 day', '1 week', '3 months')"
+        },
+        "stages": {
+          "type": "array",
+          "description": "Sequential stages of the customer journey",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["stage_name", "touchpoints"],
+            "properties": {
+              "stage_name": {
+                "type": "string",
+                "description": "Name of this stage (e.g., 'Awareness', 'Consideration', 'Purchase', 'Onboarding', 'Usage', 'Support')",
+                "minLength": 1
+              },
+              "stage_number": {
+                "type": "integer",
+                "description": "Sequential number of this stage",
+                "minimum": 1
+              },
+              "duration": {
+                "type": "string",
+                "description": "Typical duration of this stage"
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of what happens in this stage"
+              },
+              "user_goals": {
+                "type": "array",
+                "description": "What the user is trying to accomplish in this stage",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "user_actions": {
+                "type": "array",
+                "description": "Actions the user takes during this stage",
+                "items": {
+                  "type": "object",
+                  "required": ["action"],
+                  "properties": {
+                    "action": {
+                      "type": "string",
+                      "description": "Description of the action"
+                    },
+                    "channel": {
+                      "type": "string",
+                      "description": "Channel or medium where action occurs (e.g., 'mobile app', 'website', 'email', 'phone', 'in-person')"
+                    },
+                    "device": {
+                      "type": "string",
+                      "description": "Device used for this action",
+                      "enum": ["desktop", "laptop", "tablet", "smartphone", "other", "multiple"]
+                    }
+                  }
+                }
+              },
+              "touchpoints": {
+                "type": "array",
+                "description": "Points of interaction between user and product/service",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["name", "type"],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Name of the touchpoint"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Type of touchpoint",
+                      "enum": ["digital", "physical", "human", "hybrid"]
+                    },
+                    "channel": {
+                      "type": "string",
+                      "description": "Specific channel (e.g., 'website', 'mobile app', 'email', 'phone call', 'store', 'chat')"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Description of the interaction at this touchpoint"
+                    },
+                    "owned_by": {
+                      "type": "string",
+                      "description": "Department or team responsible for this touchpoint"
+                    },
+                    "current_experience": {
+                      "type": "string",
+                      "description": "Description of the current experience at this touchpoint",
+                      "enum": ["excellent", "good", "adequate", "poor", "critical_issue", "unknown"]
+                    }
+                  }
+                }
+              },
+              "emotions": {
+                "type": "array",
+                "description": "Emotional states the user experiences during this stage",
+                "items": {
+                  "type": "object",
+                  "required": ["emotion", "valence"],
+                  "properties": {
+                    "emotion": {
+                      "type": "string",
+                      "description": "The emotion (e.g., 'excited', 'frustrated', 'confused', 'satisfied', 'anxious', 'confident')"
+                    },
+                    "valence": {
+                      "type": "string",
+                      "description": "Whether the emotion is positive, negative, or neutral",
+                      "enum": ["positive", "negative", "neutral", "mixed"]
+                    },
+                    "intensity": {
+                      "type": "string",
+                      "description": "Intensity of the emotion",
+                      "enum": ["low", "moderate", "high", "extreme"]
+                    },
+                    "trigger": {
+                      "type": "string",
+                      "description": "What causes this emotion"
+                    }
+                  }
+                }
+              },
+              "thoughts": {
+                "type": "array",
+                "description": "User thoughts, questions, and internal dialogue during this stage",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "pain_points": {
+                "type": "array",
+                "description": "Problems, frustrations, or obstacles encountered in this stage",
+                "items": {
+                  "type": "object",
+                  "required": ["description", "severity"],
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "description": "Description of the pain point"
+                    },
+                    "severity": {
+                      "type": "string",
+                      "description": "Severity of the pain point",
+                      "enum": ["critical", "high", "medium", "low"]
+                    },
+                    "impact": {
+                      "type": "string",
+                      "description": "Impact on the user or business"
+                    },
+                    "root_cause": {
+                      "type": "string",
+                      "description": "Root cause of the pain point"
+                    }
+                  }
+                }
+              },
+              "delights": {
+                "type": "array",
+                "description": "Positive moments or experiences that exceed expectations",
+                "items": {
+                  "type": "object",
+                  "required": ["description"],
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "description": "Description of the delightful moment"
+                    },
+                    "impact": {
+                      "type": "string",
+                      "description": "Impact on user satisfaction or loyalty"
+                    }
+                  }
+                }
+              },
+              "opportunities": {
+                "type": "array",
+                "description": "Opportunities for improvement in this stage",
+                "items": {
+                  "type": "object",
+                  "required": ["description", "priority"],
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "description": "Description of the opportunity"
+                    },
+                    "priority": {
+                      "type": "string",
+                      "description": "Priority level for addressing this opportunity",
+                      "enum": ["critical", "high", "medium", "low"]
+                    },
+                    "expected_impact": {
+                      "type": "string",
+                      "description": "Expected impact if this opportunity is addressed",
+                      "enum": ["transformative", "significant", "moderate", "minor"]
+                    },
+                    "effort_estimate": {
+                      "type": "string",
+                      "description": "Estimated effort to implement",
+                      "enum": ["low", "medium", "high", "very_high"]
+                    },
+                    "metrics": {
+                      "type": "array",
+                      "description": "Metrics that could measure success of this improvement",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "experience_score": {
+                "type": "object",
+                "description": "Overall experience rating for this stage",
+                "properties": {
+                  "score": {
+                    "type": "number",
+                    "description": "Numeric score (typically 1-10 or 1-5)",
+                    "minimum": 0,
+                    "maximum": 10
+                  },
+                  "scale": {
+                    "type": "string",
+                    "description": "Scale used (e.g., '1-10', '1-5')"
+                  },
+                  "rationale": {
+                    "type": "string",
+                    "description": "Explanation of the score"
+                  }
+                }
+              },
+              "supporting_systems": {
+                "type": "array",
+                "description": "Backend systems, processes, or services that support this stage",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Name of the system or process"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "What this system does"
+                    },
+                    "performance": {
+                      "type": "string",
+                      "description": "Performance assessment",
+                      "enum": ["excellent", "good", "adequate", "poor", "critical_issue"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "overall_sentiment": {
+          "type": "string",
+          "description": "Overall sentiment across the entire journey",
+          "enum": ["very_positive", "positive", "neutral", "negative", "very_negative", "mixed"]
+        },
+        "key_insights": {
+          "type": "array",
+          "description": "Key insights and findings from the journey map",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "description": "High-level recommendations based on the journey",
+          "items": {
+            "type": "object",
+            "required": ["recommendation", "priority"],
+            "properties": {
+              "recommendation": {
+                "type": "string",
+                "description": "The recommendation"
+              },
+              "priority": {
+                "type": "string",
+                "description": "Priority level",
+                "enum": ["critical", "high", "medium", "low"]
+              },
+              "stages_affected": {
+                "type": "array",
+                "description": "Which stages this recommendation applies to",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "expected_impact": {
+                "type": "string",
+                "description": "Expected impact on user experience"
+              }
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about the journey map creation",
+      "properties": {
+        "created_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date the journey map was created"
+        },
+        "created_by": {
+          "type": "string",
+          "description": "Who created the journey map"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date the journey map was last updated"
+        },
+        "research_basis": {
+          "type": "string",
+          "description": "Research methods used to create this journey map"
+        },
+        "validation_status": {
+          "type": "string",
+          "description": "Whether this journey map has been validated with users",
+          "enum": ["validated", "partially_validated", "hypothesis", "not_validated"]
+        },
+        "version": {
+          "type": "string",
+          "description": "Version number of this journey map",
+          "pattern": "^\\d+\\.\\d+$"
+        },
+        "stakeholders": {
+          "type": "array",
+          "description": "Stakeholders involved in or reviewing this journey map",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "description": "Tags for categorization and filtering",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "1.0",
+      "journey_map": {
+        "title": "First-Time User Onboarding Journey",
+        "description": "Journey map for a new user signing up and completing initial setup",
+        "persona": {
+          "name": "Tech-Savvy Sarah",
+          "reference": "persona-sarah-001"
+        },
+        "scenario": {
+          "description": "Sarah discovers the product through a colleague's recommendation and decides to try it",
+          "goal": "Successfully sign up, complete onboarding, and accomplish first meaningful task",
+          "context": "During work hours, looking to solve a specific productivity problem",
+          "triggers": ["Colleague recommendation", "Frustration with current tool"]
+        },
+        "journey_type": "current_state",
+        "time_scope": "30 minutes",
+        "stages": [
+          {
+            "stage_name": "Discovery",
+            "stage_number": 1,
+            "duration": "5 minutes",
+            "description": "Sarah learns about the product and decides to try it",
+            "user_goals": ["Understand what the product does", "Determine if it solves her problem"],
+            "user_actions": [
+              {
+                "action": "Visits website from colleague's shared link",
+                "channel": "website",
+                "device": "laptop"
+              },
+              {
+                "action": "Reads homepage and value proposition",
+                "channel": "website",
+                "device": "laptop"
+              }
+            ],
+            "touchpoints": [
+              {
+                "name": "Marketing Website",
+                "type": "digital",
+                "channel": "website",
+                "description": "Landing page with product overview",
+                "owned_by": "Marketing",
+                "current_experience": "good"
+              }
+            ],
+            "emotions": [
+              {
+                "emotion": "curious",
+                "valence": "positive",
+                "intensity": "moderate",
+                "trigger": "Colleague's positive recommendation"
+              },
+              {
+                "emotion": "skeptical",
+                "valence": "neutral",
+                "intensity": "low",
+                "trigger": "Has tried many similar products before"
+              }
+            ],
+            "thoughts": [
+              "Is this really different from what I'm already using?",
+              "How much time will it take to set up?"
+            ],
+            "pain_points": [],
+            "delights": [
+              {
+                "description": "Clear, jargon-free explanation of benefits",
+                "impact": "Increases confidence in trying the product"
+              }
+            ],
+            "opportunities": [
+              {
+                "description": "Add video demonstration on homepage",
+                "priority": "medium",
+                "expected_impact": "moderate",
+                "effort_estimate": "low",
+                "metrics": ["Video play rate", "Sign-up conversion rate"]
+              }
+            ],
+            "experience_score": {
+              "score": 7,
+              "scale": "1-10",
+              "rationale": "Clear messaging but could provide more specific use cases"
+            }
+          }
+        ],
+        "overall_sentiment": "positive",
+        "key_insights": [
+          "Users need to see value within the first 5 minutes or they abandon",
+          "Clear onboarding steps reduce anxiety about time investment"
+        ],
+        "recommendations": [
+          {
+            "recommendation": "Implement progressive onboarding that shows value immediately",
+            "priority": "high",
+            "stages_affected": ["Onboarding", "First Use"],
+            "expected_impact": "Significant increase in activation rate"
+          }
+        ]
+      },
+      "metadata": {
+        "created_date": "2025-01-23T10:00:00Z",
+        "created_by": "UX Research Team",
+        "research_basis": "User interviews (n=12), Session recordings (n=50), Analytics",
+        "validation_status": "validated",
+        "version": "1.0",
+        "stakeholders": ["Product Team", "Design Team", "Customer Success"],
+        "tags": ["onboarding", "first-time-user", "b2b"]
+      }
+    }
+  ]
+}

@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.4.0"
+    "version": "2.5.0"
   },
   "plugins": [
     {
@@ -97,6 +97,12 @@
       "name": "prose-authenticity",
       "description": "Find the signs that a machine wrote a text, and rewrite the text so that it reads as human writing. Tiered detectors, voice profiles, and a humanize loop with a fact check.",
       "source": "./plugins/prose-authenticity",
+      "strict": false
+    },
+    {
+      "name": "ux-hci-design",
+      "description": "Guide a person through UX design with the Design Thinking phases: research, personas, journey maps, design concepts, wireframes, and evaluation, with built-in accessibility (WCAG 2.2) and AI interaction guidelines.",
+      "source": "./plugins/ux-hci-design",
       "strict": false
     }
   ]

@@ -1,0 +1,343 @@
+{
+  "title": "Outcome-Value Evaluation Framework",
+  "description": "Evaluates AI systems on value delivery rather than interface quality. Based on Phil Gilbert's insight that with AI, design output is no longer performance - the focus must be on outcome value.",
+  "version": "1.0.0",
+  "thought_leader": {
+    "name": "Phil Gilbert",
+    "role": "Former Head of Design at IBM",
+    "key_insight": "AI output is cheap, so designers must focus on the value and trust of AI actions, not interface polish",
+    "source": "Irresistible Change"
+  },
+  "paradigm_shift": {
+    "from": "Evaluating interface quality (is the button discoverable?)",
+    "to": "Evaluating outcome value (did the interaction improve the user's situation?)"
+  },
+  "principles": [
+    {
+      "number": 1,
+      "name": "Value Clarity",
+      "description": "Is the outcome the system delivers clearly valuable to the user?",
+      "key_questions": [
+        "Does the user's situation measurably improve after interaction?",
+        "Can the value delivered be articulated in user terms, not system terms?",
+        "Is the value persistent or ephemeral?",
+        "Would the user pay for this value (time, money, attention)?"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "What specific user problem does this interaction solve?",
+          "How would the user describe the value they received?",
+          "Is the value immediately apparent or does it require explanation?",
+          "Does the value compound over multiple interactions?"
+        ],
+        "what_to_look_for": [
+          "Clear connection between interaction and user benefit",
+          "Value articulated in user language, not feature language",
+          "Evidence of real-world impact",
+          "Value that persists beyond the interaction"
+        ],
+        "anti_patterns": [
+          "Value described only in system terms (processed, optimized)",
+          "Value requires lengthy explanation to understand",
+          "Value disappears when user leaves the system",
+          "Value primarily benefits the system, not the user"
+        ]
+      },
+      "metrics": [
+        {
+          "name": "outcome_achievement_rate",
+          "description": "Percentage of interactions resulting in intended user outcome",
+          "formula": "successful_outcomes / total_interactions"
+        },
+        {
+          "name": "value_articulation_clarity",
+          "description": "Can users clearly state what value they received?",
+          "measurement": "User interview: 'What did this help you accomplish?'"
+        },
+        {
+          "name": "value_persistence",
+          "description": "How long does the delivered value remain useful?",
+          "measurement": "Time until value becomes stale or irrelevant"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "name": "Value Velocity",
+      "description": "How quickly does the system deliver value?",
+      "key_questions": [
+        "What is the time from intent expression to value delivery?",
+        "How much user effort was required to extract value?",
+        "What is the ratio of interaction time to value received?",
+        "Are there unnecessary steps between intent and value?"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "How many steps from user intent to value delivery?",
+          "What is the minimum viable interaction to achieve value?",
+          "Does the system front-load value or delay it?",
+          "Are there gratuitous interactions that don't add value?"
+        ],
+        "what_to_look_for": [
+          "Direct paths to value without unnecessary detours",
+          "Front-loaded value delivery",
+          "Minimal steps between intent and outcome",
+          "Progressive value delivery during longer interactions"
+        ],
+        "anti_patterns": [
+          "Value delayed until end of long interaction",
+          "Required steps that don't contribute to outcome",
+          "Engagement theater (activity without value)",
+          "Value hidden behind complexity"
+        ]
+      },
+      "metrics": [
+        {
+          "name": "time_to_value",
+          "description": "Elapsed time from first interaction to first value delivery",
+          "unit": "seconds/minutes"
+        },
+        {
+          "name": "effort_to_value_ratio",
+          "description": "User effort invested relative to value received",
+          "formula": "(time_invested + cognitive_load) / perceived_value"
+        },
+        {
+          "name": "value_per_minute",
+          "description": "Normalized value delivery rate",
+          "formula": "total_value_delivered / interaction_duration"
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "name": "Trust Calibration",
+      "description": "Does the user trust the system appropriately for the value it delivers?",
+      "key_questions": [
+        "Does user trust match actual system reliability?",
+        "Are users appropriately skeptical of uncertain outputs?",
+        "Does the system help users verify value claims?",
+        "Is trust earned through demonstrated value, not claims?"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "How does the system communicate its confidence level?",
+          "Can users verify AI outputs without redoing the work?",
+          "Does trust level match demonstrated capability?",
+          "Are high-stakes decisions appropriately flagged?"
+        ],
+        "what_to_look_for": [
+          "Confidence indicators that match actual reliability",
+          "Verification mechanisms that don't negate time savings",
+          "Trust built through track record, not assertion",
+          "Appropriate caution signals for uncertain outputs"
+        ],
+        "anti_patterns": [
+          "Overconfident presentation of uncertain outputs",
+          "No way to verify without redoing work",
+          "Trust demanded before demonstrated",
+          "Same confidence level for all outputs regardless of uncertainty"
+        ]
+      },
+      "metrics": [
+        {
+          "name": "trust_calibration_accuracy",
+          "description": "How well user trust matches actual system reliability",
+          "formula": "1 - abs(user_trust_level - actual_reliability)",
+          "ideal": "1.0 (perfect calibration)"
+        },
+        {
+          "name": "appropriate_skepticism_rate",
+          "description": "Users appropriately questioning uncertain outputs",
+          "measurement": "Verification rate on low-confidence outputs"
+        },
+        {
+          "name": "value_verification_ease",
+          "description": "Effort to verify AI output vs effort to produce manually",
+          "formula": "verification_time / manual_production_time",
+          "target": "<0.2 (verification 5x faster than manual)"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "name": "Value Compounding",
+      "description": "Does value accumulate over time and interactions?",
+      "key_questions": [
+        "Does the system learn what's valuable to this user?",
+        "Does value delivery improve with continued use?",
+        "Is there compounding benefit from the relationship?",
+        "Does past value inform future value?"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Is the 10th interaction more valuable than the 1st?",
+          "Does the system remember user preferences and patterns?",
+          "Can accumulated context be leveraged for future value?",
+          "Is there a 'flywheel effect' where value begets more value?"
+        ],
+        "what_to_look_for": [
+          "Personalization that improves value over time",
+          "Learning from user feedback and corrections",
+          "Context accumulation that reduces future effort",
+          "Network effects where more use = more value"
+        ],
+        "anti_patterns": [
+          "Every interaction starts from zero",
+          "No memory of past preferences or patterns",
+          "Value plateaus regardless of usage",
+          "User must re-teach the system repeatedly"
+        ]
+      },
+      "metrics": [
+        {
+          "name": "learning_effectiveness",
+          "description": "Rate of improvement in value delivery over time",
+          "measurement": "Value per interaction trend line slope"
+        },
+        {
+          "name": "value_trajectory",
+          "description": "Direction and magnitude of value change over time",
+          "formula": "moving_average(recent_value) - moving_average(early_value)"
+        },
+        {
+          "name": "relationship_roi",
+          "description": "Cumulative value vs cumulative investment",
+          "formula": "sum(all_value_delivered) / sum(all_effort_invested)"
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "name": "Value Transparency",
+      "description": "Can users understand how value was created?",
+      "key_questions": [
+        "Is the source of value visible and verifiable?",
+        "Can users trace from output back to reasoning?",
+        "Is value attribution clear (AI vs user contribution)?",
+        "Can users learn to create similar value independently?"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "How did the AI arrive at this valuable output?",
+          "What inputs/data contributed to this value?",
+          "Could the user have achieved this value differently?",
+          "What did the AI actually do vs what did the user do?"
+        ],
+        "what_to_look_for": [
+          "Explainable value creation process",
+          "Source attribution for key decisions",
+          "Clear AI/human contribution delineation",
+          "Learning opportunities for users"
+        ],
+        "anti_patterns": [
+          "Magic black box value creation",
+          "No explanation of how output was derived",
+          "Unclear what the AI actually contributed",
+          "User becomes dependent without understanding"
+        ]
+      },
+      "metrics": [
+        {
+          "name": "value_explainability",
+          "description": "Can users understand how value was created?",
+          "measurement": "User can explain AI's contribution in own words"
+        },
+        {
+          "name": "attribution_clarity",
+          "description": "Clear understanding of AI vs user contribution",
+          "measurement": "User accurately attributes who did what"
+        }
+      ]
+    }
+  ],
+  "evaluation_methodology": {
+    "approach": "Evaluate AI systems on value delivered, not interaction design",
+    "key_shift": "Ask 'What value did the user receive?' not 'Was the interface usable?'",
+    "steps": [
+      {
+        "step": 1,
+        "name": "Define Value Outcomes",
+        "description": "Identify what specific user outcomes constitute 'value'",
+        "actions": [
+          "Interview users about what success looks like",
+          "Map interactions to intended outcomes",
+          "Distinguish between system value and user value"
+        ]
+      },
+      {
+        "step": 2,
+        "name": "Measure Value Delivery",
+        "description": "Assess whether and how value is delivered",
+        "actions": [
+          "Track outcome achievement rate",
+          "Measure time and effort to value",
+          "Assess value persistence over time"
+        ]
+      },
+      {
+        "step": 3,
+        "name": "Evaluate Trust Alignment",
+        "description": "Assess whether user trust matches system capability",
+        "actions": [
+          "Compare user confidence to actual reliability",
+          "Test verification mechanisms",
+          "Identify over-trust or under-trust patterns"
+        ]
+      },
+      {
+        "step": 4,
+        "name": "Track Value Trajectory",
+        "description": "Measure value compounding over time",
+        "actions": [
+          "Compare early vs late interaction value",
+          "Assess learning and personalization effectiveness",
+          "Identify value plateaus or declines"
+        ]
+      }
+    ]
+  },
+  "severity_scale": {
+    "description": "Severity of value delivery issues",
+    "levels": [
+      {
+        "level": 0,
+        "label": "Excellent Value",
+        "description": "Clear, immediate, persistent value that compounds over time"
+      },
+      {
+        "level": 1,
+        "label": "Good Value",
+        "description": "Clear value delivered, minor improvements possible"
+      },
+      {
+        "level": 2,
+        "label": "Adequate Value",
+        "description": "Value present but not optimized, room for improvement"
+      },
+      {
+        "level": 3,
+        "label": "Poor Value",
+        "description": "Value unclear or significantly delayed, major improvements needed"
+      },
+      {
+        "level": 4,
+        "label": "No Value",
+        "description": "No discernible user value or value negative (wasted time/effort)"
+      }
+    ]
+  },
+  "usage_guide": {
+    "when_to_use": [
+      "Evaluating AI-powered features and products",
+      "Assessing whether AI investment is delivering ROI",
+      "Comparing AI solutions on value delivery",
+      "Identifying opportunities to increase value"
+    ],
+    "complements": [
+      "ai-native-metrics (for measurement)",
+      "ai-integration-maturity (for stage context)",
+      "ai-orchestration-patterns (for interaction design)"
+    ]
+  }
+}

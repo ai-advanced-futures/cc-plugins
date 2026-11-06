@@ -1,0 +1,491 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/anthropics/claude-code/plugins/ux-hci-design/schemas/outputs/wireframe-schema.json",
+  "title": "UX Wireframe Schema",
+  "description": "Schema for wireframe specifications generated during the PROTOTYPE phase. Provides structured component and layout definitions with accessibility annotations.",
+  "type": "object",
+  "required": ["schema_version", "wireframe", "metadata"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version for compatibility tracking"
+    },
+    "wireframe": {
+      "type": "object",
+      "required": ["wireframe_id", "screen_name", "purpose", "layout", "components"],
+      "properties": {
+        "wireframe_id": {
+          "type": "string",
+          "pattern": "^WF-[0-9]+$",
+          "description": "Unique wireframe identifier (e.g., WF-001)"
+        },
+        "screen_name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 100,
+          "description": "Descriptive screen name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Purpose and context of this screen"
+        },
+        "purpose": {
+          "type": "string",
+          "description": "Primary user goal this screen supports"
+        },
+        "fidelity": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "default": "low",
+          "description": "Wireframe detail level"
+        },
+        "platform": {
+          "type": "string",
+          "enum": ["web_desktop", "web_mobile", "web_responsive", "ios", "android", "native_cross_platform"],
+          "description": "Target platform"
+        },
+        "viewport": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "description": "Viewport width in pixels"
+            },
+            "height": {
+              "type": "integer",
+              "description": "Viewport height in pixels"
+            },
+            "breakpoint": {
+              "type": "string",
+              "enum": ["mobile", "tablet", "desktop", "wide"],
+              "description": "Responsive breakpoint this represents"
+            }
+          }
+        },
+        "layout": {
+          "type": "object",
+          "required": ["type", "regions"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["single_column", "two_column", "three_column", "grid", "dashboard", "split_view", "fullscreen", "modal_overlay"],
+              "description": "Primary layout pattern"
+            },
+            "grid": {
+              "type": "object",
+              "properties": {
+                "columns": {"type": "integer", "minimum": 1, "maximum": 24},
+                "gutter": {"type": "string"},
+                "margins": {"type": "string"}
+              }
+            },
+            "regions": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["region_id", "name", "position"],
+                "properties": {
+                  "region_id": {
+                    "type": "string",
+                    "pattern": "^R-[0-9]+$"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Region name (e.g., header, sidebar, main, footer)"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "row_start": {"type": "integer"},
+                      "row_end": {"type": "integer"},
+                      "col_start": {"type": "integer"},
+                      "col_end": {"type": "integer"},
+                      "sticky": {"type": "boolean"}
+                    }
+                  },
+                  "semantic_role": {
+                    "type": "string",
+                    "enum": ["banner", "navigation", "main", "complementary", "contentinfo", "form", "search", "region"],
+                    "description": "ARIA landmark role for accessibility"
+                  },
+                  "components": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Component IDs in this region"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["component_id", "type", "label"],
+            "properties": {
+              "component_id": {
+                "type": "string",
+                "pattern": "^C-[0-9]+$"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "button", "link", "text_input", "textarea", "select", "checkbox", "radio", "toggle",
+                  "heading", "paragraph", "list", "table", "image", "icon", "avatar",
+                  "card", "modal", "drawer", "dropdown", "menu", "tabs", "accordion",
+                  "alert", "toast", "badge", "progress", "skeleton", "spinner",
+                  "breadcrumb", "pagination", "stepper", "navigation",
+                  "form", "search_box", "filter", "sort",
+                  "chart", "graph", "map",
+                  "ai_suggestion", "ai_chat", "ai_assistant_panel",
+                  "custom"
+                ],
+                "description": "Component type"
+              },
+              "label": {
+                "type": "string",
+                "description": "Display label or placeholder text"
+              },
+              "description": {
+                "type": "string",
+                "description": "Component purpose and behavior"
+              },
+              "region_id": {
+                "type": "string",
+                "description": "Parent region this component belongs to"
+              },
+              "state": {
+                "type": "string",
+                "enum": ["default", "hover", "focus", "active", "disabled", "loading", "error", "success"],
+                "default": "default"
+              },
+              "visibility": {
+                "type": "object",
+                "properties": {
+                  "default_visible": {"type": "boolean", "default": true},
+                  "show_conditions": {"type": "array", "items": {"type": "string"}},
+                  "hide_conditions": {"type": "array", "items": {"type": "string"}}
+                }
+              },
+              "content": {
+                "type": "object",
+                "properties": {
+                  "text": {"type": "string"},
+                  "placeholder": {"type": "string"},
+                  "helper_text": {"type": "string"},
+                  "error_text": {"type": "string"},
+                  "items": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List/menu/select items"
+                  }
+                }
+              },
+              "interaction": {
+                "type": "object",
+                "properties": {
+                  "clickable": {"type": "boolean"},
+                  "focusable": {"type": "boolean"},
+                  "action": {
+                    "type": "string",
+                    "description": "What happens on interaction"
+                  },
+                  "navigation_target": {
+                    "type": "string",
+                    "description": "Screen or URL navigated to"
+                  },
+                  "keyboard_shortcut": {"type": "string"}
+                }
+              },
+              "accessibility": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "description": "ARIA role if not implied by type"
+                  },
+                  "aria_label": {
+                    "type": "string",
+                    "description": "Accessible name if different from visible label"
+                  },
+                  "aria_describedby": {
+                    "type": "string",
+                    "description": "ID of element providing additional description"
+                  },
+                  "aria_live": {
+                    "type": "string",
+                    "enum": ["off", "polite", "assertive"]
+                  },
+                  "tab_index": {
+                    "type": "integer"
+                  },
+                  "required": {
+                    "type": "boolean"
+                  },
+                  "contrast_requirement": {
+                    "type": "string",
+                    "enum": ["3:1", "4.5:1", "7:1"],
+                    "description": "Minimum contrast ratio needed"
+                  },
+                  "focus_indicator": {
+                    "type": "string",
+                    "description": "Focus style specification"
+                  },
+                  "touch_target_size": {
+                    "type": "string",
+                    "description": "Minimum touch target (e.g., 44x44px)"
+                  },
+                  "screen_reader_notes": {
+                    "type": "string"
+                  }
+                }
+              },
+              "ai_behavior": {
+                "type": "object",
+                "description": "AI-specific behavior for smart components",
+                "properties": {
+                  "ai_powered": {"type": "boolean"},
+                  "suggestion_source": {"type": "string"},
+                  "confidence_display": {"type": "boolean"},
+                  "override_mechanism": {"type": "string"},
+                  "explanation_available": {"type": "boolean"}
+                }
+              },
+              "variants": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "variant_name": {"type": "string"},
+                    "conditions": {"type": "string"},
+                    "changes": {"type": "object"}
+                  }
+                }
+              },
+              "notes": {
+                "type": "string",
+                "description": "Implementation notes for developers"
+              }
+            }
+          }
+        },
+        "interactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "interaction_id": {
+                "type": "string",
+                "pattern": "^INT-[0-9]+$"
+              },
+              "trigger_component": {
+                "type": "string",
+                "description": "Component ID that triggers the interaction"
+              },
+              "trigger_event": {
+                "type": "string",
+                "enum": ["click", "hover", "focus", "blur", "submit", "change", "scroll", "swipe", "keypress", "load"]
+              },
+              "action_type": {
+                "type": "string",
+                "enum": ["navigate", "show", "hide", "toggle", "update", "submit", "validate", "animate", "ai_request"]
+              },
+              "target": {
+                "type": "string",
+                "description": "Target component, region, or screen"
+              },
+              "animation": {
+                "type": "string",
+                "enum": ["none", "fade", "slide", "scale", "custom"]
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "navigation_context": {
+          "type": "object",
+          "properties": {
+            "parent_screen": {
+              "type": "string",
+              "description": "Previous screen in flow"
+            },
+            "child_screens": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "related_screens": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "entry_points": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "How users arrive at this screen"
+            },
+            "exit_points": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Where users can go from here"
+            }
+          }
+        },
+        "content_requirements": {
+          "type": "object",
+          "properties": {
+            "copy_needed": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "component_id": {"type": "string"},
+                  "content_type": {"type": "string"},
+                  "character_limit": {"type": "integer"},
+                  "tone": {"type": "string"}
+                }
+              }
+            },
+            "images_needed": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "component_id": {"type": "string"},
+                  "dimensions": {"type": "string"},
+                  "alt_text_guidance": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "error_states": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "error_type": {
+                "type": "string",
+                "enum": ["validation", "network", "permission", "not_found", "server", "timeout"]
+              },
+              "affected_components": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "error_display": {
+                "type": "string",
+                "description": "How error is shown (inline, toast, modal, etc.)"
+              },
+              "recovery_action": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "loading_states": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "trigger": {"type": "string"},
+              "loading_pattern": {
+                "type": "string",
+                "enum": ["spinner", "skeleton", "progress_bar", "shimmer", "optimistic"]
+              },
+              "affected_regions": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          }
+        },
+        "responsive_notes": {
+          "type": "object",
+          "properties": {
+            "mobile_adaptations": {"type": "string"},
+            "tablet_adaptations": {"type": "string"},
+            "component_stacking": {"type": "string"},
+            "hidden_at_breakpoints": {
+              "type": "object",
+              "properties": {
+                "mobile": {"type": "array", "items": {"type": "string"}},
+                "tablet": {"type": "array", "items": {"type": "string"}}
+              }
+            }
+          }
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "annotation_id": {"type": "string"},
+              "target": {"type": "string", "description": "Component or region ID"},
+              "note": {"type": "string"},
+              "category": {
+                "type": "string",
+                "enum": ["behavior", "accessibility", "content", "design", "technical"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["created_date", "created_by"],
+      "properties": {
+        "created_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "concept_reference": {
+          "type": "string",
+          "description": "Design concept ID this wireframe implements"
+        },
+        "persona_reference": {
+          "type": "string",
+          "description": "Primary persona this screen serves"
+        },
+        "journey_stage": {
+          "type": "string",
+          "description": "Journey map stage this screen supports"
+        },
+        "iteration": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "review", "approved", "deprecated"],
+          "default": "draft"
+        },
+        "version": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "review_notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "reviewer": {"type": "string"},
+              "date": {"type": "string", "format": "date"},
+              "note": {"type": "string"}
+            }
+          }
+        }
+      }
+    }
+  }
+}

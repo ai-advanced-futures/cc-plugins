@@ -1,0 +1,452 @@
+{
+  "title": "Human-AI Orchestration Evaluation Framework",
+  "description": "Framework for evaluating systems where humans direct AI agents rather than performing tasks directly. Based on Phil Schroeder's insight that we're shifting from user-flows to AI-orchestration flows.",
+  "version": "1.0.0",
+  "thought_leader": {
+    "name": "Phil Schroeder",
+    "key_insight": "Traditional design focuses on 'user flows' (humans doing tasks). The new paradigm is 'AI orchestration' (humans directing AI to do tasks).",
+    "implication": "Evaluate how well humans can direct, monitor, and intervene in AI task execution"
+  },
+  "paradigm_shift": {
+    "from": "User flows - Human does task, UI facilitates",
+    "to": "Orchestration flows - AI does task, human directs and monitors"
+  },
+  "orchestration_dimensions": [
+    {
+      "number": 1,
+      "name": "Delegation Clarity",
+      "description": "Can humans clearly delegate tasks to AI?",
+      "key_aspects": [
+        "Clear delegation boundaries",
+        "Constraint expression",
+        "Partial delegation",
+        "Delegation modification"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Is it clear what can be delegated vs. what cannot?",
+          "Can users express delegation with appropriate constraints?",
+          "Is partial delegation supported (AI does steps 1-3, human does 4)?",
+          "Can delegation be revoked or modified mid-task?"
+        ],
+        "what_to_look_for": [
+          "Explicit capability boundaries",
+          "Rich constraint specification options",
+          "Flexible task splitting",
+          "Easy delegation adjustment"
+        ],
+        "anti_patterns": [
+          {
+            "pattern": "All-or-nothing delegation",
+            "description": "User must delegate entire task or do it all manually",
+            "impact": "Users avoid delegation for partially complex tasks"
+          },
+          {
+            "pattern": "Unclear scope",
+            "description": "User doesn't know what AI will do with delegation",
+            "impact": "Surprise actions, trust erosion"
+          },
+          {
+            "pattern": "No constraints",
+            "description": "User cannot limit AI's approach or boundaries",
+            "impact": "AI may do things user wouldn't want"
+          },
+          {
+            "pattern": "Irrevocable delegation",
+            "description": "Once delegated, user cannot take back or modify",
+            "impact": "Users hesitant to delegate"
+          }
+        ]
+      },
+      "metrics": [
+        {
+          "name": "delegation_success_rate",
+          "description": "Delegated tasks completed correctly",
+          "formula": "correctly_completed_delegations / total_delegations"
+        },
+        {
+          "name": "constraint_adherence",
+          "description": "AI respects specified constraints",
+          "target": ">99%"
+        },
+        {
+          "name": "modification_success",
+          "description": "Mid-task delegation changes succeed",
+          "target": ">95%"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "name": "Progress Visibility",
+      "description": "Can humans monitor AI task progress appropriately?",
+      "key_aspects": [
+        "Meaningful progress indicators",
+        "Appropriate granularity",
+        "Exception highlighting",
+        "Honest uncertainty representation"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Is AI progress visible at appropriate granularity?",
+          "Can users drill into detail when needed?",
+          "Are unexpected situations highlighted proactively?",
+          "Is progress honest (not fake progress bars)?"
+        ],
+        "what_to_look_for": [
+          "Progress indicators that reflect actual state",
+          "Hierarchical detail (summary + drill-down)",
+          "Proactive exception surfacing",
+          "Honest uncertainty in progress estimates"
+        ],
+        "anti_patterns": [
+          {
+            "pattern": "Black box execution",
+            "description": "No visibility into what AI is doing",
+            "impact": "User anxiety, lost trust"
+          },
+          {
+            "pattern": "Fake progress indicators",
+            "description": "Progress bar doesn't reflect reality",
+            "impact": "Broken mental model, frustration"
+          },
+          {
+            "pattern": "Hidden failures",
+            "description": "AI fails silently without notification",
+            "impact": "User discovers problems too late"
+          },
+          {
+            "pattern": "Overly granular noise",
+            "description": "Too much detail obscures important info",
+            "impact": "Important events missed in noise"
+          }
+        ]
+      },
+      "progress_levels": [
+        {
+          "level": "Summary",
+          "description": "At-a-glance status (started/in-progress/done)",
+          "use_case": "Quick check, dashboard view"
+        },
+        {
+          "level": "Milestone",
+          "description": "Major steps completed",
+          "use_case": "Moderate engagement, tracking progress"
+        },
+        {
+          "level": "Detailed",
+          "description": "Individual actions and decisions",
+          "use_case": "Active monitoring, debugging"
+        },
+        {
+          "level": "Debug",
+          "description": "Full trace of AI reasoning",
+          "use_case": "Troubleshooting, understanding failures"
+        }
+      ],
+      "metrics": [
+        {
+          "name": "progress_accuracy",
+          "description": "Reported progress matches reality",
+          "target": "Progress indicator within 10% of actual"
+        },
+        {
+          "name": "exception_detection_rate",
+          "description": "Unusual situations surfaced to user",
+          "target": ">95%"
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "name": "Intervention Points",
+      "description": "Can humans intervene effectively when needed?",
+      "key_aspects": [
+        "Designed intervention points",
+        "Emergency stop",
+        "Redirect without restart",
+        "Context preservation"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Are there clear points where humans can intervene?",
+          "Is intervention low-friction when urgently needed?",
+          "Can humans redirect without starting over?",
+          "Does intervention preserve AI context?"
+        ],
+        "what_to_look_for": [
+          "Explicit intervention affordances",
+          "Emergency stop always available",
+          "Graceful handoff from AI to human",
+          "Context continuity through intervention"
+        ],
+        "anti_patterns": [
+          {
+            "pattern": "No intervention possible",
+            "description": "Once started, AI runs to completion",
+            "impact": "Errors cannot be caught early"
+          },
+          {
+            "pattern": "Intervention means restart",
+            "description": "Stopping AI means losing all progress",
+            "impact": "Users hesitant to intervene even when needed"
+          },
+          {
+            "pattern": "High-friction intervention",
+            "description": "Stopping AI is difficult or confusing",
+            "impact": "Delayed intervention, worse outcomes"
+          },
+          {
+            "pattern": "Lost context on redirect",
+            "description": "AI forgets what it was doing after intervention",
+            "impact": "Human must re-explain everything"
+          }
+        ]
+      },
+      "intervention_types": [
+        {
+          "type": "Pause",
+          "description": "Temporarily halt execution",
+          "use_case": "Need time to evaluate before continuing"
+        },
+        {
+          "type": "Redirect",
+          "description": "Change direction while preserving context",
+          "use_case": "Wrong approach but right goal"
+        },
+        {
+          "type": "Takeover",
+          "description": "Human takes over specific subtask",
+          "use_case": "AI can't handle this part"
+        },
+        {
+          "type": "Abort",
+          "description": "Stop and rollback if possible",
+          "use_case": "Wrong task entirely"
+        }
+      ],
+      "metrics": [
+        {
+          "name": "intervention_success_rate",
+          "description": "Successful interventions / attempted interventions",
+          "target": ">98%"
+        },
+        {
+          "name": "intervention_latency",
+          "description": "Time from user decision to effective intervention",
+          "target": "<2 seconds"
+        },
+        {
+          "name": "context_preservation",
+          "description": "Useful context retained after intervention",
+          "target": ">90% of relevant context preserved"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "name": "Outcome Verification",
+      "description": "Can humans verify AI completed tasks correctly?",
+      "key_aspects": [
+        "Efficient verification mechanisms",
+        "Risk-appropriate verification depth",
+        "Expertise-appropriate tools",
+        "AI-assisted verification"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Can users verify outcomes without redoing the work?",
+          "Is verification effort proportional to task risk?",
+          "Are verification tools appropriate to user expertise?",
+          "Can AI explain its approach to aid verification?"
+        ],
+        "what_to_look_for": [
+          "Quick-scan verification for routine tasks",
+          "Deep verification options for high-stakes tasks",
+          "Verification explanations in user terms",
+          "AI highlighting areas most likely to need human review"
+        ],
+        "anti_patterns": [
+          {
+            "pattern": "Verification as costly as doing",
+            "description": "Checking AI work takes as long as doing it manually",
+            "impact": "No value from AI assistance"
+          },
+          {
+            "pattern": "One-size-fits-all verification",
+            "description": "Same verification burden for all risk levels",
+            "impact": "Over-verification of routine, under-verification of critical"
+          },
+          {
+            "pattern": "Expert-only verification",
+            "description": "Only specialists can verify AI output",
+            "impact": "Bottleneck on verification, or rubber-stamping"
+          },
+          {
+            "pattern": "No explanation available",
+            "description": "AI can't explain how it arrived at output",
+            "impact": "User can't verify reasoning, only output"
+          }
+        ]
+      },
+      "verification_levels": [
+        {
+          "level": "Spot-check",
+          "description": "Quick review of key outputs",
+          "for": "Routine, low-stakes tasks"
+        },
+        {
+          "level": "Systematic review",
+          "description": "Walk through all major decisions",
+          "for": "Moderate stakes, unfamiliar tasks"
+        },
+        {
+          "level": "Deep audit",
+          "description": "Detailed examination of reasoning and output",
+          "for": "High-stakes, critical tasks"
+        }
+      ],
+      "metrics": [
+        {
+          "name": "verification_efficiency",
+          "description": "Verification time vs manual production time",
+          "target": "<20% of manual time"
+        },
+        {
+          "name": "verification_catch_rate",
+          "description": "Errors caught during verification",
+          "target": ">95% of significant errors"
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "name": "Learning Loop",
+      "description": "Do orchestration patterns improve over time?",
+      "key_aspects": [
+        "Preference learning",
+        "Correction mechanisms",
+        "Transparent learning",
+        "Efficiency trajectory"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Does AI learn user's orchestration preferences?",
+          "Can users shape AI behavior through correction?",
+          "Is the learning transparent and controllable?",
+          "Does orchestration efficiency improve over time?"
+        ],
+        "what_to_look_for": [
+          "AI adapts to user's delegation style",
+          "Corrections lead to behavior change",
+          "User can see what AI has learned",
+          "Less direction needed over time for same outcomes"
+        ],
+        "anti_patterns": [
+          {
+            "pattern": "Static orchestration",
+            "description": "Same patterns regardless of history",
+            "impact": "No improvement, same inefficiencies persist"
+          },
+          {
+            "pattern": "Corrections not learned",
+            "description": "AI repeats same mistakes",
+            "impact": "Frustrating repetitive corrections"
+          },
+          {
+            "pattern": "Opaque adaptation",
+            "description": "AI changes behavior without explanation",
+            "impact": "Unpredictable, hard to trust"
+          },
+          {
+            "pattern": "No efficiency improvement",
+            "description": "Same effort required regardless of experience",
+            "impact": "Limited value of ongoing relationship"
+          }
+        ]
+      },
+      "metrics": [
+        {
+          "name": "orchestration_efficiency_trend",
+          "description": "Effort required over time for similar tasks",
+          "target": "Decreasing trend"
+        },
+        {
+          "name": "correction_incorporation_rate",
+          "description": "User corrections reflected in future behavior",
+          "target": ">80%"
+        },
+        {
+          "name": "preference_prediction_accuracy",
+          "description": "AI correctly anticipates user preferences",
+          "target": ">75% over time"
+        }
+      ]
+    }
+  ],
+  "composite_metrics": {
+    "orchestration_health_score": {
+      "name": "Orchestration Health Score",
+      "components": [
+        { "dimension": "Delegation Clarity", "weight": 0.25 },
+        { "dimension": "Progress Visibility", "weight": 0.20 },
+        { "dimension": "Intervention Points", "weight": 0.25 },
+        { "dimension": "Outcome Verification", "weight": 0.20 },
+        { "dimension": "Learning Loop", "weight": 0.10 }
+      ]
+    }
+  },
+  "evaluation_methodology": {
+    "steps": [
+      {
+        "step": 1,
+        "name": "Map Orchestration Flow",
+        "actions": [
+          "Identify what tasks user delegates to AI",
+          "Document delegation boundaries and constraints",
+          "Map monitoring and intervention points"
+        ]
+      },
+      {
+        "step": 2,
+        "name": "Evaluate Each Dimension",
+        "actions": [
+          "Use dimension-specific criteria",
+          "Identify anti-patterns present",
+          "Rate each dimension"
+        ]
+      },
+      {
+        "step": 3,
+        "name": "Test Key Scenarios",
+        "actions": [
+          "Attempt delegation with constraints",
+          "Monitor task in progress",
+          "Test intervention at various points",
+          "Verify outcomes efficiently"
+        ]
+      },
+      {
+        "step": 4,
+        "name": "Calculate Composite Score",
+        "actions": [
+          "Weight dimension scores",
+          "Identify highest priority improvements"
+        ]
+      }
+    ]
+  },
+  "usage_guide": {
+    "when_to_use": [
+      "Evaluating AI agent systems",
+      "Designing human-AI workflows",
+      "Improving AI assistant interactions",
+      "Assessing autonomous feature designs"
+    ],
+    "complements": [
+      "background-agent-patterns (for autonomous operation)",
+      "ai-integration-maturity (for stage context)",
+      "outcome-value-framework (for value assessment)"
+    ]
+  }
+}

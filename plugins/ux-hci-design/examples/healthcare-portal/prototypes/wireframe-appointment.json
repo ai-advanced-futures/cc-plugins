@@ -1,0 +1,314 @@
+{
+  "schema_version": "1.0",
+  "wireframe": {
+    "wireframe_id": "WF-HC-001",
+    "screen_name": "Appointment Date Selection",
+    "purpose": "Accessible date and time selection for healthcare appointments",
+    "fidelity": "medium",
+    "platform": "web_responsive",
+    "accessibility_target": "WCAG 2.2 Level AA",
+    "layout": {
+      "type": "single_column",
+      "grid": {
+        "columns": 12,
+        "gutter": "24px",
+        "margins": {
+          "desktop": "80px",
+          "tablet": "48px",
+          "mobile": "24px"
+        }
+      },
+      "regions": [
+        {
+          "region_id": "R-001",
+          "name": "header",
+          "semantic_role": "banner",
+          "position": {"row": 1, "col_start": 1, "col_end": 12},
+          "components": ["C-001", "C-002"]
+        },
+        {
+          "region_id": "R-002",
+          "name": "progress",
+          "semantic_role": "navigation",
+          "position": {"row": 2, "col_start": 1, "col_end": 12},
+          "components": ["C-003"]
+        },
+        {
+          "region_id": "R-003",
+          "name": "main_content",
+          "semantic_role": "main",
+          "position": {"row": 3, "col_start": 1, "col_end": 12},
+          "components": ["C-004", "C-005", "C-006", "C-007"]
+        },
+        {
+          "region_id": "R-004",
+          "name": "actions",
+          "semantic_role": "contentinfo",
+          "position": {"row": 4, "col_start": 1, "col_end": 12},
+          "components": ["C-008", "C-009"]
+        }
+      ]
+    },
+    "components": [
+      {
+        "component_id": "C-001",
+        "type": "logo",
+        "label": "MedConnect Logo",
+        "description": "Portal logo with link to home",
+        "region_id": "R-001",
+        "accessibility": {
+          "role": "link",
+          "aria_label": "MedConnect - Go to home page"
+        }
+      },
+      {
+        "component_id": "C-002",
+        "type": "help_button",
+        "label": "Get Help",
+        "description": "Access to help and support",
+        "region_id": "R-001",
+        "content": {
+          "text": "Need Help?",
+          "phone": "1-800-XXX-XXXX"
+        },
+        "accessibility": {
+          "role": "button",
+          "aria_label": "Get help with scheduling, call 1-800-XXX-XXXX",
+          "touch_target_size": "48x48px"
+        }
+      },
+      {
+        "component_id": "C-003",
+        "type": "progress_indicator",
+        "label": "Scheduling Progress",
+        "description": "Shows steps in appointment scheduling",
+        "region_id": "R-002",
+        "state": "step_3_of_5",
+        "content": {
+          "steps": ["Provider", "Reason", "Date & Time", "Review", "Confirm"],
+          "current_step": 3,
+          "current_label": "Select Date & Time"
+        },
+        "accessibility": {
+          "role": "navigation",
+          "aria_label": "Scheduling progress: Step 3 of 5, Select Date and Time",
+          "aria_current": "step"
+        }
+      },
+      {
+        "component_id": "C-004",
+        "type": "heading",
+        "label": "Page Heading",
+        "description": "Main heading for the page",
+        "region_id": "R-003",
+        "content": {
+          "text": "Select a Date and Time",
+          "subtext": "Choose when you'd like to see Dr. Smith"
+        },
+        "accessibility": {
+          "role": "heading",
+          "aria_level": "1",
+          "contrast_ratio": "7:1"
+        }
+      },
+      {
+        "component_id": "C-005",
+        "type": "view_toggle",
+        "label": "View Options",
+        "description": "Toggle between calendar and list view",
+        "region_id": "R-003",
+        "state": "list_selected",
+        "content": {
+          "options": ["Calendar View", "List View"]
+        },
+        "interaction": {
+          "focusable": true,
+          "keyboard_shortcut": "Arrow keys to switch"
+        },
+        "accessibility": {
+          "role": "radiogroup",
+          "aria_label": "Choose how to view available dates",
+          "touch_target_size": "48x48px"
+        }
+      },
+      {
+        "component_id": "C-006",
+        "type": "date_list",
+        "label": "Available Dates",
+        "description": "List of available appointment dates",
+        "region_id": "R-003",
+        "state": "default",
+        "content": {
+          "heading": "Available Appointments",
+          "dates": [
+            {"date": "Tuesday, January 21", "slots": 3},
+            {"date": "Thursday, January 23", "slots": 5},
+            {"date": "Tuesday, January 28", "slots": 2}
+          ]
+        },
+        "accessibility": {
+          "role": "list",
+          "aria_label": "Available appointment dates",
+          "keyboard_navigation": "Arrow keys to navigate, Enter to select"
+        },
+        "children": ["C-006-a"]
+      },
+      {
+        "component_id": "C-006-a",
+        "type": "date_card",
+        "label": "Date Option",
+        "description": "Individual date selection card",
+        "state": "default",
+        "content": {
+          "date": "Tuesday, January 21, 2025",
+          "day_of_week": "Tuesday",
+          "availability": "3 times available"
+        },
+        "interaction": {
+          "clickable": true,
+          "focusable": true,
+          "action": "expand_times"
+        },
+        "accessibility": {
+          "role": "button",
+          "aria_label": "Tuesday, January 21, 2025, 3 appointment times available, select to see times",
+          "aria_expanded": "false",
+          "focus_indicator": "4px solid #0066CC, offset 2px",
+          "touch_target_size": "full_width, 64px_height",
+          "contrast_ratio": "7:1"
+        }
+      },
+      {
+        "component_id": "C-007",
+        "type": "time_slots",
+        "label": "Time Slots",
+        "description": "Available time slots for selected date",
+        "region_id": "R-003",
+        "state": "hidden",
+        "content": {
+          "heading": "Available Times",
+          "slots": ["9:00 AM", "10:30 AM", "2:00 PM"]
+        },
+        "accessibility": {
+          "role": "radiogroup",
+          "aria_label": "Select an appointment time",
+          "keyboard_navigation": "Arrow keys to navigate, Enter to select"
+        },
+        "children": ["C-007-a"]
+      },
+      {
+        "component_id": "C-007-a",
+        "type": "time_slot_button",
+        "label": "Time Slot",
+        "description": "Individual time slot selection",
+        "state": "default",
+        "content": {
+          "time": "9:00 AM",
+          "duration": "30 minutes"
+        },
+        "interaction": {
+          "clickable": true,
+          "focusable": true,
+          "action": "select_time"
+        },
+        "accessibility": {
+          "role": "radio",
+          "aria_label": "9:00 AM, 30 minute appointment",
+          "aria_checked": "false",
+          "focus_indicator": "4px solid #0066CC",
+          "touch_target_size": "120px x 60px",
+          "contrast_ratio": "7:1"
+        }
+      },
+      {
+        "component_id": "C-008",
+        "type": "button",
+        "label": "Back",
+        "description": "Return to previous step",
+        "region_id": "R-004",
+        "state": "default",
+        "content": {
+          "text": "Back",
+          "icon": "arrow_left"
+        },
+        "interaction": {
+          "clickable": true,
+          "focusable": true,
+          "action": "navigate_back"
+        },
+        "accessibility": {
+          "role": "button",
+          "aria_label": "Go back to visit reason",
+          "touch_target_size": "48x48px minimum",
+          "contrast_ratio": "4.5:1"
+        }
+      },
+      {
+        "component_id": "C-009",
+        "type": "button",
+        "label": "Continue",
+        "description": "Proceed to next step",
+        "region_id": "R-004",
+        "state": "disabled",
+        "content": {
+          "text": "Continue to Review",
+          "icon": "arrow_right"
+        },
+        "interaction": {
+          "clickable": false,
+          "focusable": true,
+          "action": "navigate_next",
+          "enabled_when": "time_selected"
+        },
+        "accessibility": {
+          "role": "button",
+          "aria_label": "Continue to review your appointment, select a time first",
+          "aria_disabled": "true",
+          "touch_target_size": "full_width, 56px_height",
+          "contrast_ratio": "7:1"
+        }
+      }
+    ],
+    "interactions": [
+      {
+        "interaction_id": "INT-001",
+        "trigger": "Select date",
+        "action": "Expand time slots for that date",
+        "accessibility_note": "Focus moves to first time slot"
+      },
+      {
+        "interaction_id": "INT-002",
+        "trigger": "Select time",
+        "action": "Enable Continue button",
+        "accessibility_note": "Screen reader announces 'Time selected, continue button now available'"
+      }
+    ],
+    "error_states": [
+      {
+        "error_id": "ERR-001",
+        "trigger": "No available times",
+        "message": "No appointments available on this date. Please choose another date or call us at 1-800-XXX-XXXX.",
+        "accessibility_note": "aria-live assertive announcement"
+      }
+    ],
+    "responsive_notes": {
+      "mobile": "Full-width date cards, stacked time slots, sticky Continue button",
+      "tablet": "Two-column time slots",
+      "desktop": "Side-by-side date list and time slots"
+    },
+    "accessibility_features": {
+      "minimum_contrast": "7:1 for all text",
+      "minimum_touch_target": "48x48px, preferred 64px for primary actions",
+      "focus_indicators": "4px solid visible ring",
+      "keyboard_navigation": "Full keyboard support with logical tab order",
+      "screen_reader": "ARIA labels, live regions for updates",
+      "cognitive": "Simple layout, clear labels, one action per step"
+    }
+  },
+  "metadata": {
+    "created_date": "2025-01-20",
+    "designer": "UX Prototype Builder Agent",
+    "wcag_version": "2.2",
+    "target_level": "AA"
+  }
+}

@@ -1,0 +1,235 @@
+{
+  "schema_version": "1.0",
+  "evaluation": {
+    "evaluation_id": "EVAL-HC-001",
+    "timestamp": "2025-01-20T18:00:00Z",
+    "artifacts_evaluated": ["WF-HC-001"],
+    "context": {
+      "platform": "web_responsive",
+      "has_ai_features": true,
+      "weighting_profile": "accessibility-first",
+      "compliance_requirements": ["wcag_aa", "section_508"]
+    },
+    "executive_summary": "UX Health Score: 88/100 (Grade B - Good)\nThe appointment scheduling interface demonstrates excellent accessibility compliance with 94% WCAG 2.2 Level AA conformance. Strong points include high contrast design, large touch targets, and keyboard navigation. Minor improvements needed in error recovery messaging.",
+    "ux_health_score": {
+      "overall": 88,
+      "grade": "B",
+      "status": "Good",
+      "release_blocked": false,
+      "breakdown": {
+        "nielsen": {
+          "score": 85,
+          "weight": 0.20,
+          "weighted_contribution": 17.0
+        },
+        "wcag": {
+          "score": 94,
+          "weight": 0.45,
+          "weighted_contribution": 42.3
+        },
+        "ai_hci": {
+          "score": 80,
+          "weight": 0.15,
+          "weighted_contribution": 12.0,
+          "note": "Limited AI features - smart scheduling suggestions"
+        },
+        "rams": {
+          "score": 82,
+          "weight": 0.10,
+          "weighted_contribution": 8.2
+        },
+        "norman": {
+          "score": 85,
+          "weight": 0.10,
+          "weighted_contribution": 8.5
+        }
+      }
+    },
+    "findings_summary": {
+      "total": 6,
+      "by_severity": {
+        "critical": 0,
+        "high": 0,
+        "medium": 3,
+        "low": 3
+      },
+      "critical_count": 0
+    },
+    "critical_findings": [],
+    "recommendations": [
+      {
+        "priority_rank": 1,
+        "recommendation": "Add skip link to main content at page top",
+        "effort": "low",
+        "impact": "medium",
+        "finding_ids": ["A11Y-HC-001"],
+        "frameworks": ["wcag"]
+      },
+      {
+        "priority_rank": 2,
+        "recommendation": "Improve error message specificity for no-availability states",
+        "effort": "low",
+        "impact": "medium",
+        "finding_ids": ["N-HC-001"],
+        "frameworks": ["nielsen"]
+      },
+      {
+        "priority_rank": 3,
+        "recommendation": "Add session timeout warning with extension option",
+        "effort": "medium",
+        "impact": "high",
+        "finding_ids": ["A11Y-HC-002"],
+        "frameworks": ["wcag"]
+      }
+    ],
+    "framework_details": {
+      "wcag": {
+        "framework": "wcag",
+        "version": "2.2",
+        "target_level": "AA",
+        "score": 94,
+        "passed": 47,
+        "failed": 3,
+        "total_criteria": 50,
+        "conformance_score": 0.94,
+        "by_principle": {
+          "perceivable": {"passed": 16, "failed": 1},
+          "operable": {"passed": 19, "failed": 1},
+          "understandable": {"passed": 7, "failed": 1},
+          "robust": {"passed": 5, "failed": 0}
+        },
+        "findings": [
+          {
+            "finding_id": "A11Y-HC-001",
+            "criterion": "2.4.1",
+            "criterion_name": "Bypass Blocks",
+            "level": "A",
+            "severity": "medium",
+            "status": "partial",
+            "affected_components": ["C-001"],
+            "description": "Skip to main content link present but not first focusable element",
+            "impact": "Keyboard users must tab through header before reaching skip link",
+            "remediation": {
+              "recommendation": "Move skip link to be first focusable element",
+              "technique": "G1",
+              "code_example": "<a href=\"#main\" class=\"skip-link\">Skip to main content</a>"
+            }
+          },
+          {
+            "finding_id": "A11Y-HC-002",
+            "criterion": "2.2.1",
+            "criterion_name": "Timing Adjustable",
+            "level": "A",
+            "severity": "medium",
+            "status": "partial",
+            "description": "Session timeout exists but warning not announced to screen readers",
+            "impact": "Screen reader users may lose work without warning",
+            "remediation": {
+              "recommendation": "Add accessible timeout warning dialog",
+              "technique": "SCR16"
+            }
+          },
+          {
+            "finding_id": "A11Y-HC-003",
+            "criterion": "3.3.3",
+            "criterion_name": "Error Suggestion",
+            "level": "AA",
+            "severity": "low",
+            "status": "partial",
+            "description": "Error messages could be more specific about resolution steps",
+            "impact": "Users may not know exactly how to correct errors",
+            "remediation": {
+              "recommendation": "Provide specific, actionable error messages",
+              "technique": "G85"
+            }
+          }
+        ],
+        "strengths": [
+          "Excellent contrast ratios (7:1+) throughout",
+          "All touch targets meet 48x48px minimum",
+          "Full keyboard navigation support",
+          "Clear focus indicators (4px visible ring)",
+          "Proper heading hierarchy",
+          "ARIA labels on all interactive elements"
+        ]
+      },
+      "nielsen": {
+        "framework": "nielsen",
+        "score": 85,
+        "passed": 8,
+        "failed": 2,
+        "total_criteria": 10,
+        "findings": [
+          {
+            "finding_id": "N-HC-001",
+            "heuristic": "H9",
+            "heuristic_name": "Help users recover from errors",
+            "severity": "medium",
+            "description": "Error states could provide more specific guidance",
+            "remediation": {
+              "recommendation": "Add contextual help and specific next steps in error messages"
+            }
+          }
+        ],
+        "strengths": [
+          "Clear system status via progress indicator",
+          "Consistent navigation throughout",
+          "Simple, focused interface"
+        ]
+      },
+      "ai_hci": {
+        "framework": "microsoft_18_guidelines",
+        "score": 80,
+        "note": "Limited AI features - smart date/time suggestions",
+        "findings_count": 1,
+        "guidelines_addressed": {
+          "G1": "met",
+          "G2": "met",
+          "G8": "met",
+          "G17": "partial"
+        }
+      },
+      "rams": {
+        "framework": "rams",
+        "score": 82,
+        "by_principle": {
+          "innovative": 6,
+          "useful": 9,
+          "aesthetic": 8,
+          "understandable": 9,
+          "unobtrusive": 9,
+          "honest": 9,
+          "long_lasting": 8,
+          "thorough": 8,
+          "environmentally_friendly": 7,
+          "minimal": 9
+        },
+        "strengths": ["Useful", "Unobtrusive", "Minimal", "Honest"],
+        "opportunities": ["Innovative"]
+      },
+      "norman": {
+        "framework": "norman",
+        "score": 85,
+        "emotional_design_assessment": {
+          "visceral": 8,
+          "behavioral": 9,
+          "reflective": 8
+        },
+        "notes": "Clean, trustworthy design appropriate for healthcare context"
+      }
+    },
+    "accessibility_testing_summary": {
+      "automated_tools": ["axe", "WAVE", "Lighthouse"],
+      "manual_testing": ["Keyboard navigation", "Screen reader (NVDA, VoiceOver)"],
+      "user_testing": "Tested with 5 users with disabilities",
+      "contrast_verified": true,
+      "touch_targets_verified": true
+    }
+  },
+  "metadata": {
+    "generated_by": "UX Evaluator Agent",
+    "frameworks_evaluated": ["nielsen", "wcag", "ai-hci", "rams", "norman"],
+    "profile_used": "accessibility-first",
+    "generation_timestamp": "2025-01-20T18:00:00Z"
+  }
+}

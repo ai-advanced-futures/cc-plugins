@@ -1,0 +1,488 @@
+{
+  "title": "Hybrid AI-GUI Interaction Patterns",
+  "description": "Framework for evaluating interfaces that combine conversational/AI and graphical elements. Addresses the transition period where both NL and GUI modalities must work together effectively.",
+  "version": "1.0.0",
+  "context": {
+    "why_hybrid": "During the transition from GUI-first to intent-first interfaces, most systems will combine conversational AI with graphical elements. Effective hybrid design is critical.",
+    "key_challenge": "Achieving coherence and fluidity between modalities while leveraging each modality's strengths"
+  },
+  "paradigm_shift": {
+    "from": "AI and GUI as separate interaction channels",
+    "to": "Unified experience where modalities complement each other"
+  },
+  "pattern_categories": [
+    {
+      "category": "Modal Switching",
+      "description": "Moving between conversational and graphical modes",
+      "patterns": [
+        {
+          "name": "NL-to-GUI Handoff",
+          "description": "User starts with natural language, system presents GUI for complex choices",
+          "when_to_use": [
+            "Simple query leads to complex decision",
+            "Visual comparison needed",
+            "Precision input required"
+          ],
+          "example": "User: 'Book a flight to NYC' → System presents calendar/time picker GUI",
+          "evaluation_criteria": {
+            "questions": [
+              "Is handoff smooth and contextual?",
+              "Does GUI retain conversational context?",
+              "Can user return to NL seamlessly?",
+              "Is the reason for mode switch clear?"
+            ],
+            "what_to_look_for": [
+              "Context passed to GUI component",
+              "NL history visible/accessible",
+              "Easy return to conversation",
+              "Clear explanation of why GUI was presented"
+            ],
+            "anti_patterns": [
+              "Context lost on handoff",
+              "Jarring switch without explanation",
+              "No way to continue conversationally",
+              "GUI doesn't reflect prior NL input"
+            ]
+          }
+        },
+        {
+          "name": "GUI-to-NL Escalation",
+          "description": "User hits limitation in GUI, escalates to NL for complex request",
+          "when_to_use": [
+            "GUI can't express user's intent",
+            "Complex query beyond GUI options",
+            "Need for explanation or help"
+          ],
+          "example": "User in date picker realizes they need 'cheapest Tuesday in March' → switches to NL",
+          "evaluation_criteria": {
+            "questions": [
+              "Is escalation discoverable?",
+              "Does NL understand GUI context?",
+              "Is escalation low-friction?",
+              "Does resolution reflect back to GUI?"
+            ],
+            "what_to_look_for": [
+              "Visible NL entry point in GUI",
+              "NL aware of current GUI state",
+              "Quick switch to NL input",
+              "Results shown in appropriate modality"
+            ],
+            "anti_patterns": [
+              "No obvious way to access NL from GUI",
+              "NL ignores GUI context",
+              "Friction discourages escalation",
+              "Results only in NL, can't use GUI to refine"
+            ]
+          }
+        },
+        {
+          "name": "User-Initiated Switch",
+          "description": "User explicitly chooses different modality",
+          "when_to_use": [
+            "User preference for specific modality",
+            "Accessibility needs",
+            "Context changes (hands-free, etc.)"
+          ],
+          "evaluation_criteria": {
+            "questions": [
+              "Can users easily switch modalities?",
+              "Is state preserved across switch?",
+              "Are both modalities equally capable?",
+              "Is preference remembered?"
+            ],
+            "what_to_look_for": [
+              "Visible modality toggle",
+              "State continuity",
+              "Equivalent functionality",
+              "Preference persistence"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "category": "Parallel Modalities",
+      "description": "NL and GUI working simultaneously",
+      "patterns": [
+        {
+          "name": "NL Navigation of GUI",
+          "description": "User navigates graphical interface using natural language",
+          "when_to_use": [
+            "Power users wanting efficiency",
+            "Accessibility (voice control)",
+            "Complex GUI navigation"
+          ],
+          "example": "User says 'Show me only the overdue items' while looking at task list",
+          "evaluation_criteria": {
+            "questions": [
+              "Can all GUI actions be achieved via NL?",
+              "Is NL navigation efficient compared to direct manipulation?",
+              "Are ambiguities resolved contextually?",
+              "Is feedback appropriate for NL commands?"
+            ],
+            "what_to_look_for": [
+              "Comprehensive NL command coverage",
+              "Faster than clicking for common actions",
+              "Context-aware disambiguation",
+              "Visual feedback for NL actions"
+            ],
+            "anti_patterns": [
+              "NL can only do subset of GUI actions",
+              "Faster to just click",
+              "Frequent clarification dialogs",
+              "No visual confirmation of NL actions"
+            ]
+          }
+        },
+        {
+          "name": "GUI Manifestation of NL",
+          "description": "Conversational exchanges manifest as GUI elements",
+          "when_to_use": [
+            "Results need visual organization",
+            "Comparison required",
+            "Iterative refinement"
+          ],
+          "example": "User asks 'Compare these three options' → NL response rendered as comparison table",
+          "evaluation_criteria": {
+            "questions": [
+              "Are NL outputs appropriately visualized?",
+              "Can GUI elements be manipulated post-generation?",
+              "Is there parity between NL description and GUI reality?",
+              "Can users refine via either modality?"
+            ],
+            "what_to_look_for": [
+              "Rich visual rendering of NL outputs",
+              "Editable/interactive visualizations",
+              "WYSIWYG between NL and GUI",
+              "Bidirectional refinement"
+            ],
+            "anti_patterns": [
+              "Everything rendered as plain text",
+              "Visualizations are read-only",
+              "Discrepancy between NL and GUI",
+              "Must restart conversation to refine"
+            ]
+          }
+        },
+        {
+          "name": "Concurrent Input",
+          "description": "User provides input through both modalities simultaneously",
+          "when_to_use": [
+            "Complex specification",
+            "Gesture + voice scenarios",
+            "Precision + context combination"
+          ],
+          "example": "User drags selection box while saying 'Delete all of these except the red ones'",
+          "evaluation_criteria": {
+            "questions": [
+              "Can modalities be combined effectively?",
+              "Is multimodal input correctly fused?",
+              "Are conflicts resolved sensibly?",
+              "Is timing tolerance appropriate?"
+            ],
+            "what_to_look_for": [
+              "Coherent multimodal interpretation",
+              "Intelligent input fusion",
+              "Sensible conflict resolution",
+              "Forgiving timing windows"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "category": "Adaptive Modality Selection",
+      "description": "System chooses optimal modality for each interaction",
+      "patterns": [
+        {
+          "name": "Complexity-Appropriate Modality",
+          "description": "Simple tasks stay conversational, complex tasks get GUI",
+          "evaluation_criteria": {
+            "questions": [
+              "Is modality selection appropriate to task complexity?",
+              "Can users override modality selection?",
+              "Is selection logic transparent?",
+              "Does selection learn from user preference?"
+            ],
+            "what_to_look_for": [
+              "Simple queries answered inline",
+              "Complex tasks get appropriate UI",
+              "Override easily available",
+              "Adaptation to user patterns"
+            ],
+            "anti_patterns": [
+              "Always shows GUI even for simple queries",
+              "Forced to use wrong modality",
+              "Unpredictable modality choices",
+              "Ignores user modality preferences"
+            ]
+          },
+          "complexity_thresholds": {
+            "conversational": [
+              "Single-answer queries",
+              "Yes/no confirmations",
+              "Simple commands",
+              "Short lists (<5 items)"
+            ],
+            "gui": [
+              "Multi-option comparisons",
+              "Data entry forms",
+              "Visual content",
+              "Complex hierarchies"
+            ],
+            "hybrid": [
+              "Guided workflows",
+              "Rich results with follow-up",
+              "Iterative refinement"
+            ]
+          }
+        },
+        {
+          "name": "Context-Appropriate Modality",
+          "description": "Modality adapts to user context (hands-free, glanceable, etc.)",
+          "evaluation_criteria": {
+            "questions": [
+              "Is context correctly detected?",
+              "Is adaptation appropriate?",
+              "Can users signal context explicitly?",
+              "Is core functionality preserved across modalities?"
+            ],
+            "what_to_look_for": [
+              "Context detection (device, environment)",
+              "Appropriate modality for context",
+              "Manual context override",
+              "Feature parity across contexts"
+            ],
+            "anti_patterns": [
+              "Context misdetection",
+              "Inappropriate modality for context",
+              "No way to indicate context",
+              "Features missing in some modalities"
+            ]
+          },
+          "context_examples": [
+            {
+              "context": "Driving (hands-free)",
+              "preferred_modality": "Voice/audio",
+              "avoid": "Visual-only content"
+            },
+            {
+              "context": "Meeting (quiet)",
+              "preferred_modality": "Text/visual",
+              "avoid": "Audio output"
+            },
+            {
+              "context": "Desktop work",
+              "preferred_modality": "Full hybrid",
+              "avoid": "None (full capability)"
+            },
+            {
+              "context": "Mobile on-the-go",
+              "preferred_modality": "Quick interactions",
+              "avoid": "Complex workflows"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hybrid_heuristics": {
+    "description": "Usability heuristics specific to hybrid AI-GUI interfaces",
+    "heuristics": [
+      {
+        "number": 1,
+        "name": "Modality Coherence",
+        "description": "Information and state are consistent across modalities",
+        "evaluation": {
+          "check_for": [
+            "Same data shown in both modalities",
+            "Actions in one reflect in other",
+            "Consistent terminology"
+          ],
+          "violations": [
+            "GUI shows different state than NL describes",
+            "Actions in one modality don't reflect in other",
+            "Different names for same concepts"
+          ]
+        },
+        "severity_guide": {
+          "critical": "Users get different answers from different modalities",
+          "major": "State changes don't sync between modalities",
+          "minor": "Terminology differences cause confusion"
+        }
+      },
+      {
+        "number": 2,
+        "name": "Transition Fluidity",
+        "description": "Moving between modalities is smooth and contextual",
+        "evaluation": {
+          "check_for": [
+            "Context preserved across transitions",
+            "Natural switching points",
+            "No jarring interruptions"
+          ],
+          "violations": [
+            "Context lost on switch",
+            "Forcing restart when switching",
+            "Abrupt modality changes"
+          ]
+        },
+        "severity_guide": {
+          "critical": "Users must restart task when switching",
+          "major": "Significant context loss on transition",
+          "minor": "Minor friction in switching"
+        }
+      },
+      {
+        "number": 3,
+        "name": "Modality Parity",
+        "description": "Core tasks achievable in multiple modalities",
+        "evaluation": {
+          "check_for": [
+            "Critical functions in all modalities",
+            "Accessibility maintained",
+            "No forced modality lock-in"
+          ],
+          "violations": [
+            "Critical function only in one modality",
+            "Accessibility broken by modality lock-in",
+            "Forced to use specific modality"
+          ]
+        },
+        "severity_guide": {
+          "critical": "Essential features inaccessible in some modalities",
+          "major": "Secondary features missing in some modalities",
+          "minor": "Convenience features not universal"
+        }
+      },
+      {
+        "number": 4,
+        "name": "Selection Appropriateness",
+        "description": "Chosen modality matches task and context",
+        "evaluation": {
+          "check_for": [
+            "Right modality for task type",
+            "Right modality for user context",
+            "Sensible defaults"
+          ],
+          "violations": [
+            "Forcing GUI for simple queries",
+            "Forcing NL for visual comparison tasks",
+            "Poor default modality choices"
+          ]
+        },
+        "severity_guide": {
+          "critical": "Fundamentally wrong modality for task",
+          "major": "Suboptimal modality creates significant friction",
+          "minor": "Better modality available but current works"
+        }
+      },
+      {
+        "number": 5,
+        "name": "User Control of Modality",
+        "description": "Users can influence modality selection",
+        "evaluation": {
+          "check_for": [
+            "Easy modality switching",
+            "Preference persistence",
+            "Override availability"
+          ],
+          "violations": [
+            "No way to request different modality",
+            "System ignores modality preferences",
+            "Preferences not remembered"
+          ]
+        },
+        "severity_guide": {
+          "critical": "User cannot change modality at all",
+          "major": "Modality preference consistently ignored",
+          "minor": "Minor friction in modality control"
+        }
+      }
+    ]
+  },
+  "evaluation_methodology": {
+    "steps": [
+      {
+        "step": 1,
+        "name": "Map Modality Usage",
+        "actions": [
+          "Identify all tasks users perform",
+          "Document which modalities each task uses",
+          "Identify transition points between modalities"
+        ]
+      },
+      {
+        "step": 2,
+        "name": "Test Modal Switching",
+        "actions": [
+          "Attempt NL-to-GUI handoffs",
+          "Attempt GUI-to-NL escalations",
+          "Test user-initiated switches"
+        ]
+      },
+      {
+        "step": 3,
+        "name": "Test Parallel Modalities",
+        "actions": [
+          "Use NL to navigate GUI",
+          "Check GUI manifestation of NL outputs",
+          "Test concurrent input if supported"
+        ]
+      },
+      {
+        "step": 4,
+        "name": "Evaluate Adaptive Selection",
+        "actions": [
+          "Vary task complexity, check modality choice",
+          "Vary context, check adaptation",
+          "Test preference learning"
+        ]
+      },
+      {
+        "step": 5,
+        "name": "Apply Hybrid Heuristics",
+        "actions": [
+          "Check each heuristic systematically",
+          "Document violations with severity",
+          "Identify improvement opportunities"
+        ]
+      }
+    ]
+  },
+  "metrics": [
+    {
+      "name": "modality_coherence_score",
+      "description": "State consistency across modalities",
+      "target": ">95%"
+    },
+    {
+      "name": "transition_success_rate",
+      "description": "Successful modality switches without context loss",
+      "target": ">90%"
+    },
+    {
+      "name": "modality_satisfaction",
+      "description": "User satisfaction with modality choices",
+      "measurement": "Survey rating"
+    },
+    {
+      "name": "modality_override_rate",
+      "description": "How often users override system modality choice",
+      "interpretation": "Lower = better selection, unless users don't know they can override"
+    }
+  ],
+  "usage_guide": {
+    "when_to_use": [
+      "Evaluating systems with both chat and GUI",
+      "Designing multimodal AI interfaces",
+      "Improving existing hybrid experiences",
+      "Planning modality strategy"
+    ],
+    "complements": [
+      "intent-based-interaction (for NL evaluation)",
+      "ai-native-metrics (for measurement)",
+      "accessibility/wcag-2.2 (for modality accessibility)"
+    ]
+  }
+}

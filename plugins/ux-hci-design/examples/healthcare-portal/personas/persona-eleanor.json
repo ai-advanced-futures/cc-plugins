@@ -1,0 +1,140 @@
+{
+  "schema_version": "1.0",
+  "persona": {
+    "persona_id": "P-HC-001",
+    "name": "Eleanor Thompson",
+    "archetype": "Independent Senior",
+    "photo_description": "Active elderly woman, warm expression, comfortable home setting",
+    "quote": "I want to manage my own healthcare appointments without having to call and wait on hold.",
+    "demographics": {
+      "age": 72,
+      "occupation": "Retired teacher",
+      "location": "Suburban community",
+      "living_situation": "Independent, lives alone",
+      "education": "Master's degree",
+      "tech_proficiency": "moderate_with_support"
+    },
+    "health_context": {
+      "conditions": ["Type 2 diabetes", "Mild arthritis"],
+      "appointment_frequency": "Monthly",
+      "providers": ["Primary care", "Endocrinologist", "Eye doctor"],
+      "medications": true
+    },
+    "goals": [
+      {
+        "goal_id": "G-001",
+        "description": "Schedule and manage appointments independently",
+        "priority": "critical",
+        "category": "autonomy"
+      },
+      {
+        "goal_id": "G-002",
+        "description": "Easily see upcoming appointments and reminders",
+        "priority": "high",
+        "category": "organization"
+      },
+      {
+        "goal_id": "G-003",
+        "description": "Message doctors without phone calls",
+        "priority": "medium",
+        "category": "communication"
+      }
+    ],
+    "frustrations": [
+      {
+        "frustration_id": "FR-001",
+        "description": "Text too small to read comfortably",
+        "severity": "critical",
+        "frequency": "always"
+      },
+      {
+        "frustration_id": "FR-002",
+        "description": "Buttons too small and close together",
+        "severity": "high",
+        "frequency": "often"
+      },
+      {
+        "frustration_id": "FR-003",
+        "description": "Complicated navigation with too many options",
+        "severity": "high",
+        "frequency": "sometimes"
+      },
+      {
+        "frustration_id": "FR-004",
+        "description": "Having to re-enter information already provided",
+        "severity": "medium",
+        "frequency": "sometimes"
+      }
+    ],
+    "behaviors": [
+      "Uses tablet (iPad) as primary device",
+      "Increases text size in browser settings",
+      "Takes time to read each screen carefully",
+      "Writes down confirmation numbers on paper",
+      "Prefers daytime appointments (better vision)"
+    ],
+    "needs": [
+      {
+        "need_id": "N-001",
+        "description": "Large, readable text throughout",
+        "type": "accessibility",
+        "priority": "critical"
+      },
+      {
+        "need_id": "N-002",
+        "description": "High contrast colors for easy reading",
+        "type": "accessibility",
+        "priority": "critical"
+      },
+      {
+        "need_id": "N-003",
+        "description": "Large, well-spaced buttons",
+        "type": "accessibility",
+        "priority": "critical"
+      },
+      {
+        "need_id": "N-004",
+        "description": "Simple, linear navigation",
+        "type": "cognitive",
+        "priority": "high"
+      },
+      {
+        "need_id": "N-005",
+        "description": "Clear confirmation of all actions",
+        "type": "trust",
+        "priority": "high"
+      },
+      {
+        "need_id": "N-006",
+        "description": "Print-friendly appointment summaries",
+        "type": "functional",
+        "priority": "medium"
+      }
+    ],
+    "context_of_use": {
+      "devices": ["tablet_primary", "desktop_secondary"],
+      "environments": ["home", "quiet_settings"],
+      "frequency": "weekly_to_monthly",
+      "session_duration": "15-30 minutes",
+      "time_of_day": "morning_preferred"
+    },
+    "accessibility_considerations": {
+      "vision": "Age-related vision changes, needs large text and high contrast",
+      "motor": "Mild arthritis affecting fine motor control, needs large touch targets",
+      "cognitive": "Prefers simple, step-by-step processes",
+      "hearing": "Some hearing loss, prefers visual over audio feedback",
+      "assistive_tech": "Uses browser zoom, may use VoiceOver occasionally"
+    },
+    "support_network": {
+      "primary_contact": "Daughter Amy",
+      "tech_support": "Grandson helps with new technology",
+      "healthcare_proxy": "Daughter Amy"
+    }
+  },
+  "metadata": {
+    "created_date": "2025-01-20",
+    "source": "Patient interviews and accessibility research (n=20)",
+    "confidence": "high",
+    "last_validated": "2025-01-20"
+  }
+}

@@ -1,0 +1,351 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UX Project Context Configuration",
+  "description": "Schema for .ux-config.json files that define project context for UX/HCI design workflows. Enables context-aware evaluation weighting and framework prioritization.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "project_context"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version of this schema",
+      "enum": [
+        "1.0"
+      ]
+    },
+    "project_context": {
+      "type": "object",
+      "description": "Core project context dimensions",
+      "required": [
+        "type",
+        "domain"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Primary application type",
+          "enum": [
+            "web-app",
+            "mobile-app",
+            "desktop-app",
+            "enterprise",
+            "ai-agent",
+            "iot",
+            "voice",
+            "mixed"
+          ]
+        },
+        "domain": {
+          "type": "string",
+          "description": "Business domain",
+          "enum": [
+            "consumer",
+            "b2b",
+            "healthcare",
+            "finance",
+            "education",
+            "ecommerce",
+            "saas",
+            "government",
+            "entertainment",
+            "productivity",
+            "social",
+            "other"
+          ]
+        },
+        "ai_intensity": {
+          "type": "string",
+          "description": "Level of AI/ML integration in the product",
+          "enum": [
+            "none",
+            "light",
+            "moderate",
+            "heavy",
+            "core"
+          ],
+          "default": "none"
+        },
+        "accessibility_requirements": {
+          "type": "string",
+          "description": "Level of accessibility compliance required",
+          "enum": [
+            "none",
+            "voluntary",
+            "required",
+            "critical"
+          ],
+          "default": "required"
+        },
+        "platforms": {
+          "type": "array",
+          "description": "Target platforms",
+          "items": {
+            "type": "string",
+            "enum": [
+              "web",
+              "ios",
+              "android",
+              "windows",
+              "macos",
+              "linux",
+              "cross-platform"
+            ]
+          },
+          "default": [
+            "web"
+          ]
+        },
+        "user_expertise": {
+          "type": "string",
+          "description": "Expected user technical expertise level",
+          "enum": [
+            "novice",
+            "intermediate",
+            "expert",
+            "mixed"
+          ],
+          "default": "mixed"
+        },
+        "user_frequency": {
+          "type": "string",
+          "description": "Expected frequency of user interaction",
+          "enum": [
+            "daily",
+            "weekly",
+            "occasional",
+            "one-time"
+          ],
+          "default": "daily"
+        }
+      }
+    },
+    "weighting_profile": {
+      "type": "string",
+      "description": "Predefined weighting profile name, or 'custom' for manual weights",
+      "enum": [
+        "balanced",
+        "accessibility-first",
+        "ai-heavy",
+        "mobile-first",
+        "enterprise",
+        "custom"
+      ],
+      "default": "balanced"
+    },
+    "custom_weights": {
+      "type": "object",
+      "description": "Custom evaluation weights (only used when weighting_profile is 'custom')",
+      "properties": {
+        "nielsen_heuristics": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Weight for Nielsen's 10 Usability Heuristics"
+        },
+        "rams_principles": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Weight for Rams' 10 Principles of Good Design"
+        },
+        "norman_principles": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Weight for Norman's Interaction Design Principles"
+        },
+        "accessibility": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Weight for WCAG 2.2 accessibility criteria"
+        },
+        "ai_hci": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Weight for Microsoft 18 AI-HCI Guidelines"
+        }
+      }
+    },
+    "priority_frameworks": {
+      "type": "array",
+      "description": "Ordered list of frameworks to prioritize in evaluations",
+      "items": {
+        "type": "string",
+        "enum": [
+          "nielsen",
+          "rams",
+          "norman",
+          "wcag",
+          "ai-hci"
+        ]
+      }
+    },
+    "priority_heuristics": {
+      "type": "array",
+      "description": "Specific heuristics/guidelines to prioritize (by ID)",
+      "items": {
+        "type": "string",
+        "pattern": "^(nielsen-|rams-|norman-|wcag-|ai-hci-)"
+      }
+    },
+    "excluded_criteria": {
+      "type": "array",
+      "description": "Criteria IDs to exclude from evaluations (use sparingly)",
+      "items": {
+        "type": "string",
+        "pattern": "^(nielsen-|rams-|norman-|wcag-|ai-hci-)"
+      }
+    },
+    "detection_sources": {
+      "type": "object",
+      "description": "Information about how context was detected",
+      "properties": {
+        "auto_detected": {
+          "type": "boolean",
+          "description": "Whether context was auto-detected from codebase"
+        },
+        "detected_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When detection was performed"
+        },
+        "detection_confidence": {
+          "type": "string",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "description": "Confidence level of auto-detection"
+        },
+        "detected_signals": {
+          "type": "array",
+          "description": "Signals used for detection",
+          "items": {
+            "type": "object",
+            "properties": {
+              "signal": {
+                "type": "string",
+                "description": "What was detected"
+              },
+              "source": {
+                "type": "string",
+                "description": "Where it was detected"
+              },
+              "inference": {
+                "type": "string",
+                "description": "What was inferred from this signal"
+              }
+            }
+          }
+        },
+        "user_confirmed": {
+          "type": "boolean",
+          "description": "Whether user confirmed the detected context"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata",
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "project_name": {
+          "type": "string"
+        },
+        "project_description": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "1.0",
+      "project_context": {
+        "type": "web-app",
+        "domain": "consumer",
+        "ai_intensity": "heavy",
+        "accessibility_requirements": "required",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ],
+        "user_expertise": "mixed",
+        "user_frequency": "daily"
+      },
+      "weighting_profile": "ai-heavy",
+      "priority_frameworks": [
+        "ai-hci",
+        "nielsen",
+        "wcag"
+      ],
+      "detection_sources": {
+        "auto_detected": true,
+        "detected_at": "2026-01-23T12:00:00Z",
+        "detection_confidence": "high",
+        "detected_signals": [
+          {
+            "signal": "@anthropic-ai/sdk in dependencies",
+            "source": "package.json",
+            "inference": "AI-heavy application"
+          },
+          {
+            "signal": "React framework detected",
+            "source": "package.json",
+            "inference": "Web application"
+          }
+        ],
+        "user_confirmed": true
+      },
+      "metadata": {
+        "created_at": "2026-01-23T12:00:00Z",
+        "project_name": "AI Assistant App"
+      }
+    },
+    {
+      "schema_version": "1.0",
+      "project_context": {
+        "type": "enterprise",
+        "domain": "healthcare",
+        "ai_intensity": "moderate",
+        "accessibility_requirements": "critical",
+        "platforms": [
+          "web"
+        ],
+        "user_expertise": "expert",
+        "user_frequency": "daily"
+      },
+      "weighting_profile": "accessibility-first",
+      "priority_frameworks": [
+        "wcag",
+        "nielsen"
+      ],
+      "priority_heuristics": [
+        "wcag-1.1.1",
+        "wcag-1.4.3",
+        "wcag-2.1.1",
+        "nielsen-05"
+      ],
+      "metadata": {
+        "created_at": "2026-01-23T12:00:00Z",
+        "project_name": "Healthcare Portal"
+      }
+    }
+  ]
+}

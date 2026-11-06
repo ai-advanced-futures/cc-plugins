@@ -57,3 +57,7 @@ material, and the Apache License does not replace them.
 7. prose-authenticity, by Luis F. Amadeo, MIT License.
    The prose-authenticity plugin ports it, with changes.
    The MIT notice is in plugins/prose-authenticity/NOTICE.
+
+8. ux-hci-design, by Luis F. Amadeo, MIT License.
+   The ux-hci-design plugin is a port of it, with changes.
+   The MIT notice is in plugins/ux-hci-design/NOTICE.

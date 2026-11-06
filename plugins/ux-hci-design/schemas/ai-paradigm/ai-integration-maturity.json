@@ -1,0 +1,391 @@
+{
+  "title": "AI Integration Maturity Framework",
+  "description": "Evaluates AI-human interaction patterns across different integration maturity levels. Based on Luke Wroblewski's stages of AI integration from 'invisible enhancement' to AI-first interfaces.",
+  "version": "1.0.0",
+  "thought_leader": {
+    "name": "Luke Wroblewski",
+    "key_insight": "AI integration exists on a spectrum, each stage has fundamentally different interaction paradigms and evaluation criteria",
+    "implication": "Evaluate based on the maturity stage, not one-size-fits-all criteria"
+  },
+  "paradigm_shift": {
+    "from": "Treating all AI as a single category with uniform evaluation",
+    "to": "Recognizing distinct maturity stages with stage-appropriate evaluation criteria"
+  },
+  "maturity_stages": [
+    {
+      "stage": 1,
+      "name": "Invisible Enhancement",
+      "description": "AI improves existing experiences without users knowing AI is involved",
+      "characteristics": [
+        "AI works entirely behind the scenes",
+        "No AI-specific UI elements or indicators",
+        "Users don't know AI is involved",
+        "Improvements feel like 'magic' or just good design"
+      ],
+      "examples": [
+        "Smart defaults and auto-fill",
+        "Predictive text and autocomplete",
+        "Spam filtering",
+        "Search ranking and relevance",
+        "Content personalization"
+      ],
+      "human_role": "User (unaware of AI assistance)",
+      "ai_role": "Hidden optimizer",
+      "evaluation_criteria": {
+        "questions": [
+          "Is the AI enhancement actually improving outcomes measurably?",
+          "Are there failure modes where users should know AI is involved?",
+          "Is there appropriate transparency for high-stakes decisions?",
+          "Does invisible AI create false mental models about the system?"
+        ],
+        "what_to_look_for": [
+          "Measurable improvement in user outcomes",
+          "Graceful degradation when AI fails",
+          "Appropriate disclosure for consequential decisions",
+          "No misleading users about system capabilities"
+        ],
+        "anti_patterns": [
+          "AI that degrades experience without user knowing why",
+          "Hidden AI making high-stakes decisions",
+          "Users attributing AI capabilities to their own judgment",
+          "No fallback when AI is unavailable"
+        ]
+      },
+      "risks": [
+        "Inappropriate trust due to unawareness",
+        "Unexplainable failures",
+        "Privacy concerns (what data is AI using?)",
+        "Dependency without understanding"
+      ],
+      "success_metrics": [
+        {
+          "name": "outcome_improvement_rate",
+          "description": "How much better are outcomes with AI vs without",
+          "target": ">20% improvement"
+        },
+        {
+          "name": "failure_transparency",
+          "description": "Are failures visible and understandable",
+          "target": "Users can identify when AI has failed"
+        },
+        {
+          "name": "mental_model_accuracy",
+          "description": "Users understand system capabilities correctly",
+          "measurement": "User belief matches reality"
+        }
+      ]
+    },
+    {
+      "stage": 2,
+      "name": "AI-Assisted",
+      "description": "AI provides suggestions that humans review and act on",
+      "characteristics": [
+        "Clear AI suggestions visible to user",
+        "Human makes final decision on all actions",
+        "AI as advisor, not actor",
+        "Explicit accept/reject/modify flows"
+      ],
+      "examples": [
+        "Smart compose and writing suggestions",
+        "AI writing assistance (grammar, tone)",
+        "Recommended actions and next steps",
+        "Diagnostic suggestions",
+        "Search suggestions and autocomplete"
+      ],
+      "human_role": "Decision maker with AI advisor",
+      "ai_role": "Suggester and assistant",
+      "evaluation_criteria": {
+        "questions": [
+          "Are AI suggestions clearly distinguished from system facts?",
+          "Is accepting/rejecting suggestions frictionless?",
+          "Does the system learn from accept/reject patterns?",
+          "Is suggestion confidence appropriately communicated?"
+        ],
+        "what_to_look_for": [
+          "Clear visual distinction for AI suggestions",
+          "One-click accept/reject",
+          "Personalization from feedback",
+          "Confidence indicators on suggestions"
+        ],
+        "anti_patterns": [
+          "Suggestions that look like commands",
+          "High-friction rejection flow (bias toward acceptance)",
+          "No learning from feedback",
+          "Same confidence display for all suggestions"
+        ]
+      },
+      "risks": [
+        "Automation bias (over-trusting suggestions)",
+        "Suggestion fatigue",
+        "Learned helplessness (user stops thinking independently)",
+        "Homogenization (everyone follows same suggestions)"
+      ],
+      "success_metrics": [
+        {
+          "name": "suggestion_acceptance_rate",
+          "description": "How often suggestions are accepted",
+          "target": "50-80% (too high may indicate automation bias)"
+        },
+        {
+          "name": "suggestion_quality_over_time",
+          "description": "Are suggestions getting better?",
+          "measurement": "Acceptance rate trend and user ratings"
+        },
+        {
+          "name": "user_override_appropriateness",
+          "description": "When users reject, are they right to?",
+          "target": "Most rejections are correct decisions"
+        }
+      ]
+    },
+    {
+      "stage": 3,
+      "name": "AI-Augmented",
+      "description": "AI handles routine work autonomously, humans handle exceptions and judgment calls",
+      "characteristics": [
+        "AI takes autonomous action on routine items",
+        "Humans review exceptions and edge cases",
+        "Escalation mechanisms for uncertainty",
+        "Human-in-the-loop for anything requiring judgment"
+      ],
+      "examples": [
+        "Email triage with auto-response for routine",
+        "Content moderation with escalation",
+        "Automated scheduling with conflict resolution",
+        "Expense approval with exception flagging",
+        "Customer service routing with escalation"
+      ],
+      "human_role": "Exception handler and quality controller",
+      "ai_role": "Routine processor with escalation",
+      "evaluation_criteria": {
+        "questions": [
+          "Are routine/exception boundaries appropriate?",
+          "Is escalation to human smooth and timely?",
+          "Do humans have sufficient context when escalated to?",
+          "Is there an audit trail for AI decisions?"
+        ],
+        "what_to_look_for": [
+          "Clear criteria for what's routine vs exception",
+          "Smooth escalation flow with context handoff",
+          "Context-rich escalation interface",
+          "Complete audit trail"
+        ],
+        "anti_patterns": [
+          "Too much escalation (AI adding no value)",
+          "Too little escalation (AI missing exceptions)",
+          "Context-free escalation (human must start over)",
+          "No visibility into AI's autonomous decisions"
+        ]
+      },
+      "risks": [
+        "Skill atrophy (humans forget how to do routine work)",
+        "Complacency (humans rubber-stamp exceptions)",
+        "Exception overload (everything becomes exception)",
+        "Accountability gaps (who's responsible?)"
+      ],
+      "success_metrics": [
+        {
+          "name": "routine_automation_accuracy",
+          "description": "AI correctly handles routine items",
+          "target": ">95%"
+        },
+        {
+          "name": "escalation_appropriateness",
+          "description": "Escalated items actually need human judgment",
+          "target": ">80% of escalations are true exceptions"
+        },
+        {
+          "name": "human_context_sufficiency",
+          "description": "Humans have what they need to decide",
+          "measurement": "Human can decide without asking for more info"
+        }
+      ]
+    },
+    {
+      "stage": 4,
+      "name": "AI-First",
+      "description": "AI is primary actor, humans provide oversight and strategic direction",
+      "characteristics": [
+        "AI handles most interactions end-to-end",
+        "Human oversight via dashboards and controls",
+        "Strategic human input shapes AI behavior",
+        "Human intervention is exception, not norm"
+      ],
+      "examples": [
+        "AI agents with human supervision",
+        "Autonomous vehicles with human takeover",
+        "AI-driven portfolio management",
+        "Autonomous customer service",
+        "AI-managed supply chains"
+      ],
+      "human_role": "Supervisor and strategic director",
+      "ai_role": "Primary actor with human oversight",
+      "evaluation_criteria": {
+        "questions": [
+          "Is human oversight meaningful or just theater?",
+          "Can humans intervene effectively when needed?",
+          "Does strategic human input actually shape AI behavior?",
+          "Are accountability and responsibility clear?"
+        ],
+        "what_to_look_for": [
+          "Oversight dashboards that surface what matters",
+          "Effective intervention mechanisms",
+          "Clear feedback loop from human direction to AI behavior",
+          "Explicit accountability assignment"
+        ],
+        "anti_patterns": [
+          "Fake oversight (dashboards ignored)",
+          "Intervention mechanisms that don't work in practice",
+          "AI that ignores strategic direction",
+          "Unclear who's accountable for outcomes"
+        ]
+      },
+      "risks": [
+        "Loss of human expertise (can't take over if needed)",
+        "Accountability gaps (AI made the decision)",
+        "Runaway automation (AI optimizes for wrong goal)",
+        "Oversight theater (humans can't actually oversee)"
+      ],
+      "success_metrics": [
+        {
+          "name": "oversight_effectiveness",
+          "description": "Oversight catches problems before impact",
+          "target": ">90% of issues caught in oversight"
+        },
+        {
+          "name": "intervention_success_rate",
+          "description": "Human interventions succeed when attempted",
+          "target": ">95%"
+        },
+        {
+          "name": "strategic_input_impact",
+          "description": "Human direction measurably affects AI behavior",
+          "measurement": "Behavior changes after direction"
+        }
+      ]
+    },
+    {
+      "stage": 5,
+      "name": "Autonomous Partnership",
+      "description": "AI and human as true collaborators with complementary strengths",
+      "characteristics": [
+        "Dynamic task allocation based on strengths",
+        "AI and human negotiate responsibilities",
+        "Mutual learning and adaptation",
+        "Emergent collaboration patterns"
+      ],
+      "examples": [
+        "Creative collaboration tools",
+        "Scientific research partnerships",
+        "Strategic planning co-pilots",
+        "Design ideation partners",
+        "Complex problem-solving teams"
+      ],
+      "human_role": "Partner with complementary capabilities",
+      "ai_role": "Partner with complementary capabilities",
+      "evaluation_criteria": {
+        "questions": [
+          "Is task allocation optimizing for combined capability?",
+          "Does the partnership improve both AI and human over time?",
+          "Are collaboration patterns emergent and adaptive?",
+          "Is there genuine complementarity (not just task splitting)?"
+        ],
+        "what_to_look_for": [
+          "Dynamic handoffs based on who's best suited",
+          "Both parties learning from interaction",
+          "Novel collaboration patterns emerging",
+          "1+1>2 outcomes"
+        ],
+        "anti_patterns": [
+          "Static task allocation regardless of context",
+          "One-way learning (only AI learns)",
+          "Rigid patterns that don't adapt",
+          "Parallel work without true collaboration"
+        ]
+      },
+      "risks": [
+        "Unclear boundaries (who does what?)",
+        "Attribution confusion (who contributed what?)",
+        "Dependency (one can't function without other)",
+        "Communication overhead"
+      ],
+      "success_metrics": [
+        {
+          "name": "combined_capability_score",
+          "description": "Partnership achieves more than either alone",
+          "measurement": "Outcome quality vs solo performance"
+        },
+        {
+          "name": "mutual_improvement_rate",
+          "description": "Both parties improving over time",
+          "target": "Measurable improvement for both"
+        },
+        {
+          "name": "collaboration_adaptiveness",
+          "description": "Patterns evolve based on experience",
+          "measurement": "New patterns emerging over time"
+        }
+      ]
+    }
+  ],
+  "evaluation_methodology": {
+    "step_1": {
+      "name": "Identify Current Maturity Stage",
+      "description": "Determine which stage the AI feature is at",
+      "guidance": [
+        "Map feature characteristics to stage definitions",
+        "Consider intended vs actual user interaction patterns",
+        "Identify the human role in the interaction"
+      ]
+    },
+    "step_2": {
+      "name": "Apply Stage-Appropriate Criteria",
+      "description": "Evaluate using criteria relevant to that stage",
+      "guidance": [
+        "Don't apply Stage 5 criteria to Stage 2 features",
+        "Use stage-specific success metrics",
+        "Consider stage-specific risks"
+      ]
+    },
+    "step_3": {
+      "name": "Assess Progression Readiness",
+      "description": "Evaluate if feature is ready for next maturity stage",
+      "guidance": [
+        "Are current stage criteria well met?",
+        "Are there user needs for more autonomy?",
+        "Are safeguards in place for next stage?"
+      ]
+    },
+    "step_4": {
+      "name": "Evaluate Stage-Specific Risks",
+      "description": "Identify and assess risks unique to current stage",
+      "guidance": [
+        "Each stage has characteristic failure modes",
+        "Assess likelihood and impact of each risk",
+        "Ensure mitigations are in place"
+      ]
+    },
+    "step_5": {
+      "name": "Recommend Stage-Appropriate Improvements",
+      "description": "Suggest improvements within current paradigm",
+      "guidance": [
+        "Focus on maturity within stage, not jumping stages",
+        "Address stage-specific anti-patterns",
+        "Prepare foundations for potential progression"
+      ]
+    }
+  },
+  "usage_guide": {
+    "when_to_use": [
+      "Evaluating AI features at any maturity level",
+      "Planning AI feature roadmaps",
+      "Benchmarking against industry standards",
+      "Identifying stage-appropriate improvements"
+    ],
+    "integration": [
+      "Use with outcome-value-framework for value assessment",
+      "Use with ai-native-metrics for measurement",
+      "Use with ai-orchestration-patterns for Stage 3-5 features"
+    ]
+  }
+}

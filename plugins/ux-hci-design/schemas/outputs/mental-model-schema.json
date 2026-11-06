@@ -1,0 +1,739 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude.ai/schemas/ux-hci-design/mental-model-schema.json",
+  "title": "Mental Model Schema",
+  "description": "Schema for mental models created during the Define phase of UX design. Mental models represent how users understand and conceptualize a system, compared to how the system actually works.",
+  "type": "object",
+  "required": ["schema_version", "mental_model"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version of the mental model schema",
+      "pattern": "^\\d+\\.\\d+$",
+      "default": "1.0"
+    },
+    "mental_model": {
+      "type": "object",
+      "description": "The mental model definition",
+      "required": ["title", "domain", "user_model"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title of the mental model",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of what this mental model represents",
+          "maxLength": 1000
+        },
+        "domain": {
+          "type": "string",
+          "description": "Domain or area this mental model applies to (e.g., 'E-commerce checkout', 'File management', 'AI chat interface')",
+          "minLength": 1
+        },
+        "context": {
+          "type": "string",
+          "description": "Context in which this mental model applies"
+        },
+        "persona_reference": {
+          "type": "object",
+          "description": "Reference to persona(s) this mental model represents",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the persona"
+            },
+            "reference": {
+              "type": "string",
+              "description": "Reference or ID to the full persona document"
+            }
+          }
+        },
+        "user_model": {
+          "type": "object",
+          "description": "How users think the system works (user's mental model)",
+          "required": ["concepts"],
+          "properties": {
+            "overview": {
+              "type": "string",
+              "description": "Overview of the user's mental model"
+            },
+            "concepts": {
+              "type": "array",
+              "description": "Key concepts in the user's mental model",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["name", "user_understanding"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the concept"
+                  },
+                  "user_understanding": {
+                    "type": "string",
+                    "description": "How users understand this concept"
+                  },
+                  "metaphors": {
+                    "type": "array",
+                    "description": "Metaphors or analogies users use to understand this",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "expectations": {
+                    "type": "array",
+                    "description": "What users expect to happen with this concept",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "confidence_level": {
+                    "type": "string",
+                    "description": "How confident users are in their understanding",
+                    "enum": ["very_confident", "confident", "uncertain", "very_uncertain", "confused"]
+                  }
+                }
+              }
+            },
+            "relationships": {
+              "type": "array",
+              "description": "How users understand relationships between concepts",
+              "items": {
+                "type": "object",
+                "required": ["from_concept", "to_concept", "relationship_type"],
+                "properties": {
+                  "from_concept": {
+                    "type": "string",
+                    "description": "Starting concept"
+                  },
+                  "to_concept": {
+                    "type": "string",
+                    "description": "Related concept"
+                  },
+                  "relationship_type": {
+                    "type": "string",
+                    "description": "Type of relationship",
+                    "enum": ["causes", "contains", "is_part_of", "requires", "enables", "prevents", "similar_to", "opposite_of", "leads_to"]
+                  },
+                  "user_understanding": {
+                    "type": "string",
+                    "description": "How users understand this relationship"
+                  }
+                }
+              }
+            },
+            "workflows": {
+              "type": "array",
+              "description": "How users think workflows or processes work",
+              "items": {
+                "type": "object",
+                "required": ["workflow_name", "user_expected_steps"],
+                "properties": {
+                  "workflow_name": {
+                    "type": "string",
+                    "description": "Name of the workflow"
+                  },
+                  "user_expected_steps": {
+                    "type": "array",
+                    "description": "Steps users expect in this workflow",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "decision_points": {
+                    "type": "array",
+                    "description": "Where users expect to make decisions",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "decision": {
+                          "type": "string",
+                          "description": "What decision users expect to make"
+                        },
+                        "expected_options": {
+                          "type": "array",
+                          "description": "Options users expect to see",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "terminology": {
+              "type": "array",
+              "description": "Terms and language users use",
+              "items": {
+                "type": "object",
+                "required": ["user_term", "user_definition"],
+                "properties": {
+                  "user_term": {
+                    "type": "string",
+                    "description": "Term users use"
+                  },
+                  "user_definition": {
+                    "type": "string",
+                    "description": "What users think this term means"
+                  },
+                  "usage_context": {
+                    "type": "string",
+                    "description": "When/how users use this term"
+                  }
+                }
+              }
+            },
+            "assumptions": {
+              "type": "array",
+              "description": "Assumptions users make about the system",
+              "items": {
+                "type": "object",
+                "required": ["assumption"],
+                "properties": {
+                  "assumption": {
+                    "type": "string",
+                    "description": "What users assume"
+                  },
+                  "confidence": {
+                    "type": "string",
+                    "description": "How strongly users hold this assumption",
+                    "enum": ["strong", "moderate", "weak"]
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Where this assumption comes from (e.g., 'Prior experience with similar systems', 'Real-world analogies')"
+                  }
+                }
+              }
+            },
+            "common_misconceptions": {
+              "type": "array",
+              "description": "Common misunderstandings users have",
+              "items": {
+                "type": "object",
+                "required": ["misconception", "impact"],
+                "properties": {
+                  "misconception": {
+                    "type": "string",
+                    "description": "What users incorrectly believe"
+                  },
+                  "prevalence": {
+                    "type": "string",
+                    "description": "How common this misconception is",
+                    "enum": ["universal", "very_common", "common", "occasional", "rare"]
+                  },
+                  "impact": {
+                    "type": "string",
+                    "description": "Impact of this misconception",
+                    "enum": ["critical", "high", "moderate", "low"]
+                  },
+                  "consequences": {
+                    "type": "array",
+                    "description": "What happens when users act on this misconception",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "system_model": {
+          "type": "object",
+          "description": "How the system actually works (implementation model)",
+          "properties": {
+            "overview": {
+              "type": "string",
+              "description": "Overview of how the system actually works"
+            },
+            "concepts": {
+              "type": "array",
+              "description": "Key concepts in the system model",
+              "items": {
+                "type": "object",
+                "required": ["name", "actual_implementation"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the concept"
+                  },
+                  "actual_implementation": {
+                    "type": "string",
+                    "description": "How this is actually implemented"
+                  },
+                  "technical_details": {
+                    "type": "string",
+                    "description": "Technical details (if relevant to understanding gaps)"
+                  }
+                }
+              }
+            },
+            "workflows": {
+              "type": "array",
+              "description": "How workflows actually work in the system",
+              "items": {
+                "type": "object",
+                "required": ["workflow_name", "actual_steps"],
+                "properties": {
+                  "workflow_name": {
+                    "type": "string",
+                    "description": "Name of the workflow"
+                  },
+                  "actual_steps": {
+                    "type": "array",
+                    "description": "Actual steps in the system",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "terminology": {
+              "type": "array",
+              "description": "Actual terms used by the system",
+              "items": {
+                "type": "object",
+                "required": ["system_term", "system_definition"],
+                "properties": {
+                  "system_term": {
+                    "type": "string",
+                    "description": "Term the system uses"
+                  },
+                  "system_definition": {
+                    "type": "string",
+                    "description": "What the system means by this term"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "gaps": {
+          "type": "array",
+          "description": "Gaps between user mental model and system model",
+          "items": {
+            "type": "object",
+            "required": ["gap_type", "description", "severity"],
+            "properties": {
+              "gap_type": {
+                "type": "string",
+                "description": "Type of gap",
+                "enum": [
+                  "conceptual_mismatch",
+                  "terminology_mismatch",
+                  "workflow_mismatch",
+                  "expectation_violation",
+                  "missing_concept",
+                  "unnecessary_complexity",
+                  "unclear_relationship",
+                  "hidden_functionality"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of the gap"
+              },
+              "severity": {
+                "type": "string",
+                "description": "Severity of this gap",
+                "enum": ["critical", "high", "moderate", "low"]
+              },
+              "user_expectation": {
+                "type": "string",
+                "description": "What users expect"
+              },
+              "system_reality": {
+                "type": "string",
+                "description": "What actually happens"
+              },
+              "consequences": {
+                "type": "array",
+                "description": "Consequences of this gap",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "evidence": {
+                "type": "array",
+                "description": "Evidence of this gap (user quotes, observed behaviors, etc.)",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "affected_tasks": {
+                "type": "array",
+                "description": "Tasks or workflows affected by this gap",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "design_model": {
+          "type": "object",
+          "description": "How the design should represent the system to match user expectations (design model)",
+          "properties": {
+            "overview": {
+              "type": "string",
+              "description": "Overview of the recommended design model"
+            },
+            "principles": {
+              "type": "array",
+              "description": "Design principles for bridging the gap",
+              "items": {
+                "type": "string"
+              }
+            },
+            "recommendations": {
+              "type": "array",
+              "description": "Specific recommendations for aligning design with user mental model",
+              "items": {
+                "type": "object",
+                "required": ["recommendation", "priority"],
+                "properties": {
+                  "recommendation": {
+                    "type": "string",
+                    "description": "The recommendation"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "Priority level",
+                    "enum": ["critical", "high", "medium", "low"]
+                  },
+                  "rationale": {
+                    "type": "string",
+                    "description": "Why this helps bridge the gap"
+                  },
+                  "addresses_gaps": {
+                    "type": "array",
+                    "description": "Which gaps this recommendation addresses",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "implementation_approach": {
+                    "type": "string",
+                    "description": "How to implement this recommendation"
+                  },
+                  "examples": {
+                    "type": "array",
+                    "description": "Examples or patterns",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "interface_implications": {
+              "type": "array",
+              "description": "Implications for interface design",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "area": {
+                    "type": "string",
+                    "description": "Area of interface (e.g., 'Navigation', 'Information Architecture', 'Visual Design', 'Language/Copy')"
+                  },
+                  "implication": {
+                    "type": "string",
+                    "description": "What this means for design"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "research_basis": {
+          "type": "object",
+          "description": "Research methods and data supporting this mental model",
+          "properties": {
+            "methods": {
+              "type": "array",
+              "description": "Research methods used",
+              "items": {
+                "type": "string"
+              }
+            },
+            "participants": {
+              "type": "object",
+              "description": "Information about research participants",
+              "properties": {
+                "count": {
+                  "type": "integer",
+                  "description": "Number of participants",
+                  "minimum": 0
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Description of participants"
+                }
+              }
+            },
+            "key_findings": {
+              "type": "array",
+              "description": "Key findings from research",
+              "items": {
+                "type": "string"
+              }
+            },
+            "confidence_level": {
+              "type": "string",
+              "description": "Confidence in this mental model",
+              "enum": ["high", "medium", "low", "hypothesis"]
+            }
+          }
+        },
+        "evolution": {
+          "type": "object",
+          "description": "How this mental model might evolve over time",
+          "properties": {
+            "novice_model": {
+              "type": "string",
+              "description": "Mental model of novice users"
+            },
+            "intermediate_model": {
+              "type": "string",
+              "description": "Mental model as users gain experience"
+            },
+            "expert_model": {
+              "type": "string",
+              "description": "Mental model of expert users"
+            },
+            "learning_curve": {
+              "type": "string",
+              "description": "Description of how understanding develops"
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about the mental model",
+      "properties": {
+        "created_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date the mental model was created"
+        },
+        "created_by": {
+          "type": "string",
+          "description": "Who created the mental model"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date the mental model was last updated"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version number",
+          "pattern": "^\\d+\\.\\d+$"
+        },
+        "project_reference": {
+          "type": "string",
+          "description": "Reference to related project"
+        },
+        "tags": {
+          "type": "array",
+          "description": "Tags for categorization",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "1.0",
+      "mental_model": {
+        "title": "File Deletion Mental Model - Cloud Storage",
+        "description": "How users understand file deletion in cloud storage systems",
+        "domain": "Cloud storage file management",
+        "context": "Users managing personal and work files in a cloud storage application",
+        "persona_reference": {
+          "name": "Casual User Chris",
+          "reference": "persona-chris-002"
+        },
+        "user_model": {
+          "overview": "Users think of cloud file deletion like physical trash - once deleted, files go to a trash can and can be recovered, but after emptying trash, they're gone forever.",
+          "concepts": [
+            {
+              "name": "Delete",
+              "user_understanding": "Moves file to a trash/recycle bin where it can be recovered",
+              "metaphors": ["Like throwing paper in a trash can", "Like the Recycle Bin on Windows desktop"],
+              "expectations": [
+                "Deleted files can be restored easily",
+                "Files stay in trash for a reasonable time",
+                "Emptying trash permanently removes files"
+              ],
+              "confidence_level": "very_confident"
+            }
+          ],
+          "workflows": [
+            {
+              "workflow_name": "Delete a file",
+              "user_expected_steps": [
+                "Right-click file or select delete button",
+                "File moves to trash",
+                "Can restore from trash if needed",
+                "Files in trash are permanently deleted after 30 days or when trash is emptied"
+              ],
+              "decision_points": [
+                {
+                  "decision": "Whether to permanently delete immediately or move to trash",
+                  "expected_options": ["Move to Trash", "Delete Forever"]
+                }
+              ]
+            }
+          ],
+          "terminology": [
+            {
+              "user_term": "Delete",
+              "user_definition": "Move to trash where it can be recovered",
+              "usage_context": "When wanting to remove a file but keep option to recover"
+            }
+          ],
+          "assumptions": [
+            {
+              "assumption": "Deleted files don't count against storage quota",
+              "confidence": "moderate",
+              "source": "Experience with desktop recycle bin"
+            }
+          ],
+          "common_misconceptions": [
+            {
+              "misconception": "Files in trash are completely removed from servers and don't use storage space",
+              "prevalence": "very_common",
+              "impact": "moderate",
+              "consequences": [
+                "Users are surprised when storage is still full after deleting files",
+                "Users don't understand why they need to empty trash to free up space"
+              ]
+            }
+          ]
+        },
+        "system_model": {
+          "overview": "Files marked as deleted are moved to a trash folder that still counts against quota. They remain there for 30 days or until manually emptied. Multiple versions may be retained.",
+          "concepts": [
+            {
+              "name": "Delete",
+              "actual_implementation": "Sets a 'deleted' flag and moves file pointer to trash folder. File data remains on servers and counts toward storage quota.",
+              "technical_details": "File metadata updated, permissions changed, file moved to .trash directory. All versions retained."
+            }
+          ],
+          "workflows": [
+            {
+              "workflow_name": "Delete a file",
+              "actual_steps": [
+                "User clicks delete",
+                "System updates file metadata to mark as deleted",
+                "System moves file to trash folder",
+                "File continues to count against storage quota",
+                "After 30 days or manual trash emptying, file data is queued for permanent deletion",
+                "Background process eventually removes file data from servers"
+              ]
+            }
+          ],
+          "terminology": [
+            {
+              "system_term": "Soft Delete",
+              "system_definition": "Marking file as deleted while retaining data"
+            }
+          ]
+        },
+        "gaps": [
+          {
+            "gap_type": "conceptual_mismatch",
+            "description": "Users expect trash to be 'free' storage that doesn't count against quota",
+            "severity": "high",
+            "user_expectation": "Files in trash don't use storage space",
+            "system_reality": "Files in trash still count against storage quota",
+            "consequences": [
+              "Users frustrated when storage remains full after deleting files",
+              "Users don't empty trash because they think it doesn't matter",
+              "Users may purchase more storage unnecessarily"
+            ],
+            "evidence": [
+              "Support tickets: 'I deleted files but my storage is still full'",
+              "User quote: 'Why do I need to empty the trash? Isn't it already deleted?'"
+            ],
+            "affected_tasks": ["Managing storage space", "Understanding storage usage"]
+          }
+        ],
+        "design_model": {
+          "overview": "Design should make it clear that trash uses storage and guide users to empty it regularly",
+          "principles": [
+            "Make storage implications of trash immediately visible",
+            "Provide clear affordances for emptying trash",
+            "Use terminology that matches user mental model"
+          ],
+          "recommendations": [
+            {
+              "recommendation": "Show storage usage breakdown that clearly indicates trash is using space",
+              "priority": "high",
+              "rationale": "Makes the system model visible and corrects misconception",
+              "addresses_gaps": ["conceptual_mismatch"],
+              "implementation_approach": "Add visual indicator in storage dashboard showing 'X GB in Trash (counts toward storage)'",
+              "examples": ["Gmail's storage breakdown shows trash separately", "Dropbox shows deleted files in storage calculation"]
+            },
+            {
+              "recommendation": "Add proactive prompts to empty trash when storage is running low",
+              "priority": "high",
+              "rationale": "Guides users to the correct action at the right time",
+              "addresses_gaps": ["conceptual_mismatch"],
+              "implementation_approach": "When storage reaches 90%, show notification: 'Free up X GB by emptying trash'",
+              "examples": []
+            }
+          ],
+          "interface_implications": [
+            {
+              "area": "Storage Dashboard",
+              "implication": "Must clearly show trash as part of used storage with visual emphasis"
+            },
+            {
+              "area": "Language/Copy",
+              "implication": "Use plain language: 'Files in trash still use your storage space' rather than technical terms"
+            }
+          ]
+        },
+        "research_basis": {
+          "methods": ["User interviews", "Usability testing", "Support ticket analysis"],
+          "participants": {
+            "count": 20,
+            "description": "Mix of novice and intermediate cloud storage users"
+          },
+          "key_findings": [
+            "18 out of 20 users expected trash to not count toward storage",
+            "Users familiar with desktop recycle bins had strongest misconceptions",
+            "Users rarely checked trash folder unless specifically looking for a file"
+          ],
+          "confidence_level": "high"
+        },
+        "evolution": {
+          "novice_model": "Trash works exactly like desktop recycle bin",
+          "intermediate_model": "Trash might use storage but unsure of details",
+          "expert_model": "Understands trash counts toward quota and manages it proactively",
+          "learning_curve": "Most users only learn after encountering storage limit issue"
+        }
+      },
+      "metadata": {
+        "created_date": "2025-01-23T10:00:00Z",
+        "created_by": "UX Research Team",
+        "version": "1.0",
+        "project_reference": "Storage-UX-Improvements-2025",
+        "tags": ["cloud-storage", "file-management", "mental-models"]
+      }
+    }
+  ]
+}

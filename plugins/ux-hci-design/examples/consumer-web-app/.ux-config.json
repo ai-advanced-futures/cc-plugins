@@ -1,0 +1,32 @@
+{
+  "project": {
+    "name": "ShopEasy Checkout Redesign",
+    "version": "1.0.0",
+    "type": "consumer-web-app",
+    "description": "E-commerce checkout flow redesign for improved conversion"
+  },
+  "context": {
+    "platform": "web_responsive",
+    "target_audience": "general_consumers",
+    "has_ai_features": false,
+    "accessibility_priority": "high",
+    "mobile_priority": "critical"
+  },
+  "evaluation": {
+    "weighting_profile": "mobile-first",
+    "target_wcag_level": "AA",
+    "target_ux_score": 80,
+    "required_frameworks": ["nielsen", "wcag", "rams", "norman"]
+  },
+  "artifacts": {
+    "personas_dir": "personas/",
+    "journey_maps_dir": "journey-maps/",
+    "prototypes_dir": "prototypes/",
+    "evaluation_dir": "evaluation/"
+  },
+  "metadata": {
+    "created": "2025-01-20",
+    "last_updated": "2025-01-20",
+    "status": "completed"
+  }
+}

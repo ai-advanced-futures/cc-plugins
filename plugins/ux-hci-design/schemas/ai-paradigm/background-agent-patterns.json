@@ -1,0 +1,537 @@
+{
+  "title": "Background Agent Interaction Patterns",
+  "description": "Framework for evaluating AI that operates autonomously in the background with human oversight. Based on Birdzhan Hassan's research on the shift from chat-alike interfaces to background agents.",
+  "version": "1.0.0",
+  "thought_leader": {
+    "name": "Birdzhan Hassan",
+    "key_insight": "The 'chat-alike' metaphor limits AI potential. Background agents that work continuously with periodic human touchpoints represent the next paradigm.",
+    "implication": "Design for ambient awareness and appropriate autonomy, not conversational interaction"
+  },
+  "paradigm_shift": {
+    "from": "Chat-alike - Human initiates, AI responds, human reviews in real-time",
+    "to": "Background agent - AI works continuously, human oversees periodically"
+  },
+  "evaluation_dimensions": [
+    {
+      "number": 1,
+      "name": "Autonomous Action Boundaries",
+      "description": "Are boundaries for autonomous action appropriate and clear?",
+      "key_aspects": [
+        "Clear boundary definition",
+        "User customization",
+        "Risk-appropriate limits",
+        "Trust-adaptive boundaries"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Are autonomous action boundaries clearly defined?",
+          "Can users customize what agent does autonomously?",
+          "Are high-risk actions appropriately bounded?",
+          "Do boundaries adapt to demonstrated trust?"
+        ],
+        "what_to_look_for": [
+          "Explicit capability statements",
+          "Granular boundary controls",
+          "Risk-tiered action permissions",
+          "Progressive autonomy expansion"
+        ],
+        "anti_patterns": [
+          {
+            "pattern": "Undefined boundaries",
+            "description": "User doesn't know what agent might do",
+            "impact": "Surprise actions, trust erosion"
+          },
+          {
+            "pattern": "Fixed permissions",
+            "description": "No ability to customize agent boundaries",
+            "impact": "Too restrictive or too permissive for user needs"
+          },
+          {
+            "pattern": "Equal treatment of risk",
+            "description": "Same autonomy for low and high stakes",
+            "impact": "Either inefficient or dangerous"
+          }
+        ]
+      },
+      "autonomy_levels": [
+        {
+          "level": "Tight",
+          "description": "Agent takes no action without approval",
+          "appropriate_for": "New users, high-stakes domains, unfamiliar tasks"
+        },
+        {
+          "level": "Moderate",
+          "description": "Agent handles routine, escalates exceptions",
+          "appropriate_for": "Established users, mixed-stakes domains"
+        },
+        {
+          "level": "Loose",
+          "description": "Agent handles most situations, reports results",
+          "appropriate_for": "Experienced users, lower-stakes domains"
+        },
+        {
+          "level": "Full autonomy",
+          "description": "Agent acts independently, human reviews periodically",
+          "appropriate_for": "High-trust relationships, routine domains"
+        }
+      ],
+      "customization_dimensions": [
+        {
+          "dimension": "Action types",
+          "examples": ["Create", "Modify", "Delete", "Send"]
+        },
+        {
+          "dimension": "Value thresholds",
+          "examples": ["Monetary limits", "Importance ratings"]
+        },
+        {
+          "dimension": "Recipient types",
+          "examples": ["Internal only", "External allowed", "Specific contacts"]
+        },
+        {
+          "dimension": "Reversibility requirements",
+          "examples": ["Reversible actions only", "Confirmation for irreversible"]
+        }
+      ],
+      "metrics": [
+        {
+          "name": "boundary_clarity_score",
+          "description": "User can predict what agent will/won't do",
+          "measurement": "User prediction accuracy"
+        },
+        {
+          "name": "customization_utilization",
+          "description": "Users actively customize boundaries",
+          "measurement": "Percentage of users modifying defaults"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "name": "Proactive Notification",
+      "description": "Does agent notify humans appropriately?",
+      "key_aspects": [
+        "Priority-based notification",
+        "Manageable frequency",
+        "Actionable context",
+        "User preference respect"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Are notifications appropriately prioritized?",
+          "Is notification frequency manageable?",
+          "Do notifications provide actionable context?",
+          "Can users tune notification preferences?"
+        ],
+        "what_to_look_for": [
+          "Clear priority levels visible",
+          "Batching and summarization",
+          "Context sufficient for action",
+          "Granular notification controls"
+        ],
+        "anti_patterns": [
+          {
+            "pattern": "Notification overload",
+            "description": "Too many notifications, user ignores all",
+            "impact": "Important notifications missed"
+          },
+          {
+            "pattern": "Undernotification",
+            "description": "Important events not surfaced",
+            "impact": "User blindsided by issues"
+          },
+          {
+            "pattern": "Context-free notifications",
+            "description": "Notification without enough info to act",
+            "impact": "User must investigate to understand"
+          },
+          {
+            "pattern": "One-size-fits-all",
+            "description": "No ability to customize notifications",
+            "impact": "Either too much or too little for user needs"
+          }
+        ]
+      },
+      "notification_types": [
+        {
+          "type": "Achievement",
+          "trigger": "Significant goal accomplished",
+          "priority": "Medium",
+          "example": "Quarterly report completed and ready for review"
+        },
+        {
+          "type": "Exception",
+          "trigger": "Something unexpected happened",
+          "priority": "High",
+          "example": "Unusual activity detected, action paused"
+        },
+        {
+          "type": "Decision Point",
+          "trigger": "Human input needed to proceed",
+          "priority": "High",
+          "example": "Ambiguous situation, your guidance needed"
+        },
+        {
+          "type": "Status Update",
+          "trigger": "Periodic progress update",
+          "priority": "Low",
+          "example": "Weekly summary: 42 tasks completed"
+        },
+        {
+          "type": "Learning",
+          "trigger": "Agent learned something new",
+          "priority": "Low",
+          "example": "Noticed you prefer morning meetings, adjusting..."
+        }
+      ],
+      "metrics": [
+        {
+          "name": "signal_to_noise_ratio",
+          "description": "Actionable notifications / total notifications",
+          "target": ">80%"
+        },
+        {
+          "name": "notification_action_rate",
+          "description": "Notifications that result in user action",
+          "target": ">50%"
+        },
+        {
+          "name": "important_event_surfacing",
+          "description": "Important events that were notified",
+          "target": ">99%"
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "name": "Ambient Awareness",
+      "description": "Can humans maintain awareness without active monitoring?",
+      "key_aspects": [
+        "At-a-glance status",
+        "Progressive disclosure",
+        "Proactive problem surfacing",
+        "Attention-proportional design"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Can users maintain awareness at a glance?",
+          "Is there progressive disclosure of detail?",
+          "Are problems surfaced proactively?",
+          "Is awareness proportional to attention required?"
+        ],
+        "what_to_look_for": [
+          "Clear health indicators (green/yellow/red)",
+          "Summary → detail hierarchy",
+          "Anomaly highlighting",
+          "Calm technology principles"
+        ],
+        "anti_patterns": [
+          {
+            "pattern": "Active monitoring required",
+            "description": "User must constantly check to stay informed",
+            "impact": "Exhausting, unsustainable"
+          },
+          {
+            "pattern": "All-or-nothing visibility",
+            "description": "Either no info or overwhelming detail",
+            "impact": "User can't find right level"
+          },
+          {
+            "pattern": "Hidden problems",
+            "description": "Issues not surfaced until critical",
+            "impact": "Late discovery, worse outcomes"
+          },
+          {
+            "pattern": "Attention-demanding when unnecessary",
+            "description": "Routine status demands user attention",
+            "impact": "Attention fatigue"
+          }
+        ]
+      },
+      "awareness_patterns": [
+        {
+          "pattern": "Health dashboard",
+          "description": "At-a-glance system health indicators",
+          "elements": ["Status colors", "Key metrics", "Trend arrows"]
+        },
+        {
+          "pattern": "Exception-based display",
+          "description": "Only show what needs attention",
+          "elements": ["Problem list", "Severity indicators", "Quick actions"]
+        },
+        {
+          "pattern": "Activity feed",
+          "description": "Chronological stream of agent actions",
+          "elements": ["Action log", "Filtering", "Search"]
+        },
+        {
+          "pattern": "Trend visualization",
+          "description": "How things are changing over time",
+          "elements": ["Charts", "Comparisons", "Anomaly markers"]
+        }
+      ],
+      "metrics": [
+        {
+          "name": "time_to_awareness",
+          "description": "How quickly users notice important events",
+          "target": "<1 hour for important, <5 min for critical"
+        },
+        {
+          "name": "awareness_accuracy",
+          "description": "User mental model matches actual state",
+          "measurement": "User prediction of system state"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "name": "Recovery and Rollback",
+      "description": "Can autonomous actions be recovered from?",
+      "key_aspects": [
+        "Undo capabilities",
+        "Audit trail",
+        "State snapshots",
+        "Irreversibility protection"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Can autonomous actions be undone?",
+          "Is there an audit trail of actions?",
+          "Can the agent be 'rewound' to previous state?",
+          "Are irreversible actions appropriately protected?"
+        ],
+        "what_to_look_for": [
+          "One-click undo for recent actions",
+          "Complete action history",
+          "Point-in-time recovery options",
+          "Extra confirmation for irreversible actions"
+        ],
+        "anti_patterns": [
+          {
+            "pattern": "No undo",
+            "description": "Actions cannot be reversed",
+            "impact": "Mistakes permanent, trust eroded"
+          },
+          {
+            "pattern": "No audit trail",
+            "description": "Can't see what agent did",
+            "impact": "Can't understand or debug issues"
+          },
+          {
+            "pattern": "No snapshots",
+            "description": "Can't revert to earlier state",
+            "impact": "Compound errors hard to fix"
+          },
+          {
+            "pattern": "Silent irreversibility",
+            "description": "Irreversible actions not flagged",
+            "impact": "User doesn't know to verify first"
+          }
+        ]
+      },
+      "recovery_capabilities": [
+        {
+          "level": "Immediate undo",
+          "description": "One-click reversal of recent action",
+          "scope": "Single action",
+          "time_limit": "Within minutes"
+        },
+        {
+          "level": "Selective undo",
+          "description": "Undo specific actions from history",
+          "scope": "Chosen actions",
+          "time_limit": "Within days"
+        },
+        {
+          "level": "Point-in-time recovery",
+          "description": "Revert to state at specific time",
+          "scope": "Full state",
+          "time_limit": "Within retention period"
+        },
+        {
+          "level": "Incremental rollback",
+          "description": "Step backwards through history",
+          "scope": "Progressive reversal",
+          "time_limit": "Any retained history"
+        }
+      ],
+      "metrics": [
+        {
+          "name": "undo_success_rate",
+          "description": "Successful undos / attempted undos",
+          "target": ">99%"
+        },
+        {
+          "name": "recovery_completeness",
+          "description": "State fully restored after recovery",
+          "target": ">95%"
+        },
+        {
+          "name": "audit_trail_completeness",
+          "description": "All actions logged with context",
+          "target": "100%"
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "name": "Trust Evolution",
+      "description": "Does the human-agent trust relationship develop appropriately?",
+      "key_aspects": [
+        "Trust expansion mechanisms",
+        "Trust contraction on failure",
+        "Transparent calibration",
+        "Manual adjustment"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Can boundaries expand as trust is earned?",
+          "Does trust contract appropriately after failures?",
+          "Is trust calibration transparent?",
+          "Can users manually adjust trust levels?"
+        ],
+        "what_to_look_for": [
+          "Gradual autonomy expansion over time",
+          "Automatic boundary tightening after errors",
+          "Visible trust level indicators",
+          "User override of automatic trust adjustments"
+        ],
+        "anti_patterns": [
+          {
+            "pattern": "Static trust",
+            "description": "Same boundaries regardless of track record",
+            "impact": "No benefit from proven reliability"
+          },
+          {
+            "pattern": "No failure response",
+            "description": "Errors don't affect boundaries",
+            "impact": "Repeated failures, eroded user trust"
+          },
+          {
+            "pattern": "Opaque trust",
+            "description": "User doesn't know current trust level",
+            "impact": "Unpredictable behavior"
+          },
+          {
+            "pattern": "Locked trust",
+            "description": "User can't manually adjust",
+            "impact": "Stuck in inappropriate trust level"
+          }
+        ]
+      },
+      "trust_progression": [
+        {
+          "stage": "New agent",
+          "characteristics": [
+            "Tight boundaries",
+            "Frequent check-ins",
+            "Explicit approval for most actions"
+          ]
+        },
+        {
+          "stage": "Proving",
+          "characteristics": [
+            "Gradual boundary expansion",
+            "Reduced check-in frequency",
+            "More routine actions autonomous"
+          ]
+        },
+        {
+          "stage": "Trusted",
+          "characteristics": [
+            "Broad autonomy",
+            "Periodic review",
+            "Exception-only oversight"
+          ]
+        },
+        {
+          "stage": "After failure",
+          "characteristics": [
+            "Boundaries contract",
+            "Increased oversight temporarily",
+            "Trust rebuilds through success"
+          ]
+        }
+      ],
+      "metrics": [
+        {
+          "name": "trust_trajectory",
+          "description": "Direction of trust change over time",
+          "measurement": "Positive = expanding, negative = contracting"
+        },
+        {
+          "name": "failure_response_appropriateness",
+          "description": "Trust adjustment matches failure severity",
+          "target": "Proportional response"
+        },
+        {
+          "name": "user_override_rate",
+          "description": "How often users manually adjust trust",
+          "measurement": "Lower = automatic calibration working"
+        }
+      ]
+    }
+  ],
+  "evaluation_methodology": {
+    "steps": [
+      {
+        "step": 1,
+        "name": "Map Autonomous Behaviors",
+        "actions": [
+          "Identify all autonomous actions agent can take",
+          "Document current boundaries",
+          "Classify by risk level"
+        ]
+      },
+      {
+        "step": 2,
+        "name": "Evaluate Notification System",
+        "actions": [
+          "Review notification types and triggers",
+          "Assess frequency and priority calibration",
+          "Test user customization options"
+        ]
+      },
+      {
+        "step": 3,
+        "name": "Test Ambient Awareness",
+        "actions": [
+          "Use dashboards and summaries",
+          "Assess ability to maintain awareness passively",
+          "Test problem surfacing"
+        ]
+      },
+      {
+        "step": 4,
+        "name": "Test Recovery Mechanisms",
+        "actions": [
+          "Attempt undo of autonomous actions",
+          "Review audit trail completeness",
+          "Test point-in-time recovery"
+        ]
+      },
+      {
+        "step": 5,
+        "name": "Assess Trust Evolution",
+        "actions": [
+          "Track trust changes over time",
+          "Introduce failures and observe response",
+          "Test manual trust adjustment"
+        ]
+      }
+    ]
+  },
+  "usage_guide": {
+    "when_to_use": [
+      "Evaluating autonomous AI agents",
+      "Designing always-on AI assistants",
+      "Building AI that works in the background",
+      "Assessing AI that takes proactive actions"
+    ],
+    "complements": [
+      "ai-orchestration-patterns (for active direction)",
+      "ai-integration-maturity (for Stage 4-5 features)",
+      "ai-native-metrics (for measurement)"
+    ]
+  }
+}

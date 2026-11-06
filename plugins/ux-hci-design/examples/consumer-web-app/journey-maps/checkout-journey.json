@@ -1,0 +1,196 @@
+{
+  "schema_version": "1.0",
+  "journey_map": {
+    "journey_id": "JM-001",
+    "title": "E-commerce Checkout Journey",
+    "persona_id": "P-001",
+    "scenario": "Sarah needs to quickly purchase school supplies for her kids before a work meeting",
+    "goal": "Complete purchase efficiently during limited time window",
+    "stages": [
+      {
+        "stage_id": "S-001",
+        "name": "Cart Review",
+        "description": "User reviews items in cart before checkout",
+        "touchpoints": ["Cart page", "Mobile app"],
+        "actions": [
+          "View cart summary",
+          "Update quantities",
+          "Remove unwanted items"
+        ],
+        "thoughts": "Do I have everything? Is this the best price?",
+        "emotions": {
+          "feeling": "cautious",
+          "intensity": 5,
+          "description": "Wants to verify before committing"
+        },
+        "pain_points": [
+          "Can't see total with shipping yet",
+          "Promo code field not visible"
+        ],
+        "opportunities": [
+          "Show estimated total with shipping range",
+          "Display applicable promo codes"
+        ]
+      },
+      {
+        "stage_id": "S-002",
+        "name": "Checkout Initiation",
+        "description": "User clicks checkout and chooses path",
+        "touchpoints": ["Checkout button", "Account modal"],
+        "actions": [
+          "Click checkout",
+          "Choose guest or sign in"
+        ],
+        "thoughts": "I don't want to create another account",
+        "emotions": {
+          "feeling": "frustrated",
+          "intensity": 7,
+          "description": "Friction from account requirement"
+        },
+        "pain_points": [
+          "Guest checkout buried below sign-in",
+          "Benefits of account unclear"
+        ],
+        "opportunities": [
+          "Make guest checkout equally prominent",
+          "Show clear account benefits"
+        ]
+      },
+      {
+        "stage_id": "S-003",
+        "name": "Shipping Information",
+        "description": "User enters delivery address",
+        "touchpoints": ["Address form", "Address autocomplete"],
+        "actions": [
+          "Enter shipping address",
+          "Select from saved addresses",
+          "Choose delivery speed"
+        ],
+        "thoughts": "Can I get this by Friday?",
+        "emotions": {
+          "feeling": "neutral",
+          "intensity": 5,
+          "description": "Task-focused"
+        },
+        "pain_points": [
+          "Form requires too many fields",
+          "Delivery dates not clear until later"
+        ],
+        "opportunities": [
+          "Use address autocomplete",
+          "Show delivery date estimates immediately"
+        ]
+      },
+      {
+        "stage_id": "S-004",
+        "name": "Shipping Options",
+        "description": "User selects shipping method",
+        "touchpoints": ["Shipping options panel"],
+        "actions": [
+          "Compare shipping options",
+          "Select preferred method"
+        ],
+        "thoughts": "Which one gets it there on time? Is express worth it?",
+        "emotions": {
+          "feeling": "confused",
+          "intensity": 6,
+          "description": "Too many options, unclear value"
+        },
+        "pain_points": [
+          "Price differences not justified",
+          "Delivery windows too vague"
+        ],
+        "opportunities": [
+          "Show specific delivery dates",
+          "Highlight best value option"
+        ]
+      },
+      {
+        "stage_id": "S-005",
+        "name": "Payment",
+        "description": "User enters payment information",
+        "touchpoints": ["Payment form", "Digital wallets"],
+        "actions": [
+          "Enter card details OR",
+          "Use digital wallet"
+        ],
+        "thoughts": "Is this secure? I hope my card works.",
+        "emotions": {
+          "feeling": "anxious",
+          "intensity": 7,
+          "description": "Security concerns at payment"
+        },
+        "pain_points": [
+          "Card form intimidating",
+          "Digital wallets not prominent"
+        ],
+        "opportunities": [
+          "Lead with digital wallet options",
+          "Show security badges prominently"
+        ]
+      },
+      {
+        "stage_id": "S-006",
+        "name": "Review & Confirm",
+        "description": "User reviews order before submitting",
+        "touchpoints": ["Order summary", "Confirm button"],
+        "actions": [
+          "Review all details",
+          "Apply promo code",
+          "Place order"
+        ],
+        "thoughts": "Is everything correct? Did I miss anything?",
+        "emotions": {
+          "feeling": "cautious",
+          "intensity": 6,
+          "description": "Final check before commitment"
+        },
+        "pain_points": [
+          "Hard to edit earlier steps",
+          "Terms and conditions overwhelming"
+        ],
+        "opportunities": [
+          "Easy inline editing",
+          "Simplified terms summary"
+        ]
+      },
+      {
+        "stage_id": "S-007",
+        "name": "Confirmation",
+        "description": "Order confirmed, next steps shown",
+        "touchpoints": ["Confirmation page", "Email"],
+        "actions": [
+          "View confirmation",
+          "Save order number",
+          "Continue shopping"
+        ],
+        "thoughts": "Great, it's done! When will it arrive?",
+        "emotions": {
+          "feeling": "relieved",
+          "intensity": 8,
+          "description": "Task completed successfully"
+        },
+        "pain_points": [
+          "Tracking info not immediate",
+          "Account push too aggressive"
+        ],
+        "opportunities": [
+          "Show tracking timeline",
+          "Gentle account creation option"
+        ]
+      }
+    ],
+    "metrics": {
+      "current_completion_rate": 0.53,
+      "target_completion_rate": 0.75,
+      "average_time": "4m 30s",
+      "target_time": "2m 30s",
+      "drop_off_points": ["S-002", "S-005"]
+    }
+  },
+  "metadata": {
+    "created_date": "2025-01-20",
+    "data_sources": ["Analytics", "User interviews", "Heatmaps"],
+    "confidence_level": "high"
+  }
+}

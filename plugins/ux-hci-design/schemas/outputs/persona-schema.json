@@ -1,0 +1,473 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude.ai/schemas/ux-hci-design/persona-schema.json",
+  "title": "UX Persona Schema",
+  "description": "Schema for user personas created during the Empathize phase of UX design. Personas represent archetypal users with specific demographics, goals, behaviors, and pain points.",
+  "type": "object",
+  "required": ["schema_version", "persona"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version of the persona schema",
+      "pattern": "^\\d+\\.\\d+$",
+      "default": "1.0"
+    },
+    "persona": {
+      "type": "object",
+      "description": "The persona definition",
+      "required": ["name", "demographics", "goals", "pain_points", "behaviors", "needs"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Persona name (typically descriptive, e.g., 'Tech-Savvy Sarah' or 'Budget-Conscious Bob')",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "tagline": {
+          "type": "string",
+          "description": "Brief one-line description of the persona",
+          "maxLength": 200
+        },
+        "demographics": {
+          "type": "object",
+          "description": "Demographic information about the persona",
+          "properties": {
+            "age_range": {
+              "type": "string",
+              "description": "Age range (e.g., '25-34', '45-60')",
+              "pattern": "^\\d+(-\\d+)?$"
+            },
+            "location": {
+              "type": "string",
+              "description": "Geographic location or type (e.g., 'Urban', 'Suburban', 'Rural', 'San Francisco Bay Area')"
+            },
+            "occupation": {
+              "type": "string",
+              "description": "Job title or occupational category"
+            },
+            "education_level": {
+              "type": "string",
+              "description": "Highest level of education",
+              "enum": ["high_school", "some_college", "bachelors", "masters", "doctorate", "vocational", "other"]
+            },
+            "income_level": {
+              "type": "string",
+              "description": "Income bracket or category",
+              "enum": ["low", "lower_middle", "middle", "upper_middle", "high", "not_applicable"]
+            },
+            "family_status": {
+              "type": "string",
+              "description": "Family situation (e.g., 'Single', 'Married', 'Parent of two', 'Empty nester')"
+            },
+            "tech_proficiency": {
+              "type": "string",
+              "description": "Level of comfort and skill with technology",
+              "enum": ["novice", "intermediate", "advanced", "expert"]
+            }
+          }
+        },
+        "goals": {
+          "type": "array",
+          "description": "Primary goals and motivations that drive the persona",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "required": ["description", "priority"],
+            "properties": {
+              "description": {
+                "type": "string",
+                "description": "Description of the goal",
+                "minLength": 10
+              },
+              "priority": {
+                "type": "string",
+                "description": "Priority level of this goal",
+                "enum": ["critical", "high", "medium", "low"]
+              },
+              "context": {
+                "type": "string",
+                "description": "Context or situation where this goal arises"
+              },
+              "success_criteria": {
+                "type": "string",
+                "description": "How the persona knows they've achieved this goal"
+              }
+            }
+          }
+        },
+        "pain_points": {
+          "type": "array",
+          "description": "Frustrations, obstacles, and challenges the persona faces",
+          "minItems": 1,
+          "maxItems": 15,
+          "items": {
+            "type": "object",
+            "required": ["description", "severity"],
+            "properties": {
+              "description": {
+                "type": "string",
+                "description": "Description of the pain point",
+                "minLength": 10
+              },
+              "severity": {
+                "type": "string",
+                "description": "Severity of this pain point",
+                "enum": ["critical", "high", "medium", "low"]
+              },
+              "frequency": {
+                "type": "string",
+                "description": "How often this pain point occurs",
+                "enum": ["constantly", "frequently", "occasionally", "rarely"]
+              },
+              "context": {
+                "type": "string",
+                "description": "Situation or trigger that causes this pain point"
+              },
+              "current_workaround": {
+                "type": "string",
+                "description": "How the persona currently deals with this problem, if at all"
+              }
+            }
+          }
+        },
+        "behaviors": {
+          "type": "array",
+          "description": "Observable behaviors, habits, and patterns",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "required": ["description", "category"],
+            "properties": {
+              "description": {
+                "type": "string",
+                "description": "Description of the behavior",
+                "minLength": 10
+              },
+              "category": {
+                "type": "string",
+                "description": "Category of behavior",
+                "enum": ["usage_pattern", "decision_making", "communication", "problem_solving", "learning", "social", "purchasing", "other"]
+              },
+              "frequency": {
+                "type": "string",
+                "description": "How often this behavior occurs",
+                "enum": ["constantly", "daily", "weekly", "monthly", "occasionally", "rarely"]
+              },
+              "triggers": {
+                "type": "array",
+                "description": "What triggers this behavior",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "impact": {
+                "type": "string",
+                "description": "Impact or significance of this behavior for design"
+              }
+            }
+          }
+        },
+        "needs": {
+          "type": "array",
+          "description": "Fundamental needs that must be addressed",
+          "minItems": 1,
+          "maxItems": 15,
+          "items": {
+            "type": "object",
+            "required": ["description", "type"],
+            "properties": {
+              "description": {
+                "type": "string",
+                "description": "Description of the need",
+                "minLength": 10
+              },
+              "type": {
+                "type": "string",
+                "description": "Type of need",
+                "enum": ["functional", "emotional", "social", "aspirational", "informational", "experiential"]
+              },
+              "priority": {
+                "type": "string",
+                "description": "Priority of this need",
+                "enum": ["must_have", "should_have", "nice_to_have"]
+              },
+              "unmet": {
+                "type": "boolean",
+                "description": "Whether this need is currently unmet",
+                "default": false
+              }
+            }
+          }
+        },
+        "context": {
+          "type": "object",
+          "description": "Contextual information about the persona's environment and situation",
+          "properties": {
+            "environment": {
+              "type": "string",
+              "description": "Primary environment where the persona will use the product (e.g., 'Office', 'Home', 'Mobile/On-the-go', 'Hybrid')"
+            },
+            "devices": {
+              "type": "array",
+              "description": "Devices the persona typically uses",
+              "items": {
+                "type": "string",
+                "enum": ["desktop", "laptop", "tablet", "smartphone", "smartwatch", "smart_speaker", "other"]
+              }
+            },
+            "time_constraints": {
+              "type": "string",
+              "description": "Time pressures or constraints the persona faces"
+            },
+            "cognitive_constraints": {
+              "type": "string",
+              "description": "Cognitive load, attention span, or mental model considerations"
+            },
+            "social_context": {
+              "type": "string",
+              "description": "Social environment (e.g., working alone, in teams, with customers)"
+            }
+          }
+        },
+        "quote": {
+          "type": "string",
+          "description": "A representative quote that captures the persona's attitude or perspective",
+          "maxLength": 500
+        },
+        "accessibility_needs": {
+          "type": "array",
+          "description": "Accessibility requirements or preferences",
+          "items": {
+            "type": "object",
+            "required": ["category", "description"],
+            "properties": {
+              "category": {
+                "type": "string",
+                "description": "Category of accessibility need",
+                "enum": ["visual", "auditory", "motor", "cognitive", "temporary_disability", "situational", "preference"]
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of the accessibility need"
+              },
+              "severity": {
+                "type": "string",
+                "description": "Severity or impact",
+                "enum": ["critical", "high", "moderate", "low"]
+              },
+              "assistive_technology": {
+                "type": "array",
+                "description": "Assistive technologies the persona uses",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "ai_interaction_preferences": {
+          "type": "object",
+          "description": "Preferences and attitudes toward AI/automated systems (for AI-HCI contexts)",
+          "properties": {
+            "comfort_level": {
+              "type": "string",
+              "description": "Comfort level with AI systems",
+              "enum": ["very_comfortable", "comfortable", "neutral", "uncomfortable", "very_uncomfortable"]
+            },
+            "trust_level": {
+              "type": "string",
+              "description": "Level of trust in AI decisions",
+              "enum": ["high_trust", "moderate_trust", "low_trust", "very_low_trust"]
+            },
+            "transparency_needs": {
+              "type": "string",
+              "description": "How much explanation and transparency the persona needs from AI",
+              "enum": ["minimal", "moderate", "high", "complete"]
+            },
+            "control_preferences": {
+              "type": "string",
+              "description": "Preference for human control vs. automation",
+              "enum": ["full_automation", "mostly_automated", "balanced", "mostly_manual", "full_manual_control"]
+            },
+            "concerns": {
+              "type": "array",
+              "description": "Specific concerns about AI systems",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "jtbd_integration": {
+          "type": "object",
+          "description": "Integration with Jobs-to-be-Done framework (if applicable)",
+          "properties": {
+            "primary_job": {
+              "type": "string",
+              "description": "Primary job this persona is trying to get done"
+            },
+            "job_context": {
+              "type": "string",
+              "description": "Context and circumstances around the job"
+            },
+            "success_outcomes": {
+              "type": "array",
+              "description": "Desired outcomes that define success",
+              "items": {
+                "type": "string"
+              }
+            },
+            "switch_triggers": {
+              "type": "array",
+              "description": "What would cause this persona to switch solutions",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "segments": {
+          "type": "array",
+          "description": "Market segments or user groups this persona represents",
+          "items": {
+            "type": "string"
+          }
+        },
+        "related_personas": {
+          "type": "array",
+          "description": "References to related or complementary personas",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about the persona creation",
+      "properties": {
+        "created_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date the persona was created"
+        },
+        "created_by": {
+          "type": "string",
+          "description": "Who created the persona"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date the persona was last updated"
+        },
+        "research_basis": {
+          "type": "string",
+          "description": "Research methods used to create this persona (e.g., 'User interviews (n=12), Survey data (n=150), Analytics')"
+        },
+        "confidence_level": {
+          "type": "string",
+          "description": "Confidence level in the persona accuracy",
+          "enum": ["high", "medium", "low", "hypothesis"]
+        },
+        "version": {
+          "type": "string",
+          "description": "Version number of this persona",
+          "pattern": "^\\d+\\.\\d+$"
+        },
+        "tags": {
+          "type": "array",
+          "description": "Tags for categorization and filtering",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "1.0",
+      "persona": {
+        "name": "Tech-Savvy Sarah",
+        "tagline": "Early adopter who values efficiency and innovation",
+        "demographics": {
+          "age_range": "28-35",
+          "location": "Urban",
+          "occupation": "Product Manager",
+          "education_level": "masters",
+          "income_level": "upper_middle",
+          "family_status": "Single",
+          "tech_proficiency": "expert"
+        },
+        "goals": [
+          {
+            "description": "Streamline daily workflows to save at least 2 hours per day",
+            "priority": "critical",
+            "context": "Managing multiple projects with tight deadlines",
+            "success_criteria": "Can complete daily tasks before 5 PM"
+          },
+          {
+            "description": "Stay ahead of industry trends and emerging technologies",
+            "priority": "high",
+            "context": "Career advancement and professional development",
+            "success_criteria": "Able to speak knowledgeably about new tools with colleagues"
+          }
+        ],
+        "pain_points": [
+          {
+            "description": "Context switching between multiple tools disrupts focus and productivity",
+            "severity": "high",
+            "frequency": "constantly",
+            "context": "Using 10+ different tools daily for communication, project management, and development",
+            "current_workaround": "Using browser tabs and desktop notifications, but still loses focus"
+          }
+        ],
+        "behaviors": [
+          {
+            "description": "Checks new product launches on Product Hunt every morning",
+            "category": "usage_pattern",
+            "frequency": "daily",
+            "triggers": ["Morning coffee routine"],
+            "impact": "High receptivity to new tools and early adoption"
+          }
+        ],
+        "needs": [
+          {
+            "description": "Integrated workspace that reduces tool switching",
+            "type": "functional",
+            "priority": "must_have",
+            "unmet": true
+          }
+        ],
+        "context": {
+          "environment": "Office and home hybrid",
+          "devices": ["laptop", "smartphone", "tablet"],
+          "time_constraints": "High pressure to deliver results quickly",
+          "cognitive_constraints": "Frequent interruptions reduce deep work time",
+          "social_context": "Works in collaborative teams, frequent meetings"
+        },
+        "quote": "I don't have time to learn complicated tools. If it doesn't make me faster in the first 5 minutes, I'm moving on.",
+        "accessibility_needs": [],
+        "ai_interaction_preferences": {
+          "comfort_level": "very_comfortable",
+          "trust_level": "moderate_trust",
+          "transparency_needs": "moderate",
+          "control_preferences": "balanced",
+          "concerns": ["Wants to understand AI limitations", "Prefers to verify important decisions"]
+        },
+        "segments": ["Early Adopters", "Power Users"],
+        "related_personas": ["Busy Manager Mike"]
+      },
+      "metadata": {
+        "created_date": "2025-01-23T10:00:00Z",
+        "created_by": "UX Research Team",
+        "confidence_level": "high",
+        "research_basis": "User interviews (n=15), Survey data (n=200)",
+        "version": "1.0",
+        "tags": ["b2b", "productivity", "early-adopter"]
+      }
+    }
+  ]
+}

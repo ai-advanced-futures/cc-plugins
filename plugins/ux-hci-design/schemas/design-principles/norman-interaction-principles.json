@@ -1,0 +1,641 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Don Norman's Interaction Design Principles",
+  "description": "Fundamental principles of interaction design from Don Norman's seminal work 'The Design of Everyday Things' and related writings. These principles explain the psychological foundations of how people interact with designed objects and systems, providing a framework for creating intuitive, learnable, and error-tolerant interfaces.",
+  "version": "1.0.0",
+  "author": "Don Norman",
+  "primary_source": "The Design of Everyday Things (1988, revised 2013)",
+  "year": 1988,
+  "sources": [
+    "https://www.nngroup.com/",
+    "Norman, D. A. (2013). The Design of Everyday Things: Revised and Expanded Edition. Basic Books."
+  ],
+  "context": "These principles derive from cognitive psychology and human factors research. They explain how people form mental models, perceive affordances, and interact with designed systems. Understanding these principles is fundamental to creating usable interfaces.",
+  "principles": [
+    {
+      "number": 1,
+      "name": "Affordances",
+      "short_description": "An affordance is the relationship between the properties of an object and the capabilities of the agent that determine how the object could possibly be used.",
+      "detailed_description": "Affordances are the possible actions between an object and an agent (typically a person). A chair affords sitting because of its height and flat surface relative to human anatomy. In interface design, affordances are the fundamental properties that determine what actions are possible. However, what matters most in design is perceived affordances - whether users perceive that an action is possible, regardless of whether it actually is.",
+      "key_principles": [
+        "Affordances are relationships between objects and agents",
+        "Different agents perceive different affordances",
+        "Perceived affordances matter more than actual affordances in design",
+        "Good design makes affordances perceivable",
+        "Affordances exist independent of user discovery"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "What actions do interface elements afford?",
+          "Are the affordances appropriate for user capabilities?",
+          "Can users perceive the affordances?",
+          "Do elements afford the actions users expect?",
+          "Are false affordances (elements that appear actionable but aren't) avoided?"
+        ],
+        "what_to_look_for": [
+          "Buttons that look pressable",
+          "Links that look clickable",
+          "Draggable elements that appear moveable",
+          "Input fields that invite text entry",
+          "Scrollable areas that suggest more content",
+          "Interactive elements distinct from static content"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "False affordances",
+          "example": "Static text styled to look like a clickable link",
+          "impact": "Users attempt impossible actions, leading to frustration and confusion"
+        },
+        {
+          "issue": "Hidden affordances",
+          "example": "Clickable elements that don't look interactive",
+          "impact": "Users fail to discover available actions and functionality"
+        },
+        {
+          "issue": "Contradictory affordances",
+          "example": "Disabled button that appears enabled, or vice versa",
+          "impact": "User expectations violated, confusion about system state"
+        },
+        {
+          "issue": "Inconsistent affordances",
+          "example": "Some clickable text is underlined, other clickable text is not",
+          "impact": "Users cannot reliably predict what is actionable"
+        }
+      ],
+      "best_practices": [
+        "Make interactive elements look interactive",
+        "Use established conventions for affordances (underlined links, raised buttons)",
+        "Ensure non-interactive elements don't appear interactive",
+        "Provide visual feedback when hovering over interactive elements",
+        "Match visual appearance to functional capabilities",
+        "Test whether users recognize affordances without instruction",
+        "Use appropriate cursor changes to reinforce affordances"
+      ],
+      "related_concepts": [
+        "Perceived affordances - what users think is possible",
+        "Signifiers - communicate where actions should occur (separate but related)",
+        "Anti-affordances - designed to prevent actions"
+      ]
+    },
+    {
+      "number": 2,
+      "name": "Signifiers",
+      "short_description": "Signifiers communicate where the action should take place. They are signals that indicate what affordances are available and how to access them.",
+      "detailed_description": "While affordances define what actions are possible, signifiers communicate where and how to perform those actions. A door handle is a signifier that indicates where to grasp and how to operate the door. In digital interfaces, signifiers include labels, icons, highlights, and visual cues that guide users to discover and activate affordances. Good signifiers make the system understandable and usable.",
+      "key_principles": [
+        "Signifiers communicate where actions occur",
+        "They indicate how to use affordances",
+        "Effective signifiers are perceivable and understandable",
+        "Signifiers can be intentional (designed) or unintentional",
+        "Good design uses clear, consistent signifiers"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Are there clear signifiers for all interactive elements?",
+          "Do signifiers clearly indicate what action will occur?",
+          "Can users easily discover functionality through signifiers?",
+          "Are signifiers consistent across the interface?",
+          "Do signifiers match user expectations from prior experience?"
+        ],
+        "what_to_look_for": [
+          "Clear labels on buttons and controls",
+          "Icons that represent their functions",
+          "Visual highlights on interactive elements",
+          "Hover states showing interactivity",
+          "Focus indicators for keyboard navigation",
+          "Cursor changes indicating interaction types",
+          "Visual cues like arrows, chevrons, or underlines"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Missing signifiers",
+          "example": "Interactive elements with no labels, icons, or visual indication of function",
+          "impact": "Users cannot discover or understand available actions"
+        },
+        {
+          "issue": "Ambiguous signifiers",
+          "example": "Generic icons that could mean multiple things, unclear button labels",
+          "impact": "Users uncertain about what will happen when they act"
+        },
+        {
+          "issue": "Inconsistent signifiers",
+          "example": "Similar actions signified differently in different contexts",
+          "impact": "Users cannot transfer knowledge across interface"
+        },
+        {
+          "issue": "Misleading signifiers",
+          "example": "Signifiers that suggest wrong action or outcome",
+          "impact": "Users develop incorrect mental models and make errors"
+        }
+      ],
+      "best_practices": [
+        "Provide clear labels for all interactive elements",
+        "Use recognizable icons paired with text when meaning might be ambiguous",
+        "Implement consistent signifiers throughout the interface",
+        "Use visual hierarchy to indicate primary vs. secondary actions",
+        "Provide hover and focus states to confirm interactivity",
+        "Follow platform conventions for standard signifiers",
+        "Test signifiers with users to ensure they're understood correctly",
+        "Use multiple signifiers when appropriate (icon + label + color)"
+      ],
+      "related_concepts": [
+        "Affordances - what actions are possible",
+        "Mappings - relationship between signifiers and their effects",
+        "Feedback - confirms that signified action occurred"
+      ]
+    },
+    {
+      "number": 3,
+      "name": "Feedback",
+      "short_description": "Feedback communicates the results of actions. It is information that confirms the system has received input and shows what effect that input had.",
+      "detailed_description": "Feedback is essential for users to understand that their actions have been received and what effect they had. It closes the interaction loop by providing information about results. Feedback must be immediate, clear, and informative. Without adequate feedback, users are uncertain whether their actions succeeded, what state the system is in, and what to do next. Good feedback matches the importance and impact of the action.",
+      "key_principles": [
+        "Provide immediate confirmation that actions are received",
+        "Communicate results of actions clearly",
+        "Match feedback to the importance of the action",
+        "Make feedback perceivable but not intrusive",
+        "Continuous feedback for ongoing operations"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Do all user actions receive timely feedback?",
+          "Is feedback clear and informative about what happened?",
+          "Is the timing of feedback appropriate (immediate vs. progressive)?",
+          "Does feedback match the significance of the action?",
+          "Can users understand system state from feedback?"
+        ],
+        "what_to_look_for": [
+          "Visual confirmation of button clicks and interactions",
+          "Progress indicators for ongoing operations",
+          "Success and error messages after actions complete",
+          "State changes that reflect user actions",
+          "Loading indicators for delayed responses",
+          "Sound or haptic feedback for important actions (where appropriate)",
+          "Visual changes showing system response"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "No feedback for actions",
+          "example": "Button click produces no visible response, leaving users uncertain",
+          "impact": "Users don't know if action was received, may click multiple times"
+        },
+        {
+          "issue": "Delayed feedback",
+          "example": "Feedback arrives so late users have moved on or taken other actions",
+          "impact": "Users lose connection between action and result, confusion about cause"
+        },
+        {
+          "issue": "Insufficient feedback",
+          "example": "Vague messages like 'Done' without explaining what was accomplished",
+          "impact": "Users uncertain about what actually happened"
+        },
+        {
+          "issue": "Overwhelming feedback",
+          "example": "Excessive animations, sounds, or messages for minor actions",
+          "impact": "Feedback becomes noise, users learn to ignore it"
+        }
+      ],
+      "best_practices": [
+        "Provide immediate visual feedback for all user actions (within 0.1 seconds)",
+        "Show progress indicators for operations taking more than 1 second",
+        "Display clear success/error messages after significant actions",
+        "Use appropriate feedback modalities (visual, audio, haptic) for context",
+        "Make feedback proportional to action importance",
+        "Ensure feedback is perceivable but not disruptive to workflow",
+        "Provide continuous feedback for ongoing operations",
+        "Include enough information so users understand what happened"
+      ],
+      "related_concepts": [
+        "Visibility of system status (Nielsen's Heuristics)",
+        "Immediate vs. eventual feedback",
+        "Feed-forward - showing expected results before action is taken"
+      ]
+    },
+    {
+      "number": 4,
+      "name": "Conceptual Models (Mental Models)",
+      "short_description": "A conceptual model is an explanation of how something works. Users form mental models of systems based on their experience and understanding.",
+      "detailed_description": "Users create mental models - internal representations of how things work. Good design provides a clear conceptual model through the system image (all information available from the product itself). When the designer's conceptual model matches the user's mental model, the system is intuitive. When they diverge, users struggle. The system image - created through design, documentation, and interaction - is the only communication channel between designer and user.",
+      "key_principles": [
+        "Users form mental models from system image",
+        "Designer's model must be communicated through system image",
+        "Good design makes conceptual model clear and consistent",
+        "Mental models influence predictions and expectations",
+        "Inconsistent models lead to confusion and errors"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Does the interface clearly communicate how the system works?",
+          "Is the conceptual model consistent throughout?",
+          "Can users predict system behavior from their mental model?",
+          "Does the system image support developing accurate mental models?",
+          "Are there conflicting signals about how the system works?"
+        ],
+        "what_to_look_for": [
+          "Consistent metaphors and terminology",
+          "Clear information architecture that reveals structure",
+          "Predictable behavior based on established patterns",
+          "Documentation and help that explains the conceptual model",
+          "Visual structure that reveals functional organization",
+          "Consistent cause-and-effect relationships"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Inconsistent conceptual model",
+          "example": "System sometimes works like a file system, sometimes like a database, confusing users",
+          "impact": "Users cannot predict behavior, must memorize rather than understand"
+        },
+        {
+          "issue": "Hidden conceptual model",
+          "example": "Complex system with no clear explanation of how it works",
+          "impact": "Users never develop accurate mental model, rely on trial and error"
+        },
+        {
+          "issue": "Conflicting models",
+          "example": "Different parts of system suggest different underlying models",
+          "impact": "Users confused about how system actually works"
+        },
+        {
+          "issue": "Model-reality mismatch",
+          "example": "System image suggests one model but actual behavior follows different rules",
+          "impact": "User expectations violated, errors and frustration"
+        }
+      ],
+      "best_practices": [
+        "Use consistent metaphors throughout the interface (folders, documents, trash, etc.)",
+        "Make system structure visible and understandable",
+        "Provide clear explanations of how the system works",
+        "Ensure behavior matches the suggested conceptual model",
+        "Use familiar models when possible (leverage existing user knowledge)",
+        "Test whether users develop accurate mental models through use",
+        "Document the conceptual model explicitly when complex",
+        "Maintain consistency between model and all system behaviors"
+      ],
+      "related_concepts": [
+        "System image - all perceivable aspects of the system",
+        "Designer's model - how designer intends system to work",
+        "User's mental model - how user thinks system works",
+        "Gulf of evaluation - difficulty understanding system state",
+        "Gulf of execution - difficulty determining how to act"
+      ]
+    },
+    {
+      "number": 5,
+      "name": "Constraints",
+      "short_description": "Constraints limit the possible actions that can be taken. They guide users toward correct actions and prevent errors.",
+      "detailed_description": "Constraints reduce the number of possible actions at any moment, making interfaces easier to use and errors less likely. There are four types: physical constraints (literal limitations), cultural constraints (conventions), semantic constraints (meaning-based), and logical constraints (reasonable relationships). Good design uses constraints to guide users naturally toward correct actions without explicit instruction.",
+      "key_principles": [
+        "Constraints limit possibilities to reduce errors",
+        "Different types serve different purposes",
+        "Good constraints feel natural, not restrictive",
+        "Constraints guide without explicit instruction",
+        "Use constraints to prevent errors rather than recover from them"
+      ],
+      "types": {
+        "physical": {
+          "description": "Physical limitations that prevent wrong actions",
+          "digital_examples": [
+            "Input fields that only accept certain characters",
+            "Drag targets that only accept compatible items",
+            "Disabled buttons when actions aren't available"
+          ]
+        },
+        "cultural": {
+          "description": "Conventions and learned behaviors",
+          "digital_examples": [
+            "Red for stop/error, green for go/success",
+            "Icons with conventional meanings (trash for delete)",
+            "Reading order (left-to-right in Western cultures)"
+          ]
+        },
+        "semantic": {
+          "description": "Meaning-based constraints from context",
+          "digital_examples": [
+            "Email field requires valid email format",
+            "Date picker prevents selecting dates in the past",
+            "Password field requires certain character types"
+          ]
+        },
+        "logical": {
+          "description": "Reasonable relationships between elements",
+          "digital_examples": [
+            "Next button disabled until current step complete",
+            "Undo only available after an action is taken",
+            "Save only enabled when changes have been made"
+          ]
+        }
+      },
+      "evaluation_criteria": {
+        "questions": [
+          "Are constraints used to prevent common errors?",
+          "Do constraints feel natural and helpful rather than arbitrary?",
+          "Are impossible actions prevented rather than just warned against?",
+          "Do constraints leverage physical, cultural, semantic, or logical principles?",
+          "Are constraints clear enough that users understand why they exist?"
+        ],
+        "what_to_look_for": [
+          "Disabled controls when actions aren't appropriate",
+          "Input validation preventing invalid data",
+          "Drag-and-drop that only allows valid combinations",
+          "Form fields that guide correct input format",
+          "Stepped processes that prevent skipping necessary steps",
+          "Visual or interactive limitations that match business rules"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Missing constraints",
+          "example": "Allowing users to enter invalid data then showing error after submission",
+          "impact": "Errors that could have been prevented occur frequently"
+        },
+        {
+          "issue": "Arbitrary constraints",
+          "example": "Limiting actions without clear reason or benefit",
+          "impact": "Users frustrated by unnecessary limitations"
+        },
+        {
+          "issue": "Inconsistent constraints",
+          "example": "Some email fields validate format, others don't until submission",
+          "impact": "Users uncertain about what's actually required or allowed"
+        },
+        {
+          "issue": "Hidden constraints",
+          "example": "Preventing actions without explaining why they're not available",
+          "impact": "Users confused about why they can't do what they expect"
+        }
+      ],
+      "best_practices": [
+        "Use constraints to prevent errors rather than reporting them after the fact",
+        "Disable unavailable options rather than showing errors when selected",
+        "Provide input masking for formatted data (phone numbers, credit cards)",
+        "Use appropriate input types that constrain naturally (date pickers, dropdowns)",
+        "Make constraints perceivable - show why options are unavailable",
+        "Leverage cultural conventions (color meanings, icon conventions)",
+        "Apply semantic constraints based on meaning (email format, positive numbers)",
+        "Use logical constraints based on reasonable relationships (next after current)"
+      ],
+      "related_concepts": [
+        "Error prevention (Nielsen's Heuristics)",
+        "Forcing functions - constraints that prevent proceeding without completing required actions",
+        "Poka-yoke - mistake-proofing from manufacturing"
+      ]
+    },
+    {
+      "number": 6,
+      "name": "Mapping",
+      "short_description": "Mapping is the relationship between controls and their effects. Good mappings are natural and intuitive, making the relationship between actions and results clear.",
+      "detailed_description": "Mapping describes the relationship between the layout and arrangement of controls and their effects in the world. Natural mappings leverage spatial relationships, cultural standards, and analogies to create intuitive interfaces. When mapping is good, users immediately understand what control affects what outcome. Poor mapping requires labels, instructions, or memory to use successfully.",
+      "key_principles": [
+        "Natural mappings leverage spatial relationships",
+        "Good mappings make effects of controls immediately obvious",
+        "Cultural standards provide conventional mappings",
+        "Physical analogies create intuitive mappings",
+        "Poor mapping requires labels and memory"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Is the relationship between controls and effects clear?",
+          "Do spatial arrangements match expected relationships?",
+          "Can users predict effects from control layout?",
+          "Are cultural conventions followed for mappings?",
+          "Do controls require labels to understand their effects?"
+        ],
+        "what_to_look_for": [
+          "Spatial correspondence between controls and affected elements",
+          "Controls arranged to match layout of what they control",
+          "Use of natural analogies (sliders for continuous values)",
+          "Cultural conventions (up/right for increase, down/left for decrease)",
+          "Proximity of controls to affected elements",
+          "Visual connections showing relationships"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Arbitrary mapping",
+          "example": "Volume controls where left button increases and right decreases",
+          "impact": "Users must memorize mapping, frequent errors"
+        },
+        {
+          "issue": "Spatial mismatch",
+          "example": "Controls arranged differently than elements they affect",
+          "impact": "Users cannot predict which control affects which element"
+        },
+        {
+          "issue": "Cultural convention violations",
+          "example": "Green for stop, red for go",
+          "impact": "Strong learned associations violated, high error rate"
+        },
+        {
+          "issue": "Distant controls",
+          "example": "Control panel far from elements it affects with no visual connection",
+          "impact": "Relationship between control and effect unclear"
+        }
+      ],
+      "best_practices": [
+        "Arrange controls to match spatial layout of affected elements",
+        "Use natural mappings when possible (sliders for ranges, toggles for binary states)",
+        "Follow cultural conventions for directional relationships",
+        "Place controls near the elements they affect",
+        "Use visual connections (lines, grouping) to show relationships",
+        "Leverage physical analogies from real world",
+        "Test mappings with users to ensure they're intuitive",
+        "Avoid requiring labels to understand control-effect relationships"
+      ],
+      "related_concepts": [
+        "Natural mapping - relationships that require no learning",
+        "Spatial correspondence - layout matching physical arrangement",
+        "Logical mapping - meaningful non-spatial relationships"
+      ]
+    },
+    {
+      "number": 7,
+      "name": "Consistency",
+      "short_description": "Consistency means that similar operations and elements should behave and appear similarly. It allows users to transfer knowledge across contexts.",
+      "detailed_description": "Consistency enables transfer of learning. When similar things work similarly, users can apply knowledge from one context to another. There are multiple levels: internal consistency (within the product), external consistency (with platform conventions), and consistency with user expectations from domain knowledge. Consistency reduces cognitive load and learning time while increasing predictability and efficiency.",
+      "key_principles": [
+        "Similar things should look and behave similarly",
+        "Consistency enables knowledge transfer",
+        "Multiple levels: internal, external, and domain consistency",
+        "Consistency reduces learning time and cognitive load",
+        "Break consistency only when there's clear benefit"
+      ],
+      "types": {
+        "internal": {
+          "description": "Consistency within the product or system",
+          "examples": [
+            "Same button styles for similar actions throughout",
+            "Consistent terminology for same concepts",
+            "Uniform interaction patterns across features"
+          ]
+        },
+        "external": {
+          "description": "Consistency with platform conventions and standards",
+          "examples": [
+            "Following iOS or Android design guidelines",
+            "Using standard web conventions",
+            "Matching system-level behaviors"
+          ]
+        },
+        "domain": {
+          "description": "Consistency with industry or domain standards",
+          "examples": [
+            "Using standard medical terminology in health apps",
+            "Following financial industry conventions in banking apps",
+            "Matching genre conventions in games or creative tools"
+          ]
+        }
+      },
+      "evaluation_criteria": {
+        "questions": [
+          "Do similar elements behave similarly throughout?",
+          "Is terminology used consistently?",
+          "Does the interface follow platform conventions?",
+          "Are interaction patterns consistent across features?",
+          "Do similar situations present similar interfaces?"
+        ],
+        "what_to_look_for": [
+          "Uniform button styles and behaviors",
+          "Consistent terminology throughout",
+          "Standard icon meanings maintained",
+          "Similar layouts for similar content types",
+          "Consistent interaction patterns",
+          "Following platform guidelines",
+          "Matching user expectations from similar products"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Inconsistent terminology",
+          "example": "Calling same action 'delete', 'remove', and 'discard' in different places",
+          "impact": "Users uncertain whether these are different actions or same one"
+        },
+        {
+          "issue": "Visual inconsistency",
+          "example": "Primary buttons styled differently across screens",
+          "impact": "Users can't reliably identify primary actions"
+        },
+        {
+          "issue": "Behavioral inconsistency",
+          "example": "Some buttons execute immediately, others show confirmation, without clear pattern",
+          "impact": "Users uncertain about what will happen, hesitant to act"
+        },
+        {
+          "issue": "Platform convention violations",
+          "example": "Using non-standard gestures or shortcuts that conflict with platform norms",
+          "impact": "User muscle memory from platform violated, frequent errors"
+        }
+      ],
+      "best_practices": [
+        "Create and maintain design systems for consistent components",
+        "Use consistent terminology documented in style guide",
+        "Follow platform guidelines for your target systems",
+        "Maintain consistent interaction patterns across features",
+        "Use standard icons with conventional meanings",
+        "Keep visual styling uniform for similar elements",
+        "Document and communicate consistency standards to team",
+        "Break consistency only when there's clear user benefit",
+        "Test cross-feature consistency systematically"
+      ],
+      "related_concepts": [
+        "Consistency and Standards (Nielsen's Heuristics)",
+        "Design systems and pattern libraries",
+        "Platform guidelines (Material Design, Human Interface Guidelines)"
+      ]
+    }
+  ],
+  "interaction_framework": {
+    "seven_stages_of_action": {
+      "description": "Norman's model of how people interact with systems, forming two gulfs that design must bridge.",
+      "stages": [
+        {
+          "stage": "Goal",
+          "description": "Form the goal - what do I want to accomplish?"
+        },
+        {
+          "stage": "Plan",
+          "description": "Form the intention - what actions will achieve the goal?"
+        },
+        {
+          "stage": "Specify",
+          "description": "Specify the action sequence - what specific actions?"
+        },
+        {
+          "stage": "Execute",
+          "description": "Execute the action - physically perform the action"
+        },
+        {
+          "stage": "Perceive",
+          "description": "Perceive system state - what happened?"
+        },
+        {
+          "stage": "Interpret",
+          "description": "Interpret the perception - what does it mean?"
+        },
+        {
+          "stage": "Compare",
+          "description": "Compare outcome with goal - did I achieve what I wanted?"
+        }
+      ],
+      "gulfs": {
+        "gulf_of_execution": {
+          "description": "The gap between user intentions and allowable actions. How hard is it to figure out how to do what you want?",
+          "bridged_by": [
+            "Signifiers showing available actions",
+            "Constraints limiting possibilities",
+            "Mappings making effects predictable",
+            "Affordances enabling actions"
+          ]
+        },
+        "gulf_of_evaluation": {
+          "description": "The gap between system state and user understanding. How hard is it to figure out what happened?",
+          "bridged_by": [
+            "Feedback showing results of actions",
+            "Clear conceptual models",
+            "Visible system state",
+            "Interpretable information displays"
+          ]
+        }
+      }
+    },
+    "design_implications": {
+      "discoverability": "Users can discover what actions are possible (good signifiers, visible affordances)",
+      "understanding": "Users can understand the system (clear conceptual model, good feedback)",
+      "learnability": "Users can learn how to use the system (consistency, good mappings)",
+      "error_tolerance": "System prevents errors and supports recovery (constraints, feedback, undo)"
+    }
+  },
+  "usage_guide": {
+    "how_to_apply": [
+      "1. Analyze each interaction through the seven stages of action",
+      "2. Evaluate interface against each principle systematically",
+      "3. Identify where gulfs of execution and evaluation are largest",
+      "4. Apply principles to bridge gulfs and improve interactions",
+      "5. Test with users to verify improvements",
+      "6. Iterate based on observed difficulties"
+    ],
+    "evaluation_approach": {
+      "heuristic_evaluation": "Walk through interface asking evaluation questions for each principle",
+      "cognitive_walkthrough": "Trace user goals through seven stages of action",
+      "usability_testing": "Observe where users struggle and map to principle violations",
+      "expert_review": "Systematic assessment by trained evaluator"
+    },
+    "design_process_integration": [
+      "Early design: Use principles to evaluate concepts and sketches",
+      "Detailed design: Apply principles to specific interaction patterns",
+      "Implementation: Ensure principles maintained in final product",
+      "Testing: Use principles to structure usability evaluation",
+      "Iteration: Apply principles to identify and fix problems"
+    ],
+    "relationship_to_other_frameworks": {
+      "nielsen_heuristics": "Tactical evaluation guidelines complementing Norman's theoretical foundations",
+      "rams_principles": "Broader design philosophy that these interaction principles help achieve",
+      "gestalt_principles": "Perceptual principles underlying visual design aspects",
+      "fitts_law": "Specific interaction principle about target size and distance",
+      "hicks_law": "Principle about choice and decision time complementing constraint principle"
+    }
+  }
+}

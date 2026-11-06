@@ -1,0 +1,1141 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Microsoft's 18 Guidelines for Human-AI Interaction",
+  "description": "Research-based guidelines for designing AI systems that work effectively with humans. Based on empirical research from Microsoft Research analyzing 150+ AI guidelines and validated through user studies. These guidelines address transparency, explainability, trust, fairness, and control in AI interactions.",
+  "version": "1.0.0",
+  "organization": "Microsoft Research",
+  "authors": [
+    "Saleema Amershi",
+    "Dan Weld",
+    "Mihaela Vorvoreanu",
+    "Adam Fourney",
+    "Besmira Nushi",
+    "Penny Collisson",
+    "Jina Suh",
+    "Shamsi Iqbal",
+    "Paul N. Bennett",
+    "Kori Inkpen",
+    "Jaime Teevan",
+    "Ruth Kikin-Gil",
+    "Eric Horvitz"
+  ],
+  "year": 2019,
+  "source": "https://www.microsoft.com/en-us/research/publication/guidelines-for-human-ai-interaction/",
+  "published": "CHI 2019: ACM Conference on Human Factors in Computing Systems",
+  "doi": "10.1145/3290605.3300233",
+  "guidelines": [
+    {
+      "guideline_number": 1,
+      "guideline_name": "Make clear what the system can do",
+      "category": "Initially",
+      "interaction_phase": "Before interaction begins",
+      "description": "Help users understand what the AI system is capable of doing. Set appropriate expectations by clearly communicating the scope, limitations, and intended use cases of the AI system.",
+      "intent": "Prevents user frustration and misuse by ensuring users understand the AI's capabilities and boundaries from the start. Clear capability communication helps users know when to trust the system and when to seek alternatives.",
+      "applicability": "All AI systems, especially those with limited or specialized capabilities",
+      "evaluation_criteria": {
+        "questions": [
+          "Does the system clearly state what it can and cannot do?",
+          "Are the AI's capabilities communicated before the user starts interacting?",
+          "Are limitations and boundaries explicitly mentioned?",
+          "Can users understand the intended use cases?",
+          "Is the scope of functionality clear without trial and error?"
+        ],
+        "what_to_look_for": [
+          "Onboarding flows that explain capabilities",
+          "Clear documentation of what the AI can assist with",
+          "Examples of tasks the AI can handle",
+          "Explicit statements about limitations",
+          "Use case descriptions",
+          "Feature tours or walkthroughs"
+        ]
+      },
+      "best_practices": [
+        "Provide concrete examples of tasks the AI can perform",
+        "Show capability demonstrations during onboarding",
+        "Display limitations prominently, not hidden in fine print",
+        "Use simple language to describe capabilities, not marketing jargon",
+        "Offer interactive tutorials that showcase main features",
+        "Update capability descriptions when the AI improves",
+        "Be honest about what the AI cannot do",
+        "Show the range of inputs the AI can process"
+      ],
+      "common_issues": [
+        {
+          "issue": "Vague or overly broad capability claims",
+          "example": "AI assistant claims to 'help with anything' without specifying actual capabilities",
+          "impact": "Users develop unrealistic expectations and become frustrated when the AI cannot help",
+          "severity": "high"
+        },
+        {
+          "issue": "Hidden limitations",
+          "example": "Chatbot only works with English but this isn't mentioned until user tries another language",
+          "impact": "Users waste time attempting unsupported tasks",
+          "severity": "medium"
+        },
+        {
+          "issue": "No examples of use cases",
+          "example": "AI tool launched without showing what kinds of problems it solves",
+          "impact": "Users must guess how to use the system effectively",
+          "severity": "medium"
+        }
+      ]
+    },
+    {
+      "guideline_number": 2,
+      "guideline_name": "Make clear how well the system can do what it can do",
+      "category": "Initially",
+      "interaction_phase": "Before interaction begins",
+      "description": "Communicate the AI system's expected performance level and accuracy. Help users understand not just what the system can do, but how reliably it can do it.",
+      "intent": "Enables users to calibrate their trust appropriately. Users need to know whether they can depend on the AI's outputs or should verify them independently.",
+      "applicability": "All AI systems, critical for systems making predictions or recommendations",
+      "evaluation_criteria": {
+        "questions": [
+          "Is the AI's accuracy or performance level communicated?",
+          "Do users understand the reliability of the system's outputs?",
+          "Are confidence levels or uncertainty indicated?",
+          "Is performance communicated in user-understandable terms?",
+          "Are there metrics or benchmarks shared with users?"
+        ],
+        "what_to_look_for": [
+          "Accuracy statements in plain language",
+          "Confidence scores or indicators",
+          "Performance benchmarks",
+          "Reliability disclaimers",
+          "Expected error rates",
+          "Comparative performance information"
+        ]
+      },
+      "best_practices": [
+        "Share accuracy metrics in user-friendly terms (e.g., '9 out of 10 times')",
+        "Show confidence levels for individual predictions",
+        "Provide examples of when the system performs well vs. poorly",
+        "Update performance claims as the system improves",
+        "Be transparent about known weaknesses",
+        "Use visual indicators for confidence levels",
+        "Compare performance to human benchmarks when relevant",
+        "Explain what factors affect accuracy"
+      ],
+      "common_issues": [
+        {
+          "issue": "No accuracy information provided",
+          "example": "Medical diagnosis AI doesn't share how often it's correct",
+          "impact": "Users cannot judge whether to trust the AI's recommendations",
+          "severity": "critical"
+        },
+        {
+          "issue": "Overconfident presentation without disclaimers",
+          "example": "Translation tool presents all translations as perfect without indicating uncertainty",
+          "impact": "Users may not verify outputs that contain errors",
+          "severity": "high"
+        },
+        {
+          "issue": "Technical metrics without context",
+          "example": "Showing '87.3% F1 score' to non-technical users",
+          "impact": "Users cannot understand what the performance numbers mean",
+          "severity": "medium"
+        }
+      ]
+    },
+    {
+      "guideline_number": 3,
+      "guideline_name": "Time services based on context",
+      "category": "Initially",
+      "interaction_phase": "Before interaction begins",
+      "description": "Initiate AI interactions at contextually appropriate times. The system should appear when users need it, not randomly or at disruptive moments.",
+      "intent": "Prevents interruption fatigue and ensures AI assistance is perceived as helpful rather than intrusive. Well-timed interventions increase acceptance and usage.",
+      "applicability": "Proactive AI systems, notifications, recommendations, interruption-based interfaces",
+      "evaluation_criteria": {
+        "questions": [
+          "Does the AI appear at appropriate times?",
+          "Are interruptions based on user context and state?",
+          "Can users control when the AI engages?",
+          "Does the timing respect user workflow?",
+          "Are urgent vs. non-urgent interventions appropriately timed?"
+        ],
+        "what_to_look_for": [
+          "Context-aware triggering of AI features",
+          "Respect for user's current task",
+          "Timing based on user activity patterns",
+          "Deferral of non-urgent notifications",
+          "User control over intervention timing",
+          "Detection of appropriate moments to assist"
+        ]
+      },
+      "best_practices": [
+        "Detect moments of user uncertainty or struggle before offering help",
+        "Avoid interrupting during focused work periods",
+        "Allow users to set 'do not disturb' preferences",
+        "Queue non-urgent suggestions for natural break points",
+        "Use progressive disclosure - start subtle, escalate if needed",
+        "Learn user patterns to optimize timing",
+        "Provide immediate help for urgent situations",
+        "Defer optional suggestions to convenient moments"
+      ],
+      "common_issues": [
+        {
+          "issue": "Random, context-free interruptions",
+          "example": "AI assistant pops up tips while user is in middle of typing important email",
+          "impact": "Disrupts flow, reduces productivity, creates annoyance",
+          "severity": "high"
+        },
+        {
+          "issue": "No timing controls for users",
+          "example": "AI suggestions cannot be snoozed or dismissed permanently",
+          "impact": "Users feel lack of control, may disable AI features entirely",
+          "severity": "medium"
+        },
+        {
+          "issue": "Urgent and non-urgent treated same",
+          "example": "Security alerts and promotional tips both interrupt with equal urgency",
+          "impact": "Users learn to ignore all notifications, missing important ones",
+          "severity": "high"
+        }
+      ]
+    },
+    {
+      "guideline_number": 4,
+      "guideline_name": "Show contextually relevant information",
+      "category": "During interaction",
+      "interaction_phase": "During normal operation",
+      "description": "Display information that is specifically relevant to the user's current context, task, and goals. Filter and prioritize AI outputs based on what matters now.",
+      "intent": "Reduces cognitive load by showing only pertinent information. Users can focus on their task without being overwhelmed by irrelevant AI outputs.",
+      "applicability": "All AI systems, especially recommendation engines, search, and assistive systems",
+      "evaluation_criteria": {
+        "questions": [
+          "Is displayed information relevant to the user's current task?",
+          "Does the AI filter out irrelevant results?",
+          "Is information prioritized by contextual importance?",
+          "Does the system adapt to user's current goals?",
+          "Are outputs tailored to the specific situation?"
+        ],
+        "what_to_look_for": [
+          "Personalized, context-aware outputs",
+          "Filtering based on current task",
+          "Prioritization of relevant items",
+          "Adaptation to user's workflow",
+          "Suppression of irrelevant information",
+          "Context-sensitive help"
+        ]
+      },
+      "best_practices": [
+        "Personalize outputs based on user context and history",
+        "Filter results by current task or project",
+        "Show location-aware or time-aware information",
+        "Prioritize by relevance, not just recency or popularity",
+        "Adapt to the user's expertise level",
+        "Consider device context (mobile vs. desktop)",
+        "Surface relevant information proactively",
+        "Hide or deprioritize irrelevant options"
+      ],
+      "common_issues": [
+        {
+          "issue": "Generic, one-size-fits-all outputs",
+          "example": "AI recommendations ignore user's current project or role",
+          "impact": "Users must manually filter through irrelevant information",
+          "severity": "medium"
+        },
+        {
+          "issue": "No context awareness",
+          "example": "Search results don't consider user's location when it's clearly relevant",
+          "impact": "Poor user experience, reduced trust in AI usefulness",
+          "severity": "medium"
+        },
+        {
+          "issue": "Information overload",
+          "example": "AI shows all possible options without prioritizing by relevance",
+          "impact": "Users are overwhelmed and may miss important information",
+          "severity": "high"
+        }
+      ]
+    },
+    {
+      "guideline_number": 5,
+      "guideline_name": "Match relevant social norms",
+      "category": "During interaction",
+      "interaction_phase": "During normal operation",
+      "description": "Ensure the AI system's behavior aligns with appropriate social and cultural norms for the context. The system should behave in socially acceptable ways.",
+      "intent": "Builds user comfort and trust by making AI interactions feel natural and appropriate. Violations of social norms can make users uncomfortable or reject the system.",
+      "applicability": "Conversational AI, social robots, customer service bots, any user-facing AI",
+      "evaluation_criteria": {
+        "questions": [
+          "Does the AI communicate in socially appropriate ways?",
+          "Are cultural norms respected?",
+          "Is the tone appropriate for the context?",
+          "Does the AI respect social boundaries?",
+          "Are formality levels appropriate?"
+        ],
+        "what_to_look_for": [
+          "Culturally appropriate language and behavior",
+          "Appropriate formality levels",
+          "Respectful interaction patterns",
+          "Context-appropriate tone",
+          "Professional vs. casual communication as needed",
+          "Respect for privacy and boundaries"
+        ]
+      },
+      "best_practices": [
+        "Match communication style to the context (formal for business, casual for entertainment)",
+        "Respect cultural differences in different regions",
+        "Use appropriate pronouns and inclusive language",
+        "Avoid overly familiar or presumptuous behavior",
+        "Respect privacy norms (don't ask inappropriate questions)",
+        "Adapt to professional vs. personal contexts",
+        "Follow domain-specific etiquette (medical, legal, educational)",
+        "Allow users to set formality preferences"
+      ],
+      "common_issues": [
+        {
+          "issue": "Inappropriate familiarity",
+          "example": "Professional AI assistant uses overly casual slang in business context",
+          "impact": "Users perceive the AI as unprofessional or disrespectful",
+          "severity": "medium"
+        },
+        {
+          "issue": "Cultural insensitivity",
+          "example": "AI uses idioms or references that don't translate culturally",
+          "impact": "Alienates users from different cultural backgrounds",
+          "severity": "high"
+        },
+        {
+          "issue": "Privacy boundary violations",
+          "example": "AI asks personal questions without establishing appropriate rapport",
+          "impact": "Users feel uncomfortable and may abandon the system",
+          "severity": "high"
+        }
+      ]
+    },
+    {
+      "guideline_number": 6,
+      "guideline_name": "Mitigate social biases",
+      "category": "During interaction",
+      "interaction_phase": "During normal operation",
+      "description": "Actively work to prevent and reduce social biases in AI outputs. Ensure the system doesn't perpetuate or amplify harmful stereotypes or unfair treatment.",
+      "intent": "Promotes fairness and prevents harm. Biased AI systems can perpetuate discrimination and cause real-world harm to marginalized groups.",
+      "applicability": "All AI systems, critical for systems affecting people's opportunities or treatment",
+      "evaluation_criteria": {
+        "questions": [
+          "Has the system been tested for bias across demographic groups?",
+          "Are outputs fair and equitable?",
+          "Does the system avoid stereotypes?",
+          "Is there regular bias monitoring?",
+          "Are mitigation strategies in place?"
+        ],
+        "what_to_look_for": [
+          "Fairness testing across demographic groups",
+          "Diverse training data",
+          "Bias detection and monitoring",
+          "Equitable treatment of all users",
+          "Regular audits for discriminatory patterns",
+          "Inclusive design practices"
+        ]
+      },
+      "best_practices": [
+        "Test AI performance across diverse demographic groups",
+        "Use diverse and representative training data",
+        "Implement fairness constraints in model training",
+        "Monitor outputs for biased patterns",
+        "Conduct regular bias audits",
+        "Establish fairness metrics and thresholds",
+        "Include diverse perspectives in design and testing",
+        "Provide channels for reporting bias",
+        "Document known limitations and biases",
+        "Continuously improve based on bias findings"
+      ],
+      "common_issues": [
+        {
+          "issue": "Unaudited outputs that perpetuate stereotypes",
+          "example": "Image generation AI consistently depicts doctors as male and nurses as female",
+          "impact": "Reinforces harmful stereotypes and limits representation",
+          "severity": "critical"
+        },
+        {
+          "issue": "Disparate performance across groups",
+          "example": "Facial recognition works well for some skin tones but poorly for others",
+          "impact": "Creates unfair experiences and excludes certain users",
+          "severity": "critical"
+        },
+        {
+          "issue": "Biased training data without mitigation",
+          "example": "Hiring AI trained on historical data that reflects past discrimination",
+          "impact": "Perpetuates discriminatory practices",
+          "severity": "critical"
+        }
+      ]
+    },
+    {
+      "guideline_number": 7,
+      "guideline_name": "Support efficient invocation",
+      "category": "During interaction",
+      "interaction_phase": "During normal operation",
+      "description": "Make it easy for users to invoke or activate the AI system when they need it. Reduce friction in accessing AI assistance.",
+      "intent": "Ensures users can quickly access AI help when needed. If invocation is difficult, users may not use the AI even when it would be helpful.",
+      "applicability": "All AI systems, especially optional or on-demand AI features",
+      "evaluation_criteria": {
+        "questions": [
+          "Can users easily activate the AI when needed?",
+          "Are there multiple ways to invoke assistance?",
+          "Is invocation quick and low-effort?",
+          "Are invocation methods discoverable?",
+          "Can power users use shortcuts?"
+        ],
+        "what_to_look_for": [
+          "Clear, accessible trigger points",
+          "Multiple invocation methods (button, voice, shortcut)",
+          "Low-effort activation",
+          "Discoverability of invocation options",
+          "Keyboard shortcuts for efficiency",
+          "Always-accessible entry points"
+        ]
+      },
+      "best_practices": [
+        "Provide visible, easily accessible buttons or controls",
+        "Support keyboard shortcuts for power users",
+        "Enable voice activation where appropriate",
+        "Make AI features discoverable in context",
+        "Reduce steps required to invoke AI",
+        "Offer persistent access points (floating button, menu item)",
+        "Support gesture-based invocation on touch devices",
+        "Allow customization of invocation methods",
+        "Surface AI features at point of need"
+      ],
+      "common_issues": [
+        {
+          "issue": "Hidden or hard-to-find AI features",
+          "example": "AI assistant buried three menus deep in settings",
+          "impact": "Users don't discover or use available AI help",
+          "severity": "high"
+        },
+        {
+          "issue": "Complex invocation process",
+          "example": "Requiring multiple steps or specific sequences to activate AI",
+          "impact": "Users avoid using AI due to high friction",
+          "severity": "medium"
+        },
+        {
+          "issue": "Single invocation method only",
+          "example": "AI only accessible via voice, no visual alternative",
+          "impact": "Excludes users in quiet environments or with speech difficulties",
+          "severity": "medium"
+        }
+      ]
+    },
+    {
+      "guideline_number": 8,
+      "guideline_name": "Support efficient dismissal",
+      "category": "During interaction",
+      "interaction_phase": "During normal operation",
+      "description": "Make it easy for users to dismiss or ignore AI outputs when they are not useful. Users should be able to quickly move on from unhelpful AI interactions.",
+      "intent": "Prevents AI from becoming an obstacle. Users need to maintain control and not be forced to engage with AI outputs they don't want.",
+      "applicability": "All AI systems, especially proactive and recommendation systems",
+      "evaluation_criteria": {
+        "questions": [
+          "Can users easily dismiss AI suggestions or outputs?",
+          "Is dismissal quick and obvious?",
+          "Does dismissal stop the AI from repeating the same suggestion?",
+          "Can users opt out of AI features?",
+          "Are there no penalties for dismissing AI help?"
+        ],
+        "what_to_look_for": [
+          "Clear dismiss or close buttons",
+          "Easy opt-out options",
+          "Respect for dismissal (don't repeat immediately)",
+          "No forced engagement with AI outputs",
+          "Quick escape routes",
+          "Persistent dismissal options"
+        ]
+      },
+      "best_practices": [
+        "Provide obvious close or dismiss buttons",
+        "Support ESC key and standard dismissal gestures",
+        "Remember when users dismiss suggestions (don't repeat)",
+        "Allow permanent dismissal of recurring suggestions",
+        "Make dismissal a single action, not multi-step",
+        "Don't penalize or obstruct users who dismiss AI help",
+        "Offer 'don't show this again' options",
+        "Respect dismissal across sessions",
+        "Allow granular control over what AI features to disable"
+      ],
+      "common_issues": [
+        {
+          "issue": "No way to dismiss AI outputs",
+          "example": "AI recommendations block interface with no close button",
+          "impact": "Users feel trapped and frustrated",
+          "severity": "high"
+        },
+        {
+          "issue": "AI repeatedly shows dismissed content",
+          "example": "Dismissed suggestions reappear immediately or next session",
+          "impact": "Creates annoyance and trains users to ignore AI",
+          "severity": "medium"
+        },
+        {
+          "issue": "Complex dismissal process",
+          "example": "Dismissing requires multiple clicks or confirmation dialogs",
+          "impact": "Increases friction and user frustration",
+          "severity": "medium"
+        }
+      ]
+    },
+    {
+      "guideline_number": 9,
+      "guideline_name": "Support efficient correction",
+      "category": "During interaction",
+      "interaction_phase": "During normal operation",
+      "description": "Enable users to easily correct AI mistakes or provide feedback when outputs are wrong. Make the correction process quick and straightforward.",
+      "intent": "Allows users to fix errors and helps the AI learn. Easy correction improves both immediate user experience and long-term AI performance.",
+      "applicability": "All AI systems, especially learning systems and those prone to errors",
+      "evaluation_criteria": {
+        "questions": [
+          "Can users easily correct AI mistakes?",
+          "Is correction a simple, low-effort process?",
+          "Does the AI learn from corrections?",
+          "Are correction options discoverable?",
+          "Can users provide feedback on AI outputs?"
+        ],
+        "what_to_look_for": [
+          "Inline editing capabilities",
+          "Clear correction mechanisms",
+          "Feedback buttons or options",
+          "Low-friction correction process",
+          "Learning from user corrections",
+          "Acknowledgment of corrections"
+        ]
+      },
+      "best_practices": [
+        "Enable inline editing of AI outputs",
+        "Provide thumbs up/down or rating buttons",
+        "Allow users to report incorrect results",
+        "Make corrections single actions where possible",
+        "Show that corrections are being used to improve the AI",
+        "Support different types of feedback (wrong, inappropriate, irrelevant)",
+        "Learn from corrections to improve future outputs",
+        "Make correction options visible and accessible",
+        "Thank users for corrections to encourage feedback"
+      ],
+      "common_issues": [
+        {
+          "issue": "No correction mechanism available",
+          "example": "AI outputs text that can't be edited or corrected",
+          "impact": "Users must abandon AI output and start over manually",
+          "severity": "high"
+        },
+        {
+          "issue": "Corrections don't improve AI behavior",
+          "example": "Users report errors but AI keeps making same mistakes",
+          "impact": "Users lose trust and stop providing feedback",
+          "severity": "medium"
+        },
+        {
+          "issue": "Complex correction process",
+          "example": "Correcting requires navigating to separate feedback form",
+          "impact": "Users don't bother correcting, reducing AI learning",
+          "severity": "medium"
+        }
+      ]
+    },
+    {
+      "guideline_number": 10,
+      "guideline_name": "Scope services when in doubt",
+      "category": "When wrong",
+      "interaction_phase": "When the AI fails or is uncertain",
+      "description": "When the AI is uncertain or lacks confidence, it should narrow its scope or defer to the user rather than guessing broadly. Limit outputs to what the AI is confident about.",
+      "intent": "Prevents AI from making overconfident mistakes. Users prefer honest uncertainty to confident incorrectness.",
+      "applicability": "All AI systems, especially predictive and generative systems",
+      "evaluation_criteria": {
+        "questions": [
+          "Does the AI narrow scope when uncertain?",
+          "Are low-confidence outputs flagged or withheld?",
+          "Does the AI defer to users in ambiguous situations?",
+          "Are conservative approaches used when stakes are high?",
+          "Does the AI avoid guessing when it doesn't know?"
+        ],
+        "what_to_look_for": [
+          "Confidence thresholds for outputs",
+          "Scoped responses when uncertain",
+          "Deferral to human judgment",
+          "Conservative behavior in high-stakes scenarios",
+          "Honest acknowledgment of uncertainty",
+          "Narrowed suggestions rather than broad guesses"
+        ]
+      },
+      "best_practices": [
+        "Set confidence thresholds below which AI doesn't make suggestions",
+        "Offer narrower, more conservative options when uncertain",
+        "Explicitly state when the AI is uncertain",
+        "Ask clarifying questions rather than guessing",
+        "Provide multiple options with uncertainty rather than single guess",
+        "Escalate to human assistance when confidence is low",
+        "Use conservative defaults in high-stakes situations",
+        "Show confidence scores to help users judge outputs",
+        "Err on the side of caution rather than boldness"
+      ],
+      "common_issues": [
+        {
+          "issue": "Overconfident responses despite uncertainty",
+          "example": "Medical AI gives definitive diagnosis with low confidence data",
+          "impact": "Users may act on incorrect information with serious consequences",
+          "severity": "critical"
+        },
+        {
+          "issue": "Guessing instead of asking for clarification",
+          "example": "AI makes assumptions about ambiguous queries instead of asking",
+          "impact": "Users receive irrelevant or wrong results",
+          "severity": "high"
+        },
+        {
+          "issue": "No confidence indicators",
+          "example": "All AI outputs presented with equal confidence regardless of certainty",
+          "impact": "Users cannot distinguish reliable from unreliable outputs",
+          "severity": "high"
+        }
+      ]
+    },
+    {
+      "guideline_number": 11,
+      "guideline_name": "Make clear why the system did what it did",
+      "category": "When wrong",
+      "interaction_phase": "When the AI fails or is uncertain",
+      "description": "Provide explanations for AI decisions and actions. Help users understand the reasoning behind AI outputs, especially when they are unexpected.",
+      "intent": "Builds understanding and appropriate trust. Users can better evaluate AI outputs and learn when to rely on the system when they understand its reasoning.",
+      "applicability": "All AI systems, critical for high-stakes and complex AI decisions",
+      "evaluation_criteria": {
+        "questions": [
+          "Does the AI explain its decisions?",
+          "Are explanations understandable to users?",
+          "Can users see what factors influenced AI outputs?",
+          "Are explanations provided especially for unexpected results?",
+          "Is transparency balanced with usability?"
+        ],
+        "what_to_look_for": [
+          "Explanation features or buttons",
+          "Visible reasoning for decisions",
+          "Factors or features that influenced output",
+          "Plain-language explanations",
+          "Causal explanations, not just correlations",
+          "Different explanation depths for different users"
+        ]
+      },
+      "best_practices": [
+        "Provide 'Why this recommendation?' explanations",
+        "Show key factors that influenced the AI's decision",
+        "Use plain language, avoid technical jargon",
+        "Offer progressive disclosure (brief explanation with option for more detail)",
+        "Explain unexpected or surprising results",
+        "Show what data or inputs the AI used",
+        "Provide causal explanations when possible",
+        "Use visualizations to aid understanding",
+        "Tailor explanation complexity to user expertise",
+        "Make explanations optional to avoid clutter"
+      ],
+      "common_issues": [
+        {
+          "issue": "No explanations provided",
+          "example": "AI rejects loan application with no explanation of why",
+          "impact": "Users cannot understand or contest decisions, feel powerless",
+          "severity": "critical"
+        },
+        {
+          "issue": "Technical, incomprehensible explanations",
+          "example": "Showing feature weights and model parameters to end users",
+          "impact": "Users cannot benefit from explanations they don't understand",
+          "severity": "high"
+        },
+        {
+          "issue": "Post-hoc rationalizations instead of true reasoning",
+          "example": "AI generates plausible-sounding but inaccurate explanations",
+          "impact": "Misleads users about how the AI actually works",
+          "severity": "high"
+        }
+      ]
+    },
+    {
+      "guideline_number": 12,
+      "guideline_name": "Remember recent interactions",
+      "category": "Over time",
+      "interaction_phase": "Across multiple interactions",
+      "description": "Maintain context and memory of recent user interactions. The AI should remember what just happened to provide coherent, contextual experiences.",
+      "intent": "Prevents frustrating repetition and creates more natural, efficient interactions. Users expect AI to remember recent context like a human conversation partner would.",
+      "applicability": "Conversational AI, assistants, multi-turn interactions, session-based systems",
+      "evaluation_criteria": {
+        "questions": [
+          "Does the AI remember previous exchanges in the session?",
+          "Can users reference earlier parts of the conversation?",
+          "Is context maintained across related interactions?",
+          "Does the AI avoid asking for information already provided?",
+          "Is there appropriate session memory?"
+        ],
+        "what_to_look_for": [
+          "Conversation history maintenance",
+          "Context continuity across turns",
+          "Reference resolution (pronouns, 'that', 'it')",
+          "No redundant information requests",
+          "Session persistence",
+          "Context-aware follow-up responses"
+        ]
+      },
+      "best_practices": [
+        "Maintain conversation history throughout the session",
+        "Enable pronoun and reference resolution ('it', 'that', 'the previous one')",
+        "Don't ask for information the user just provided",
+        "Show conversation history so users can reference it",
+        "Persist context across related tasks in the same session",
+        "Resume interrupted conversations where they left off",
+        "Allow users to clear or reset context when needed",
+        "Balance memory with privacy (clear sensitive data appropriately)",
+        "Maintain context for a reasonable time window"
+      ],
+      "common_issues": [
+        {
+          "issue": "No memory of previous turns",
+          "example": "Chatbot treats each message as independent, losing conversation flow",
+          "impact": "Users must repeat information, conversation feels robotic",
+          "severity": "high"
+        },
+        {
+          "issue": "Asking for already-provided information",
+          "example": "User says their name, then AI asks 'What's your name?' two turns later",
+          "impact": "Frustrates users and wastes time",
+          "severity": "high"
+        },
+        {
+          "issue": "Cannot reference previous outputs",
+          "example": "User says 'make it blue' but AI doesn't remember what 'it' refers to",
+          "impact": "Forces unnatural, repetitive interactions",
+          "severity": "medium"
+        }
+      ]
+    },
+    {
+      "guideline_number": 13,
+      "guideline_name": "Learn from user behavior",
+      "category": "Over time",
+      "interaction_phase": "Across multiple interactions",
+      "description": "Adapt and improve based on user behavior and patterns over time. The AI should personalize and become more helpful as it learns user preferences.",
+      "intent": "Creates increasingly valuable and personalized experiences. AI that learns becomes more efficient and aligned with individual user needs.",
+      "applicability": "All AI systems with repeated user interactions, personalization engines",
+      "evaluation_criteria": {
+        "questions": [
+          "Does the AI adapt to user preferences over time?",
+          "Are personalization improvements noticeable?",
+          "Does the system learn from user choices and corrections?",
+          "Is learning balanced with privacy concerns?",
+          "Can users see and control what the AI has learned?"
+        ],
+        "what_to_look_for": [
+          "Personalized recommendations that improve",
+          "Learning from user selections and rejections",
+          "Adaptation to user patterns",
+          "Improved accuracy over time",
+          "Preference learning",
+          "User control over learning and personalization"
+        ]
+      },
+      "best_practices": [
+        "Learn from user selections, corrections, and dismissals",
+        "Personalize suggestions based on usage patterns",
+        "Adapt to user's communication style and preferences",
+        "Improve accuracy based on user feedback",
+        "Balance personalization with privacy (transparent data use)",
+        "Allow users to see and control learned preferences",
+        "Provide option to reset or modify learned profile",
+        "Start with reasonable defaults, improve through use",
+        "Show users how the AI is adapting ('Because you often...')",
+        "Learn incrementally without dramatic, jarring changes"
+      ],
+      "common_issues": [
+        {
+          "issue": "No personalization or learning",
+          "example": "AI gives same generic results to every user regardless of history",
+          "impact": "Missed opportunity for improved relevance and efficiency",
+          "severity": "medium"
+        },
+        {
+          "issue": "Learning creates 'filter bubble'",
+          "example": "AI only shows content similar to past choices, limiting discovery",
+          "impact": "Users miss diverse options and become trapped in narrow patterns",
+          "severity": "high"
+        },
+        {
+          "issue": "Opaque learning without user control",
+          "example": "AI changes behavior based on learning but users can't see or control it",
+          "impact": "Users feel loss of control and may not trust the system",
+          "severity": "medium"
+        }
+      ]
+    },
+    {
+      "guideline_number": 14,
+      "guideline_name": "Update and adapt cautiously",
+      "category": "Over time",
+      "interaction_phase": "Across multiple interactions",
+      "description": "When updating AI behavior or models, do so gradually and carefully. Avoid sudden, dramatic changes that could confuse or frustrate users.",
+      "intent": "Maintains user trust and prevents disruption. Abrupt AI changes can break user workflows and expectations built over time.",
+      "applicability": "All AI systems that update or retrain models, especially production systems",
+      "evaluation_criteria": {
+        "questions": [
+          "Are AI updates gradual rather than sudden?",
+          "Do users receive notice of significant changes?",
+          "Are updates tested before wide deployment?",
+          "Can users provide feedback on updates?",
+          "Is there rollback capability if updates cause problems?"
+        ],
+        "what_to_look_for": [
+          "Gradual rollout of changes",
+          "User notification of updates",
+          "A/B testing before full deployment",
+          "Feedback mechanisms for new behavior",
+          "Version control and rollback ability",
+          "Stability in core functionality"
+        ]
+      },
+      "best_practices": [
+        "Use gradual rollouts (A/B testing, phased deployment)",
+        "Notify users of significant AI behavior changes",
+        "Test updates thoroughly before deployment",
+        "Maintain backward compatibility when possible",
+        "Provide option to use previous version temporarily",
+        "Monitor user feedback and metrics after updates",
+        "Have rollback plans for problematic updates",
+        "Update incrementally rather than drastically",
+        "Preserve core functionality users rely on",
+        "Communicate the benefits of updates to users"
+      ],
+      "common_issues": [
+        {
+          "issue": "Sudden, dramatic behavior changes",
+          "example": "AI assistant completely changes personality overnight after update",
+          "impact": "Breaks user expectations and workflows, reduces trust",
+          "severity": "high"
+        },
+        {
+          "issue": "No notification of changes",
+          "example": "Search algorithm changes significantly without informing users",
+          "impact": "Users confused by different results for same queries",
+          "severity": "medium"
+        },
+        {
+          "issue": "No testing before deployment",
+          "example": "Model update deployed to all users immediately, causes widespread errors",
+          "impact": "Disrupts all users simultaneously, difficult to diagnose",
+          "severity": "critical"
+        }
+      ]
+    },
+    {
+      "guideline_number": 15,
+      "guideline_name": "Encourage granular feedback",
+      "category": "Over time",
+      "interaction_phase": "Across multiple interactions",
+      "description": "Solicit specific, detailed feedback from users rather than just binary ratings. Enable users to explain what was good or bad about AI outputs.",
+      "intent": "Provides richer signals for improvement. Specific feedback helps developers and AI systems understand what to fix and what to preserve.",
+      "applicability": "All AI systems, especially those that learn from feedback",
+      "evaluation_criteria": {
+        "questions": [
+          "Can users provide detailed feedback beyond thumbs up/down?",
+          "Are there options to explain what was wrong?",
+          "Can users specify types of issues (irrelevant, biased, incorrect)?",
+          "Is granular feedback easy to provide?",
+          "Does the system act on specific feedback?"
+        ],
+        "what_to_look_for": [
+          "Multi-dimensional feedback options",
+          "Free-text feedback fields",
+          "Categorized issue reporting",
+          "Specific feedback prompts",
+          "Tag-based feedback systems",
+          "Follow-up questions to clarify ratings"
+        ]
+      },
+      "best_practices": [
+        "Offer multiple feedback dimensions (accuracy, relevance, tone, etc.)",
+        "Provide categorized issue types (wrong, offensive, irrelevant, etc.)",
+        "Enable free-text explanations for feedback",
+        "Ask clarifying follow-up questions to simple ratings",
+        "Make feedback optional but easy to provide",
+        "Show users how their feedback improves the system",
+        "Use progressive disclosure (start simple, allow detailed feedback)",
+        "Allow feedback on specific parts of outputs, not just overall",
+        "Act on feedback and communicate improvements",
+        "Balance feedback requests with not being annoying"
+      ],
+      "common_issues": [
+        {
+          "issue": "Only binary feedback available",
+          "example": "Just thumbs up/down with no way to explain why",
+          "impact": "Cannot learn what specifically to improve",
+          "severity": "medium"
+        },
+        {
+          "issue": "Feedback not acted upon",
+          "example": "Users report issues but never see improvements",
+          "impact": "Users stop providing feedback, feeling it's ignored",
+          "severity": "high"
+        },
+        {
+          "issue": "Feedback process too burdensome",
+          "example": "Providing feedback requires filling out long surveys",
+          "impact": "Users don't bother, reducing feedback volume",
+          "severity": "medium"
+        }
+      ]
+    },
+    {
+      "guideline_number": 16,
+      "guideline_name": "Convey the consequences of user actions",
+      "category": "Over time",
+      "interaction_phase": "Across multiple interactions",
+      "description": "Clearly communicate what will happen as a result of user actions, especially actions that affect AI behavior or learning. Users should understand the impact of their choices.",
+      "intent": "Enables informed decision-making. Users need to understand how their actions affect AI behavior to make good choices and maintain control.",
+      "applicability": "All AI systems, especially learning systems and those with persistent effects",
+      "evaluation_criteria": {
+        "questions": [
+          "Are consequences of actions explained before users take them?",
+          "Do users understand how their actions affect AI behavior?",
+          "Are long-term effects communicated?",
+          "Is there preview of outcomes?",
+          "Are irreversible actions clearly marked?"
+        ],
+        "what_to_look_for": [
+          "Action consequence explanations",
+          "Preview of effects before committing",
+          "Warnings for significant impacts",
+          "Clear indication of reversible vs. irreversible actions",
+          "Examples of how choices affect AI",
+          "Transparency about learning effects"
+        ]
+      },
+      "best_practices": [
+        "Explain how feedback and corrections affect future AI behavior",
+        "Show previews or examples of consequences before users commit",
+        "Warn users about irreversible actions",
+        "Clarify which settings are immediate vs. learned over time",
+        "Use 'This will...' language to be explicit about effects",
+        "Show examples of how similar actions affected AI in the past",
+        "Communicate privacy implications of choices",
+        "Allow users to preview AI changes before applying them",
+        "Make consequences immediate and visible when possible"
+      ],
+      "common_issues": [
+        {
+          "issue": "Hidden consequences of actions",
+          "example": "Dismissing suggestion affects future recommendations but this isn't explained",
+          "impact": "Users unknowingly shape AI behavior in unintended ways",
+          "severity": "medium"
+        },
+        {
+          "issue": "No preview of AI changes",
+          "example": "Changing settings immediately affects AI with no way to see impact first",
+          "impact": "Users afraid to experiment with settings",
+          "severity": "medium"
+        },
+        {
+          "issue": "Unclear permanence of effects",
+          "example": "User doesn't know if action has temporary or permanent effect on AI",
+          "impact": "Users hesitant to interact, fearing unintended lasting changes",
+          "severity": "medium"
+        }
+      ]
+    },
+    {
+      "guideline_number": 17,
+      "guideline_name": "Provide global controls",
+      "category": "Over time",
+      "interaction_phase": "Across multiple interactions",
+      "description": "Give users high-level controls over AI behavior and settings. Allow users to set overall preferences and boundaries for how AI operates.",
+      "intent": "Provides user agency and control. Users should be able to govern AI behavior at a system level, not just react to individual instances.",
+      "applicability": "All AI systems, especially those with ongoing interactions",
+      "evaluation_criteria": {
+        "questions": [
+          "Can users access system-wide AI settings?",
+          "Are there controls for overall AI behavior?",
+          "Can users set boundaries and preferences globally?",
+          "Are privacy controls available?",
+          "Can users disable or limit AI features?"
+        ],
+        "what_to_look_for": [
+          "Centralized settings for AI behavior",
+          "Global preference controls",
+          "Privacy and data controls",
+          "Ability to disable AI features",
+          "Transparency controls",
+          "Personalization settings",
+          "Notification preferences"
+        ]
+      },
+      "best_practices": [
+        "Provide centralized AI settings/preferences page",
+        "Allow users to disable AI features entirely",
+        "Offer controls for proactivity levels (how often AI suggests)",
+        "Enable privacy controls (data collection, personalization)",
+        "Allow users to reset AI learning and start fresh",
+        "Provide transparency controls (explanation detail levels)",
+        "Offer notification frequency settings",
+        "Allow export of user data and AI-learned preferences",
+        "Make controls discoverable and well-organized",
+        "Provide sensible defaults that work for most users"
+      ],
+      "common_issues": [
+        {
+          "issue": "No centralized AI controls",
+          "example": "AI settings scattered across interface with no global access",
+          "impact": "Users cannot manage overall AI behavior effectively",
+          "severity": "high"
+        },
+        {
+          "issue": "Cannot disable AI features",
+          "example": "AI assistance is forced with no opt-out option",
+          "impact": "Users feel lack of control, may abandon entire product",
+          "severity": "high"
+        },
+        {
+          "issue": "No privacy controls for AI learning",
+          "example": "AI learns from behavior with no way to limit or control data use",
+          "impact": "Privacy concerns may prevent users from engaging with AI",
+          "severity": "high"
+        }
+      ]
+    },
+    {
+      "guideline_number": 18,
+      "guideline_name": "Notify users about changes",
+      "category": "Over time",
+      "interaction_phase": "Across multiple interactions",
+      "description": "Inform users when the AI system changes in significant ways, whether through updates, learning, or new capabilities. Keep users aware of evolution.",
+      "intent": "Maintains transparency and trust. Users should understand how and when AI systems change to calibrate expectations and trust appropriately.",
+      "applicability": "All AI systems that update or adapt over time",
+      "evaluation_criteria": {
+        "questions": [
+          "Are users notified of significant AI updates?",
+          "Do users know when AI has learned new capabilities?",
+          "Are behavior changes communicated?",
+          "Is there changelog or update information?",
+          "Can users review recent changes?"
+        ],
+        "what_to_look_for": [
+          "Update notifications",
+          "Change logs or release notes",
+          "In-app announcements of new capabilities",
+          "Notification of significant behavior changes",
+          "Transparency about AI improvements",
+          "Version information"
+        ]
+      },
+      "best_practices": [
+        "Notify users of significant AI capability additions",
+        "Communicate behavior changes that affect user experience",
+        "Provide changelogs for AI updates",
+        "Highlight new features with in-app announcements",
+        "Explain improvements in user-benefit terms",
+        "Time notifications appropriately (not disruptive)",
+        "Allow users to explore changes at their own pace",
+        "Provide 'What's new' summaries",
+        "Notify about both additions and removals",
+        "Balance transparency with not overwhelming users"
+      ],
+      "common_issues": [
+        {
+          "issue": "Silent updates with no notification",
+          "example": "AI behavior changes but users aren't informed",
+          "impact": "Users confused by unexpected different behavior",
+          "severity": "medium"
+        },
+        {
+          "issue": "Vague or technical update notes",
+          "example": "Release notes say 'model retrained' without explaining impact",
+          "impact": "Users cannot understand what actually changed",
+          "severity": "medium"
+        },
+        {
+          "issue": "No way to review past changes",
+          "example": "No changelog or history of AI updates available",
+          "impact": "Users cannot trace when behavior changed or report issues",
+          "severity": "low"
+        }
+      ]
+    }
+  ],
+  "usage_guide": {
+    "how_to_conduct_evaluation": [
+      "1. Identify the AI system's interaction phases (initially, during, when wrong, over time)",
+      "2. Select relevant guidelines based on system type and capabilities",
+      "3. For each applicable guideline, review evaluation criteria and questions",
+      "4. Document specific compliance or violations with examples",
+      "5. Assess severity of violations (critical, high, medium, low)",
+      "6. Prioritize issues based on severity and user impact",
+      "7. Review best practices for remediation guidance",
+      "8. Create action plan with specific improvements",
+      "9. Re-evaluate after implementing changes"
+    ],
+    "guideline_categories": {
+      "initially": {
+        "description": "Guidelines that apply before users begin interacting with the AI",
+        "guidelines": [1, 2, 3],
+        "focus": "Setting appropriate expectations and timing"
+      },
+      "during": {
+        "description": "Guidelines that apply during normal AI operation",
+        "guidelines": [4, 5, 6, 7, 8, 9],
+        "focus": "Effective, appropriate, and controllable interaction"
+      },
+      "when_wrong": {
+        "description": "Guidelines for handling AI failures and uncertainty",
+        "guidelines": [10, 11],
+        "focus": "Managing errors and building understanding"
+      },
+      "over_time": {
+        "description": "Guidelines for AI systems that adapt and evolve",
+        "guidelines": [12, 13, 14, 15, 16, 17, 18],
+        "focus": "Learning, adaptation, and long-term user relationships"
+      }
+    },
+    "applicability_matrix": {
+      "conversational_ai": {
+        "critical_guidelines": [1, 2, 5, 9, 11, 12],
+        "important_guidelines": [3, 4, 7, 8, 13, 14],
+        "applicable_guidelines": [6, 10, 15, 16, 17, 18]
+      },
+      "predictive_systems": {
+        "critical_guidelines": [1, 2, 10, 11, 16],
+        "important_guidelines": [4, 6, 13, 14, 15],
+        "applicable_guidelines": [3, 5, 7, 8, 9, 12, 17, 18]
+      },
+      "recommendation_engines": {
+        "critical_guidelines": [1, 2, 4, 6, 13],
+        "important_guidelines": [3, 8, 11, 12, 14, 15],
+        "applicable_guidelines": [5, 7, 9, 10, 16, 17, 18]
+      },
+      "generative_ai": {
+        "critical_guidelines": [1, 2, 6, 9, 11],
+        "important_guidelines": [4, 5, 10, 13, 15],
+        "applicable_guidelines": [3, 7, 8, 12, 14, 16, 17, 18]
+      },
+      "autonomous_agents": {
+        "critical_guidelines": [1, 2, 10, 11, 16, 17],
+        "important_guidelines": [3, 4, 6, 8, 9, 14, 18],
+        "applicable_guidelines": [5, 7, 12, 13, 15]
+      }
+    },
+    "severity_assessment": {
+      "critical": "Violates user safety, privacy, fairness, or causes significant harm",
+      "high": "Severely impacts usability, trust, or creates major frustration",
+      "medium": "Noticeably affects user experience or efficiency",
+      "low": "Minor inconvenience or missed opportunity for improvement"
+    },
+    "reporting_best_practices": [
+      "Reference specific guideline number and name in findings",
+      "Include concrete examples with context (screenshots, scenarios)",
+      "Explain user impact of violations",
+      "Assess severity using the severity framework",
+      "Suggest specific remediation from best practices",
+      "Prioritize fixes based on severity and implementation effort",
+      "Consider guideline interactions (fixing one may affect others)",
+      "Re-test after fixes to verify compliance"
+    ],
+    "integration_with_other_frameworks": {
+      "nielsen_heuristics": "AI-HCI guidelines extend usability principles to AI-specific contexts",
+      "wcag": "Accessibility should be considered alongside AI-HCI guidelines",
+      "ethical_ai": "Guidelines 5, 6, 10, 11, 17 relate to responsible AI principles",
+      "privacy_frameworks": "Guidelines 13, 14, 16, 17 connect to privacy and data governance"
+    }
+  }
+}

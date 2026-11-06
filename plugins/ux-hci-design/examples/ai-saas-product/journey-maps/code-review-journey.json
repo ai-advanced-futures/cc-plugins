@@ -1,0 +1,208 @@
+{
+  "schema_version": "1.0",
+  "journey_map": {
+    "journey_id": "JM-AI-001",
+    "title": "AI-Assisted Code Review Journey",
+    "persona_id": "P-AI-001",
+    "scenario": "Alex reviews a pull request with AI assistance to catch issues and suggest improvements",
+    "goal": "Complete thorough code review efficiently with AI helping spot issues",
+    "stages": [
+      {
+        "stage_id": "S-001",
+        "name": "Context Loading",
+        "description": "AI loads and analyzes PR context",
+        "touchpoints": ["PR view", "AI panel"],
+        "actions": [
+          "Open pull request",
+          "AI automatically loads PR context",
+          "Review AI capability indicator"
+        ],
+        "thoughts": "What can the AI help me with on this PR?",
+        "emotions": {
+          "feeling": "curious",
+          "intensity": 5,
+          "description": "Open to AI assistance but cautious"
+        },
+        "ai_interactions": {
+          "guideline_relevant": ["G1", "G2"],
+          "ai_behavior": "Shows capabilities and confidence for this PR type",
+          "transparency": "Displays 'I can help with: bug detection, style review, security scan'"
+        },
+        "pain_points": [
+          "Unclear what AI can actually help with",
+          "No indication of AI confidence for this code type"
+        ],
+        "opportunities": [
+          "Show contextual AI capabilities",
+          "Display confidence level for PR language/framework"
+        ]
+      },
+      {
+        "stage_id": "S-002",
+        "name": "AI Analysis Request",
+        "description": "User triggers AI analysis",
+        "touchpoints": ["AI trigger button", "Command palette"],
+        "actions": [
+          "Click 'Analyze with AI' or use keyboard shortcut",
+          "Select analysis scope (full PR or specific files)",
+          "Confirm analysis start"
+        ],
+        "thoughts": "Let me see what the AI finds before I dig in myself",
+        "emotions": {
+          "feeling": "expectant",
+          "intensity": 6,
+          "description": "Hoping for useful insights"
+        },
+        "ai_interactions": {
+          "guideline_relevant": ["G3", "G7"],
+          "ai_behavior": "Responds to explicit invocation, not automatic",
+          "transparency": "Shows analysis in progress with ETA"
+        },
+        "pain_points": [
+          "AI starts automatically without consent",
+          "No way to scope analysis to specific areas"
+        ],
+        "opportunities": [
+          "Explicit opt-in AI analysis",
+          "Customizable analysis scope"
+        ]
+      },
+      {
+        "stage_id": "S-003",
+        "name": "Review AI Findings",
+        "description": "AI presents findings for review",
+        "touchpoints": ["Findings panel", "Inline annotations"],
+        "actions": [
+          "Review AI findings summary",
+          "Click through individual findings",
+          "See AI confidence per finding"
+        ],
+        "thoughts": "Are these real issues or false positives?",
+        "emotions": {
+          "feeling": "skeptical",
+          "intensity": 7,
+          "description": "Evaluating AI accuracy"
+        },
+        "ai_interactions": {
+          "guideline_relevant": ["G2", "G4", "G11"],
+          "ai_behavior": "Shows confidence levels, explains each finding",
+          "transparency": "Each finding has 'Why?' button for explanation"
+        },
+        "pain_points": [
+          "Findings not prioritized by importance",
+          "No explanation for why AI flagged something"
+        ],
+        "opportunities": [
+          "Severity-sorted findings",
+          "Expandable explanations with evidence"
+        ]
+      },
+      {
+        "stage_id": "S-004",
+        "name": "Evaluate Individual Finding",
+        "description": "Deep dive on specific AI finding",
+        "touchpoints": ["Finding detail view", "Code context"],
+        "actions": [
+          "Expand finding details",
+          "View AI reasoning",
+          "Check suggested fix"
+        ],
+        "thoughts": "Is this actually a problem? What's the AI's reasoning?",
+        "emotions": {
+          "feeling": "analytical",
+          "intensity": 6,
+          "description": "Critically evaluating AI judgment"
+        },
+        "ai_interactions": {
+          "guideline_relevant": ["G11", "G4"],
+          "ai_behavior": "Provides detailed explanation with code evidence",
+          "transparency": "Shows 'Based on: [code pattern], [best practice reference]'"
+        },
+        "pain_points": [
+          "AI explanation too technical or too vague",
+          "Can't see the code context easily"
+        ],
+        "opportunities": [
+          "Adjustable explanation detail level",
+          "Side-by-side code view"
+        ]
+      },
+      {
+        "stage_id": "S-005",
+        "name": "Accept, Modify, or Dismiss",
+        "description": "User decides on each finding",
+        "touchpoints": ["Finding actions", "Quick actions"],
+        "actions": [
+          "Accept finding and apply fix",
+          "Modify AI suggestion",
+          "Dismiss as false positive",
+          "Provide feedback"
+        ],
+        "thoughts": "This one's valid, but the fix needs adjustment. This other one is wrong.",
+        "emotions": {
+          "feeling": "in_control",
+          "intensity": 8,
+          "description": "Feels empowered to guide AI"
+        },
+        "ai_interactions": {
+          "guideline_relevant": ["G8", "G9", "G15"],
+          "ai_behavior": "Easy single-click dismiss, inline edit, feedback option",
+          "transparency": "Shows 'Your feedback helps improve AI' on dismiss"
+        },
+        "pain_points": [
+          "Dismissing requires multiple clicks",
+          "Can't easily modify AI suggestion",
+          "Feedback feels like it goes nowhere"
+        ],
+        "opportunities": [
+          "Single-click dismiss with reason",
+          "Direct inline editing of suggestions",
+          "Visible feedback impact"
+        ]
+      },
+      {
+        "stage_id": "S-006",
+        "name": "Complete Review",
+        "description": "Finish review with AI summary",
+        "touchpoints": ["Summary view", "Submit review"],
+        "actions": [
+          "Review changes made",
+          "See AI-assisted improvements summary",
+          "Submit review"
+        ],
+        "thoughts": "Good, the AI caught some things I might have missed",
+        "emotions": {
+          "feeling": "satisfied",
+          "intensity": 7,
+          "description": "Productive collaboration with AI"
+        },
+        "ai_interactions": {
+          "guideline_relevant": ["G12", "G16"],
+          "ai_behavior": "Summarizes AI contributions, remembers preferences",
+          "transparency": "Shows 'AI helped identify 3 issues, you modified 1 suggestion'"
+        },
+        "pain_points": [
+          "No summary of what AI contributed",
+          "Preferences not remembered for next time"
+        ],
+        "opportunities": [
+          "AI contribution summary",
+          "Learn from user modifications"
+        ]
+      }
+    ],
+    "metrics": {
+      "current_review_time": "45m",
+      "target_review_time": "25m",
+      "ai_suggestion_acceptance_rate": 0.65,
+      "target_acceptance_rate": 0.80,
+      "false_positive_rate": 0.15,
+      "target_false_positive_rate": 0.05
+    }
+  },
+  "metadata": {
+    "created_date": "2025-01-20",
+    "data_sources": ["Developer interviews", "Usage analytics", "Feedback surveys"],
+    "confidence_level": "high"
+  }
+}

@@ -1,0 +1,311 @@
+{
+  "schema_version": "1.0",
+  "wireframe": {
+    "wireframe_id": "WF-AI-001",
+    "screen_name": "AI Code Review Assistant",
+    "purpose": "AI-powered code review with transparency and user control",
+    "fidelity": "medium",
+    "platform": "desktop_web",
+    "design_concept_id": "DC-AI-001",
+    "layout": {
+      "type": "three_panel",
+      "grid": {
+        "columns": 12,
+        "gutter": "16px"
+      },
+      "regions": [
+        {
+          "region_id": "R-001",
+          "name": "code_view",
+          "semantic_role": "main",
+          "position": {
+            "col_start": 1,
+            "col_end": 8
+          },
+          "components": ["C-001", "C-002", "C-003"]
+        },
+        {
+          "region_id": "R-002",
+          "name": "ai_panel",
+          "semantic_role": "complementary",
+          "position": {
+            "col_start": 9,
+            "col_end": 12
+          },
+          "components": ["C-004", "C-005", "C-006", "C-007"]
+        }
+      ]
+    },
+    "components": [
+      {
+        "component_id": "C-001",
+        "type": "code_editor",
+        "label": "Code View",
+        "description": "Main code display with AI annotations",
+        "region_id": "R-001",
+        "state": "default",
+        "content": {
+          "file_path": "src/components/UserAuth.tsx"
+        },
+        "accessibility": {
+          "role": "region",
+          "aria_label": "Code editor with AI annotations"
+        }
+      },
+      {
+        "component_id": "C-002",
+        "type": "ai_inline_annotation",
+        "label": "AI Finding Marker",
+        "description": "Inline marker showing AI-detected issue",
+        "region_id": "R-001",
+        "state": "default",
+        "content": {
+          "line_number": 42,
+          "severity": "warning",
+          "preview": "Potential null reference"
+        },
+        "ai_behavior": {
+          "ai_powered": true,
+          "confidence_display": true,
+          "confidence_level": 0.85,
+          "explanation_available": true
+        },
+        "interaction": {
+          "clickable": true,
+          "focusable": true,
+          "action": "expand_finding",
+          "keyboard_shortcut": "Enter"
+        },
+        "accessibility": {
+          "role": "button",
+          "aria_label": "AI finding: Potential null reference at line 42, confidence 85%, press Enter to view details",
+          "aria_expanded": "false"
+        }
+      },
+      {
+        "component_id": "C-003",
+        "type": "ai_suggestion_overlay",
+        "label": "AI Suggestion Preview",
+        "description": "Overlay showing AI suggested code change",
+        "region_id": "R-001",
+        "state": "hidden",
+        "ai_behavior": {
+          "ai_powered": true,
+          "guideline": "G8",
+          "suggestion_source": "Static analysis + pattern matching",
+          "override_mechanism": "Edit, Accept, Dismiss buttons",
+          "confidence_display": true,
+          "explanation_available": true
+        },
+        "accessibility": {
+          "role": "dialog",
+          "aria_label": "AI suggestion for code change",
+          "aria_modal": "false"
+        }
+      },
+      {
+        "component_id": "C-004",
+        "type": "ai_status_header",
+        "label": "AI Analysis Status",
+        "description": "Shows AI capabilities and current analysis status",
+        "region_id": "R-002",
+        "state": "ready",
+        "content": {
+          "capability_text": "Ready to analyze TypeScript/React code",
+          "confidence_for_context": "high"
+        },
+        "ai_behavior": {
+          "ai_powered": true,
+          "guideline": "G1",
+          "transparency_note": "Clearly states what AI can do for this context"
+        },
+        "accessibility": {
+          "role": "status",
+          "aria_label": "AI assistant ready, high confidence for TypeScript/React analysis",
+          "aria_live": "polite"
+        }
+      },
+      {
+        "component_id": "C-005",
+        "type": "ai_findings_list",
+        "label": "AI Findings",
+        "description": "List of AI-detected issues with confidence",
+        "region_id": "R-002",
+        "state": "populated",
+        "ai_behavior": {
+          "ai_powered": true,
+          "guideline": "G2, G4",
+          "confidence_display": true,
+          "explanation_available": true
+        },
+        "content": {
+          "heading": "AI Findings",
+          "count": 4,
+          "severity_breakdown": {
+            "error": 1,
+            "warning": 2,
+            "info": 1
+          }
+        },
+        "accessibility": {
+          "role": "list",
+          "aria_label": "AI findings: 4 issues found, 1 error, 2 warnings, 1 info"
+        },
+        "children": ["C-005-a"]
+      },
+      {
+        "component_id": "C-005-a",
+        "type": "ai_finding_card",
+        "label": "Finding Card",
+        "description": "Individual AI finding with actions",
+        "region_id": "R-002",
+        "state": "default",
+        "content": {
+          "title": "Potential null reference",
+          "location": "Line 42",
+          "confidence": "85%"
+        },
+        "ai_behavior": {
+          "ai_powered": true,
+          "confidence_display": true,
+          "explanation_available": true,
+          "override_mechanism": "Accept | Edit | Dismiss"
+        },
+        "interaction": {
+          "clickable": true,
+          "focusable": true
+        },
+        "accessibility": {
+          "role": "article",
+          "aria_label": "Finding: Potential null reference at line 42, confidence 85%"
+        },
+        "children": ["C-005-a-1", "C-005-a-2", "C-005-a-3", "C-005-a-4"]
+      },
+      {
+        "component_id": "C-005-a-1",
+        "type": "button",
+        "label": "Why?",
+        "description": "Shows AI explanation for this finding",
+        "state": "default",
+        "ai_behavior": {
+          "guideline": "G11",
+          "action": "show_explanation"
+        },
+        "accessibility": {
+          "role": "button",
+          "aria_label": "Show AI explanation for this finding"
+        }
+      },
+      {
+        "component_id": "C-005-a-2",
+        "type": "button",
+        "label": "Accept",
+        "description": "Accept AI suggestion",
+        "state": "default",
+        "accessibility": {
+          "role": "button",
+          "aria_label": "Accept AI suggestion"
+        }
+      },
+      {
+        "component_id": "C-005-a-3",
+        "type": "button",
+        "label": "Edit",
+        "description": "Edit AI suggestion before applying",
+        "state": "default",
+        "ai_behavior": {
+          "guideline": "G9"
+        },
+        "accessibility": {
+          "role": "button",
+          "aria_label": "Edit AI suggestion"
+        }
+      },
+      {
+        "component_id": "C-005-a-4",
+        "type": "button",
+        "label": "Dismiss",
+        "description": "Dismiss this AI finding",
+        "state": "default",
+        "ai_behavior": {
+          "guideline": "G8",
+          "dismissal_type": "single_click"
+        },
+        "accessibility": {
+          "role": "button",
+          "aria_label": "Dismiss this finding"
+        }
+      },
+      {
+        "component_id": "C-006",
+        "type": "ai_feedback_prompt",
+        "label": "Feedback Section",
+        "description": "Quick feedback for AI improvement",
+        "region_id": "R-002",
+        "state": "collapsed",
+        "ai_behavior": {
+          "guideline": "G15, G16",
+          "feedback_type": "granular"
+        },
+        "content": {
+          "prompt": "How helpful was this AI analysis?"
+        },
+        "accessibility": {
+          "role": "region",
+          "aria_label": "AI feedback"
+        }
+      },
+      {
+        "component_id": "C-007",
+        "type": "ai_settings_button",
+        "label": "AI Settings",
+        "description": "Access to global AI controls",
+        "region_id": "R-002",
+        "state": "default",
+        "ai_behavior": {
+          "guideline": "G17",
+          "action": "open_settings"
+        },
+        "content": {
+          "icon": "settings",
+          "text": "AI Settings"
+        },
+        "accessibility": {
+          "role": "button",
+          "aria_label": "Open AI settings and preferences"
+        }
+      }
+    ],
+    "interactions": [
+      {
+        "interaction_id": "INT-AI-001",
+        "trigger": "Click 'Why?' button",
+        "action": "Show explanation panel",
+        "ai_guideline": "G11"
+      },
+      {
+        "interaction_id": "INT-AI-002",
+        "trigger": "Click 'Dismiss'",
+        "action": "Remove finding, show feedback option",
+        "ai_guideline": "G8, G15"
+      },
+      {
+        "interaction_id": "INT-AI-003",
+        "trigger": "Keyboard Escape",
+        "action": "Dismiss focused AI suggestion",
+        "ai_guideline": "G8"
+      }
+    ],
+    "keyboard_shortcuts": [
+      {"key": "Cmd+Shift+A", "action": "Toggle AI panel"},
+      {"key": "Escape", "action": "Dismiss current AI suggestion"},
+      {"key": "Tab", "action": "Navigate between findings"},
+      {"key": "Enter", "action": "Expand/accept focused finding"}
+    ]
+  },
+  "metadata": {
+    "created_date": "2025-01-20",
+    "designer": "UX Prototype Builder Agent",
+    "ai_hci_guidelines_addressed": ["G1", "G2", "G4", "G8", "G9", "G11", "G15", "G16", "G17"]
+  }
+}

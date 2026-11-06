@@ -1,0 +1,394 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/anthropics/claude-code/plugins/ux-hci-design/schemas/outputs/design-concept-schema.json",
+  "title": "UX Design Concept Schema",
+  "description": "Schema for UX design concepts generated during the IDEATE phase. Captures divergent thinking outputs with Dieter Rams principles as quality constraints.",
+  "type": "object",
+  "required": ["schema_version", "concept", "metadata"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version for compatibility tracking"
+    },
+    "concept": {
+      "type": "object",
+      "required": ["concept_id", "title", "description", "value_proposition", "design_principles", "key_features"],
+      "properties": {
+        "concept_id": {
+          "type": "string",
+          "pattern": "^DC-[0-9]+$",
+          "description": "Unique concept identifier (e.g., DC-001)"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 100,
+          "description": "Descriptive concept title"
+        },
+        "tagline": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "One-line concept essence"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 50,
+          "description": "Detailed concept description"
+        },
+        "concept_type": {
+          "type": "string",
+          "enum": ["evolutionary", "revolutionary", "hybrid", "minimal_viable", "full_vision"],
+          "description": "Category of design approach"
+        },
+        "value_proposition": {
+          "type": "object",
+          "required": ["primary_benefit", "target_users", "differentiation"],
+          "properties": {
+            "primary_benefit": {
+              "type": "string",
+              "description": "Main value delivered to users"
+            },
+            "target_users": {
+              "type": "array",
+              "items": {"type": "string"},
+              "minItems": 1,
+              "description": "Persona references this concept serves"
+            },
+            "differentiation": {
+              "type": "string",
+              "description": "How this differs from existing solutions"
+            },
+            "user_outcomes": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Specific outcomes users will achieve"
+            }
+          }
+        },
+        "design_principles": {
+          "type": "object",
+          "required": ["rams_alignment"],
+          "properties": {
+            "rams_alignment": {
+              "type": "object",
+              "description": "Alignment with Dieter Rams' 10 Principles of Good Design",
+              "properties": {
+                "innovative": {
+                  "type": "object",
+                  "properties": {
+                    "score": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "rationale": {"type": "string"}
+                  }
+                },
+                "useful": {
+                  "type": "object",
+                  "properties": {
+                    "score": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "rationale": {"type": "string"}
+                  }
+                },
+                "aesthetic": {
+                  "type": "object",
+                  "properties": {
+                    "score": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "rationale": {"type": "string"}
+                  }
+                },
+                "understandable": {
+                  "type": "object",
+                  "properties": {
+                    "score": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "rationale": {"type": "string"}
+                  }
+                },
+                "unobtrusive": {
+                  "type": "object",
+                  "properties": {
+                    "score": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "rationale": {"type": "string"}
+                  }
+                },
+                "honest": {
+                  "type": "object",
+                  "properties": {
+                    "score": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "rationale": {"type": "string"}
+                  }
+                },
+                "long_lasting": {
+                  "type": "object",
+                  "properties": {
+                    "score": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "rationale": {"type": "string"}
+                  }
+                },
+                "thorough": {
+                  "type": "object",
+                  "properties": {
+                    "score": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "rationale": {"type": "string"}
+                  }
+                },
+                "environmentally_friendly": {
+                  "type": "object",
+                  "properties": {
+                    "score": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "rationale": {"type": "string"}
+                  }
+                },
+                "minimal": {
+                  "type": "object",
+                  "properties": {
+                    "score": {"type": "integer", "minimum": 1, "maximum": 10},
+                    "rationale": {"type": "string"}
+                  }
+                }
+              }
+            },
+            "norman_principles": {
+              "type": "object",
+              "description": "Alignment with Don Norman's design principles",
+              "properties": {
+                "visibility": {"type": "string"},
+                "feedback": {"type": "string"},
+                "constraints": {"type": "string"},
+                "mapping": {"type": "string"},
+                "consistency": {"type": "string"},
+                "affordance": {"type": "string"}
+              }
+            },
+            "accessibility_commitment": {
+              "type": "object",
+              "properties": {
+                "wcag_target": {
+                  "type": "string",
+                  "enum": ["A", "AA", "AAA"],
+                  "description": "Target WCAG conformance level"
+                },
+                "inclusive_design_considerations": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "key_features": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "required": ["feature_id", "name", "description", "priority"],
+            "properties": {
+              "feature_id": {
+                "type": "string",
+                "pattern": "^F-[0-9]+$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string",
+                "enum": ["must_have", "should_have", "could_have", "wont_have"]
+              },
+              "user_story": {
+                "type": "string",
+                "description": "As a [user], I want [feature] so that [benefit]"
+              },
+              "acceptance_criteria": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "accessibility_requirements": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "ai_capabilities": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "AI-powered capabilities for this feature"
+              }
+            }
+          }
+        },
+        "interaction_model": {
+          "type": "object",
+          "properties": {
+            "primary_modality": {
+              "type": "string",
+              "enum": ["gui", "conversational", "voice", "gesture", "multimodal"]
+            },
+            "input_methods": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "feedback_mechanisms": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "ai_interaction_style": {
+              "type": "string",
+              "enum": ["proactive", "reactive", "collaborative", "autonomous"],
+              "description": "How AI elements behave in the interaction"
+            }
+          }
+        },
+        "visual_direction": {
+          "type": "object",
+          "properties": {
+            "style": {
+              "type": "string",
+              "description": "Visual style description (e.g., minimal, playful, professional)"
+            },
+            "color_palette_intent": {
+              "type": "string"
+            },
+            "typography_intent": {
+              "type": "string"
+            },
+            "density": {
+              "type": "string",
+              "enum": ["spacious", "balanced", "compact"]
+            },
+            "motion_philosophy": {
+              "type": "string",
+              "description": "Approach to animation and transitions"
+            }
+          }
+        },
+        "information_architecture": {
+          "type": "object",
+          "properties": {
+            "navigation_model": {
+              "type": "string",
+              "enum": ["hierarchical", "flat", "hub_and_spoke", "adaptive"]
+            },
+            "content_organization": {
+              "type": "string"
+            },
+            "key_screens": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "purpose": {"type": "string"},
+                  "primary_actions": {"type": "array", "items": {"type": "string"}}
+                }
+              }
+            }
+          }
+        },
+        "constraints": {
+          "type": "object",
+          "properties": {
+            "technical": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "business": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "regulatory": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "accessibility": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          }
+        },
+        "risks_and_mitigations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "risk": {"type": "string"},
+              "likelihood": {"type": "string", "enum": ["low", "medium", "high"]},
+              "impact": {"type": "string", "enum": ["low", "medium", "high"]},
+              "mitigation": {"type": "string"}
+            }
+          }
+        },
+        "success_metrics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "metric": {"type": "string"},
+              "target": {"type": "string"},
+              "measurement_method": {"type": "string"}
+            }
+          }
+        },
+        "handoff_complete": {
+          "type": "boolean",
+          "description": "True when all Handoff-Complete criteria pass; false when gaps remain"
+        },
+        "handoff_gaps": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "List of unresolved handoff items blocking frontend-design implementation"
+        },
+        "related_concepts": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "IDs of related design concepts for comparison"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["created_date", "created_by", "iteration"],
+      "properties": {
+        "created_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "iteration": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Iteration number in the ideation process"
+        },
+        "source_inputs": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "References to personas, research, PRD used as input"
+        },
+        "stakeholder_feedback": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stakeholder": {"type": "string"},
+              "feedback": {"type": "string"},
+              "date": {"type": "string", "format": "date"}
+            }
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "review", "approved", "rejected", "archived"],
+          "default": "draft"
+        },
+        "version": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  }
+}

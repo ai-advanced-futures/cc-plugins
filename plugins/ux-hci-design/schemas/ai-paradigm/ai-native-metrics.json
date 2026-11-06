@@ -1,0 +1,329 @@
+{
+  "title": "AI-Native UX Metrics Framework",
+  "description": "New metrics framework for evaluating AI-driven experiences, replacing traditional GUI metrics with AI-appropriate measurements.",
+  "version": "1.0.0",
+  "paradigm_shift": {
+    "description": "Traditional metrics assume user-driven interfaces. AI-native metrics assume AI-driven outcomes.",
+    "retiring_metrics": [
+      {
+        "metric": "Click-through Rate (CTR)",
+        "why_retiring": "Irrelevant when AI eliminates clicks",
+        "replacement": "Prompt Success Rate (PSR)"
+      },
+      {
+        "metric": "Page Views",
+        "why_retiring": "Irrelevant when interfaces are dynamically generated",
+        "replacement": "Value per Interaction"
+      },
+      {
+        "metric": "Time on Task",
+        "why_retiring": "May penalize efficient AI assistance",
+        "replacement": "Time to Value"
+      },
+      {
+        "metric": "Error Rate",
+        "why_retiring": "AI errors have different characteristics than user errors",
+        "replacement": "Recovery Velocity"
+      },
+      {
+        "metric": "Task Completion Rate",
+        "why_retiring": "Completion is table stakes; value is what matters",
+        "replacement": "Outcome Achievement Rate"
+      }
+    ]
+  },
+  "primary_metrics": [
+    {
+      "id": "psr",
+      "name": "Prompt Success Rate (PSR)",
+      "category": "Intent",
+      "description": "Percentage of user expressions that result in intended outcome on first attempt",
+      "formula": "successful_first_attempts / total_user_expressions",
+      "what_counts_as_success": [
+        "User intent correctly interpreted",
+        "Outcome matches user expectation",
+        "No re-prompting or correction needed",
+        "User accepts result without modification"
+      ],
+      "stratification": [
+        {
+          "dimension": "Intent Complexity",
+          "levels": ["Simple (1 action)", "Moderate (2-3 steps)", "Complex (multi-step workflow)"]
+        },
+        {
+          "dimension": "User Experience",
+          "levels": ["New user", "Regular user", "Power user"]
+        },
+        {
+          "dimension": "Modality",
+          "levels": ["Text", "Voice", "Gesture", "Hybrid"]
+        },
+        {
+          "dimension": "Domain",
+          "levels": ["General", "Domain-specific"]
+        }
+      ],
+      "benchmark_ranges": {
+        "excellent": { "min": 0.90, "description": "Elite AI systems" },
+        "good": { "min": 0.75, "max": 0.90, "description": "Well-designed AI" },
+        "acceptable": { "min": 0.60, "max": 0.75, "description": "Functional but improvable" },
+        "poor": { "max": 0.60, "description": "Significant improvement needed" }
+      },
+      "improvement_levers": [
+        "Better intent disambiguation",
+        "Improved context awareness",
+        "Clearer system capabilities communication",
+        "More natural language understanding"
+      ]
+    },
+    {
+      "id": "ire",
+      "name": "Intent Refinement Efficiency",
+      "category": "Intent",
+      "description": "How efficiently users can refine or correct initial intent when first attempt fails",
+      "formula": "(1 - correction_attempts / total_attempts) + (correction_success_rate * 0.5)",
+      "components": [
+        {
+          "name": "First-try Success Rate",
+          "description": "Interactions that succeed without correction",
+          "target": ">75%"
+        },
+        {
+          "name": "Corrections per Success",
+          "description": "Average corrections needed when first attempt fails",
+          "target": "<2"
+        },
+        {
+          "name": "Refinement Dialog Efficiency",
+          "description": "How quickly refinement converges on correct intent",
+          "measurement": "Turns to resolution"
+        }
+      ],
+      "benchmark_ranges": {
+        "excellent": { "min": 0.85, "description": "Refinement rarely needed, quick when it is" },
+        "good": { "min": 0.70, "max": 0.85, "description": "Efficient refinement process" },
+        "acceptable": { "min": 0.50, "max": 0.70, "description": "Refinement works but could be smoother" },
+        "poor": { "max": 0.50, "description": "Frustrating refinement experience" }
+      }
+    },
+    {
+      "id": "vdr",
+      "name": "Value Delivery Ratio",
+      "category": "Value",
+      "description": "Value delivered relative to user investment of time and cognitive effort",
+      "formula": "perceived_value_score / (time_invested_minutes + cognitive_effort_score)",
+      "components": [
+        {
+          "name": "Perceived Value",
+          "description": "User-rated value of outcome (1-10 scale)",
+          "measurement": "Post-interaction survey or implicit signals"
+        },
+        {
+          "name": "Time Investment",
+          "description": "Total time spent in interaction",
+          "includes": ["Active interaction time", "Waiting time", "Learning time"]
+        },
+        {
+          "name": "Cognitive Effort",
+          "description": "Mental load required (1-10 scale)",
+          "factors": ["Complexity of input required", "Decision difficulty", "Attention demands"]
+        }
+      ],
+      "interpretation": {
+        "high_ratio": "High value, low investment = excellent AI assistance",
+        "low_ratio": "Low value or high investment = poor AI assistance",
+        "balanced": "Value proportional to investment = adequate but improvable"
+      }
+    },
+    {
+      "id": "tcs",
+      "name": "Trust Calibration Score",
+      "category": "Trust",
+      "description": "How well user trust matches actual system reliability",
+      "formula": "1 - abs(user_trust_level - actual_reliability_rate)",
+      "ideal_state": "User trusts system exactly as much as warranted by its actual performance",
+      "measurement": {
+        "user_trust_level": "Survey: 'How confident are you in this AI's outputs?' (0-1)",
+        "actual_reliability_rate": "Measured accuracy of AI outputs over time (0-1)"
+      },
+      "failure_modes": {
+        "over_trust": {
+          "condition": "user_trust > actual_reliability",
+          "risk": "Users don't verify when they should",
+          "severity": "High - can lead to costly errors"
+        },
+        "under_trust": {
+          "condition": "user_trust < actual_reliability",
+          "risk": "Users waste time over-verifying",
+          "severity": "Medium - inefficiency, not safety issue"
+        }
+      },
+      "benchmark_ranges": {
+        "excellent": { "min": 0.90, "description": "Trust perfectly calibrated" },
+        "good": { "min": 0.75, "max": 0.90, "description": "Minor calibration gaps" },
+        "acceptable": { "min": 0.50, "max": 0.75, "description": "Noticeable trust mismatch" },
+        "poor": { "max": 0.50, "description": "Significant trust miscalibration" }
+      }
+    },
+    {
+      "id": "aas",
+      "name": "Autonomy Appropriateness Score",
+      "category": "Control",
+      "description": "How well autonomous AI actions match user preferences and expectations",
+      "formula": "acceptable_autonomous_actions / total_autonomous_actions",
+      "action_categories": [
+        {
+          "type": "Desired",
+          "description": "Actions user would have taken anyway",
+          "weight": 1.0
+        },
+        {
+          "type": "Approved",
+          "description": "Actions user approved when asked",
+          "weight": 0.8
+        },
+        {
+          "type": "Tolerated",
+          "description": "Actions user didn't want but can live with",
+          "weight": 0.3
+        },
+        {
+          "type": "Unwanted",
+          "description": "Actions user actively did not want",
+          "weight": 0.0
+        }
+      ],
+      "benchmark_ranges": {
+        "excellent": { "min": 0.95, "description": "AI acts almost always as user would" },
+        "good": { "min": 0.85, "max": 0.95, "description": "Occasional minor misalignment" },
+        "acceptable": { "min": 0.70, "max": 0.85, "description": "Noticeable autonomy issues" },
+        "poor": { "max": 0.70, "description": "Frequent unwanted autonomous actions" }
+      }
+    },
+    {
+      "id": "rv",
+      "name": "Recovery Velocity",
+      "category": "Resilience",
+      "description": "How quickly users can recognize and recover from AI errors",
+      "formula": "1 / (time_to_recognize_error + time_to_understand + time_to_correct)",
+      "stages": [
+        {
+          "stage": "Recognition",
+          "description": "Time until user realizes AI made an error",
+          "target": "<10 seconds for obvious errors"
+        },
+        {
+          "stage": "Understanding",
+          "description": "Time to understand what went wrong",
+          "target": "<30 seconds"
+        },
+        {
+          "stage": "Correction",
+          "description": "Time to correct or work around the error",
+          "target": "<60 seconds"
+        }
+      ],
+      "factors_affecting_velocity": [
+        "Error visibility/obviousness",
+        "Error explanation quality",
+        "Undo/correction mechanism availability",
+        "Alternative path availability"
+      ]
+    },
+    {
+      "id": "lre",
+      "name": "Learning Rate Effectiveness",
+      "category": "Adaptation",
+      "description": "How effectively the AI learns from user interactions and feedback",
+      "formula": "improvement_rate_per_n_interactions",
+      "measurement": {
+        "baseline": "Performance at interaction 1",
+        "checkpoints": [10, 50, 100, 500],
+        "expected_trajectory": "Diminishing returns curve approaching asymptote"
+      },
+      "learning_dimensions": [
+        "User preferences",
+        "Communication style",
+        "Domain knowledge",
+        "Error patterns to avoid"
+      ]
+    }
+  ],
+  "composite_metrics": {
+    "ai_ux_health_score": {
+      "name": "AI UX Health Score",
+      "description": "Overall health score for AI user experience",
+      "components": [
+        { "metric": "psr", "weight": 0.25, "description": "Intent capture quality" },
+        { "metric": "vdr", "weight": 0.25, "description": "Value delivery" },
+        { "metric": "tcs", "weight": 0.20, "description": "Trust alignment" },
+        { "metric": "aas", "weight": 0.15, "description": "Autonomy appropriateness" },
+        { "metric": "rv", "weight": 0.15, "description": "Error recovery" }
+      ],
+      "formula": "sum(normalized_component * weight)",
+      "interpretation": {
+        "90-100": "Excellent - best-in-class AI UX",
+        "75-89": "Good - competitive AI UX",
+        "60-74": "Adequate - room for improvement",
+        "40-59": "Poor - significant issues",
+        "0-39": "Critical - fundamental problems"
+      }
+    }
+  },
+  "measurement_methodology": {
+    "data_collection": [
+      {
+        "method": "Interaction Logging",
+        "captures": ["Intent expressions", "Outcomes", "Corrections", "Time stamps"],
+        "privacy": "Must respect user privacy and data regulations"
+      },
+      {
+        "method": "User Surveys",
+        "captures": ["Perceived value", "Trust levels", "Satisfaction"],
+        "timing": ["Post-interaction", "Periodic (weekly/monthly)"]
+      },
+      {
+        "method": "A/B Testing",
+        "captures": ["Comparative performance", "Feature impact"],
+        "requirements": ["Statistical significance", "Appropriate sample size"]
+      },
+      {
+        "method": "Observational Studies",
+        "captures": ["Natural behavior patterns", "Error recovery processes"],
+        "context": ["Usability testing", "Field studies"]
+      }
+    ],
+    "reporting_cadence": {
+      "real_time": ["PSR", "Recovery Velocity"],
+      "daily": ["Value Delivery Ratio", "Autonomy Appropriateness"],
+      "weekly": ["Trust Calibration", "AI UX Health Score"],
+      "monthly": ["Learning Rate Effectiveness", "Trend analysis"]
+    }
+  },
+  "usage_guide": {
+    "implementation_priority": [
+      {
+        "phase": 1,
+        "metrics": ["PSR", "Recovery Velocity"],
+        "rationale": "Core interaction quality indicators"
+      },
+      {
+        "phase": 2,
+        "metrics": ["Value Delivery Ratio", "Trust Calibration Score"],
+        "rationale": "Value and trust assessment"
+      },
+      {
+        "phase": 3,
+        "metrics": ["Autonomy Appropriateness", "Learning Rate Effectiveness"],
+        "rationale": "Advanced AI behavior metrics"
+      },
+      {
+        "phase": 4,
+        "metrics": ["AI UX Health Score"],
+        "rationale": "Composite score once components stable"
+      }
+    ],
+    "benchmarking": "Compare against industry standards and competitive products",
+    "iteration": "Use metrics to identify improvement opportunities and measure impact"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "project": {
+    "name": "MedConnect Patient Portal",
+    "version": "1.0.0",
+    "type": "healthcare-portal",
+    "description": "Accessible patient portal for healthcare appointment management"
+  },
+  "context": {
+    "platform": "web_responsive",
+    "target_audience": "patients_all_ages",
+    "has_ai_features": true,
+    "ai_features_limited": true,
+    "accessibility_priority": "critical",
+    "compliance_requirements": ["wcag_aa", "section_508", "hipaa"]
+  },
+  "evaluation": {
+    "weighting_profile": "accessibility-first",
+    "target_wcag_level": "AA",
+    "target_ux_score": 85,
+    "required_frameworks": ["nielsen", "wcag", "ai-hci", "rams", "norman"],
+    "wcag_strict_mode": true
+  },
+  "accessibility": {
+    "minimum_contrast": "7:1",
+    "target_size_minimum": "44x44px",
+    "support_screen_readers": true,
+    "support_voice_control": true,
+    "cognitive_accessibility": true
+  },
+  "artifacts": {
+    "personas_dir": "personas/",
+    "journey_maps_dir": "journey-maps/",
+    "prototypes_dir": "prototypes/",
+    "evaluation_dir": "evaluation/"
+  },
+  "metadata": {
+    "created": "2025-01-20",
+    "last_updated": "2025-01-20",
+    "status": "completed"
+  }
+}

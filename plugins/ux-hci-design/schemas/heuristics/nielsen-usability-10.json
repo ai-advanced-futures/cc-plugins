@@ -1,0 +1,977 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Nielsen's 10 Usability Heuristics",
+  "description": "Jakob Nielsen's 10 usability heuristics for user interface design (1994). These heuristics are general principles for interaction design that help create more usable systems.",
+  "version": "1.0.0",
+  "author": "Jakob Nielsen",
+  "year": 1994,
+  "source": "https://www.nngroup.com/articles/ten-usability-heuristics/",
+  "severity_scale": {
+    "description": "Nielsen Norman Group severity ratings for usability problems",
+    "levels": {
+      "0": {
+        "label": "No Problem",
+        "description": "Not a usability problem at all"
+      },
+      "1": {
+        "label": "Cosmetic",
+        "description": "Need not be fixed unless extra time is available on project"
+      },
+      "2": {
+        "label": "Minor",
+        "description": "Fixing this should be given low priority"
+      },
+      "3": {
+        "label": "Major",
+        "description": "Important to fix, should be given high priority"
+      },
+      "4": {
+        "label": "Catastrophic",
+        "description": "Imperative to fix before product can be released"
+      }
+    }
+  },
+  "heuristics": [
+    {
+      "number": 1,
+      "name": "Visibility of System Status",
+      "short_description": "The design should always keep users informed about what is going on, through appropriate feedback within a reasonable amount of time.",
+      "detailed_description": "Users should never have to guess what the system is doing. The system should provide clear and immediate feedback about actions, system state, and progress. This reduces uncertainty and helps users feel in control.",
+      "key_principles": [
+        "Communicate the current state clearly",
+        "Provide feedback for every user action",
+        "Make system state visible",
+        "Show progress for long operations",
+        "Update status in real-time when possible"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Does the system provide feedback for every user action?",
+          "Is feedback provided within a reasonable timeframe (typically within 0.1 seconds for immediate feedback, 1 second for progress indicators)?",
+          "Are users informed about system status changes?",
+          "Do loading states clearly indicate progress?",
+          "Are users notified when background processes complete?"
+        ],
+        "what_to_look_for": [
+          "Loading indicators for delayed operations",
+          "Progress bars showing completion percentage",
+          "Visual confirmation of user actions (button states, highlights)",
+          "Status messages explaining what is happening",
+          "Real-time updates (notifications, live data)",
+          "System state indicators (online/offline, saved/unsaved)"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "No feedback after button click",
+          "example": "User clicks 'Submit' but nothing indicates the form is processing",
+          "severity": 3
+        },
+        {
+          "issue": "Unclear loading state",
+          "example": "Page appears frozen without any loading indicator during data fetch",
+          "severity": 3
+        },
+        {
+          "issue": "Missing progress indication",
+          "example": "File upload shows no progress, leaving users uncertain about completion",
+          "severity": 2
+        },
+        {
+          "issue": "Delayed feedback",
+          "example": "Button doesn't change state immediately when clicked, causing users to click multiple times",
+          "severity": 2
+        },
+        {
+          "issue": "No success confirmation",
+          "example": "Form submits but user receives no confirmation that action completed successfully",
+          "severity": 2
+        }
+      ],
+      "best_practices": [
+        "Show loading spinners for operations taking more than 1 second",
+        "Use progress bars for operations with known duration",
+        "Provide immediate visual feedback (within 0.1 seconds) for clicks and interactions",
+        "Display success/error messages after operations complete",
+        "Show skeleton screens while content loads",
+        "Indicate system status in navigation/header (e.g., connection status)",
+        "Use subtle animations to indicate state transitions"
+      ],
+      "remediation_guidance": {
+        "quick_fixes": [
+          "Add loading spinners to all async operations",
+          "Implement button disabled states during processing",
+          "Add toast notifications for action confirmations"
+        ],
+        "comprehensive_solutions": [
+          "Implement consistent feedback system across all interactions",
+          "Create progress indicators for multi-step processes",
+          "Add real-time status updates using websockets or polling",
+          "Implement optimistic UI updates with rollback on failure",
+          "Create a design system with standard feedback patterns"
+        ],
+        "testing_approach": [
+          "Test on slow connections to ensure feedback is visible",
+          "Verify feedback appears for all interactive elements",
+          "Check timing of feedback (immediate vs. delayed)",
+          "Test with users to confirm feedback is noticed and understood"
+        ]
+      }
+    },
+    {
+      "number": 2,
+      "name": "Match Between System and the Real World",
+      "short_description": "The design should speak the users' language. Use words, phrases, and concepts familiar to the user, rather than internal jargon. Follow real-world conventions, making information appear in a natural and logical order.",
+      "detailed_description": "Systems should communicate in language and concepts that users already understand from their real-world experience. This includes using familiar terminology, following real-world conventions, and presenting information in a natural, logical order that matches users' mental models.",
+      "key_principles": [
+        "Use familiar language and terminology",
+        "Follow real-world conventions and metaphors",
+        "Present information in logical, natural order",
+        "Use culturally appropriate symbols and icons",
+        "Avoid technical jargon and system-oriented terms"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Does the interface use language familiar to the target audience?",
+          "Are metaphors and icons recognizable from real-world experience?",
+          "Is information organized in a way that matches users' mental models?",
+          "Are date formats, number formats, and conventions culturally appropriate?",
+          "Is technical jargon replaced with user-friendly terms?"
+        ],
+        "what_to_look_for": [
+          "Plain language instead of technical terms",
+          "Familiar metaphors (e.g., trash can for delete, folders for organization)",
+          "Natural ordering (e.g., first name before last name)",
+          "Cultural conventions (date/time formats, currency)",
+          "Recognizable icons and symbols",
+          "Industry-standard terminology for the user's domain"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Technical jargon in user-facing text",
+          "example": "Error message: 'API endpoint returned 500 status code' instead of 'Something went wrong, please try again'",
+          "severity": 2
+        },
+        {
+          "issue": "Unfamiliar metaphors or icons",
+          "example": "Using abstract icons that don't represent their function clearly",
+          "severity": 2
+        },
+        {
+          "issue": "Illogical information ordering",
+          "example": "Asking for password before username in a login form",
+          "severity": 1
+        },
+        {
+          "issue": "System-oriented language",
+          "example": "Button labeled 'Instantiate Session' instead of 'Log In'",
+          "severity": 3
+        },
+        {
+          "issue": "Culturally inappropriate conventions",
+          "example": "Using MM/DD/YYYY date format for international users who expect DD/MM/YYYY",
+          "severity": 2
+        }
+      ],
+      "best_practices": [
+        "Use plain language and avoid technical terminology",
+        "Follow platform conventions (iOS, Android, Web standards)",
+        "Test terminology with actual users from target audience",
+        "Use universally recognized icons or pair icons with labels",
+        "Match the mental model of your specific user group",
+        "Localize not just language but cultural conventions",
+        "Order fields and information logically (chronological, alphabetical, or by frequency of use)",
+        "Use real-world metaphors consistently throughout the interface"
+      ],
+      "remediation_guidance": {
+        "quick_fixes": [
+          "Replace technical terms with plain language alternatives",
+          "Add text labels to ambiguous icons",
+          "Reorder forms to match natural flow"
+        ],
+        "comprehensive_solutions": [
+          "Conduct user research to understand target audience's vocabulary",
+          "Create a content style guide based on user language",
+          "Implement localization for different regions and cultures",
+          "Design information architecture based on user mental models",
+          "Use card sorting to understand natural categorization"
+        ],
+        "testing_approach": [
+          "Conduct comprehension testing with target users",
+          "Test with users from different cultural backgrounds",
+          "Use A/B testing to compare terminology options",
+          "Analyze support tickets for terminology confusion"
+        ]
+      }
+    },
+    {
+      "number": 3,
+      "name": "User Control and Freedom",
+      "short_description": "Users often perform actions by mistake. They need a clearly marked 'emergency exit' to leave the unwanted action without having to go through an extended process.",
+      "detailed_description": "Users need to feel in control and be able to recover from mistakes easily. This means providing clear ways to undo actions, cancel operations, and exit from unwanted states. The system should support exploration without fear of irreversible consequences.",
+      "key_principles": [
+        "Provide undo and redo functionality",
+        "Offer clear exit options from any state",
+        "Support cancellation of ongoing operations",
+        "Enable easy reversal of actions",
+        "Avoid forcing users down predetermined paths"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Can users easily undo their actions?",
+          "Are there clear ways to exit from modal dialogs, wizards, or processes?",
+          "Can users cancel ongoing operations?",
+          "Is it easy to go back to previous states?",
+          "Can users explore without fear of breaking things?"
+        ],
+        "what_to_look_for": [
+          "Undo/Redo buttons or commands",
+          "Clear 'Cancel' or 'Exit' buttons",
+          "Back navigation that preserves state",
+          "Ability to edit or delete created content",
+          "Draft/autosave functionality for forms",
+          "Ability to stop or cancel long-running operations"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "No way to undo destructive actions",
+          "example": "Delete button permanently removes data with no undo option",
+          "severity": 4
+        },
+        {
+          "issue": "Modal dialogs without clear exit",
+          "example": "Modal popup has no close button or clicking outside doesn't dismiss it",
+          "severity": 3
+        },
+        {
+          "issue": "Uncancellable operations",
+          "example": "Long-running process has no cancel button, forcing users to wait",
+          "severity": 3
+        },
+        {
+          "issue": "Wizard with no back button",
+          "example": "Multi-step form only allows forward navigation, can't go back to fix errors",
+          "severity": 2
+        },
+        {
+          "issue": "Lost work when navigating away",
+          "example": "Form data is lost when user accidentally clicks back button",
+          "severity": 3
+        }
+      ],
+      "best_practices": [
+        "Implement undo/redo for all significant actions",
+        "Provide clear 'Cancel' buttons in all dialogs and processes",
+        "Use soft deletes with recovery options (trash/recycle bin)",
+        "Add confirmation dialogs only for truly destructive actions",
+        "Save work automatically and preserve state",
+        "Allow navigation back and forth in multi-step processes",
+        "Enable ESC key to close modals and cancel actions",
+        "Show clear exit paths in navigation",
+        "Implement draft functionality for long forms"
+      ],
+      "remediation_guidance": {
+        "quick_fixes": [
+          "Add undo option to destructive actions",
+          "Add visible close buttons to all modals",
+          "Implement form autosave"
+        ],
+        "comprehensive_solutions": [
+          "Implement system-wide undo/redo functionality",
+          "Create soft delete system with recovery period",
+          "Build draft/autosave system for all forms",
+          "Design multi-step processes with full bidirectional navigation",
+          "Implement session recovery for crashes"
+        ],
+        "testing_approach": [
+          "Test all destructive actions for undo capability",
+          "Verify all modals can be closed easily",
+          "Test form data preservation when navigating away",
+          "Check cancellation works for all long operations"
+        ]
+      }
+    },
+    {
+      "number": 4,
+      "name": "Consistency and Standards",
+      "short_description": "Users should not have to wonder whether different words, situations, or actions mean the same thing. Follow platform and industry conventions.",
+      "detailed_description": "Consistency reduces cognitive load by ensuring users can apply knowledge from one part of your interface to another. Follow both internal consistency (within your product) and external consistency (platform conventions and industry standards).",
+      "key_principles": [
+        "Maintain internal consistency throughout the product",
+        "Follow platform conventions (iOS, Android, Web)",
+        "Adhere to industry standards",
+        "Use consistent terminology",
+        "Apply uniform visual design patterns"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Are similar elements styled and behaving consistently?",
+          "Is terminology used consistently throughout?",
+          "Does the interface follow platform conventions?",
+          "Are actions placed in predictable locations?",
+          "Do similar actions produce similar results?"
+        ],
+        "what_to_look_for": [
+          "Consistent button styles and behaviors",
+          "Uniform terminology for same concepts",
+          "Standard placement of navigation and actions",
+          "Consistent use of colors for meanings (red for error, green for success)",
+          "Following platform patterns (hamburger menu, swipe gestures)",
+          "Consistent form layouts and validation"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Inconsistent terminology",
+          "example": "Using 'Remove', 'Delete', and 'Discard' interchangeably for the same action",
+          "severity": 2
+        },
+        {
+          "issue": "Varying button styles for similar actions",
+          "example": "Primary action button is blue on one page, green on another",
+          "severity": 1
+        },
+        {
+          "issue": "Inconsistent navigation patterns",
+          "example": "Back button on left in some screens, right in others",
+          "severity": 2
+        },
+        {
+          "issue": "Breaking platform conventions",
+          "example": "Using non-standard gestures on mobile or unusual keyboard shortcuts",
+          "severity": 2
+        },
+        {
+          "issue": "Inconsistent form validation",
+          "example": "Some forms show errors inline, others only after submission",
+          "severity": 2
+        }
+      ],
+      "best_practices": [
+        "Create and maintain a design system with reusable components",
+        "Document naming conventions and use them consistently",
+        "Follow platform guidelines (Material Design, Human Interface Guidelines)",
+        "Use standard icons and their conventional meanings",
+        "Maintain consistent layouts across similar pages",
+        "Apply uniform spacing, typography, and color usage",
+        "Keep navigation patterns consistent throughout",
+        "Use standard terminology from your industry",
+        "Position common elements (search, profile, settings) in expected locations"
+      ],
+      "remediation_guidance": {
+        "quick_fixes": [
+          "Audit and standardize terminology across interface",
+          "Apply consistent button styling",
+          "Standardize icon usage"
+        ],
+        "comprehensive_solutions": [
+          "Build comprehensive design system with components and guidelines",
+          "Create style guide documenting all patterns and conventions",
+          "Implement component library for consistent implementation",
+          "Conduct consistency audit across entire product",
+          "Establish design review process to maintain consistency",
+          "Create terminology dictionary for content creators"
+        ],
+        "testing_approach": [
+          "Conduct consistency audit across all screens",
+          "Test terminology usage with search",
+          "Compare against platform guidelines",
+          "Review similar features for pattern consistency"
+        ]
+      }
+    },
+    {
+      "number": 5,
+      "name": "Error Prevention",
+      "short_description": "Good error messages are important, but the best designs carefully prevent problems from occurring in the first place. Either eliminate error-prone conditions, or check for them and present users with a confirmation option before they commit to the action.",
+      "detailed_description": "Preventing errors is better than helping users recover from them. Design to eliminate error-prone conditions through constraints, defaults, and helpful suggestions. When errors are possible, warn users before they commit to potentially destructive or irreversible actions.",
+      "key_principles": [
+        "Use constraints to prevent invalid input",
+        "Provide helpful defaults",
+        "Offer suggestions and autocomplete",
+        "Confirm before destructive actions",
+        "Design to make errors difficult or impossible"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Does the interface constrain inputs to valid values?",
+          "Are there helpful defaults that prevent common mistakes?",
+          "Do users receive warnings before destructive actions?",
+          "Are error-prone situations identified and addressed?",
+          "Does the system help users make correct choices?"
+        ],
+        "what_to_look_for": [
+          "Input validation and masking",
+          "Disabled buttons/options when actions are invalid",
+          "Smart defaults based on context",
+          "Confirmation dialogs for destructive actions",
+          "Autocomplete and suggestions",
+          "Clear constraints on what's allowed",
+          "Prevention of duplicate submissions"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "No input validation",
+          "example": "Form accepts invalid email addresses or phone numbers without checking",
+          "severity": 3
+        },
+        {
+          "issue": "No confirmation for destructive actions",
+          "example": "Delete button immediately removes data without asking for confirmation",
+          "severity": 4
+        },
+        {
+          "issue": "Allowing duplicate submissions",
+          "example": "Submit button can be clicked multiple times, creating duplicate orders",
+          "severity": 4
+        },
+        {
+          "issue": "No constraints on invalid states",
+          "example": "Calendar allows booking dates in the past",
+          "severity": 3
+        },
+        {
+          "issue": "Poor defaults",
+          "example": "Quantity field defaults to 0, causing order errors",
+          "severity": 2
+        }
+      ],
+      "best_practices": [
+        "Use appropriate input types (date pickers, number spinners)",
+        "Implement input masking for formatted data (phone, credit card)",
+        "Disable unavailable options rather than showing error after selection",
+        "Provide inline validation with immediate feedback",
+        "Use smart defaults based on user context and common choices",
+        "Require confirmation for destructive or irreversible actions",
+        "Implement duplicate submission prevention (disable button after click)",
+        "Show constraints clearly (password requirements, character limits)",
+        "Offer autocomplete and suggestions to guide correct input",
+        "Use progressive disclosure to avoid overwhelming users"
+      ],
+      "remediation_guidance": {
+        "quick_fixes": [
+          "Add confirmation dialogs to delete actions",
+          "Implement input type validation",
+          "Disable submit button after first click",
+          "Add input constraints (min/max values)"
+        ],
+        "comprehensive_solutions": [
+          "Implement comprehensive input validation framework",
+          "Build smart defaults system based on user behavior",
+          "Create confirmation pattern for all destructive actions",
+          "Implement constraint-based UI (disable invalid options)",
+          "Add autocomplete and suggestion systems",
+          "Build duplicate detection and prevention",
+          "Implement undo for actions instead of confirmation dialogs where possible"
+        ],
+        "testing_approach": [
+          "Test all input fields with invalid data",
+          "Verify confirmations appear for destructive actions",
+          "Test rapid clicking to catch duplicate submissions",
+          "Review analytics for common user errors to prevent them"
+        ]
+      }
+    },
+    {
+      "number": 6,
+      "name": "Recognition Rather Than Recall",
+      "short_description": "Minimize the user's memory load by making elements, actions, and options visible. The user should not have to remember information from one part of the interface to another. Information required to use the design should be visible or easily retrievable when needed.",
+      "detailed_description": "Human memory is limited and unreliable. Design interfaces that show users what they need rather than requiring them to remember. Make options visible, provide context, and help users recognize information rather than having to recall it from memory.",
+      "key_principles": [
+        "Make options and actions visible",
+        "Provide contextual help and hints",
+        "Use progressive disclosure to show relevant information",
+        "Show recent items and history",
+        "Display current state and context"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Are all available options and actions visible?",
+          "Does the interface provide necessary context at each step?",
+          "Can users see their recent activity or history?",
+          "Are there reminders and hints where needed?",
+          "Do users have to remember information across screens?"
+        ],
+        "what_to_look_for": [
+          "Visible menu options and commands",
+          "Contextual help and tooltips",
+          "Recently used items",
+          "Breadcrumbs showing current location",
+          "Inline labels that persist when fields are filled",
+          "Preview of selections before confirmation",
+          "Search history and suggestions"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Hidden functionality",
+          "example": "Actions only accessible through memorized keyboard shortcuts with no visible menu",
+          "severity": 3
+        },
+        {
+          "issue": "Disappearing labels",
+          "example": "Form labels disappear when user starts typing, leaving no reference",
+          "severity": 2
+        },
+        {
+          "issue": "No context across steps",
+          "example": "Multi-step form doesn't show previous answers, requiring users to remember",
+          "severity": 2
+        },
+        {
+          "issue": "No search history",
+          "example": "Search field has no recent searches or suggestions, requiring users to retype",
+          "severity": 1
+        },
+        {
+          "issue": "Unclear current location",
+          "example": "Deep navigation with no breadcrumbs or indication of where user is",
+          "severity": 2
+        }
+      ],
+      "best_practices": [
+        "Keep form labels visible even when fields are filled",
+        "Show menus and toolbars rather than relying only on shortcuts",
+        "Provide autocomplete and search suggestions",
+        "Display recently used items and history",
+        "Use breadcrumbs for deep navigation hierarchies",
+        "Show previews before users commit to actions",
+        "Provide contextual help and tooltips",
+        "Display current state clearly (selected items, filters applied)",
+        "Use visual indicators for status (icons, colors, badges)",
+        "Keep related information together on the same screen"
+      ],
+      "remediation_guidance": {
+        "quick_fixes": [
+          "Add tooltips to icon-only buttons",
+          "Keep form labels visible",
+          "Add breadcrumb navigation",
+          "Show recently accessed items"
+        ],
+        "comprehensive_solutions": [
+          "Implement persistent labels for all form fields",
+          "Build comprehensive search with history and suggestions",
+          "Create visible navigation showing current context",
+          "Add preview functionality before actions complete",
+          "Implement contextual help system",
+          "Build recently-used and frequently-used lists",
+          "Add visual indicators for all system states",
+          "Create summary screens showing selections before submission"
+        ],
+        "testing_approach": [
+          "Test workflows for required memorization",
+          "Verify all functionality is discoverable without documentation",
+          "Check that context is available at each step",
+          "Test with users new to the interface"
+        ]
+      }
+    },
+    {
+      "number": 7,
+      "name": "Flexibility and Efficiency of Use",
+      "short_description": "Shortcuts — hidden from novice users — may speed up the interaction for the expert user so that the design can cater to both inexperienced and experienced users. Allow users to tailor frequent actions.",
+      "detailed_description": "Provide multiple ways to accomplish tasks to accommodate both novice and expert users. Accelerators like keyboard shortcuts, gestures, and customization options make experienced users more efficient without compromising usability for beginners.",
+      "key_principles": [
+        "Provide shortcuts for expert users",
+        "Allow customization of frequent actions",
+        "Support multiple ways to accomplish tasks",
+        "Enable batch operations",
+        "Remember user preferences and history"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Are there keyboard shortcuts for common actions?",
+          "Can users customize their workflow?",
+          "Are there quick actions for frequent tasks?",
+          "Can experienced users bypass intermediate steps?",
+          "Does the system remember user preferences?"
+        ],
+        "what_to_look_for": [
+          "Keyboard shortcuts for common actions",
+          "Customizable toolbars and dashboards",
+          "Quick actions and bulk operations",
+          "Recent items and favorites",
+          "Saved preferences and settings",
+          "Alternative input methods (gestures, voice)",
+          "Macros or action templates"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "No keyboard shortcuts",
+          "example": "Application requires mouse for all actions, slowing down expert users",
+          "severity": 2
+        },
+        {
+          "issue": "Can't customize frequently used features",
+          "example": "No way to pin or prioritize commonly used menu items",
+          "severity": 1
+        },
+        {
+          "issue": "No bulk operations",
+          "example": "Users must delete items one at a time, no multi-select option",
+          "severity": 2
+        },
+        {
+          "issue": "No saved preferences",
+          "example": "Users must set their preferences every session",
+          "severity": 2
+        },
+        {
+          "issue": "Single path to accomplish tasks",
+          "example": "Only one way to access a feature, forcing all users through same steps",
+          "severity": 1
+        }
+      ],
+      "best_practices": [
+        "Implement standard keyboard shortcuts (Ctrl+S, Ctrl+Z, etc.)",
+        "Allow customization of workspace and frequently used features",
+        "Provide quick actions for common tasks",
+        "Enable batch/bulk operations where appropriate",
+        "Remember user preferences across sessions",
+        "Offer multiple ways to access features (menu, toolbar, shortcut, context menu)",
+        "Create templates or presets for repeated tasks",
+        "Implement smart suggestions based on user history",
+        "Allow drag-and-drop as alternative to menu actions",
+        "Support power-user features without cluttering novice interface"
+      ],
+      "remediation_guidance": {
+        "quick_fixes": [
+          "Add keyboard shortcuts for top 10 actions",
+          "Implement multi-select for batch operations",
+          "Add favorites or pinning functionality",
+          "Save user preferences"
+        ],
+        "comprehensive_solutions": [
+          "Implement comprehensive keyboard shortcut system",
+          "Build customizable dashboard and workspace",
+          "Create bulk operations for all applicable actions",
+          "Implement user preference system with sync",
+          "Build template and preset functionality",
+          "Add command palette for quick access to any action",
+          "Create macro recording for repeated workflows",
+          "Implement smart suggestions based on usage patterns"
+        ],
+        "testing_approach": [
+          "Test with expert users to identify needed shortcuts",
+          "Measure time-on-task for frequent operations",
+          "Test all actions for keyboard accessibility",
+          "Analyze usage patterns to identify customization opportunities"
+        ]
+      }
+    },
+    {
+      "number": 8,
+      "name": "Aesthetic and Minimalist Design",
+      "short_description": "Interfaces should not contain information that is irrelevant or rarely needed. Every extra unit of information in an interface competes with the relevant units of information and diminishes their relative visibility.",
+      "detailed_description": "Remove unnecessary elements and focus on essential content and functionality. Every element should serve a purpose. Extraneous information creates noise and reduces the prominence of important information. Good design is as little design as possible.",
+      "key_principles": [
+        "Remove unnecessary elements",
+        "Focus on essential content",
+        "Use progressive disclosure for advanced features",
+        "Prioritize information hierarchy",
+        "Eliminate visual clutter"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Does every element serve a clear purpose?",
+          "Is the visual hierarchy clear and effective?",
+          "Are advanced features hidden until needed?",
+          "Is there unnecessary decoration or information?",
+          "Can users focus on their primary task?"
+        ],
+        "what_to_look_for": [
+          "Clean, uncluttered layouts",
+          "Clear visual hierarchy",
+          "Progressive disclosure of complexity",
+          "Purposeful use of whitespace",
+          "Minimal decoration",
+          "Focused content without distractions",
+          "Appropriate information density"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Information overload",
+          "example": "Screen shows all possible fields and options at once, overwhelming users",
+          "severity": 2
+        },
+        {
+          "issue": "Unnecessary decoration",
+          "example": "Heavy use of shadows, gradients, and effects that don't improve usability",
+          "severity": 1
+        },
+        {
+          "issue": "Poor visual hierarchy",
+          "example": "Everything is same size/weight, no clear indication of importance",
+          "severity": 2
+        },
+        {
+          "issue": "Excessive help text",
+          "example": "Every field has paragraph of explanatory text visible by default",
+          "severity": 2
+        },
+        {
+          "issue": "Too many options visible",
+          "example": "Advanced settings mixed with basic options, cluttering interface",
+          "severity": 2
+        }
+      ],
+      "best_practices": [
+        "Use progressive disclosure - show advanced features only when needed",
+        "Apply clear visual hierarchy with size, weight, and color",
+        "Remove decorative elements that don't serve functional purpose",
+        "Use whitespace effectively to create breathing room",
+        "Limit choices and options shown at once",
+        "Prioritize content - most important information should be most prominent",
+        "Simplify navigation - fewer menu items and levels",
+        "Use collapsible sections for secondary information",
+        "Keep text concise and scannable",
+        "Reduce visual noise (borders, dividers, shadows) to minimum necessary"
+      ],
+      "remediation_guidance": {
+        "quick_fixes": [
+          "Remove decorative elements",
+          "Hide advanced options in collapsible sections",
+          "Increase whitespace between elements",
+          "Simplify button and link text"
+        ],
+        "comprehensive_solutions": [
+          "Conduct information architecture review to eliminate redundancy",
+          "Implement progressive disclosure system for complexity",
+          "Redesign with clear visual hierarchy",
+          "Create simplified 'basic' mode with 'advanced' toggle",
+          "Audit all content for necessity and clarity",
+          "Implement card sorting to understand natural groupings",
+          "Remove or consolidate redundant features",
+          "Create focused task flows without distractions"
+        ],
+        "testing_approach": [
+          "Conduct heuristic evaluation focused on simplicity",
+          "Test information findability to ensure simplification didn't hide needed items",
+          "Measure task completion time before and after simplification",
+          "Get user feedback on clarity and focus"
+        ]
+      }
+    },
+    {
+      "number": 9,
+      "name": "Help Users Recognize, Diagnose, and Recover from Errors",
+      "short_description": "Error messages should be expressed in plain language (no error codes), precisely indicate the problem, and constructively suggest a solution.",
+      "detailed_description": "When errors occur, help users understand what went wrong and how to fix it. Error messages should be helpful, not blame the user, and should provide clear guidance for recovery. Good error handling turns frustrating moments into learning opportunities.",
+      "key_principles": [
+        "Use plain language, not technical codes",
+        "Clearly explain what went wrong",
+        "Suggest specific solutions",
+        "Be constructive, not blaming",
+        "Provide paths to recovery"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Are error messages written in plain language?",
+          "Do errors explain what went wrong?",
+          "Are solutions or next steps provided?",
+          "Are errors presented constructively?",
+          "Can users easily recover from errors?"
+        ],
+        "what_to_look_for": [
+          "Plain language error messages",
+          "Specific explanation of the problem",
+          "Actionable suggestions for resolution",
+          "Links or buttons to help fix the issue",
+          "Inline validation showing errors near their source",
+          "Constructive tone without blame",
+          "Clear visual distinction of error state"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "Technical error codes only",
+          "example": "Error: ERR_CONNECTION_REFUSED (no explanation or guidance)",
+          "severity": 3
+        },
+        {
+          "issue": "Vague error messages",
+          "example": "Something went wrong. Please try again.",
+          "severity": 3
+        },
+        {
+          "issue": "No solution provided",
+          "example": "Invalid email address (doesn't explain what makes it invalid)",
+          "severity": 2
+        },
+        {
+          "issue": "Blaming language",
+          "example": "You entered the wrong password instead of Password incorrect",
+          "severity": 1
+        },
+        {
+          "issue": "Error not near its source",
+          "example": "Form shows all errors at top, user must hunt for which field has issue",
+          "severity": 2
+        }
+      ],
+      "best_practices": [
+        "Write error messages in plain, non-technical language",
+        "Explain exactly what went wrong",
+        "Provide specific, actionable solutions",
+        "Show errors inline near the problematic field/element",
+        "Use appropriate visual indicators (color, icons) for errors",
+        "Avoid error codes or show them secondarily for support purposes",
+        "Use constructive language that doesn't blame the user",
+        "Link to relevant help documentation when appropriate",
+        "Offer automatic fixes when possible (e.g., 'Did you mean...?')",
+        "Make error states clearly distinguishable but not aggressive"
+      ],
+      "remediation_guidance": {
+        "quick_fixes": [
+          "Rewrite error messages in plain language",
+          "Add specific solutions to error messages",
+          "Move errors inline near their source",
+          "Remove blaming language"
+        ],
+        "comprehensive_solutions": [
+          "Create error message library with consistent patterns",
+          "Implement inline validation for all forms",
+          "Build helpful error system with suggested actions",
+          "Add contextual help links to error messages",
+          "Implement smart suggestions (spell check, autocorrect)",
+          "Create error recovery workflows",
+          "Log errors for analysis to improve prevention",
+          "Design error states with clear visual indicators"
+        ],
+        "testing_approach": [
+          "Test all error scenarios to verify helpful messages",
+          "Have non-technical users read error messages for comprehension",
+          "Verify errors appear near their source",
+          "Test recovery paths from all error states",
+          "Analyze support tickets to improve common error messages"
+        ]
+      }
+    },
+    {
+      "number": 10,
+      "name": "Help and Documentation",
+      "short_description": "It's best if the system doesn't need any additional explanation. However, it may be necessary to provide documentation to help users understand how to complete their tasks.",
+      "detailed_description": "While interfaces should be self-explanatory, comprehensive help and documentation should be available when needed. Help should be easy to find, task-focused, concrete, and concise. Provide help in context where users need it.",
+      "key_principles": [
+        "Make help easy to find and access",
+        "Focus on user tasks and goals",
+        "Provide concrete steps and examples",
+        "Keep help concise and scannable",
+        "Offer contextual help where needed"
+      ],
+      "evaluation_criteria": {
+        "questions": [
+          "Is help easily accessible when needed?",
+          "Is documentation organized by user tasks?",
+          "Are there concrete examples and steps?",
+          "Is help available in context?",
+          "Can users find answers quickly?"
+        ],
+        "what_to_look_for": [
+          "Visible help links or buttons",
+          "Contextual tooltips and inline help",
+          "Task-based documentation structure",
+          "Searchable help system",
+          "Tutorials and onboarding flows",
+          "Examples and screenshots",
+          "FAQ sections for common questions"
+        ]
+      },
+      "common_violations": [
+        {
+          "issue": "No help available",
+          "example": "Complex feature with no explanation or documentation",
+          "severity": 3
+        },
+        {
+          "issue": "Help is hard to find",
+          "example": "Help link buried in settings, not accessible from main interface",
+          "severity": 2
+        },
+        {
+          "issue": "Feature-focused not task-focused documentation",
+          "example": "Help organized by technical features rather than user goals",
+          "severity": 2
+        },
+        {
+          "issue": "No search in documentation",
+          "example": "Long help documentation with no search, forcing users to browse",
+          "severity": 2
+        },
+        {
+          "issue": "Generic help text",
+          "example": "Help text doesn't provide specific steps or examples for the task",
+          "severity": 2
+        }
+      ],
+      "best_practices": [
+        "Provide contextual help (tooltips, inline hints) where users need it",
+        "Make help/support easily accessible from any screen",
+        "Organize documentation by user tasks and goals, not features",
+        "Include concrete examples and step-by-step instructions",
+        "Make documentation searchable",
+        "Use progressive onboarding for new users",
+        "Provide multiple help formats (tooltips, guides, videos)",
+        "Keep help content concise and scannable",
+        "Include visual aids (screenshots, diagrams, videos)",
+        "Maintain FAQ for common questions",
+        "Update documentation when features change"
+      ],
+      "remediation_guidance": {
+        "quick_fixes": [
+          "Add tooltips to complex features",
+          "Create FAQ for common questions",
+          "Add visible help link to main navigation",
+          "Provide contact support option"
+        ],
+        "comprehensive_solutions": [
+          "Build comprehensive help center organized by user tasks",
+          "Implement contextual help system with inline assistance",
+          "Create interactive tutorials and onboarding",
+          "Add search functionality to documentation",
+          "Build knowledge base with examples and screenshots",
+          "Implement progressive disclosure in help (basic to advanced)",
+          "Create video tutorials for complex features",
+          "Add in-app guidance for new features",
+          "Implement chatbot or live support integration"
+        ],
+        "testing_approach": [
+          "Test help system with actual user questions",
+          "Verify help is findable from all relevant screens",
+          "Test search functionality for common queries",
+          "Analyze support tickets to identify missing documentation",
+          "Conduct usability testing on help content clarity"
+        ]
+      }
+    }
+  ],
+  "usage_guide": {
+    "how_to_conduct_evaluation": [
+      "1. Review interface systematically against each heuristic",
+      "2. Document specific violations with screenshots and descriptions",
+      "3. Assign severity ratings (0-4) based on impact and frequency",
+      "4. Prioritize issues based on severity",
+      "5. Provide specific remediation recommendations",
+      "6. Retest after fixes to verify improvements"
+    ],
+    "severity_rating_guidance": {
+      "frequency": "How often does the problem occur?",
+      "impact": "How difficult is it for users to overcome?",
+      "persistence": "Will users be affected repeatedly?",
+      "combine_factors": "Severity = Frequency × Impact × Persistence"
+    },
+    "reporting_best_practices": [
+      "Reference specific heuristic number and name",
+      "Include concrete examples with screenshots",
+      "Explain why it's a problem (user impact)",
+      "Suggest specific solutions with priority",
+      "Group related issues together",
+      "Provide before/after examples when possible"
+    ]
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0",
+  "persona": {
+    "persona_id": "P-AI-001",
+    "name": "Alex Rivera",
+    "archetype": "Senior Developer",
+    "photo_description": "Developer in casual office setting, multiple monitors, focused expression",
+    "quote": "AI is great, but I need to understand what it's doing before I trust it with my code.",
+    "demographics": {
+      "age": 35,
+      "occupation": "Senior Software Engineer",
+      "location": "Tech hub city",
+      "experience_level": "8+ years",
+      "company_size": "Mid-size startup (200-500)",
+      "tech_proficiency": "expert"
+    },
+    "goals": [
+      {
+        "goal_id": "G-001",
+        "description": "Increase code quality without slowing down",
+        "priority": "high",
+        "category": "efficiency"
+      },
+      {
+        "goal_id": "G-002",
+        "description": "Maintain understanding of all code, including AI-assisted",
+        "priority": "critical",
+        "category": "control"
+      },
+      {
+        "goal_id": "G-003",
+        "description": "Mentor junior developers effectively",
+        "priority": "medium",
+        "category": "leadership"
+      },
+      {
+        "goal_id": "G-004",
+        "description": "Stay current with AI-assisted development trends",
+        "priority": "medium",
+        "category": "professional_growth"
+      }
+    ],
+    "frustrations": [
+      {
+        "frustration_id": "FR-001",
+        "description": "AI tools that feel like black boxes",
+        "severity": "critical",
+        "frequency": "often"
+      },
+      {
+        "frustration_id": "FR-002",
+        "description": "Suggestions that ignore project context",
+        "severity": "high",
+        "frequency": "sometimes"
+      },
+      {
+        "frustration_id": "FR-003",
+        "description": "No way to correct AI's mistakes permanently",
+        "severity": "high",
+        "frequency": "often"
+      },
+      {
+        "frustration_id": "FR-004",
+        "description": "AI interrupting flow with irrelevant suggestions",
+        "severity": "medium",
+        "frequency": "sometimes"
+      }
+    ],
+    "behaviors": [
+      "Prefers keyboard-driven workflows",
+      "Reads AI suggestions critically before accepting",
+      "Configures tools extensively before use",
+      "Shares useful AI prompts with team",
+      "Actively provides feedback on AI suggestions"
+    ],
+    "needs": [
+      {
+        "need_id": "N-001",
+        "description": "Transparent AI reasoning and confidence levels",
+        "type": "trust",
+        "priority": "critical"
+      },
+      {
+        "need_id": "N-002",
+        "description": "Easy way to correct and teach the AI",
+        "type": "control",
+        "priority": "critical"
+      },
+      {
+        "need_id": "N-003",
+        "description": "Granular control over AI behavior",
+        "type": "customization",
+        "priority": "high"
+      },
+      {
+        "need_id": "N-004",
+        "description": "Non-intrusive assistance that respects flow state",
+        "type": "experience",
+        "priority": "high"
+      },
+      {
+        "need_id": "N-005",
+        "description": "Keyboard shortcuts for all AI interactions",
+        "type": "efficiency",
+        "priority": "high"
+      }
+    ],
+    "context_of_use": {
+      "devices": ["desktop_primary", "laptop_secondary"],
+      "environments": ["office", "home_office"],
+      "frequency": "daily",
+      "session_duration": "6-8 hours with breaks"
+    },
+    "ai_attitudes": {
+      "trust_level": "cautious",
+      "adoption_stage": "active_evaluator",
+      "concerns": ["Code quality", "Understanding", "Security"],
+      "expectations": ["Explanation", "Control", "Reliability"]
+    },
+    "accessibility_considerations": {
+      "vision": "Mild color vision deficiency (deuteranomaly)",
+      "motor": "RSI concerns, prefers keyboard",
+      "cognitive": "Deep focus mode, dislikes interruptions",
+      "assistive_tech": "Uses keyboard navigation extensively"
+    }
+  },
+  "metadata": {
+    "created_date": "2025-01-20",
+    "source": "Developer interviews and survey (n=25)",
+    "confidence": "high",
+    "last_validated": "2025-01-20"
+  }
+}

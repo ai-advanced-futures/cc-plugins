@@ -1,0 +1,2484 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WCAG 2.2 Web Content Accessibility Guidelines",
+  "description": "W3C Web Content Accessibility Guidelines (WCAG) 2.2 Level A and AA success criteria. WCAG 2.2 extends WCAG 2.1 with additional success criteria to improve accessibility, particularly for users with cognitive disabilities and mobile device users.",
+  "version": "2.2",
+  "published": "2023-10-05",
+  "organization": "W3C Web Accessibility Initiative (WAI)",
+  "source": "https://www.w3.org/TR/WCAG22/",
+  "conformance_levels": {
+    "A": {
+      "description": "Level A (Minimum) - The most basic web accessibility features. If this level is not satisfied, some groups will find it impossible to access information on the website.",
+      "priority": "Essential"
+    },
+    "AA": {
+      "description": "Level AA (Mid-Range) - Deals with the biggest and most common barriers for disabled users. This is the level most organizations should strive for and is legally required in many jurisdictions.",
+      "priority": "Recommended"
+    },
+    "AAA": {
+      "description": "Level AAA (Highest) - The highest level of accessibility. Not required for entire sites but may be applied to specific pages or sections.",
+      "priority": "Enhanced (not included in this schema)"
+    }
+  },
+  "principles": [
+    {
+      "number": 1,
+      "code": "perceivable",
+      "name": "Perceivable",
+      "description": "Information and user interface components must be presentable to users in ways they can perceive.",
+      "guidelines": [
+        {
+          "number": "1.1",
+          "name": "Text Alternatives",
+          "description": "Provide text alternatives for any non-text content so that it can be changed into other forms people need, such as large print, braille, speech, symbols or simpler language.",
+          "success_criteria": [
+            {
+              "number": "1.1.1",
+              "name": "Non-text Content",
+              "level": "A",
+              "description": "All non-text content that is presented to the user has a text alternative that serves the equivalent purpose.",
+              "intent": "To make information conveyed by non-text content accessible through the use of text alternatives. Text alternatives can be presented in a variety of ways (visually, audibly, or tactilely) to match the needs of the user.",
+              "exceptions": [
+                "Controls and Input: If non-text content is a control or accepts user input, it has a name that describes its purpose",
+                "Time-Based Media: If non-text content is time-based media, text alternatives provide descriptive identification",
+                "Test: If non-text content is a test that would be invalid if presented in text, text alternatives provide descriptive identification",
+                "Sensory: If non-text content is primarily intended to create a specific sensory experience, text alternatives provide descriptive identification",
+                "CAPTCHA: Text alternative identifies purpose, and alternative forms for different disabilities are provided",
+                "Decoration, Formatting, Invisible: If non-text content is pure decoration, used only for visual formatting, or not presented to users, it is implemented in a way that can be ignored by assistive technology"
+              ],
+              "techniques": {
+                "sufficient": [
+                  "Using alt attribute on img elements (H37)",
+                  "Using null alt text and no title attribute on img elements for decorative images (H67)",
+                  "Providing a text alternative for non-text content using aria-label (ARIA6)",
+                  "Providing a text alternative using aria-labelledby (ARIA10)",
+                  "Using longdesc attribute for complex images (H45)",
+                  "Providing a long description in text near the image (G73, G74)",
+                  "Using figure and figcaption elements (H88)"
+                ],
+                "advisory": [
+                  "Using aria-describedby for additional description",
+                  "Providing text alternatives for emojis and emoticons",
+                  "Using SVG with title and desc elements"
+                ],
+                "failures": [
+                  "Using alt attribute text that is not equivalent (F30)",
+                  "Using generic or placeholder alt text (F39)",
+                  "Omitting alt attribute on img elements (F65)"
+                ]
+              },
+              "test_procedures": [
+                "Identify all non-text content (images, icons, charts, graphics)",
+                "Verify that each has a text alternative that serves equivalent purpose",
+                "Check that decorative images have empty alt attributes",
+                "Verify CAPTCHA has text alternative and accessible alternatives provided",
+                "Confirm complex images have detailed descriptions via longdesc, aria-describedby, or adjacent text",
+                "Test with screen reader to ensure alternatives are read correctly"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Missing alt text",
+                  "example": "<img src='chart.png'> with no alt attribute",
+                  "impact": "Screen reader users cannot access content"
+                },
+                {
+                  "issue": "Generic alt text",
+                  "example": "alt='image' or alt='photo'",
+                  "impact": "Provides no useful information"
+                },
+                {
+                  "issue": "Alt text contains 'image of' or 'picture of'",
+                  "example": "alt='image of a cat'",
+                  "impact": "Redundant information as screen reader already announces it as image"
+                },
+                {
+                  "issue": "Decorative image with descriptive alt",
+                  "example": "Background pattern has detailed alt text",
+                  "impact": "Creates noise for screen reader users"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": "1.2",
+          "name": "Time-based Media",
+          "description": "Provide alternatives for time-based media (audio and video).",
+          "success_criteria": [
+            {
+              "number": "1.2.1",
+              "name": "Audio-only and Video-only (Prerecorded)",
+              "level": "A",
+              "description": "For prerecorded audio-only and prerecorded video-only media, alternatives are provided that present equivalent information.",
+              "intent": "To make information conveyed by prerecorded audio-only and video-only media available to all users, including those who are deaf, hard of hearing, blind, or have low vision.",
+              "techniques": {
+                "sufficient": [
+                  "Providing a transcript for audio-only content (G158)",
+                  "Providing an audio track for video-only content (G159)",
+                  "Providing a text document including descriptions of major visual elements and transcript of dialogue (G166)"
+                ],
+                "advisory": [
+                  "Linking to text transcripts from audio/video",
+                  "Providing a sign language interpretation"
+                ],
+                "failures": [
+                  "No alternative provided for prerecorded audio-only (F30)",
+                  "No alternative provided for prerecorded video-only (F67)"
+                ]
+              },
+              "test_procedures": [
+                "Identify all prerecorded audio-only content",
+                "Verify transcript is provided that includes all audio information",
+                "Identify all prerecorded video-only content",
+                "Verify audio track or text description is provided",
+                "Check that alternatives convey equivalent information"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Podcast without transcript",
+                  "example": "Audio podcast with no text alternative",
+                  "impact": "Deaf users cannot access content"
+                },
+                {
+                  "issue": "Incomplete transcript",
+                  "example": "Transcript missing sound effects or non-speech audio",
+                  "impact": "Important information is lost"
+                }
+              ]
+            },
+            {
+              "number": "1.2.2",
+              "name": "Captions (Prerecorded)",
+              "level": "A",
+              "description": "Captions are provided for all prerecorded audio content in synchronized media, except when the media is a media alternative for text and is clearly labeled as such.",
+              "intent": "To enable people who are deaf or hard of hearing to watch synchronized media presentations. Captions provide the part of the content available via the audio track.",
+              "techniques": {
+                "sufficient": [
+                  "Providing closed captions using video player caption features (G87)",
+                  "Providing open captions embedded in the video (G93)",
+                  "Using WebVTT for captions (H95)",
+                  "Using SMIL to add captions (SM11, SM12)"
+                ],
+                "advisory": [
+                  "Using captions that are synchronized within 150ms",
+                  "Providing speaker identification in captions",
+                  "Including non-speech sounds in captions"
+                ],
+                "failures": [
+                  "No captions provided for video with audio (F8)",
+                  "Captions not synchronized with audio (F74)",
+                  "Captions missing important audio information (F75)"
+                ]
+              },
+              "test_procedures": [
+                "Identify all prerecorded synchronized media (video with audio)",
+                "Verify captions are provided",
+                "Check that captions include all dialogue",
+                "Verify captions include relevant sound effects",
+                "Check synchronization of captions with audio",
+                "Confirm caption controls are accessible"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Auto-generated captions only",
+                  "example": "YouTube auto-captions with errors",
+                  "impact": "Inaccurate information"
+                },
+                {
+                  "issue": "Captions missing sound effects",
+                  "example": "Dialogue captioned but not [door slams] or [phone ringing]",
+                  "impact": "Context is lost"
+                }
+              ]
+            },
+            {
+              "number": "1.2.3",
+              "name": "Audio Description or Media Alternative (Prerecorded)",
+              "level": "A",
+              "description": "An alternative for time-based media or audio description of the prerecorded video content is provided for synchronized media, except when the media is a media alternative for text and is clearly labeled as such.",
+              "intent": "To provide people who are blind or visually impaired access to the visual information in a synchronized media presentation.",
+              "techniques": {
+                "sufficient": [
+                  "Providing audio description (G78)",
+                  "Providing a full text alternative including descriptions of visual information (G173)",
+                  "Using extended audio description (G8)"
+                ],
+                "advisory": [
+                  "Providing audio description for live video",
+                  "Providing a screenplay or script"
+                ],
+                "failures": [
+                  "No audio description or alternative provided (F81)"
+                ]
+              },
+              "test_procedures": [
+                "Identify prerecorded video with synchronized audio",
+                "Check if visual information is described in audio",
+                "If not, verify a full text transcript with visual descriptions exists",
+                "Confirm important visual details are included"
+              ],
+              "common_failures": [
+                {
+                  "issue": "No description of visual actions",
+                  "example": "Video shows process but audio doesn't describe steps",
+                  "impact": "Blind users miss critical visual information"
+                }
+              ]
+            },
+            {
+              "number": "1.2.4",
+              "name": "Captions (Live)",
+              "level": "AA",
+              "description": "Captions are provided for all live audio content in synchronized media.",
+              "intent": "To enable people who are deaf or hard of hearing to watch real-time presentations by providing captions of the audio content.",
+              "techniques": {
+                "sufficient": [
+                  "Using real-time text captioning service (G9, G87)",
+                  "Providing captions using video player that supports captions (SM11, SM12)"
+                ],
+                "advisory": [
+                  "Using speech-to-text services",
+                  "Using Communication Access Real-time Translation (CART)"
+                ],
+                "failures": [
+                  "No captions for live video content (F8)"
+                ]
+              },
+              "test_procedures": [
+                "Identify all live audio/video content",
+                "Verify real-time captions are provided",
+                "Check caption accuracy (allowing for real-time limitations)",
+                "Verify captions keep pace with audio"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Live webinar without captions",
+                  "example": "Live streaming event with no captioning service",
+                  "impact": "Deaf users excluded from live events"
+                }
+              ]
+            },
+            {
+              "number": "1.2.5",
+              "name": "Audio Description (Prerecorded)",
+              "level": "AA",
+              "description": "Audio description is provided for all prerecorded video content in synchronized media.",
+              "intent": "To provide people who are blind or visually impaired access to the visual information in a synchronized media presentation (stronger requirement than 1.2.3).",
+              "techniques": {
+                "sufficient": [
+                  "Providing audio description for video (G78)",
+                  "Providing extended audio description (G173)",
+                  "Using SMIL to add audio description (SM6, SM7)"
+                ],
+                "advisory": [
+                  "Providing audio description in multiple languages",
+                  "Using descriptive video service"
+                ],
+                "failures": [
+                  "Important visual information not described in audio (F81)"
+                ]
+              },
+              "test_procedures": [
+                "Identify all prerecorded video with audio",
+                "Verify audio description track is available",
+                "Check that all important visual information is described",
+                "Test with screen off to ensure understanding is possible from audio alone"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Incomplete audio description",
+                  "example": "Only some visual elements described, not all",
+                  "impact": "Blind users miss important visual context"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": "1.3",
+          "name": "Adaptable",
+          "description": "Create content that can be presented in different ways (for example simpler layout) without losing information or structure.",
+          "success_criteria": [
+            {
+              "number": "1.3.1",
+              "name": "Info and Relationships",
+              "level": "A",
+              "description": "Information, structure, and relationships conveyed through presentation can be programmatically determined or are available in text.",
+              "intent": "To ensure that information and relationships that are implied by visual or auditory formatting are preserved when the presentation format changes (e.g., when read by a screen reader, or when CSS is not loaded).",
+              "techniques": {
+                "sufficient": [
+                  "Using semantic HTML elements (H49, H51, H71, H85)",
+                  "Using ARIA roles, states, and properties (ARIA11, ARIA12, ARIA13)",
+                  "Using table headers for data tables (H43, H63)",
+                  "Using fieldset and legend for form groups (H71)",
+                  "Using label elements for form controls (H44)",
+                  "Using heading elements (H42)",
+                  "Using list elements for lists (H48)"
+                ],
+                "advisory": [
+                  "Using aria-describedby for additional relationships",
+                  "Using CSS for visual presentation rather than HTML tables",
+                  "Providing semantic markup for emphasized text"
+                ],
+                "failures": [
+                  "Using presentation markup instead of structural markup (F43, F46)",
+                  "Not using header elements for headings (F2)",
+                  "Using white space characters to format tables (F49)",
+                  "Using tables for layout (F48, F92)"
+                ]
+              },
+              "test_procedures": [
+                "View page with CSS disabled and verify structure is clear",
+                "Check that headings use h1-h6 elements",
+                "Verify lists use ul, ol, or dl elements",
+                "Check data tables use th elements and scope or headers attributes",
+                "Verify form controls have associated labels",
+                "Test with screen reader to confirm relationships are announced",
+                "Check that visual formatting conveys structure programmatically"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Visual headings not marked up",
+                  "example": "<div class='big-bold'>Heading</div> instead of <h2>Heading</h2>",
+                  "impact": "Screen readers cannot navigate by headings"
+                },
+                {
+                  "issue": "Data table without headers",
+                  "example": "Table using <b> for headers instead of <th>",
+                  "impact": "Screen readers cannot associate data with headers"
+                },
+                {
+                  "issue": "Form label not associated",
+                  "example": "Label text near input but not using <label> element",
+                  "impact": "Screen readers don't announce what input is for"
+                }
+              ]
+            },
+            {
+              "number": "1.3.2",
+              "name": "Meaningful Sequence",
+              "level": "A",
+              "description": "When the sequence in which content is presented affects its meaning, a correct reading sequence can be programmatically determined.",
+              "intent": "To enable a screen reader to present content in a meaningful order even when the visual layout changes the order.",
+              "techniques": {
+                "sufficient": [
+                  "Ordering content in DOM to match meaningful sequence (G57)",
+                  "Using CSS positioning without affecting DOM order (C27)",
+                  "Specifying reading order via tabindex when necessary (H34)"
+                ],
+                "advisory": [
+                  "Using CSS flexbox and grid with proper order",
+                  "Testing linearized content order"
+                ],
+                "failures": [
+                  "Using CSS to reorder content in a way that affects meaning (F1, F49)",
+                  "Using white space or layout tables to control visual presentation (F32, F33, F34)"
+                ]
+              },
+              "test_procedures": [
+                "Disable CSS and verify content order makes sense",
+                "Use screen reader to check reading order",
+                "Tab through page and verify focus order is logical",
+                "Linearize content and verify it maintains meaning"
+              ],
+              "common_failures": [
+                {
+                  "issue": "CSS repositions content illogically",
+                  "example": "Visual order: 1,2,3 but DOM order: 2,1,3",
+                  "impact": "Screen reader users experience confusing order"
+                },
+                {
+                  "issue": "Multi-column layout breaks reading order",
+                  "example": "DOM goes down column 1 then column 2, but should alternate",
+                  "impact": "Content reads in wrong sequence"
+                }
+              ]
+            },
+            {
+              "number": "1.3.3",
+              "name": "Sensory Characteristics",
+              "level": "A",
+              "description": "Instructions provided for understanding and operating content do not rely solely on sensory characteristics of components such as shape, color, size, visual location, orientation, or sound.",
+              "intent": "To ensure that all users can access instructions for using content, including users who are blind, have low vision, or are colorblind.",
+              "techniques": {
+                "sufficient": [
+                  "Providing textual identification in addition to sensory characteristics (G96)"
+                ],
+                "advisory": [
+                  "Using semantic markup for identification",
+                  "Providing text alternatives for location-based cues"
+                ],
+                "failures": [
+                  "Identifying content only by shape or location (F14, F26)",
+                  "Using color alone to convey information (F73, F81)"
+                ]
+              },
+              "test_procedures": [
+                "Review all instructions for sensory-only references",
+                "Check that instructions work without color perception",
+                "Verify instructions work without visual reference",
+                "Test with screen reader to confirm instructions are understandable"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Color-only instructions",
+                  "example": "Click the green button to continue",
+                  "impact": "Colorblind users cannot follow instructions"
+                },
+                {
+                  "issue": "Shape-only instructions",
+                  "example": "Click the round button",
+                  "impact": "Screen reader users don't perceive shape"
+                },
+                {
+                  "issue": "Location-only instructions",
+                  "example": "See information on the right",
+                  "impact": "Screen reader users don't perceive spatial layout"
+                }
+              ]
+            },
+            {
+              "number": "1.3.4",
+              "name": "Orientation",
+              "level": "AA",
+              "description": "Content does not restrict its view and operation to a single display orientation, such as portrait or landscape, unless a specific display orientation is essential.",
+              "intent": "To ensure that content displays and functions in any orientation unless a specific orientation is necessary.",
+              "techniques": {
+                "sufficient": [
+                  "Using CSS to allow both orientations (G214)",
+                  "Not locking display orientation via platform features"
+                ],
+                "advisory": [
+                  "Using responsive design for all orientations",
+                  "Testing in both portrait and landscape modes"
+                ],
+                "failures": [
+                  "Locking orientation without essential need (F97, F100)"
+                ]
+              },
+              "test_procedures": [
+                "Rotate device to portrait and landscape",
+                "Verify all content is accessible in both orientations",
+                "Check that no orientation is locked unless essential",
+                "Test all functionality in both orientations"
+              ],
+              "common_failures": [
+                {
+                  "issue": "App locked to portrait only",
+                  "example": "Mobile app only works in portrait mode",
+                  "impact": "Users with mounted devices cannot access content"
+                },
+                {
+                  "issue": "Content cut off in landscape",
+                  "example": "Important content not visible in landscape orientation",
+                  "impact": "Users must rotate device to access content"
+                }
+              ]
+            },
+            {
+              "number": "1.3.5",
+              "name": "Identify Input Purpose",
+              "level": "AA",
+              "description": "The purpose of each input field collecting information about the user can be programmatically determined when the input field serves a purpose identified in the Input Purposes for User Interface Components section of WCAG 2.2.",
+              "intent": "To ensure that the purpose of form input fields can be understood by user agents and assistive technologies, enabling them to present and auto-fill form fields in ways that are customized to the user.",
+              "techniques": {
+                "sufficient": [
+                  "Using HTML autocomplete attribute (H98)",
+                  "Using appropriate autocomplete values for common fields (email, name, address, phone, etc.)"
+                ],
+                "advisory": [
+                  "Using ARIA for custom form controls",
+                  "Providing consistent input purposes across site"
+                ],
+                "failures": [
+                  "Not using autocomplete for common user information fields (F107)"
+                ]
+              },
+              "test_procedures": [
+                "Identify all input fields collecting user information",
+                "Verify autocomplete attribute is used with appropriate values",
+                "Test that browser/assistive tech can auto-fill fields",
+                "Check autocomplete values match WCAG list"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Email field without autocomplete",
+                  "example": "<input type='email'> missing autocomplete='email'",
+                  "impact": "Users cannot auto-fill personal information"
+                },
+                {
+                  "issue": "Incorrect autocomplete value",
+                  "example": "Using autocomplete='name' instead of autocomplete='given-name' and 'family-name'",
+                  "impact": "Auto-fill may not work correctly"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": "1.4",
+          "name": "Distinguishable",
+          "description": "Make it easier for users to see and hear content including separating foreground from background.",
+          "success_criteria": [
+            {
+              "number": "1.4.1",
+              "name": "Use of Color",
+              "level": "A",
+              "description": "Color is not used as the only visual means of conveying information, indicating an action, prompting a response, or distinguishing a visual element.",
+              "intent": "To ensure that all users, including users with color vision deficiencies, can access information that is conveyed by color differences.",
+              "techniques": {
+                "sufficient": [
+                  "Using text or icons in addition to color (G14, G182, G111)",
+                  "Providing additional visual cue besides color (G138)"
+                ],
+                "advisory": [
+                  "Using sufficient contrast in addition to color",
+                  "Using patterns in addition to color"
+                ],
+                "failures": [
+                  "Identifying required fields only by color (F73, F81)",
+                  "Using color alone to distinguish links (F73)",
+                  "Using only color to convey information in charts (F81)"
+                ]
+              },
+              "test_procedures": [
+                "View page in grayscale and verify all information is still available",
+                "Check that required fields are marked with asterisk or text, not just color",
+                "Verify links are distinguishable without color (underline, icon, etc.)",
+                "Check that color-coded information has text labels or patterns",
+                "Test with color blindness simulator"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Required fields only shown in red",
+                  "example": "Red asterisk with no text indication",
+                  "impact": "Colorblind users cannot identify required fields"
+                },
+                {
+                  "issue": "Status conveyed by color only",
+                  "example": "Green for success, red for error with no icons or text",
+                  "impact": "Colorblind users cannot distinguish status"
+                },
+                {
+                  "issue": "Chart legend color-only",
+                  "example": "Bar chart with only color distinguishing data series",
+                  "impact": "Colorblind users cannot read chart"
+                }
+              ]
+            },
+            {
+              "number": "1.4.2",
+              "name": "Audio Control",
+              "level": "A",
+              "description": "If any audio on a Web page plays automatically for more than 3 seconds, either a mechanism is available to pause or stop the audio, or a mechanism is available to control audio volume independently from the overall system volume level.",
+              "intent": "To allow a person using a screen reader to hear the screen reader without interference from auto-playing audio.",
+              "techniques": {
+                "sufficient": [
+                  "Providing a control to turn off auto-playing audio (G60, G170)",
+                  "Playing audio for 3 seconds or less (G171)"
+                ],
+                "advisory": [
+                  "Not auto-playing audio",
+                  "Providing user preference for audio"
+                ],
+                "failures": [
+                  "Auto-playing audio longer than 3 seconds with no control (F23, F93)"
+                ]
+              },
+              "test_procedures": [
+                "Identify any audio that plays automatically on page load",
+                "If audio plays longer than 3 seconds, verify pause/stop control exists",
+                "Check that control is near top of page or clearly visible",
+                "Verify control is keyboard accessible",
+                "Test that volume can be controlled independently"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Background music with no control",
+                  "example": "Site plays music automatically with no pause button",
+                  "impact": "Screen reader users cannot hear their assistive technology"
+                },
+                {
+                  "issue": "Video auto-plays with audio",
+                  "example": "Hero video plays with sound on page load",
+                  "impact": "Interferes with screen reader audio"
+                }
+              ]
+            },
+            {
+              "number": "1.4.3",
+              "name": "Contrast (Minimum)",
+              "level": "AA",
+              "description": "The visual presentation of text and images of text has a contrast ratio of at least 4.5:1, except for large text (at least 18pt or 14pt bold) which requires 3:1, and incidental text (inactive UI components, pure decoration, invisible, or part of picture with significant other visual content).",
+              "intent": "To provide enough contrast between text and its background so that it can be read by people with moderately low vision.",
+              "techniques": {
+                "sufficient": [
+                  "Ensuring sufficient contrast ratio (G18, G148, G174)",
+                  "Using sufficient contrast for images of text (G145)"
+                ],
+                "advisory": [
+                  "Using higher contrast ratios than minimum",
+                  "Allowing users to customize contrast"
+                ],
+                "failures": [
+                  "Text has insufficient contrast with background (F24, F83)"
+                ]
+              },
+              "test_procedures": [
+                "Use color contrast analyzer tool to test all text",
+                "Verify normal text has at least 4.5:1 contrast ratio",
+                "Verify large text has at least 3:1 contrast ratio",
+                "Check text over images and gradients",
+                "Test all UI component text and icons",
+                "Verify link text has sufficient contrast"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Light gray text on white background",
+                  "example": "#999999 on #FFFFFF (2.8:1 contrast)",
+                  "impact": "Low vision users cannot read text"
+                },
+                {
+                  "issue": "Placeholder text too light",
+                  "example": "Gray placeholder text below 4.5:1",
+                  "impact": "Users cannot read form hints"
+                },
+                {
+                  "issue": "White text on light background",
+                  "example": "White text over light image",
+                  "impact": "Text is illegible"
+                }
+              ]
+            },
+            {
+              "number": "1.4.4",
+              "name": "Resize Text",
+              "level": "AA",
+              "description": "Except for captions and images of text, text can be resized without assistive technology up to 200 percent without loss of content or functionality.",
+              "intent": "To ensure that visually rendered text can be scaled successfully without requiring assistive technology.",
+              "techniques": {
+                "sufficient": [
+                  "Using relative units for font sizes (C28, C12, C13, C14)",
+                  "Ensuring text containers resize when text is resized (SCR34)",
+                  "Not using absolute units for font sizes (avoiding px for font-size)"
+                ],
+                "advisory": [
+                  "Using viewport units carefully",
+                  "Testing zoom at 200%",
+                  "Avoiding horizontal scrolling when zoomed"
+                ],
+                "failures": [
+                  "Using fixed-size text that cannot scale (F69, F80, F94)",
+                  "Text clipped when zoomed (F94)"
+                ]
+              },
+              "test_procedures": [
+                "Zoom browser to 200% using Ctrl/Cmd +",
+                "Verify all text is still visible and readable",
+                "Check that no text is cut off or overlaps",
+                "Verify all functionality still works",
+                "Check horizontal scrolling is not required (unless for tables/complex layouts)",
+                "Test that text containers expand with content"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Fixed height containers cut off text",
+                  "example": "Button with height:30px crops text when zoomed",
+                  "impact": "Users cannot read zoomed text"
+                },
+                {
+                  "issue": "Text overlaps when zoomed",
+                  "example": "Absolute positioned elements overlap text at 200%",
+                  "impact": "Content becomes unreadable"
+                },
+                {
+                  "issue": "Horizontal scroll required",
+                  "example": "Page requires horizontal scrolling at 200% zoom",
+                  "impact": "Difficult to read and navigate"
+                }
+              ]
+            },
+            {
+              "number": "1.4.5",
+              "name": "Images of Text",
+              "level": "AA",
+              "description": "If the technologies being used can achieve the visual presentation, text is used to convey information rather than images of text except for customizable images of text and essential images (like logos).",
+              "intent": "To encourage authors to enable text presentation that can be adjusted to meet user needs.",
+              "techniques": {
+                "sufficient": [
+                  "Using text rather than images of text (G140)",
+                  "Using CSS to style text instead of images (C22, C30)"
+                ],
+                "advisory": [
+                  "Using CSS web fonts instead of images",
+                  "Using SVG for logos that need to scale"
+                ],
+                "failures": [
+                  "Using images of text when text could be used (F3)"
+                ]
+              },
+              "test_procedures": [
+                "Identify all images of text",
+                "Determine if same presentation could be achieved with styled text",
+                "Verify essential images (logos, required visual presentation) are exceptions",
+                "Check if customizable alternatives are provided"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Styled headings as images",
+                  "example": "Fancy font heading saved as PNG",
+                  "impact": "Cannot be resized, translated, or customized"
+                },
+                {
+                  "issue": "Button text as images",
+                  "example": "Button background contains text",
+                  "impact": "Text cannot scale or be translated"
+                }
+              ]
+            },
+            {
+              "number": "1.4.10",
+              "name": "Reflow",
+              "level": "AA",
+              "description": "Content can be presented without loss of information or functionality, and without requiring scrolling in two dimensions for vertical content at width of 320 CSS pixels and horizontal content at height of 256 CSS pixels, except for parts that require two-dimensional layout (like maps, diagrams, video, games, presentations, data tables, interfaces where keeping toolbars visible is essential).",
+              "intent": "To support people with low vision who need to enlarge text and read it in a single column by allowing content to reflow.",
+              "techniques": {
+                "sufficient": [
+                  "Using responsive design techniques (C32, C31, C33, C38)",
+                  "Using CSS Flexbox and Grid (C34, C36)",
+                  "Using media queries for responsive layout (C40)"
+                ],
+                "advisory": [
+                  "Using viewport meta tag appropriately",
+                  "Avoiding fixed positioning that prevents reflow",
+                  "Testing at 400% zoom"
+                ],
+                "failures": [
+                  "Fixed width content that doesn't reflow (F102)",
+                  "Content requires 2D scrolling at mobile viewport (F69)"
+                ]
+              },
+              "test_procedures": [
+                "Set browser width to 1280px and zoom to 400% (equivalent to 320px)",
+                "Verify content reflows to single column",
+                "Check no horizontal scrolling is required",
+                "Verify all content and functionality is available",
+                "Test responsive design at mobile viewport sizes"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Fixed width layout doesn't reflow",
+                  "example": "Desktop layout maintained at all sizes requiring horizontal scroll",
+                  "impact": "Low vision users must scroll in two dimensions"
+                },
+                {
+                  "issue": "Content overlaps when reflowed",
+                  "example": "Text overlaps at narrow viewport",
+                  "impact": "Content is unreadable"
+                }
+              ]
+            },
+            {
+              "number": "1.4.11",
+              "name": "Non-text Contrast",
+              "level": "AA",
+              "description": "The visual presentation of user interface components and graphical objects have a contrast ratio of at least 3:1 against adjacent colors for UI components (active controls, their states, and focus indicators) and graphical objects (parts of graphics required to understand content).",
+              "intent": "To ensure that people with moderately low vision can perceive user interface components and meaningful graphics.",
+              "techniques": {
+                "sufficient": [
+                  "Ensuring 3:1 contrast for UI components (G195, G207)",
+                  "Providing sufficient contrast for graphical objects (G174, G183)"
+                ],
+                "advisory": [
+                  "Using higher contrast ratios",
+                  "Providing multiple visual cues beyond color"
+                ],
+                "failures": [
+                  "UI component has insufficient contrast (F78)",
+                  "Graphical object has insufficient contrast (F78)"
+                ]
+              },
+              "test_procedures": [
+                "Use contrast analyzer on UI components (buttons, form controls, focus indicators)",
+                "Check contrast of icons and graphical indicators",
+                "Verify 3:1 minimum contrast for component boundaries",
+                "Test focus indicators for visibility",
+                "Check controls in different states (hover, active, disabled)"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Light gray button outline",
+                  "example": "Button border #DDDDDD on #FFFFFF (1.3:1)",
+                  "impact": "Users cannot see button boundaries"
+                },
+                {
+                  "issue": "Low contrast focus indicator",
+                  "example": "Light blue outline on white (2.1:1)",
+                  "impact": "Keyboard users cannot see focus"
+                },
+                {
+                  "issue": "Icon without sufficient contrast",
+                  "example": "Gray icon on light gray (2.5:1)",
+                  "impact": "Users cannot perceive icon"
+                }
+              ]
+            },
+            {
+              "number": "1.4.12",
+              "name": "Text Spacing",
+              "level": "AA",
+              "description": "No loss of content or functionality occurs when users adjust line height to 1.5x font size, paragraph spacing to 2x font size, letter spacing to 0.12x font size, and word spacing to 0.16x font size.",
+              "intent": "To ensure that people with low vision or reading disabilities can adjust text spacing to improve readability without loss of content or functionality.",
+              "techniques": {
+                "sufficient": [
+                  "Allowing text spacing adjustments without loss of content (C36, C35, C8, C21)"
+                ],
+                "advisory": [
+                  "Using relative units for spacing",
+                  "Not using fixed heights for text containers"
+                ],
+                "failures": [
+                  "Content clipped with text spacing adjustments (F104, F105)"
+                ]
+              },
+              "test_procedures": [
+                "Apply text spacing bookmarklet or extension",
+                "Set line-height to 1.5em, paragraph spacing to 2em, letter-spacing to 0.12em, word-spacing to 0.16em",
+                "Verify no text is cut off",
+                "Check that no content overlaps",
+                "Verify all functionality still works"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Fixed height truncates text",
+                  "example": "Card with height:200px clips text with increased spacing",
+                  "impact": "Users cannot read full content with adjusted spacing"
+                },
+                {
+                  "issue": "Text overlaps other content",
+                  "example": "Increased line height causes text to overlap below",
+                  "impact": "Content becomes unreadable"
+                }
+              ]
+            },
+            {
+              "number": "1.4.13",
+              "name": "Content on Hover or Focus",
+              "level": "AA",
+              "description": "Where receiving and then removing pointer hover or keyboard focus triggers additional content to become visible and then hidden, the following are true: Dismissible (can dismiss without moving focus/hover), Hoverable (pointer can move to additional content), Persistent (stays visible until hover/focus removed, dismissed, or invalid).",
+              "intent": "To ensure that additional content that appears on hover or focus can be perceived and dismissed by users, particularly those with low vision who use screen magnification.",
+              "techniques": {
+                "sufficient": [
+                  "Implementing dismiss mechanism like ESC key (SCR39)",
+                  "Ensuring additional content can be hovered (G212)",
+                  "Ensuring content persists until dismissed (G201)"
+                ],
+                "advisory": [
+                  "Using ARIA live regions for notifications",
+                  "Testing with screen magnifiers"
+                ],
+                "failures": [
+                  "Tooltip disappears when trying to hover over it (F95)",
+                  "No way to dismiss popup without moving focus (F89)"
+                ]
+              },
+              "test_procedures": [
+                "Trigger all hover/focus content (tooltips, submenus, etc.)",
+                "Verify ESC key dismisses additional content",
+                "Check that pointer can move to additional content without it disappearing",
+                "Verify content persists until explicitly dismissed or focus moved away",
+                "Test with keyboard and mouse"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Tooltip disappears on hover",
+                  "example": "Tooltip vanishes when trying to hover over it to read",
+                  "impact": "Low vision users using magnification cannot read tooltip"
+                },
+                {
+                  "issue": "No ESC to dismiss",
+                  "example": "Popup has no dismiss mechanism except moving mouse",
+                  "impact": "Users cannot dismiss content to see underlying text"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "code": "operable",
+      "name": "Operable",
+      "description": "User interface components and navigation must be operable.",
+      "guidelines": [
+        {
+          "number": "2.1",
+          "name": "Keyboard Accessible",
+          "description": "Make all functionality available from a keyboard.",
+          "success_criteria": [
+            {
+              "number": "2.1.1",
+              "name": "Keyboard",
+              "level": "A",
+              "description": "All functionality of the content is operable through a keyboard interface without requiring specific timings for individual keystrokes, except where the underlying function requires input that depends on the path of the user's movement and not just the endpoints.",
+              "intent": "To ensure that, wherever possible, content can be operated through a keyboard or keyboard interface (enabling alternative keyboards, voice input, etc.).",
+              "techniques": {
+                "sufficient": [
+                  "Ensuring all functionality is keyboard accessible (G202)",
+                  "Using standard HTML controls (H91)",
+                  "Providing keyboard shortcuts (G90)"
+                ],
+                "advisory": [
+                  "Using WAI-ARIA for custom controls",
+                  "Documenting keyboard shortcuts"
+                ],
+                "failures": [
+                  "Requiring mouse-specific events (F54, F55)",
+                  "Using device-dependent event handlers (F42)"
+                ]
+              },
+              "test_procedures": [
+                "Unplug mouse or avoid using mouse completely",
+                "Tab through entire page",
+                "Verify all interactive elements are reachable",
+                "Test all functionality works with keyboard only",
+                "Check custom widgets work with keyboard",
+                "Verify no keyboard traps exist"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Click-only buttons",
+                  "example": "div with onclick but not keyboard accessible",
+                  "impact": "Keyboard users cannot activate control"
+                },
+                {
+                  "issue": "Dropdown requires mouse",
+                  "example": "Menu only opens on hover with no keyboard equivalent",
+                  "impact": "Keyboard users cannot access submenu"
+                },
+                {
+                  "issue": "Drag-and-drop only",
+                  "example": "Reordering only works with mouse drag",
+                  "impact": "Keyboard users cannot reorder items"
+                }
+              ]
+            },
+            {
+              "number": "2.1.2",
+              "name": "No Keyboard Trap",
+              "level": "A",
+              "description": "If keyboard focus can be moved to a component of the page using a keyboard interface, then focus can be moved away from that component using only a keyboard interface, and if it requires more than unmodified arrow or tab keys or other standard exit methods, the user is advised of the method for moving focus away.",
+              "intent": "To ensure that users can navigate to all areas of content using keyboard and do not get trapped in any subset of content.",
+              "techniques": {
+                "sufficient": [
+                  "Ensuring no keyboard trap exists (G21)",
+                  "Providing standard exit methods or documenting custom methods (G90)"
+                ],
+                "advisory": [
+                  "Using standard HTML controls that manage focus properly",
+                  "Testing keyboard navigation through all interactive elements"
+                ],
+                "failures": [
+                  "Creating a keyboard trap (F10)"
+                ]
+              },
+              "test_procedures": [
+                "Tab to each interactive element",
+                "Verify Tab/Shift+Tab can move focus away",
+                "Check modal dialogs can be exited with keyboard",
+                "Test that focus doesn't get stuck in any widget",
+                "Verify ESC key works for dismissing overlays"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Modal dialog traps focus",
+                  "example": "Modal has no close button and ESC doesn't work",
+                  "impact": "Keyboard users stuck in modal"
+                },
+                {
+                  "issue": "Custom widget traps Tab",
+                  "example": "Rich text editor prevents Tab from leaving",
+                  "impact": "Cannot navigate away from widget"
+                }
+              ]
+            },
+            {
+              "number": "2.1.4",
+              "name": "Character Key Shortcuts",
+              "level": "A",
+              "description": "If a keyboard shortcut is implemented using only character keys (letter, punctuation, number, or symbol), then at least one of the following is true: can be turned off, can be remapped, or is only active when component has focus.",
+              "intent": "To reduce accidental activation of keyboard shortcuts and provide flexibility for users who rely on voice input or have physical disabilities.",
+              "techniques": {
+                "sufficient": [
+                  "Providing mechanism to turn off single-key shortcuts (G217)",
+                  "Providing mechanism to remap shortcuts (G216)",
+                  "Making shortcuts active only when component focused (SCR43)"
+                ],
+                "advisory": [
+                  "Using modifier keys for shortcuts",
+                  "Avoiding single-key shortcuts for common letters"
+                ],
+                "failures": [
+                  "Single-key shortcut cannot be turned off or remapped (F99)"
+                ]
+              },
+              "test_procedures": [
+                "Identify all character-key shortcuts",
+                "Verify they can be turned off in settings",
+                "Check if they can be remapped",
+                "Test if they only work when component has focus",
+                "Test with voice input software for conflicts"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Single letter shortcut always active",
+                  "example": "'s' key triggers search from anywhere on page",
+                  "impact": "Voice input users trigger shortcuts when speaking"
+                },
+                {
+                  "issue": "No way to disable shortcuts",
+                  "example": "Character shortcuts with no disable option",
+                  "impact": "Users cannot prevent accidental activation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": "2.2",
+          "name": "Enough Time",
+          "description": "Provide users enough time to read and use content.",
+          "success_criteria": [
+            {
+              "number": "2.2.1",
+              "name": "Timing Adjustable",
+              "level": "A",
+              "description": "For each time limit set by the content, the user can turn off, adjust, or extend the time limit before time expires (with exceptions for real-time events, essential time limits, and limits longer than 20 hours).",
+              "intent": "To ensure that users with disabilities that affect their ability to read or interact quickly have adequate time to complete tasks.",
+              "techniques": {
+                "sufficient": [
+                  "Providing mechanism to turn off time limit (G198)",
+                  "Providing mechanism to adjust time limit (G133)",
+                  "Providing mechanism to extend time limit (G180, SCR16)",
+                  "Using scripts to extend time limit before expiry (SCR1)"
+                ],
+                "advisory": [
+                  "Using time limits greater than 20 hours",
+                  "Providing warning before time expires"
+                ],
+                "failures": [
+                  "Using timed redirects (F40, F41, F58)",
+                  "No way to extend or disable timeout (F16)"
+                ]
+              },
+              "test_procedures": [
+                "Identify all time limits in content",
+                "Verify user can turn off, adjust, or extend each limit",
+                "Check that warning appears before timeout with option to extend",
+                "Test that essential actions (like auctions) document time requirements",
+                "Verify session timeouts can be extended"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Session timeout with no warning",
+                  "example": "User logged out after 15 minutes with no extension option",
+                  "impact": "Users lose work if they need more time"
+                },
+                {
+                  "issue": "Timed quiz with no adjustment",
+                  "example": "Test has fixed time limit that cannot be extended",
+                  "impact": "Users with disabilities cannot complete test"
+                }
+              ]
+            },
+            {
+              "number": "2.2.2",
+              "name": "Pause, Stop, Hide",
+              "level": "A",
+              "description": "For moving, blinking, scrolling, or auto-updating information that starts automatically, lasts more than 5 seconds, and is presented in parallel with other content, there is a mechanism to pause, stop, or hide it, or control its frequency. For auto-updating information, there is a mechanism to pause, stop, hide, or control update frequency unless it is essential.",
+              "intent": "To avoid distracting users, especially those with attention deficits, from being able to use the rest of the page.",
+              "techniques": {
+                "sufficient": [
+                  "Providing pause mechanism for moving content (G4)",
+                  "Providing stop mechanism for auto-updating (G186, G191)",
+                  "Using scripts to control blinking (SCR22, SCR33)",
+                  "Allowing user to set update frequency (G187)"
+                ],
+                "advisory": [
+                  "Not auto-playing content",
+                  "Pausing animation after 5 seconds automatically"
+                ],
+                "failures": [
+                  "Auto-playing movement with no pause (F16, F47, F50)",
+                  "Scrolling content with no pause (F4, F7)"
+                ]
+              },
+              "test_procedures": [
+                "Identify moving, blinking, scrolling, or auto-updating content",
+                "Verify content lasting >5 seconds has pause/stop control",
+                "Check control is easily findable",
+                "Test that pausing doesn't lose information",
+                "Verify auto-updating content can be controlled"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Carousel with no pause",
+                  "example": "Auto-rotating slides with no stop button",
+                  "impact": "Users cannot read content before it changes"
+                },
+                {
+                  "issue": "Scrolling news ticker",
+                  "example": "Continuous scrolling with no pause control",
+                  "impact": "Users cannot read moving text"
+                },
+                {
+                  "issue": "Auto-refreshing content",
+                  "example": "Live data updates with no way to pause",
+                  "impact": "Screen reader users interrupted constantly"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": "2.3",
+          "name": "Seizures and Physical Reactions",
+          "description": "Do not design content in a way that is known to cause seizures or physical reactions.",
+          "success_criteria": [
+            {
+              "number": "2.3.1",
+              "name": "Three Flashes or Below Threshold",
+              "level": "A",
+              "description": "Web pages do not contain anything that flashes more than three times in any one second period, or the flash is below the general flash and red flash thresholds.",
+              "intent": "To prevent photosensitive epileptic seizures caused by flashing.",
+              "techniques": {
+                "sufficient": [
+                  "Ensuring no content flashes more than 3 times per second (G19)",
+                  "Ensuring flash is below general and red flash thresholds (G176)"
+                ],
+                "advisory": [
+                  "Reducing contrast for flashes",
+                  "Avoiding fully saturated reds in flashing content"
+                ],
+                "failures": [
+                  "Content flashes more than 3 times per second (F1, F3)"
+                ]
+              },
+              "test_procedures": [
+                "Identify any flashing content",
+                "Use tool to measure flash frequency",
+                "Verify flashing is 3 times per second or less",
+                "Check flash size and contrast meet threshold requirements",
+                "Test animations for rapid flashing"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Rapid flashing animation",
+                  "example": "Strobe effect or rapid color changes",
+                  "impact": "Can trigger seizures in photosensitive users"
+                },
+                {
+                  "issue": "Video with rapid flashing",
+                  "example": "Content includes footage with rapid flashes",
+                  "impact": "Risk of seizures"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": "2.4",
+          "name": "Navigable",
+          "description": "Provide ways to help users navigate, find content, and determine where they are.",
+          "success_criteria": [
+            {
+              "number": "2.4.1",
+              "name": "Bypass Blocks",
+              "level": "A",
+              "description": "A mechanism is available to bypass blocks of content that are repeated on multiple Web pages.",
+              "intent": "To allow people who navigate sequentially through content more direct access to primary content of the Web page.",
+              "techniques": {
+                "sufficient": [
+                  "Providing skip links (G1, G123, G124)",
+                  "Using ARIA landmarks (ARIA11)",
+                  "Using HTML5 sectioning elements (H69)",
+                  "Providing heading structure for navigation (H70)"
+                ],
+                "advisory": [
+                  "Providing table of contents",
+                  "Using expandable/collapsible menus"
+                ],
+                "failures": [
+                  "No mechanism to skip navigation (F44)"
+                ]
+              },
+              "test_procedures": [
+                "Tab as first action on page",
+                "Verify skip link appears and is functional",
+                "Check that skip link goes to main content",
+                "Test with screen reader that landmarks are present",
+                "Verify keyboard can bypass repeated blocks"
+              ],
+              "common_failures": [
+                {
+                  "issue": "No skip link",
+                  "example": "Page with navigation but no skip to content link",
+                  "impact": "Keyboard users must tab through entire navigation"
+                },
+                {
+                  "issue": "Skip link doesn't work",
+                  "example": "Skip link present but focus doesn't move",
+                  "impact": "Users still stuck in navigation"
+                }
+              ]
+            },
+            {
+              "number": "2.4.2",
+              "name": "Page Titled",
+              "level": "A",
+              "description": "Web pages have titles that describe topic or purpose.",
+              "intent": "To help users find content and orient themselves within it by ensuring that each Web page has a descriptive and informative title.",
+              "techniques": {
+                "sufficient": [
+                  "Providing descriptive titles using title element (G88, H25)"
+                ],
+                "advisory": [
+                  "Identifying pages with unique titles",
+                  "Providing useful page titles for bookmarking"
+                ],
+                "failures": [
+                  "No title element (F25)",
+                  "Title doesn't describe page (F25)"
+                ]
+              },
+              "test_procedures": [
+                "Check every page has title element",
+                "Verify title describes page content or purpose",
+                "Check title is unique within site section",
+                "Test that title appears in browser tab/window",
+                "Verify screen reader announces title"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Generic title",
+                  "example": "<title>Page</title> or <title>Untitled</title>",
+                  "impact": "Users cannot identify page content"
+                },
+                {
+                  "issue": "Same title on all pages",
+                  "example": "All pages titled 'Company Name'",
+                  "impact": "Users cannot distinguish pages in tabs or history"
+                },
+                {
+                  "issue": "Missing title",
+                  "example": "No title element in head",
+                  "impact": "No indication of page content"
+                }
+              ]
+            },
+            {
+              "number": "2.4.3",
+              "name": "Focus Order",
+              "level": "A",
+              "description": "If a Web page can be navigated sequentially and the navigation sequences affect meaning or operation, focusable components receive focus in an order that preserves meaning and operability.",
+              "intent": "To ensure that users who navigate sequentially through content encounter information in an order that is consistent with the meaning of the content.",
+              "techniques": {
+                "sufficient": [
+                  "Ordering content in DOM to match focus order (G59)",
+                  "Using tabindex to specify focus order when needed (H4)",
+                  "Using CSS to position content without affecting DOM order (C27)"
+                ],
+                "advisory": [
+                  "Avoiding positive tabindex values",
+                  "Providing highly visible focus indicator"
+                ],
+                "failures": [
+                  "Tabindex creates illogical focus order (F44, F85)",
+                  "Focus order doesn't follow reading order (F85)"
+                ]
+              },
+              "test_procedures": [
+                "Tab through entire page",
+                "Verify focus order matches logical reading order",
+                "Check focus doesn't jump unexpectedly",
+                "Test modal dialogs maintain logical focus order",
+                "Verify dynamic content maintains focus order"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Focus jumps around page",
+                  "example": "Tab goes from top nav to footer then back to content",
+                  "impact": "Keyboard users confused by focus order"
+                },
+                {
+                  "issue": "Positive tabindex creates problems",
+                  "example": "tabindex='1' on button breaks natural order",
+                  "impact": "Focus order doesn't match visual order"
+                }
+              ]
+            },
+            {
+              "number": "2.4.4",
+              "name": "Link Purpose (In Context)",
+              "level": "A",
+              "description": "The purpose of each link can be determined from the link text alone or from the link text together with its programmatically determined link context, except where the purpose of the link would be ambiguous to users in general.",
+              "intent": "To help users understand the purpose of each link so they can decide whether they want to follow the link.",
+              "techniques": {
+                "sufficient": [
+                  "Providing descriptive link text (G91, G53)",
+                  "Using alt attribute with link context (H30)",
+                  "Combining adjacent text with link (H33, H77, H78, H79, H81)",
+                  "Using ARIA label or labelledby (ARIA7, ARIA8)"
+                ],
+                "advisory": [
+                  "Avoiding generic link text",
+                  "Making links visually distinct"
+                ],
+                "failures": [
+                  "Using generic link text without context (F84, F89)"
+                ]
+              },
+              "test_procedures": [
+                "Review all links on page",
+                "Verify each link's purpose is clear from text or context",
+                "Check no generic 'click here' or 'more' links",
+                "Test with screen reader link list",
+                "Verify icon-only links have appropriate alternative text"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Generic link text",
+                  "example": "'Click here' or 'Read more' without context",
+                  "impact": "Users don't know where link goes"
+                },
+                {
+                  "issue": "Multiple identical link text",
+                  "example": "Multiple 'Learn more' links to different destinations",
+                  "impact": "Screen reader users cannot distinguish links"
+                },
+                {
+                  "issue": "Image link without alt text",
+                  "example": "Icon link with no alternative text",
+                  "impact": "Link purpose unknown to screen readers"
+                }
+              ]
+            },
+            {
+              "number": "2.4.5",
+              "name": "Multiple Ways",
+              "level": "AA",
+              "description": "More than one way is available to locate a Web page within a set of Web pages except where the Web Page is the result of, or a step in, a process.",
+              "intent": "To make it possible for users to locate content in a manner that best meets their needs by providing more than one method.",
+              "techniques": {
+                "sufficient": [
+                  "Providing navigation links (G125, G64, G63)",
+                  "Providing search functionality (G161, G126)",
+                  "Providing site map (G185, G161, G126)",
+                  "Providing table of contents (G63)",
+                  "Providing breadcrumb trail (G65, G128)"
+                ],
+                "advisory": [
+                  "Providing A-Z index",
+                  "Providing taxonomy of topics"
+                ],
+                "failures": [
+                  "Only one way to find pages"
+                ]
+              },
+              "test_procedures": [
+                "Identify at least two ways to reach each page",
+                "Verify navigation menu is present",
+                "Check if search function exists",
+                "Look for site map or table of contents",
+                "Check for breadcrumb navigation"
+              ],
+              "common_failures": [
+                {
+                  "issue": "No search function",
+                  "example": "Site has navigation but no search",
+                  "impact": "Users who prefer searching cannot find content easily"
+                },
+                {
+                  "issue": "No site map",
+                  "example": "Only navigation available with no overview",
+                  "impact": "Users cannot see full site structure"
+                }
+              ]
+            },
+            {
+              "number": "2.4.6",
+              "name": "Headings and Labels",
+              "level": "AA",
+              "description": "Headings and labels clearly and accurately describe their topic or purpose, helping users understand what content follows or what action to take.",
+              "intent": "To help users understand what information is contained in Web pages and how that information is organized.",
+              "techniques": {
+                "sufficient": [
+                  "Providing descriptive headings (G130, G131)",
+                  "Providing descriptive labels (G131)"
+                ],
+                "advisory": [
+                  "Using unique headings",
+                  "Providing informative labels for form controls"
+                ],
+                "failures": [
+                  "Using non-descriptive headings (F43)"
+                ]
+              },
+              "test_procedures": [
+                "Review all headings for descriptiveness",
+                "Check form labels clearly describe purpose",
+                "Verify headings accurately describe following content",
+                "Test that labels help users understand what input is expected"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Generic headings",
+                  "example": "'Section 1', 'Section 2' instead of descriptive text",
+                  "impact": "Users don't know what content is about"
+                },
+                {
+                  "issue": "Vague form labels",
+                  "example": "'Input 1' instead of 'Email Address'",
+                  "impact": "Users don't know what to enter"
+                }
+              ]
+            },
+            {
+              "number": "2.4.7",
+              "name": "Focus Visible",
+              "level": "AA",
+              "description": "Any keyboard operable user interface has a mode of operation where the keyboard focus indicator is visible.",
+              "intent": "To help a person know which element has the keyboard focus.",
+              "techniques": {
+                "sufficient": [
+                  "Not hiding focus indicator (G149, G165, G195)",
+                  "Providing highly visible focus indicator (C15, SCR31)"
+                ],
+                "advisory": [
+                  "Using high contrast focus indicator",
+                  "Making focus indicator thick enough to see"
+                ],
+                "failures": [
+                  "Removing focus indicator without providing visible alternative (F78)",
+                  "Focus indicator not visible against background (F55)"
+                ]
+              },
+              "test_procedures": [
+                "Tab through all interactive elements",
+                "Verify focus indicator is visible on each element",
+                "Check focus indicator has sufficient contrast",
+                "Test on light and dark backgrounds",
+                "Verify focus not hidden by outline:none without replacement"
+              ],
+              "common_failures": [
+                {
+                  "issue": "outline:none with no alternative",
+                  "example": "CSS removes outline with no custom focus style",
+                  "impact": "Keyboard users cannot see focus"
+                },
+                {
+                  "issue": "Low contrast focus indicator",
+                  "example": "Light blue outline on white background",
+                  "impact": "Focus barely visible"
+                },
+                {
+                  "issue": "Focus indicator too thin",
+                  "example": "1px dotted outline",
+                  "impact": "Difficult to see focus"
+                }
+              ]
+            },
+            {
+              "number": "2.4.11",
+              "name": "Focus Not Obscured (Minimum)",
+              "level": "AA",
+              "description": "When a user interface component receives keyboard focus, the component is not entirely hidden due to author-created content.",
+              "intent": "The purpose of this Success Criterion is to ensure that a user interface component that has keyboard focus is not entirely hidden by content created by the author. When navigating with a keyboard, users need to be able to see the component that currently has focus. People with attention limitations, short-term memory limitations, or limitations in executive processes benefit by being able to discover where the focus is located.",
+              "techniques": {
+                "sufficient": [
+                  "Ensuring focus is not obscured by sticky headers or footers",
+                  "Using CSS overflow and positioning to prevent obscuring focused elements",
+                  "Ensuring dialogs and popups do not obscure focused elements"
+                ],
+                "advisory": [
+                  "Ensuring sufficient spacing between interactive elements and fixed content",
+                  "Using z-index appropriately to maintain focus visibility",
+                  "Testing focus visibility with common viewport sizes"
+                ],
+                "failures": [
+                  "Sticky headers or footers that obscure focused elements (F110)",
+                  "Modal dialogs that cover focused elements without moving focus",
+                  "Fixed positioned content that overlays focused elements"
+                ]
+              },
+              "test_procedures": [
+                "Tab through all interactive elements on the page",
+                "Check that when each element receives focus, at least part of the focus indicator is visible",
+                "Test with sticky headers, footers, and other fixed-position content",
+                "Verify that focus is not completely hidden by author-created content",
+                "Test at various viewport sizes to ensure focus remains visible"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Sticky header obscures focused element",
+                  "example": "Fixed header at top of page covers focused links when scrolled into view",
+                  "impact": "Keyboard users cannot see which element has focus"
+                },
+                {
+                  "issue": "Cookie banner overlays focused element",
+                  "example": "Cookie consent banner at bottom covers focused buttons",
+                  "impact": "Users cannot determine focus location"
+                },
+                {
+                  "issue": "Fixed sidebar hides focused content",
+                  "example": "Persistent navigation sidebar obscures focused form fields",
+                  "impact": "Users lose track of current focus position"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": "2.5",
+          "name": "Input Modalities",
+          "description": "Make it easier for users to operate functionality through various inputs beyond keyboard.",
+          "success_criteria": [
+            {
+              "number": "2.5.1",
+              "name": "Pointer Gestures",
+              "level": "A",
+              "description": "All functionality that uses multipoint or path-based gestures for operation can be operated with a single pointer without a path-based gesture, unless a multipoint or path-based gesture is essential.",
+              "intent": "To ensure that content can be operated by users with various disabilities who cannot perform complex pointer gestures.",
+              "techniques": {
+                "sufficient": [
+                  "Providing alternatives to complex gestures (G215, G216)"
+                ],
+                "advisory": [
+                  "Using simple tap/click for all functionality",
+                  "Providing button alternatives to gestures"
+                ],
+                "failures": [
+                  "No alternative to multipoint gesture (F105)"
+                ]
+              },
+              "test_procedures": [
+                "Identify all gesture-based functionality",
+                "Verify single-pointer alternative exists",
+                "Test that complex gestures are not required",
+                "Check pinch-to-zoom has +/- button alternative",
+                "Verify swipe actions have button alternatives"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Pinch zoom only",
+                  "example": "No +/- buttons for zooming map",
+                  "impact": "Users with mobility impairments cannot zoom"
+                },
+                {
+                  "issue": "Swipe-only navigation",
+                  "example": "Gallery requires swipe with no next/previous buttons",
+                  "impact": "Cannot navigate with single pointer"
+                }
+              ]
+            },
+            {
+              "number": "2.5.2",
+              "name": "Pointer Cancellation",
+              "level": "A",
+              "description": "For functionality that can be operated using a single pointer, at least one of the following is true: no down-event is used, completion is on up-event with ability to abort, up-event reverses any outcome of down-event, or completing on down-event is essential.",
+              "intent": "To make it easier for users to prevent accidental or erroneous pointer input.",
+              "techniques": {
+                "sufficient": [
+                  "Triggering on up-event (G210, G212)",
+                  "Providing ability to abort or undo (G210, G212)"
+                ],
+                "advisory": [
+                  "Using click event rather than mousedown",
+                  "Providing undo functionality"
+                ],
+                "failures": [
+                  "Activating on down-event without ability to abort (F101)"
+                ]
+              },
+              "test_procedures": [
+                "Test all clickable elements",
+                "Press and hold pointer on element then drag away",
+                "Verify action doesn't complete if pointer moved away",
+                "Check actions occur on release, not on press",
+                "Verify ability to abort accidental activations"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Action on mousedown",
+                  "example": "Button activates on press instead of release",
+                  "impact": "Users cannot abort accidental clicks"
+                },
+                {
+                  "issue": "No way to cancel drag",
+                  "example": "Drag operation completes with no abort option",
+                  "impact": "Accidental drags cannot be undone"
+                }
+              ]
+            },
+            {
+              "number": "2.5.3",
+              "name": "Label in Name",
+              "level": "A",
+              "description": "For user interface components with labels that include text or images of text, the name contains the text that is presented visually.",
+              "intent": "To help speech input users interact with components by ensuring the visible label matches the accessible name.",
+              "techniques": {
+                "sufficient": [
+                  "Using visible label text in accessible name (G208, G211)"
+                ],
+                "advisory": [
+                  "Starting accessible name with visible label",
+                  "Using same text for visible and accessible name"
+                ],
+                "failures": [
+                  "Accessible name doesn't include visible label text (F96)"
+                ]
+              },
+              "test_procedures": [
+                "Identify all labeled components",
+                "Check accessible name includes visible label text",
+                "Verify speech input can target using visible label",
+                "Use browser inspector to check accessible name",
+                "Test with speech input software"
+              ],
+              "common_failures": [
+                {
+                  "issue": "aria-label differs from visible text",
+                  "example": "Button shows 'Search' but aria-label='Find'",
+                  "impact": "Voice input users saying 'Search' won't activate button"
+                },
+                {
+                  "issue": "Icon button accessible name doesn't include visible text",
+                  "example": "Button shows 'Save' icon and text but accessible name is only 'icon'",
+                  "impact": "Voice commands won't work"
+                }
+              ]
+            },
+            {
+              "number": "2.5.4",
+              "name": "Motion Actuation",
+              "level": "A",
+              "description": "Functionality that can be operated by device motion or user motion can also be operated by user interface components and responding to the motion can be disabled to prevent accidental actuation.",
+              "intent": "To ensure that functionality triggered by device motion (shaking, tilting) or user motion (waving) can also be operated through accessible user interface components, and can be disabled.",
+              "techniques": {
+                "sufficient": [
+                  "Providing button alternatives to motion actuation (G213)",
+                  "Providing settings to disable motion actuation (G213)"
+                ],
+                "advisory": [
+                  "Supporting system motion settings",
+                  "Providing clear indication when motion is being used"
+                ],
+                "failures": [
+                  "No alternative to motion actuation (F106)"
+                ]
+              },
+              "test_procedures": [
+                "Identify all motion-actuated functionality",
+                "Verify button or control alternative exists",
+                "Check settings allow disabling motion actuation",
+                "Test that functionality still works with motion disabled"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Shake to undo only",
+                  "example": "No button to undo, must shake device",
+                  "impact": "Users who cannot shake device cannot undo"
+                },
+                {
+                  "issue": "No way to disable motion",
+                  "example": "Shake always triggers action even if accidental",
+                  "impact": "Users with tremors trigger actions unintentionally"
+                }
+              ]
+            },
+            {
+              "number": "2.5.7",
+              "name": "Dragging Movements",
+              "level": "AA",
+              "description": "All functionality that uses a dragging movement for operation can be achieved by a single pointer without dragging, unless dragging is essential or the functionality is determined by the user agent and not modified by the author.",
+              "intent": "The intent of this Success Criterion is to ensure that functionality that uses a dragging movement (e.g., sliders, drag-and-drop interfaces) has another single pointer mode of operation without the need for the dexterity required to drag elements. Some people cannot perform dragging movements in a precise manner due to hand tremor, limited dexterity, or other reasons. People who use a specialized or adapted input device such as a head pointer, eye-gaze system, or speech-controlled mouse emulator may also find dragging difficult or impossible.",
+              "techniques": {
+                "sufficient": [
+                  "Providing single pointer alternatives to dragging movements",
+                  "Using buttons to move items instead of drag-and-drop",
+                  "Providing input fields as alternatives to sliders"
+                ],
+                "advisory": [
+                  "Providing both drag-and-drop and cut/paste or keyboard alternatives",
+                  "Using increment/decrement buttons with sliders",
+                  "Supporting tap to select and tap to place for drag-and-drop"
+                ],
+                "failures": [
+                  "Only supporting drag-and-drop without single pointer alternative",
+                  "Requiring dragging with no alternative input method"
+                ]
+              },
+              "test_procedures": [
+                "Identify all functionality that uses dragging movements",
+                "Verify single pointer alternatives exist (buttons, input fields, etc.)",
+                "Test that alternatives achieve the same functionality",
+                "Check that sliders can be operated by tapping/clicking at target position",
+                "Verify drag-and-drop has keyboard or button-based alternatives"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Slider only works by dragging",
+                  "example": "Volume slider requires dragging with no way to click at position or use increment buttons",
+                  "impact": "Users with limited dexterity cannot adjust slider values"
+                },
+                {
+                  "issue": "Drag-and-drop with no alternative",
+                  "example": "Reordering list items only possible via drag-and-drop",
+                  "impact": "Users cannot perform reordering tasks"
+                },
+                {
+                  "issue": "Map pan requires dragging",
+                  "example": "Map interface only allows panning by dragging with no pan buttons",
+                  "impact": "Users cannot navigate map content"
+                }
+              ]
+            },
+            {
+              "number": "2.5.8",
+              "name": "Target Size (Minimum)",
+              "level": "AA",
+              "description": "The size of the target for pointer inputs is at least 24 by 24 CSS pixels, except where: the target is available through an equivalent link or control on the same page that meets this criterion; the target is inline in a block of text; the size of the target is determined by the user agent and is not modified by the author; a particular presentation of the target is essential or is legally required for the information being conveyed.",
+              "intent": "The intent of this Success Criterion is to ensure that target sizes are large enough for users to easily activate them, even if they have difficulty with fine motor movements. Touch interfaces, in particular, require larger targets to support users with limited dexterity. Mouse, stylus, or eye-gaze system users can also benefit from larger targets. The 24 by 24 CSS pixel minimum ensures usability for a broad range of users, including people with tremors or other movement disorders.",
+              "techniques": {
+                "sufficient": [
+                  "Ensuring inline links provide sufficiently large click targets (C42)",
+                  "Using CSS to increase the size of small targets",
+                  "Providing large click targets for pointer input"
+                ],
+                "advisory": [
+                  "Ensuring buttons and links are at least 44x44 CSS pixels for enhanced usability",
+                  "Providing sufficient spacing between targets",
+                  "Making full card areas clickable rather than just text links"
+                ],
+                "failures": [
+                  "Interactive controls smaller than 24x24 CSS pixels without exceptions (F111)"
+                ]
+              },
+              "test_procedures": [
+                "Identify all interactive elements that accept pointer input",
+                "Measure the target size (width × height) in CSS pixels",
+                "Verify targets are at least 24 by 24 CSS pixels",
+                "Check if any exceptions apply (inline text, user agent controlled, essential, etc.)",
+                "Test on touch devices to verify usability"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Small icon buttons",
+                  "example": "Close button that is only 16x16 CSS pixels",
+                  "impact": "Users have difficulty activating small targets, especially on touch devices"
+                },
+                {
+                  "issue": "Tiny checkbox inputs",
+                  "example": "Default HTML checkboxes that are smaller than 24x24 pixels",
+                  "impact": "Users struggle to select options accurately"
+                },
+                {
+                  "issue": "Compact navigation links",
+                  "example": "Navigation menu with links smaller than minimum target size",
+                  "impact": "Users frequently mis-tap and activate wrong links"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "code": "understandable",
+      "name": "Understandable",
+      "description": "Information and the operation of user interface must be understandable.",
+      "guidelines": [
+        {
+          "number": "3.1",
+          "name": "Readable",
+          "description": "Make text content readable and understandable.",
+          "success_criteria": [
+            {
+              "number": "3.1.1",
+              "name": "Language of Page",
+              "level": "A",
+              "description": "The default human language of each Web page can be programmatically determined.",
+              "intent": "To ensure screen readers and other assistive technologies can render text correctly by knowing the language of content.",
+              "techniques": {
+                "sufficient": [
+                  "Using lang attribute on html element (H57)"
+                ],
+                "advisory": [
+                  "Using metadata to identify language",
+                  "Specifying language in HTTP headers"
+                ],
+                "failures": [
+                  "No lang attribute on html element (F3)"
+                ]
+              },
+              "test_procedures": [
+                "Check html element has lang attribute",
+                "Verify lang value uses valid language code (e.g., 'en', 'es', 'fr')",
+                "Test screen reader uses correct pronunciation"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Missing lang attribute",
+                  "example": "<html> without lang attribute",
+                  "impact": "Screen readers use wrong pronunciation"
+                },
+                {
+                  "issue": "Incorrect lang code",
+                  "example": "lang='english' instead of lang='en'",
+                  "impact": "Invalid language specification"
+                }
+              ]
+            },
+            {
+              "number": "3.1.2",
+              "name": "Language of Parts",
+              "level": "AA",
+              "description": "The human language of each passage or phrase in the content can be programmatically determined except for proper names, technical terms, words of indeterminate language, and words or phrases that have become part of the vernacular of the immediately surrounding text.",
+              "intent": "To ensure that user agents can correctly present content written in multiple languages.",
+              "techniques": {
+                "sufficient": [
+                  "Using lang attribute on elements for language changes (H58)"
+                ],
+                "advisory": [
+                  "Marking up quotes in other languages",
+                  "Identifying language for foreign phrases"
+                ],
+                "failures": [
+                  "Language changes not marked up (F9)"
+                ]
+              },
+              "test_procedures": [
+                "Identify passages in different languages",
+                "Verify lang attribute marks language changes",
+                "Test screen reader pronunciation changes appropriately"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Foreign quote not marked",
+                  "example": "Spanish quote in English page without lang='es'",
+                  "impact": "Screen reader mispronounces text"
+                },
+                {
+                  "issue": "Multilingual content not marked",
+                  "example": "French paragraph in English page without language markup",
+                  "impact": "Incorrect pronunciation"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": "3.2",
+          "name": "Predictable",
+          "description": "Make Web pages appear and operate in predictable ways.",
+          "success_criteria": [
+            {
+              "number": "3.2.1",
+              "name": "On Focus",
+              "level": "A",
+              "description": "When any user interface component receives focus, it does not initiate a change of context.",
+              "intent": "To ensure that functionality is predictable as visitors navigate through a document.",
+              "techniques": {
+                "sufficient": [
+                  "Not causing changes on focus (G107)"
+                ],
+                "advisory": [
+                  "Using click/activation for changes",
+                  "Warning users of context changes"
+                ],
+                "failures": [
+                  "Launching new window on focus (F52, F55)",
+                  "Automatically submitting form on focus (F55)"
+                ]
+              },
+              "test_procedures": [
+                "Tab to each interactive element",
+                "Verify focus alone doesn't trigger changes",
+                "Check no new windows open on focus",
+                "Verify forms don't submit on focus"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Popup on focus",
+                  "example": "Help dialog opens when field receives focus",
+                  "impact": "Unexpected changes disorient users"
+                },
+                {
+                  "issue": "Form submits on focus",
+                  "example": "Tabbing to button submits form",
+                  "impact": "Accidental form submission"
+                }
+              ]
+            },
+            {
+              "number": "3.2.2",
+              "name": "On Input",
+              "level": "A",
+              "description": "Changing the setting of any user interface component does not automatically cause a change of context unless the user has been advised of the behavior before using the component.",
+              "intent": "To ensure that entering data or selecting a form control has predictable effects.",
+              "techniques": {
+                "sufficient": [
+                  "Using button to trigger changes (G80, H32, H84)",
+                  "Warning users before auto-updating (G13)"
+                ],
+                "advisory": [
+                  "Using onchange only with user notification",
+                  "Providing submit button"
+                ],
+                "failures": [
+                  "Automatically changing context on input (F36, F37)"
+                ]
+              },
+              "test_procedures": [
+                "Interact with all form controls",
+                "Verify changes don't occur automatically on input",
+                "Check dropdowns don't navigate on selection",
+                "Verify forms have submit buttons"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Dropdown auto-submits",
+                  "example": "Selecting option immediately navigates to new page",
+                  "impact": "Keyboard users cannot review options"
+                },
+                {
+                  "issue": "Radio button auto-submits",
+                  "example": "Clicking radio submits form immediately",
+                  "impact": "Users cannot review choices before submitting"
+                }
+              ]
+            },
+            {
+              "number": "3.2.3",
+              "name": "Consistent Navigation",
+              "level": "AA",
+              "description": "Navigational mechanisms that are repeated on multiple Web pages within a set of Web pages occur in the same relative order each time they are repeated, unless a change is initiated by the user.",
+              "intent": "To encourage use of consistent navigation across a set of Web pages.",
+              "techniques": {
+                "sufficient": [
+                  "Using consistent navigation order (G61)"
+                ],
+                "advisory": [
+                  "Using consistent navigation position",
+                  "Using templates for consistent layout"
+                ],
+                "failures": [
+                  "Navigation order changes on different pages (F66)"
+                ]
+              },
+              "test_procedures": [
+                "Navigate through multiple pages",
+                "Verify navigation menu items appear in same order",
+                "Check navigation position is consistent",
+                "Verify repeated elements maintain order"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Menu order varies by page",
+                  "example": "Home, About, Contact on one page; About, Home, Contact on another",
+                  "impact": "Users confused by changing order"
+                },
+                {
+                  "issue": "Navigation jumps position",
+                  "example": "Top navigation on some pages, side navigation on others",
+                  "impact": "Users must relearn navigation"
+                }
+              ]
+            },
+            {
+              "number": "3.2.4",
+              "name": "Consistent Identification",
+              "level": "AA",
+              "description": "Components that have the same functionality within a set of Web pages are identified consistently.",
+              "intent": "To ensure that components with the same function are identified consistently across pages.",
+              "techniques": {
+                "sufficient": [
+                  "Using consistent labels for same function (G197)"
+                ],
+                "advisory": [
+                  "Using consistent icons for same function",
+                  "Using consistent alternative text"
+                ],
+                "failures": [
+                  "Using different labels for same function (F31)"
+                ]
+              },
+              "test_procedures": [
+                "Identify repeated functional components",
+                "Verify same labels/icons used consistently",
+                "Check search always labeled 'Search'",
+                "Verify submit buttons use consistent text"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Inconsistent button labels",
+                  "example": "'Submit' on one page, 'Send' on another for same function",
+                  "impact": "Users confused about functionality"
+                },
+                {
+                  "issue": "Different icons for same action",
+                  "example": "Trash can icon on one page, X icon on another for delete",
+                  "impact": "Inconsistent visual language"
+                }
+              ]
+            },
+            {
+              "number": "3.2.6",
+              "name": "Consistent Help",
+              "level": "A",
+              "description": "If a Web page contains any of the following help mechanisms, and those mechanisms are repeated on multiple Web pages within a set of Web pages, they occur in the same relative order to other page content, unless a change is initiated by the user: Human contact details, Human contact mechanism, Self-help option, A fully automated contact mechanism.",
+              "intent": "To ensure users can easily find help when it is provided, by keeping help mechanisms in a consistent location.",
+              "techniques": {
+                "sufficient": [
+                  "Providing help link in consistent location (G220)",
+                  "Using consistent position for help mechanisms (G221)"
+                ],
+                "advisory": [
+                  "Placing help in header or footer",
+                  "Using consistent help icon"
+                ],
+                "failures": [
+                  "Help mechanism moves to different location (F108)"
+                ]
+              },
+              "test_procedures": [
+                "Identify help mechanisms across pages",
+                "Verify help appears in same position",
+                "Check contact info has consistent placement",
+                "Test help link location is predictable"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Help link moves position",
+                  "example": "Help in header on one page, footer on another",
+                  "impact": "Users cannot quickly find help"
+                },
+                {
+                  "issue": "Inconsistent contact location",
+                  "example": "Contact info top of some pages, bottom of others",
+                  "impact": "Difficult to locate when needed"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "number": "3.3",
+          "name": "Input Assistance",
+          "description": "Help users avoid and correct mistakes.",
+          "success_criteria": [
+            {
+              "number": "3.3.1",
+              "name": "Error Identification",
+              "level": "A",
+              "description": "If an input error is automatically detected, the item that is in error is identified and the error is described to the user in text.",
+              "intent": "To ensure that users are aware that an error has occurred and can determine what is wrong.",
+              "techniques": {
+                "sufficient": [
+                  "Providing text description of error (G83, G84, G85)",
+                  "Using ARIA alerts for errors (ARIA18, ARIA19, ARIA21)"
+                ],
+                "advisory": [
+                  "Highlighting error fields",
+                  "Providing suggestions for correction"
+                ],
+                "failures": [
+                  "Using color alone to indicate error (F81, F82)",
+                  "Not identifying error in text (F3)"
+                ]
+              },
+              "test_procedures": [
+                "Submit forms with errors",
+                "Verify errors are identified in text",
+                "Check each error field is indicated",
+                "Test screen reader announces errors",
+                "Verify error not shown by color alone"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Red border only",
+                  "example": "Field turns red with no text explanation",
+                  "impact": "Users don't know what the error is"
+                },
+                {
+                  "issue": "Generic error message",
+                  "example": "'Form has errors' without specifying which fields",
+                  "impact": "Users must hunt for errors"
+                },
+                {
+                  "issue": "Error not announced",
+                  "example": "Visual error but screen reader doesn't announce it",
+                  "impact": "Screen reader users unaware of error"
+                }
+              ]
+            },
+            {
+              "number": "3.3.2",
+              "name": "Labels or Instructions",
+              "level": "A",
+              "description": "Labels or instructions are provided when content requires user input.",
+              "intent": "To help users understand what information they should provide in form fields.",
+              "techniques": {
+                "sufficient": [
+                  "Providing labels for form controls (G131, G89, G162, G83)",
+                  "Using label element (H44, H71, H65)",
+                  "Using title attribute (H65)",
+                  "Using ARIA labelledby or label (ARIA1, ARIA16, ARIA14)"
+                ],
+                "advisory": [
+                  "Providing examples of expected format",
+                  "Providing help text for complex inputs"
+                ],
+                "failures": [
+                  "Form control without label (F82, F68)"
+                ]
+              },
+              "test_procedures": [
+                "Check all form fields have labels",
+                "Verify labels describe purpose clearly",
+                "Test screen reader announces labels",
+                "Check complex fields have instructions",
+                "Verify required fields are indicated"
+              ],
+              "common_failures": [
+                {
+                  "issue": "No label",
+                  "example": "Input field with placeholder but no label element",
+                  "impact": "Screen readers don't announce purpose"
+                },
+                {
+                  "issue": "Unclear label",
+                  "example": "Label says 'Input 1' instead of descriptive text",
+                  "impact": "Users don't know what to enter"
+                },
+                {
+                  "issue": "Missing format instructions",
+                  "example": "Date field with no indication of required format",
+                  "impact": "Users enter data in wrong format"
+                }
+              ]
+            },
+            {
+              "number": "3.3.3",
+              "name": "Error Suggestion",
+              "level": "AA",
+              "description": "If an input error is automatically detected and suggestions for correction are known, then the suggestions are provided to the user, unless it would jeopardize the security or purpose of the content.",
+              "intent": "To help users understand how to correct input errors when possible.",
+              "techniques": {
+                "sufficient": [
+                  "Providing suggestions for correcting errors (G83, G84, G85, G177)",
+                  "Using ARIA to provide error suggestions (ARIA18, SCR18)"
+                ],
+                "advisory": [
+                  "Providing spell check",
+                  "Providing example of correct format"
+                ],
+                "failures": [
+                  "Providing error without suggestion when suggestion possible"
+                ]
+              },
+              "test_procedures": [
+                "Trigger various input errors",
+                "Verify suggestions are provided where possible",
+                "Check suggestions are specific and helpful",
+                "Test that suggestions don't reveal security info"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Error with no suggestion",
+                  "example": "'Invalid date' without showing expected format",
+                  "impact": "Users don't know how to fix error"
+                },
+                {
+                  "issue": "Vague suggestion",
+                  "example": "'Fix the format' without explaining how",
+                  "impact": "Suggestion not helpful"
+                }
+              ]
+            },
+            {
+              "number": "3.3.4",
+              "name": "Error Prevention (Legal, Financial, Data)",
+              "level": "AA",
+              "description": "For Web pages that cause legal commitments or financial transactions for the user to occur, that modify or delete user-controllable data in data storage systems, or that submit user test responses, at least one of the following is true: submissions are reversible, data is checked and user given opportunity to correct errors, or mechanism is available for reviewing and confirming information before final submission.",
+              "intent": "To help users avoid serious consequences resulting from mistakes when performing actions that cannot be reversed.",
+              "techniques": {
+                "sufficient": [
+                  "Providing ability to review and correct before submission (G98, G99, G155, G168)",
+                  "Making actions reversible (G164)",
+                  "Checking data and providing opportunity to correct (G168)"
+                ],
+                "advisory": [
+                  "Providing confirmation page",
+                  "Using multi-step process with review"
+                ],
+                "failures": [
+                  "No prevention for critical actions"
+                ]
+              },
+              "test_procedures": [
+                "Identify legal/financial/data transactions",
+                "Verify review step before submission",
+                "Check confirmation is required for critical actions",
+                "Test that errors are checked before final submission",
+                "Verify reversibility or undo for critical actions"
+              ],
+              "common_failures": [
+                {
+                  "issue": "No review before purchase",
+                  "example": "One-click purchase with no confirmation",
+                  "impact": "Users cannot review order before committing"
+                },
+                {
+                  "issue": "No confirmation for delete",
+                  "example": "Delete account button with no verification",
+                  "impact": "Accidental permanent data loss"
+                },
+                {
+                  "issue": "No error checking before submission",
+                  "example": "Financial form submits without validating critical fields",
+                  "impact": "Errors not caught before legal commitment"
+                }
+              ]
+            },
+            {
+              "number": "3.3.7",
+              "name": "Redundant Entry",
+              "level": "A",
+              "description": "Information previously entered by or provided to the user that is required to be entered again in the same process is either auto-populated, or available for the user to select.",
+              "intent": "To reduce cognitive load and errors by not requiring users to re-enter information they have already provided in a process.",
+              "techniques": {
+                "sufficient": [
+                  "Auto-populating previously entered data (G221)",
+                  "Providing option to select previously entered data (G198)"
+                ],
+                "advisory": [
+                  "Using session storage to remember entries",
+                  "Providing copy from previous step functionality"
+                ],
+                "failures": [
+                  "Requiring re-entry of same information without auto-population (F109)"
+                ]
+              },
+              "test_procedures": [
+                "Complete multi-step process",
+                "Note when same information is requested again",
+                "Verify information is auto-populated or selectable",
+                "Check shipping/billing address scenarios",
+                "Test that essential re-entry (like password confirmation) is excluded"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Re-entering same address",
+                  "example": "Billing address must be typed again when same as shipping",
+                  "impact": "Extra effort and potential for errors"
+                },
+                {
+                  "issue": "Contact info re-entry",
+                  "example": "Email entered in step 1 must be entered again in step 3",
+                  "impact": "Unnecessary cognitive load"
+                }
+              ]
+            },
+            {
+              "number": "3.3.8",
+              "name": "Accessible Authentication (Minimum)",
+              "level": "AA",
+              "description": "A cognitive function test (such as remembering a password or solving a puzzle) is not required for any step in an authentication process unless that step provides at least one of the following: Alternative (another authentication method not relying on cognitive function test), Mechanism (assistance like password managers available), Object Recognition (cognitive test is recognizing objects), or Personal Content (cognitive test is identifying non-text content user provided).",
+              "intent": "To ensure people with cognitive disabilities can authenticate to use services.",
+              "techniques": {
+                "sufficient": [
+                  "Supporting password managers (G218)",
+                  "Providing alternative authentication methods (G217, G220)",
+                  "Using WebAuthn (G220)",
+                  "Allowing copy/paste in password fields (G218)"
+                ],
+                "advisory": [
+                  "Supporting biometric authentication",
+                  "Using OAuth/Social login options",
+                  "Providing email magic links"
+                ],
+                "failures": [
+                  "Blocking password managers (F109)",
+                  "Requiring cognitive tests without alternatives (F108)"
+                ]
+              },
+              "test_procedures": [
+                "Attempt to use password manager",
+                "Check if alternative authentication methods offered",
+                "Verify copy/paste works in password fields",
+                "Test that CAPTCHAs have accessible alternatives",
+                "Check security questions have object recognition option"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Password manager blocked",
+                  "example": "autocomplete='off' prevents password manager",
+                  "impact": "Users with memory issues cannot use assistance"
+                },
+                {
+                  "issue": "Complex CAPTCHA only",
+                  "example": "Text-based puzzle with no alternative",
+                  "impact": "Users with cognitive disabilities cannot authenticate"
+                },
+                {
+                  "issue": "Paste disabled in password field",
+                  "example": "JavaScript prevents pasting password",
+                  "impact": "Cannot use password managers effectively"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "code": "robust",
+      "name": "Robust",
+      "description": "Content must be robust enough that it can be interpreted by a wide variety of user agents, including assistive technologies.",
+      "guidelines": [
+        {
+          "number": "4.1",
+          "name": "Compatible",
+          "description": "Maximize compatibility with current and future user agents, including assistive technologies.",
+          "success_criteria": [
+            {
+              "number": "4.1.2",
+              "name": "Name, Role, Value",
+              "level": "A",
+              "description": "For all user interface components, the name and role can be programmatically determined; states, properties, and values that can be set by the user can be programmatically set; and notification of changes to these items is available to user agents, including assistive technologies.",
+              "intent": "To ensure that assistive technologies can gather information about, activate, and keep up to date on the status of user interface controls in the content.",
+              "techniques": {
+                "sufficient": [
+                  "Using standard HTML controls (H91, H44, H64, H88, H90)",
+                  "Using ARIA roles, states, and properties (ARIA14, ARIA16, G108, ARIA1, ARIA2)",
+                  "Using title attribute (H65)"
+                ],
+                "advisory": [
+                  "Using semantic HTML elements",
+                  "Testing with assistive technologies"
+                ],
+                "failures": [
+                  "Using div or span for buttons without role (F15, F20, F59, F79, F86, F89)"
+                ]
+              },
+              "test_procedures": [
+                "Inspect all UI components with browser developer tools",
+                "Verify name (label/text) is programmatically exposed",
+                "Check role is correctly identified (button, link, checkbox, etc.)",
+                "Test states are exposed (checked, expanded, selected, etc.)",
+                "Verify values can be read and set programmatically",
+                "Test with screen reader that all info is announced"
+              ],
+              "common_failures": [
+                {
+                  "issue": "div as button without ARIA",
+                  "example": "<div onclick='submit()'>Submit</div>",
+                  "impact": "Screen reader doesn't know it's a button"
+                },
+                {
+                  "issue": "Custom control missing state",
+                  "example": "Expandable section doesn't expose expanded/collapsed state",
+                  "impact": "Screen reader users don't know current state"
+                },
+                {
+                  "issue": "Icon button without name",
+                  "example": "<button><i class='icon'></i></button> with no accessible name",
+                  "impact": "Screen reader announces 'button' with no label"
+                }
+              ]
+            },
+            {
+              "number": "4.1.3",
+              "name": "Status Messages",
+              "level": "AA",
+              "description": "In content implemented using markup languages, status messages can be programmatically determined through role or properties such that they can be presented to the user by assistive technologies without receiving focus.",
+              "intent": "To ensure that status messages can be presented to users who use screen readers and other assistive technologies without requiring the user's focus to move to the message.",
+              "techniques": {
+                "sufficient": [
+                  "Using ARIA role='status' (G199, ARIA22)",
+                  "Using ARIA role='alert' (ARIA19, G193)",
+                  "Using ARIA live regions (ARIA23, G194)"
+                ],
+                "advisory": [
+                  "Using aria-live='polite' for non-critical updates",
+                  "Using aria-atomic for complete message reading"
+                ],
+                "failures": [
+                  "Status messages not programmatically determinable (F103, F104)"
+                ]
+              },
+              "test_procedures": [
+                "Trigger all status messages (success, error, progress, etc.)",
+                "Verify messages don't receive focus",
+                "Check screen reader announces messages",
+                "Test ARIA live regions or role='status/alert' are used",
+                "Verify important updates are communicated to assistive tech"
+              ],
+              "common_failures": [
+                {
+                  "issue": "Success message not announced",
+                  "example": "Form submission success shown visually but not in ARIA live region",
+                  "impact": "Screen reader users miss confirmation"
+                },
+                {
+                  "issue": "Error not announced automatically",
+                  "example": "Validation error appears but screen reader not notified",
+                  "impact": "Users unaware of errors"
+                },
+                {
+                  "issue": "Progress updates not exposed",
+                  "example": "File upload progress shown but not announced",
+                  "impact": "Screen reader users don't know progress"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "usage_guide": {
+    "how_to_conduct_wcag_audit": [
+      "1. Determine conformance level target (A or AA)",
+      "2. Test each applicable success criterion systematically",
+      "3. Use automated tools for initial scan (but manual testing required)",
+      "4. Test with assistive technologies (screen readers, voice input, magnification)",
+      "5. Document all failures with specific criterion numbers",
+      "6. Prioritize remediation based on severity and user impact",
+      "7. Retest after fixes",
+      "8. Create accessibility conformance report"
+    ],
+    "testing_tools": [
+      "Automated: WAVE, axe DevTools, Lighthouse, Pa11y",
+      "Screen readers: NVDA (Windows), JAWS (Windows), VoiceOver (Mac/iOS), TalkBack (Android)",
+      "Browser extensions: axe, WAVE, Accessibility Insights",
+      "Contrast checkers: WebAIM Contrast Checker, Colour Contrast Analyser",
+      "Code validators: W3C HTML Validator, ARIA validator"
+    ],
+    "conformance_requirements": {
+      "level_a": "Minimum legal requirement in many jurisdictions. All Level A criteria must pass.",
+      "level_aa": "Recommended target for most websites. Legally required for government sites in many countries. All Level A and AA criteria must pass.",
+      "conformance_claims": "Should specify: conformance level, scope (full site or pages), date, WCAG version"
+    },
+    "priority_guidance": {
+      "critical": "Level A failures that prevent access (no keyboard access, missing alt text, no captions)",
+      "high": "Level AA failures affecting many users (contrast, text resize, focus visible)",
+      "medium": "Level AA failures with workarounds (redundant entry, text spacing)",
+      "low": "Minor issues with limited impact"
+    }
+  }
+}

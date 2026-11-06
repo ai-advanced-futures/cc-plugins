@@ -1,0 +1,39 @@
+{
+  "project": {
+    "name": "CodeMate AI Interface Design",
+    "version": "1.0.0",
+    "type": "ai-saas-product",
+    "description": "AI-powered coding assistant with emphasis on transparency and control"
+  },
+  "context": {
+    "platform": "desktop_web",
+    "target_audience": "software_developers",
+    "has_ai_features": true,
+    "accessibility_priority": "medium",
+    "ai_transparency_priority": "critical"
+  },
+  "evaluation": {
+    "weighting_profile": "ai-heavy",
+    "target_wcag_level": "AA",
+    "target_ux_score": 75,
+    "required_frameworks": ["nielsen", "wcag", "ai-hci", "rams", "norman"]
+  },
+  "ai_features": {
+    "code_suggestions": true,
+    "code_explanation": true,
+    "bug_detection": true,
+    "refactoring": true,
+    "natural_language_queries": true
+  },
+  "artifacts": {
+    "personas_dir": "personas/",
+    "journey_maps_dir": "journey-maps/",
+    "prototypes_dir": "prototypes/",
+    "evaluation_dir": "evaluation/"
+  },
+  "metadata": {
+    "created": "2025-01-20",
+    "last_updated": "2025-01-20",
+    "status": "completed"
+  }
+}

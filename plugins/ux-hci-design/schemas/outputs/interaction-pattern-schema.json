@@ -1,0 +1,447 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/anthropics/claude-code/plugins/ux-hci-design/schemas/outputs/interaction-pattern-schema.json",
+  "title": "UX Interaction Pattern Schema",
+  "description": "Schema for reusable interaction patterns documented during the PROTOTYPE phase. Captures accessibility-first interaction specifications with AI-HCI integration.",
+  "type": "object",
+  "required": ["schema_version", "pattern", "metadata"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version for compatibility tracking"
+    },
+    "pattern": {
+      "type": "object",
+      "required": ["pattern_id", "name", "category", "description", "trigger", "behavior", "accessibility"],
+      "properties": {
+        "pattern_id": {
+          "type": "string",
+          "pattern": "^IP-[0-9]+$",
+          "description": "Unique pattern identifier (e.g., IP-001)"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 100,
+          "description": "Pattern name (e.g., 'Progressive Disclosure', 'Inline Validation')"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "navigation",
+            "data_entry",
+            "feedback",
+            "disclosure",
+            "selection",
+            "manipulation",
+            "communication",
+            "ai_interaction",
+            "accessibility",
+            "error_handling",
+            "loading",
+            "onboarding"
+          ],
+          "description": "Pattern category"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 50,
+          "description": "Detailed pattern description and use cases"
+        },
+        "problem_solved": {
+          "type": "string",
+          "description": "User problem this pattern addresses"
+        },
+        "when_to_use": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Scenarios where this pattern is appropriate"
+        },
+        "when_not_to_use": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Scenarios where this pattern should be avoided"
+        },
+        "trigger": {
+          "type": "object",
+          "required": ["type", "description"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "click", "tap", "double_click", "long_press",
+                "hover", "focus", "blur",
+                "swipe", "scroll", "pinch", "drag",
+                "keypress", "key_combination",
+                "voice_command",
+                "time_elapsed", "data_change", "system_event",
+                "ai_suggestion", "ai_completion"
+              ]
+            },
+            "description": {
+              "type": "string"
+            },
+            "modifiers": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Key modifiers (Ctrl, Shift, etc.)"
+            },
+            "target_element": {
+              "type": "string",
+              "description": "Element type that receives the trigger"
+            }
+          }
+        },
+        "behavior": {
+          "type": "object",
+          "required": ["steps"],
+          "properties": {
+            "steps": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["step_number", "action", "description"],
+                "properties": {
+                  "step_number": {"type": "integer", "minimum": 1},
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "show", "hide", "toggle", "expand", "collapse",
+                      "highlight", "focus", "scroll_to", "animate",
+                      "update_content", "validate", "submit",
+                      "navigate", "open_modal", "close_modal",
+                      "display_feedback", "display_error", "display_success",
+                      "request_data", "process_ai", "display_suggestion",
+                      "announce", "wait", "custom"
+                    ]
+                  },
+                  "description": {"type": "string"},
+                  "target": {"type": "string"},
+                  "duration": {"type": "string"},
+                  "condition": {"type": "string"},
+                  "accessibility_announcement": {"type": "string"}
+                }
+              }
+            },
+            "timing": {
+              "type": "object",
+              "properties": {
+                "delay": {"type": "string", "description": "Delay before starting"},
+                "duration": {"type": "string", "description": "Total duration"},
+                "easing": {"type": "string", "description": "Animation easing function"}
+              }
+            },
+            "reversible": {
+              "type": "boolean",
+              "description": "Can the action be undone"
+            },
+            "cancelable": {
+              "type": "boolean",
+              "description": "Can the action be canceled mid-execution"
+            }
+          }
+        },
+        "states": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["state_name", "description"],
+            "properties": {
+              "state_name": {
+                "type": "string",
+                "enum": ["initial", "in_progress", "completed", "error", "disabled", "hover", "focus", "loading"]
+              },
+              "description": {"type": "string"},
+              "visual_indicator": {"type": "string"},
+              "aria_state": {"type": "string"}
+            }
+          }
+        },
+        "feedback": {
+          "type": "object",
+          "properties": {
+            "visual": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {"type": "string"},
+                  "description": {"type": "string"},
+                  "duration": {"type": "string"}
+                }
+              }
+            },
+            "auditory": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {"type": "string", "enum": ["sound", "speech", "tone"]},
+                  "description": {"type": "string"},
+                  "optional": {"type": "boolean"}
+                }
+              }
+            },
+            "haptic": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {"type": "string"},
+                  "description": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "accessibility": {
+          "type": "object",
+          "required": ["keyboard_support", "screen_reader_support"],
+          "properties": {
+            "keyboard_support": {
+              "type": "object",
+              "required": ["fully_operable"],
+              "properties": {
+                "fully_operable": {
+                  "type": "boolean",
+                  "description": "Can pattern be fully operated with keyboard alone"
+                },
+                "key_bindings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {"type": "string"},
+                      "action": {"type": "string"},
+                      "notes": {"type": "string"}
+                    }
+                  }
+                },
+                "focus_management": {
+                  "type": "string",
+                  "description": "How focus is managed during the interaction"
+                },
+                "focus_trap": {
+                  "type": "boolean",
+                  "description": "Does this pattern trap focus (e.g., modal)"
+                },
+                "tab_order_notes": {
+                  "type": "string"
+                }
+              }
+            },
+            "screen_reader_support": {
+              "type": "object",
+              "required": ["announcements"],
+              "properties": {
+                "announcements": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "event": {"type": "string"},
+                      "announcement": {"type": "string"},
+                      "politeness": {
+                        "type": "string",
+                        "enum": ["polite", "assertive"]
+                      }
+                    }
+                  }
+                },
+                "aria_attributes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "attribute": {"type": "string"},
+                      "value": {"type": "string"},
+                      "purpose": {"type": "string"}
+                    }
+                  }
+                },
+                "live_region_usage": {
+                  "type": "string"
+                }
+              }
+            },
+            "motion_considerations": {
+              "type": "object",
+              "properties": {
+                "respects_reduced_motion": {
+                  "type": "boolean",
+                  "description": "Pattern respects prefers-reduced-motion"
+                },
+                "reduced_motion_alternative": {
+                  "type": "string"
+                }
+              }
+            },
+            "timing_considerations": {
+              "type": "object",
+              "properties": {
+                "user_can_control_timing": {"type": "boolean"},
+                "minimum_display_time": {"type": "string"},
+                "timeout_warning": {"type": "boolean"}
+              }
+            },
+            "wcag_criteria": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "criterion": {"type": "string", "description": "e.g., 2.1.1 Keyboard"},
+                  "level": {"type": "string", "enum": ["A", "AA", "AAA"]},
+                  "how_met": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "ai_hci_integration": {
+          "type": "object",
+          "description": "AI interaction considerations per Microsoft 18 Guidelines",
+          "properties": {
+            "ai_powered": {
+              "type": "boolean",
+              "description": "Does this pattern involve AI"
+            },
+            "transparency": {
+              "type": "object",
+              "properties": {
+                "ai_indication": {
+                  "type": "string",
+                  "description": "How AI involvement is indicated"
+                },
+                "confidence_display": {
+                  "type": "string",
+                  "description": "How AI confidence is shown"
+                },
+                "explanation_available": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "user_control": {
+              "type": "object",
+              "properties": {
+                "can_override": {"type": "boolean"},
+                "override_mechanism": {"type": "string"},
+                "can_disable": {"type": "boolean"},
+                "feedback_mechanism": {"type": "string"}
+              }
+            },
+            "error_handling": {
+              "type": "object",
+              "properties": {
+                "graceful_degradation": {"type": "string"},
+                "error_recovery": {"type": "string"},
+                "user_correction_path": {"type": "string"}
+              }
+            },
+            "learning_behavior": {
+              "type": "object",
+              "properties": {
+                "adapts_over_time": {"type": "boolean"},
+                "personalization_controls": {"type": "string"},
+                "reset_option": {"type": "boolean"}
+              }
+            }
+          }
+        },
+        "design_tokens": {
+          "type": "object",
+          "description": "Design system integration",
+          "properties": {
+            "colors": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Color token references used"
+            },
+            "typography": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Typography token references"
+            },
+            "spacing": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Spacing token references"
+            },
+            "animation": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Animation/motion token references"
+            }
+          }
+        },
+        "related_patterns": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "IDs of related interaction patterns"
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "context": {"type": "string"},
+              "implementation": {"type": "string"},
+              "notes": {"type": "string"}
+            }
+          }
+        },
+        "anti_patterns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": {"type": "string"},
+              "why_problematic": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["created_date", "created_by"],
+      "properties": {
+        "created_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "description": "Origin of pattern (e.g., 'Material Design', 'Custom')"
+        },
+        "version": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "review", "approved", "deprecated"],
+          "default": "draft"
+        },
+        "tags": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {"type": "string"},
+              "url": {"type": "string", "format": "uri"}
+            }
+          }
+        }
+      }
+    }
+  }
+}

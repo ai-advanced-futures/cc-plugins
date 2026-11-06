@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.0",
+  "persona": {
+    "persona_id": "P-001",
+    "name": "Sarah Chen",
+    "archetype": "Busy Parent",
+    "photo_description": "Professional woman, mid-30s, multitasking with phone and laptop",
+    "quote": "I need to get this done between meetings. Just make it simple.",
+    "demographics": {
+      "age": 34,
+      "occupation": "Marketing Manager",
+      "location": "Suburban area",
+      "family_status": "Married, 2 kids",
+      "income_range": "$75,000-$100,000",
+      "education": "Bachelor's degree",
+      "tech_proficiency": "moderate"
+    },
+    "goals": [
+      {
+        "goal_id": "G-001",
+        "description": "Complete purchases quickly during limited free time",
+        "priority": "high",
+        "category": "efficiency"
+      },
+      {
+        "goal_id": "G-002",
+        "description": "Feel confident about purchase decisions",
+        "priority": "high",
+        "category": "emotional"
+      },
+      {
+        "goal_id": "G-003",
+        "description": "Track orders easily for family deliveries",
+        "priority": "medium",
+        "category": "functional"
+      }
+    ],
+    "frustrations": [
+      {
+        "frustration_id": "FR-001",
+        "description": "Long checkout processes that get interrupted",
+        "severity": "high",
+        "frequency": "often"
+      },
+      {
+        "frustration_id": "FR-002",
+        "description": "Having to create an account just to buy something",
+        "severity": "high",
+        "frequency": "always"
+      },
+      {
+        "frustration_id": "FR-003",
+        "description": "Unclear shipping costs and delivery times",
+        "severity": "medium",
+        "frequency": "sometimes"
+      }
+    ],
+    "behaviors": [
+      "Shops primarily on mobile during commute",
+      "Saves items to cart, returns later to purchase",
+      "Reads reviews before purchasing",
+      "Uses Apple Pay when available"
+    ],
+    "needs": [
+      {
+        "need_id": "N-001",
+        "description": "Fast, interruptible checkout process",
+        "type": "functional",
+        "priority": "critical"
+      },
+      {
+        "need_id": "N-002",
+        "description": "Guest checkout option",
+        "type": "functional",
+        "priority": "high"
+      },
+      {
+        "need_id": "N-003",
+        "description": "Clear cost breakdown before committing",
+        "type": "emotional",
+        "priority": "high"
+      },
+      {
+        "need_id": "N-004",
+        "description": "Mobile-friendly payment options",
+        "type": "functional",
+        "priority": "high"
+      }
+    ],
+    "context_of_use": {
+      "devices": ["mobile_primary", "laptop_secondary"],
+      "environments": ["commute", "home_multitasking", "work_breaks"],
+      "frequency": "weekly",
+      "session_duration": "5-10 minutes"
+    },
+    "accessibility_considerations": {
+      "vision": "No impairments, uses reading glasses occasionally",
+      "motor": "No impairments",
+      "cognitive": "Often distracted, values clear visual hierarchy",
+      "assistive_tech": "None"
+    }
+  },
+  "metadata": {
+    "created_date": "2025-01-20",
+    "source": "User research interviews (n=12)",
+    "confidence": "high",
+    "last_validated": "2025-01-20"
+  }
+}
