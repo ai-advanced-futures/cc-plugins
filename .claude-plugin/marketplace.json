@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.8.0"
+    "version": "2.9.0"
   },
   "plugins": [
     {
@@ -121,6 +121,12 @@
       "name": "corporate-development",
       "description": "Run an M&A pipeline on one target company: readiness, sourcing, assessment, operational and financial due diligence, integration plan, and a go or no-go recommendation.",
       "source": "./plugins/corporate-development",
+      "strict": false
+    },
+    {
+      "name": "jtbd-market-discovery",
+      "description": "Find market opportunities with Jobs To Be Done and numbers. Ten phases lead from one job statement to ranked opportunities, customer segments and a validated price. Use discover, quick-validate and wtp-check.",
+      "source": "./plugins/jtbd-market-discovery",
       "strict": false
     }
   ]

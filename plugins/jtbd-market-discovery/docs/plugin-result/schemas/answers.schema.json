@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:plugin-answers:1",
+  "title": "Answers file, version 1",
+  "description": "The answers a coach hands to plugin runs. Each key is a canonical command name. Its value maps an input name of that command's questions list to the answer. A plugin reads only its own commands' sections.",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^[a-z0-9-]+(:[a-z0-9-]+)+$": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-z][a-z0-9_]*$": {
+          "type": "object",
+          "required": ["value", "settled_by"],
+          "additionalProperties": false,
+          "properties": {
+            "value": {},
+            "settled_by": { "type": "string", "enum": ["person", "recommended"] },
+            "round": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    }
+  }
+}

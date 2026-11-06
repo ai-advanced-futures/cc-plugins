@@ -39,6 +39,7 @@ claude plugin install <name>@cc-plugins
 | `data-strategy` | Assess the data strategy of a software company: business alignment, the data platform, and the data product portfolio. Write a strategy report, a platform ADR, and a data roadmap. |
 | `strategic-partnerships` | Find, design and decide on partnerships in a software ecosystem. Runs six phases: readiness, partner candidates, deal structure, technical integration, revenue model, and a go or no-go recommendation. |
 | `corporate-development` | Run an M&A pipeline on one target company: readiness, sourcing, assessment, operational and financial due diligence, integration plan, and a go or no-go recommendation. |
+| `jtbd-market-discovery` | Find market opportunities with Jobs To Be Done and numbers. Ten phases lead from one job statement to ranked opportunities, customer segments and a validated price. Use discover, quick-validate and wtp-check. |
 
 ## Skills
 

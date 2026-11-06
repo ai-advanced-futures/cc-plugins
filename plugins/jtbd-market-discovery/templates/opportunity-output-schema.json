@@ -1,0 +1,623 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ai-advanced-futures/cc-plugins/plugins/jtbd-market-discovery/opportunity-output-schema.json",
+  "title": "JTBD Market Discovery Output Schema",
+  "description": "Complete structured output from JTBD Market Discovery workflow for downstream integration with brainstorm, PRD, and design plugins",
+  "type": "object",
+  "required": ["metadata", "job", "needs", "opportunities", "segments", "evc_analysis", "wtp_validation", "recommendations"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Analysis metadata and provenance",
+      "required": ["analysis_date", "methodology_version"],
+      "properties": {
+        "analysis_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date analysis was completed (YYYY-MM-DD)"
+        },
+        "analyst": {
+          "type": "string",
+          "description": "Person or tool that conducted analysis"
+        },
+        "sample_size": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of survey respondents"
+        },
+        "methodology_version": {
+          "type": "string",
+          "pattern": "^ODI v\\d+\\.\\d+$",
+          "description": "Outcome-Driven Innovation methodology version (e.g., 'ODI v1.0')"
+        },
+        "domain": {
+          "type": "string",
+          "description": "Industry or product domain (e.g., 'Consumer Navigation', 'HR Technology')"
+        }
+      }
+    },
+    "job": {
+      "type": "object",
+      "description": "Job-to-be-done definition and structure",
+      "required": ["statement", "performer", "desired_outcome"],
+      "properties": {
+        "statement": {
+          "type": "string",
+          "description": "Complete job statement (e.g., 'Get to destinations on time')"
+        },
+        "performer": {
+          "type": "string",
+          "description": "Who performs this job (target customer)"
+        },
+        "desired_outcome": {
+          "type": "string",
+          "description": "Primary outcome the job performer wants to achieve"
+        },
+        "circumstances": {
+          "type": "array",
+          "description": "When, where, and why this job arises",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forces": {
+          "type": "object",
+          "description": "Four forces of progress (push, pull, anxiety, habit)",
+          "properties": {
+            "push": {
+              "type": "array",
+              "description": "Problems with current solution that push change",
+              "items": {"type": "string"}
+            },
+            "pull": {
+              "type": "array",
+              "description": "Benefits of new solution that pull toward change",
+              "items": {"type": "string"}
+            },
+            "anxiety": {
+              "type": "array",
+              "description": "Concerns about switching that create anxiety",
+              "items": {"type": "string"}
+            },
+            "habit": {
+              "type": "array",
+              "description": "Existing habits that resist change",
+              "items": {"type": "string"}
+            }
+          }
+        },
+        "steps": {
+          "type": "array",
+          "description": "Universal job steps (typically 12-15 across 6 phases)",
+          "items": {
+            "type": "object",
+            "required": ["step_number", "phase", "description"],
+            "properties": {
+              "step_number": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Sequential step number"
+              },
+              "phase": {
+                "type": "string",
+                "enum": ["UNDERSTAND", "PLAN", "EXECUTE", "ASSESS", "REVISE", "CONCLUDE"],
+                "description": "Universal job phase"
+              },
+              "description": {
+                "type": "string",
+                "description": "What the job performer does in this step"
+              }
+            }
+          }
+        }
+      }
+    },
+    "needs": {
+      "type": "object",
+      "description": "Customer needs collection",
+      "required": ["total_count", "top_10"],
+      "properties": {
+        "total_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total number of needs identified (typically 80-100)"
+        },
+        "top_10": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "description": "Top needs by opportunity score",
+          "items": {
+            "$ref": "#/definitions/need"
+          }
+        },
+        "all_needs": {
+          "type": "array",
+          "description": "Optional: Complete list of all needs",
+          "items": {
+            "$ref": "#/definitions/need"
+          }
+        }
+      }
+    },
+    "opportunities": {
+      "type": "object",
+      "description": "Opportunity analysis summary",
+      "properties": {
+        "severely_underserved_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of needs with opportunity score 15-20"
+        },
+        "underserved_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of needs with opportunity score 12-15"
+        },
+        "appropriately_served_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of needs with opportunity score 10-12"
+        },
+        "overserved_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of needs with opportunity score <10"
+        },
+        "strategic_focus": {
+          "type": "array",
+          "description": "Recommended product focus areas",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "segments": {
+      "type": "array",
+      "description": "Customer segments identified via K-means clustering",
+      "minItems": 2,
+      "maxItems": 6,
+      "items": {
+        "$ref": "#/definitions/segment"
+      }
+    },
+    "evc_analysis": {
+      "type": "object",
+      "description": "Economic Value to Customer calculation",
+      "required": ["weighted_average"],
+      "properties": {
+        "weighted_average": {
+          "$ref": "#/definitions/evc_breakdown",
+          "description": "Weighted average EVC across all segments"
+        },
+        "by_segment": {
+          "type": "object",
+          "description": "EVC breakdown by segment name",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "total_monthly": {"type": "number", "minimum": 0},
+              "total_annual": {"type": "number", "minimum": 0},
+              "multiplier": {"type": "number", "minimum": 0}
+            }
+          }
+        }
+      }
+    },
+    "wtp_validation": {
+      "type": "object",
+      "description": "Willingness-to-pay validation using 6-layer framework",
+      "required": ["validated_range", "validation_passed", "confidence_level"],
+      "properties": {
+        "raw_data": {
+          "type": "object",
+          "properties": {
+            "sample_size": {"type": "integer", "minimum": 1},
+            "median_wtp": {"type": "number", "minimum": 0},
+            "mean_wtp": {"type": "number", "minimum": 0},
+            "std_dev": {"type": "number", "minimum": 0}
+          }
+        },
+        "layer_1_outliers": {
+          "type": "object",
+          "description": "Statistical outlier detection (IQR method)",
+          "properties": {
+            "outliers_removed": {"type": "integer", "minimum": 0},
+            "clean_sample_size": {"type": "integer", "minimum": 1},
+            "clean_median": {"type": "number", "minimum": 0},
+            "clean_mean": {"type": "number", "minimum": 0},
+            "clean_std_dev": {"type": "number", "minimum": 0},
+            "result": {"type": "string", "enum": ["PASS", "CHALLENGED", "FAIL"]}
+          }
+        },
+        "layer_2_competitive": {
+          "type": "object",
+          "description": "Comparative benchmarking vs competitors",
+          "properties": {
+            "free_alternatives": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "premium_alternatives": {
+              "type": "object",
+              "properties": {
+                "range": {"type": "string"},
+                "positioning": {"type": "string"}
+              }
+            },
+            "our_positioning": {
+              "type": "object",
+              "properties": {
+                "price": {"type": "string"},
+                "differentiation": {"type": "string"}
+              }
+            },
+            "result": {"type": "string", "enum": ["PASS", "CHALLENGED", "FAIL"]}
+          }
+        },
+        "layer_3_value_economics": {
+          "type": "object",
+          "description": "Value capture vs EVC check",
+          "properties": {
+            "weighted_evc_monthly": {"type": "number", "minimum": 0},
+            "wtp_monthly": {"type": "number", "minimum": 0},
+            "value_capture_pct": {"type": "number", "minimum": 0, "maximum": 100},
+            "optimal_range_pct": {"type": "string"},
+            "assessment": {"type": "string"},
+            "result": {"type": "string", "enum": ["PASS", "CHALLENGED", "FAIL"]}
+          }
+        },
+        "layer_4_confidence": {
+          "type": "object",
+          "description": "Confidence scoring based on sample quality",
+          "properties": {
+            "sample_adequate": {"type": "boolean"},
+            "consistency_good": {"type": "boolean"},
+            "segment_alignment": {"type": "boolean"},
+            "confidence_level": {"type": "string", "enum": ["HIGH", "MEDIUM", "LOW"]},
+            "result": {"type": "string", "enum": ["PASS", "CHALLENGED", "FAIL"]}
+          }
+        },
+        "layer_5_segments": {
+          "type": "object",
+          "description": "Segment-specific WTP benchmarking",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "median": {"type": "number", "minimum": 0},
+              "evc_pct": {"type": "number", "minimum": 0},
+              "result": {"type": "string", "enum": ["VALIDATED", "CHALLENGED", "REJECTED"]}
+            }
+          }
+        },
+        "layer_6_van_westendorp": {
+          "type": "object",
+          "description": "Van Westendorp Price Sensitivity Meter (optional)",
+          "properties": {
+            "optimal_price": {"type": "number", "minimum": 0},
+            "indifference_price": {"type": "number", "minimum": 0},
+            "acceptable_range": {
+              "type": "object",
+              "properties": {
+                "min": {"type": "number", "minimum": 0},
+                "max": {"type": "number", "minimum": 0}
+              }
+            },
+            "result": {"type": "string", "enum": ["PASS", "CHALLENGED", "FAIL"]}
+          }
+        },
+        "validated_range": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": {
+            "min": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Minimum validated price"
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Maximum validated price"
+            },
+            "recommended": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Recommended price point"
+            }
+          }
+        },
+        "validation_passed": {
+          "type": "boolean",
+          "description": "Overall validation result (true if passed)"
+        },
+        "confidence_level": {
+          "type": "string",
+          "enum": ["high", "medium", "low"],
+          "description": "Overall confidence in validation"
+        },
+        "warnings": {
+          "type": "array",
+          "description": "Any warnings or concerns about validation",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "recommendations": {
+      "type": "object",
+      "description": "Strategic recommendations based on analysis",
+      "properties": {
+        "target_segment": {
+          "type": "string",
+          "description": "Recommended primary target segment"
+        },
+        "pricing_strategy": {
+          "type": "object",
+          "properties": {
+            "model": {
+              "type": "string",
+              "enum": ["subscription", "freemium", "usage-based", "one-time", "enterprise"],
+              "description": "Recommended pricing model"
+            },
+            "tiers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "monthly": {"type": "number", "minimum": 0},
+                  "annual": {"type": "number", "minimum": 0},
+                  "annual_discount_pct": {"type": "number", "minimum": 0, "maximum": 100}
+                }
+              }
+            }
+          }
+        },
+        "product_focus": {
+          "type": "array",
+          "description": "Recommended features to build (addressing top needs)",
+          "items": {"type": "string"}
+        },
+        "go_to_market": {
+          "type": "object",
+          "properties": {
+            "primary_channels": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "messaging": {"type": "string"},
+            "cac_target": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Target Customer Acquisition Cost"
+            },
+            "ltv_3year": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Expected 3-year Lifetime Value"
+            },
+            "payback_months": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Expected CAC payback period in months"
+            }
+          }
+        },
+        "next_steps": {
+          "type": "array",
+          "description": "Recommended action items",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "integration_prompts": {
+      "type": "object",
+      "description": "Suggested prompts for downstream plugin integration",
+      "properties": {
+        "brainstorm": {
+          "type": "string",
+          "description": "Prompt for brainstorm plugin"
+        },
+        "prd": {
+          "type": "string",
+          "description": "Prompt for PRD plugin"
+        },
+        "design": {
+          "type": "string",
+          "description": "Prompt for design plugin"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "need": {
+      "type": "object",
+      "required": ["need_id", "statement", "importance", "satisfaction", "gap", "opportunity_score", "category"],
+      "properties": {
+        "need_id": {
+          "type": "string",
+          "pattern": "^[A-Z0-9]+$",
+          "description": "Unique need identifier (e.g., 'N031', '031')"
+        },
+        "statement": {
+          "type": "string",
+          "description": "Complete need statement following ACTION + VARIABLE formula"
+        },
+        "importance": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Average importance rating (1-10 scale)"
+        },
+        "satisfaction": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Average satisfaction rating (1-10 scale)"
+        },
+        "gap": {
+          "type": "number",
+          "description": "Importance - Satisfaction (can be negative)"
+        },
+        "opportunity_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20,
+          "description": "ODI opportunity score: Importance + max(Gap, 0)"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["severely_underserved", "underserved", "appropriately_served", "overserved"],
+          "description": "Opportunity category based on score"
+        },
+        "step": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Job step number this need relates to"
+        },
+        "phase": {
+          "type": "string",
+          "enum": ["UNDERSTAND", "PLAN", "EXECUTE", "ASSESS", "REVISE", "CONCLUDE"],
+          "description": "Universal job phase"
+        }
+      }
+    },
+    "segment": {
+      "type": "object",
+      "required": ["segment_id", "name", "size", "percentage", "avg_importance", "avg_satisfaction", "gap"],
+      "properties": {
+        "segment_id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Segment number (1, 2, 3, ...)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Descriptive segment name (e.g., 'Crisis Avoiders')"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of respondents in segment"
+        },
+        "percentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Segment size as percentage of total (0.0 to 1.0)"
+        },
+        "avg_importance": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Average importance rating across all needs"
+        },
+        "avg_satisfaction": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Average satisfaction rating across all needs"
+        },
+        "gap": {
+          "type": "number",
+          "description": "avg_importance - avg_satisfaction"
+        },
+        "top_needs": {
+          "type": "array",
+          "description": "Top 5 needs for this segment (by importance)",
+          "items": {"type": "string"}
+        },
+        "characteristics": {
+          "type": "string",
+          "description": "Brief description of segment characteristics"
+        },
+        "evc_monthly": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Economic value per month for this segment"
+        },
+        "evc_annual": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Economic value per year for this segment"
+        },
+        "wtp_range": {
+          "type": "object",
+          "properties": {
+            "min": {"type": "number", "minimum": 0},
+            "max": {"type": "number", "minimum": 0},
+            "median": {"type": "number", "minimum": 0}
+          }
+        },
+        "demographics": {
+          "type": "object",
+          "description": "Demographic characteristics of segment",
+          "additionalProperties": true
+        },
+        "strategic_priority": {
+          "type": "string",
+          "enum": ["PRIMARY TARGET", "SECONDARY TARGET", "LOW PRIORITY", "DON'T TARGET"],
+          "description": "Recommended targeting priority"
+        },
+        "marketing_message": {
+          "type": "string",
+          "description": "Recommended marketing message for segment"
+        }
+      }
+    },
+    "evc_breakdown": {
+      "type": "object",
+      "description": "Economic Value to Customer breakdown",
+      "required": ["time_savings", "error_reduction", "revenue_increase", "risk_reduction", "subtotal", "performance_premium", "total_monthly", "total_annual"],
+      "properties": {
+        "time_savings": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Monthly value from time saved"
+        },
+        "error_reduction": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Monthly value from errors prevented"
+        },
+        "revenue_increase": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Monthly value from additional revenue"
+        },
+        "risk_reduction": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Monthly value from risk mitigation"
+        },
+        "subtotal": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Sum of four value components"
+        },
+        "performance_premium_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Performance premium percentage (0.05 = 5%)"
+        },
+        "performance_premium": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Performance premium dollar amount"
+        },
+        "total_monthly": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Total EVC per month"
+        },
+        "total_annual": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Total EVC per year"
+        }
+      }
+    }
+  }
+}

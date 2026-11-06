@@ -1,0 +1,31 @@
+{
+  "schema": "plugin-result-adoption/1",
+  "plugin": "jtbd-market-discovery",
+  "commands": {
+    "jtbd-market-discovery:discover": {"writer": "agents/output-assembler.md"},
+    "jtbd-market-discovery:wtp-check": {"writer": "agents/wtp-validator.md"}
+  },
+  "defaults": [
+    {"command": ["jtbd-market-discovery:discover"], "input": "ratings_source",
+     "marker": "importance_satisfaction = expert estimates", "file": "agents/orchestrator.md",
+     "anchor": "use `expert_estimates` unless dispatch context specifies `survey_data_path`"},
+    {"command": ["jtbd-market-discovery:discover"], "input": "labor_rate",
+     "marker": "labor_rate = 75", "file": "agents/evc-calculator.md",
+     "anchor": "When nobody gives a labor rate, use `labor_rate = 75`"},
+    {"command": ["jtbd-market-discovery:discover"], "input": "average_error_cost",
+     "marker": "average_error_cost = 50", "file": "agents/evc-calculator.md",
+     "anchor": "When nobody gives an error cost, use `average_error_cost = 50`"},
+    {"command": ["jtbd-market-discovery:discover"], "input": "average_revenue",
+     "marker": "average_revenue = 5000", "file": "agents/evc-calculator.md",
+     "anchor": "When nobody gives a deal size, use `average_revenue = 5000`"},
+    {"command": ["jtbd-market-discovery:discover"], "input": "revenue_margin",
+     "marker": "revenue_margin = 0.20", "file": "agents/evc-calculator.md",
+     "anchor": "When nobody gives a margin, use `revenue_margin = 0.20`"},
+    {"command": ["jtbd-market-discovery:discover"], "input": "risk_tolerance",
+     "marker": "risk_tolerance = moderate", "file": "agents/evc-calculator.md",
+     "anchor": "When nobody gives a risk tolerance, use `risk_tolerance = moderate`"},
+    {"command": ["jtbd-market-discovery:discover"], "input": "segment_count",
+     "marker": "segment_count = 4", "file": "agents/segmentation-analyst.md",
+     "anchor": "else `segment_count = 4`"}
+  ]
+}

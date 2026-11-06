@@ -1,0 +1,404 @@
+{
+  "metadata": {
+    "analysis_date": "2026-01-21",
+    "analyst": "JTBD Market Discovery Plugin",
+    "sample_size": 87,
+    "methodology_version": "ODI v1.0",
+    "domain": "Consumer Navigation / Location-Based Services"
+  },
+  "job": {
+    "statement": "Get to destinations on time",
+    "performer": "Urban commuter (daily travelers in metropolitan areas)",
+    "desired_outcome": "Arrive on time consistently and minimize stress from uncertainty",
+    "circumstances": [
+      "Daily commute to office",
+      "Important meetings or appointments",
+      "School pickup/dropoff deadlines",
+      "Medical appointments",
+      "Flight/train departure deadlines"
+    ],
+    "forces": {
+      "push": [
+        "Frequent late arrivals despite planning",
+        "High stress from time uncertainty",
+        "Poor real-time adaptation",
+        "Inaccurate departure time estimates"
+      ],
+      "pull": [
+        "Reliable arrival time predictions",
+        "Proactive real-time alerts",
+        "Smart departure time estimation",
+        "Stress reduction through certainty"
+      ],
+      "anxiety": [
+        "Cost concerns (free alternatives exist)",
+        "Switching costs (muscle memory)",
+        "Privacy concerns (location tracking)",
+        "Reliability doubts"
+      ],
+      "habit": [
+        "Default app on phone",
+        "Social proof and familiarity",
+        "'Good enough' mentality",
+        "Embedded in workflow"
+      ]
+    },
+    "steps": [
+      {"step_number": 1, "phase": "UNDERSTAND", "description": "Determine where I need to go"},
+      {"step_number": 2, "phase": "UNDERSTAND", "description": "Determine when I need to arrive"},
+      {"step_number": 3, "phase": "UNDERSTAND", "description": "Assess current location and constraints"},
+      {"step_number": 4, "phase": "PLAN", "description": "Identify available route options"},
+      {"step_number": 5, "phase": "PLAN", "description": "Estimate travel time for each route"},
+      {"step_number": 6, "phase": "PLAN", "description": "Select optimal route"},
+      {"step_number": 7, "phase": "EXECUTE", "description": "Navigate to destination using selected route"},
+      {"step_number": 8, "phase": "EXECUTE", "description": "Monitor real-time traffic conditions"},
+      {"step_number": 9, "phase": "EXECUTE", "description": "Adapt route when conditions change"},
+      {"step_number": 10, "phase": "ASSESS", "description": "Verify arrival time accuracy"},
+      {"step_number": 11, "phase": "ASSESS", "description": "Evaluate route efficiency"},
+      {"step_number": 12, "phase": "REVISE", "description": "Learn from route outcomes for future trips"}
+    ]
+  },
+  "needs": {
+    "total_count": 85,
+    "top_10": [
+      {
+        "need_id": "031",
+        "statement": "Minimize time it takes to estimate departure time to arrive on schedule",
+        "importance": 9.2,
+        "satisfaction": 3.1,
+        "gap": 6.1,
+        "opportunity_score": 15.3,
+        "category": "severely_underserved",
+        "step": 5,
+        "phase": "PLAN"
+      },
+      {
+        "need_id": "035",
+        "statement": "Reduce likelihood of arriving late despite following time estimate",
+        "importance": 9.5,
+        "satisfaction": 4.2,
+        "gap": 5.3,
+        "opportunity_score": 14.8,
+        "category": "severely_underserved",
+        "step": 5,
+        "phase": "PLAN"
+      },
+      {
+        "need_id": "029",
+        "statement": "Minimize error in travel time estimation accuracy",
+        "importance": 9.1,
+        "satisfaction": 3.9,
+        "gap": 5.2,
+        "opportunity_score": 14.3,
+        "category": "severely_underserved",
+        "step": 5,
+        "phase": "PLAN"
+      },
+      {
+        "need_id": "033",
+        "statement": "Ensure accuracy of traffic condition predictions",
+        "importance": 8.9,
+        "satisfaction": 4.0,
+        "gap": 4.9,
+        "opportunity_score": 13.8,
+        "category": "severely_underserved",
+        "step": 5,
+        "phase": "PLAN"
+      },
+      {
+        "need_id": "061",
+        "statement": "Minimize time it takes to receive reroute suggestions after incidents",
+        "importance": 8.8,
+        "satisfaction": 3.8,
+        "gap": 5.0,
+        "opportunity_score": 13.8,
+        "category": "severely_underserved",
+        "step": 9,
+        "phase": "EXECUTE"
+      },
+      {
+        "need_id": "055",
+        "statement": "Reduce likelihood of encountering unexpected traffic delays",
+        "importance": 8.7,
+        "satisfaction": 4.1,
+        "gap": 4.6,
+        "opportunity_score": 13.3,
+        "category": "severely_underserved",
+        "step": 8,
+        "phase": "EXECUTE"
+      },
+      {
+        "need_id": "054",
+        "statement": "Minimize delay before receiving traffic alert notifications",
+        "importance": 8.5,
+        "satisfaction": 4.3,
+        "gap": 4.2,
+        "opportunity_score": 12.7,
+        "category": "underserved",
+        "step": 8,
+        "phase": "EXECUTE"
+      },
+      {
+        "need_id": "068",
+        "statement": "Ensure effectiveness of reroute in actually saving time",
+        "importance": 8.4,
+        "satisfaction": 4.4,
+        "gap": 4.0,
+        "opportunity_score": 12.4,
+        "category": "underserved",
+        "step": 9,
+        "phase": "EXECUTE"
+      },
+      {
+        "need_id": "069",
+        "statement": "Minimize discrepancy between predicted and actual arrival time",
+        "importance": 8.3,
+        "satisfaction": 4.5,
+        "gap": 3.8,
+        "opportunity_score": 12.1,
+        "category": "underserved",
+        "step": 10,
+        "phase": "ASSESS"
+      },
+      {
+        "need_id": "030",
+        "statement": "Reduce likelihood of underestimating actual travel time",
+        "importance": 8.2,
+        "satisfaction": 4.6,
+        "gap": 3.6,
+        "opportunity_score": 11.8,
+        "category": "appropriately_served",
+        "step": 5,
+        "phase": "PLAN"
+      }
+    ]
+  },
+  "opportunities": {
+    "severely_underserved_count": 6,
+    "underserved_count": 3,
+    "appropriately_served_count": 11,
+    "overserved_count": 0,
+    "strategic_focus": [
+      "Smart Departure Time Calculator (addresses needs 029, 031, 030)",
+      "Proactive Traffic Intelligence (addresses needs 033, 054, 055)",
+      "Adaptive Route Management (addresses needs 061, 068)"
+    ]
+  },
+  "segments": [
+    {
+      "segment_id": 1,
+      "name": "Crisis Avoiders",
+      "size": 26,
+      "percentage": 0.30,
+      "avg_importance": 9.1,
+      "avg_satisfaction": 3.2,
+      "gap": 5.9,
+      "top_needs": [
+        "Minimize time to estimate departure time",
+        "Reduce likelihood of arriving late",
+        "Minimize error in travel time estimation",
+        "Ensure accuracy of traffic predictions",
+        "Minimize time to receive reroute suggestions"
+      ],
+      "characteristics": "Very high importance needs that are severely underserved",
+      "evc_monthly": 1361,
+      "evc_annual": 16332,
+      "wtp_range": {
+        "min": 80,
+        "max": 100,
+        "median": 92
+      },
+      "demographics": {
+        "age_range": "25-54",
+        "occupations": ["professional", "manager", "healthcare"],
+        "frequency": "daily"
+      },
+      "strategic_priority": "PRIMARY TARGET",
+      "marketing_message": "Never miss an important meeting again. Guaranteed on-time arrival."
+    },
+    {
+      "segment_id": 2,
+      "name": "Balanced Users",
+      "size": 30,
+      "percentage": 0.35,
+      "avg_importance": 7.3,
+      "avg_satisfaction": 5.8,
+      "gap": 1.5,
+      "top_needs": [
+        "Minimize time to estimate departure time",
+        "Reduce likelihood of arriving late",
+        "Minimize error in travel time estimation",
+        "Ensure accuracy of traffic predictions",
+        "Reduce likelihood of unexpected traffic"
+      ],
+      "characteristics": "High importance needs that are moderately underserved",
+      "evc_monthly": 756,
+      "evc_annual": 9072,
+      "wtp_range": {
+        "min": 50,
+        "max": 65,
+        "median": 58
+      },
+      "demographics": {
+        "age_range": "25-44",
+        "occupations": ["professional", "student", "service"],
+        "frequency": "daily to 4-5 times/week"
+      },
+      "strategic_priority": "SECONDARY TARGET",
+      "marketing_message": "Arrive on time, every time. Premium navigation for professionals."
+    },
+    {
+      "segment_id": 3,
+      "name": "Satisfied Users",
+      "size": 31,
+      "percentage": 0.35,
+      "avg_importance": 5.2,
+      "avg_satisfaction": 8.1,
+      "gap": -2.9,
+      "top_needs": [
+        "Minimize time to estimate departure time",
+        "Reduce likelihood of arriving late",
+        "Ensure accuracy of traffic predictions"
+      ],
+      "characteristics": "Moderate importance needs that are overserved",
+      "evc_monthly": 302,
+      "evc_annual": 3624,
+      "wtp_range": {
+        "min": 20,
+        "max": 30,
+        "median": 24
+      },
+      "demographics": {
+        "age_range": "18-24, 55+",
+        "occupations": ["student", "retired", "other"],
+        "frequency": "2-3 times/week or weekly"
+      },
+      "strategic_priority": "LOW (DON'T TARGET)",
+      "marketing_message": "Freemium tier only - no active acquisition"
+    }
+  ],
+  "evc_analysis": {
+    "weighted_average": {
+      "time_savings": 415,
+      "error_reduction": 155,
+      "revenue_increase": 25,
+      "risk_reduction": 35,
+      "subtotal": 630,
+      "performance_premium_pct": 0.20,
+      "performance_premium": 126,
+      "total_monthly": 756,
+      "total_annual": 9072
+    },
+    "by_segment": {
+      "crisis_avoiders": {
+        "total_monthly": 1361,
+        "total_annual": 16332,
+        "multiplier": 1.8
+      },
+      "balanced_users": {
+        "total_monthly": 756,
+        "total_annual": 9072,
+        "multiplier": 1.0
+      },
+      "satisfied_users": {
+        "total_monthly": 302,
+        "total_annual": 3624,
+        "multiplier": 0.4
+      }
+    }
+  },
+  "wtp_validation": {
+    "raw_data": {
+      "sample_size": 87,
+      "median_wtp": 65,
+      "mean_wtp": 71,
+      "std_dev": 28
+    },
+    "layer_1_outliers": {
+      "outliers_removed": 4,
+      "clean_sample_size": 83,
+      "clean_median": 63,
+      "clean_mean": 68,
+      "clean_std_dev": 22,
+      "result": "PASS"
+    },
+    "layer_2_competitive": {
+      "free_alternatives": ["Google Maps", "Waze", "Apple Maps"],
+      "premium_navigation": {"range": "10-20", "positioning": "feature-focused"},
+      "our_positioning": {"price": "60-75", "differentiation": "outcome-focused"},
+      "result": "PASS"
+    },
+    "layer_3_value_economics": {
+      "weighted_evc_monthly": 778,
+      "wtp_monthly": 63,
+      "value_capture_pct": 8.1,
+      "optimal_range_pct": "20-30",
+      "assessment": "Under-capturing (strategic)",
+      "result": "PASS"
+    },
+    "layer_4_confidence": {
+      "sample_adequate": true,
+      "consistency_good": true,
+      "segment_alignment": true,
+      "confidence_level": "HIGH",
+      "result": "PASS"
+    },
+    "layer_5_segments": {
+      "crisis_avoiders": {"median": 92, "evc_pct": 6.8, "result": "VALIDATED"},
+      "balanced_users": {"median": 58, "evc_pct": 7.7, "result": "VALIDATED"},
+      "satisfied_users": {"median": 24, "evc_pct": 7.9, "result": "VALIDATED"}
+    },
+    "layer_6_van_westendorp": {
+      "optimal_price": 72,
+      "indifference_price": 68,
+      "acceptable_range": {"min": 45, "max": 95},
+      "result": "PASS"
+    },
+    "validated_range": {
+      "min": 60,
+      "max": 75,
+      "recommended": 69
+    },
+    "validation_passed": true,
+    "confidence_level": "high"
+  },
+  "recommendations": {
+    "target_segment": "Crisis Avoiders (30% of market)",
+    "pricing_strategy": {
+      "premium_tier": {
+        "monthly": 69,
+        "annual": 749,
+        "annual_discount_pct": 10
+      },
+      "freemium_tier": {
+        "monthly": 0,
+        "features_limited": true
+      }
+    },
+    "product_focus": [
+      "Smart Departure Time Calculator (needs 029, 031, 030)",
+      "Proactive Traffic Intelligence (needs 033, 054, 055)",
+      "Adaptive Route Management (needs 061, 068)",
+      "Arrival Confidence Score (need 069)"
+    ],
+    "go_to_market": {
+      "primary_channels": ["LinkedIn ads", "Corporate partnerships", "Healthcare partnerships"],
+      "messaging": "Never miss an important meeting again",
+      "cac_target": 1000,
+      "ltv_3year": 3456,
+      "payback_months": 11
+    },
+    "next_steps": [
+      "Build MVP focusing on top 6 severely underserved needs",
+      "Launch beta with 50 Crisis Avoiders for validation",
+      "A/B test pricing ($69 vs $79)",
+      "Integrate with brainstorm plugin for feature ideation",
+      "Create PRD targeting Crisis Avoiders segment"
+    ]
+  },
+  "integration_prompts": {
+    "brainstorm": "Given this JTBD analysis, brainstorm solution concepts that address the top 3 severely underserved needs (departure time estimation, traffic prediction accuracy, proactive rerouting) for Crisis Avoiders segment who experience acute pain from late arrivals.",
+    "prd": "Create a PRD for a premium navigation app targeting Crisis Avoiders (professionals, parents, healthcare workers) who need guaranteed on-time arrival. Focus on smart departure time calculator, proactive traffic alerts, and adaptive route management. Target pricing: $69/month with $1,361/month EVC.",
+    "design": "Design the smart departure time calculator feature that accounts for parking time, destination-specific delays, and personal driving patterns. Target Crisis Avoiders who need 95%+ on-time arrival accuracy for high-stakes trips."
+  }
+}

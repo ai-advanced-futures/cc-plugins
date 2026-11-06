@@ -1,0 +1,13 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "jtbd-market-discovery:wtp-check",
+  "questions": [
+    {"input": "target_price", "question": "What price per month should the check test?", "type": "number", "unit": "USD per month"},
+    {"input": "target_segment", "question": "Which customers is the price for, by role and industry?", "type": "text"},
+    {"input": "market_context", "question": "Does the offering sell to businesses or to consumers?", "type": "choice",
+     "options": [{"value": "b2b", "label": "To businesses"}, {"value": "b2c", "label": "To consumers"}]},
+    {"input": "evc_estimate", "question": "What economic value does the offering create per customer per month?", "type": "number", "unit": "USD per month"},
+    {"input": "wtp_survey_path", "question": "What is the path of the willingness-to-pay survey file, if there is one?", "type": "path"},
+    {"input": "competitor_pricing", "question": "Who are the direct competitors, what do they charge, and are there free alternatives?", "type": "text"}
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "jtbd-market-discovery:discover",
+  "questions": [
+    {"input": "market_area", "question": "Which product or market should the discovery cover?", "type": "text"},
+    {"input": "ratings_source", "question": "Where should the importance and satisfaction ratings of each need come from?", "type": "choice",
+     "options": [
+       {"value": "survey", "label": "A survey file of customer ratings"},
+       {"value": "expert_estimates", "label": "Estimates made without a survey"},
+       {"value": "manual", "label": "Ratings typed in by hand, in an interactive run only"}
+     ],
+     "default": "expert_estimates"},
+    {"input": "survey_data_path", "question": "What is the path of the survey file with the importance and satisfaction ratings?", "type": "path",
+     "options": [{"value": "none", "label": "I have no survey file yet"}]},
+    {"input": "manual_ratings", "question": "What importance and satisfaction, from 1 to 10 each, does each of the top 40 needs have?", "type": "text"},
+    {"input": "labor_rate", "question": "What does an hour of the customer's time cost?", "type": "number", "default": 75, "unit": "USD per hour"},
+    {"input": "average_error_cost", "question": "What does one error or mistake in the job cost the customer?", "type": "number", "default": 50, "unit": "USD per error"},
+    {"input": "average_revenue", "question": "What is the customer's average deal size or order value?", "type": "number", "default": 5000, "unit": "USD per sale"},
+    {"input": "revenue_margin", "question": "What share of that revenue is margin?", "type": "number", "default": 0.2, "unit": "share of revenue"},
+    {"input": "risk_tolerance", "question": "How much risk does the customer accept?", "type": "choice",
+     "options": [{"value": "low", "label": "Low"}, {"value": "moderate", "label": "Moderate"}, {"value": "high", "label": "High"}],
+     "default": "moderate"},
+    {"input": "segment_count", "question": "How many customer segments should the analysis start from?", "type": "number", "default": 4}
+  ]
+}

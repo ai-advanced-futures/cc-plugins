@@ -1,0 +1,52 @@
+need_id,need_statement,phase,step,importance_question,satisfaction_question
+N001,Minimize time it takes to [ACTION + VARIABLE from Step 1],UNDERSTAND,1,"When you [JOB STATEMENT], how important is it to minimize time it takes to [ACTION + VARIABLE]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to minimize time it takes to [ACTION + VARIABLE]? (1=Not at all satisfied, 10=Completely satisfied)"
+N002,Reduce likelihood of [NEGATIVE OUTCOME from Step 1],UNDERSTAND,1,"When you [JOB STATEMENT], how important is it to reduce likelihood of [NEGATIVE OUTCOME]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to reduce likelihood of [NEGATIVE OUTCOME]? (1=Not at all satisfied, 10=Completely satisfied)"
+N003,Minimize effort required to [ACTION + VARIABLE from Step 1],UNDERSTAND,1,"When you [JOB STATEMENT], how important is it to minimize effort required to [ACTION + VARIABLE]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to minimize effort required to [ACTION + VARIABLE]? (1=Not at all satisfied, 10=Completely satisfied)"
+N004,Ensure accuracy of [METRIC/OUTCOME from Step 1],UNDERSTAND,1,"When you [JOB STATEMENT], how important is it to ensure accuracy of [METRIC/OUTCOME]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to ensure accuracy of [METRIC/OUTCOME]? (1=Not at all satisfied, 10=Completely satisfied)"
+N005,Minimize time it takes to [ACTION + VARIABLE from Step 2],UNDERSTAND,2,"When you [JOB STATEMENT], how important is it to minimize time it takes to [ACTION + VARIABLE]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to minimize time it takes to [ACTION + VARIABLE]? (1=Not at all satisfied, 10=Completely satisfied)"
+N006,Reduce likelihood of [NEGATIVE OUTCOME from Step 2],UNDERSTAND,2,"When you [JOB STATEMENT], how important is it to reduce likelihood of [NEGATIVE OUTCOME]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to reduce likelihood of [NEGATIVE OUTCOME]? (1=Not at all satisfied, 10=Completely satisfied)"
+N007,Minimize effort required to [ACTION + VARIABLE from Step 2],UNDERSTAND,2,"When you [JOB STATEMENT], how important is it to minimize effort required to [ACTION + VARIABLE]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to minimize effort required to [ACTION + VARIABLE]? (1=Not at all satisfied, 10=Completely satisfied)"
+N008,Ensure completeness of [OUTCOME from Step 2],UNDERSTAND,2,"When you [JOB STATEMENT], how important is it to ensure completeness of [OUTCOME]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to ensure completeness of [OUTCOME]? (1=Not at all satisfied, 10=Completely satisfied)"
+N009,Minimize time it takes to [ACTION + VARIABLE from Step 3],UNDERSTAND,3,"When you [JOB STATEMENT], how important is it to minimize time it takes to [ACTION + VARIABLE]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to minimize time it takes to [ACTION + VARIABLE]? (1=Not at all satisfied, 10=Completely satisfied)"
+N010,Reduce uncertainty about [VARIABLE from Step 3],UNDERSTAND,3,"When you [JOB STATEMENT], how important is it to reduce uncertainty about [VARIABLE]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to reduce uncertainty about [VARIABLE]? (1=Not at all satisfied, 10=Completely satisfied)"
+N011,Minimize time it takes to [ACTION + VARIABLE from Step 4],PLAN,4,"When you [JOB STATEMENT], how important is it to minimize time it takes to [ACTION + VARIABLE]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to minimize time it takes to [ACTION + VARIABLE]? (1=Not at all satisfied, 10=Completely satisfied)"
+N012,Reduce likelihood of [NEGATIVE OUTCOME from Step 4],PLAN,4,"When you [JOB STATEMENT], how important is it to reduce likelihood of [NEGATIVE OUTCOME]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to reduce likelihood of [NEGATIVE OUTCOME]? (1=Not at all satisfied, 10=Completely satisfied)"
+N013,Minimize effort required to [ACTION + VARIABLE from Step 4],PLAN,4,"When you [JOB STATEMENT], how important is it to minimize effort required to [ACTION + VARIABLE]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to minimize effort required to [ACTION + VARIABLE]? (1=Not at all satisfied, 10=Completely satisfied)"
+N014,Ensure completeness of [OUTCOME from Step 4],PLAN,4,"When you [JOB STATEMENT], how important is it to ensure completeness of [OUTCOME]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to ensure completeness of [OUTCOME]? (1=Not at all satisfied, 10=Completely satisfied)"
+N015,Minimize error in [METRIC from Step 5],PLAN,5,"When you [JOB STATEMENT], how important is it to minimize error in [METRIC]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to minimize error in [METRIC]? (1=Not at all satisfied, 10=Completely satisfied)"
+N016,Reduce likelihood of [NEGATIVE OUTCOME from Step 5],PLAN,5,"When you [JOB STATEMENT], how important is it to reduce likelihood of [NEGATIVE OUTCOME]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to reduce likelihood of [NEGATIVE OUTCOME]? (1=Not at all satisfied, 10=Completely satisfied)"
+N017,Minimize time it takes to [ACTION + VARIABLE from Step 5],PLAN,5,"When you [JOB STATEMENT], how important is it to minimize time it takes to [ACTION + VARIABLE]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to minimize time it takes to [ACTION + VARIABLE]? (1=Not at all satisfied, 10=Completely satisfied)"
+N018,Ensure accuracy of [METRIC/OUTCOME from Step 5],PLAN,5,"When you [JOB STATEMENT], how important is it to ensure accuracy of [METRIC/OUTCOME]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to ensure accuracy of [METRIC/OUTCOME]? (1=Not at all satisfied, 10=Completely satisfied)"
+N019,Minimize time it takes to [ACTION + VARIABLE from Step 6],PLAN,6,"When you [JOB STATEMENT], how important is it to minimize time it takes to [ACTION + VARIABLE]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to minimize time it takes to [ACTION + VARIABLE]? (1=Not at all satisfied, 10=Completely satisfied)"
+N020,Reduce likelihood of [NEGATIVE OUTCOME from Step 6],PLAN,6,"When you [JOB STATEMENT], how important is it to reduce likelihood of [NEGATIVE OUTCOME]? (1=Not at all important, 10=Extremely important)","When you [JOB STATEMENT], how satisfied are you with your current ability to reduce likelihood of [NEGATIVE OUTCOME]? (1=Not at all satisfied, 10=Completely satisfied)"
+
+# TEMPLATE INSTRUCTIONS:
+#
+# 1. Replace [JOB STATEMENT] with your actual job (e.g., "get to destinations on time")
+# 2. Replace [ACTION + VARIABLE] with specific needs from your job steps
+# 3. Generate 7-8 needs per job step (typically 80-100 total needs)
+# 4. Use ACTION verbs: minimize, reduce, ensure, increase, maximize, avoid
+# 5. Use VARIABLE nouns that are outcome-focused (not solution-specific)
+# 6. Follow ACTION + VARIABLE formula: "Minimize time it takes to estimate departure time"
+# 7. Ensure each need is:
+#    - Outcome-focused (not solution: "use AI" is wrong)
+#    - Measurable (can be rated 1-10)
+#    - Stable (won't change in 5 years)
+#    - Controllable (solution can impact it)
+#    - Distinct (not duplicate of another need)
+#
+# 8. Survey deployment:
+#    - Minimum 50 respondents recommended
+#    - 100-180 respondents ideal for segmentation
+#    - Use Qualtrics, Google Forms, SurveyMonkey, or Typeform
+#    - Both questions required for each need (importance + satisfaction)
+#    - Add demographics section (age, occupation, frequency, etc.)
+#    - Add willingness-to-pay question at end
+#
+# 9. Data format for analysis:
+#    - Export as CSV with columns: respondent_id, need_001_importance, need_001_satisfaction, need_002_importance, need_002_satisfaction, ...
+#    - Use scripts/opportunity_scorer.py to calculate opportunity scores
+#    - Use scripts/segmentation_engine.py for K-means clustering
+#    - Use scripts/wtp_validator.py for pricing validation
+#
+# 10. See examples/example-01-navigation/ for complete workflow reference
