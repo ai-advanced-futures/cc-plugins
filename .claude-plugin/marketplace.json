@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.9.0"
+    "version": "2.10.0"
   },
   "plugins": [
     {
@@ -127,6 +127,12 @@
       "name": "jtbd-market-discovery",
       "description": "Find market opportunities with Jobs To Be Done and numbers. Ten phases lead from one job statement to ranked opportunities, customer segments and a validated price. Use discover, quick-validate and wtp-check.",
       "source": "./plugins/jtbd-market-discovery",
+      "strict": false
+    },
+    {
+      "name": "pricing",
+      "description": "Find the right price for an AI product. Classify a feature, compute its price from willingness to pay and cost, design Good, Better, and Best packages, and audit a price. Use price, audit, package, and value-metric.",
+      "source": "./plugins/pricing",
       "strict": false
     }
   ]

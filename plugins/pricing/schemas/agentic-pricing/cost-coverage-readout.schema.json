@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ai-advanced-futures/cc-plugins/plugins/pricing/schemas/agentic-pricing/cost-coverage-readout.schema.json",
+  "title": "Cost Coverage Readout",
+  "type": "object",
+  "required": ["engagement_id", "produced_at", "schema_version", "archetype", "arr_band", "s1_to_s5_matrix", "gm_trajectory", "multiple_compression_signals", "audience"],
+  "additionalProperties": false,
+  "properties": {
+    "engagement_id": {"type": "string", "format": "uuid"},
+    "produced_at": {"type": "string", "format": "date-time"},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "archetype": {"type": "string"},
+    "arr_band": {"type": "string"},
+    "s1_to_s5_matrix": {
+      "type": "object",
+      "required": ["s1", "s2", "s3", "s4", "s5"],
+      "additionalProperties": false,
+      "properties": {
+        "s1": {"$ref": "#/definitions/scenario"},
+        "s2": {"$ref": "#/definitions/scenario"},
+        "s3": {"$ref": "#/definitions/scenario"},
+        "s4": {"$ref": "#/definitions/scenario"},
+        "s5": {"$ref": "#/definitions/scenario"}
+      }
+    },
+    "gm_trajectory": {
+      "type": "object",
+      "required": ["y1_pct", "y2_pct", "y3_pct", "requires_vertical_anchor_for_70plus"],
+      "additionalProperties": false,
+      "properties": {
+        "y1_pct": {"type": "number"},
+        "y2_pct": {"type": "number"},
+        "y3_pct": {"type": "number"},
+        "requires_vertical_anchor_for_70plus": {"type": "boolean"}
+      }
+    },
+    "multiple_compression_signals": {
+      "type": "object",
+      "required": ["forecast_variance_pct", "gm_pct", "nrr_delta_pct", "multiple_pressure_estimate"],
+      "additionalProperties": false,
+      "properties": {
+        "forecast_variance_pct": {"type": "number"},
+        "gm_pct": {"type": "number"},
+        "nrr_delta_pct": {"type": "number"},
+        "multiple_pressure_estimate": {
+          "type": "string",
+          "enum": ["0", "0.5-1x", "1-2x", ">2x"]
+        }
+      }
+    },
+    "audience": {"type": "string", "const": "internal"}
+  },
+  "definitions": {
+    "scenario": {
+      "type": "object",
+      "required": ["effective_margin_pct", "narrative_md"],
+      "additionalProperties": false,
+      "properties": {
+        "effective_margin_pct": {"type": "number"},
+        "narrative_md": {"type": "string"}
+      }
+    }
+  }
+}

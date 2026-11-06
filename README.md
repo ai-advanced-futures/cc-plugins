@@ -40,6 +40,7 @@ claude plugin install <name>@cc-plugins
 | `strategic-partnerships` | Find, design and decide on partnerships in a software ecosystem. Runs six phases: readiness, partner candidates, deal structure, technical integration, revenue model, and a go or no-go recommendation. |
 | `corporate-development` | Run an M&A pipeline on one target company: readiness, sourcing, assessment, operational and financial due diligence, integration plan, and a go or no-go recommendation. |
 | `jtbd-market-discovery` | Find market opportunities with Jobs To Be Done and numbers. Ten phases lead from one job statement to ranked opportunities, customer segments and a validated price. Use discover, quick-validate and wtp-check. |
+| `pricing` | Find the right price for an AI product. Classify a feature, compute its price from willingness to pay and cost, design Good, Better, and Best packages, and audit a price. Use price, audit, package, and value-metric. |
 
 ## Skills
 

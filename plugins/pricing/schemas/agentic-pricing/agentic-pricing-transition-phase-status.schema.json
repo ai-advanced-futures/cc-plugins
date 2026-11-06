@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ai-advanced-futures/cc-plugins/plugins/pricing/schemas/agentic-pricing/agentic-pricing-transition-phase-status.schema.json",
+  "title": "Agentic Pricing Transition Phase Status",
+  "type": "object",
+  "required": ["engagement_id", "produced_at", "schema_version", "agentic_pricing_transition_phase", "reversibility_pct", "phase_gate_checks", "competitive_monitoring_trigger_status", "audience"],
+  "additionalProperties": false,
+  "properties": {
+    "engagement_id": {"type": "string", "format": "uuid"},
+    "produced_at": {"type": "string", "format": "date-time"},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "agentic_pricing_transition_phase": {
+      "type": "string",
+      "enum": ["phase_1_insight", "phase_2_pilot", "phase_3_new_sales_default", "phase_4_cohort_migration", "phase_5_full_cutover"]
+    },
+    "reversibility_pct": {"type": "integer", "minimum": 0, "maximum": 100},
+    "phase_gate_checks": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "enum": ["pass", "fail", "unverified"]}
+    },
+    "competitive_monitoring_trigger_status": {"type": "string", "enum": ["clear", "monitoring", "paused"]},
+    "audience": {"type": "string", "const": "internal"}
+  }
+}

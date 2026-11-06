@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ai-advanced-futures/cc-plugins/plugins/pricing/schemas/agentic-pricing/cost-amplifier-readout.schema.json",
+  "title": "Cost Amplifier Readout",
+  "type": "object",
+  "required": ["engagement_id", "produced_at", "schema_version", "mode", "amplifiers", "composite_p75", "composite_p95", "audience", "notes"],
+  "additionalProperties": false,
+  "properties": {
+    "engagement_id": {"type": "string", "format": "uuid"},
+    "produced_at": {"type": "string", "format": "date-time"},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "mode": {"type": "string", "enum": ["rule_of_thumb", "telemetry_enriched"]},
+    "amplifiers": {
+      "type": "object",
+      "patternProperties": {
+        "^[1-8]$": {
+          "type": "object",
+          "required": ["multiplier_p75", "multiplier_p95", "detection_signal", "present"],
+          "additionalProperties": false,
+          "properties": {
+            "multiplier_p75": {"type": "number"},
+            "multiplier_p95": {"type": "number"},
+            "detection_signal": {"type": "string"},
+            "present": {"type": "boolean"}
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "composite_p75": {"type": "number"},
+    "composite_p95": {"type": "number"},
+    "notes": {"type": "string", "maxLength": 2000},
+    "audience": {"type": "string", "const": "internal"}
+  }
+}

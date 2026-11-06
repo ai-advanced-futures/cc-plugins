@@ -1,0 +1,321 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "pricing:price",
+  "questions": [
+    {
+      "input": "offering",
+      "question": "What feature or offering are you pricing, and what job does it do for customers?",
+      "type": "text"
+    },
+    {
+      "input": "segment",
+      "question": "Who is the target customer segment?",
+      "type": "text"
+    },
+    {
+      "input": "agentic_tier",
+      "question": "Which describes the offering's AI best?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "commodity",
+          "label": "Any generic AI tool could do this job"
+        },
+        {
+          "value": "augmented",
+          "label": "It helps a person, who still does each step"
+        },
+        {
+          "value": "autonomous",
+          "label": "It runs the steps on its own, and a person reviews the output"
+        },
+        {
+          "value": "fully_agentic",
+          "label": "It does a whole role's job with no review"
+        }
+      ]
+    },
+    {
+      "input": "confirm_jtbd_run",
+      "question": "Is the jtbd run named here the one to price from?",
+      "type": "boolean"
+    },
+    {
+      "input": "outcome",
+      "question": "What specific outcome does the offering deliver for the customer?",
+      "type": "text"
+    },
+    {
+      "input": "speed_improvement",
+      "question": "How many times faster than the non-AI way does the offering do the job?",
+      "type": "number",
+      "default": 0,
+      "unit": "times faster"
+    },
+    {
+      "input": "accuracy_improvement",
+      "question": "How accurate is the offering's AI, from 0 to 1?",
+      "type": "number",
+      "unit": "share correct"
+    },
+    {
+      "input": "bargain_price",
+      "question": "At what price does the offering feel like a bargain?",
+      "type": "number",
+      "unit": "currency per pricing unit"
+    },
+    {
+      "input": "expensive_price",
+      "question": "At what price does the offering feel too expensive?",
+      "type": "number",
+      "unit": "currency per pricing unit"
+    },
+    {
+      "input": "alternative_price",
+      "question": "What do customers pay today for the nearest alternative?",
+      "type": "number",
+      "unit": "currency per pricing unit; per the price's period in Path A"
+    },
+    {
+      "input": "hours_per_task",
+      "question": "How many hours does one task take a person today?",
+      "type": "number",
+      "unit": "hours"
+    },
+    {
+      "input": "hourly_cost",
+      "question": "What is the full hourly cost of the person who does the task?",
+      "type": "number",
+      "unit": "currency per hour"
+    },
+    {
+      "input": "annual_salary",
+      "question": "What is the yearly salary of the role the offering replaces?",
+      "type": "number",
+      "unit": "currency per year"
+    },
+    {
+      "input": "automation_rate",
+      "question": "What share of that role does the offering do, from 0 to 1?",
+      "type": "number",
+      "unit": "share of the role"
+    },
+    {
+      "input": "wtp_max",
+      "question": "What is the most a customer would pay per task, or per agent per year?",
+      "type": "number",
+      "unit": "currency per task or per year"
+    },
+    {
+      "input": "production_cost",
+      "question": "What does it cost you to deliver one unit of the offering?",
+      "type": "number",
+      "default": 0,
+      "unit": "currency per pricing unit; per the price's period in Path A"
+    },
+    {
+      "input": "ai_value_delta",
+      "question": "What is the AI's improvement worth to the customer, in money per pricing unit?",
+      "type": "number",
+      "default": 0,
+      "unit": "currency per pricing unit"
+    },
+    {
+      "input": "evc",
+      "question": "What is the most the offering is worth to a customer, in money per pricing unit?",
+      "type": "number",
+      "unit": "currency per pricing unit"
+    },
+    {
+      "input": "wtp_number",
+      "question": "Which willingness-to-pay number from jtbd should cap the price?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "high",
+          "label": "The high end"
+        },
+        {
+          "value": "point",
+          "label": "The single estimate"
+        },
+        {
+          "value": "low",
+          "label": "The low end"
+        }
+      ],
+      "default": "high"
+    },
+    {
+      "input": "pricing_unit",
+      "question": "What unit is the price charged per, such as per seat per month?",
+      "type": "text",
+      "default": "per seat per month"
+    },
+    {
+      "input": "competitors",
+      "question": "Which two direct competitors does the offering face, and why is leaving you harder than leaving them?",
+      "type": "text"
+    },
+    {
+      "input": "network_effects",
+      "question": "Does the offering become more valuable for each customer as more customers use it?",
+      "type": "text"
+    },
+    {
+      "input": "scale_advantage",
+      "question": "Does the offering cost less per unit at scale, and do you use that to grow share or to keep margin?",
+      "type": "text"
+    },
+    {
+      "input": "moat_value_delta",
+      "question": "What is the advantage over competitors worth to the customer, in money per pricing unit?",
+      "type": "number",
+      "default": 0,
+      "unit": "currency per pricing unit"
+    },
+    {
+      "input": "target_margin",
+      "question": "What gross margin should the price keep?",
+      "type": "number",
+      "default": 0.7,
+      "unit": "share of price"
+    },
+    {
+      "input": "value_capture_rate",
+      "question": "What share of a task's value should the price take?",
+      "type": "number",
+      "default": 0.3,
+      "unit": "share of task value"
+    },
+    {
+      "input": "overhead_rate",
+      "question": "What overhead should be added to the salary of the role replaced?",
+      "type": "number",
+      "default": 0.3,
+      "unit": "share of salary"
+    },
+    {
+      "input": "value_share",
+      "question": "What share of the replaced role's value should the price take?",
+      "type": "number",
+      "default": 0.4,
+      "unit": "share of role value"
+    },
+    {
+      "input": "value_sign",
+      "question": "How does a customer know they got value from the offering?",
+      "type": "text"
+    },
+    {
+      "input": "current_pricing_model",
+      "question": "What pricing model do you use today?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "per_seat",
+          "label": "Per seat"
+        },
+        {
+          "value": "flat_fee",
+          "label": "A flat fee"
+        },
+        {
+          "value": "usage_based",
+          "label": "By usage"
+        },
+        {
+          "value": "none_yet",
+          "label": "None yet"
+        }
+      ]
+    },
+    {
+      "input": "feature_list",
+      "question": "Which features and capabilities does the product have?",
+      "type": "text",
+      "default": "inferred from the offering"
+    },
+    {
+      "input": "feature_classes",
+      "question": "For each feature, is it a Killer (the reason customers buy), a Leader (builds on it) or a Filler (expected)?",
+      "type": "text",
+      "default": "classified by the model"
+    },
+    {
+      "input": "sales_assisted",
+      "question": "Does the product need sales-led onboarding or a contract before it gives value?",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "input": "network_usage",
+      "question": "Does the product have network effects, and does its value grow with usage?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "both",
+          "label": "Both"
+        },
+        {
+          "value": "network_only",
+          "label": "Only network effects"
+        },
+        {
+          "value": "usage_only",
+          "label": "Only usage scaling"
+        },
+        {
+          "value": "neither",
+          "label": "Neither"
+        }
+      ],
+      "default": "neither"
+    },
+    {
+      "input": "immediate_value",
+      "question": "Does a new customer get value within minutes, or only after setup?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "immediate",
+          "label": "Within minutes"
+        },
+        {
+          "value": "setup",
+          "label": "Only after setup"
+        }
+      ],
+      "default": "setup"
+    },
+    {
+      "input": "tier_feedback",
+      "question": "Which features should move to another tier, if any?",
+      "type": "text",
+      "default": "keep the proposed tiers"
+    },
+    {
+      "input": "complexity_choice",
+      "question": "A tier holds more than nine benefits: what should change?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "remove",
+          "label": "Remove features from the tier"
+        },
+        {
+          "value": "merge",
+          "label": "Merge features"
+        },
+        {
+          "value": "add_on",
+          "label": "Make features paid add-ons"
+        },
+        {
+          "value": "keep",
+          "label": "Keep all features"
+        }
+      ]
+    }
+  ]
+}

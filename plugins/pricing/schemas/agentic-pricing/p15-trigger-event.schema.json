@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ai-advanced-futures/cc-plugins/plugins/pricing/schemas/agentic-pricing/p15-trigger-event.schema.json",
+  "title": "P15 Trigger Event",
+  "description": "Charter v1.3.0 federation contract for aiml-produced Pattern P15 trigger events.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["engagement_id", "produced_at", "schema_version", "audience", "events"],
+  "properties": {
+    "engagement_id": {"type": "string", "format": "uuid"},
+    "produced_at": {"type": "string", "format": "date-time"},
+    "schema_version": {"type": "string", "const": "1.0.0"},
+    "audience": {"type": "string", "const": "internal"},
+    "detection_notes": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Optional envelope-level diagnostic notes. Emitter MUST omit this key when the list is empty (per spec §3.15 T2A-7)."
+    },
+    "events": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["trigger_kind", "pattern_id", "severity", "trigger_timestamp", "actor", "miss_band_pct", "detection_signal", "inputs_hash", "breach_basis", "computed", "contracted"],
+            "properties": {
+              "trigger_kind": {"type": "string", "const": "cost_rate_breach"},
+              "pattern_id": {"type": "string", "const": "P15"},
+              "severity": {"type": "string", "enum": ["minor", "major", "critical"]},
+              "trigger_timestamp": {"type": "string", "format": "date-time"},
+              "actor": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["vendor_name"],
+                "properties": {
+                  "vendor_name": {"type": "string", "minLength": 1},
+                  "customer_name": {"type": "string"}
+                }
+              },
+              "miss_band_pct": {"type": "number", "minimum": 0},
+              "detection_signal": {"type": "string", "minLength": 1},
+              "inputs_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "breach_basis": {"type": "string", "enum": ["operator_declared", "detector_derived"]},
+              "computed": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["amplifier_id", "measured_p75", "measured_p95", "baseline_p75", "baseline_p95", "rate_pct_over_window", "rolling_window_days"],
+                "properties": {
+                  "amplifier_id": {"type": "string", "pattern": "^[1-8]$"},
+                  "measured_p75": {"type": "number", "exclusiveMinimum": 0},
+                  "measured_p95": {"type": "number", "exclusiveMinimum": 0},
+                  "baseline_p75": {"type": "number", "exclusiveMinimum": 0},
+                  "baseline_p95": {"type": "number", "exclusiveMinimum": 0},
+                  "rate_pct_over_window": {"type": "number"},
+                  "rolling_window_days": {"type": "integer", "minimum": 1}
+                }
+              },
+              "contracted": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["threshold_pct"],
+                "properties": {
+                  "threshold_pct": {"type": "number", "minimum": 0},
+                  "cap_pct": {"type": "number", "minimum": 0}
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["trigger_kind", "pattern_id", "severity", "trigger_timestamp", "actor", "miss_band_pct", "detection_signal", "inputs_hash", "breach_basis", "computed", "contracted"],
+            "properties": {
+              "trigger_kind": {"type": "string", "const": "quality_floor_breach"},
+              "pattern_id": {"type": "string", "const": "P15"},
+              "severity": {"type": "string", "enum": ["minor", "major", "critical"]},
+              "trigger_timestamp": {"type": "string", "format": "date-time"},
+              "actor": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["vendor_name"],
+                "properties": {
+                  "vendor_name": {"type": "string", "minLength": 1},
+                  "customer_name": {"type": "string"}
+                }
+              },
+              "miss_band_pct": {"type": "number", "minimum": 0},
+              "detection_signal": {"type": "string", "minLength": 1},
+              "inputs_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "breach_basis": {"type": "string", "enum": ["operator_declared", "detector_derived"]},
+              "computed": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["metric_id", "measured_value"],
+                "properties": {
+                  "metric_id": {"type": "string", "minLength": 1},
+                  "measured_value": {"type": "number"}
+                }
+              },
+              "contracted": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["floor_value"],
+                "properties": {
+                  "floor_value": {"type": "number"},
+                  "floor_unit": {"type": "string"}
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

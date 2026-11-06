@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ai-advanced-futures/cc-plugins/plugins/pricing/schemas/agentic-pricing/clause-package.schema.json",
+  "title": "Clause Package",
+  "type": "object",
+  "required": ["engagement_id", "produced_at", "schema_version", "clauses", "audience"],
+  "additionalProperties": false,
+  "properties": {
+    "engagement_id": {"type": "string", "format": "uuid"},
+    "produced_at": {"type": "string", "format": "date-time"},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "clauses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["clause_id", "pattern_id", "title", "redline_or_baseline", "graduated_remedy_schedule", "jurisdiction_notes"],
+        "additionalProperties": false,
+        "properties": {
+          "clause_id": {"type": "string"},
+          "pattern_id": {"type": "string", "pattern": "^P[0-9]+(?:-Light)?$"},
+          "title": {"type": "string"},
+          "redline_or_baseline": {"type": "string"},
+          "graduated_remedy_schedule": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["miss_band_pct_low", "miss_band_pct_high", "remedy_type", "remedy_value", "notes"],
+              "additionalProperties": false,
+              "properties": {
+                "miss_band_pct_low": {"type": "number"},
+                "miss_band_pct_high": {"type": "number"},
+                "remedy_type": {"type": "string", "enum": ["credit", "termination_right", "both"]},
+                "remedy_value": {"type": ["number", "null"]},
+                "notes": {"type": "string"}
+              }
+            }
+          },
+          "jurisdiction_notes": {"type": "string"}
+        }
+      }
+    },
+    "audience": {"type": "string", "const": "mixed"}
+  }
+}

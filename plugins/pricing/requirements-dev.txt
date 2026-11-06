@@ -1,0 +1,10 @@
+# Test dependencies for the pricing plugin.
+# The job pricing of .github/workflows/ci.yml installs them with:
+#   pip install -r requirements-dev.txt
+pytest>=7.0
+jsonschema>=4.17.0
+pyyaml>=6.0
+
+# Editable install of the plugin, so that `from pricing.lib.*` and
+# `import vocabulary_linter` work. The plugin holds both packages.
+-e .

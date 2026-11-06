@@ -1,0 +1,71 @@
+version: "1.0.0"
+internal_only:
+  - term: "cost-coverage equilibrium"
+    pattern: "cost[- ]coverage equilibrium"
+    severity: error
+    rationale: "diagnostic concept only — never customer-facing"
+  - term: "two-sided cost-coverage"
+    pattern: "two[- ]sided cost[- ]coverage"
+    severity: error
+    rationale: "diagnostic concept only — vendor-internal"
+  - term: "vendor margin"
+    pattern: "\\bvendor margin\\b"
+    severity: error
+    rationale: "vendor-internal — never customer-facing"
+  - term: "GM compression"
+    pattern: "\\bGM compression\\b"
+    severity: error
+    rationale: "vendor-internal — never customer-facing"
+  - term: "margin collapse"
+    pattern: "margin collapse|margin trap"
+    severity: error
+    rationale: "diagnostic only — never customer-facing"
+  - term: "amplifier multiplier"
+    pattern: "amplifier[ #]?(multiplier|#?[1-8])"
+    severity: error
+    rationale: "diagnostic only — never customer-facing"
+  - term: "shared risk"
+    pattern: "\\bshared risk\\b"
+    severity: error
+    rationale: "diagnostic only — never customer-facing"
+  - term: "cost-coverage trap"
+    pattern: "cost[- ]coverage trap"
+    severity: error
+    rationale: "diagnostic only — never customer-facing"
+  - term: "effective cost per outcome"
+    pattern: "effective cost per outcome"
+    severity: error
+    rationale: "diagnostic only — never customer-facing"
+customer_facing:
+  - term: "predictable AI cost"
+    rationale: "customer-facing equivalent of cost-coverage equilibrium"
+  - term: "hard ceilings"
+    rationale: "customer-facing — spending caps"
+  - term: "spending caps"
+    rationale: "customer-facing — spending caps"
+  - term: "value floors"
+    rationale: "customer-facing — quality floors"
+  - term: "quality floors"
+    rationale: "customer-facing — quality floors"
+  - term: "quality assurance"
+    rationale: "customer-facing — quality discipline"
+  - term: "predictable cost"
+    rationale: "customer-facing — Predictability Architecture"
+  - term: "forecastable cost"
+    rationale: "customer-facing — Predictability Architecture"
+  - term: "renewal-rate protection"
+    rationale: "customer-facing — Predictability Architecture"
+  - term: "model-version hedges"
+    rationale: "customer-facing OK when framed as customer commitments, not vendor protection"
+bidirectional:
+  - term: "quality SLA"
+    contexts: ["internal", "customer-facing"]
+  - term: "cap"
+    contexts: ["internal", "customer-facing"]
+  - term: "floor"
+    contexts: ["internal", "customer-facing"]
+allowlist_contexts:
+  - pattern: "^>"
+    rationale: "blockquoted prose (citing the framework) — internal-vocab match suppressed"
+  - pattern: "^```"
+    rationale: "fenced code blocks not subject to vocab discipline (linter tracks fence state)"

@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ai-advanced-futures/cc-plugins/plugins/pricing/schemas/agentic-pricing/amplifier-telemetry-input.schema.json",
+  "title": "Amplifier Telemetry Input",
+  "description": "Federation input contract for raw amplifier telemetry. Producer: aiml. Consumer: aiml (canonical reader) + future MCP collectors. Audience: internal.",
+  "type": "object",
+  "required": ["engagement_id", "produced_at", "schema_version", "audience",
+               "measurement_window", "telemetry_source", "amplifiers"],
+  "additionalProperties": false,
+  "properties": {
+    "engagement_id": {"type": "string", "format": "uuid"},
+    "produced_at": {"type": "string", "format": "date-time"},
+    "schema_version": {"type": "string", "const": "1.1.0"},
+    "audience": {"type": "string", "const": "internal"},
+    "measurement_window": {
+      "type": "object",
+      "required": ["start", "end", "duration_days"],
+      "additionalProperties": false,
+      "properties": {
+        "start": {"type": "string", "format": "date-time"},
+        "end":   {"type": "string", "format": "date-time"},
+        "duration_days": {"type": "integer", "minimum": 1}
+      }
+    },
+    "telemetry_source": {
+      "type": "string",
+      "enum": ["datadog", "grafana", "wandb", "trackio", "manual", "other"]
+    },
+    "amplifiers": {
+      "type": "object",
+      "patternProperties": {
+        "^[1-8]$": {
+          "type": "object",
+          "required": ["measured_p75", "measured_p95", "sample_size_n", "detection_signal", "present"],
+          "additionalProperties": false,
+          "properties": {
+            "measured_p75": {"type": "number", "minimum": 1.0},
+            "measured_p95": {"type": "number", "minimum": 1.0},
+            "sample_size_n": {"type": "integer", "minimum": 1},
+            "detection_signal": {"type": "string", "maxLength": 500},
+            "present": {"type": "boolean"}
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "notes": {"type": "string", "maxLength": 2000},
+    "quality_metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "metric_id": {"type": "string", "minLength": 1},
+          "measured_value": {"type": "number"},
+          "contracted_floor": {"type": "number"},
+          "breach_observed": {"type": "boolean"}
+        },
+        "required": ["metric_id", "measured_value"]
+      }
+    },
+    "contractual_thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "p15_threshold_pct": {"type": "number", "minimum": 0},
+        "p15_cap_pct": {"type": "number", "minimum": 0},
+        "quality_floor_targets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "metric_id": {"type": "string", "minLength": 1},
+              "target_value": {"type": "number"},
+              "target_unit": {"type": "string"}
+            },
+            "required": ["metric_id", "target_value"]
+          }
+        }
+      }
+    }
+  }
+}

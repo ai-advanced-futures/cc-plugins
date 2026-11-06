@@ -1,0 +1,18 @@
+{
+  "description": "Pricing plugin hooks — surfaces available upstream data at session start so agents can activate the right pricing path (A or B) without re-asking",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/session-start.sh\"",
+            "timeout": 10,
+            "statusMessage": "Checking for pricing context..."
+          }
+        ]
+      }
+    ]
+  }
+}

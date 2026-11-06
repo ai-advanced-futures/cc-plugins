@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ai-advanced-futures/cc-plugins/plugins/pricing/schemas/agentic-pricing/vocabulary.schema.json",
+  "title": "Agentic Pricing Vocabulary",
+  "type": "object",
+  "required": ["version", "internal_only", "customer_facing", "bidirectional", "allowlist_contexts"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "internal_only": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["term", "pattern", "severity", "rationale"],
+        "additionalProperties": false,
+        "properties": {
+          "term": {"type": "string"},
+          "pattern": {"type": "string"},
+          "severity": {"type": "string", "enum": ["error", "warning"]},
+          "rationale": {"type": "string"}
+        }
+      }
+    },
+    "customer_facing": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["term", "rationale"],
+        "additionalProperties": false,
+        "properties": {
+          "term": {"type": "string"},
+          "pattern": {"type": "string"},
+          "rationale": {"type": "string"}
+        }
+      }
+    },
+    "bidirectional": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["term", "contexts"],
+        "additionalProperties": false,
+        "properties": {
+          "term": {"type": "string"},
+          "pattern": {"type": "string"},
+          "contexts": {
+            "type": "array",
+            "items": {"type": "string", "enum": ["internal", "customer-facing"]},
+            "minItems": 1
+          }
+        }
+      }
+    },
+    "allowlist_contexts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pattern", "rationale"],
+        "additionalProperties": false,
+        "properties": {
+          "pattern": {"type": "string"},
+          "rationale": {"type": "string"}
+        }
+      }
+    }
+  }
+}

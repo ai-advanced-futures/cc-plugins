@@ -77,3 +77,7 @@ material, and the Apache License does not replace them.
 12. jtbd-market-discovery, by Luis F. Amadeo, MIT License.
     The jtbd-market-discovery plugin ports it, with changes.
     The MIT notice is in plugins/jtbd-market-discovery/NOTICE.
+
+13. pricing, by Luis F. Amadeo, MIT License.
+    The pricing plugin ports it, with changes.
+    The MIT notice is in plugins/pricing/NOTICE.

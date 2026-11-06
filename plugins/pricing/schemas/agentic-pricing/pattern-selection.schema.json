@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ai-advanced-futures/cc-plugins/plugins/pricing/schemas/agentic-pricing/pattern-selection.schema.json",
+  "title": "Pattern Selection",
+  "type": "object",
+  "required": ["engagement_id", "produced_at", "schema_version", "selected_patterns", "customer_facing_name", "dependencies", "audience"],
+  "additionalProperties": false,
+  "properties": {
+    "engagement_id": {"type": "string", "format": "uuid"},
+    "produced_at": {"type": "string", "format": "date-time"},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "selected_patterns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pattern_id", "acv_band", "rationale"],
+        "additionalProperties": false,
+        "properties": {
+          "pattern_id": {"type": "string", "pattern": "^P[0-9]+(?:-Light)?$"},
+          "acv_band": {"type": "string"},
+          "rationale": {"type": "string", "maxLength": 500}
+        }
+      }
+    },
+    "customer_facing_name": {"type": "string"},
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pattern_id", "depends_on_pattern_id", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "pattern_id": {"type": "string", "pattern": "^P[0-9]+(?:-Light)?$"},
+          "depends_on_pattern_id": {"type": "string", "pattern": "^P[0-9]+(?:-Light)?$"},
+          "reason": {"type": "string"}
+        }
+      }
+    },
+    "audience": {"type": "string", "const": "mixed"}
+  }
+}

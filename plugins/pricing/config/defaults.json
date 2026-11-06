@@ -1,0 +1,19 @@
+{
+  "_comment": "Pricing plugin formula defaults. Edit here — not in skill prompts or calculator code.",
+  "formulas": {
+    "path_b": {
+      "target_margin": 0.70,
+      "accuracy_fear_signal_threshold": 0.8
+    },
+    "path_c_autonomous": {
+      "value_capture_rate": 0.30,
+      "value_capture_rate_range": [0.10, 0.50]
+    },
+    "path_c_fully_agentic": {
+      "overhead_rate": 0.30,
+      "value_share": 0.40,
+      "value_share_range": [0.30, 0.70],
+      "automation_rate_fear_signal_threshold": 0.80
+    }
+  }
+}

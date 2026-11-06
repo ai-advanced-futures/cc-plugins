@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "vendor-archetype-classification.schema.json",
+  "title": "Vendor Archetype Classification",
+  "description": "Charter §7.15 — competitive-intelligence classifies a vendor into one of the framework's 5 canonical pricing archetypes (JustKeenAI v2.1 Chapter 1). Producer: competitive-intelligence. Consumer: pricing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "audience", "vendor_name", "classified_at", "archetype", "best_in_class_pattern", "signals", "confidence", "rationale"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "audience": {"const": "mixed"},
+    "vendor_name": {"type": "string", "minLength": 1},
+    "pricing_page_url": {"type": "string", "format": "uri"},
+    "classified_at": {"type": "string", "format": "date-time"},
+    "archetype": {
+      "type": "string",
+      "enum": ["pure_outcome_absorbed", "hybrid_platform_outcome", "pure_per_seat", "hybrid_seat_meter", "pure_passthrough"]
+    },
+    "seat_anchor": {
+      "type": ["string", "null"],
+      "enum": ["vertical_anchor", "bounded_surface", null]
+    },
+    "best_in_class_pattern": {"type": "string", "minLength": 1},
+    "signals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["has_outcome_metric", "has_platform_fee_floor", "has_seat_price", "has_usage_meter", "passthrough_dominant", "labor_anchored", "bounded_agent_surface"],
+      "properties": {
+        "has_outcome_metric": {"type": "boolean"},
+        "has_platform_fee_floor": {"type": "boolean"},
+        "has_seat_price": {"type": "boolean"},
+        "has_usage_meter": {"type": "boolean"},
+        "passthrough_dominant": {"type": "boolean"},
+        "labor_anchored": {"type": "boolean"},
+        "bounded_agent_surface": {"type": "boolean"}
+      }
+    },
+    "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+    "rationale": {"type": "string", "minLength": 1},
+    "multi_sku": {"type": "boolean", "default": false}
+  },
+  "if": {"properties": {"archetype": {"const": "pure_per_seat"}}, "required": ["archetype"]},
+  "then": {"properties": {"seat_anchor": {"type": "string", "enum": ["vertical_anchor", "bounded_surface"]}}, "required": ["seat_anchor"]},
+  "else": {"properties": {"seat_anchor": {"enum": [null]}}}
+}

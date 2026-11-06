@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ai-advanced-futures/cc-plugins/plugins/pricing/schemas/agentic-pricing/cost-class-classification.schema.json",
+  "title": "Cost Class Classification",
+  "type": "object",
+  "required": ["engagement_id", "produced_at", "schema_version", "audience", "feature_id", "ai_stack_layer", "ai_stack_layer_basis", "cost_class", "cost_class_basis", "requires_guardrail", "recommended_remediation", "source_readout", "notes"],
+  "additionalProperties": false,
+  "properties": {
+    "engagement_id": {"type": "string", "format": "uuid"},
+    "produced_at": {"type": "string", "format": "date-time"},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "audience": {"type": "string", "const": "internal"},
+    "feature_id": {"type": "string", "minLength": 1},
+    "ai_stack_layer": {"type": "string", "enum": ["foundation_model", "infrastructure_orchestration", "application", "vertical_labor_anchor"]},
+    "ai_stack_layer_basis": {"type": "string", "minLength": 1},
+    "cost_class": {"type": "string", "enum": ["class_1_bounded", "class_2_moderate", "class_3_high", "class_4_critical"]},
+    "cost_class_basis": {
+      "type": "object",
+      "required": ["composite_p75", "composite_p95"],
+      "additionalProperties": false,
+      "properties": {
+        "composite_p75": {"type": "number", "exclusiveMinimum": 0},
+        "composite_p95": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "requires_guardrail": {"type": "boolean"},
+    "recommended_remediation": {"type": "string", "minLength": 1},
+    "source_readout": {
+      "type": "object",
+      "required": ["engagement_id", "produced_at", "mode"],
+      "additionalProperties": false,
+      "properties": {
+        "engagement_id": {"type": "string", "format": "uuid"},
+        "produced_at": {"type": "string", "format": "date-time"},
+        "mode": {"type": "string", "enum": ["rule_of_thumb", "telemetry_enriched"]}
+      }
+    },
+    "notes": {"type": "string", "maxLength": 2000}
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ai-advanced-futures/cc-plugins/plugins/pricing/schemas/agentic-pricing/pattern_catalogue.schema.json",
+  "title": "Agentic Pricing Pattern Catalogue",
+  "type": "object",
+  "required": ["version", "patterns"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "patterns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pattern_id", "name", "acv_band", "description", "audience_default"],
+        "additionalProperties": false,
+        "properties": {
+          "pattern_id": {"type": "string", "pattern": "^P[0-9]+(?:-Light)?$"},
+          "name": {"type": "string"},
+          "acv_band": {"type": "string"},
+          "description": {"type": "string", "maxLength": 500},
+          "audience_default": {"type": "string", "enum": ["internal", "customer-facing", "mixed"]}
+        }
+      }
+    }
+  }
+}

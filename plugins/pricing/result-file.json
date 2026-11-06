@@ -1,0 +1,191 @@
+{
+  "schema": "plugin-result-adoption/1",
+  "plugin": "pricing",
+  "commands": {
+    "pricing:price": {
+      "writer": "agents/new-offering-pricer.md"
+    }
+  },
+  "defaults": [
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "target_margin",
+      "marker": "target_margin = 0.70",
+      "file": "config/defaults.json",
+      "anchor": "formulas.path_b.target_margin"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "value_capture_rate",
+      "marker": "value_capture_rate = 0.30",
+      "file": "config/defaults.json",
+      "anchor": "formulas.path_c_autonomous.value_capture_rate"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "overhead_rate",
+      "marker": "overhead_rate = 0.30",
+      "file": "config/defaults.json",
+      "anchor": "formulas.path_c_fully_agentic.overhead_rate"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "value_share",
+      "marker": "value_share = 0.40",
+      "file": "config/defaults.json",
+      "anchor": "formulas.path_c_fully_agentic.value_share"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "production_cost",
+      "marker": "production_cost = 0",
+      "file": "skills/price/price.md",
+      "anchor": "| PRODUCTION_COST |"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "speed_improvement",
+      "marker": "ai_multiplier = 1.0",
+      "file": "skills/price/price.md",
+      "anchor": "| AI_MULTIPLIER inputs |"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "competitors",
+      "marker": "moat_multiplier = 1.0",
+      "file": "skills/price/price.md",
+      "anchor": "| MOAT_MULTIPLIER |"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "immediate_value",
+      "marker": "freemium_gate = no_free_tier",
+      "file": "skills/package/package.md",
+      "anchor": "**Condition 5: Default**"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "ai_value_delta",
+      "marker": "ai_value_delta = 0",
+      "file": "skills/price/price.md",
+      "anchor": "| AI_VALUE_DELTA (Path A) |"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "moat_value_delta",
+      "marker": "moat_value_delta = 0",
+      "file": "skills/price/price.md",
+      "anchor": "| MOAT_VALUE_DELTA (Path A) |"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "evc",
+      "marker": "evc = wtp_max",
+      "file": "skills/price/price.md",
+      "anchor": "| EVC (Path A) |"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "alternative_price",
+      "marker": "alternative_price = wtp_max",
+      "file": "skills/price/price.md",
+      "anchor": "| REFERENCE_PRICE (Path A) |"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "wtp_number",
+      "marker": "wtp_number = high",
+      "file": "skills/price/price.md",
+      "anchor": "| WTP_max (Path A) |"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "pricing_unit",
+      "marker": "pricing_unit = per seat per month",
+      "file": "skills/price/price.md",
+      "anchor": "| PRICING_UNIT (Paths A and B) |"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "feature_list",
+      "marker": "feature_list = inferred from the offering",
+      "file": "skills/package/package.md",
+      "anchor": "(`feature_list = inferred from the offering`)"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "feature_classes",
+      "marker": "feature_classes = classified by the model",
+      "file": "skills/package/package.md",
+      "anchor": "(`feature_classes = classified by the model`)"
+    },
+    {
+      "command": [
+        "pricing:price"
+      ],
+      "input": "tier_feedback",
+      "marker": "tier_feedback = keep the proposed tiers",
+      "file": "skills/package/package.md",
+      "anchor": "(`tier_feedback = keep the proposed tiers`)"
+    }
+  ],
+  "not_defaults": [
+    {
+      "file": "config/defaults.json",
+      "anchor": "_comment",
+      "why": "a note to the person who edits the file, not a value the price uses"
+    },
+    {
+      "file": "config/defaults.json",
+      "anchor": "formulas.path_b.accuracy_fear_signal_threshold",
+      "why": "a rule of the method, the same for every offering: below this accuracy the AI premium is dropped; the person is asked for the accuracy, not for the rule, and method says when it applied"
+    },
+    {
+      "file": "config/defaults.json",
+      "anchor": "formulas.path_c_autonomous.value_capture_rate_range",
+      "why": "documentation bounds for value_capture_rate; no code or prompt reads it, and it sets no value"
+    },
+    {
+      "file": "config/defaults.json",
+      "anchor": "formulas.path_c_fully_agentic.value_share_range",
+      "why": "documentation bounds for value_share; no code or prompt reads it, and it sets no value"
+    },
+    {
+      "file": "config/defaults.json",
+      "anchor": "formulas.path_c_fully_agentic.automation_rate_fear_signal_threshold",
+      "why": "a rule of the method, the same for every offering: below this automation rate the price is moved to Path C-autonomous, which a gap records; the person is asked for the automation rate, not for the rule"
+    }
+  ]
+}
