@@ -1,0 +1,179 @@
+# Every linguistic value the correctness checker reads. Nothing is hard-coded.
+# See docs/adr/ADR-010-prose-correctness-check.md.
+
+# C1 — known misspellings mapped to their correction. Every key must be wrong in
+# every register this repository writes; the test suite enforces that.
+# A key must also not be a real initialism: rule_c1 lowercases the token before
+# lookup, so `ot`, `nad` and `hte` FAILed the uppercase OT (operational
+# technology), NAD and HTE. The corpus test cannot see this — none of the three
+# appears in this repository — and the checker's subject is arbitrary PRDs.
+misspellings:
+  # Transposition
+  teh: "the"
+  adn: "and"
+  taht: "that"
+  wiht: "with"
+  # ie/ei
+  recieve: "receive"
+  recieved: "received"
+  beleive: "believe"
+  acheive: "achieve"
+  acheived: "achieved"
+  releive: "relieve"
+  wierd: "weird"
+  thier: "their"
+  # Doubling
+  occured: "occurred"
+  occuring: "occurring"
+  refered: "referred"
+  refering: "referring"
+  begining: "beginning"
+  comitted: "committed"
+  ocurrence: "occurrence"
+  neccessary: "necessary"
+  accomodate: "accommodate"
+  # Common technical prose
+  seperate: "separate"
+  seperately: "separately"
+  definately: "definitely"
+  concious: "conscious"
+  consistant: "consistent"
+  dependancy: "dependency"
+  dependancies: "dependencies"
+  enviroment: "environment"
+  existance: "existence"
+  independant: "independent"
+  maintainance: "maintenance"
+  occassionally: "occasionally"
+  persistant: "persistent"
+  precendence: "precedence"
+  reccomend: "recommend"
+  refernce: "reference"
+  succesful: "successful"
+  succesfully: "successfully"
+  supress: "suppress"
+  supressed: "suppressed"
+  threshhold: "threshold"
+  untill: "until"
+  wich: "which"
+  lenght: "length"
+  widht: "width"
+  heigth: "height"
+
+# C2 — pairs that are legitimately doubled, lowercased, space-separated.
+c2_allow_list:
+  - "had had"
+  - "that that"
+
+# C2 — a token shorter than this is never half of a doubled pair.
+c2_min_token_length: 2
+
+# C3 — a CLOSED table, matched whatever the casing the document uses. A token
+# absent from it falls to the sounded-h and long-u lists, then to the
+# one-character letter-name rule, and last to a plain vowel test. All-caps
+# emphasis (`a HEAD start`) is left alone by every one of those, because none
+# of them reads capitals as a mark of an initialism.
+c3_initialisms:
+  STE: "an"
+  SLA: "an"
+  ADR: "an"
+  API: "an"
+  SDK: "an"
+  LLM: "an"
+  LFA: "an"
+  MCP: "an"
+  HTTP: "an"
+  XML: "an"
+  ID: "an"
+  SDLC: "an"
+  LOI: "an"
+  NDA: "an"
+  HTML: "an"
+  SMB: "an"
+  MQL: "an"
+  MVP: "an"
+  HCM: "an"
+  MC: "an"
+  ML: "an"
+  SP: "an"
+  SoT: "an"
+  # `FAQ` is the one row here with two live readings: `eff-ay-cue` takes `an`,
+  # and `fack` takes `a`. Both are attested English. This repository writes
+  # `an FAQ`, and encoding the project's reading is what a closed table is
+  # for — but a document that says `a FAQ` will now be reported, and that
+  # report is a convention call, not a spelling fact.
+  FAQ: "an"
+  URL: "a"
+  UUID: "a"
+  USB: "a"
+  UI: "a"
+  UX: "a"
+  US: "a"
+  URI: "a"
+  UTC: "a"
+
+# C3 — a word whose initial `h` is SILENT opens on a vowel sound and takes
+# `an` (hour, honest, heir). The key name is historical; do not add a word
+# with an aspirated `h` (house, history) here — that would produce `an house`.
+c3_sounded_h:
+  - "hour"
+  - "hourly"
+  - "honest"
+  - "honestly"
+  - "honour"
+  - "honourable"
+  - "heir"
+
+# C3 — an initial vowel pronounced as a consonant takes `a`.
+#
+# A closed WORD LIST, never a `uni-` prefix rule. `uniform` is `uni` + `form`
+# and takes `a`; `uninitialised` is `un` + `initialised` and takes `an`. Both
+# open `u-n-i` and no spelling rule separates them, so a prefix rule would
+# clear this whole class and break `an unimportant`, `an unintended`, `an
+# uninterrupted`. Add the word, not the pattern.
+c3_long_u:
+  - "user"
+  - "users"
+  - "unit"
+  - "units"
+  - "unique"
+  - "uniform"
+  - "universal"
+  - "usage"
+  - "utility"
+  - "uniquely"
+  - "unified"
+  - "usable"
+  - "useful"
+  - "one"
+  - "once"
+  - "uv"
+  # Measured against this repository: each of these was a FAILing finding.
+  - "uniformity"
+  - "uniformly"
+  - "universe"
+  - "ubiquitous"
+  # Added by inspection, not by measurement. Common long-u words whose reading
+  # is not in doubt; they appear here so the next document does not have to
+  # fail first.
+  - "ubiquity"
+  - "university"
+  - "universities"
+  - "unicode"
+  - "unification"
+  - "uniqueness"
+  - "unilateral"
+  - "union"
+  - "unions"
+  - "usual"
+  - "usually"
+  - "utilities"
+
+# C3 — more than this many spaces after an article means the seam blanked the
+# following token, so the article has nothing to agree with.
+c3_gap_width: 1
+
+severities:
+  C1: "FAIL"
+  C2: "FAIL"
+  C3: "FAIL"

@@ -1,0 +1,179 @@
+# ASD-STE100 conformance thresholds and word lists (spec section 8.2).
+# This repository owns every list here. None of it is copied from the ASD
+# dictionary, which ASD holds the copyright to. See ADR-007.
+
+# R1 sentence length. STE sets 20 words for procedures and 25 for
+# descriptions. We cannot tell the two apart without a tagger, so we warn at
+# the lower cap and fail at the higher one.
+r1_warn_words: 20
+r1_fail_words: 25
+
+# R2 paragraph length.
+r2_max_sentences: 6
+
+# R7 uniform-cadence floor, in words of standard deviation. An initial guess,
+# to be corrected with data.
+r7_stdev_floor: 4.0
+
+# R3 Part A. Single-token corporate vocabulary. An exact match, so it FAILs.
+# The seven words of tell 11 in skills/anti-ai-tells/SKILL.md, plus "robust".
+banned_part_a:
+  - leverage
+  - seamless
+  - synergy
+  - innovative
+  - AI-powered
+  - imperative
+  - non-negotiable
+  - robust
+
+# R3 Part B. Multi-word contextual phrases. A judgment-dependent match, so it
+# WARNs. This repository owns the list as an initial one.
+banned_part_b:
+  - specification variance
+  - binding constraint on throughput
+  - return edges
+  - conditions of satisfaction
+  - productivity multiplier
+  - the whole board
+  - the constraint moves downstream
+  - blueprints persuade nobody
+  - agentic SDLC
+
+# Repository product and plugin names. Never flagged, at any severity, even
+# when they also appear in Part A or Part B.
+exempt_terms:
+  - agentic SDLC
+
+# Sentence splitting. A period that closes one of these is never a sentence
+# end. Without the list, "e.g." manufactures a phantom sentence break, which
+# both inflates the sentence count R2 caps and inflates the spread R7 measures.
+# Matching is case-insensitive and whole-token.
+sentence_abbreviations:
+  - e.g.
+  - i.e.
+  - vs.
+  - cf.
+  - Dr.
+  - Mr.
+  - Mrs.
+  - Ms.
+  - Prof.
+  - Fig.
+
+# The ambiguous half of the same job. Every entry here also ends real
+# sentences ("We ship A, B, etc. The team stops."), so the period after one
+# closes the sentence unless the next non-space character is lowercase or a
+# digit. Merging these unconditionally swallowed the boundary and joined two
+# sentences into one, which manufactured a false R1 FAIL, undercounted an R2
+# paragraph, and inflated the R7 spread over the floor so R7 stopped firing.
+# Single-letter initials ("J. Smith" vs "We prefer option A.") are ambiguous
+# too and are handled by pattern and position, not by list.
+sentence_abbreviations_ambiguous:
+  - etc.
+  - "No."
+  - Inc.
+  - Ltd.
+
+# R4 passive voice: forms of "be".
+r4_be_forms:
+  - is
+  - are
+  - was
+  - were
+  - be
+  - been
+  - being
+  - am
+
+# R5 noun-position markers: articles and determiners.
+#
+# YAML 1.1 boolean words are quoted below ("no"). [inferred] PyYAML's
+# SafeLoader resolves a bare yes/no/y/n/true/false/on/off, in any case, to a
+# Python bool, not the string. Any future edit that adds one of those words to
+# a list in this file must quote it, or every rule that reads this list will
+# crash with `AttributeError: 'bool' object has no attribute 'lower'`.
+r5_determiners:
+  - the
+  - a
+  - an
+  - this
+  - that
+  - these
+  - those
+  - its
+  - their
+  - our
+  - your
+  - his
+  - her
+  - each
+  - every
+  - some
+  - any
+  - "no"
+
+# r5_determiners and r6_function_words are intentionally independent lists
+# serving different rules. [inferred] They are not meant to be kept in sync —
+# do not "fix" one list to match the other.
+
+# R6 function words. A run of 4 or more consecutive non-function words is a
+# noun cluster above the 3-word limit.
+r6_function_words:
+  - the
+  - a
+  - an
+  - and
+  - or
+  - but
+  - if
+  - of
+  - to
+  - in
+  - "on"
+  - at
+  - by
+  - for
+  - with
+  - from
+  - as
+  - is
+  - are
+  - was
+  - were
+  - be
+  - been
+  - being
+  - it
+  - its
+  - this
+  - that
+  - these
+  - those
+  - we
+  - you
+  - they
+  - he
+  - she
+  - not
+  - do
+  - does
+  - did
+  - has
+  - have
+  - had
+  - will
+  - would
+  - can
+  - could
+  - may
+  - might
+  - must
+  - so
+  - than
+  - then
+  - when
+  - where
+  - which
+  - who
+  - what

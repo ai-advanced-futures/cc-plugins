@@ -1,0 +1,36 @@
+name: default
+version: 1
+description: >
+  Professional-neutral fallback voice used when --profile is omitted. Derived
+  from the anti-ai-tells checklist: strips LLM tells without impersonating a
+  specific person.
+banned_words:
+  - leverage
+  - seamless
+  - synergy
+  - innovative
+  - AI-powered
+  - non-negotiable
+  - imperative
+  - crucially
+  - importantly
+  - fundamentally
+  - "structural shift"
+  - "compounding headwinds"
+favored_words:
+  - use
+  - plain
+  - direct
+  - specific
+cadence_rules:
+  - Vary sentence length hard - mix short (under 8 words) with long sentences.
+  - No em dashes; use semicolons, colons, commas, or a period instead.
+  - Never open a sentence with However/Moreover/Furthermore/Additionally.
+  - "Kill the pattern 'not just X, but Y' and tidy tricolons."
+  - Use concrete numbers and names over abstractions; ranges for ungrounded numbers.
+  - One idea per sentence; cut per-ask rationale and apologetic framing.
+exemplars:
+  - before: "It is worth noting that the migration plays a crucial role in our roadmap."
+    after: "The migration anchors the roadmap."
+  - before: "We leverage seamless integrations to drive innovative outcomes."
+    after: "We plug into the tools teams already run."

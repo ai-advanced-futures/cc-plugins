@@ -34,6 +34,7 @@ claude plugin install <name>@cc-plugins
 | `grounded-synthesis` | Audit a draft against its primary source files. Find the facts that a source holds and the draft does not, and write a gap report. |
 | `aiml` | Help a software engineer build an AI or ML feature, from the choice of approach (LLM, classical ML or hybrid) through design, plan, simulation, code scaffold, training guidance, evaluation and MLOps. |
 | `competitive-intelligence` | Map the competitors of a market, gather public facts about them, and analyze one competitor through six lenses. Writes a SWOT, recommendations, and a result file for business-case. |
+| `prose-authenticity` | Find the signs that a machine wrote a text, and rewrite the text so that it reads as human writing. Tiered detectors, voice profiles, and a humanize loop with a fact check. |
 
 ## Skills
 

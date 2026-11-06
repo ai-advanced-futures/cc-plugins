@@ -1,0 +1,41 @@
+# Detector roster + verdict thresholds (ADR-003).
+# Ported from the ai-text-check toolkit detectors.yaml; extended with tier config
+# and composite-point thresholds (canonical [0,100] scale, spec §4).
+
+hf_detectors:
+  - id: "Hello-SimpleAI/chatgpt-detector-roberta"
+    ai_label_idx: 1
+    baseline_fpr_on_pe_writing: 0.000
+    status: active
+  - id: "andreas122001/roberta-mixed-detector"
+    ai_label_idx: 1
+    baseline_fpr_on_pe_writing: 0.000
+    status: active
+  - id: "openai-community/roberta-base-openai-detector"
+    ai_label_idx: 0
+    baseline_fpr_on_pe_writing: 0.013
+    status: active
+  - id: "desklib/ai-text-detector-v1.01"
+    ai_label_idx: 1
+    baseline_fpr_on_pe_writing: 0.655
+    status: excluded
+    excluded_reason: "Flags known-human PE/technical writing at p(AI)=0.655 (calibration 2026-06-04)."
+
+api_detectors: [gptzero, originality, sapling]
+
+# All PASS/FAIL thresholds in composite points [0,100]. The p(AI)<=0.5 <->
+# composite<=50 mapping lives in lib/verdicts.py; structural warns are a
+# distinct non-composite class (raw burstiness/TTR values).
+thresholds:
+  pass_max_composite: 50.0
+  baseline_margin: 10.0
+  multi_fail_count: 2
+  single_fail_above: 70.0
+  structural_warn:
+    burstiness_below: 0.40
+    ttr_below: 0.35
+
+inference:
+  chunk_token_max: 400
+  chunk_stride: 50
+  device: "cpu"

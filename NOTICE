@@ -53,3 +53,7 @@ material, and the Apache License does not replace them.
 6. competitive-intelligence, by Luis F. Amadeo, MIT License.
    The competitive-intelligence plugin ports it, with changes.
    The MIT notice is in plugins/competitive-intelligence/NOTICE.
+
+7. prose-authenticity, by Luis F. Amadeo, MIT License.
+   The prose-authenticity plugin ports it, with changes.
+   The MIT notice is in plugins/prose-authenticity/NOTICE.

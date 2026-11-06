@@ -1,0 +1,43 @@
+prose-authenticity plugin
+
+This plugin is a port of the `prose-authenticity` plugin, version 0.5.0, in a
+private repository of ai-advanced-futures. Luis F. Amadeo wrote it. It is under
+the MIT license. This plugin takes its agents, library scripts, configuration,
+and tests from it, with these changes:
+
+  - The contract with the host system of the source repository is removed. No
+    agent has a mode that skips a question, and no agent asks the person a
+    question.
+  - The commands run in the main conversation. They dispatch the agents with
+    the Agent tool and full agent names. The setup steps are in the setup
+    command.
+  - The skills have a bare name that is the name of the folder.
+  - The library scripts run with `uv run ${CLAUDE_PLUGIN_ROOT}/lib/<file>.py`,
+    and each script has a PEP 723 header.
+  - `lib/fact_gate.py` stops when the handoff file of grounded-synthesis has the
+    status failed. `lib/extract_prose.py` has the option `--out`, and
+    `lib/hf_detectors.py` prints its availability when it runs as a script.
+  - The tests, the fixtures, and the documents are written again for this
+    repository.
+
+MIT License
+
+Copyright (c) 2026 Luis F. Amadeo
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

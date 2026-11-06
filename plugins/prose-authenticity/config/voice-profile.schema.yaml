@@ -1,0 +1,12 @@
+# Voice-profile schema (ADR-004). Validated by lib/profile_store.py (stdlib
+# presence/type checks — no jsonschema dep so CI stays pip-light).
+required:
+  name: str          # kebab-case profile name; file is profiles/<name>.yaml
+  version: int       # bump when regenerating from new samples
+  description: str
+  banned_words: list       # words/phrases this voice never uses
+  favored_words: list      # replacements/preferred vocabulary
+  cadence_rules: list      # prose rules the humanizer must follow
+  exemplars: list          # [{before, after}] rewrite pairs
+optional:
+  source_samples: list     # provenance: sample files the profile was learned from

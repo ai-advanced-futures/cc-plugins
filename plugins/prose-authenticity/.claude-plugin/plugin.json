@@ -1,0 +1,18 @@
+{
+  "name": "prose-authenticity",
+  "displayName": "prose-authenticity",
+  "version": "0.6.0",
+  "description": "Find the signs that a machine wrote a text, and rewrite the text so that it reads as human writing. Tiered detectors, voice profiles, and a humanize loop with a fact check.",
+  "author": {
+    "name": "ai-advanced-futures"
+  },
+  "homepage": "https://github.com/ai-advanced-futures/cc-plugins",
+  "repository": "https://github.com/ai-advanced-futures/cc-plugins",
+  "keywords": [
+    "ai-detection",
+    "humanize",
+    "prose",
+    "stylometry",
+    "voice"
+  ]
+}

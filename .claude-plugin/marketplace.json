@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.3.0"
+    "version": "2.4.0"
   },
   "plugins": [
     {
@@ -91,6 +91,12 @@
       "name": "competitive-intelligence",
       "description": "Map the competitors of a market, gather public facts about them, and analyze one competitor through six lenses. Writes a SWOT, recommendations, and a result file for business-case.",
       "source": "./plugins/competitive-intelligence",
+      "strict": false
+    },
+    {
+      "name": "prose-authenticity",
+      "description": "Find the signs that a machine wrote a text, and rewrite the text so that it reads as human writing. Tiered detectors, voice profiles, and a humanize loop with a fact check.",
+      "source": "./plugins/prose-authenticity",
       "strict": false
     }
   ]
