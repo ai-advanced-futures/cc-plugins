@@ -1,0 +1,7 @@
+# Schemas aiml produces or consumes per Charter §8 + §7.10
+# Format: <schema-name>: <role>  (role in {produces, consumes})
+cost-amplifier-readout: produces
+amplifier-telemetry-input: produces
+p15-trigger-event: produces
+archetype-cost-samples: consumes
+archetype-baseline-telemetry: produces

@@ -1,0 +1,8 @@
+# Test dependencies of the aiml plugin.
+# The job `aiml` of .github/workflows/ci.yml installs this file with pip.
+# Run the tests from this folder: pytest tests/ -q -rs
+
+pytest>=7.0.0
+jsonschema>=4.17.0
+# tests/conftest.py reads the YAML frontmatter of each agent and skill.
+pyyaml>=6.0

@@ -32,6 +32,7 @@ claude plugin install <name>@cc-plugins
 | `status` | A Nord status bar (below the prompt in a terminal, in a band above it in the desktop app): the model, the context, a prompt cache pill (cold, or warm with the time left and the hit percent), the 7-day limit, the folder, the worktree and the git branch. |
 | `sofa` | Software factory: a team of Claude Code background sessions that build a product from the PRD and roadmap of a repository. |
 | `grounded-synthesis` | Audit a draft against its primary source files. Find the facts that a source holds and the draft does not, and write a gap report. |
+| `aiml` | Help a software engineer build an AI or ML feature, from the choice of approach (LLM, classical ML or hybrid) through design, plan, simulation, code scaffold, training guidance, evaluation and MLOps. |
 
 ## Skills
 

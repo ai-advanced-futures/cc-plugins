@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.1.0"
+    "version": "2.2.0"
   },
   "plugins": [
     {
@@ -79,6 +79,12 @@
       "name": "grounded-synthesis",
       "description": "Audit a draft against its primary source files. Find the facts that a source holds and the draft does not, and write a gap report.",
       "source": "./plugins/grounded-synthesis",
+      "strict": false
+    },
+    {
+      "name": "aiml",
+      "description": "Help a software engineer build an AI or ML feature, from the choice of approach (LLM, classical ML or hybrid) through design, plan, simulation, code scaffold, training guidance, evaluation and MLOps.",
+      "source": "./plugins/aiml",
       "strict": false
     }
   ]

@@ -45,3 +45,7 @@ material, and the Apache License does not replace them.
 4. grounded-synthesis, by ai-advanced-futures, MIT License.
    The grounded-synthesis plugin ports it, with changes.
    The MIT notice is in plugins/grounded-synthesis/NOTICE.
+
+5. aiml, by Luis F. Amadeo, MIT License.
+   The aiml plugin ports it, with changes.
+   The MIT notice is in plugins/aiml/NOTICE.

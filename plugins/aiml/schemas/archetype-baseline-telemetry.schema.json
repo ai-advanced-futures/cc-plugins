@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ai-advanced-futures/cc-plugins/plugins/aiml/schemas/archetype-baseline-telemetry.schema.json",
+  "title": "Archetype Baseline Telemetry",
+  "description": "Per-archetype telemetry-derived baseline cost-per-interaction emitted by aiml for pricing consumption. Producer: aiml. Consumer: pricing. Audience: internal.",
+  "type": "object",
+  "required": ["engagement_id", "produced_at", "schema_version", "audience", "measurement_window", "telemetry_source", "baselines"],
+  "additionalProperties": false,
+  "properties": {
+    "engagement_id": {"type": "string", "format": "uuid"},
+    "produced_at": {"type": "string", "format": "date-time"},
+    "schema_version": {"type": "string", "const": "1.0.0"},
+    "audience": {"type": "string", "const": "internal"},
+    "measurement_window": {
+      "type": "object",
+      "required": ["start", "end", "duration_days"],
+      "additionalProperties": false,
+      "properties": {
+        "start": {"type": "string", "format": "date-time"},
+        "end": {"type": "string", "format": "date-time"},
+        "duration_days": {"type": "integer", "minimum": 1}
+      }
+    },
+    "telemetry_source": {"type": "string", "enum": ["datadog", "grafana", "wandb", "trackio", "manual", "other"]},
+    "baselines": {
+      "type": "object",
+      "patternProperties": {
+        "^(support_agent|developer_tool|vertical_pro_services_agent|sales_marketing_agent|knowledge_horizontal_copilot|autonomous_workflow_agent)$": {
+          "type": "object",
+          "required": ["baseline_cost_per_interaction", "sample_size_n", "aggregation"],
+          "additionalProperties": false,
+          "properties": {
+            "baseline_cost_per_interaction": {"type": "number", "exclusiveMinimum": 0},
+            "sample_size_n": {"type": "integer", "minimum": 1},
+            "aggregation": {"type": "string", "const": "median"}
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "notes": {"type": "string", "maxLength": 2000}
+  }
+}
