@@ -1,0 +1,997 @@
+"""Unit Economics Calculator for SaaS Financial Analysis.
+
+This module provides comprehensive unit economics calculations including:
+- CAC (Customer Acquisition Cost)
+- LTV (Lifetime Value)
+- LTV:CAC Ratio
+- CAC Payback Period
+- Magic Number
+
+Based on industry-standard formulas from:
+- David Skok (Matrix Partners) - SaaS Playbook
+- Brad Feld (Foundry Group) - SaaS Metrics
+- Tomasz Tunguz (Theory Ventures) - Growth benchmarks
+
+Author: Luis F. Amadeo (Chief Agentic Officer)
+License: MIT
+"""
+
+import json
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional
+
+if __package__ in (None, ""):  # run by path: uv run "<plugin root>/scripts/<file>.py"
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # its own package, never the cwd
+
+from pydantic import BaseModel, Field, field_validator  # noqa: E402
+
+from scripts.utils.enums import MetricHealth  # noqa: E402
+from scripts.utils.magic_number import (
+    calculate_magic_number as _canonical_magic_number,  # noqa: E402
+)
+
+
+def calculate_ltv_safe(arpu: float, gross_margin: float, monthly_churn_rate: float) -> Optional[float]:  # noqa: E501
+    """
+    Calculate LTV safely, returning None if churn rate is 0.
+
+    Formula: ARPU * gross_margin / monthly_churn_rate
+    Returns None if monthly_churn_rate == 0 (infinite lifetime is not representable).
+    """
+    from scripts.utils.calculators import safe_divide
+    monthly_gp = arpu * gross_margin
+    return safe_divide(monthly_gp, monthly_churn_rate)
+
+
+def calculate_cac_safe(total_spend: float, new_customers: int) -> Optional[float]:
+    """
+    Calculate CAC safely, returning None if new_customers is 0.
+
+    Formula: total_spend / new_customers
+    """
+    from scripts.utils.calculators import safe_divide
+    return safe_divide(total_spend, new_customers)
+
+
+def calculate_cac_payback_safe(cac: float, arpu: float, gross_margin: float) -> Optional[float]:
+    """
+    Calculate CAC payback period in months, returning None if gross margin is 0.
+
+    Formula: cac / (arpu * gross_margin)
+    """
+    from scripts.utils.calculators import safe_divide
+    monthly_gp = arpu * gross_margin
+    return safe_divide(cac, monthly_gp)
+
+
+class CACInput(BaseModel):
+    """Input data for Customer Acquisition Cost calculation.
+
+    Attributes:
+        sales_costs: Total sales team costs including salaries, commissions, benefits
+        marketing_costs: Total marketing spend including advertising, content, events
+        new_customers: Number of new customers acquired in the period
+        period_months: Number of months over which costs were incurred (default: 12)
+    """
+
+    sales_costs: float = Field(gt=0, description="Total sales costs in dollars")
+    marketing_costs: float = Field(ge=0, description="Total marketing costs in dollars")
+    new_customers: int = Field(gt=0, description="Number of new customers acquired")
+    period_months: int = Field(default=12, gt=0, le=60, description="Period in months")
+
+    @field_validator("sales_costs", "marketing_costs")
+    @classmethod
+    def validate_costs(cls, v: float) -> float:
+        """Ensure costs are reasonable."""
+        if v > 1_000_000_000:  # $1B sanity check
+            raise ValueError("Cost value seems unreasonably high (>$1B)")
+        return v
+
+
+class LTVInput(BaseModel):
+    """Input data for Lifetime Value calculation.
+
+    Attributes:
+        arpu: Average Revenue Per User per month
+        gross_margin_percent: Gross margin as a percentage (0-100)
+        churn_rate_percent: Monthly churn rate as a percentage (0-100)
+    """
+
+    arpu: float = Field(gt=0, description="Average Revenue Per User per month")
+    gross_margin_percent: float = Field(gt=0, le=100, description="Gross margin percentage")
+    churn_rate_percent: float = Field(gt=0, le=100, description="Monthly churn rate percentage")
+
+    @field_validator("arpu")
+    @classmethod
+    def validate_arpu(cls, v: float) -> float:
+        """Ensure ARPU is reasonable."""
+        if v > 1_000_000:  # $1M per month sanity check
+            raise ValueError("ARPU seems unreasonably high (>$1M/month)")
+        return v
+
+
+class CACPaybackInput(BaseModel):
+    """Input data for CAC Payback Period calculation.
+
+    Attributes:
+        cac: Customer Acquisition Cost
+        arpu: Average Revenue Per User per month
+        gross_margin_percent: Gross margin as a percentage (0-100)
+    """
+
+    cac: float = Field(gt=0, description="Customer Acquisition Cost")
+    arpu: float = Field(gt=0, description="Average Revenue Per User per month")
+    gross_margin_percent: float = Field(gt=0, le=100, description="Gross margin percentage")
+
+
+class MagicNumberInput(BaseModel):
+    """Input data for Magic Number calculation.
+
+    Attributes:
+        quarterly_net_new_arr: Net new ARR added in the most recent quarter (can be negative)
+        prior_quarter_sm_spend: Sales & Marketing spend in the prior quarter (must be > 0)
+    """
+
+    quarterly_net_new_arr: float = Field(description="Quarterly net new ARR (can be negative)")
+    prior_quarter_sm_spend: float = Field(gt=0, description="Prior quarter sales & marketing spend")
+
+    @field_validator("prior_quarter_sm_spend")
+    @classmethod
+    def validate_spend(cls, v: float) -> float:
+        """Ensure spend is reasonable."""
+        if v > 1_000_000_000:  # $1B sanity check
+            raise ValueError("Spend seems unreasonably high (>$1B)")
+        return v
+
+
+class UnitEconomicsInput(BaseModel):
+    """Comprehensive input for full unit economics analysis.
+
+    Attributes:
+        sales_costs: Total sales team costs
+        marketing_costs: Total marketing spend
+        new_customers: Number of new customers acquired
+        arpu: Average Revenue Per User per month
+        gross_margin_percent: Gross margin as a percentage (0-100)
+        churn_rate_percent: Monthly churn rate as a percentage (0-100)
+        net_new_arr: Quarterly net new ARR for Magic Number (×4 annualization applied
+            internally; pass a quarterly figure, not annual)
+        period_months: Number of months over which metrics were measured (default: 12)
+    """
+
+    sales_costs: float = Field(gt=0, description="Total sales costs")
+    marketing_costs: float = Field(ge=0, description="Total marketing costs")
+    new_customers: int = Field(gt=0, description="Number of new customers")
+    arpu: float = Field(gt=0, description="Average Revenue Per User per month")
+    gross_margin_percent: float = Field(gt=0, le=100, description="Gross margin percentage")
+    churn_rate_percent: float = Field(gt=0, le=100, description="Monthly churn rate percentage")
+    net_new_arr: Optional[float] = Field(
+        default=None,
+        description=(
+            "Quarterly net new ARR for Magic Number "
+            "(the ×4 annualization is applied internally; pass a quarterly figure, not annual)"
+        ),
+    )
+    period_months: int = Field(default=12, gt=0, le=60, description="Period in months")
+
+
+@dataclass
+class CACResult:
+    """Result of CAC calculation.
+
+    Attributes:
+        cac: Customer Acquisition Cost in dollars
+        total_acquisition_costs: Total sales and marketing costs
+        new_customers: Number of new customers acquired
+        health_status: Health assessment of CAC value
+        benchmark_notes: Benchmark comparison notes
+    """
+
+    cac: float
+    total_acquisition_costs: float
+    new_customers: int
+    health_status: MetricHealth
+    benchmark_notes: str
+
+
+@dataclass
+class LTVResult:
+    """Result of LTV calculation.
+
+    Attributes:
+        ltv: Lifetime Value in dollars
+        arpu: Average Revenue Per User per month
+        gross_margin_percent: Gross margin percentage
+        churn_rate_percent: Monthly churn rate percentage
+        average_customer_lifespan_months: Expected customer lifespan
+        health_status: Health assessment of LTV value
+        benchmark_notes: Benchmark comparison notes
+    """
+
+    ltv: float
+    arpu: float
+    gross_margin_percent: float
+    churn_rate_percent: float
+    average_customer_lifespan_months: float
+    health_status: MetricHealth
+    benchmark_notes: str
+
+
+@dataclass
+class LTVCACRatioResult:
+    """Result of LTV:CAC Ratio calculation.
+
+    Attributes:
+        ratio: LTV:CAC ratio
+        ltv: Lifetime Value
+        cac: Customer Acquisition Cost
+        health_status: Health assessment of ratio
+        benchmark_notes: Benchmark comparison notes
+    """
+
+    ratio: float
+    ltv: float
+    cac: float
+    health_status: MetricHealth
+    benchmark_notes: str
+
+
+@dataclass
+class CACPaybackResult:
+    """Result of CAC Payback Period calculation.
+
+    Attributes:
+        payback_months: Months to recover CAC
+        cac: Customer Acquisition Cost
+        monthly_gross_profit: Monthly gross profit per customer
+        health_status: Health assessment of payback period
+        benchmark_notes: Benchmark comparison notes
+    """
+
+    payback_months: float
+    cac: float
+    monthly_gross_profit: float
+    health_status: MetricHealth
+    benchmark_notes: str
+
+
+@dataclass
+class MagicNumberResult:
+    """Result of Magic Number calculation.
+
+    Attributes:
+        magic_number: Magic Number value
+        quarterly_net_new_arr: Quarterly net new ARR
+        prior_quarter_sm_spend: Prior quarter sales & marketing spend
+        efficiency_interpretation: Interpretation of efficiency
+        health_status: Health assessment
+        benchmark_notes: Benchmark comparison notes
+    """
+
+    magic_number: float
+    quarterly_net_new_arr: float
+    prior_quarter_sm_spend: float
+    efficiency_interpretation: str
+    health_status: MetricHealth
+    benchmark_notes: str
+
+
+@dataclass
+class UnitEconomicsResult:
+    """Comprehensive unit economics analysis result.
+
+    Attributes:
+        cac_result: CAC calculation result
+        ltv_result: LTV calculation result
+        ltv_cac_ratio_result: LTV:CAC ratio result
+        payback_result: CAC Payback Period result
+        magic_number_result: Magic Number result (optional)
+        overall_health: Overall unit economics health
+        recommendations: List of actionable recommendations
+    """
+
+    cac_result: CACResult
+    ltv_result: LTVResult
+    ltv_cac_ratio_result: LTVCACRatioResult
+    payback_result: CACPaybackResult
+    magic_number_result: Optional[MagicNumberResult]
+    overall_health: MetricHealth
+    recommendations: list[str]
+
+
+def calculate_cac(data: CACInput) -> CACResult:
+    """Calculate Customer Acquisition Cost (CAC).
+
+    Formula: CAC = (Sales Costs + Marketing Costs) / New Customers
+
+    Industry benchmarks:
+    - B2B SaaS: $200-$1,500+ depending on ACV
+    - B2C SaaS: $50-$500
+    - Enterprise SaaS: $10,000-$50,000+
+
+    Args:
+        data: Input data for CAC calculation
+
+    Returns:
+        CACResult with calculated CAC and health assessment
+
+    Example:
+        >>> input_data = CACInput(
+        ...     sales_costs=500000,
+        ...     marketing_costs=300000,
+        ...     new_customers=100
+        ... )
+        >>> result = calculate_cac(input_data)
+        >>> print(f"CAC: ${result.cac:,.2f}")
+        CAC: $8,000.00
+    """
+    total_costs = data.sales_costs + data.marketing_costs
+    cac = total_costs / data.new_customers
+
+    # Assess health based on general benchmarks
+    # Note: Real assessment should consider ACV and business model
+    if cac < 100:
+        health = MetricHealth.EXCELLENT
+        notes = "Very efficient acquisition (CAC < $100). Common for viral B2C products."
+    elif cac < 500:
+        health = MetricHealth.GOOD
+        notes = "Healthy CAC ($100-$500). Typical for SMB B2C/B2B SaaS."
+    elif cac < 2000:
+        health = MetricHealth.WARNING
+        notes = "Moderate CAC ($500-$2,000). Ensure LTV:CAC ratio is healthy (>3:1)."
+    elif cac < 10000:
+        health = MetricHealth.WARNING
+        notes = "High CAC ($2,000-$10,000). Acceptable only for high-ACV enterprise deals."
+    else:
+        health = MetricHealth.CRITICAL
+        notes = "Very high CAC (>$10,000). Requires very high ACV and long customer lifetime."
+
+    return CACResult(
+        cac=cac,
+        total_acquisition_costs=total_costs,
+        new_customers=data.new_customers,
+        health_status=health,
+        benchmark_notes=notes,
+    )
+
+
+def calculate_ltv(data: LTVInput) -> LTVResult:
+    """Calculate Customer Lifetime Value (LTV).
+
+    Formula: LTV = ARPU × (Gross Margin % / 100) / (Churn Rate % / 100)
+
+    Industry benchmarks:
+    - B2B SaaS: $5,000-$50,000+ depending on segment
+    - B2C SaaS: $200-$2,000
+    - Enterprise SaaS: $50,000-$500,000+
+
+    Args:
+        data: Input data for LTV calculation
+
+    Returns:
+        LTVResult with calculated LTV and health assessment
+
+    Example:
+        >>> input_data = LTVInput(
+        ...     arpu=100,
+        ...     gross_margin_percent=80,
+        ...     churn_rate_percent=2
+        ... )
+        >>> result = calculate_ltv(input_data)
+        >>> print(f"LTV: ${result.ltv:,.2f}")
+        LTV: $4,000.00
+    """
+    gross_margin_decimal = data.gross_margin_percent / 100
+    churn_rate_decimal = data.churn_rate_percent / 100
+
+    ltv = data.arpu * gross_margin_decimal / churn_rate_decimal
+
+    # Calculate average customer lifespan in months
+    average_lifespan = 1 / churn_rate_decimal
+
+    # Assess health based on general benchmarks
+    if ltv < 500:
+        health = MetricHealth.WARNING
+        notes = "Low LTV (<$500). Difficult to sustain healthy unit economics."
+    elif ltv < 2000:
+        health = MetricHealth.GOOD
+        notes = "Moderate LTV ($500-$2,000). Common for SMB B2C SaaS."
+    elif ltv < 10000:
+        health = MetricHealth.GOOD
+        notes = "Healthy LTV ($2,000-$10,000). Typical for B2B SaaS."
+    else:
+        health = MetricHealth.EXCELLENT
+        notes = "Excellent LTV (>$10,000). Strong foundation for growth."
+
+    return LTVResult(
+        ltv=ltv,
+        arpu=data.arpu,
+        gross_margin_percent=data.gross_margin_percent,
+        churn_rate_percent=data.churn_rate_percent,
+        average_customer_lifespan_months=average_lifespan,
+        health_status=health,
+        benchmark_notes=notes,
+    )
+
+
+def calculate_ltv_cac_ratio(ltv: float, cac: float) -> LTVCACRatioResult:
+    """Calculate LTV:CAC Ratio.
+
+    Formula: LTV:CAC Ratio = LTV / CAC
+
+    Industry benchmarks:
+    - < 1:1 - Critical: Losing money on each customer
+    - 1:1 to 3:1 - Warning: Marginally viable, need improvement
+    - 3:1 to 5:1 - Good: Healthy unit economics
+    - > 5:1 - Excellent: Very efficient, but may indicate under-investment in growth
+
+    Args:
+        ltv: Customer Lifetime Value
+        cac: Customer Acquisition Cost
+
+    Returns:
+        LTVCACRatioResult with ratio and health assessment
+
+    Raises:
+        ValueError: If CAC is zero or negative
+
+    Example:
+        >>> result = calculate_ltv_cac_ratio(ltv=4000, cac=1000)
+        >>> print(f"LTV:CAC Ratio: {result.ratio:.2f}:1")
+        LTV:CAC Ratio: 4.00:1
+    """
+    if cac <= 0:
+        raise ValueError("CAC must be positive")
+
+    ratio = ltv / cac
+
+    # Assess health based on industry benchmarks
+    if ratio < 1:
+        health = MetricHealth.CRITICAL
+        notes = "Critical: LTV < CAC. Losing money on each customer. Need to reduce CAC or increase LTV."  # noqa: E501
+    elif ratio < 3:
+        health = MetricHealth.WARNING
+        notes = "Warning: LTV:CAC < 3:1. Marginally viable. Focus on improving unit economics."
+    elif ratio <= 5:
+        health = MetricHealth.GOOD
+        notes = "Good: LTV:CAC 3:1 to 5:1. Healthy unit economics. This is the target range."
+    elif ratio <= 8:
+        health = MetricHealth.EXCELLENT
+        notes = "Excellent: LTV:CAC 5:1 to 8:1. Very efficient. Strong growth potential."
+    else:
+        health = MetricHealth.WARNING
+        notes = "Very high ratio (>8:1). May indicate under-investment in growth. Consider increasing CAC to accelerate."  # noqa: E501
+
+    return LTVCACRatioResult(
+        ratio=ratio,
+        ltv=ltv,
+        cac=cac,
+        health_status=health,
+        benchmark_notes=notes,
+    )
+
+
+def calculate_cac_payback(data: CACPaybackInput) -> CACPaybackResult:
+    """Calculate CAC Payback Period.
+
+    Formula: CAC Payback Period = CAC / (ARPU × Gross Margin %)
+
+    Industry benchmarks:
+    - < 6 months - Excellent: Very efficient, enables rapid scaling
+    - 6-12 months - Good: Acceptable for most SaaS businesses
+    - 12-18 months - Warning: Long payback, limits growth
+    - > 18 months - Critical: Too long, difficult to scale profitably
+
+    Args:
+        data: Input data for CAC Payback calculation
+
+    Returns:
+        CACPaybackResult with payback period and health assessment
+
+    Example:
+        >>> input_data = CACPaybackInput(
+        ...     cac=1000,
+        ...     arpu=100,
+        ...     gross_margin_percent=80
+        ... )
+        >>> result = calculate_cac_payback(input_data)
+        >>> print(f"Payback: {result.payback_months:.1f} months")
+        Payback: 12.5 months
+    """
+    gross_margin_decimal = data.gross_margin_percent / 100
+    monthly_gross_profit = data.arpu * gross_margin_decimal
+
+    payback_months = data.cac / monthly_gross_profit
+
+    # Assess health based on industry benchmarks
+    if payback_months < 6:
+        health = MetricHealth.EXCELLENT
+        notes = "Excellent: Payback < 6 months. Very efficient, enables rapid scaling."
+    elif payback_months <= 12:
+        health = MetricHealth.GOOD
+        notes = "Good: Payback 6-12 months. Acceptable for most SaaS businesses."
+    elif payback_months <= 18:
+        health = MetricHealth.WARNING
+        notes = "Warning: Payback 12-18 months. Long payback limits growth velocity."
+    else:
+        health = MetricHealth.CRITICAL
+        notes = "Critical: Payback > 18 months. Too long to scale profitably. Need to reduce CAC or increase ARPU."  # noqa: E501
+
+    return CACPaybackResult(
+        payback_months=payback_months,
+        cac=data.cac,
+        monthly_gross_profit=monthly_gross_profit,
+        health_status=health,
+        benchmark_notes=notes,
+    )
+
+
+def calculate_magic_number(data: MagicNumberInput) -> MagicNumberResult:
+    """Calculate Magic Number (Sales Efficiency).
+
+    Formula: Magic Number = (Quarterly Net New ARR × 4) / Prior Quarter S&M Spend
+
+    Delegates to the canonical scripts.utils.magic_number.calculate_magic_number helper
+    (single source of truth) and adapts its MagicNumberOutcome into MagicNumberResult.
+
+    Args:
+        data: Input data for Magic Number calculation
+
+    Returns:
+        MagicNumberResult with Magic Number and efficiency assessment
+
+    Example:
+        >>> input_data = MagicNumberInput(
+        ...     quarterly_net_new_arr=1000000,
+        ...     prior_quarter_sm_spend=800000,
+        ... )
+        >>> result = calculate_magic_number(input_data)
+        >>> print(f"Magic Number: {result.magic_number:.2f}")
+        Magic Number: 5.00
+    """
+    outcome = _canonical_magic_number(
+        data.quarterly_net_new_arr,
+        data.prior_quarter_sm_spend,
+    )
+    assert outcome.magic_number is not None, (
+        "prior_quarter_sm_spend gt=0 guarantees a non-None magic number"
+    )
+    return MagicNumberResult(
+        magic_number=outcome.magic_number,
+        quarterly_net_new_arr=data.quarterly_net_new_arr,
+        prior_quarter_sm_spend=data.prior_quarter_sm_spend,
+        efficiency_interpretation=f"Magic Number: {outcome.magic_number:.2f}",
+        health_status=outcome.health,
+        benchmark_notes=outcome.interpretation,
+    )
+
+
+def calculate_unit_economics(data: UnitEconomicsInput) -> UnitEconomicsResult:
+    """Perform comprehensive unit economics analysis.
+
+    Calculates and analyzes:
+    - Customer Acquisition Cost (CAC)
+    - Lifetime Value (LTV)
+    - LTV:CAC Ratio
+    - CAC Payback Period
+    - Magic Number (if net_new_arr provided)
+
+    Args:
+        data: Comprehensive unit economics input data
+
+    Returns:
+        UnitEconomicsResult with all metrics and recommendations
+
+    Example:
+        >>> input_data = UnitEconomicsInput(
+        ...     sales_costs=500000,
+        ...     marketing_costs=300000,
+        ...     new_customers=100,
+        ...     arpu=100,
+        ...     gross_margin_percent=80,
+        ...     churn_rate_percent=2,
+        ...     net_new_arr=1000000
+        ... )
+        >>> result = calculate_unit_economics(input_data)
+        >>> print(f"Overall Health: {result.overall_health}")
+    """
+    # Calculate CAC
+    cac_input = CACInput(
+        sales_costs=data.sales_costs,
+        marketing_costs=data.marketing_costs,
+        new_customers=data.new_customers,
+        period_months=data.period_months,
+    )
+    cac_result = calculate_cac(cac_input)
+
+    # Calculate LTV
+    ltv_input = LTVInput(
+        arpu=data.arpu,
+        gross_margin_percent=data.gross_margin_percent,
+        churn_rate_percent=data.churn_rate_percent,
+    )
+    ltv_result = calculate_ltv(ltv_input)
+
+    # Calculate LTV:CAC Ratio
+    ltv_cac_result = calculate_ltv_cac_ratio(ltv_result.ltv, cac_result.cac)
+
+    # Calculate CAC Payback
+    payback_input = CACPaybackInput(
+        cac=cac_result.cac,
+        arpu=data.arpu,
+        gross_margin_percent=data.gross_margin_percent,
+    )
+    payback_result = calculate_cac_payback(payback_input)
+
+    # Calculate Magic Number if data provided (LOCK-POINT B: the holistic
+    # UnitEconomicsInput carries no time series, so prior_quarter_sm_spend is
+    # approximated from current-period S&M cost components — see ADR-005).
+    magic_number_result = None
+    if data.net_new_arr is not None:
+        magic_input = MagicNumberInput(
+            quarterly_net_new_arr=data.net_new_arr,
+            prior_quarter_sm_spend=data.sales_costs + data.marketing_costs,
+        )
+        magic_number_result = calculate_magic_number(magic_input)
+
+    # Determine overall health (most conservative assessment)
+    health_values = [
+        cac_result.health_status,
+        ltv_result.health_status,
+        ltv_cac_result.health_status,
+        payback_result.health_status,
+    ]
+
+    if magic_number_result:
+        health_values.append(magic_number_result.health_status)
+
+    # Overall health is the worst of all metrics
+    if MetricHealth.CRITICAL in health_values:
+        overall_health = MetricHealth.CRITICAL
+    elif MetricHealth.WARNING in health_values:
+        overall_health = MetricHealth.WARNING
+    elif MetricHealth.GOOD in health_values:
+        overall_health = MetricHealth.GOOD
+    else:
+        overall_health = MetricHealth.EXCELLENT
+
+    # Generate recommendations
+    recommendations = _generate_recommendations(
+        cac_result,
+        ltv_result,
+        ltv_cac_result,
+        payback_result,
+        magic_number_result,
+    )
+
+    return UnitEconomicsResult(
+        cac_result=cac_result,
+        ltv_result=ltv_result,
+        ltv_cac_ratio_result=ltv_cac_result,
+        payback_result=payback_result,
+        magic_number_result=magic_number_result,
+        overall_health=overall_health,
+        recommendations=recommendations,
+    )
+
+
+def _generate_recommendations(
+    cac_result: CACResult,
+    ltv_result: LTVResult,
+    ltv_cac_result: LTVCACRatioResult,
+    payback_result: CACPaybackResult,
+    magic_number_result: Optional[MagicNumberResult],
+) -> list[str]:
+    """Generate actionable recommendations based on unit economics.
+
+    Args:
+        cac_result: CAC calculation result
+        ltv_result: LTV calculation result
+        ltv_cac_result: LTV:CAC ratio result
+        payback_result: CAC Payback result
+        magic_number_result: Magic Number result (optional)
+
+    Returns:
+        List of actionable recommendations
+    """
+    recommendations = []
+
+    # CAC recommendations
+    if cac_result.health_status in [MetricHealth.WARNING, MetricHealth.CRITICAL]:
+        recommendations.append(
+            f"High CAC (${cac_result.cac:,.2f}): Optimize acquisition channels, improve conversion rates, "  # noqa: E501
+            "or focus on organic/referral growth."
+        )
+
+    # LTV recommendations
+    if ltv_result.health_status in [MetricHealth.WARNING, MetricHealth.CRITICAL]:
+        recommendations.append(
+            f"Low LTV (${ltv_result.ltv:,.2f}): Reduce churn through better onboarding, increase ARPU via "  # noqa: E501
+            "upsells/cross-sells, or improve product value."
+        )
+
+    # LTV:CAC recommendations
+    if ltv_cac_result.health_status == MetricHealth.CRITICAL:
+        recommendations.append(
+            f"Critical LTV:CAC ratio ({ltv_cac_result.ratio:.2f}:1): Urgently need to reduce CAC or increase LTV. "  # noqa: E501
+            "Current unit economics are not sustainable."
+        )
+    elif ltv_cac_result.health_status == MetricHealth.WARNING:
+        if ltv_cac_result.ratio > 8:
+            recommendations.append(
+                f"Very high LTV:CAC ratio ({ltv_cac_result.ratio:.2f}:1): Consider increasing sales/marketing "  # noqa: E501
+                "investment to accelerate growth while maintaining healthy economics."
+            )
+        else:
+            recommendations.append(
+                f"Suboptimal LTV:CAC ratio ({ltv_cac_result.ratio:.2f}:1): Target 3:1 or better. "
+                "Balance CAC reduction with LTV improvement initiatives."
+            )
+
+    # Payback recommendations
+    if payback_result.health_status in [MetricHealth.WARNING, MetricHealth.CRITICAL]:
+        recommendations.append(
+            f"Long CAC payback ({payback_result.payback_months:.1f} months): Target <12 months. "
+            "Consider annual contracts, upfront payment discounts, or increase pricing."
+        )
+
+    # Magic Number recommendations
+    if magic_number_result:
+        if magic_number_result.health_status in [MetricHealth.WARNING, MetricHealth.CRITICAL]:
+            recommendations.append(
+                f"Low Magic Number ({magic_number_result.magic_number:.2f}): Sales/marketing efficiency needs "  # noqa: E501
+                "improvement. Optimize go-to-market strategy, improve sales productivity, or refine ICP."  # noqa: E501
+            )
+
+    # Churn-specific recommendations
+    if ltv_result.churn_rate_percent > 5:
+        recommendations.append(
+            f"High monthly churn ({ltv_result.churn_rate_percent:.1f}%): Target <2-3% for B2B SaaS. "  # noqa: E501
+            "Focus on product-market fit, customer success, and user onboarding."
+        )
+
+    # Gross margin recommendations
+    if ltv_result.gross_margin_percent < 70:
+        recommendations.append(
+            f"Low gross margin ({ltv_result.gross_margin_percent:.1f}%): Target >80% for SaaS. "
+            "Optimize infrastructure costs, improve operational efficiency, or increase pricing."
+        )
+
+    # General recommendations if everything is healthy
+    if not recommendations:
+        recommendations.append(
+            "Unit economics are healthy! Focus on scaling efficiently while maintaining these metrics."  # noqa: E501
+        )
+        recommendations.append(
+            "Continue monitoring cohort performance and segment-level unit economics for optimization opportunities."  # noqa: E501
+        )
+
+    return recommendations
+
+
+def format_result_as_json(result: UnitEconomicsResult) -> str:
+    """Format unit economics result as JSON.
+
+    Args:
+        result: Unit economics calculation result
+
+    Returns:
+        JSON string representation of the result
+    """
+    data = {
+        "cac": {
+            "value": round(result.cac_result.cac, 2),
+            "total_acquisition_costs": round(result.cac_result.total_acquisition_costs, 2),
+            "new_customers": result.cac_result.new_customers,
+            "health_status": result.cac_result.health_status.value,
+            "benchmark_notes": result.cac_result.benchmark_notes,
+        },
+        "ltv": {
+            "value": round(result.ltv_result.ltv, 2),
+            "arpu": round(result.ltv_result.arpu, 2),
+            "gross_margin_percent": round(result.ltv_result.gross_margin_percent, 2),
+            "churn_rate_percent": round(result.ltv_result.churn_rate_percent, 2),
+            "average_customer_lifespan_months": round(result.ltv_result.average_customer_lifespan_months, 1),  # noqa: E501
+            "health_status": result.ltv_result.health_status.value,
+            "benchmark_notes": result.ltv_result.benchmark_notes,
+        },
+        "ltv_cac_ratio": {
+            "ratio": round(result.ltv_cac_ratio_result.ratio, 2),
+            "formatted": f"{result.ltv_cac_ratio_result.ratio:.2f}:1",
+            "health_status": result.ltv_cac_ratio_result.health_status.value,
+            "benchmark_notes": result.ltv_cac_ratio_result.benchmark_notes,
+        },
+        "cac_payback": {
+            "payback_months": round(result.payback_result.payback_months, 1),
+            "monthly_gross_profit": round(result.payback_result.monthly_gross_profit, 2),
+            "health_status": result.payback_result.health_status.value,
+            "benchmark_notes": result.payback_result.benchmark_notes,
+        },
+        "overall_health": result.overall_health.value,
+        "recommendations": result.recommendations,
+    }
+
+    if result.magic_number_result:
+        data["magic_number"] = {
+            "value": round(result.magic_number_result.magic_number, 2),
+            "quarterly_net_new_arr": round(result.magic_number_result.quarterly_net_new_arr, 2),
+            "prior_quarter_sm_spend": round(result.magic_number_result.prior_quarter_sm_spend, 2),
+            "efficiency_interpretation": result.magic_number_result.efficiency_interpretation,
+            "health_status": result.magic_number_result.health_status.value,
+            "benchmark_notes": result.magic_number_result.benchmark_notes,
+        }
+
+    return json.dumps(data, indent=2)
+
+
+def format_result_as_markdown(result: UnitEconomicsResult) -> str:
+    """Format unit economics result as Markdown.
+
+    Args:
+        result: Unit economics calculation result
+
+    Returns:
+        Markdown string representation of the result
+    """
+    lines = [
+        "# Unit Economics Analysis",
+        "",
+        f"**Overall Health:** {result.overall_health.value.upper()}",
+        "",
+        "## Customer Acquisition Cost (CAC)",
+        f"- **CAC:** ${result.cac_result.cac:,.2f}",
+        f"- **Total Acquisition Costs:** ${result.cac_result.total_acquisition_costs:,.2f}",
+        f"- **New Customers:** {result.cac_result.new_customers:,}",
+        f"- **Health:** {result.cac_result.health_status.value}",
+        f"- **Notes:** {result.cac_result.benchmark_notes}",
+        "",
+        "## Lifetime Value (LTV)",
+        f"- **LTV:** ${result.ltv_result.ltv:,.2f}",
+        f"- **ARPU:** ${result.ltv_result.arpu:,.2f}/month",
+        f"- **Gross Margin:** {result.ltv_result.gross_margin_percent:.1f}%",
+        f"- **Monthly Churn:** {result.ltv_result.churn_rate_percent:.2f}%",
+        f"- **Average Customer Lifespan:** {result.ltv_result.average_customer_lifespan_months:.1f} months",  # noqa: E501
+        f"- **Health:** {result.ltv_result.health_status.value}",
+        f"- **Notes:** {result.ltv_result.benchmark_notes}",
+        "",
+        "## LTV:CAC Ratio",
+        f"- **Ratio:** {result.ltv_cac_ratio_result.ratio:.2f}:1",
+        f"- **Health:** {result.ltv_cac_ratio_result.health_status.value}",
+        f"- **Notes:** {result.ltv_cac_ratio_result.benchmark_notes}",
+        "",
+        "## CAC Payback Period",
+        f"- **Payback:** {result.payback_result.payback_months:.1f} months",
+        f"- **Monthly Gross Profit:** ${result.payback_result.monthly_gross_profit:,.2f}",
+        f"- **Health:** {result.payback_result.health_status.value}",
+        f"- **Notes:** {result.payback_result.benchmark_notes}",
+        "",
+    ]
+
+    if result.magic_number_result:
+        lines.extend([
+            "## Magic Number (Sales Efficiency)",
+            f"- **Magic Number:** {result.magic_number_result.magic_number:.2f}",
+            f"- **Quarterly Net New ARR:** ${result.magic_number_result.quarterly_net_new_arr:,.2f}",  # noqa: E501
+            f"- **Prior Quarter S&M Spend:** ${result.magic_number_result.prior_quarter_sm_spend:,.2f}",  # noqa: E501
+            f"- **Interpretation:** {result.magic_number_result.efficiency_interpretation}",
+            f"- **Health:** {result.magic_number_result.health_status.value}",
+            f"- **Notes:** {result.magic_number_result.benchmark_notes}",
+            "",
+        ])
+
+    lines.extend([
+        "## Recommendations",
+        "",
+    ])
+
+    for i, rec in enumerate(result.recommendations, 1):
+        lines.append(f"{i}. {rec}")
+
+    return "\n".join(lines)
+
+
+def main() -> None:
+    """CLI entry point for unit economics calculator.
+
+    Reads input from stdin (JSON) or prompts interactively,
+    calculates unit economics, and outputs results.
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Unit Economics Calculator for SaaS",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Interactive mode
+  python unit_economics.py
+
+  # JSON input from stdin
+  echo '{"sales_costs": 500000, "marketing_costs": 300000, ...}' | python unit_economics.py
+
+  # JSON file input
+  python unit_economics.py < input.json
+
+  # Output formats
+  python unit_economics.py --format json
+  python unit_economics.py --format markdown
+        """,
+    )
+
+    parser.add_argument(
+        "--format",
+        choices=["json", "markdown"],
+        default="markdown",
+        help="Output format (default: markdown)",
+    )
+
+    args = parser.parse_args()
+
+    # Check if input is from stdin
+    if not sys.stdin.isatty():
+        # Read JSON from stdin
+        try:
+            input_data = json.load(sys.stdin)
+            data = UnitEconomicsInput(**input_data)
+        except json.JSONDecodeError as e:
+            print(f"Error: Invalid JSON input: {e}", file=sys.stderr)
+            sys.exit(1)
+        except Exception as e:
+            print(f"Error: Invalid input data: {e}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        # Interactive mode
+        print("Unit Economics Calculator")
+        print("=" * 50)
+        print()
+
+        try:
+            sales_costs = float(input("Sales costs ($): "))
+            marketing_costs = float(input("Marketing costs ($): "))
+            new_customers = int(input("Number of new customers: "))
+            arpu = float(input("Average Revenue Per User per month ($): "))
+            gross_margin_percent = float(input("Gross margin (%): "))
+            churn_rate_percent = float(input("Monthly churn rate (%): "))
+
+            net_new_arr_input = input("Net new ARR ($ or press Enter to skip): ").strip()
+            net_new_arr = float(net_new_arr_input) if net_new_arr_input else None
+
+            period_months_input = input("Period in months (default 12): ").strip()
+            period_months = int(period_months_input) if period_months_input else 12
+
+            data = UnitEconomicsInput(
+                sales_costs=sales_costs,
+                marketing_costs=marketing_costs,
+                new_customers=new_customers,
+                arpu=arpu,
+                gross_margin_percent=gross_margin_percent,
+                churn_rate_percent=churn_rate_percent,
+                net_new_arr=net_new_arr,
+                period_months=period_months,
+            )
+        except KeyboardInterrupt:
+            print("\n\nCancelled by user.")
+            sys.exit(0)
+        except Exception as e:
+            print(f"\nError: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    # Calculate unit economics
+    try:
+        result = calculate_unit_economics(data)
+    except Exception as e:
+        print(f"Error calculating unit economics: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # Output results
+    print()
+    if args.format == "json":
+        print(format_result_as_json(result))
+    else:
+        print(format_result_as_markdown(result))
+
+
+if __name__ == "__main__":
+    main()

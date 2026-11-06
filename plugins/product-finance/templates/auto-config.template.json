@@ -1,0 +1,33 @@
+{
+  "_comment": "Copy to .product-finance/auto-config.json to answer the setup questions from this file. Set enabled: true to skip the setup questions.",
+  "enabled": false,
+  "version": "1.0.0",
+  "question_keys": {
+    "pricing_model": "per_seat",
+    "price_per_seat_monthly": 99,
+    "annual_discount_percent": 15,
+    "avg_seats_per_customer": 3,
+    "hosting_cost_per_user": 2.50,
+    "ai_cost_per_user": 5.00,
+    "third_party_cost_per_user": 1.00,
+    "support_cost_per_user": 1.50,
+    "rd_team_size": 5,
+    "rd_avg_fully_loaded_annual": 200000,
+    "has_sales_team": false,
+    "monthly_marketing_budget": 15000,
+    "estimated_cac": 1500,
+    "monthly_ga_overhead": 8000,
+    "product_status": "existing",
+    "current_mrr": 50000,
+    "current_arr": 600000,
+    "total_paying_customers": 120,
+    "new_customers_last_month": 8,
+    "churned_customers_last_month": 3,
+    "market_sizing_source": "skip",
+    "target_rule_of_40": 40,
+    "target_ltv_cac_ratio": 3.0,
+    "target_cac_payback_months": 12,
+    "target_gross_margin_percent": 70,
+    "target_magic_number": 0.75
+  }
+}

@@ -1,0 +1,475 @@
+{
+  "target_metrics": {
+    "board_level_kpis": [
+      {
+        "metric_name": "MRR",
+        "full_name": "Monthly Recurring Revenue",
+        "priority": "critical",
+        "calculation": "SUM(active_subscription_mrr)",
+        "required_events": [
+          "subscription_created",
+          "subscription_upgraded",
+          "subscription_downgraded",
+          "subscription_cancelled",
+          "subscription_renewed"
+        ],
+        "refresh_frequency": "daily",
+        "historical_required": true
+      },
+      {
+        "metric_name": "ARR",
+        "full_name": "Annual Recurring Revenue",
+        "priority": "critical",
+        "calculation": "MRR * 12",
+        "required_events": ["Same as MRR"],
+        "refresh_frequency": "daily",
+        "historical_required": true
+      },
+      {
+        "metric_name": "Churn Rate",
+        "full_name": "Monthly Revenue Churn Rate",
+        "priority": "critical",
+        "calculation": "(churned_mrr / beginning_mrr) * 100",
+        "required_events": [
+          "subscription_cancelled",
+          "subscription_created"
+        ],
+        "refresh_frequency": "daily",
+        "historical_required": true
+      },
+      {
+        "metric_name": "NRR",
+        "full_name": "Net Revenue Retention",
+        "priority": "critical",
+        "calculation": "((beginning_mrr + expansion - contraction - churn) / beginning_mrr) * 100",
+        "required_events": [
+          "subscription_upgraded",
+          "subscription_downgraded",
+          "subscription_cancelled"
+        ],
+        "refresh_frequency": "monthly",
+        "historical_required": true
+      },
+      {
+        "metric_name": "Customer Count",
+        "full_name": "Active Customer Count",
+        "priority": "high",
+        "calculation": "COUNT(DISTINCT active_customers)",
+        "required_events": [
+          "customer_created",
+          "subscription_created",
+          "subscription_cancelled"
+        ],
+        "refresh_frequency": "daily",
+        "historical_required": true
+      }
+    ],
+    "unit_economics_kpis": [
+      {
+        "metric_name": "CAC",
+        "full_name": "Customer Acquisition Cost",
+        "priority": "high",
+        "calculation": "sales_marketing_spend / new_customers",
+        "required_events": [
+          "customer_created",
+          "marketing_spend_recorded"
+        ],
+        "refresh_frequency": "monthly",
+        "historical_required": true
+      },
+      {
+        "metric_name": "LTV",
+        "full_name": "Customer Lifetime Value",
+        "priority": "high",
+        "calculation": "ARPC * gross_margin / monthly_churn",
+        "required_events": [
+          "subscription_created",
+          "subscription_cancelled",
+          "payment_received"
+        ],
+        "refresh_frequency": "monthly",
+        "historical_required": true
+      },
+      {
+        "metric_name": "LTV:CAC",
+        "full_name": "LTV to CAC Ratio",
+        "priority": "high",
+        "calculation": "LTV / CAC",
+        "required_events": ["Same as LTV and CAC"],
+        "refresh_frequency": "monthly",
+        "historical_required": true
+      },
+      {
+        "metric_name": "CAC Payback",
+        "full_name": "CAC Payback Period",
+        "priority": "high",
+        "calculation": "CAC / (ARPC * gross_margin)",
+        "required_events": ["Same as LTV and CAC"],
+        "refresh_frequency": "monthly",
+        "historical_required": true
+      }
+    ],
+    "ai_economics_kpis": [
+      {
+        "metric_name": "AI Cost per Request",
+        "full_name": "Average AI API Cost per Request",
+        "priority": "high",
+        "calculation": "total_ai_cost / total_ai_requests",
+        "required_events": [
+          "ai_request_completed",
+          "ai_cost_incurred"
+        ],
+        "refresh_frequency": "daily",
+        "historical_required": true
+      },
+      {
+        "metric_name": "AI Cost per User",
+        "full_name": "Monthly AI Cost per Active User",
+        "priority": "high",
+        "calculation": "total_ai_cost / active_ai_users",
+        "required_events": [
+          "ai_request_completed",
+          "ai_cost_incurred",
+          "ai_feature_used"
+        ],
+        "refresh_frequency": "daily",
+        "historical_required": true
+      },
+      {
+        "metric_name": "AI ROI",
+        "full_name": "AI Feature Return on Investment",
+        "priority": "high",
+        "calculation": "(ai_enabled_revenue - ai_costs) / ai_costs * 100",
+        "required_events": [
+          "ai_request_completed",
+          "ai_cost_incurred",
+          "subscription_created",
+          "subscription_upgraded"
+        ],
+        "refresh_frequency": "monthly",
+        "historical_required": true
+      },
+      {
+        "metric_name": "AI Adoption Rate",
+        "full_name": "Percentage of Users Using AI Features",
+        "priority": "medium",
+        "calculation": "ai_active_users / total_active_users * 100",
+        "required_events": [
+          "ai_feature_used"
+        ],
+        "refresh_frequency": "daily",
+        "historical_required": true
+      }
+    ],
+    "operational_kpis": [
+      {
+        "metric_name": "Trial Conversion Rate",
+        "full_name": "Trial to Paid Conversion Rate",
+        "priority": "medium",
+        "calculation": "converted_trials / total_trials * 100",
+        "required_events": [
+          "trial_started",
+          "trial_ended",
+          "subscription_created"
+        ],
+        "refresh_frequency": "weekly",
+        "historical_required": true
+      },
+      {
+        "metric_name": "Expansion Rate",
+        "full_name": "Monthly Expansion Revenue Rate",
+        "priority": "medium",
+        "calculation": "expansion_mrr / beginning_mrr * 100",
+        "required_events": [
+          "subscription_upgraded"
+        ],
+        "refresh_frequency": "monthly",
+        "historical_required": true
+      },
+      {
+        "metric_name": "Contraction Rate",
+        "full_name": "Monthly Contraction Revenue Rate",
+        "priority": "medium",
+        "calculation": "contraction_mrr / beginning_mrr * 100",
+        "required_events": [
+          "subscription_downgraded"
+        ],
+        "refresh_frequency": "monthly",
+        "historical_required": true
+      }
+    ]
+  },
+  "required_events": {
+    "subscription_events": [
+      {
+        "event_name": "subscription_created",
+        "priority": "critical",
+        "trigger": "When a new subscription is activated",
+        "required_fields": [
+          "customer_id",
+          "subscription_id",
+          "plan",
+          "mrr",
+          "billing_cycle",
+          "start_date"
+        ],
+        "optional_fields": [
+          "discount_pct",
+          "promo_code",
+          "source_channel",
+          "sales_rep_id"
+        ],
+        "enables_metrics": ["MRR", "ARR", "Customer Count", "New MRR"]
+      },
+      {
+        "event_name": "subscription_upgraded",
+        "priority": "critical",
+        "trigger": "When a customer moves to a higher plan",
+        "required_fields": [
+          "customer_id",
+          "subscription_id",
+          "previous_plan",
+          "new_plan",
+          "previous_mrr",
+          "new_mrr",
+          "mrr_change"
+        ],
+        "optional_fields": [
+          "upgrade_reason",
+          "triggered_by"
+        ],
+        "enables_metrics": ["Expansion MRR", "NRR"]
+      },
+      {
+        "event_name": "subscription_downgraded",
+        "priority": "critical",
+        "trigger": "When a customer moves to a lower plan",
+        "required_fields": [
+          "customer_id",
+          "subscription_id",
+          "previous_plan",
+          "new_plan",
+          "previous_mrr",
+          "new_mrr",
+          "mrr_change"
+        ],
+        "optional_fields": [
+          "downgrade_reason",
+          "triggered_by"
+        ],
+        "enables_metrics": ["Contraction MRR", "NRR"]
+      },
+      {
+        "event_name": "subscription_cancelled",
+        "priority": "critical",
+        "trigger": "When a subscription is cancelled",
+        "required_fields": [
+          "customer_id",
+          "subscription_id",
+          "plan",
+          "mrr_lost",
+          "cancellation_date",
+          "effective_date"
+        ],
+        "optional_fields": [
+          "cancellation_reason",
+          "feedback",
+          "win_back_eligible"
+        ],
+        "enables_metrics": ["Churn Rate", "Churned MRR", "NRR"]
+      },
+      {
+        "event_name": "subscription_renewed",
+        "priority": "high",
+        "trigger": "When an annual subscription renews",
+        "required_fields": [
+          "customer_id",
+          "subscription_id",
+          "plan",
+          "mrr",
+          "renewal_date",
+          "next_renewal_date"
+        ],
+        "optional_fields": [
+          "renewal_discount",
+          "auto_renewed"
+        ],
+        "enables_metrics": ["Renewal Rate", "GRR"]
+      }
+    ],
+    "ai_usage_events": [
+      {
+        "event_name": "ai_request_completed",
+        "priority": "high",
+        "trigger": "After each AI API call completes",
+        "required_fields": [
+          "request_id",
+          "user_id",
+          "customer_id",
+          "model",
+          "provider",
+          "tokens_input",
+          "tokens_output",
+          "tokens_total",
+          "latency_ms"
+        ],
+        "optional_fields": [
+          "feature",
+          "success",
+          "error_code",
+          "cache_hit"
+        ],
+        "enables_metrics": ["AI Usage", "AI Latency"]
+      },
+      {
+        "event_name": "ai_cost_incurred",
+        "priority": "high",
+        "trigger": "After calculating cost for AI request",
+        "required_fields": [
+          "request_id",
+          "user_id",
+          "customer_id",
+          "model",
+          "provider",
+          "cost_usd",
+          "tokens_total"
+        ],
+        "optional_fields": [
+          "feature",
+          "cost_category"
+        ],
+        "enables_metrics": ["AI Cost", "AI Cost per User", "AI Cost per Request"]
+      },
+      {
+        "event_name": "ai_feature_used",
+        "priority": "medium",
+        "trigger": "When user interacts with AI feature",
+        "required_fields": [
+          "user_id",
+          "customer_id",
+          "feature",
+          "action"
+        ],
+        "optional_fields": [
+          "query_type",
+          "result_count",
+          "user_rating"
+        ],
+        "enables_metrics": ["AI Adoption", "AI Feature Usage"]
+      }
+    ],
+    "customer_events": [
+      {
+        "event_name": "customer_created",
+        "priority": "high",
+        "trigger": "When a new organization/customer is created",
+        "required_fields": [
+          "customer_id",
+          "company_name",
+          "industry",
+          "employee_count",
+          "source_channel"
+        ],
+        "optional_fields": [
+          "referral_source",
+          "sales_rep_id",
+          "campaign_id"
+        ],
+        "enables_metrics": ["Customer Count", "CAC by Channel"]
+      },
+      {
+        "event_name": "trial_started",
+        "priority": "medium",
+        "trigger": "When a customer starts a free trial",
+        "required_fields": [
+          "customer_id",
+          "trial_plan",
+          "trial_start_date",
+          "trial_end_date"
+        ],
+        "optional_fields": [
+          "source_channel",
+          "referral_code"
+        ],
+        "enables_metrics": ["Trial Starts", "Trial Conversion"]
+      },
+      {
+        "event_name": "trial_ended",
+        "priority": "medium",
+        "trigger": "When a trial expires or converts",
+        "required_fields": [
+          "customer_id",
+          "trial_plan",
+          "outcome",
+          "trial_duration_days"
+        ],
+        "optional_fields": [
+          "converted_to_plan",
+          "non_conversion_reason"
+        ],
+        "enables_metrics": ["Trial Conversion Rate"]
+      }
+    ],
+    "acquisition_events": [
+      {
+        "event_name": "lead_created",
+        "priority": "medium",
+        "trigger": "When a new lead enters the funnel",
+        "required_fields": [
+          "lead_id",
+          "email",
+          "source_channel",
+          "campaign_id"
+        ],
+        "optional_fields": [
+          "company_name",
+          "job_title",
+          "lead_score"
+        ],
+        "enables_metrics": ["Lead Volume", "Funnel Conversion"]
+      },
+      {
+        "event_name": "marketing_spend_recorded",
+        "priority": "medium",
+        "trigger": "Monthly or when significant spend occurs",
+        "required_fields": [
+          "period_start",
+          "period_end",
+          "channel",
+          "spend_amount",
+          "currency"
+        ],
+        "optional_fields": [
+          "campaign_id",
+          "impressions",
+          "clicks"
+        ],
+        "enables_metrics": ["CAC", "CAC by Channel"]
+      }
+    ]
+  },
+  "implementation_requirements": {
+    "data_storage": {
+      "primary_database": "PostgreSQL",
+      "event_retention_days": 730,
+      "aggregation_tables": true,
+      "real_time_required": false,
+      "max_query_latency_ms": 5000
+    },
+    "analytics_platform": {
+      "primary": "Segment",
+      "secondary": "Internal PostgreSQL",
+      "warehouse": "Snowflake (future)"
+    },
+    "api_requirements": {
+      "financial_health_api": true,
+      "ai_economics_api": true,
+      "real_time_mrr_api": true
+    },
+    "compliance": {
+      "pii_handling": "Hash emails, use customer_id",
+      "data_retention_policy": "2 years for financial events",
+      "gdpr_compliance": true
+    }
+  }
+}

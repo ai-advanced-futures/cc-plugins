@@ -1,0 +1,438 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Financial Metrics Schema",
+  "description": "Schema for capturing current financial metrics and KPIs",
+  "type": "object",
+  "properties": {
+    "growth_metrics": {
+      "type": "object",
+      "description": "Revenue growth and bookings metrics",
+      "properties": {
+        "arr": {
+          "type": "number",
+          "description": "Annual Recurring Revenue in USD (THE most important SaaS metric)"
+        },
+        "mrr": {
+          "type": "number",
+          "description": "Monthly Recurring Revenue in USD"
+        },
+        "revenue_growth_rate_pct": {
+          "type": "number",
+          "description": "Year-over-year revenue growth rate as percentage"
+        },
+        "new_arr": {
+          "type": "number",
+          "description": "New ARR from new customers in current period"
+        },
+        "expansion_arr": {
+          "type": "number",
+          "description": "Expansion ARR from existing customers"
+        },
+        "churned_arr": {
+          "type": "number",
+          "description": "ARR lost due to customer churn"
+        },
+        "net_new_arr": {
+          "type": "number",
+          "description": "Net new ARR (New + Expansion - Churned)"
+        },
+        "bookings": {
+          "type": "number",
+          "description": "Total bookings (committed revenue)"
+        },
+        "billings": {
+          "type": "number",
+          "description": "Actual invoiced amounts"
+        },
+        "deferred_revenue": {
+          "type": "number",
+          "description": "Revenue collected but not yet recognized"
+        }
+      }
+    },
+    "profitability_metrics": {
+      "type": "object",
+      "description": "Profitability and margin metrics",
+      "properties": {
+        "gross_margin_pct": {
+          "type": "number",
+          "description": "Gross margin percentage ((Revenue - COGS) / Revenue)"
+        },
+        "contribution_margin_pct": {
+          "type": "number",
+          "description": "Contribution margin percentage (Revenue - COGS - S&M)"
+        },
+        "operating_margin_pct": {
+          "type": "number",
+          "description": "Operating margin percentage (Operating Income / Revenue)"
+        },
+        "ebitda_margin_pct": {
+          "type": "number",
+          "description": "EBITDA margin percentage"
+        },
+        "net_income": {
+          "type": "number",
+          "description": "Net income (profit after all expenses)"
+        },
+        "rule_of_40": {
+          "type": "number",
+          "description": "Rule of 40 score (Revenue Growth % + EBITDA Margin %)"
+        },
+        "weighted_rule_of_40": {
+          "type": "number",
+          "description": "Weighted Rule of 40 (1.33 × Growth + 0.67 × EBITDA Margin)"
+        }
+      }
+    },
+    "unit_economics": {
+      "type": "object",
+      "description": "Unit economics and efficiency metrics",
+      "properties": {
+        "cac": {
+          "type": "number",
+          "description": "Customer Acquisition Cost (total S&M spend / new customers)"
+        },
+        "cac_by_channel": {
+          "type": "object",
+          "description": "CAC broken down by acquisition channel",
+          "properties": {
+            "inbound": {
+              "type": "number"
+            },
+            "outbound": {
+              "type": "number"
+            },
+            "partner": {
+              "type": "number"
+            },
+            "self_service": {
+              "type": "number"
+            }
+          }
+        },
+        "ltv": {
+          "type": "number",
+          "description": "Customer Lifetime Value (ARPU × Gross Margin % / Churn Rate)"
+        },
+        "ltv_cac_ratio": {
+          "type": "number",
+          "description": "LTV:CAC ratio (target: 3:1 or better)"
+        },
+        "cac_payback_months": {
+          "type": "number",
+          "description": "Months to recover CAC investment"
+        },
+        "magic_number": {
+          "type": "number",
+          "description": "Magic Number (Net New ARR / S&M Spend)"
+        },
+        "arpu": {
+          "type": "number",
+          "description": "Average Revenue Per User (monthly)"
+        },
+        "arpa": {
+          "type": "number",
+          "description": "Average Revenue Per Account (monthly)"
+        }
+      }
+    },
+    "retention_expansion": {
+      "type": "object",
+      "description": "Retention and expansion metrics",
+      "properties": {
+        "nrr_pct": {
+          "type": "number",
+          "description": "Net Revenue Retention percentage"
+        },
+        "grr_pct": {
+          "type": "number",
+          "description": "Gross Revenue Retention percentage"
+        },
+        "logo_retention_pct": {
+          "type": "number",
+          "description": "Logo (customer) retention percentage"
+        },
+        "monthly_churn_rate_pct": {
+          "type": "number",
+          "description": "Monthly customer churn rate percentage"
+        },
+        "annual_churn_rate_pct": {
+          "type": "number",
+          "description": "Annual customer churn rate percentage"
+        },
+        "revenue_churn_rate_pct": {
+          "type": "number",
+          "description": "Revenue churn rate percentage"
+        },
+        "expansion_revenue": {
+          "type": "number",
+          "description": "Revenue from upsells and cross-sells"
+        },
+        "expansion_rate_pct": {
+          "type": "number",
+          "description": "Expansion revenue as percentage of base"
+        }
+      }
+    },
+    "efficiency_metrics": {
+      "type": "object",
+      "description": "Operational efficiency metrics",
+      "properties": {
+        "burn_rate": {
+          "type": "number",
+          "description": "Monthly cash burn rate (negative cash flow)"
+        },
+        "runway_months": {
+          "type": "number",
+          "description": "Months of runway remaining (cash / burn rate)"
+        },
+        "free_cash_flow": {
+          "type": "number",
+          "description": "Free cash flow (operating cash flow - capex)"
+        },
+        "revenue_per_employee": {
+          "type": "number",
+          "description": "Revenue per full-time employee"
+        },
+        "rd_efficiency": {
+          "type": "number",
+          "description": "R&D Efficiency (Revenue / R&D headcount)"
+        },
+        "sales_efficiency": {
+          "type": "number",
+          "description": "Sales efficiency (New ARR / Sales & Marketing spend)"
+        }
+      }
+    },
+    "ai_metrics": {
+      "type": "object",
+      "description": "AI-specific financial metrics",
+      "properties": {
+        "ai_cost_per_interaction": {
+          "type": "number",
+          "description": "Average cost per AI interaction/API call"
+        },
+        "ai_cost_per_user_monthly": {
+          "type": "number",
+          "description": "AI cost per user per month"
+        },
+        "ai_cost_as_pct_revenue": {
+          "type": "number",
+          "description": "AI costs as percentage of revenue"
+        },
+        "ai_enabled_revenue": {
+          "type": "number",
+          "description": "Revenue attributed to AI-powered features"
+        },
+        "ai_revenue_premium_pct": {
+          "type": "number",
+          "description": "Price premium captured for AI capabilities"
+        },
+        "ai_roi": {
+          "type": "number",
+          "description": "AI ROI ((AI Value - AI Costs) / AI Costs)"
+        },
+        "ai_productivity_multiplier": {
+          "type": "number",
+          "description": "Productivity improvement from AI (e.g., 2x = doubled productivity)"
+        },
+        "ai_infrastructure_cost_monthly": {
+          "type": "number",
+          "description": "Monthly AI infrastructure costs (compute, storage, APIs)"
+        }
+      }
+    },
+    "customer_metrics": {
+      "type": "object",
+      "description": "Customer and usage metrics",
+      "properties": {
+        "total_customers": {
+          "type": "integer",
+          "description": "Total number of paying customers"
+        },
+        "new_customers_current_period": {
+          "type": "integer",
+          "description": "New customers acquired in current period"
+        },
+        "churned_customers_current_period": {
+          "type": "integer",
+          "description": "Customers lost in current period"
+        },
+        "active_users": {
+          "type": "integer",
+          "description": "Total active users across all customers"
+        },
+        "dau": {
+          "type": "integer",
+          "description": "Daily Active Users"
+        },
+        "mau": {
+          "type": "integer",
+          "description": "Monthly Active Users"
+        },
+        "dau_mau_ratio": {
+          "type": "number",
+          "description": "DAU/MAU ratio (stickiness metric)"
+        },
+        "average_deal_size": {
+          "type": "number",
+          "description": "Average contract value"
+        },
+        "sales_cycle_days": {
+          "type": "number",
+          "description": "Average sales cycle length in days"
+        }
+      }
+    },
+    "segment_breakdown": {
+      "type": "object",
+      "description": "Metrics broken down by customer segment or tier",
+      "properties": {
+        "by_tier": {
+          "type": "object",
+          "description": "Metrics by pricing tier",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "customer_count": {
+                "type": "integer"
+              },
+              "arr": {
+                "type": "number"
+              },
+              "churn_rate_pct": {
+                "type": "number"
+              },
+              "expansion_rate_pct": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "by_segment": {
+          "type": "object",
+          "description": "Metrics by customer segment",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "customer_count": {
+                "type": "integer"
+              },
+              "arr": {
+                "type": "number"
+              },
+              "churn_rate_pct": {
+                "type": "number"
+              },
+              "cac": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "cohort_analysis": {
+      "type": "object",
+      "description": "Cohort-based retention and revenue metrics",
+      "properties": {
+        "cohorts": {
+          "type": "array",
+          "description": "Cohort data by acquisition period",
+          "items": {
+            "type": "object",
+            "properties": {
+              "cohort_period": {
+                "type": "string",
+                "description": "Cohort identifier (e.g., '2024-Q1')"
+              },
+              "initial_customers": {
+                "type": "integer",
+                "description": "Customers acquired in this cohort"
+              },
+              "initial_arr": {
+                "type": "number",
+                "description": "Initial ARR from this cohort"
+              },
+              "retention_by_month": {
+                "type": "array",
+                "description": "Retention rate for each month since acquisition",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "revenue_by_month": {
+                "type": "array",
+                "description": "Revenue for each month since acquisition",
+                "items": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "period_info": {
+      "type": "object",
+      "description": "Information about the reporting period",
+      "properties": {
+        "period_start": {
+          "type": "string",
+          "format": "date",
+          "description": "Start date of reporting period"
+        },
+        "period_end": {
+          "type": "string",
+          "format": "date",
+          "description": "End date of reporting period"
+        },
+        "period_type": {
+          "type": "string",
+          "description": "Type of reporting period",
+          "enum": ["monthly", "quarterly", "annual"]
+        },
+        "fiscal_year": {
+          "type": "integer",
+          "description": "Fiscal year"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency for all monetary values",
+          "default": "USD"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about these metrics",
+      "properties": {
+        "generated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When these metrics were calculated"
+        },
+        "data_sources": {
+          "type": "array",
+          "description": "Sources of data for these metrics",
+          "items": {
+            "type": "string"
+          }
+        },
+        "calculation_method": {
+          "type": "string",
+          "description": "Methodology used for calculations"
+        },
+        "data_quality": {
+          "type": "string",
+          "description": "Assessment of data quality",
+          "enum": ["estimated", "partial", "complete", "audited"]
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes or caveats"
+        }
+      }
+    }
+  }
+}

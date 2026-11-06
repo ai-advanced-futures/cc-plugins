@@ -1,0 +1,195 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "product-finance:unit-economics",
+  "questions": [
+    {
+      "input": "product",
+      "question": "Which product or company are these figures for?",
+      "type": "text"
+    },
+    {
+      "input": "analysis_period",
+      "question": "What time period should the analysis cover?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "last_3_months",
+          "label": "The last 3 months"
+        },
+        {
+          "value": "last_6_months",
+          "label": "The last 6 months"
+        },
+        {
+          "value": "last_12_months",
+          "label": "The last 12 months"
+        },
+        {
+          "value": "current_quarter",
+          "label": "The current quarter to date"
+        },
+        {
+          "value": "custom",
+          "label": "A custom date range"
+        }
+      ]
+    },
+    {
+      "input": "data_type",
+      "question": "Are the figures actual data or projections?",
+      "type": "choice",
+      "default": "actual",
+      "options": [
+        {
+          "value": "actual",
+          "label": "Real historical data"
+        },
+        {
+          "value": "projected",
+          "label": "Modelled future figures"
+        },
+        {
+          "value": "hybrid",
+          "label": "A mix of actuals and projections"
+        }
+      ]
+    },
+    {
+      "input": "sm_spend",
+      "question": "What was your total sales and marketing spend for the period?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "new_customers",
+      "question": "How many new paying customers did you win in the period?",
+      "type": "number"
+    },
+    {
+      "input": "cac_by_channel",
+      "question": "Should acquisition cost be broken down by channel?",
+      "type": "boolean"
+    },
+    {
+      "input": "channel_customer_split",
+      "question": "What percentage of new customers came from each channel?",
+      "type": "text"
+    },
+    {
+      "input": "channel_spend_split",
+      "question": "What percentage of sales and marketing spend went to each channel?",
+      "type": "text"
+    },
+    {
+      "input": "cost_basis",
+      "question": "Does the spend include only variable costs, or all costs?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "fully_loaded",
+          "label": "All sales and marketing costs, salaries and overhead included"
+        },
+        {
+          "value": "variable_only",
+          "label": "Only variable costs such as advertising and commissions"
+        }
+      ]
+    },
+    {
+      "input": "arpc",
+      "question": "What is your average monthly recurring revenue per customer?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "gross_margin_percent",
+      "question": "What is your gross margin, in percent?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "monthly_churn_percent",
+      "question": "What is your monthly customer churn rate, in percent?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "has_cohort_data",
+      "question": "Do you have retention data by customer cohort?",
+      "type": "boolean"
+    },
+    {
+      "input": "cohort_count",
+      "question": "How many cohorts should be analysed?",
+      "type": "number"
+    },
+    {
+      "input": "cohorts",
+      "question": "For each cohort: its start month, how many customers started, and the percentage left after each month.",
+      "type": "text"
+    },
+    {
+      "input": "company_stage",
+      "question": "What stage is your company at?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "early_stage",
+          "label": "Pre-seed to Series A, up to $5M ARR"
+        },
+        {
+          "value": "growth_stage",
+          "label": "Series B or C, $5M to $50M ARR"
+        },
+        {
+          "value": "scale_stage",
+          "label": "Series D or later, over $50M ARR"
+        }
+      ]
+    },
+    {
+      "input": "target_payback_months",
+      "question": "What is your company's target payback period for acquisition cost?",
+      "type": "number",
+      "unit": "months",
+      "default": 12
+    },
+    {
+      "input": "net_new_arr",
+      "question": "What was your net new ARR for the period?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "magic_number_lag",
+      "question": "Should the Magic Number use the previous quarter's sales and marketing spend?",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "input": "cohort_analysis",
+      "question": "Should the run analyse cohort retention in detail?",
+      "type": "boolean"
+    },
+    {
+      "input": "cohort_factors",
+      "question": "What do you think influenced retention for each cohort?",
+      "type": "text"
+    },
+    {
+      "input": "model_scenarios",
+      "question": "Should the run model improvement scenarios?",
+      "type": "boolean"
+    },
+    {
+      "input": "scenario_metrics",
+      "question": "Which metrics would you like to improve?",
+      "type": "text"
+    },
+    {
+      "input": "scenario_improvement",
+      "question": "By how much can you realistically improve each of those metrics?",
+      "type": "text"
+    }
+  ]
+}

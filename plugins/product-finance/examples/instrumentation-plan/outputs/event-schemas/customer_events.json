@@ -1,0 +1,443 @@
+{
+  "schema_version": "1.0.0",
+  "category": "customer",
+  "description": "Event schemas for customer lifecycle tracking",
+  "generated_at": "2026-01-23T10:00:00Z",
+  "events": [
+    {
+      "event_name": "customer_created",
+      "event_category": "customer",
+      "description": "Emitted when a new organization/customer is created",
+      "trigger": "Organization signup completion",
+      "priority": "high",
+      "required_fields": [
+        {
+          "field_name": "customer_id",
+          "field_type": "string",
+          "description": "Unique customer/organization identifier",
+          "example": "cus_ABC123",
+          "validation": "Must be unique"
+        },
+        {
+          "field_name": "company_name",
+          "field_type": "string",
+          "description": "Company/organization name",
+          "example": "Acme Corporation"
+        },
+        {
+          "field_name": "industry",
+          "field_type": "string",
+          "description": "Industry classification",
+          "example": "technology",
+          "enum": [
+            "technology",
+            "healthcare",
+            "finance",
+            "retail",
+            "manufacturing",
+            "education",
+            "government",
+            "other"
+          ]
+        },
+        {
+          "field_name": "employee_count",
+          "field_type": "string",
+          "description": "Company size range",
+          "example": "51-200",
+          "enum": [
+            "1-10",
+            "11-50",
+            "51-200",
+            "201-500",
+            "501-1000",
+            "1001-5000",
+            "5000+"
+          ]
+        },
+        {
+          "field_name": "source_channel",
+          "field_type": "string",
+          "description": "Acquisition channel",
+          "example": "organic_search",
+          "enum": [
+            "organic_search",
+            "paid_search",
+            "social_media",
+            "referral",
+            "partner",
+            "outbound_sales",
+            "event",
+            "content_marketing",
+            "direct",
+            "other"
+          ]
+        },
+        {
+          "field_name": "timestamp",
+          "field_type": "datetime",
+          "description": "Event timestamp",
+          "example": "2026-01-23T10:00:00Z"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field_name": "referral_source",
+          "field_type": "string",
+          "description": "Specific referral source",
+          "example": "partner_xyz"
+        },
+        {
+          "field_name": "sales_rep_id",
+          "field_type": "string",
+          "description": "Assigned sales representative",
+          "example": "emp_123"
+        },
+        {
+          "field_name": "campaign_id",
+          "field_type": "string",
+          "description": "Marketing campaign attribution",
+          "example": "camp_spring2026"
+        },
+        {
+          "field_name": "lead_id",
+          "field_type": "string",
+          "description": "Associated lead ID if converted",
+          "example": "lead_xyz789"
+        },
+        {
+          "field_name": "country",
+          "field_type": "string",
+          "description": "Country (ISO 3166-1 alpha-2)",
+          "example": "US"
+        },
+        {
+          "field_name": "timezone",
+          "field_type": "string",
+          "description": "Customer timezone",
+          "example": "America/New_York"
+        }
+      ],
+      "enables_metrics": [
+        "Customer Count",
+        "New Customers",
+        "CAC by Channel",
+        "Customer Segmentation"
+      ]
+    },
+    {
+      "event_name": "trial_started",
+      "event_category": "customer",
+      "description": "Emitted when a customer starts a free trial",
+      "trigger": "Trial activation",
+      "priority": "medium",
+      "required_fields": [
+        {
+          "field_name": "customer_id",
+          "field_type": "string",
+          "description": "Customer identifier",
+          "example": "cus_ABC123"
+        },
+        {
+          "field_name": "trial_plan",
+          "field_type": "string",
+          "description": "Plan being trialed",
+          "example": "professional"
+        },
+        {
+          "field_name": "trial_start_date",
+          "field_type": "datetime",
+          "description": "Trial start date",
+          "example": "2026-01-23T10:00:00Z"
+        },
+        {
+          "field_name": "trial_end_date",
+          "field_type": "datetime",
+          "description": "Trial expiration date",
+          "example": "2026-02-06T10:00:00Z"
+        },
+        {
+          "field_name": "trial_days",
+          "field_type": "integer",
+          "description": "Length of trial in days",
+          "example": 14
+        },
+        {
+          "field_name": "timestamp",
+          "field_type": "datetime",
+          "description": "Event timestamp",
+          "example": "2026-01-23T10:00:00Z"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field_name": "source_channel",
+          "field_type": "string",
+          "description": "Channel that drove trial",
+          "example": "content_marketing"
+        },
+        {
+          "field_name": "referral_code",
+          "field_type": "string",
+          "description": "Referral or promo code used",
+          "example": "FRIEND20"
+        },
+        {
+          "field_name": "extended_trial",
+          "field_type": "boolean",
+          "description": "Whether trial was extended",
+          "example": false
+        }
+      ],
+      "enables_metrics": [
+        "Trial Starts",
+        "Trial Conversion Rate",
+        "Time to Convert"
+      ]
+    },
+    {
+      "event_name": "trial_ended",
+      "event_category": "customer",
+      "description": "Emitted when a trial expires or converts",
+      "trigger": "Trial expiration or conversion to paid",
+      "priority": "medium",
+      "required_fields": [
+        {
+          "field_name": "customer_id",
+          "field_type": "string",
+          "description": "Customer identifier",
+          "example": "cus_ABC123"
+        },
+        {
+          "field_name": "trial_plan",
+          "field_type": "string",
+          "description": "Plan that was trialed",
+          "example": "professional"
+        },
+        {
+          "field_name": "outcome",
+          "field_type": "string",
+          "description": "Trial outcome",
+          "example": "converted",
+          "enum": [
+            "converted",
+            "expired",
+            "cancelled",
+            "extended"
+          ]
+        },
+        {
+          "field_name": "trial_duration_days",
+          "field_type": "integer",
+          "description": "Actual trial duration",
+          "example": 14
+        },
+        {
+          "field_name": "timestamp",
+          "field_type": "datetime",
+          "description": "Event timestamp",
+          "example": "2026-02-06T10:00:00Z"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field_name": "converted_to_plan",
+          "field_type": "string",
+          "description": "Plan converted to (if converted)",
+          "example": "professional_annual"
+        },
+        {
+          "field_name": "non_conversion_reason",
+          "field_type": "string",
+          "description": "Reason for not converting",
+          "example": "too_expensive",
+          "enum": [
+            "too_expensive",
+            "missing_features",
+            "not_ready",
+            "chose_competitor",
+            "no_budget",
+            "no_response",
+            "other"
+          ]
+        },
+        {
+          "field_name": "trial_engagement_score",
+          "field_type": "integer",
+          "description": "Engagement score during trial (0-100)",
+          "example": 75
+        },
+        {
+          "field_name": "features_used",
+          "field_type": "array",
+          "description": "Features used during trial",
+          "example": ["integrations", "reports", "ai_assistant"]
+        }
+      ],
+      "enables_metrics": [
+        "Trial Conversion Rate",
+        "Time to Convert",
+        "Trial Engagement"
+      ]
+    },
+    {
+      "event_name": "lead_created",
+      "event_category": "customer",
+      "description": "Emitted when a new lead enters the funnel",
+      "trigger": "Form submission, demo request, etc.",
+      "priority": "medium",
+      "required_fields": [
+        {
+          "field_name": "lead_id",
+          "field_type": "string",
+          "description": "Unique lead identifier",
+          "example": "lead_xyz789"
+        },
+        {
+          "field_name": "email",
+          "field_type": "string",
+          "description": "Lead email (hashed for privacy)",
+          "example": "hash_abc123"
+        },
+        {
+          "field_name": "source_channel",
+          "field_type": "string",
+          "description": "Channel that generated lead",
+          "example": "content_marketing"
+        },
+        {
+          "field_name": "campaign_id",
+          "field_type": "string",
+          "description": "Marketing campaign",
+          "example": "camp_spring2026"
+        },
+        {
+          "field_name": "timestamp",
+          "field_type": "datetime",
+          "description": "Event timestamp",
+          "example": "2026-01-23T10:00:00Z"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field_name": "company_name",
+          "field_type": "string",
+          "description": "Company name",
+          "example": "Acme Corp"
+        },
+        {
+          "field_name": "job_title",
+          "field_type": "string",
+          "description": "Lead's job title",
+          "example": "VP of Engineering"
+        },
+        {
+          "field_name": "lead_score",
+          "field_type": "integer",
+          "description": "Initial lead score",
+          "example": 65
+        },
+        {
+          "field_name": "lead_source_detail",
+          "field_type": "string",
+          "description": "Specific source detail",
+          "example": "ebook_download_saas_metrics"
+        }
+      ],
+      "enables_metrics": [
+        "Lead Volume",
+        "Lead by Channel",
+        "Funnel Conversion"
+      ]
+    },
+    {
+      "event_name": "marketing_spend_recorded",
+      "event_category": "customer",
+      "description": "Emitted to record marketing spend for CAC calculation",
+      "trigger": "Monthly spend recording or significant spend event",
+      "priority": "medium",
+      "required_fields": [
+        {
+          "field_name": "period_start",
+          "field_type": "date",
+          "description": "Start of spend period",
+          "example": "2026-01-01"
+        },
+        {
+          "field_name": "period_end",
+          "field_type": "date",
+          "description": "End of spend period",
+          "example": "2026-01-31"
+        },
+        {
+          "field_name": "channel",
+          "field_type": "string",
+          "description": "Marketing channel",
+          "example": "paid_search",
+          "enum": [
+            "paid_search",
+            "organic_search",
+            "social_paid",
+            "social_organic",
+            "content_marketing",
+            "events",
+            "partnerships",
+            "referral_program",
+            "outbound_sales",
+            "other"
+          ]
+        },
+        {
+          "field_name": "spend_amount",
+          "field_type": "number",
+          "description": "Spend amount",
+          "example": 15000.00
+        },
+        {
+          "field_name": "currency",
+          "field_type": "string",
+          "description": "Currency (ISO 4217)",
+          "example": "USD"
+        },
+        {
+          "field_name": "timestamp",
+          "field_type": "datetime",
+          "description": "Event timestamp",
+          "example": "2026-02-01T10:00:00Z"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field_name": "campaign_id",
+          "field_type": "string",
+          "description": "Specific campaign",
+          "example": "camp_spring2026"
+        },
+        {
+          "field_name": "impressions",
+          "field_type": "integer",
+          "description": "Number of impressions",
+          "example": 500000
+        },
+        {
+          "field_name": "clicks",
+          "field_type": "integer",
+          "description": "Number of clicks",
+          "example": 2500
+        },
+        {
+          "field_name": "leads_generated",
+          "field_type": "integer",
+          "description": "Leads from this spend",
+          "example": 45
+        }
+      ],
+      "enables_metrics": [
+        "CAC",
+        "CAC by Channel",
+        "Marketing Efficiency",
+        "Cost per Lead"
+      ]
+    }
+  ]
+}

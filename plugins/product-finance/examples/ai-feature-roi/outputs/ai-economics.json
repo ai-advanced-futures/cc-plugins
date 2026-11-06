@@ -1,0 +1,338 @@
+{
+  "metadata": {
+    "analysis_type": "new_feature",
+    "feature_name": "AI Analytics Assistant",
+    "analysis_date": "2026-01-23T10:00:00Z",
+    "period": {
+      "start_date": "2026-04-01",
+      "end_date": "2027-03-31",
+      "period_months": 12,
+      "period_type": "projected_year_1"
+    },
+    "methodology": "Multi-dimensional value attribution with provider cost breakdown",
+    "confidence_level": "medium"
+  },
+  "ai_costs": {
+    "api_costs": {
+      "total_annual": 96000,
+      "total_monthly": 8000,
+      "cost_per_api_call": 0.08,
+      "total_api_calls_monthly": 100000,
+      "total_api_calls_annual": 1200000,
+      "by_model": [
+        {
+          "model_name": "gpt-4",
+          "provider": "OpenAI",
+          "monthly_cost": 4500,
+          "annual_cost": 54000,
+          "api_calls_monthly": 25000,
+          "average_cost_per_call": 0.18,
+          "pct_of_total_cost": 56.3,
+          "use_cases": ["Complex queries", "Report generation"]
+        },
+        {
+          "model_name": "claude-sonnet-4",
+          "provider": "Anthropic",
+          "monthly_cost": 2000,
+          "annual_cost": 24000,
+          "api_calls_monthly": 35000,
+          "average_cost_per_call": 0.057,
+          "pct_of_total_cost": 25.0,
+          "use_cases": ["Standard queries", "Insight generation"]
+        },
+        {
+          "model_name": "claude-haiku",
+          "provider": "Anthropic",
+          "monthly_cost": 500,
+          "annual_cost": 6000,
+          "api_calls_monthly": 40000,
+          "average_cost_per_call": 0.0125,
+          "pct_of_total_cost": 6.3,
+          "use_cases": ["Simple queries", "Anomaly detection"]
+        },
+        {
+          "model_name": "text-embedding-3-large",
+          "provider": "OpenAI",
+          "monthly_cost": 1000,
+          "annual_cost": 12000,
+          "api_calls_monthly": 500000,
+          "average_cost_per_call": 0.002,
+          "pct_of_total_cost": 12.5,
+          "use_cases": ["Vector embeddings"]
+        }
+      ]
+    },
+    "infrastructure_costs": {
+      "total_monthly": 7500,
+      "total_annual": 90000,
+      "breakdown": {
+        "compute_monthly": 3000,
+        "compute_annual": 36000,
+        "storage_monthly": 500,
+        "storage_annual": 6000,
+        "vector_database_monthly": 2500,
+        "vector_database_annual": 30000,
+        "caching_monthly": 1000,
+        "caching_annual": 12000,
+        "monitoring_monthly": 500,
+        "monitoring_annual": 6000
+      }
+    },
+    "development_costs": {
+      "included_in_build_cost": true,
+      "ai_engineering_headcount": 0.5,
+      "monthly_personnel_cost": 9167,
+      "annual_personnel_cost": 110000,
+      "note": "0.5 FTE ML engineer for ongoing maintenance and optimization"
+    },
+    "per_user_costs": {
+      "ai_users": 300,
+      "cost_per_user_monthly": 51.67,
+      "cost_per_user_annual": 620,
+      "cost_per_interaction": 0.08
+    },
+    "total_ai_costs": {
+      "monthly": 15500,
+      "annual": 186000,
+      "as_pct_revenue": 7.4,
+      "cost_breakdown_pct": {
+        "api_costs": 51.6,
+        "infrastructure": 48.4
+      }
+    }
+  },
+  "ai_value": {
+    "revenue_impact": {
+      "ai_enabled_revenue_monthly": 210000,
+      "ai_enabled_arr": 2520000,
+      "non_ai_revenue_monthly": 40000,
+      "non_ai_arr": 480000,
+      "total_revenue_monthly": 250000,
+      "total_arr": 3000000,
+      "ai_revenue_pct": 84.0,
+      "revenue_premium_pct": 50
+    },
+    "premium_pricing_value": {
+      "customers_on_ai_tier": 35,
+      "avg_monthly_price_ai_tier": 6000,
+      "avg_monthly_price_base_tier": 4000,
+      "premium_per_customer_monthly": 2000,
+      "total_premium_monthly": 70000,
+      "total_premium_annual": 840000
+    },
+    "retention_impact": {
+      "baseline_monthly_churn_pct": 1.2,
+      "ai_tier_monthly_churn_pct": 0.7,
+      "churn_reduction_pct": 0.5,
+      "customers_retained": 3,
+      "retained_arr": 180000,
+      "retention_value_annual": 180000
+    },
+    "expansion_revenue": {
+      "customers_expanding": 12,
+      "avg_expansion_annual": 20000,
+      "total_expansion_revenue": 240000,
+      "expansion_driven_by_ai_pct": 100
+    },
+    "productivity_gains": {
+      "hours_saved_monthly": 120,
+      "hours_saved_annual": 1440,
+      "cost_per_hour": 100,
+      "productivity_value_monthly": 12000,
+      "productivity_value_annual": 144000,
+      "productivity_multiplier": 1.15
+    },
+    "time_to_value_acceleration": {
+      "days_saved_per_customer": 15,
+      "new_customers_per_year": 10,
+      "value_per_customer": 2500,
+      "acceleration_value_annual": 25000
+    },
+    "total_ai_value": {
+      "monthly": 121917,
+      "annual": 1463000,
+      "breakdown": {
+        "premium_pricing": 840000,
+        "retention": 180000,
+        "expansion": 240000,
+        "productivity": 144000,
+        "ttv_acceleration": 25000,
+        "direct_ai_revenue": 34000
+      }
+    }
+  },
+  "ai_roi": {
+    "roi_pct": 386.6,
+    "roi_ratio": 4.87,
+    "calculation": {
+      "total_ai_value": 1463000,
+      "total_ai_costs": 186000,
+      "net_ai_value": 1277000,
+      "formula": "(AI_Value - AI_Costs) / AI_Costs * 100"
+    },
+    "payback_period_months": 3.1,
+    "break_even_analysis": {
+      "monthly_value": 121917,
+      "monthly_cost": 15500,
+      "months_to_break_even": 3.1,
+      "cumulative_value_month_6": 731502,
+      "cumulative_cost_month_6": 93000,
+      "cumulative_net_month_6": 638502
+    },
+    "net_value": {
+      "monthly": 106417,
+      "annual": 1277000,
+      "three_year_projected": 4200000
+    },
+    "health_status": "EXCELLENT",
+    "health_rationale": [
+      "AI ROI of 387% far exceeds 200% threshold for excellent",
+      "AI costs at 7.4% of revenue within 5-10% excellent range",
+      "Payback of 3.1 months significantly better than 12-month target",
+      "Multiple value sources provide diversified returns"
+    ]
+  },
+  "usage_patterns": {
+    "projected": true,
+    "ai_users": 300,
+    "total_customers": 50,
+    "ai_adoption_rate_pct": 70.0,
+    "interactions_monthly": 100000,
+    "interactions_per_user_monthly": 333,
+    "queries_per_user_monthly": 75,
+    "insights_per_user_monthly": 20,
+    "reports_per_user_monthly": 5,
+    "peak_usage_hours": "9am-11am, 2pm-4pm EST",
+    "usage_growth_rate_monthly": 8
+  },
+  "cost_optimization": {
+    "current_optimizations": [
+      {
+        "optimization": "Model routing",
+        "status": "planned",
+        "savings_pct": 40,
+        "savings_monthly": 3200,
+        "implementation": "Route simple queries to Haiku, complex to GPT-4"
+      },
+      {
+        "optimization": "Semantic caching",
+        "status": "planned",
+        "savings_pct": 30,
+        "savings_monthly": 2400,
+        "implementation": "Cache similar query responses using embeddings"
+      },
+      {
+        "optimization": "Prompt optimization",
+        "status": "planned",
+        "savings_pct": 25,
+        "savings_monthly": 2000,
+        "implementation": "Reduce token usage through better prompts"
+      }
+    ],
+    "optimization_opportunities": [
+      {
+        "opportunity": "Batch processing for insights",
+        "potential_savings_monthly": 1500,
+        "implementation_effort": "low",
+        "priority": "medium"
+      },
+      {
+        "opportunity": "Fine-tune smaller model for common queries",
+        "potential_savings_monthly": 3000,
+        "implementation_effort": "high",
+        "priority": "low"
+      }
+    ],
+    "total_potential_savings": {
+      "monthly": 12100,
+      "annual": 145200,
+      "as_pct_of_current_costs": 78
+    }
+  },
+  "strategic_recommendations": [
+    {
+      "priority": 1,
+      "recommendation": "Proceed with AI feature development",
+      "rationale": "387% projected ROI with 3-month payback strongly justifies investment",
+      "action": "Approve $165K build budget and allocate engineering resources",
+      "timeline": "Immediate"
+    },
+    {
+      "priority": 2,
+      "recommendation": "Implement cost optimization from day one",
+      "rationale": "Proactive optimization prevents cost overruns as usage scales",
+      "action": "Include caching and model routing in MVP architecture",
+      "timeline": "During development"
+    },
+    {
+      "priority": 3,
+      "recommendation": "Set up AI cost monitoring and alerting",
+      "rationale": "Early detection of cost anomalies prevents surprises",
+      "action": "Implement per-customer cost tracking and usage alerts",
+      "timeline": "Pre-launch"
+    },
+    {
+      "priority": 4,
+      "recommendation": "Plan for usage-based pricing tier",
+      "rationale": "Heavy users may exceed cost assumptions; usage pricing aligns incentives",
+      "action": "Design usage tiers for year 2 pricing update",
+      "timeline": "Q4 2026"
+    }
+  ],
+  "risk_analysis": {
+    "cost_risks": [
+      {
+        "risk": "API cost increases from providers",
+        "probability": "medium",
+        "impact": "medium",
+        "mitigation": "Multi-provider strategy, cost caps, renegotiate as volume grows"
+      },
+      {
+        "risk": "Usage exceeds projections",
+        "probability": "medium",
+        "impact": "high",
+        "mitigation": "Per-user rate limits, usage-based pricing tier for heavy users"
+      }
+    ],
+    "value_risks": [
+      {
+        "risk": "Lower adoption than projected",
+        "probability": "medium",
+        "impact": "high",
+        "mitigation": "Beta program, strong onboarding, adoption incentives"
+      },
+      {
+        "risk": "Competitive AI features reduce premium",
+        "probability": "high",
+        "impact": "medium",
+        "mitigation": "Continuous innovation, deep integration, switch cost"
+      }
+    ]
+  },
+  "comparison_to_benchmarks": {
+    "ai_cost_pct_revenue": {
+      "value": 7.4,
+      "benchmark_excellent": 5,
+      "benchmark_good": 10,
+      "status": "GOOD"
+    },
+    "cost_per_query": {
+      "value": 0.08,
+      "benchmark_excellent": 0.05,
+      "benchmark_good": 0.10,
+      "status": "GOOD"
+    },
+    "ai_roi": {
+      "value": 387,
+      "benchmark_excellent": 300,
+      "benchmark_good": 150,
+      "status": "EXCELLENT"
+    },
+    "ai_adoption_rate": {
+      "value": 70,
+      "benchmark_excellent": 70,
+      "benchmark_good": 50,
+      "status": "EXCELLENT"
+    }
+  }
+}

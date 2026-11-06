@@ -1,0 +1,314 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "product-finance:feature-roi",
+  "questions": [
+    {
+      "input": "feature_name",
+      "question": "What feature are you analysing?",
+      "type": "text"
+    },
+    {
+      "input": "strategic_purpose",
+      "question": "What is the strategic purpose of this feature?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "new_revenue",
+          "label": "Attract new customers or a new segment"
+        },
+        {
+          "value": "expansion",
+          "label": "Upsell existing customers"
+        },
+        {
+          "value": "retention",
+          "label": "Reduce churn"
+        },
+        {
+          "value": "efficiency",
+          "label": "Improve internal efficiency or reduce costs"
+        },
+        {
+          "value": "competitive",
+          "label": "Match a competitor's feature"
+        },
+        {
+          "value": "strategic",
+          "label": "Long-term strategic position"
+        },
+        {
+          "value": "hybrid",
+          "label": "Several purposes"
+        }
+      ]
+    },
+    {
+      "input": "urgency",
+      "question": "How urgent is this feature?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "critical",
+          "label": "Losing customers without it"
+        },
+        {
+          "value": "high",
+          "label": "Strong demand, revenue opportunity"
+        },
+        {
+          "value": "medium",
+          "label": "Important but not urgent"
+        },
+        {
+          "value": "low",
+          "label": "Nice to have"
+        },
+        {
+          "value": "exploratory",
+          "label": "Research or experiment"
+        }
+      ],
+      "default": "medium"
+    },
+    {
+      "input": "build_method",
+      "question": "How should the build effort be estimated?",
+      "type": "choice",
+      "default": "time_based",
+      "options": [
+        {
+          "value": "story_points",
+          "label": "In story points"
+        },
+        {
+          "value": "time_based",
+          "label": "In weeks of engineering time"
+        },
+        {
+          "value": "fte_allocation",
+          "label": "In person-months"
+        },
+        {
+          "value": "direct_cost",
+          "label": "As a direct dollar amount"
+        }
+      ]
+    },
+    {
+      "input": "story_points",
+      "question": "How many story points will the feature take?",
+      "type": "number"
+    },
+    {
+      "input": "cost_per_story_point",
+      "question": "What does one story point cost?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "monthly_rd_cost",
+      "question": "What is your total monthly research and development cost?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "story_points_per_month",
+      "question": "How many story points does your team complete each month?",
+      "type": "number"
+    },
+    {
+      "input": "build_weeks",
+      "question": "How many weeks will the build take?",
+      "type": "number",
+      "unit": "weeks",
+      "default": 4
+    },
+    {
+      "input": "engineers",
+      "question": "How many engineers will work on it?",
+      "type": "number",
+      "default": 1
+    },
+    {
+      "input": "engineer_monthly_cost",
+      "question": "What is the fully loaded monthly cost of one engineer?",
+      "type": "number",
+      "unit": "USD",
+      "default": 16667
+    },
+    {
+      "input": "non_engineering_resources",
+      "question": "Does the build need product, design or QA time beyond the engineers?",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "input": "person_months",
+      "question": "How many person-months will the build take?",
+      "type": "number"
+    },
+    {
+      "input": "cost_per_person_month",
+      "question": "What is the average fully loaded cost of one person-month?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "total_build_cost",
+      "question": "What is the total build cost?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "cost_scope",
+      "question": "Does that total cover only the build, or ongoing costs too?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "build_only",
+          "label": "Only the initial build"
+        },
+        {
+          "value": "includes_ongoing",
+          "label": "The build and ongoing costs"
+        }
+      ]
+    },
+    {
+      "input": "has_ongoing_costs",
+      "question": "Will the feature have ongoing operating costs?",
+      "type": "boolean"
+    },
+    {
+      "input": "ongoing_monthly_cost",
+      "question": "What will the feature cost to run each month: hosting, third-party services, maintenance and other recurring costs?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "drives_new_revenue",
+      "question": "Will the feature bring new customer revenue?",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "input": "new_customers_per_month",
+      "question": "How many new customers a month will the feature bring?",
+      "type": "number"
+    },
+    {
+      "input": "new_customer_arpc",
+      "question": "What is the average monthly revenue from one of those customers?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "ramp_months",
+      "question": "How many months until that rate is reached?",
+      "type": "number",
+      "unit": "months",
+      "default": 3
+    },
+    {
+      "input": "drives_expansion",
+      "question": "Will the feature bring expansion revenue from existing customers?",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "input": "upgrading_customers",
+      "question": "How many existing customers will upgrade for it?",
+      "type": "number"
+    },
+    {
+      "input": "upgrade_revenue_per_customer",
+      "question": "What is the average monthly revenue increase per upgraded customer?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "improves_retention",
+      "question": "Will the feature improve customer retention?",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "input": "current_churn_percent",
+      "question": "What is your current monthly churn rate?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "churn_reduction_points",
+      "question": "By how many percentage points will the feature reduce monthly churn?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "retained_customers",
+      "question": "How many customers will the retention gain apply to?",
+      "type": "number"
+    },
+    {
+      "input": "retention_arpc",
+      "question": "What is the average monthly revenue of one of those customers?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "enables_premium",
+      "question": "Will the feature let you charge a premium?",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "input": "premium_percent",
+      "question": "What is the price premium, in percent?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "premium_customers",
+      "question": "How many customers will pay the premium?",
+      "type": "number"
+    },
+    {
+      "input": "premium_base_revenue",
+      "question": "What is the monthly revenue from those customers now, before the premium?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "discount_rate",
+      "question": "What discount rate should the net present value use, as a fraction (0.15 is 15%)?",
+      "type": "number",
+      "default": 0.15
+    },
+    {
+      "input": "analysis_horizon_months",
+      "question": "Over how many months should the return be counted?",
+      "type": "number",
+      "unit": "months",
+      "default": 36
+    },
+    {
+      "input": "target_payback_months",
+      "question": "What is your company's target payback period?",
+      "type": "number",
+      "unit": "months",
+      "default": 12
+    },
+    {
+      "input": "minimum_roi_percent",
+      "question": "What is your company's minimum acceptable return?",
+      "type": "number",
+      "unit": "percent",
+      "default": 100
+    },
+    {
+      "input": "confirm_high_roi",
+      "question": "The return looks very high: are the inputs behind it correct?",
+      "type": "boolean"
+    }
+  ]
+}

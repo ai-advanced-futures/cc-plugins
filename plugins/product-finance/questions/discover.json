@@ -1,0 +1,265 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "product-finance:discover",
+  "questions": [
+    {
+      "input": "market",
+      "question": "Which product and market is this analysis for?",
+      "type": "text"
+    },
+    {
+      "input": "discovery_stage",
+      "question": "What stage of discovery are you in?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "pre_jtbd",
+          "label": "Market sizing before customer research"
+        },
+        {
+          "value": "post_jtbd",
+          "label": "Financial analysis after jobs-to-be-done research"
+        },
+        {
+          "value": "refresh",
+          "label": "Updating an earlier discovery analysis"
+        }
+      ]
+    },
+    {
+      "input": "tam_method",
+      "question": "How should the total addressable market be worked out?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "top_down",
+          "label": "Start with the total market size, then narrow by ideal customer profile"
+        },
+        {
+          "value": "bottom_up",
+          "label": "Start with the target customers, then multiply by price"
+        },
+        {
+          "value": "value_theory",
+          "label": "Start with the value created per customer, then the share you capture"
+        }
+      ]
+    },
+    {
+      "input": "total_market_size",
+      "question": "What is the total market size for your category, per year?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "icp_percent",
+      "question": "What percentage of that market matches your ideal customer profile?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "potential_customers",
+      "question": "How many potential customers fit your target profile, worldwide?",
+      "type": "number"
+    },
+    {
+      "input": "target_acv",
+      "question": "What is your target annual contract value per customer?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "value_per_customer",
+      "question": "What economic value do you create per customer each year?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "capture_percent",
+      "question": "What percentage of that value can you capture as price?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "value_customers",
+      "question": "How many potential customers could get that value?",
+      "type": "number"
+    },
+    {
+      "input": "sam_percent",
+      "question": "What share of the total addressable market can you reach, given your geography, customer sizes and channels?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "som_timeframe_years",
+      "question": "Over how many years should the obtainable market be counted?",
+      "type": "number",
+      "unit": "years",
+      "default": 3
+    },
+    {
+      "input": "competitive_intensity",
+      "question": "How intense is competition in your market?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "low",
+          "label": "Few competitors"
+        },
+        {
+          "value": "medium",
+          "label": "Several competitors, differentiated positioning"
+        },
+        {
+          "value": "high",
+          "label": "Many competitors, incumbents to displace"
+        },
+        {
+          "value": "very_high",
+          "label": "Saturated market with free alternatives"
+        }
+      ]
+    },
+    {
+      "input": "market_share_percent",
+      "question": "What share of the serviceable market can you realistically capture?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "segment_count",
+      "question": "How many customer segments are you targeting?",
+      "type": "number"
+    },
+    {
+      "input": "segments",
+      "question": "For each customer segment: its name, potential customers, target annual contract value, expected conversion rate and how hard it is to acquire.",
+      "type": "text"
+    },
+    {
+      "input": "channels",
+      "question": "Which acquisition channels will you use? Any of inbound_marketing, outbound_sales, product_led_growth, partnerships, field_sales and community.",
+      "type": "text"
+    },
+    {
+      "input": "inbound_monthly_spend",
+      "question": "What will you spend each month on inbound marketing?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "inbound_mqls_per_month",
+      "question": "How many marketing qualified leads do you expect each month?",
+      "type": "number"
+    },
+    {
+      "input": "mql_conversion_percent",
+      "question": "What percentage of marketing qualified leads become customers?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "sdr_count",
+      "question": "How many sales development reps will you have?",
+      "type": "number"
+    },
+    {
+      "input": "sdr_annual_cost",
+      "question": "What is the fully loaded annual cost of one sales development rep?",
+      "type": "number",
+      "unit": "USD",
+      "default": 100000
+    },
+    {
+      "input": "opps_per_sdr_month",
+      "question": "How many qualified opportunities does each sales development rep make each month?",
+      "type": "number"
+    },
+    {
+      "input": "ae_count",
+      "question": "How many account executives will close these deals?",
+      "type": "number"
+    },
+    {
+      "input": "ae_annual_cost",
+      "question": "What is the fully loaded annual cost of one account executive?",
+      "type": "number",
+      "unit": "USD",
+      "default": 200000
+    },
+    {
+      "input": "close_rate_percent",
+      "question": "What percentage of opportunities close?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "plg_free_users_month",
+      "question": "How many free users do you expect to sign up each month?",
+      "type": "number"
+    },
+    {
+      "input": "plg_conversion_percent",
+      "question": "What percentage of free users convert to paid?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "plg_cost_per_signup",
+      "question": "What does one free sign-up cost?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "partner_count",
+      "question": "How many active channel partners do you expect?",
+      "type": "number"
+    },
+    {
+      "input": "partner_commission_percent",
+      "question": "What commission does a partner get per customer, as a percentage of annual contract value?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "partner_acv",
+      "question": "What is the average annual contract value of a partner customer?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "customers_per_partner_quarter",
+      "question": "How many customers does each partner bring each quarter?",
+      "type": "number"
+    },
+    {
+      "input": "enterprise_ae_count",
+      "question": "How many enterprise account executives will you have?",
+      "type": "number"
+    },
+    {
+      "input": "enterprise_ae_annual_cost",
+      "question": "What is the fully loaded annual cost of one enterprise account executive?",
+      "type": "number",
+      "unit": "USD",
+      "default": 300000
+    },
+    {
+      "input": "deals_per_enterprise_ae_year",
+      "question": "How many enterprise deals does each enterprise account executive close each year?",
+      "type": "number"
+    },
+    {
+      "input": "community_monthly_investment",
+      "question": "What will you invest each month in community building?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "community_conversions_month",
+      "question": "How many customers does the community bring each month?",
+      "type": "number"
+    }
+  ]
+}

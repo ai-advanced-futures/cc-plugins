@@ -1,0 +1,372 @@
+{
+  "schema_version": "1.0.0",
+  "category": "ai_usage",
+  "description": "Event schemas for AI usage and cost tracking",
+  "generated_at": "2026-01-23T10:00:00Z",
+  "events": [
+    {
+      "event_name": "ai_request_completed",
+      "event_category": "ai_usage",
+      "description": "Emitted after each AI API call completes (success or failure)",
+      "trigger": "After OpenAI/Anthropic/etc. API call returns",
+      "priority": "high",
+      "required_fields": [
+        {
+          "field_name": "request_id",
+          "field_type": "string",
+          "description": "Unique request identifier for correlation",
+          "example": "req_abc123-def456",
+          "source": "UUID generated at request start",
+          "validation": "Must be unique"
+        },
+        {
+          "field_name": "user_id",
+          "field_type": "string",
+          "description": "User who initiated the request",
+          "example": "usr_123",
+          "source": "Request context",
+          "validation": "Must exist in users table"
+        },
+        {
+          "field_name": "customer_id",
+          "field_type": "string",
+          "description": "Organization/customer for cost attribution",
+          "example": "cus_ABC123",
+          "source": "User's organization",
+          "validation": "Must exist in customers table"
+        },
+        {
+          "field_name": "model",
+          "field_type": "string",
+          "description": "AI model used",
+          "example": "gpt-4",
+          "source": "API response",
+          "validation": "Must be valid model name"
+        },
+        {
+          "field_name": "provider",
+          "field_type": "string",
+          "description": "AI provider",
+          "example": "openai",
+          "source": "Derived from model or explicit",
+          "validation": "Must be 'openai', 'anthropic', or 'other'"
+        },
+        {
+          "field_name": "tokens_input",
+          "field_type": "integer",
+          "description": "Number of input/prompt tokens",
+          "example": 1500,
+          "source": "API response usage.prompt_tokens",
+          "validation": "Must be >= 0"
+        },
+        {
+          "field_name": "tokens_output",
+          "field_type": "integer",
+          "description": "Number of output/completion tokens",
+          "example": 800,
+          "source": "API response usage.completion_tokens",
+          "validation": "Must be >= 0"
+        },
+        {
+          "field_name": "tokens_total",
+          "field_type": "integer",
+          "description": "Total tokens used",
+          "example": 2300,
+          "source": "API response usage.total_tokens",
+          "validation": "Must equal tokens_input + tokens_output"
+        },
+        {
+          "field_name": "latency_ms",
+          "field_type": "integer",
+          "description": "Request latency in milliseconds",
+          "example": 2500,
+          "source": "Time from request start to response",
+          "validation": "Must be >= 0"
+        },
+        {
+          "field_name": "timestamp",
+          "field_type": "datetime",
+          "description": "Event timestamp (ISO 8601)",
+          "example": "2026-01-23T10:00:00Z",
+          "source": "Server timestamp",
+          "validation": "Must be valid ISO 8601"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field_name": "feature",
+          "field_type": "string",
+          "description": "Product feature that triggered the request",
+          "example": "natural_language_query",
+          "enum": [
+            "natural_language_query",
+            "insight_generation",
+            "report_builder",
+            "anomaly_detection",
+            "chat_assistant"
+          ]
+        },
+        {
+          "field_name": "success",
+          "field_type": "boolean",
+          "description": "Whether request succeeded",
+          "example": true,
+          "default": true
+        },
+        {
+          "field_name": "error_code",
+          "field_type": "string",
+          "description": "Error code if request failed",
+          "example": "rate_limit_exceeded"
+        },
+        {
+          "field_name": "cache_hit",
+          "field_type": "boolean",
+          "description": "Whether response was served from cache",
+          "example": false,
+          "default": false
+        },
+        {
+          "field_name": "session_id",
+          "field_type": "string",
+          "description": "Session for multi-turn conversations",
+          "example": "sess_xyz789"
+        }
+      ],
+      "enables_metrics": [
+        "AI Usage",
+        "AI Latency",
+        "AI Requests per User",
+        "AI Feature Usage"
+      ],
+      "implementation_example": {
+        "framework": "python",
+        "location": "ai/client.py",
+        "code": "track_ai_event('ai_request_completed', {\n    'request_id': request_id,\n    'user_id': user_id,\n    'customer_id': customer_id,\n    'model': response.model,\n    'provider': 'openai' if 'gpt' in response.model else 'anthropic',\n    'tokens_input': response.usage.prompt_tokens,\n    'tokens_output': response.usage.completion_tokens,\n    'tokens_total': response.usage.total_tokens,\n    'latency_ms': latency_ms,\n    'feature': feature,\n    'success': True,\n    'timestamp': datetime.utcnow().isoformat()\n})"
+      }
+    },
+    {
+      "event_name": "ai_cost_incurred",
+      "event_category": "ai_usage",
+      "description": "Emitted after calculating cost for an AI request",
+      "trigger": "Immediately after ai_request_completed",
+      "priority": "high",
+      "required_fields": [
+        {
+          "field_name": "request_id",
+          "field_type": "string",
+          "description": "Correlates with ai_request_completed",
+          "example": "req_abc123-def456"
+        },
+        {
+          "field_name": "user_id",
+          "field_type": "string",
+          "description": "User who incurred the cost",
+          "example": "usr_123"
+        },
+        {
+          "field_name": "customer_id",
+          "field_type": "string",
+          "description": "Organization for cost attribution",
+          "example": "cus_ABC123"
+        },
+        {
+          "field_name": "model",
+          "field_type": "string",
+          "description": "AI model used",
+          "example": "gpt-4"
+        },
+        {
+          "field_name": "provider",
+          "field_type": "string",
+          "description": "AI provider",
+          "example": "openai"
+        },
+        {
+          "field_name": "cost_usd",
+          "field_type": "decimal",
+          "description": "Cost in USD (6 decimal places)",
+          "example": 0.105000,
+          "source": "Calculated from token pricing",
+          "validation": "Must be >= 0, 6 decimal precision"
+        },
+        {
+          "field_name": "tokens_total",
+          "field_type": "integer",
+          "description": "Total tokens for cost calculation",
+          "example": 2300
+        },
+        {
+          "field_name": "timestamp",
+          "field_type": "datetime",
+          "description": "Event timestamp",
+          "example": "2026-01-23T10:00:00Z"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field_name": "feature",
+          "field_type": "string",
+          "description": "Feature for cost attribution",
+          "example": "natural_language_query"
+        },
+        {
+          "field_name": "cost_category",
+          "field_type": "string",
+          "description": "Cost categorization",
+          "example": "inference",
+          "enum": ["inference", "embedding", "fine_tuning", "training"]
+        },
+        {
+          "field_name": "pricing_tier",
+          "field_type": "string",
+          "description": "Pricing tier applied",
+          "example": "standard"
+        }
+      ],
+      "enables_metrics": [
+        "AI Cost",
+        "AI Cost per User",
+        "AI Cost per Request",
+        "AI Cost by Model",
+        "AI Cost by Feature"
+      ],
+      "cost_calculation": {
+        "description": "Cost calculated based on model pricing",
+        "models": {
+          "gpt-4": {
+            "input_cost_per_1k": 0.03,
+            "output_cost_per_1k": 0.06,
+            "formula": "(tokens_input/1000 * 0.03) + (tokens_output/1000 * 0.06)"
+          },
+          "gpt-4-turbo": {
+            "input_cost_per_1k": 0.01,
+            "output_cost_per_1k": 0.03
+          },
+          "gpt-3.5-turbo": {
+            "input_cost_per_1k": 0.0005,
+            "output_cost_per_1k": 0.0015
+          },
+          "claude-sonnet-4": {
+            "input_cost_per_1k": 0.003,
+            "output_cost_per_1k": 0.015
+          },
+          "claude-haiku": {
+            "input_cost_per_1k": 0.00025,
+            "output_cost_per_1k": 0.00125
+          }
+        }
+      },
+      "implementation_example": {
+        "framework": "python",
+        "location": "ai/cost_calculator.py",
+        "code": "def calculate_cost(model: str, tokens_input: int, tokens_output: int) -> Decimal:\n    pricing = MODEL_PRICING.get(model, DEFAULT_PRICING)\n    input_cost = Decimal(tokens_input) / 1000 * pricing['input']\n    output_cost = Decimal(tokens_output) / 1000 * pricing['output']\n    return (input_cost + output_cost).quantize(Decimal('0.000001'))\n\ntrack_ai_event('ai_cost_incurred', {\n    'request_id': request_id,\n    'user_id': user_id,\n    'customer_id': customer_id,\n    'model': model,\n    'provider': provider,\n    'cost_usd': float(calculate_cost(model, tokens_input, tokens_output)),\n    'tokens_total': tokens_total,\n    'feature': feature,\n    'timestamp': datetime.utcnow().isoformat()\n})"
+      }
+    },
+    {
+      "event_name": "ai_feature_used",
+      "event_category": "ai_usage",
+      "description": "Emitted when user interacts with an AI-powered feature",
+      "trigger": "User action on AI feature (may not result in API call)",
+      "priority": "medium",
+      "required_fields": [
+        {
+          "field_name": "user_id",
+          "field_type": "string",
+          "description": "User who used the feature",
+          "example": "usr_123"
+        },
+        {
+          "field_name": "customer_id",
+          "field_type": "string",
+          "description": "Organization for attribution",
+          "example": "cus_ABC123"
+        },
+        {
+          "field_name": "feature",
+          "field_type": "string",
+          "description": "AI feature used",
+          "example": "natural_language_query",
+          "validation": "Must be valid feature name"
+        },
+        {
+          "field_name": "action",
+          "field_type": "string",
+          "description": "Action taken",
+          "example": "query_submitted",
+          "validation": "Must be valid action for feature"
+        },
+        {
+          "field_name": "timestamp",
+          "field_type": "datetime",
+          "description": "Event timestamp",
+          "example": "2026-01-23T10:00:00Z"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field_name": "query_type",
+          "field_type": "string",
+          "description": "Type of query (for NL queries)",
+          "example": "aggregation"
+        },
+        {
+          "field_name": "result_count",
+          "field_type": "integer",
+          "description": "Number of results returned",
+          "example": 15
+        },
+        {
+          "field_name": "user_rating",
+          "field_type": "integer",
+          "description": "User rating of result (1-5)",
+          "example": 4
+        },
+        {
+          "field_name": "session_id",
+          "field_type": "string",
+          "description": "Session identifier",
+          "example": "sess_xyz789"
+        }
+      ],
+      "features_and_actions": {
+        "natural_language_query": [
+          "query_submitted",
+          "result_viewed",
+          "result_exported",
+          "query_refined"
+        ],
+        "insight_generation": [
+          "insights_requested",
+          "insight_viewed",
+          "insight_dismissed",
+          "insight_acted_on"
+        ],
+        "report_builder": [
+          "report_started",
+          "ai_suggestion_used",
+          "report_completed",
+          "report_exported"
+        ],
+        "anomaly_detection": [
+          "anomaly_detected",
+          "anomaly_viewed",
+          "anomaly_acknowledged",
+          "anomaly_investigated"
+        ],
+        "chat_assistant": [
+          "conversation_started",
+          "message_sent",
+          "conversation_ended",
+          "feedback_given"
+        ]
+      },
+      "enables_metrics": [
+        "AI Adoption Rate",
+        "AI Feature Usage",
+        "AI User Engagement",
+        "AI Feature Satisfaction"
+      ]
+    }
+  ]
+}

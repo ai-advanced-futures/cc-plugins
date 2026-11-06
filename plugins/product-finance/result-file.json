@@ -1,0 +1,405 @@
+{
+  "schema": "plugin-result-adoption/1",
+  "plugin": "product-finance",
+  "commands": {
+    "product-finance:discover": {
+      "writer": "agents/market-analyzer.md"
+    },
+    "product-finance:feature-roi": {
+      "writer": "agents/roi-calculator.md"
+    },
+    "product-finance:unit-economics": {
+      "writer": "agents/financial-analyst.md"
+    },
+    "product-finance:ai-economics": {
+      "writer": "agents/ai-economist.md"
+    },
+    "product-finance:cost-coverage": {
+      "writer": "agents/cost-coverage-agent.md"
+    }
+  },
+  "defaults": [
+    {
+      "command": [
+        "product-finance:discover"
+      ],
+      "input": "som_timeframe_years",
+      "marker": "som_timeframe_years = 3",
+      "file": "commands/discover.md",
+      "anchor": "- **Default:** 3 years"
+    },
+    {
+      "command": [
+        "product-finance:discover"
+      ],
+      "input": "sdr_annual_cost",
+      "marker": "sdr_annual_cost = 100000",
+      "file": "commands/discover.md",
+      "anchor": "- **Default:** $100,000"
+    },
+    {
+      "command": [
+        "product-finance:discover"
+      ],
+      "input": "ae_annual_cost",
+      "marker": "ae_annual_cost = 200000",
+      "file": "commands/discover.md",
+      "anchor": "- **Default:** $200,000"
+    },
+    {
+      "command": [
+        "product-finance:discover"
+      ],
+      "input": "enterprise_ae_annual_cost",
+      "marker": "enterprise_ae_annual_cost = 300000",
+      "file": "commands/discover.md",
+      "anchor": "- **Default:** $300,000"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "urgency",
+      "marker": "urgency = medium",
+      "file": "commands/feature-roi.md",
+      "anchor": "- **Default:** `medium`, when nobody gives one"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "build_method",
+      "marker": "build_method = time_based",
+      "file": "commands/feature-roi.md",
+      "anchor": "- **Default:** `time_based`, when nobody gives a method"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "build_weeks",
+      "marker": "build_weeks = 4",
+      "file": "commands/feature-roi.md",
+      "anchor": "- **Default:** 4 weeks, when nobody gives a number"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "engineers",
+      "marker": "engineers = 1",
+      "file": "commands/feature-roi.md",
+      "anchor": "- **Default:** 1 engineer, when nobody gives a number"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "engineer_monthly_cost",
+      "marker": "engineer_monthly_cost = 16667",
+      "file": "commands/feature-roi.md",
+      "anchor": "else $16,667 a month ($200,000 a year)"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "non_engineering_resources",
+      "marker": "non_engineering_resources = false",
+      "file": "commands/feature-roi.md",
+      "anchor": "\"Any non-engineering resources needed?\" (yes/no; default: no)"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "ongoing_monthly_cost",
+      "marker": "ongoing_monthly_cost = 15% of build cost a year, by month",
+      "file": "commands/feature-roi.md",
+      "anchor": "- **Default (no answer):** maintenance only, at 15% of build cost a year, by month"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "drives_new_revenue",
+      "marker": "drives_new_revenue = false",
+      "file": "commands/feature-roi.md",
+      "anchor": "\"Will this feature drive new customer revenue?\" (yes/no; default: no)"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "drives_expansion",
+      "marker": "drives_expansion = false",
+      "file": "commands/feature-roi.md",
+      "anchor": "\"Will this feature drive expansion revenue from existing customers?\" (yes/no; default: no)"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "improves_retention",
+      "marker": "improves_retention = false",
+      "file": "commands/feature-roi.md",
+      "anchor": "\"Will this feature improve customer retention?\" (yes/no; default: no)"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "enables_premium",
+      "marker": "enables_premium = false",
+      "file": "commands/feature-roi.md",
+      "anchor": "\"Will this feature enable premium pricing?\" (yes/no; default: no)"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "ramp_months",
+      "marker": "ramp_months = 3",
+      "file": "commands/feature-roi.md",
+      "anchor": "- **Default:** 3 months"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "discount_rate",
+      "marker": "discount_rate = 0.15",
+      "file": "commands/feature-roi.md",
+      "anchor": "- **Default:** 15%"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "discount_rate",
+      "marker": "discount_rate = 0.15",
+      "file": "agents/roi-calculator.md",
+      "anchor": "discount_rate = user_selection or 0.15"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "analysis_horizon_months",
+      "marker": "analysis_horizon_months = 36",
+      "file": "commands/feature-roi.md",
+      "anchor": "- **Default:** 36 months"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "target_payback_months",
+      "marker": "target_payback_months = 12",
+      "file": "commands/feature-roi.md",
+      "anchor": "- **Default:** 12 months"
+    },
+    {
+      "command": [
+        "product-finance:feature-roi"
+      ],
+      "input": "minimum_roi_percent",
+      "marker": "minimum_roi_percent = 100",
+      "file": "commands/feature-roi.md",
+      "anchor": "- **Default:** 100% (2x return)"
+    },
+    {
+      "command": [
+        "product-finance:unit-economics"
+      ],
+      "input": "data_type",
+      "marker": "data_type = actual",
+      "file": "commands/unit-economics.md",
+      "anchor": "- **Default:** `actual`, when nobody says which"
+    },
+    {
+      "command": [
+        "product-finance:unit-economics"
+      ],
+      "input": "target_payback_months",
+      "marker": "target_payback_months = 12",
+      "file": "commands/unit-economics.md",
+      "anchor": "- **Default:** 12 months"
+    },
+    {
+      "command": [
+        "product-finance:ai-economics"
+      ],
+      "input": "analysis_period",
+      "marker": "analysis_period = 1_month",
+      "file": "commands/ai-economics.md",
+      "anchor": "- `1_month` - 1 month (default)"
+    },
+    {
+      "command": [
+        "product-finance:ai-economics"
+      ],
+      "input": "ai_engineer_annual_cost",
+      "marker": "ai_engineer_annual_cost = 220000",
+      "file": "commands/ai-economics.md",
+      "anchor": "- **Default:** $220,000"
+    }
+  ],
+  "not_defaults": [
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "_comment",
+      "why": "a note to the person, not an input"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "enabled",
+      "why": "the switch for setup's auto mode, not an input; a plugin run takes its automation from the invocation block"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "version",
+      "why": "the template's own version label, not an input"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.pricing_model",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.price_per_seat_monthly",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.annual_discount_percent",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.avg_seats_per_customer",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.hosting_cost_per_user",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.ai_cost_per_user",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.third_party_cost_per_user",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.support_cost_per_user",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.rd_team_size",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.rd_avg_fully_loaded_annual",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.has_sales_team",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.monthly_marketing_budget",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.estimated_cac",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.monthly_ga_overhead",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.product_status",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.current_mrr",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.current_arr",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.total_paying_customers",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.new_customers_last_month",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.churned_customers_last_month",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.market_sizing_source",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.target_rule_of_40",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.target_ltv_cac_ratio",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.target_cac_payback_months",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.target_gross_margin_percent",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "anchor": "question_keys.target_magic_number",
+      "why": "not read in a plugin run; in a person run the writer marks each assumptions.json value it used as a default"
+    }
+  ],
+  "scan_also": [
+    {
+      "file": "commands/setup.md",
+      "why": "setup writes the assumptions.json and auto-config.json that a person's run of each adopting command reads"
+    },
+    {
+      "file": "templates/auto-config.template.json",
+      "why": "setup's auto mode answers, which reach a person's run of each adopting command through assumptions.json"
+    }
+  ]
+}

@@ -1,0 +1,717 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI Usage Event Schemas",
+  "description": "Event schemas for AI feature usage tracking and cost analysis",
+  "type": "object",
+  "properties": {
+    "ai_request_completed": {
+      "type": "object",
+      "description": "Emitted when an AI API request completes successfully",
+      "properties": {
+        "event": {
+          "type": "string",
+          "const": "ai_request_completed",
+          "description": "Event name"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0.0",
+          "description": "Event schema version"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event occurred"
+        },
+        "user_id": {
+          "type": "string",
+          "description": "Unique user identifier"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer/organization identifier"
+        },
+        "request_id": {
+          "type": "string",
+          "description": "Unique request identifier"
+        },
+        "session_id": {
+          "type": "string",
+          "description": "Session identifier for grouping related requests"
+        },
+        "feature": {
+          "type": "string",
+          "description": "Feature using AI",
+          "examples": ["content_generation", "code_completion", "analysis", "summarization", "translation"]
+        },
+        "model": {
+          "type": "string",
+          "description": "AI model used",
+          "examples": ["claude-sonnet-4.5", "claude-opus-4.5", "gpt-4", "gpt-3.5-turbo"]
+        },
+        "provider": {
+          "type": "string",
+          "description": "AI provider",
+          "examples": ["anthropic", "openai", "google", "azure", "aws"]
+        },
+        "tokens": {
+          "type": "object",
+          "description": "Token usage breakdown",
+          "properties": {
+            "input": {
+              "type": "integer",
+              "description": "Input tokens consumed",
+              "minimum": 0
+            },
+            "output": {
+              "type": "integer",
+              "description": "Output tokens generated",
+              "minimum": 0
+            },
+            "total": {
+              "type": "integer",
+              "description": "Total tokens (input + output)",
+              "minimum": 0
+            },
+            "cached": {
+              "type": "integer",
+              "description": "Cached tokens (if applicable)",
+              "minimum": 0
+            }
+          },
+          "required": ["input", "output", "total"]
+        },
+        "cost": {
+          "type": "number",
+          "description": "Cost of this request in USD",
+          "minimum": 0
+        },
+        "cost_breakdown": {
+          "type": "object",
+          "description": "Detailed cost breakdown",
+          "properties": {
+            "input_cost": {
+              "type": "number",
+              "description": "Cost for input tokens",
+              "minimum": 0
+            },
+            "output_cost": {
+              "type": "number",
+              "description": "Cost for output tokens",
+              "minimum": 0
+            },
+            "cache_savings": {
+              "type": "number",
+              "description": "Cost saved from caching",
+              "minimum": 0
+            }
+          }
+        },
+        "latency_ms": {
+          "type": "integer",
+          "description": "Request latency in milliseconds",
+          "minimum": 0
+        },
+        "time_to_first_token_ms": {
+          "type": "integer",
+          "description": "Time to first token in milliseconds (for streaming)",
+          "minimum": 0
+        },
+        "status": {
+          "type": "string",
+          "description": "Request completion status",
+          "enum": ["success", "partial_success", "cached"]
+        },
+        "cache_hit": {
+          "type": "boolean",
+          "description": "Whether response was served from cache",
+          "default": false
+        },
+        "user_plan": {
+          "type": "string",
+          "description": "User's subscription plan",
+          "examples": ["free", "professional", "enterprise"]
+        },
+        "request_context": {
+          "type": "object",
+          "description": "Additional context about the request",
+          "properties": {
+            "prompt_length": {
+              "type": "integer",
+              "description": "Length of user prompt in characters"
+            },
+            "response_length": {
+              "type": "integer",
+              "description": "Length of AI response in characters"
+            },
+            "temperature": {
+              "type": "number",
+              "description": "Model temperature setting"
+            },
+            "max_tokens": {
+              "type": "integer",
+              "description": "Maximum tokens requested"
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context-specific data",
+          "additionalProperties": true
+        }
+      },
+      "required": ["event", "version", "timestamp", "user_id", "customer_id", "request_id", "feature", "model", "provider", "tokens", "cost", "latency_ms", "status"]
+    },
+    "ai_feature_used": {
+      "type": "object",
+      "description": "Emitted when a user engages with an AI-powered feature",
+      "properties": {
+        "event": {
+          "type": "string",
+          "const": "ai_feature_used",
+          "description": "Event name"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0.0",
+          "description": "Event schema version"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event occurred"
+        },
+        "user_id": {
+          "type": "string",
+          "description": "Unique user identifier"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer/organization identifier"
+        },
+        "session_id": {
+          "type": "string",
+          "description": "Session identifier"
+        },
+        "feature": {
+          "type": "string",
+          "description": "AI feature used",
+          "examples": ["smart_compose", "code_assistant", "data_analysis", "content_optimizer", "ai_search"]
+        },
+        "feature_category": {
+          "type": "string",
+          "description": "Category of AI feature",
+          "enum": ["productivity", "creativity", "analysis", "automation", "personalization"]
+        },
+        "interaction_type": {
+          "type": "string",
+          "description": "Type of interaction",
+          "enum": ["generation", "completion", "suggestion", "analysis", "transformation", "search"]
+        },
+        "user_plan": {
+          "type": "string",
+          "description": "User's subscription plan",
+          "examples": ["free", "professional", "enterprise"]
+        },
+        "ai_enabled_plan": {
+          "type": "boolean",
+          "description": "Whether user's plan includes AI features as premium",
+          "default": false
+        },
+        "usage_count_today": {
+          "type": "integer",
+          "description": "Number of times feature used today by this user",
+          "minimum": 1
+        },
+        "usage_limit": {
+          "type": "integer",
+          "description": "Usage limit for this feature (if applicable)",
+          "minimum": 0
+        },
+        "limit_approaching": {
+          "type": "boolean",
+          "description": "Whether user is approaching usage limit",
+          "default": false
+        },
+        "engagement_score": {
+          "type": "number",
+          "description": "Engagement quality score (0-100)",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "outcome": {
+          "type": "string",
+          "description": "Outcome of feature usage",
+          "enum": ["accepted", "modified", "rejected", "partial_accept"]
+        },
+        "session_duration_seconds": {
+          "type": "integer",
+          "description": "Duration of feature interaction in seconds",
+          "minimum": 0
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context-specific data",
+          "additionalProperties": true
+        }
+      },
+      "required": ["event", "version", "timestamp", "user_id", "customer_id", "feature", "feature_category", "interaction_type", "user_plan"]
+    },
+    "ai_error_occurred": {
+      "type": "object",
+      "description": "Emitted when an AI request fails or encounters an error",
+      "properties": {
+        "event": {
+          "type": "string",
+          "const": "ai_error_occurred",
+          "description": "Event name"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0.0",
+          "description": "Event schema version"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event occurred"
+        },
+        "user_id": {
+          "type": "string",
+          "description": "Unique user identifier"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer/organization identifier"
+        },
+        "request_id": {
+          "type": "string",
+          "description": "Unique request identifier"
+        },
+        "feature": {
+          "type": "string",
+          "description": "Feature that encountered error"
+        },
+        "model": {
+          "type": "string",
+          "description": "AI model being used"
+        },
+        "provider": {
+          "type": "string",
+          "description": "AI provider",
+          "examples": ["anthropic", "openai", "google", "azure", "aws"]
+        },
+        "error_type": {
+          "type": "string",
+          "description": "Type of error",
+          "enum": ["rate_limit", "timeout", "invalid_request", "model_error", "provider_error", "content_filter", "quota_exceeded", "network_error", "authentication_error"]
+        },
+        "error_code": {
+          "type": "string",
+          "description": "Specific error code from provider"
+        },
+        "error_message": {
+          "type": "string",
+          "description": "Error message"
+        },
+        "retry_count": {
+          "type": "integer",
+          "description": "Number of retry attempts made",
+          "minimum": 0
+        },
+        "retry_successful": {
+          "type": "boolean",
+          "description": "Whether retry eventually succeeded",
+          "default": false
+        },
+        "tokens_consumed_before_error": {
+          "type": "integer",
+          "description": "Tokens consumed before error (if applicable)",
+          "minimum": 0
+        },
+        "cost_incurred": {
+          "type": "number",
+          "description": "Cost incurred despite error",
+          "minimum": 0
+        },
+        "latency_ms": {
+          "type": "integer",
+          "description": "Time before error occurred in milliseconds",
+          "minimum": 0
+        },
+        "user_impact": {
+          "type": "string",
+          "description": "Impact on user experience",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "fallback_used": {
+          "type": "boolean",
+          "description": "Whether fallback mechanism was used",
+          "default": false
+        },
+        "fallback_type": {
+          "type": "string",
+          "description": "Type of fallback if used",
+          "examples": ["alternative_model", "cached_response", "simplified_response", "manual_process"]
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context-specific data",
+          "additionalProperties": true
+        }
+      },
+      "required": ["event", "version", "timestamp", "user_id", "customer_id", "request_id", "feature", "model", "provider", "error_type", "error_message"]
+    },
+    "ai_cost_incurred": {
+      "type": "object",
+      "description": "Aggregated cost event for billing and financial tracking",
+      "properties": {
+        "event": {
+          "type": "string",
+          "const": "ai_cost_incurred",
+          "description": "Event name"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0.0",
+          "description": "Event schema version"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event occurred"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer/organization identifier"
+        },
+        "billing_period_start": {
+          "type": "string",
+          "format": "date",
+          "description": "Start of billing period"
+        },
+        "billing_period_end": {
+          "type": "string",
+          "format": "date",
+          "description": "End of billing period"
+        },
+        "aggregation_period": {
+          "type": "string",
+          "description": "Time period for aggregation",
+          "enum": ["hourly", "daily", "weekly", "monthly"]
+        },
+        "total_cost": {
+          "type": "number",
+          "description": "Total AI cost for this period",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code (ISO 4217)",
+          "default": "USD"
+        },
+        "cost_by_model": {
+          "type": "array",
+          "description": "Cost breakdown by AI model",
+          "items": {
+            "type": "object",
+            "properties": {
+              "model": {
+                "type": "string",
+                "description": "AI model name"
+              },
+              "provider": {
+                "type": "string",
+                "description": "AI provider"
+              },
+              "request_count": {
+                "type": "integer",
+                "description": "Number of requests",
+                "minimum": 0
+              },
+              "total_tokens": {
+                "type": "integer",
+                "description": "Total tokens consumed",
+                "minimum": 0
+              },
+              "cost": {
+                "type": "number",
+                "description": "Cost for this model",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "cost_by_feature": {
+          "type": "array",
+          "description": "Cost breakdown by feature",
+          "items": {
+            "type": "object",
+            "properties": {
+              "feature": {
+                "type": "string",
+                "description": "Feature name"
+              },
+              "request_count": {
+                "type": "integer",
+                "description": "Number of requests",
+                "minimum": 0
+              },
+              "cost": {
+                "type": "number",
+                "description": "Cost for this feature",
+                "minimum": 0
+              },
+              "cost_percentage": {
+                "type": "number",
+                "description": "Percentage of total AI cost",
+                "minimum": 0,
+                "maximum": 100
+              }
+            }
+          }
+        },
+        "total_requests": {
+          "type": "integer",
+          "description": "Total number of AI requests",
+          "minimum": 0
+        },
+        "total_tokens": {
+          "type": "integer",
+          "description": "Total tokens consumed",
+          "minimum": 0
+        },
+        "unique_users": {
+          "type": "integer",
+          "description": "Number of unique users making AI requests",
+          "minimum": 0
+        },
+        "average_cost_per_request": {
+          "type": "number",
+          "description": "Average cost per request",
+          "minimum": 0
+        },
+        "average_cost_per_user": {
+          "type": "number",
+          "description": "Average cost per user",
+          "minimum": 0
+        },
+        "cache_savings": {
+          "type": "number",
+          "description": "Cost saved through caching",
+          "minimum": 0
+        },
+        "ai_cost_as_pct_of_revenue": {
+          "type": "number",
+          "description": "AI cost as percentage of customer's revenue contribution",
+          "minimum": 0
+        },
+        "customer_mrr": {
+          "type": "number",
+          "description": "Customer's MRR for context",
+          "minimum": 0
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context-specific data",
+          "additionalProperties": true
+        }
+      },
+      "required": ["event", "version", "timestamp", "customer_id", "billing_period_start", "billing_period_end", "total_cost", "currency", "total_requests"]
+    },
+    "ai_value_delivered": {
+      "type": "object",
+      "description": "Emitted when measurable value is delivered through AI features",
+      "properties": {
+        "event": {
+          "type": "string",
+          "const": "ai_value_delivered",
+          "description": "Event name"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0.0",
+          "description": "Event schema version"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event occurred"
+        },
+        "user_id": {
+          "type": "string",
+          "description": "Unique user identifier"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer/organization identifier"
+        },
+        "feature": {
+          "type": "string",
+          "description": "AI feature that delivered value"
+        },
+        "value_type": {
+          "type": "string",
+          "description": "Type of value delivered",
+          "enum": ["time_saved", "revenue_generated", "cost_reduced", "quality_improved", "task_completed", "insight_generated"]
+        },
+        "value_metric": {
+          "type": "object",
+          "description": "Quantified value delivered",
+          "properties": {
+            "time_saved_minutes": {
+              "type": "number",
+              "description": "Time saved in minutes",
+              "minimum": 0
+            },
+            "time_saved_value_usd": {
+              "type": "number",
+              "description": "Monetary value of time saved",
+              "minimum": 0
+            },
+            "revenue_generated_usd": {
+              "type": "number",
+              "description": "Revenue directly attributable to AI",
+              "minimum": 0
+            },
+            "cost_reduced_usd": {
+              "type": "number",
+              "description": "Cost reduction from AI automation",
+              "minimum": 0
+            },
+            "tasks_completed": {
+              "type": "integer",
+              "description": "Number of tasks completed",
+              "minimum": 0
+            },
+            "quality_score": {
+              "type": "number",
+              "description": "Quality improvement score (0-100)",
+              "minimum": 0,
+              "maximum": 100
+            }
+          }
+        },
+        "user_satisfaction": {
+          "type": "number",
+          "description": "User satisfaction score (0-100)",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "productivity_multiplier": {
+          "type": "number",
+          "description": "Productivity increase factor (e.g., 2.5x)",
+          "minimum": 1.0
+        },
+        "feature_adoption_stage": {
+          "type": "string",
+          "description": "User's adoption stage for this feature",
+          "enum": ["first_use", "learning", "proficient", "power_user"]
+        },
+        "value_attribution_confidence": {
+          "type": "string",
+          "description": "Confidence in value attribution",
+          "enum": ["low", "medium", "high"]
+        },
+        "comparison_baseline": {
+          "type": "string",
+          "description": "What value is compared against",
+          "examples": ["manual_process", "previous_tool", "no_action", "alternative_method"]
+        },
+        "ai_cost_for_value": {
+          "type": "number",
+          "description": "AI cost incurred to deliver this value",
+          "minimum": 0
+        },
+        "roi": {
+          "type": "number",
+          "description": "ROI of this specific AI interaction (value/cost)",
+          "minimum": 0
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context-specific data",
+          "additionalProperties": true
+        }
+      },
+      "required": ["event", "version", "timestamp", "user_id", "customer_id", "feature", "value_type", "value_metric"]
+    }
+  },
+  "definitions": {
+    "ai_models": {
+      "type": "string",
+      "description": "Common AI model identifiers",
+      "enum": [
+        "claude-opus-4.5",
+        "claude-sonnet-4.5",
+        "claude-haiku-4",
+        "gpt-4",
+        "gpt-4-turbo",
+        "gpt-3.5-turbo",
+        "gemini-pro",
+        "gemini-ultra",
+        "llama-3-70b",
+        "mixtral-8x7b"
+      ]
+    },
+    "ai_providers": {
+      "type": "string",
+      "description": "AI service providers",
+      "enum": ["anthropic", "openai", "google", "azure", "aws", "huggingface", "cohere"]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "created_at": "2026-01-22",
+    "description": "Standard event schemas for AI usage tracking and ROI analysis. These events enable comprehensive cost tracking, value attribution, and ROI calculation for AI-powered features.",
+    "usage_notes": [
+      "Track every AI API request for accurate cost accounting",
+      "Emit ai_feature_used for high-level feature engagement tracking",
+      "Use ai_error_occurred to monitor AI reliability and costs from failures",
+      "Aggregate costs daily/hourly using ai_cost_incurred for financial reporting",
+      "Capture value metrics in ai_value_delivered for ROI justification",
+      "All costs should be in USD for consistency",
+      "Timestamps should be in ISO 8601 format with timezone",
+      "Link events using request_id and session_id for analysis"
+    ],
+    "pricing_notes": {
+      "anthropic_claude_sonnet_4_5": {
+        "input_cost_per_1k_tokens": 0.003,
+        "output_cost_per_1k_tokens": 0.015,
+        "cached_input_cost_per_1k_tokens": 0.0003
+      },
+      "anthropic_claude_opus_4_5": {
+        "input_cost_per_1k_tokens": 0.015,
+        "output_cost_per_1k_tokens": 0.075,
+        "cached_input_cost_per_1k_tokens": 0.0015
+      },
+      "note": "Pricing is example only. Actual pricing varies by provider and model. Update based on current rates."
+    },
+    "enabled_metrics": [
+      "AI Cost per Request",
+      "AI Cost per User",
+      "AI Cost as % of Revenue",
+      "AI Cost by Model",
+      "AI Cost by Feature",
+      "Total Token Consumption",
+      "Cache Hit Rate",
+      "Cache Savings",
+      "Average Latency",
+      "Error Rate by Type",
+      "AI Feature Adoption Rate",
+      "AI Value Generated (Time Saved)",
+      "AI Value Generated (Revenue)",
+      "AI ROI (Value / Cost)",
+      "Productivity Multiplier",
+      "User Satisfaction with AI",
+      "AI-Enabled vs. Non-AI Revenue"
+    ],
+    "integration_recommendations": [
+      "Send ai_request_completed events to data warehouse for cost analysis",
+      "Use ai_feature_used events in product analytics (Amplitude, Mixpanel)",
+      "Alert on ai_error_occurred for high error rates",
+      "Generate daily ai_cost_incurred summaries for finance dashboards",
+      "Track ai_value_delivered for customer success and expansion opportunities"
+    ]
+  }
+}

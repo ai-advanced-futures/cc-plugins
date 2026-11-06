@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/ai-advanced-futures/cc-plugins/plugins/product-finance/schemas/agentic-pricing/agentic-pricing-diagnosis.schema.json",
+  "title": "Agentic Pricing Diagnosis",
+  "type": "object",
+  "required": [
+    "engagement_id", "produced_at", "schema_version", "portco_arr_band",
+    "layer_classification", "archetype", "bounded_vs_unbounded", "terminal_node",
+    "value_metric_rationale", "recommended_pattern_ids", "confidence", "audience"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "engagement_id": {"type": "string", "format": "uuid"},
+    "produced_at": {"type": "string", "format": "date-time"},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "portco_arr_band": {"type": "string", "enum": ["<50M", "50-100M", "100-200M", "200-500M", ">500M"]},
+    "layer_classification": {"type": "string", "enum": ["foundation", "infrastructure", "application", "vertical_labor_anchor"]},
+    "archetype": {"type": "string", "enum": ["support_agent", "sales_marketing_agent", "vertical_pro_services_agent", "knowledge_horizontal_copilot", "autonomous_workflow_agent", "developer_tool"]},
+    "bounded_vs_unbounded": {"type": "string", "enum": ["bounded", "unbounded"]},
+    "terminal_node": {"type": "string", "enum": ["A.2", "A.3", "B.2", "B.3", "C.2", "C.3", "D.2", "E.2", "E.3"], "description": "9 string members; D.2 is an alias for B.2 — see canonical_terminal_node() helper"},
+    "value_metric_rationale": {"type": "string", "maxLength": 500},
+    "recommended_pattern_ids": {"type": "array", "items": {"type": "string", "pattern": "^P[0-9]+(?:-Light)?$"}},
+    "confidence": {"type": "string", "enum": ["low", "medium", "high"]},
+    "audience": {"type": "string", "const": "mixed"}
+  }
+}

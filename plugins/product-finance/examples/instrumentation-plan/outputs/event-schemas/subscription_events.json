@@ -1,0 +1,436 @@
+{
+  "schema_version": "1.0.0",
+  "category": "subscription",
+  "description": "Event schemas for subscription lifecycle tracking",
+  "generated_at": "2026-01-23T10:00:00Z",
+  "events": [
+    {
+      "event_name": "subscription_created",
+      "event_category": "subscription",
+      "description": "Emitted when a new subscription is created and activated",
+      "trigger": "Stripe webhook: customer.subscription.created",
+      "priority": "critical",
+      "required_fields": [
+        {
+          "field_name": "customer_id",
+          "field_type": "string",
+          "description": "Unique customer/organization identifier",
+          "example": "cus_ABC123",
+          "source": "subscription.customer",
+          "validation": "Must exist in customers table"
+        },
+        {
+          "field_name": "subscription_id",
+          "field_type": "string",
+          "description": "Unique subscription identifier",
+          "example": "sub_XYZ789",
+          "source": "subscription.id",
+          "validation": "Must be unique"
+        },
+        {
+          "field_name": "plan",
+          "field_type": "string",
+          "description": "Plan/price identifier",
+          "example": "price_professional_monthly",
+          "source": "subscription.items.data[0].price.id",
+          "validation": "Must be valid plan ID"
+        },
+        {
+          "field_name": "mrr",
+          "field_type": "number",
+          "description": "Monthly recurring revenue in USD",
+          "example": 99.00,
+          "source": "subscription.items.data[0].price.unit_amount / 100",
+          "validation": "Must be >= 0"
+        },
+        {
+          "field_name": "billing_cycle",
+          "field_type": "string",
+          "description": "Billing interval",
+          "example": "month",
+          "source": "subscription.items.data[0].price.recurring.interval",
+          "validation": "Must be 'month' or 'year'"
+        },
+        {
+          "field_name": "start_date",
+          "field_type": "datetime",
+          "description": "Subscription start date (ISO 8601)",
+          "example": "2026-01-23T10:00:00Z",
+          "source": "subscription.start_date",
+          "validation": "Must be valid ISO 8601 datetime"
+        },
+        {
+          "field_name": "timestamp",
+          "field_type": "datetime",
+          "description": "Event timestamp (ISO 8601)",
+          "example": "2026-01-23T10:00:05Z",
+          "source": "Server timestamp",
+          "validation": "Must be valid ISO 8601 datetime"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field_name": "discount_pct",
+          "field_type": "number",
+          "description": "Applied discount percentage",
+          "example": 20
+        },
+        {
+          "field_name": "promo_code",
+          "field_type": "string",
+          "description": "Applied promo/coupon code",
+          "example": "LAUNCH20"
+        },
+        {
+          "field_name": "source_channel",
+          "field_type": "string",
+          "description": "Acquisition channel",
+          "example": "organic"
+        },
+        {
+          "field_name": "sales_rep_id",
+          "field_type": "string",
+          "description": "Sales representative ID",
+          "example": "emp_123"
+        },
+        {
+          "field_name": "trial_converted",
+          "field_type": "boolean",
+          "description": "Whether this converted from trial",
+          "example": true
+        }
+      ],
+      "enables_metrics": [
+        "MRR",
+        "ARR",
+        "Customer Count",
+        "New MRR",
+        "Trial Conversion Rate"
+      ],
+      "implementation_example": {
+        "framework": "django",
+        "location": "billing/webhooks.py",
+        "code": "track_financial_event('subscription_created', {\n    'customer_id': subscription['customer'],\n    'subscription_id': subscription['id'],\n    'plan': plan_item['price']['id'],\n    'mrr': plan_item['price']['unit_amount'] / 100,\n    'billing_cycle': plan_item['price']['recurring']['interval'],\n    'start_date': datetime.fromtimestamp(subscription['start_date']).isoformat(),\n    'timestamp': datetime.utcnow().isoformat()\n})"
+      }
+    },
+    {
+      "event_name": "subscription_upgraded",
+      "event_category": "subscription",
+      "description": "Emitted when a customer upgrades to a higher-priced plan",
+      "trigger": "Stripe webhook: customer.subscription.updated (when new price > old price)",
+      "priority": "critical",
+      "required_fields": [
+        {
+          "field_name": "customer_id",
+          "field_type": "string",
+          "description": "Unique customer identifier",
+          "example": "cus_ABC123"
+        },
+        {
+          "field_name": "subscription_id",
+          "field_type": "string",
+          "description": "Unique subscription identifier",
+          "example": "sub_XYZ789"
+        },
+        {
+          "field_name": "previous_plan",
+          "field_type": "string",
+          "description": "Previous plan identifier",
+          "example": "price_professional_monthly"
+        },
+        {
+          "field_name": "new_plan",
+          "field_type": "string",
+          "description": "New plan identifier",
+          "example": "price_business_monthly"
+        },
+        {
+          "field_name": "previous_mrr",
+          "field_type": "number",
+          "description": "MRR before upgrade",
+          "example": 99.00
+        },
+        {
+          "field_name": "new_mrr",
+          "field_type": "number",
+          "description": "MRR after upgrade",
+          "example": 199.00
+        },
+        {
+          "field_name": "mrr_change",
+          "field_type": "number",
+          "description": "Change in MRR (positive)",
+          "example": 100.00
+        },
+        {
+          "field_name": "timestamp",
+          "field_type": "datetime",
+          "description": "Event timestamp",
+          "example": "2026-01-23T10:00:00Z"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field_name": "upgrade_reason",
+          "field_type": "string",
+          "description": "Reason for upgrade",
+          "example": "needed_more_features"
+        },
+        {
+          "field_name": "triggered_by",
+          "field_type": "string",
+          "description": "What triggered the upgrade",
+          "example": "self_service"
+        }
+      ],
+      "enables_metrics": [
+        "Expansion MRR",
+        "NRR",
+        "Expansion Rate"
+      ]
+    },
+    {
+      "event_name": "subscription_downgraded",
+      "event_category": "subscription",
+      "description": "Emitted when a customer downgrades to a lower-priced plan",
+      "trigger": "Stripe webhook: customer.subscription.updated (when new price < old price)",
+      "priority": "critical",
+      "required_fields": [
+        {
+          "field_name": "customer_id",
+          "field_type": "string",
+          "description": "Unique customer identifier",
+          "example": "cus_ABC123"
+        },
+        {
+          "field_name": "subscription_id",
+          "field_type": "string",
+          "description": "Unique subscription identifier",
+          "example": "sub_XYZ789"
+        },
+        {
+          "field_name": "previous_plan",
+          "field_type": "string",
+          "description": "Previous plan identifier",
+          "example": "price_business_monthly"
+        },
+        {
+          "field_name": "new_plan",
+          "field_type": "string",
+          "description": "New plan identifier",
+          "example": "price_professional_monthly"
+        },
+        {
+          "field_name": "previous_mrr",
+          "field_type": "number",
+          "description": "MRR before downgrade",
+          "example": 199.00
+        },
+        {
+          "field_name": "new_mrr",
+          "field_type": "number",
+          "description": "MRR after downgrade",
+          "example": 99.00
+        },
+        {
+          "field_name": "mrr_change",
+          "field_type": "number",
+          "description": "Change in MRR (positive value representing loss)",
+          "example": 100.00
+        },
+        {
+          "field_name": "timestamp",
+          "field_type": "datetime",
+          "description": "Event timestamp",
+          "example": "2026-01-23T10:00:00Z"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field_name": "downgrade_reason",
+          "field_type": "string",
+          "description": "Reason for downgrade",
+          "example": "budget_constraints"
+        },
+        {
+          "field_name": "feedback",
+          "field_type": "string",
+          "description": "Customer feedback",
+          "example": "Not using advanced features"
+        }
+      ],
+      "enables_metrics": [
+        "Contraction MRR",
+        "NRR",
+        "Contraction Rate"
+      ]
+    },
+    {
+      "event_name": "subscription_cancelled",
+      "event_category": "subscription",
+      "description": "Emitted when a subscription is cancelled",
+      "trigger": "Stripe webhook: customer.subscription.deleted",
+      "priority": "critical",
+      "required_fields": [
+        {
+          "field_name": "customer_id",
+          "field_type": "string",
+          "description": "Unique customer identifier",
+          "example": "cus_ABC123"
+        },
+        {
+          "field_name": "subscription_id",
+          "field_type": "string",
+          "description": "Unique subscription identifier",
+          "example": "sub_XYZ789"
+        },
+        {
+          "field_name": "plan",
+          "field_type": "string",
+          "description": "Cancelled plan identifier",
+          "example": "price_professional_monthly"
+        },
+        {
+          "field_name": "mrr_lost",
+          "field_type": "number",
+          "description": "MRR lost from cancellation",
+          "example": 99.00
+        },
+        {
+          "field_name": "cancellation_date",
+          "field_type": "datetime",
+          "description": "When cancellation was requested",
+          "example": "2026-01-23T10:00:00Z"
+        },
+        {
+          "field_name": "effective_date",
+          "field_type": "datetime",
+          "description": "When subscription actually ends",
+          "example": "2026-02-23T10:00:00Z"
+        },
+        {
+          "field_name": "timestamp",
+          "field_type": "datetime",
+          "description": "Event timestamp",
+          "example": "2026-01-23T10:00:00Z"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field_name": "cancellation_reason",
+          "field_type": "string",
+          "description": "Primary cancellation reason",
+          "example": "too_expensive",
+          "enum": [
+            "too_expensive",
+            "not_using",
+            "missing_features",
+            "competitor",
+            "business_closed",
+            "other"
+          ]
+        },
+        {
+          "field_name": "feedback",
+          "field_type": "string",
+          "description": "Additional customer feedback",
+          "example": "Great product but budget cuts"
+        },
+        {
+          "field_name": "win_back_eligible",
+          "field_type": "boolean",
+          "description": "Whether customer is eligible for win-back",
+          "example": true
+        },
+        {
+          "field_name": "lifetime_value",
+          "field_type": "number",
+          "description": "Total revenue from this customer",
+          "example": 2376.00
+        }
+      ],
+      "enables_metrics": [
+        "Churn Rate",
+        "Churned MRR",
+        "NRR",
+        "GRR"
+      ]
+    },
+    {
+      "event_name": "subscription_renewed",
+      "event_category": "subscription",
+      "description": "Emitted when an annual subscription renews",
+      "trigger": "Stripe webhook: invoice.paid (for renewal invoice)",
+      "priority": "high",
+      "required_fields": [
+        {
+          "field_name": "customer_id",
+          "field_type": "string",
+          "description": "Unique customer identifier",
+          "example": "cus_ABC123"
+        },
+        {
+          "field_name": "subscription_id",
+          "field_type": "string",
+          "description": "Unique subscription identifier",
+          "example": "sub_XYZ789"
+        },
+        {
+          "field_name": "plan",
+          "field_type": "string",
+          "description": "Renewed plan identifier",
+          "example": "price_professional_annual"
+        },
+        {
+          "field_name": "mrr",
+          "field_type": "number",
+          "description": "Monthly recurring revenue",
+          "example": 99.00
+        },
+        {
+          "field_name": "renewal_date",
+          "field_type": "datetime",
+          "description": "Date of renewal",
+          "example": "2026-01-23T10:00:00Z"
+        },
+        {
+          "field_name": "next_renewal_date",
+          "field_type": "datetime",
+          "description": "Next scheduled renewal",
+          "example": "2027-01-23T10:00:00Z"
+        },
+        {
+          "field_name": "timestamp",
+          "field_type": "datetime",
+          "description": "Event timestamp",
+          "example": "2026-01-23T10:00:00Z"
+        }
+      ],
+      "optional_fields": [
+        {
+          "field_name": "renewal_discount",
+          "field_type": "number",
+          "description": "Discount applied to renewal",
+          "example": 10
+        },
+        {
+          "field_name": "auto_renewed",
+          "field_type": "boolean",
+          "description": "Whether renewal was automatic",
+          "example": true
+        },
+        {
+          "field_name": "renewal_amount",
+          "field_type": "number",
+          "description": "Total renewal amount",
+          "example": 1188.00
+        }
+      ],
+      "enables_metrics": [
+        "Renewal Rate",
+        "GRR",
+        "Annual Retention"
+      ]
+    }
+  ]
+}

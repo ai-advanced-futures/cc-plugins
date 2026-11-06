@@ -42,6 +42,7 @@ claude plugin install <name>@cc-plugins
 | `jtbd-market-discovery` | Find market opportunities with Jobs To Be Done and numbers. Ten phases lead from one job statement to ranked opportunities, customer segments and a validated price. Use discover, quick-validate and wtp-check. |
 | `pricing` | Find the right price for an AI product. Classify a feature, compute its price from willingness to pay and cost, design Good, Better, and Best packages, and audit a price. Use price, audit, package, and value-metric. |
 | `gtm` | Plan the go-to-market work of a product. Build the brand identity, the marketing plans, the sales playbooks, and the revenue funnel from the real abilities of the product. Check each claim against a five-tier truth scale. |
+| `product-finance` | Run financial analysis for a product team: market size, feature ROI, AI cost and ROI, unit economics, financial health, an instrumentation plan, a services model, and a cost-coverage readout. Use discover, setup, feature-roi, ai-economics, unit-economics, health-check, instrumentation, services-model, and cost-coverage. |
 
 ## Skills
 

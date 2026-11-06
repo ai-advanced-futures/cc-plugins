@@ -1,0 +1,490 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Financial Assumptions Schema",
+  "description": "Schema for capturing financial assumptions used in product finance analysis",
+  "type": "object",
+  "properties": {
+    "pricing": {
+      "type": "object",
+      "description": "Pricing model and tier definitions",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Primary pricing model type",
+          "enum": ["per_seat", "usage_based", "tiered", "freemium", "hybrid"]
+        },
+        "tiers": {
+          "type": "array",
+          "description": "Pricing tier definitions",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Tier name (e.g., 'Starter', 'Professional', 'Enterprise')"
+              },
+              "price_monthly": {
+                "type": "number",
+                "description": "Monthly price in USD"
+              },
+              "price_annual": {
+                "type": "number",
+                "description": "Annual price in USD (often discounted)"
+              },
+              "seats_included": {
+                "type": "integer",
+                "description": "Number of seats included in base price"
+              },
+              "price_per_additional_seat": {
+                "type": "number",
+                "description": "Price per additional seat beyond base"
+              },
+              "usage_limits": {
+                "type": "object",
+                "description": "Usage limits for this tier",
+                "additionalProperties": true
+              },
+              "features": {
+                "type": "array",
+                "description": "Features included in this tier",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["name", "price_monthly"]
+          }
+        },
+        "usage_pricing": {
+          "type": "object",
+          "description": "Usage-based pricing components",
+          "properties": {
+            "unit": {
+              "type": "string",
+              "description": "Unit of measurement (e.g., 'API call', 'GB', 'transaction')"
+            },
+            "price_per_unit": {
+              "type": "number",
+              "description": "Price per unit in USD"
+            },
+            "included_units": {
+              "type": "integer",
+              "description": "Number of units included in base subscription"
+            },
+            "volume_discounts": {
+              "type": "array",
+              "description": "Volume-based pricing tiers",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "from_units": {
+                    "type": "integer"
+                  },
+                  "to_units": {
+                    "type": "integer"
+                  },
+                  "price_per_unit": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "discounts": {
+          "type": "object",
+          "description": "Standard discount structures",
+          "properties": {
+            "annual_discount_pct": {
+              "type": "number",
+              "description": "Discount percentage for annual vs monthly billing"
+            },
+            "enterprise_discount_pct": {
+              "type": "number",
+              "description": "Typical discount for enterprise deals"
+            },
+            "promotional_discount_pct": {
+              "type": "number",
+              "description": "Current promotional discount"
+            }
+          }
+        }
+      },
+      "required": ["model"]
+    },
+    "costs": {
+      "type": "object",
+      "description": "Cost structure assumptions",
+      "properties": {
+        "cogs": {
+          "type": "object",
+          "description": "Cost of Goods Sold (direct costs)",
+          "properties": {
+            "hosting_per_user_monthly": {
+              "type": "number",
+              "description": "Infrastructure cost per user per month"
+            },
+            "ai_cost_per_user_monthly": {
+              "type": "number",
+              "description": "AI/LLM cost per user per month"
+            },
+            "third_party_services_per_user_monthly": {
+              "type": "number",
+              "description": "Third-party API/service costs per user per month"
+            },
+            "support_cost_per_user_monthly": {
+              "type": "number",
+              "description": "Customer support cost per user per month"
+            },
+            "total_cogs_per_user_monthly": {
+              "type": "number",
+              "description": "Total COGS per user per month (sum of components)"
+            }
+          }
+        },
+        "sales_marketing": {
+          "type": "object",
+          "description": "Sales and marketing cost assumptions",
+          "properties": {
+            "cac_by_channel": {
+              "type": "object",
+              "description": "Customer Acquisition Cost by channel",
+              "properties": {
+                "inbound": {
+                  "type": "number",
+                  "description": "CAC for inbound leads (marketing-driven)"
+                },
+                "outbound": {
+                  "type": "number",
+                  "description": "CAC for outbound sales"
+                },
+                "partner": {
+                  "type": "number",
+                  "description": "CAC for partner channel"
+                },
+                "self_service": {
+                  "type": "number",
+                  "description": "CAC for self-service signups"
+                }
+              }
+            },
+            "sales_team_costs": {
+              "type": "object",
+              "description": "Sales team cost structure",
+              "properties": {
+                "ae_fully_loaded_annual": {
+                  "type": "number",
+                  "description": "Account Executive fully-loaded annual cost"
+                },
+                "sdr_fully_loaded_annual": {
+                  "type": "number",
+                  "description": "Sales Development Rep fully-loaded annual cost"
+                },
+                "csm_fully_loaded_annual": {
+                  "type": "number",
+                  "description": "Customer Success Manager fully-loaded annual cost"
+                }
+              }
+            },
+            "marketing_budget_monthly": {
+              "type": "number",
+              "description": "Monthly marketing budget"
+            }
+          }
+        },
+        "rd": {
+          "type": "object",
+          "description": "Research & Development costs",
+          "properties": {
+            "team_composition": {
+              "type": "array",
+              "description": "R&D team composition and costs",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "description": "Role title (e.g., 'Senior Engineer', 'Product Manager')"
+                  },
+                  "count": {
+                    "type": "integer",
+                    "description": "Number of people in this role"
+                  },
+                  "fully_loaded_annual_cost": {
+                    "type": "number",
+                    "description": "Fully-loaded annual cost per person (salary + benefits + overhead)"
+                  }
+                }
+              }
+            },
+            "total_rd_monthly": {
+              "type": "number",
+              "description": "Total R&D cost per month"
+            },
+            "capitalization_rate": {
+              "type": "number",
+              "description": "Percentage of R&D costs that are capitalized vs. expensed"
+            }
+          }
+        },
+        "ga": {
+          "type": "object",
+          "description": "General & Administrative costs",
+          "properties": {
+            "monthly_overhead": {
+              "type": "number",
+              "description": "Monthly G&A overhead (rent, legal, finance, etc.)"
+            },
+            "as_percentage_of_revenue": {
+              "type": "number",
+              "description": "G&A as percentage of revenue (alternative to fixed cost)"
+            }
+          }
+        }
+      }
+    },
+    "market": {
+      "type": "object",
+      "description": "Market sizing and opportunity assumptions",
+      "properties": {
+        "tam": {
+          "type": "number",
+          "description": "Total Addressable Market in USD"
+        },
+        "sam": {
+          "type": "number",
+          "description": "Serviceable Addressable Market in USD"
+        },
+        "som": {
+          "type": "number",
+          "description": "Serviceable Obtainable Market in USD"
+        },
+        "target_segments": {
+          "type": "array",
+          "description": "Target customer segments",
+          "items": {
+            "type": "object",
+            "properties": {
+              "segment_name": {
+                "type": "string",
+                "description": "Customer segment name"
+              },
+              "size": {
+                "type": "integer",
+                "description": "Number of potential customers in segment"
+              },
+              "willingness_to_pay": {
+                "type": "number",
+                "description": "Average willingness to pay per customer"
+              },
+              "acquisition_difficulty": {
+                "type": "string",
+                "description": "Relative difficulty to acquire",
+                "enum": ["low", "medium", "high"]
+              }
+            }
+          }
+        },
+        "competitive_landscape": {
+          "type": "object",
+          "description": "Competitive positioning",
+          "properties": {
+            "primary_competitors": {
+              "type": "array",
+              "description": "List of primary competitors",
+              "items": {
+                "type": "string"
+              }
+            },
+            "market_share_target_pct": {
+              "type": "number",
+              "description": "Target market share percentage within 3-5 years"
+            }
+          }
+        }
+      }
+    },
+    "team": {
+      "type": "object",
+      "description": "Team structure and productivity assumptions",
+      "properties": {
+        "current_headcount": {
+          "type": "integer",
+          "description": "Current total headcount"
+        },
+        "headcount_by_function": {
+          "type": "object",
+          "description": "Headcount breakdown by function",
+          "properties": {
+            "engineering": {
+              "type": "integer"
+            },
+            "product": {
+              "type": "integer"
+            },
+            "design": {
+              "type": "integer"
+            },
+            "sales": {
+              "type": "integer"
+            },
+            "marketing": {
+              "type": "integer"
+            },
+            "customer_success": {
+              "type": "integer"
+            },
+            "ga": {
+              "type": "integer",
+              "description": "General & Administrative headcount"
+            }
+          }
+        },
+        "productivity_metrics": {
+          "type": "object",
+          "description": "Team productivity assumptions",
+          "properties": {
+            "story_points_per_sprint": {
+              "type": "number",
+              "description": "Average story points completed per sprint"
+            },
+            "sprint_length_weeks": {
+              "type": "integer",
+              "description": "Sprint length in weeks"
+            },
+            "cost_per_story_point": {
+              "type": "number",
+              "description": "Estimated cost per story point"
+            }
+          }
+        },
+        "hiring_plan": {
+          "type": "object",
+          "description": "Future hiring assumptions",
+          "properties": {
+            "quarterly_new_hires": {
+              "type": "integer",
+              "description": "Planned new hires per quarter"
+            },
+            "ramp_time_months": {
+              "type": "integer",
+              "description": "Months until new hire reaches full productivity"
+            }
+          }
+        }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "description": "Customer retention and churn assumptions",
+      "properties": {
+        "monthly_churn_rate_pct": {
+          "type": "number",
+          "description": "Monthly customer churn rate as percentage"
+        },
+        "annual_churn_rate_pct": {
+          "type": "number",
+          "description": "Annual customer churn rate as percentage"
+        },
+        "grr_target_pct": {
+          "type": "number",
+          "description": "Gross Revenue Retention target as percentage"
+        },
+        "nrr_target_pct": {
+          "type": "number",
+          "description": "Net Revenue Retention target as percentage"
+        },
+        "expansion_revenue_pct": {
+          "type": "number",
+          "description": "Expected expansion revenue as percentage of base"
+        },
+        "average_customer_lifetime_months": {
+          "type": "number",
+          "description": "Average customer lifetime in months (1 / monthly churn rate)"
+        }
+      }
+    },
+    "growth": {
+      "type": "object",
+      "description": "Growth and scaling assumptions",
+      "properties": {
+        "target_arr_growth_rate_pct": {
+          "type": "number",
+          "description": "Target ARR growth rate as percentage"
+        },
+        "new_customer_growth_rate_monthly_pct": {
+          "type": "number",
+          "description": "Monthly new customer growth rate as percentage"
+        },
+        "sales_cycle_days": {
+          "type": "integer",
+          "description": "Average sales cycle length in days"
+        },
+        "time_to_first_value_days": {
+          "type": "integer",
+          "description": "Days from signup to first value delivery"
+        }
+      }
+    },
+    "targets": {
+      "type": "object",
+      "description": "Financial targets and goals",
+      "properties": {
+        "rule_of_40_target": {
+          "type": "number",
+          "description": "Target Rule of 40 score (typically 40 or higher)"
+        },
+        "ltv_cac_ratio_target": {
+          "type": "number",
+          "description": "Target LTV:CAC ratio (typically 3.0 or higher)"
+        },
+        "cac_payback_months_target": {
+          "type": "number",
+          "description": "Target CAC payback period in months (typically 12-18)"
+        },
+        "gross_margin_target_pct": {
+          "type": "number",
+          "description": "Target gross margin percentage (typically 70%+ for SaaS)"
+        },
+        "magic_number_target": {
+          "type": "number",
+          "description": "Target Magic Number (typically 0.75-1.0+)"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about these assumptions",
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When these assumptions were created"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When these assumptions were last updated"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of assumptions (for tracking changes)"
+        },
+        "confidence_level": {
+          "type": "string",
+          "description": "Confidence level in these assumptions",
+          "enum": ["low", "medium", "high"]
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of assumptions (e.g., 'historical data', 'market research', 'estimates')"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes or context"
+        }
+      }
+    }
+  },
+  "required": ["pricing", "costs"]
+}

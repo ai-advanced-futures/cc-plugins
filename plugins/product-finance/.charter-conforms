@@ -1,0 +1,4 @@
+# Schemas product-finance produces or consumes per Charter §8 (schema matrix table)
+# Format: <schema-name>: <role>  (role in {produces, consumes})
+cost-coverage-readout: produces
+cost-amplifier-readout: consumes

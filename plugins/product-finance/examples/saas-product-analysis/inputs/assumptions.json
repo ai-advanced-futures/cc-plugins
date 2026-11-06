@@ -1,0 +1,137 @@
+{
+  "company": {
+    "name": "DataSync Pro",
+    "stage": "series_a",
+    "funding_raised": 8000000,
+    "industry": "Enterprise Software",
+    "founded": "2022-03-15",
+    "business_model": "b2b_saas",
+    "target_market": "mid_market_enterprise"
+  },
+  "revenue": {
+    "current_arr": 3000000,
+    "current_mrr": 250000,
+    "mrr_growth_rate": 8.5,
+    "arr_target_eoy": 4500000,
+    "revenue_recognition": "subscription",
+    "billing_frequency": "annual",
+    "currency": "USD"
+  },
+  "customers": {
+    "total_customers": 50,
+    "enterprise_customers": 35,
+    "mid_market_customers": 15,
+    "average_contract_value": 60000,
+    "median_contract_value": 48000,
+    "largest_contract": 180000,
+    "smallest_contract": 24000,
+    "customer_concentration_top_10_pct": 42
+  },
+  "pricing": {
+    "model": "tiered_subscription",
+    "plans": [
+      {
+        "name": "Professional",
+        "monthly_price": 2000,
+        "annual_price": 21600,
+        "features": ["5 integrations", "10K records/day", "Email support"]
+      },
+      {
+        "name": "Business",
+        "monthly_price": 4000,
+        "annual_price": 43200,
+        "features": ["15 integrations", "100K records/day", "Priority support", "SSO"]
+      },
+      {
+        "name": "Enterprise",
+        "monthly_price": 8000,
+        "annual_price": 86400,
+        "features": ["Unlimited integrations", "Unlimited records", "24/7 support", "Dedicated CSM", "Custom SLAs"]
+      }
+    ],
+    "average_discount_pct": 12,
+    "professional_mix_pct": 20,
+    "business_mix_pct": 45,
+    "enterprise_mix_pct": 35
+  },
+  "costs": {
+    "cogs": {
+      "infrastructure_monthly": 25000,
+      "third_party_apis_monthly": 8000,
+      "support_team_monthly": 22000,
+      "total_monthly": 55000
+    },
+    "gross_margin_pct": 78,
+    "operating_expenses": {
+      "sales_marketing_monthly": 95000,
+      "rd_monthly": 120000,
+      "ga_monthly": 35000,
+      "total_monthly": 250000
+    },
+    "burn_rate_monthly": 55000,
+    "runway_months": 24
+  },
+  "team": {
+    "total_headcount": 25,
+    "engineering": 10,
+    "sales": 5,
+    "marketing": 3,
+    "customer_success": 4,
+    "operations": 3,
+    "average_salary": 125000,
+    "fully_loaded_cost_multiplier": 1.35,
+    "cost_per_story_point": 450
+  },
+  "acquisition": {
+    "cac_blended": 45000,
+    "cac_by_channel": {
+      "outbound_sales": 52000,
+      "inbound_marketing": 38000,
+      "partnerships": 28000,
+      "referrals": 15000
+    },
+    "sales_cycle_days": 75,
+    "win_rate_pct": 28,
+    "qualified_leads_monthly": 35,
+    "marketing_spend_monthly": 45000,
+    "sales_spend_monthly": 50000
+  },
+  "retention": {
+    "monthly_churn_rate": 1.2,
+    "annual_churn_rate": 13.6,
+    "gross_revenue_retention": 94,
+    "net_revenue_retention": 115,
+    "logo_retention_rate": 88,
+    "expansion_rate": 21,
+    "contraction_rate": 6
+  },
+  "unit_economics": {
+    "ltv_assumption_years": 5,
+    "discount_rate_pct": 10,
+    "target_ltv_cac_ratio": 3.0,
+    "target_cac_payback_months": 18
+  },
+  "benchmarks": {
+    "source": "OpenView SaaS Benchmarks 2025",
+    "target_gross_margin_pct": 75,
+    "target_nrr_pct": 110,
+    "target_monthly_churn_pct": 1.5,
+    "target_ltv_cac_ratio": 3.0,
+    "target_rule_of_40": 40,
+    "target_cac_payback_months": 18,
+    "target_arr_growth_rate": 100
+  },
+  "financial_targets": {
+    "series_b_target_arr": 8000000,
+    "series_b_timeline_months": 18,
+    "target_gross_margin_pct": 80,
+    "target_operating_margin_pct": -15,
+    "burn_multiple_target": 1.5
+  },
+  "metadata": {
+    "last_updated": "2026-01-15T10:00:00Z",
+    "updated_by": "finance_team",
+    "data_source": "Stripe + QuickBooks + Salesforce",
+    "confidence_level": "high"
+  }
+}

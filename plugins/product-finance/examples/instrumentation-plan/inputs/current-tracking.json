@@ -1,0 +1,328 @@
+{
+  "analysis_metadata": {
+    "analyzed_at": "2026-01-23T09:00:00Z",
+    "codebase_path": "/app/datasync-pro",
+    "framework_detected": "django",
+    "database_detected": "postgresql",
+    "analysis_confidence": "high"
+  },
+  "framework_details": {
+    "framework": "Django",
+    "version": "4.2",
+    "python_version": "3.11",
+    "database": {
+      "type": "PostgreSQL",
+      "version": "15.2",
+      "connection": "DATABASE_URL from environment"
+    },
+    "orm": "Django ORM",
+    "async_support": true,
+    "celery_detected": true
+  },
+  "existing_tracking": {
+    "analytics_platforms": [
+      {
+        "platform": "Segment",
+        "integration_type": "server_side",
+        "sdk_version": "2.0.0",
+        "configured": true,
+        "events_found": 12
+      },
+      {
+        "platform": "Amplitude",
+        "integration_type": "client_side",
+        "sdk_version": "8.5.0",
+        "configured": true,
+        "events_found": 8
+      }
+    ],
+    "payment_integrations": [
+      {
+        "provider": "Stripe",
+        "integration_type": "webhooks",
+        "webhook_endpoint": "/webhooks/stripe/",
+        "events_handled": [
+          "customer.created",
+          "customer.subscription.created",
+          "invoice.paid",
+          "invoice.payment_failed"
+        ],
+        "events_not_handled": [
+          "customer.subscription.updated",
+          "customer.subscription.deleted",
+          "customer.subscription.trial_will_end"
+        ]
+      }
+    ],
+    "ai_integrations": [
+      {
+        "provider": "OpenAI",
+        "sdk_version": "1.12.0",
+        "usage_tracking": "none",
+        "cost_tracking": "none"
+      },
+      {
+        "provider": "Anthropic",
+        "sdk_version": "0.18.0",
+        "usage_tracking": "none",
+        "cost_tracking": "none"
+      }
+    ]
+  },
+  "discovered_events": [
+    {
+      "event_name": "user_signed_up",
+      "location": "accounts/views.py:45",
+      "platform": "Segment",
+      "fields": ["user_id", "email", "source"],
+      "quality": "good",
+      "frequency": "on_signup"
+    },
+    {
+      "event_name": "user_logged_in",
+      "location": "accounts/views.py:78",
+      "platform": "Segment",
+      "fields": ["user_id", "method"],
+      "quality": "good",
+      "frequency": "on_login"
+    },
+    {
+      "event_name": "subscription_started",
+      "location": "billing/webhooks.py:34",
+      "platform": "Segment",
+      "fields": ["customer_id", "plan", "amount"],
+      "quality": "fair",
+      "missing_fields": ["subscription_id", "mrr", "billing_cycle"],
+      "frequency": "on_subscription_create"
+    },
+    {
+      "event_name": "payment_received",
+      "location": "billing/webhooks.py:89",
+      "platform": "Segment",
+      "fields": ["customer_id", "amount", "invoice_id"],
+      "quality": "good",
+      "frequency": "on_invoice_paid"
+    },
+    {
+      "event_name": "feature_used",
+      "location": "analytics/middleware.py:23",
+      "platform": "Amplitude",
+      "fields": ["user_id", "feature_name", "timestamp"],
+      "quality": "good",
+      "frequency": "on_feature_use"
+    },
+    {
+      "event_name": "integration_connected",
+      "location": "integrations/views.py:112",
+      "platform": "Segment",
+      "fields": ["customer_id", "integration_type"],
+      "quality": "fair",
+      "missing_fields": ["setup_time", "error_count"],
+      "frequency": "on_integration_setup"
+    },
+    {
+      "event_name": "report_generated",
+      "location": "reports/views.py:56",
+      "platform": "Amplitude",
+      "fields": ["user_id", "report_type"],
+      "quality": "fair",
+      "missing_fields": ["generation_time", "row_count"],
+      "frequency": "on_report_generate"
+    },
+    {
+      "event_name": "support_ticket_created",
+      "location": "support/views.py:23",
+      "platform": "Segment",
+      "fields": ["customer_id", "ticket_id", "priority"],
+      "quality": "good",
+      "frequency": "on_ticket_create"
+    }
+  ],
+  "tracking_gaps": {
+    "subscription_lifecycle": {
+      "status": "partial",
+      "tracked": ["subscription_started", "payment_received"],
+      "missing": [
+        {
+          "event": "subscription_upgraded",
+          "impact": "Cannot track expansion MRR",
+          "priority": "critical"
+        },
+        {
+          "event": "subscription_downgraded",
+          "impact": "Cannot track contraction MRR",
+          "priority": "critical"
+        },
+        {
+          "event": "subscription_cancelled",
+          "impact": "Cannot calculate churn rate",
+          "priority": "critical"
+        },
+        {
+          "event": "subscription_renewed",
+          "impact": "Cannot track renewal rates",
+          "priority": "high"
+        }
+      ]
+    },
+    "ai_usage": {
+      "status": "none",
+      "tracked": [],
+      "missing": [
+        {
+          "event": "ai_request_completed",
+          "impact": "Cannot track AI usage patterns",
+          "priority": "high"
+        },
+        {
+          "event": "ai_cost_incurred",
+          "impact": "Cannot calculate AI ROI",
+          "priority": "high"
+        },
+        {
+          "event": "ai_feature_used",
+          "impact": "Cannot attribute AI value to features",
+          "priority": "medium"
+        }
+      ]
+    },
+    "customer_lifecycle": {
+      "status": "partial",
+      "tracked": ["user_signed_up"],
+      "missing": [
+        {
+          "event": "customer_created",
+          "impact": "No organization-level tracking (only users)",
+          "priority": "high"
+        },
+        {
+          "event": "customer_health_scored",
+          "impact": "No proactive churn risk identification",
+          "priority": "medium"
+        },
+        {
+          "event": "customer_churned",
+          "impact": "Missing churn reason tracking",
+          "priority": "high"
+        }
+      ]
+    },
+    "acquisition": {
+      "status": "partial",
+      "tracked": ["user_signed_up"],
+      "missing": [
+        {
+          "event": "lead_created",
+          "impact": "Cannot track full funnel",
+          "priority": "medium"
+        },
+        {
+          "event": "marketing_spend_recorded",
+          "impact": "Cannot calculate CAC by channel",
+          "priority": "medium"
+        },
+        {
+          "event": "trial_started",
+          "impact": "Cannot track trial conversion",
+          "priority": "medium"
+        },
+        {
+          "event": "trial_ended",
+          "impact": "Cannot track trial-to-paid conversion",
+          "priority": "medium"
+        }
+      ]
+    }
+  },
+  "metric_calculability": {
+    "mrr": {
+      "calculable": "partial",
+      "missing_events": ["subscription_upgraded", "subscription_downgraded", "subscription_cancelled"],
+      "data_quality": "fair",
+      "notes": "Can calculate from Stripe directly, but no historical event data"
+    },
+    "arr": {
+      "calculable": "partial",
+      "missing_events": ["subscription_upgraded", "subscription_downgraded", "subscription_cancelled"],
+      "data_quality": "fair",
+      "notes": "Derived from MRR"
+    },
+    "churn_rate": {
+      "calculable": false,
+      "missing_events": ["subscription_cancelled"],
+      "data_quality": "none",
+      "notes": "Critical gap - no cancellation tracking"
+    },
+    "net_revenue_retention": {
+      "calculable": false,
+      "missing_events": ["subscription_upgraded", "subscription_downgraded", "subscription_cancelled"],
+      "data_quality": "none",
+      "notes": "Requires full subscription lifecycle tracking"
+    },
+    "cac": {
+      "calculable": false,
+      "missing_events": ["marketing_spend_recorded", "lead_created"],
+      "data_quality": "none",
+      "notes": "Marketing spend not tracked in product"
+    },
+    "ltv": {
+      "calculable": "partial",
+      "missing_events": ["subscription_cancelled"],
+      "data_quality": "fair",
+      "notes": "Can estimate from ARPC and assumed churn"
+    },
+    "ai_cost": {
+      "calculable": false,
+      "missing_events": ["ai_request_completed", "ai_cost_incurred"],
+      "data_quality": "none",
+      "notes": "No AI usage tracking implemented"
+    },
+    "ai_roi": {
+      "calculable": false,
+      "missing_events": ["ai_request_completed", "ai_cost_incurred", "ai_feature_used"],
+      "data_quality": "none",
+      "notes": "Requires both cost and value tracking"
+    }
+  },
+  "data_quality_assessment": {
+    "overall_score": 45,
+    "max_score": 100,
+    "grade": "D",
+    "issues": [
+      {
+        "issue": "Missing subscription lifecycle events",
+        "severity": "critical",
+        "impact": "Cannot calculate core SaaS metrics"
+      },
+      {
+        "issue": "No AI usage tracking",
+        "severity": "high",
+        "impact": "Cannot calculate AI economics"
+      },
+      {
+        "issue": "Inconsistent customer_id vs user_id",
+        "severity": "medium",
+        "impact": "Difficult to aggregate at customer level"
+      },
+      {
+        "issue": "Missing MRR field on subscription events",
+        "severity": "medium",
+        "impact": "Must derive MRR from plan pricing"
+      }
+    ],
+    "recommendations": [
+      "Implement full subscription lifecycle tracking",
+      "Add AI cost tracking to all LLM calls",
+      "Standardize on customer_id for all financial events",
+      "Add MRR impact to all subscription events"
+    ]
+  },
+  "codebase_patterns": {
+    "event_emission_pattern": "segment.track()",
+    "webhook_handler_location": "billing/webhooks.py",
+    "models_location": "core/models.py",
+    "async_task_framework": "Celery",
+    "event_bus": "none",
+    "database_event_log": "none"
+  }
+}

@@ -1,0 +1,218 @@
+{
+  "period": {
+    "start_date": "2026-01-01",
+    "end_date": "2026-01-31",
+    "period_type": "monthly",
+    "fiscal_year": "FY2026",
+    "fiscal_quarter": "Q1"
+  },
+  "revenue_metrics": {
+    "mrr": {
+      "beginning_mrr": 230000,
+      "ending_mrr": 250000,
+      "new_mrr": 28000,
+      "expansion_mrr": 12000,
+      "contraction_mrr": 5000,
+      "churned_mrr": 15000,
+      "net_new_mrr": 20000,
+      "mrr_growth_rate_pct": 8.7
+    },
+    "arr": {
+      "current_arr": 3000000,
+      "beginning_arr": 2760000,
+      "net_new_arr": 240000,
+      "arr_growth_rate_pct": 8.7
+    },
+    "revenue_breakdown": {
+      "subscription_revenue": 248000,
+      "professional_services": 2000,
+      "total_revenue": 250000
+    }
+  },
+  "customer_metrics": {
+    "customer_count": {
+      "beginning_customers": 48,
+      "new_customers": 4,
+      "churned_customers": 2,
+      "ending_customers": 50,
+      "net_new_customers": 2
+    },
+    "customer_segments": {
+      "enterprise": {
+        "count": 35,
+        "mrr": 175000,
+        "avg_mrr_per_customer": 5000,
+        "churn_rate_pct": 0.8
+      },
+      "mid_market": {
+        "count": 15,
+        "mrr": 75000,
+        "avg_mrr_per_customer": 5000,
+        "churn_rate_pct": 2.0
+      }
+    },
+    "arpc": {
+      "blended": 5000,
+      "new_customers": 7000,
+      "churned_customers": 7500
+    }
+  },
+  "retention_metrics": {
+    "churn": {
+      "monthly_logo_churn_rate": 4.0,
+      "monthly_revenue_churn_rate": 1.2,
+      "annual_logo_churn_rate": 39.3,
+      "annual_revenue_churn_rate": 13.6
+    },
+    "retention": {
+      "logo_retention_rate": 96.0,
+      "gross_revenue_retention": 94.0,
+      "net_revenue_retention": 115.0,
+      "dollar_retention_rate": 115.0
+    },
+    "expansion": {
+      "expansion_rate_pct": 21.0,
+      "contraction_rate_pct": 6.0,
+      "customers_expanded": 8,
+      "customers_contracted": 3,
+      "expansion_mrr": 12000,
+      "contraction_mrr": 5000
+    }
+  },
+  "acquisition_metrics": {
+    "leads": {
+      "marketing_qualified_leads": 85,
+      "sales_qualified_leads": 35,
+      "opportunities_created": 18,
+      "opportunities_won": 4,
+      "opportunities_lost": 8
+    },
+    "conversion_rates": {
+      "mql_to_sql_rate": 41.2,
+      "sql_to_opportunity_rate": 51.4,
+      "opportunity_win_rate": 28.0,
+      "lead_to_customer_rate": 4.7
+    },
+    "sales_efficiency": {
+      "sales_cycle_days": 75,
+      "average_deal_size": 60000,
+      "quota_attainment_pct": 92,
+      "pipeline_coverage": 3.2
+    },
+    "marketing_metrics": {
+      "website_visitors": 12500,
+      "trial_signups": 45,
+      "demo_requests": 38,
+      "content_downloads": 285,
+      "webinar_attendees": 120
+    }
+  },
+  "cost_metrics": {
+    "cogs": {
+      "infrastructure": 25000,
+      "third_party_apis": 8000,
+      "support_costs": 22000,
+      "total_cogs": 55000,
+      "gross_profit": 195000,
+      "gross_margin_pct": 78.0
+    },
+    "operating_expenses": {
+      "sales_and_marketing": 95000,
+      "research_and_development": 120000,
+      "general_and_administrative": 35000,
+      "total_opex": 250000
+    },
+    "profitability": {
+      "operating_income": -55000,
+      "operating_margin_pct": -22.0,
+      "ebitda": -50000,
+      "ebitda_margin_pct": -20.0,
+      "net_burn": 55000
+    }
+  },
+  "unit_economics": {
+    "cac": {
+      "blended_cac": 45000,
+      "cac_by_channel": {
+        "outbound": 52000,
+        "inbound": 38000,
+        "partnerships": 28000,
+        "referrals": 15000
+      },
+      "sales_marketing_spend": 95000,
+      "new_customers": 4,
+      "cac_trend": "stable"
+    },
+    "ltv": {
+      "gross_ltv": 416667,
+      "net_ltv": 375000,
+      "ltv_calculation_method": "revenue_based",
+      "assumed_lifetime_months": 83,
+      "arpc_for_ltv": 5000,
+      "gross_margin_for_ltv": 0.78
+    },
+    "efficiency_ratios": {
+      "ltv_cac_ratio": 8.33,
+      "cac_payback_months": 9.0,
+      "gross_margin_adjusted_payback": 11.5,
+      "magic_number": 0.84
+    }
+  },
+  "efficiency_metrics": {
+    "burn_metrics": {
+      "monthly_burn": 55000,
+      "gross_burn": 305000,
+      "net_burn": 55000,
+      "burn_multiple": 0.92,
+      "months_of_runway": 24
+    },
+    "productivity": {
+      "arr_per_employee": 120000,
+      "revenue_per_sales_rep": 600000,
+      "customers_per_csm": 12.5,
+      "support_tickets_per_customer": 2.3
+    },
+    "rule_of_40": {
+      "arr_growth_rate": 104.0,
+      "operating_margin": -22.0,
+      "rule_of_40_score": 82.0,
+      "using_ebitda_margin": 84.0
+    }
+  },
+  "cohort_metrics": {
+    "jan_2025_cohort": {
+      "starting_customers": 12,
+      "starting_mrr": 48000,
+      "month_12_customers": 10,
+      "month_12_mrr": 52000,
+      "logo_retention": 83.3,
+      "dollar_retention": 108.3
+    },
+    "apr_2025_cohort": {
+      "starting_customers": 8,
+      "starting_mrr": 36000,
+      "month_9_customers": 7,
+      "month_9_mrr": 42000,
+      "logo_retention": 87.5,
+      "dollar_retention": 116.7
+    },
+    "jul_2025_cohort": {
+      "starting_customers": 10,
+      "starting_mrr": 55000,
+      "month_6_customers": 9,
+      "month_6_mrr": 58000,
+      "logo_retention": 90.0,
+      "dollar_retention": 105.5
+    }
+  },
+  "metadata": {
+    "generated_at": "2026-01-31T23:59:59Z",
+    "data_sources": ["Stripe", "Salesforce", "HubSpot", "QuickBooks"],
+    "confidence_level": "high",
+    "notes": [
+      "Q1 typically shows higher churn due to annual renewal cycle",
+      "New enterprise deal in pipeline expected to close Q2",
+      "Marketing spend increased 15% for conference season"
+    ]
+  }
+}

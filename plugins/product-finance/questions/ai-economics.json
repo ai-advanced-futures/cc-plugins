@@ -1,0 +1,203 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "product-finance:ai-economics",
+  "questions": [
+    {
+      "input": "ai_product",
+      "question": "Which AI product or feature is this analysis for?",
+      "type": "text"
+    },
+    {
+      "input": "analysis_subject",
+      "question": "What are you analysing?",
+      "type": "choice",
+      "options": [
+        {
+          "value": "new_feature",
+          "label": "A new AI feature, from projections"
+        },
+        {
+          "value": "existing_product",
+          "label": "An existing product with AI, from actuals"
+        },
+        {
+          "value": "existing_feature",
+          "label": "One existing AI feature"
+        }
+      ]
+    },
+    {
+      "input": "analysis_period",
+      "question": "What time period should the analysis cover?",
+      "type": "choice",
+      "default": "1_month",
+      "options": [
+        {
+          "value": "1_month",
+          "label": "1 month"
+        },
+        {
+          "value": "3_months",
+          "label": "3 months"
+        },
+        {
+          "value": "6_months",
+          "label": "6 months"
+        },
+        {
+          "value": "12_months",
+          "label": "12 months"
+        }
+      ]
+    },
+    {
+      "input": "total_ai_api_cost",
+      "question": "What was your total AI model and API cost for the whole analysis period?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "ai_interactions",
+      "question": "How many AI interactions or API calls were there in the period?",
+      "type": "number"
+    },
+    {
+      "input": "active_users",
+      "question": "How many active users were there in the period?",
+      "type": "number"
+    },
+    {
+      "input": "provider_breakdown",
+      "question": "Do you have the cost broken down by provider or model?",
+      "type": "boolean"
+    },
+    {
+      "input": "providers",
+      "question": "For each provider or model: its name and its cost for the period.",
+      "type": "text"
+    },
+    {
+      "input": "has_infrastructure_costs",
+      "question": "Do you have AI infrastructure costs beyond the API calls?",
+      "type": "boolean"
+    },
+    {
+      "input": "infrastructure_monthly_cost",
+      "question": "What are your monthly AI infrastructure costs: compute, storage, vector database, caching and monitoring?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "include_dev_costs",
+      "question": "Should AI development costs be included?",
+      "type": "boolean"
+    },
+    {
+      "input": "ai_engineers",
+      "question": "How many engineers work on AI features?",
+      "type": "number"
+    },
+    {
+      "input": "ai_engineer_annual_cost",
+      "question": "What is the fully loaded annual cost of one AI engineer?",
+      "type": "number",
+      "unit": "USD",
+      "default": 220000
+    },
+    {
+      "input": "training_costs",
+      "question": "What are your training data or fine-tuning costs?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "total_revenue",
+      "question": "What was your total revenue for the period?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "ai_revenue",
+      "question": "What revenue do the AI features enable?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "non_ai_revenue",
+      "question": "What is your revenue without AI, for comparison?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "charges_ai_premium",
+      "question": "Do you charge a premium for AI capabilities?",
+      "type": "boolean"
+    },
+    {
+      "input": "ai_premium_percent",
+      "question": "What is the AI price premium, in percent?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "saves_time",
+      "question": "Does AI save time for your users or team?",
+      "type": "boolean"
+    },
+    {
+      "input": "hours_saved_per_month",
+      "question": "How many hours a month does AI save?",
+      "type": "number"
+    },
+    {
+      "input": "cost_per_hour",
+      "question": "What is the fully loaded cost of one employee hour?",
+      "type": "number",
+      "unit": "USD",
+      "default": 100
+    },
+    {
+      "input": "ai_improves_retention",
+      "question": "Does AI improve customer retention?",
+      "type": "boolean"
+    },
+    {
+      "input": "churn_with_ai",
+      "question": "What is the churn rate of customers with the AI features, in percent?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "churn_without_ai",
+      "question": "What is the churn rate of customers without the AI features, in percent?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "ai_drives_expansion",
+      "question": "Has AI brought expansion revenue?",
+      "type": "boolean"
+    },
+    {
+      "input": "ai_expansion_revenue",
+      "question": "How much expansion revenue comes from AI adoption?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "reduces_time_to_value",
+      "question": "Does AI cut customers' time to value?",
+      "type": "boolean"
+    },
+    {
+      "input": "days_faster",
+      "question": "How many days sooner do customers get value with AI?",
+      "type": "number"
+    },
+    {
+      "input": "accept_before_after",
+      "question": "With no controlled data, may the value be worked out from a before-and-after comparison, at lower confidence?",
+      "type": "boolean"
+    }
+  ]
+}

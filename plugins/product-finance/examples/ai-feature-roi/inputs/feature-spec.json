@@ -1,0 +1,311 @@
+{
+  "feature": {
+    "name": "AI Analytics Assistant",
+    "codename": "project-insight",
+    "version": "1.0.0",
+    "description": "AI-powered analytics assistant that enables natural language data queries, automated insight generation, and intelligent report building",
+    "status": "planning",
+    "target_launch": "2026-Q2"
+  },
+  "capabilities": [
+    {
+      "name": "Natural Language Queries",
+      "description": "Users can ask questions about their data in plain English",
+      "examples": [
+        "Show me revenue by region for last quarter",
+        "Which customers are at risk of churning?",
+        "Compare this month's performance to same period last year"
+      ],
+      "ai_usage": {
+        "model": "gpt-4",
+        "avg_tokens_per_query": 2500,
+        "queries_per_user_per_month": 50
+      }
+    },
+    {
+      "name": "Automated Insights",
+      "description": "AI proactively surfaces important trends and anomalies",
+      "examples": [
+        "Your conversion rate dropped 15% last week",
+        "Customer segment A shows 2x higher engagement",
+        "Revenue trending 10% above forecast"
+      ],
+      "ai_usage": {
+        "model": "claude-sonnet-4",
+        "avg_tokens_per_insight": 1500,
+        "insights_per_user_per_month": 20
+      }
+    },
+    {
+      "name": "Smart Report Builder",
+      "description": "AI suggests visualizations and report structures based on user goals",
+      "examples": [
+        "Create an executive summary for the board",
+        "Build a weekly KPI dashboard",
+        "Generate a customer health report"
+      ],
+      "ai_usage": {
+        "model": "gpt-4",
+        "avg_tokens_per_report": 5000,
+        "reports_per_user_per_month": 5
+      }
+    },
+    {
+      "name": "Anomaly Detection",
+      "description": "Continuous monitoring with AI-powered alerting",
+      "examples": [
+        "Alert: Unusual spike in error rates",
+        "Warning: Customer X usage dropped 50%",
+        "Notice: New competitor detected in your market"
+      ],
+      "ai_usage": {
+        "model": "claude-haiku",
+        "avg_tokens_per_check": 500,
+        "checks_per_customer_per_day": 24
+      }
+    }
+  ],
+  "technical_requirements": {
+    "infrastructure": {
+      "vector_database": {
+        "provider": "Pinecone",
+        "tier": "Standard",
+        "estimated_vectors": 10000000,
+        "monthly_cost": 2500
+      },
+      "caching": {
+        "provider": "Redis Enterprise",
+        "use_case": "Semantic query caching",
+        "monthly_cost": 1000
+      },
+      "compute": {
+        "provider": "AWS",
+        "services": ["Lambda", "ECS", "S3"],
+        "monthly_cost": 3000
+      },
+      "monitoring": {
+        "provider": "Datadog",
+        "apm_and_logs": true,
+        "monthly_cost": 1000
+      }
+    },
+    "ai_providers": [
+      {
+        "provider": "OpenAI",
+        "models": ["gpt-4", "gpt-3.5-turbo"],
+        "use_cases": ["Complex queries", "Report generation"],
+        "estimated_monthly_cost": 6000,
+        "tokens_per_month": 15000000
+      },
+      {
+        "provider": "Anthropic",
+        "models": ["claude-sonnet-4", "claude-haiku"],
+        "use_cases": ["Insight generation", "Anomaly detection"],
+        "estimated_monthly_cost": 2000,
+        "tokens_per_month": 25000000
+      }
+    ],
+    "data_pipeline": {
+      "ingestion_frequency": "real-time",
+      "data_retention_days": 365,
+      "embedding_model": "text-embedding-3-large",
+      "embedding_dimensions": 3072
+    }
+  },
+  "build_estimate": {
+    "methodology": "story_points",
+    "total_story_points": 320,
+    "cost_per_story_point": 450,
+    "total_build_cost": 144000,
+    "contingency_pct": 15,
+    "total_with_contingency": 165600,
+    "breakdown": {
+      "backend_engineering": {
+        "story_points": 140,
+        "cost": 63000,
+        "description": "API integration, data pipeline, caching"
+      },
+      "frontend_engineering": {
+        "story_points": 80,
+        "cost": 36000,
+        "description": "Chat interface, visualizations, report builder"
+      },
+      "ml_engineering": {
+        "story_points": 60,
+        "cost": 27000,
+        "description": "Prompt engineering, model routing, fine-tuning"
+      },
+      "product_management": {
+        "weeks": 8,
+        "cost": 12000,
+        "description": "Requirements, testing, launch coordination"
+      },
+      "design": {
+        "weeks": 4,
+        "cost": 6000,
+        "description": "UX design, component library updates"
+      }
+    },
+    "timeline": {
+      "phase_1_mvp": {
+        "duration_weeks": 8,
+        "features": ["Natural language queries", "Basic insights"],
+        "cost": 72000
+      },
+      "phase_2_enhancement": {
+        "duration_weeks": 6,
+        "features": ["Report builder", "Advanced visualizations"],
+        "cost": 54000
+      },
+      "phase_3_polish": {
+        "duration_weeks": 4,
+        "features": ["Anomaly detection", "Performance optimization"],
+        "cost": 39600
+      }
+    }
+  },
+  "ongoing_costs": {
+    "monthly": {
+      "ai_api_costs": 8000,
+      "infrastructure": 7500,
+      "maintenance": 2500,
+      "total": 18000
+    },
+    "annual": {
+      "ai_api_costs": 96000,
+      "infrastructure": 90000,
+      "maintenance": 30000,
+      "total": 216000
+    },
+    "assumptions": {
+      "users_with_access": 400,
+      "active_usage_rate": 0.75,
+      "queries_per_active_user": 75,
+      "growth_rate_annual": 0.5
+    }
+  },
+  "revenue_projections": {
+    "pricing_strategy": {
+      "model": "premium_tier",
+      "base_plan_price": 4000,
+      "ai_tier_price": 6000,
+      "price_premium_pct": 50,
+      "ai_addon_price": null
+    },
+    "adoption_projections": {
+      "year_1": {
+        "existing_customers_adopting": 25,
+        "new_customers_with_ai": 10,
+        "total_ai_customers": 35,
+        "premium_revenue": 2520000,
+        "baseline_revenue_equivalent": 1680000,
+        "incremental_revenue": 840000
+      },
+      "year_2": {
+        "existing_customers_adopting": 35,
+        "new_customers_with_ai": 15,
+        "total_ai_customers": 50,
+        "premium_revenue": 3600000,
+        "baseline_revenue_equivalent": 2400000,
+        "incremental_revenue": 1200000
+      },
+      "year_3": {
+        "existing_customers_adopting": 40,
+        "new_customers_with_ai": 20,
+        "total_ai_customers": 60,
+        "premium_revenue": 4320000,
+        "baseline_revenue_equivalent": 2880000,
+        "incremental_revenue": 1440000
+      }
+    },
+    "value_attribution": {
+      "premium_pricing_value": {
+        "description": "Additional revenue from AI tier pricing",
+        "year_1": 540000,
+        "year_2": 780000,
+        "year_3": 936000
+      },
+      "retention_improvement": {
+        "description": "Reduced churn from AI feature stickiness",
+        "churn_reduction_pct": 0.5,
+        "customers_retained": 3,
+        "retained_arr": 180000,
+        "year_1": 180000,
+        "year_2": 200000,
+        "year_3": 220000
+      },
+      "expansion_revenue": {
+        "description": "Existing customers upgrading for AI",
+        "customers_expanding": 12,
+        "expansion_per_customer": 20000,
+        "year_1": 240000,
+        "year_2": 300000,
+        "year_3": 360000
+      },
+      "productivity_savings": {
+        "description": "Reduced customer success workload",
+        "hours_saved_monthly": 120,
+        "cost_per_hour": 100,
+        "year_1": 144000,
+        "year_2": 168000,
+        "year_3": 192000
+      }
+    }
+  },
+  "risks": [
+    {
+      "risk": "AI cost overrun",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Implement aggressive caching, usage limits, model routing"
+    },
+    {
+      "risk": "Lower than expected adoption",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Beta program with early adopters, iterate on UX"
+    },
+    {
+      "risk": "Competitive response",
+      "probability": "high",
+      "impact": "low",
+      "mitigation": "First-mover advantage, deep integration with platform"
+    },
+    {
+      "risk": "AI quality issues",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "Human review for critical outputs, feedback loops"
+    }
+  ],
+  "success_criteria": {
+    "launch_criteria": [
+      "Query response time < 3 seconds for 95th percentile",
+      "AI accuracy > 90% on test dataset",
+      "Beta user satisfaction > 4.0/5.0",
+      "Cost per query < $0.15"
+    ],
+    "month_3_criteria": [
+      "25+ customers using AI tier",
+      "AI cost < 5% of AI tier revenue",
+      "NPS for AI feature > 40"
+    ],
+    "month_6_criteria": [
+      "35+ customers on AI tier",
+      "Measurable churn reduction (0.3%+)",
+      "Expansion revenue from AI > $100K"
+    ],
+    "month_12_criteria": [
+      "50+ customers on AI tier",
+      "AI ROI > 200%",
+      "Feature contributing > 15% of total ARR"
+    ]
+  },
+  "metadata": {
+    "created_at": "2026-01-15T10:00:00Z",
+    "created_by": "product_team",
+    "last_updated": "2026-01-22T14:30:00Z",
+    "status": "pending_approval",
+    "approvers": ["cfo", "cto", "ceo"]
+  }
+}

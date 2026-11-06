@@ -1,0 +1,51 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "product-finance:cost-coverage",
+  "questions": [
+    {
+      "input": "diagnosis_path",
+      "question": "Where is pricing's agentic-pricing-diagnosis.json for this engagement?",
+      "type": "path"
+    },
+    {
+      "input": "amplifier_path",
+      "question": "Where is pricing's cost-amplifier-readout.json (audience internal) for this engagement?",
+      "type": "path"
+    },
+    {
+      "input": "gm_pct",
+      "question": "What is the company's gross margin, in percent?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "nrr_delta_pct",
+      "question": "What is the change in net revenue retention, in percentage points?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "forecast_variance_pct",
+      "question": "What is the revenue forecast variance, in percent?",
+      "type": "number",
+      "unit": "percent"
+    },
+    {
+      "input": "cost_per_interaction_baseline",
+      "question": "What is the median effective cost of one interaction?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "headline_price",
+      "question": "What price does the vendor bill per interaction?",
+      "type": "number",
+      "unit": "USD"
+    },
+    {
+      "input": "engagement_id",
+      "question": "What is the engagement id (a lowercase UUID)?",
+      "type": "text"
+    }
+  ]
+}

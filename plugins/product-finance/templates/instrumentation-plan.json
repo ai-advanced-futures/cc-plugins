@@ -1,0 +1,784 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Financial Instrumentation Plan Schema",
+  "description": "Schema for financial tracking and instrumentation requirements",
+  "type": "object",
+  "properties": {
+    "overview": {
+      "type": "object",
+      "description": "High-level instrumentation plan overview",
+      "properties": {
+        "product_name": {
+          "type": "string",
+          "description": "Name of the product being instrumented"
+        },
+        "objectives": {
+          "type": "array",
+          "description": "Financial tracking objectives",
+          "items": {
+            "type": "string"
+          }
+        },
+        "target_metrics": {
+          "type": "array",
+          "description": "List of target metrics to track",
+          "items": {
+            "type": "string"
+          }
+        },
+        "implementation_timeline": {
+          "type": "string",
+          "description": "Timeline for implementation (e.g., 'Q1 2024', '6 weeks')"
+        },
+        "priority": {
+          "type": "string",
+          "description": "Overall priority level",
+          "enum": ["low", "medium", "high", "critical"]
+        }
+      }
+    },
+    "current_state": {
+      "type": "object",
+      "description": "Current instrumentation state",
+      "properties": {
+        "existing_tracking": {
+          "type": "array",
+          "description": "Currently tracked events and data points",
+          "items": {
+            "type": "object",
+            "properties": {
+              "event_name": {
+                "type": "string",
+                "description": "Name of tracked event"
+              },
+              "location": {
+                "type": "string",
+                "description": "Where tracking is implemented (file path, service)"
+              },
+              "data_captured": {
+                "type": "array",
+                "description": "Data points captured",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "storage": {
+                "type": "string",
+                "description": "Where data is stored (database, warehouse, logs)"
+              },
+              "quality": {
+                "type": "string",
+                "description": "Quality assessment of current tracking",
+                "enum": ["poor", "fair", "good", "excellent"]
+              }
+            }
+          }
+        },
+        "gaps": {
+          "type": "array",
+          "description": "Identified gaps in current instrumentation",
+          "items": {
+            "type": "object",
+            "properties": {
+              "metric": {
+                "type": "string",
+                "description": "Metric that cannot be calculated with current data"
+              },
+              "missing_data": {
+                "type": "array",
+                "description": "Missing data points needed",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "impact": {
+                "type": "string",
+                "description": "Impact of this gap",
+                "enum": ["low", "medium", "high", "critical"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "required_events": {
+      "type": "array",
+      "description": "Events that need to be tracked",
+      "items": {
+        "type": "object",
+        "properties": {
+          "event_name": {
+            "type": "string",
+            "description": "Name of the event (e.g., 'subscription_created', 'feature_used')"
+          },
+          "event_category": {
+            "type": "string",
+            "description": "Category of event",
+            "enum": ["subscription", "usage", "billing", "customer", "ai", "support"]
+          },
+          "description": {
+            "type": "string",
+            "description": "What this event represents"
+          },
+          "trigger": {
+            "type": "string",
+            "description": "When/where this event should be emitted"
+          },
+          "priority": {
+            "type": "string",
+            "description": "Implementation priority",
+            "enum": ["low", "medium", "high", "critical"]
+          },
+          "schema": {
+            "type": "object",
+            "description": "Event data schema",
+            "properties": {
+              "required_fields": {
+                "type": "array",
+                "description": "Required data fields",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field_name": {
+                      "type": "string"
+                    },
+                    "field_type": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "optional_fields": {
+                "type": "array",
+                "description": "Optional data fields",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field_name": {
+                      "type": "string"
+                    },
+                    "field_type": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "implementation": {
+            "type": "object",
+            "description": "Implementation guidance",
+            "properties": {
+              "code_location": {
+                "type": "string",
+                "description": "Where to implement tracking (file path, function)"
+              },
+              "example_code": {
+                "type": "string",
+                "description": "Example implementation code"
+              },
+              "dependencies": {
+                "type": "array",
+                "description": "Dependencies or prerequisites",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "enables_metrics": {
+            "type": "array",
+            "description": "Metrics that this event enables",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["event_name", "event_category", "description", "priority"]
+      }
+    },
+    "database_schema": {
+      "type": "object",
+      "description": "Required database schema changes",
+      "properties": {
+        "new_tables": {
+          "type": "array",
+          "description": "New tables to create",
+          "items": {
+            "type": "object",
+            "properties": {
+              "table_name": {
+                "type": "string",
+                "description": "Name of the table"
+              },
+              "purpose": {
+                "type": "string",
+                "description": "Purpose of this table"
+              },
+              "columns": {
+                "type": "array",
+                "description": "Table columns",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "column_name": {
+                      "type": "string"
+                    },
+                    "data_type": {
+                      "type": "string"
+                    },
+                    "constraints": {
+                      "type": "string",
+                      "description": "SQL constraints (NOT NULL, PRIMARY KEY, etc.)"
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "indexes": {
+                "type": "array",
+                "description": "Recommended indexes",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "migration_script": {
+                "type": "string",
+                "description": "SQL migration script"
+              }
+            }
+          }
+        },
+        "table_modifications": {
+          "type": "array",
+          "description": "Modifications to existing tables",
+          "items": {
+            "type": "object",
+            "properties": {
+              "table_name": {
+                "type": "string"
+              },
+              "changes": {
+                "type": "array",
+                "description": "Changes needed",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "change_type": {
+                      "type": "string",
+                      "enum": ["add_column", "modify_column", "add_index", "add_constraint"]
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "migration_script": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "api_endpoints": {
+      "type": "array",
+      "description": "API endpoints to expose financial data",
+      "items": {
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "description": "API endpoint path (e.g., '/api/financial-health')"
+          },
+          "method": {
+            "type": "string",
+            "description": "HTTP method",
+            "enum": ["GET", "POST"]
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Purpose of this endpoint"
+          },
+          "metrics_exposed": {
+            "type": "array",
+            "description": "Metrics returned by this endpoint",
+            "items": {
+              "type": "string"
+            }
+          },
+          "response_schema": {
+            "type": "object",
+            "description": "Response data structure",
+            "additionalProperties": true
+          },
+          "refresh_frequency": {
+            "type": "string",
+            "description": "How often data is refreshed (e.g., 'real-time', 'hourly', 'daily')"
+          },
+          "caching_strategy": {
+            "type": "string",
+            "description": "Recommended caching approach"
+          },
+          "authentication": {
+            "type": "string",
+            "description": "Authentication requirements"
+          },
+          "example_request": {
+            "type": "string",
+            "description": "Example API request"
+          },
+          "example_response": {
+            "type": "string",
+            "description": "Example API response"
+          }
+        }
+      }
+    },
+    "analytics_integration": {
+      "type": "object",
+      "description": "Integration with analytics platforms",
+      "properties": {
+        "platforms": {
+          "type": "array",
+          "description": "Analytics platforms to integrate with",
+          "items": {
+            "type": "object",
+            "properties": {
+              "platform_name": {
+                "type": "string",
+                "description": "Platform name (e.g., 'Segment', 'Amplitude', 'Mixpanel')"
+              },
+              "events_to_send": {
+                "type": "array",
+                "description": "Events to send to this platform",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "configuration": {
+                "type": "object",
+                "description": "Platform-specific configuration",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "data_warehouse": {
+          "type": "object",
+          "description": "Data warehouse integration",
+          "properties": {
+            "warehouse_type": {
+              "type": "string",
+              "description": "Type of data warehouse (e.g., 'Snowflake', 'BigQuery', 'Redshift')"
+            },
+            "sync_frequency": {
+              "type": "string",
+              "description": "How often to sync data"
+            },
+            "tables_to_sync": {
+              "type": "array",
+              "description": "Tables to sync to warehouse",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "reporting_dashboards": {
+      "type": "array",
+      "description": "Dashboards to build for financial reporting",
+      "items": {
+        "type": "object",
+        "properties": {
+          "dashboard_name": {
+            "type": "string",
+            "description": "Name of the dashboard"
+          },
+          "audience": {
+            "type": "string",
+            "description": "Target audience (e.g., 'Board', 'CFO', 'Product Team')"
+          },
+          "refresh_frequency": {
+            "type": "string",
+            "description": "How often to refresh data"
+          },
+          "metrics_included": {
+            "type": "array",
+            "description": "Metrics to display",
+            "items": {
+              "type": "string"
+            }
+          },
+          "visualizations": {
+            "type": "array",
+            "description": "Recommended visualizations",
+            "items": {
+              "type": "object",
+              "properties": {
+                "metric": {
+                  "type": "string"
+                },
+                "chart_type": {
+                  "type": "string",
+                  "description": "Type of chart (e.g., 'line', 'bar', 'gauge')"
+                }
+              }
+            }
+          },
+          "tool": {
+            "type": "string",
+            "description": "Tool to build dashboard in (e.g., 'Tableau', 'Looker', 'Metabase')"
+          }
+        }
+      }
+    },
+    "implementation_phases": {
+      "type": "array",
+      "description": "Phased implementation plan",
+      "items": {
+        "type": "object",
+        "properties": {
+          "phase_number": {
+            "type": "integer",
+            "description": "Phase number (1, 2, 3...)"
+          },
+          "phase_name": {
+            "type": "string",
+            "description": "Name of this phase"
+          },
+          "duration": {
+            "type": "string",
+            "description": "Estimated duration"
+          },
+          "objectives": {
+            "type": "array",
+            "description": "Objectives for this phase",
+            "items": {
+              "type": "string"
+            }
+          },
+          "deliverables": {
+            "type": "array",
+            "description": "Deliverables for this phase",
+            "items": {
+              "type": "string"
+            }
+          },
+          "events_to_implement": {
+            "type": "array",
+            "description": "Events to implement in this phase",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metrics_enabled": {
+            "type": "array",
+            "description": "Metrics that will be available after this phase",
+            "items": {
+              "type": "string"
+            }
+          },
+          "success_criteria": {
+            "type": "array",
+            "description": "Success criteria for this phase",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "code_templates": {
+      "type": "object",
+      "description": "Code templates for implementation",
+      "properties": {
+        "event_emitter": {
+          "type": "string",
+          "description": "Template for event emission code"
+        },
+        "event_consumer": {
+          "type": "string",
+          "description": "Template for event consumption/processing"
+        },
+        "metric_calculator": {
+          "type": "string",
+          "description": "Template for metric calculation functions"
+        },
+        "api_endpoint": {
+          "type": "string",
+          "description": "Template for financial API endpoints"
+        }
+      }
+    },
+    "testing_validation": {
+      "type": "object",
+      "description": "Testing and validation requirements",
+      "properties": {
+        "unit_tests": {
+          "type": "array",
+          "description": "Required unit tests",
+          "items": {
+            "type": "string"
+          }
+        },
+        "integration_tests": {
+          "type": "array",
+          "description": "Required integration tests",
+          "items": {
+            "type": "string"
+          }
+        },
+        "data_quality_checks": {
+          "type": "array",
+          "description": "Data quality validation checks",
+          "items": {
+            "type": "object",
+            "properties": {
+              "check_name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "frequency": {
+                "type": "string",
+                "description": "How often to run this check"
+              }
+            }
+          }
+        },
+        "validation_queries": {
+          "type": "array",
+          "description": "SQL queries to validate data correctness",
+          "items": {
+            "type": "object",
+            "properties": {
+              "query_name": {
+                "type": "string"
+              },
+              "query": {
+                "type": "string",
+                "description": "SQL query"
+              },
+              "expected_result": {
+                "type": "string",
+                "description": "What the query should verify"
+              }
+            }
+          }
+        }
+      }
+    },
+    "monitoring_alerts": {
+      "type": "object",
+      "description": "Monitoring and alerting setup",
+      "properties": {
+        "metrics_to_monitor": {
+          "type": "array",
+          "description": "Metrics that need monitoring",
+          "items": {
+            "type": "string"
+          }
+        },
+        "alerts": {
+          "type": "array",
+          "description": "Alert configurations",
+          "items": {
+            "type": "object",
+            "properties": {
+              "alert_name": {
+                "type": "string"
+              },
+              "condition": {
+                "type": "string",
+                "description": "Alert trigger condition"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["info", "warning", "critical"]
+              },
+              "notification_channel": {
+                "type": "string",
+                "description": "Where to send alerts (e.g., 'Slack', 'PagerDuty', 'email')"
+              }
+            }
+          }
+        },
+        "data_freshness_checks": {
+          "type": "array",
+          "description": "Checks to ensure data is up-to-date",
+          "items": {
+            "type": "object",
+            "properties": {
+              "data_source": {
+                "type": "string"
+              },
+              "max_age_minutes": {
+                "type": "integer",
+                "description": "Maximum acceptable data age"
+              }
+            }
+          }
+        }
+      }
+    },
+    "documentation": {
+      "type": "object",
+      "description": "Documentation requirements",
+      "properties": {
+        "event_catalog": {
+          "type": "string",
+          "description": "Link or location of event catalog documentation"
+        },
+        "data_dictionary": {
+          "type": "string",
+          "description": "Link or location of data dictionary"
+        },
+        "runbooks": {
+          "type": "array",
+          "description": "Operational runbooks",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "string"
+              },
+              "location": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "team_responsibilities": {
+      "type": "object",
+      "description": "Team ownership and responsibilities",
+      "properties": {
+        "owners": {
+          "type": "array",
+          "description": "Team or individuals responsible",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "description": "Role or team name"
+              },
+              "responsibilities": {
+                "type": "array",
+                "description": "Specific responsibilities",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "stakeholders": {
+          "type": "array",
+          "description": "Key stakeholders to involve",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "success_metrics": {
+      "type": "object",
+      "description": "Success metrics for instrumentation project",
+      "properties": {
+        "coverage": {
+          "type": "object",
+          "description": "Coverage metrics",
+          "properties": {
+            "target_event_coverage_pct": {
+              "type": "number",
+              "description": "Target percentage of events instrumented"
+            },
+            "target_metric_coverage_pct": {
+              "type": "number",
+              "description": "Target percentage of metrics calculable"
+            }
+          }
+        },
+        "quality": {
+          "type": "object",
+          "description": "Data quality metrics",
+          "properties": {
+            "target_data_accuracy_pct": {
+              "type": "number",
+              "description": "Target data accuracy percentage"
+            },
+            "target_data_freshness_minutes": {
+              "type": "integer",
+              "description": "Target maximum data age"
+            }
+          }
+        },
+        "adoption": {
+          "type": "object",
+          "description": "Adoption metrics",
+          "properties": {
+            "target_dashboard_users": {
+              "type": "integer",
+              "description": "Target number of dashboard users"
+            },
+            "target_api_consumers": {
+              "type": "integer",
+              "description": "Target number of API consumers"
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about this instrumentation plan",
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this plan was created"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this plan was last updated"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of this plan"
+        },
+        "author": {
+          "type": "string",
+          "description": "Plan author"
+        },
+        "status": {
+          "type": "string",
+          "description": "Implementation status",
+          "enum": ["draft", "approved", "in_progress", "completed"]
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes"
+        }
+      }
+    }
+  }
+}

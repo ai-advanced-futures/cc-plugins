@@ -1,0 +1,793 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Subscription Event Schemas",
+  "description": "Event schemas for subscription lifecycle tracking and financial analysis",
+  "type": "object",
+  "properties": {
+    "subscription_created": {
+      "type": "object",
+      "description": "Emitted when a new subscription is created",
+      "properties": {
+        "event": {
+          "type": "string",
+          "const": "subscription_created",
+          "description": "Event name"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0.0",
+          "description": "Event schema version"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event occurred"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer identifier"
+        },
+        "subscription_id": {
+          "type": "string",
+          "description": "Unique subscription identifier"
+        },
+        "plan": {
+          "type": "string",
+          "description": "Subscription plan name (e.g., 'free', 'professional', 'enterprise')"
+        },
+        "plan_tier": {
+          "type": "string",
+          "description": "Plan tier level for hierarchy",
+          "enum": ["free", "starter", "professional", "team", "enterprise"]
+        },
+        "billing_period": {
+          "type": "string",
+          "description": "Billing frequency",
+          "enum": ["monthly", "quarterly", "annual", "trial"]
+        },
+        "mrr": {
+          "type": "number",
+          "description": "Monthly Recurring Revenue for this subscription",
+          "minimum": 0
+        },
+        "arr": {
+          "type": "number",
+          "description": "Annual Recurring Revenue (MRR × 12)",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code (ISO 4217)",
+          "default": "USD"
+        },
+        "start_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Subscription start date"
+        },
+        "trial": {
+          "type": "boolean",
+          "description": "Whether this is a trial subscription",
+          "default": false
+        },
+        "trial_end_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Trial end date (if applicable)"
+        },
+        "contract_length_months": {
+          "type": "integer",
+          "description": "Length of contract commitment in months",
+          "minimum": 0
+        },
+        "seats": {
+          "type": "integer",
+          "description": "Number of user seats (for per-seat pricing)",
+          "minimum": 1
+        },
+        "source": {
+          "type": "string",
+          "description": "Acquisition source/channel",
+          "examples": ["organic", "paid_search", "referral", "sales", "partner"]
+        },
+        "payment_method": {
+          "type": "string",
+          "description": "Payment method type",
+          "examples": ["credit_card", "invoice", "ach", "wire"]
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context-specific data",
+          "additionalProperties": true
+        }
+      },
+      "required": ["event", "version", "timestamp", "customer_id", "subscription_id", "plan", "billing_period", "mrr", "currency", "start_date"]
+    },
+    "subscription_upgraded": {
+      "type": "object",
+      "description": "Emitted when a subscription is upgraded to a higher tier",
+      "properties": {
+        "event": {
+          "type": "string",
+          "const": "subscription_upgraded",
+          "description": "Event name"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0.0",
+          "description": "Event schema version"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event occurred"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer identifier"
+        },
+        "subscription_id": {
+          "type": "string",
+          "description": "Unique subscription identifier"
+        },
+        "previous_plan": {
+          "type": "string",
+          "description": "Previous plan name"
+        },
+        "new_plan": {
+          "type": "string",
+          "description": "New plan name"
+        },
+        "previous_plan_tier": {
+          "type": "string",
+          "description": "Previous plan tier",
+          "enum": ["free", "starter", "professional", "team", "enterprise"]
+        },
+        "new_plan_tier": {
+          "type": "string",
+          "description": "New plan tier",
+          "enum": ["free", "starter", "professional", "team", "enterprise"]
+        },
+        "previous_mrr": {
+          "type": "number",
+          "description": "Previous Monthly Recurring Revenue",
+          "minimum": 0
+        },
+        "new_mrr": {
+          "type": "number",
+          "description": "New Monthly Recurring Revenue",
+          "minimum": 0
+        },
+        "expansion_mrr": {
+          "type": "number",
+          "description": "Net new MRR from upgrade (new_mrr - previous_mrr)",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code (ISO 4217)",
+          "default": "USD"
+        },
+        "upgrade_reason": {
+          "type": "string",
+          "description": "Reason for upgrade",
+          "examples": ["feature_need", "user_growth", "usage_limit", "sales_driven"]
+        },
+        "effective_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when upgrade becomes effective"
+        },
+        "proration_amount": {
+          "type": "number",
+          "description": "Prorated amount charged/credited"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context-specific data",
+          "additionalProperties": true
+        }
+      },
+      "required": ["event", "version", "timestamp", "customer_id", "subscription_id", "previous_plan", "new_plan", "previous_mrr", "new_mrr", "expansion_mrr", "currency"]
+    },
+    "subscription_downgraded": {
+      "type": "object",
+      "description": "Emitted when a subscription is downgraded to a lower tier",
+      "properties": {
+        "event": {
+          "type": "string",
+          "const": "subscription_downgraded",
+          "description": "Event name"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0.0",
+          "description": "Event schema version"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event occurred"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer identifier"
+        },
+        "subscription_id": {
+          "type": "string",
+          "description": "Unique subscription identifier"
+        },
+        "previous_plan": {
+          "type": "string",
+          "description": "Previous plan name"
+        },
+        "new_plan": {
+          "type": "string",
+          "description": "New plan name"
+        },
+        "previous_plan_tier": {
+          "type": "string",
+          "description": "Previous plan tier",
+          "enum": ["free", "starter", "professional", "team", "enterprise"]
+        },
+        "new_plan_tier": {
+          "type": "string",
+          "description": "New plan tier",
+          "enum": ["free", "starter", "professional", "team", "enterprise"]
+        },
+        "previous_mrr": {
+          "type": "number",
+          "description": "Previous Monthly Recurring Revenue",
+          "minimum": 0
+        },
+        "new_mrr": {
+          "type": "number",
+          "description": "New Monthly Recurring Revenue",
+          "minimum": 0
+        },
+        "contraction_mrr": {
+          "type": "number",
+          "description": "Lost MRR from downgrade (previous_mrr - new_mrr)",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code (ISO 4217)",
+          "default": "USD"
+        },
+        "downgrade_reason": {
+          "type": "string",
+          "description": "Reason for downgrade",
+          "examples": ["price_concern", "feature_underutilization", "budget_cut", "team_size_reduction"]
+        },
+        "churn_risk_score": {
+          "type": "number",
+          "description": "Risk score for potential churn (0-100)",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "effective_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when downgrade becomes effective"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context-specific data",
+          "additionalProperties": true
+        }
+      },
+      "required": ["event", "version", "timestamp", "customer_id", "subscription_id", "previous_plan", "new_plan", "previous_mrr", "new_mrr", "contraction_mrr", "currency"]
+    },
+    "subscription_cancelled": {
+      "type": "object",
+      "description": "Emitted when a subscription is cancelled",
+      "properties": {
+        "event": {
+          "type": "string",
+          "const": "subscription_cancelled",
+          "description": "Event name"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0.0",
+          "description": "Event schema version"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event occurred"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer identifier"
+        },
+        "subscription_id": {
+          "type": "string",
+          "description": "Unique subscription identifier"
+        },
+        "plan": {
+          "type": "string",
+          "description": "Plan that was cancelled"
+        },
+        "plan_tier": {
+          "type": "string",
+          "description": "Plan tier level",
+          "enum": ["free", "starter", "professional", "team", "enterprise"]
+        },
+        "churned_mrr": {
+          "type": "number",
+          "description": "Monthly Recurring Revenue lost from cancellation",
+          "minimum": 0
+        },
+        "churned_arr": {
+          "type": "number",
+          "description": "Annual Recurring Revenue lost from cancellation",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code (ISO 4217)",
+          "default": "USD"
+        },
+        "cancellation_reason": {
+          "type": "string",
+          "description": "Primary reason for cancellation",
+          "examples": ["price", "missing_features", "competitor", "no_longer_needed", "poor_support", "technical_issues"]
+        },
+        "cancellation_reason_details": {
+          "type": "string",
+          "description": "Detailed feedback about cancellation"
+        },
+        "subscription_start_date": {
+          "type": "string",
+          "format": "date",
+          "description": "When subscription originally started"
+        },
+        "cancellation_date": {
+          "type": "string",
+          "format": "date",
+          "description": "When cancellation was requested"
+        },
+        "effective_end_date": {
+          "type": "string",
+          "format": "date",
+          "description": "When subscription access actually ends"
+        },
+        "subscription_lifetime_days": {
+          "type": "integer",
+          "description": "Total days customer was subscribed",
+          "minimum": 0
+        },
+        "lifetime_value": {
+          "type": "number",
+          "description": "Total revenue from this subscription",
+          "minimum": 0
+        },
+        "cancellation_type": {
+          "type": "string",
+          "description": "Type of cancellation",
+          "enum": ["voluntary", "involuntary", "payment_failure", "fraud"]
+        },
+        "retention_attempt": {
+          "type": "boolean",
+          "description": "Whether retention was attempted",
+          "default": false
+        },
+        "retention_offer_made": {
+          "type": "string",
+          "description": "Retention offer provided, if any"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context-specific data",
+          "additionalProperties": true
+        }
+      },
+      "required": ["event", "version", "timestamp", "customer_id", "subscription_id", "plan", "churned_mrr", "currency", "cancellation_date", "effective_end_date"]
+    },
+    "subscription_renewed": {
+      "type": "object",
+      "description": "Emitted when a subscription is renewed (contract extension or auto-renewal)",
+      "properties": {
+        "event": {
+          "type": "string",
+          "const": "subscription_renewed",
+          "description": "Event name"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0.0",
+          "description": "Event schema version"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event occurred"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer identifier"
+        },
+        "subscription_id": {
+          "type": "string",
+          "description": "Unique subscription identifier"
+        },
+        "plan": {
+          "type": "string",
+          "description": "Subscription plan name"
+        },
+        "plan_tier": {
+          "type": "string",
+          "description": "Plan tier level",
+          "enum": ["free", "starter", "professional", "team", "enterprise"]
+        },
+        "renewal_type": {
+          "type": "string",
+          "description": "Type of renewal",
+          "enum": ["auto_renewal", "manual_renewal", "contract_extension"]
+        },
+        "mrr": {
+          "type": "number",
+          "description": "Monthly Recurring Revenue continuing",
+          "minimum": 0
+        },
+        "renewal_amount": {
+          "type": "number",
+          "description": "Total amount paid for renewal period",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code (ISO 4217)",
+          "default": "USD"
+        },
+        "previous_end_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Previous subscription end date"
+        },
+        "new_end_date": {
+          "type": "string",
+          "format": "date",
+          "description": "New subscription end date after renewal"
+        },
+        "contract_length_months": {
+          "type": "integer",
+          "description": "Length of renewed contract in months",
+          "minimum": 1
+        },
+        "renewal_number": {
+          "type": "integer",
+          "description": "Which renewal this is (1st, 2nd, etc.)",
+          "minimum": 1
+        },
+        "price_change_pct": {
+          "type": "number",
+          "description": "Percentage price change vs. previous period"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context-specific data",
+          "additionalProperties": true
+        }
+      },
+      "required": ["event", "version", "timestamp", "customer_id", "subscription_id", "plan", "renewal_type", "mrr", "currency", "previous_end_date", "new_end_date"]
+    },
+    "payment_received": {
+      "type": "object",
+      "description": "Emitted when a payment is successfully received",
+      "properties": {
+        "event": {
+          "type": "string",
+          "const": "payment_received",
+          "description": "Event name"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0.0",
+          "description": "Event schema version"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event occurred"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer identifier"
+        },
+        "subscription_id": {
+          "type": "string",
+          "description": "Unique subscription identifier"
+        },
+        "payment_id": {
+          "type": "string",
+          "description": "Unique payment transaction identifier"
+        },
+        "invoice_id": {
+          "type": "string",
+          "description": "Invoice identifier this payment applies to"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Payment amount",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code (ISO 4217)",
+          "default": "USD"
+        },
+        "payment_method": {
+          "type": "string",
+          "description": "Payment method used",
+          "examples": ["credit_card", "ach", "wire", "check", "paypal"]
+        },
+        "payment_type": {
+          "type": "string",
+          "description": "Type of payment",
+          "enum": ["subscription", "one_time", "usage", "overage", "setup_fee", "renewal"]
+        },
+        "billing_period_start": {
+          "type": "string",
+          "format": "date",
+          "description": "Start of billing period this payment covers"
+        },
+        "billing_period_end": {
+          "type": "string",
+          "format": "date",
+          "description": "End of billing period this payment covers"
+        },
+        "invoice_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date invoice was issued"
+        },
+        "payment_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Date payment was received"
+        },
+        "days_to_payment": {
+          "type": "integer",
+          "description": "Days between invoice and payment",
+          "minimum": 0
+        },
+        "fees": {
+          "type": "number",
+          "description": "Processing fees incurred",
+          "minimum": 0
+        },
+        "net_amount": {
+          "type": "number",
+          "description": "Net amount after fees",
+          "minimum": 0
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context-specific data",
+          "additionalProperties": true
+        }
+      },
+      "required": ["event", "version", "timestamp", "customer_id", "payment_id", "amount", "currency", "payment_method", "payment_type", "payment_date"]
+    },
+    "trial_started": {
+      "type": "object",
+      "description": "Emitted when a customer starts a trial",
+      "properties": {
+        "event": {
+          "type": "string",
+          "const": "trial_started",
+          "description": "Event name"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0.0",
+          "description": "Event schema version"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event occurred"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer identifier"
+        },
+        "subscription_id": {
+          "type": "string",
+          "description": "Unique subscription identifier"
+        },
+        "trial_plan": {
+          "type": "string",
+          "description": "Plan being trialed"
+        },
+        "trial_plan_tier": {
+          "type": "string",
+          "description": "Plan tier being trialed",
+          "enum": ["free", "starter", "professional", "team", "enterprise"]
+        },
+        "trial_start_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Trial start date"
+        },
+        "trial_end_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Trial end date"
+        },
+        "trial_length_days": {
+          "type": "integer",
+          "description": "Length of trial in days",
+          "minimum": 1
+        },
+        "trial_type": {
+          "type": "string",
+          "description": "Type of trial",
+          "enum": ["time_based", "feature_limited", "usage_limited"]
+        },
+        "requires_payment_method": {
+          "type": "boolean",
+          "description": "Whether trial requires payment method upfront",
+          "default": false
+        },
+        "auto_convert": {
+          "type": "boolean",
+          "description": "Whether trial auto-converts to paid if not cancelled",
+          "default": true
+        },
+        "conversion_plan": {
+          "type": "string",
+          "description": "Plan customer will convert to after trial"
+        },
+        "expected_mrr": {
+          "type": "number",
+          "description": "Expected MRR if trial converts",
+          "minimum": 0
+        },
+        "source": {
+          "type": "string",
+          "description": "Acquisition source/channel",
+          "examples": ["organic", "paid_search", "referral", "sales", "partner"]
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context-specific data",
+          "additionalProperties": true
+        }
+      },
+      "required": ["event", "version", "timestamp", "customer_id", "subscription_id", "trial_plan", "trial_start_date", "trial_end_date", "trial_length_days"]
+    },
+    "trial_ended": {
+      "type": "object",
+      "description": "Emitted when a trial period ends",
+      "properties": {
+        "event": {
+          "type": "string",
+          "const": "trial_ended",
+          "description": "Event name"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0.0",
+          "description": "Event schema version"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when event occurred"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer identifier"
+        },
+        "subscription_id": {
+          "type": "string",
+          "description": "Unique subscription identifier"
+        },
+        "trial_plan": {
+          "type": "string",
+          "description": "Plan that was trialed"
+        },
+        "trial_start_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Trial start date"
+        },
+        "trial_end_date": {
+          "type": "string",
+          "format": "date",
+          "description": "Trial end date"
+        },
+        "trial_length_days": {
+          "type": "integer",
+          "description": "Actual length of trial in days",
+          "minimum": 1
+        },
+        "conversion_status": {
+          "type": "string",
+          "description": "Result of trial",
+          "enum": ["converted", "cancelled", "expired"]
+        },
+        "converted_to_plan": {
+          "type": "string",
+          "description": "Plan converted to (if converted)"
+        },
+        "converted_mrr": {
+          "type": "number",
+          "description": "MRR from conversion (if converted)",
+          "minimum": 0
+        },
+        "engagement_score": {
+          "type": "number",
+          "description": "Customer engagement score during trial (0-100)",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "feature_usage_count": {
+          "type": "integer",
+          "description": "Number of features used during trial",
+          "minimum": 0
+        },
+        "login_count": {
+          "type": "integer",
+          "description": "Number of logins during trial",
+          "minimum": 0
+        },
+        "cancellation_reason": {
+          "type": "string",
+          "description": "Reason for not converting (if applicable)"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional context-specific data",
+          "additionalProperties": true
+        }
+      },
+      "required": ["event", "version", "timestamp", "customer_id", "subscription_id", "trial_plan", "trial_start_date", "trial_end_date", "conversion_status"]
+    }
+  },
+  "definitions": {
+    "currency_codes": {
+      "type": "string",
+      "description": "ISO 4217 currency codes",
+      "enum": ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "CNY", "INR"]
+    },
+    "plan_tiers": {
+      "type": "string",
+      "description": "Standard plan tier levels",
+      "enum": ["free", "starter", "professional", "team", "enterprise"]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "created_at": "2026-01-22",
+    "description": "Standard event schemas for subscription lifecycle tracking in SaaS products. These events enable calculation of key metrics including MRR, ARR, churn rate, expansion revenue, and customer lifetime value.",
+    "usage_notes": [
+      "All timestamps should be in ISO 8601 format with timezone",
+      "All monetary amounts should be in decimal format with 2 decimal places",
+      "Currency should be specified for all monetary values",
+      "Customer and subscription IDs should be consistent across all events",
+      "Metadata fields allow for extensibility without schema changes"
+    ],
+    "enabled_metrics": [
+      "MRR (Monthly Recurring Revenue)",
+      "ARR (Annual Recurring Revenue)",
+      "Net New MRR",
+      "Expansion MRR",
+      "Contraction MRR",
+      "Churned MRR",
+      "Customer Churn Rate",
+      "Revenue Churn Rate",
+      "Net Revenue Retention (NRR)",
+      "Gross Revenue Retention (GRR)",
+      "Trial Conversion Rate",
+      "Lifetime Value (LTV)",
+      "Customer Lifetime",
+      "Average Revenue Per User (ARPU)",
+      "Payment Collection Efficiency"
+    ]
+  }
+}

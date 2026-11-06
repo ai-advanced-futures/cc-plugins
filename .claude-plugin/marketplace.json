@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.11.0"
+    "version": "2.12.0"
   },
   "plugins": [
     {
@@ -139,6 +139,12 @@
       "name": "gtm",
       "description": "Plan the go-to-market work of a product. Build the brand identity, the marketing plans, the sales playbooks, and the revenue funnel from the real abilities of the product. Check each claim against a five-tier truth scale.",
       "source": "./plugins/gtm",
+      "strict": false
+    },
+    {
+      "name": "product-finance",
+      "description": "Run financial analysis for a product team: market size, feature ROI, AI cost and ROI, unit economics, financial health, an instrumentation plan, a services model, and a cost-coverage readout. Use discover, setup, feature-roi, ai-economics, unit-economics, health-check, instrumentation, services-model, and cost-coverage.",
+      "source": "./plugins/product-finance",
       "strict": false
     }
   ]

@@ -85,3 +85,7 @@ material, and the Apache License does not replace them.
 14. gtm, by Luis F. Amadeo, MIT License.
    The gtm plugin ports it, with changes.
    The MIT notice is in plugins/gtm/NOTICE.
+
+15. product-finance, by Luis F. Amadeo, MIT License.
+    The product-finance plugin ports it, with changes.
+    The MIT notice is in plugins/product-finance/NOTICE.

@@ -1,0 +1,500 @@
+{
+  "report_metadata": {
+    "report_type": "unit_economics_analysis",
+    "generated_at": "2026-01-23T10:45:00Z",
+    "period": {
+      "start_date": "2025-01-01",
+      "end_date": "2026-01-31",
+      "period_type": "trailing_12_months"
+    },
+    "company": {
+      "name": "DataSync Pro",
+      "stage": "series_a"
+    },
+    "version": "1.0.0"
+  },
+  "summary": {
+    "overall_health": "EXCELLENT",
+    "unit_economics_score": 92,
+    "key_metrics": {
+      "cac": 45000,
+      "ltv": 375000,
+      "ltv_cac_ratio": 8.33,
+      "cac_payback_months": 9.0,
+      "gross_margin_pct": 78.0
+    },
+    "recommendation": "Strong unit economics support aggressive growth investment. Consider increasing marketing spend and expanding sales team."
+  },
+  "customer_acquisition_cost": {
+    "blended_cac": 45000,
+    "cac_trend": "stable",
+    "cac_change_yoy_pct": -5.2,
+    "calculation": {
+      "total_sales_marketing_spend": 1140000,
+      "new_customers_acquired": 28,
+      "period_months": 12
+    },
+    "by_channel": [
+      {
+        "channel": "Outbound Sales",
+        "cac": 52000,
+        "customers_acquired": 8,
+        "total_spend": 416000,
+        "pct_of_total_customers": 28.6,
+        "efficiency_rating": "FAIR",
+        "trend": "increasing"
+      },
+      {
+        "channel": "Inbound Marketing",
+        "cac": 38000,
+        "customers_acquired": 10,
+        "total_spend": 380000,
+        "pct_of_total_customers": 35.7,
+        "efficiency_rating": "GOOD",
+        "trend": "stable"
+      },
+      {
+        "channel": "Partnerships",
+        "cac": 28000,
+        "customers_acquired": 6,
+        "total_spend": 168000,
+        "pct_of_total_customers": 21.4,
+        "efficiency_rating": "EXCELLENT",
+        "trend": "improving"
+      },
+      {
+        "channel": "Referrals",
+        "cac": 15000,
+        "customers_acquired": 4,
+        "total_spend": 60000,
+        "pct_of_total_customers": 14.3,
+        "efficiency_rating": "EXCELLENT",
+        "trend": "stable"
+      }
+    ],
+    "by_segment": [
+      {
+        "segment": "Enterprise",
+        "cac": 58000,
+        "customers_acquired": 18,
+        "avg_acv": 86400,
+        "cac_to_acv_ratio": 0.67,
+        "efficiency_rating": "GOOD"
+      },
+      {
+        "segment": "Mid-Market",
+        "cac": 32000,
+        "customers_acquired": 10,
+        "avg_acv": 43200,
+        "cac_to_acv_ratio": 0.74,
+        "efficiency_rating": "GOOD"
+      }
+    ],
+    "cac_components": {
+      "sales_salaries": 420000,
+      "sales_commissions": 84000,
+      "marketing_programs": 285000,
+      "marketing_salaries": 180000,
+      "sales_tools_tech": 95000,
+      "events_conferences": 76000,
+      "total": 1140000
+    },
+    "optimization_opportunities": [
+      {
+        "opportunity": "Expand partnership channel",
+        "current_pct": 21.4,
+        "target_pct": 35.0,
+        "potential_cac_reduction": 8500,
+        "implementation_effort": "medium",
+        "priority": "high"
+      },
+      {
+        "opportunity": "Launch referral program",
+        "current_pct": 14.3,
+        "target_pct": 25.0,
+        "potential_cac_reduction": 6000,
+        "implementation_effort": "low",
+        "priority": "high"
+      },
+      {
+        "opportunity": "Optimize outbound targeting",
+        "current_cac": 52000,
+        "target_cac": 45000,
+        "potential_savings": 56000,
+        "implementation_effort": "medium",
+        "priority": "medium"
+      }
+    ]
+  },
+  "lifetime_value": {
+    "gross_ltv": 416667,
+    "net_ltv": 375000,
+    "ltv_trend": "stable",
+    "ltv_change_yoy_pct": 8.2,
+    "calculation": {
+      "method": "revenue_based_with_discount",
+      "arpc_monthly": 5000,
+      "arpc_annual": 60000,
+      "gross_margin_pct": 78.0,
+      "gross_margin_per_customer_monthly": 3900,
+      "gross_margin_per_customer_annual": 46800,
+      "monthly_churn_rate": 1.2,
+      "implied_lifetime_months": 83.3,
+      "discount_rate_annual": 10.0,
+      "formula": "ARPC * Gross_Margin / Monthly_Churn_Rate * Discount_Factor"
+    },
+    "by_segment": [
+      {
+        "segment": "Enterprise",
+        "arpc_monthly": 5000,
+        "arpc_annual": 60000,
+        "gross_margin_pct": 80.0,
+        "monthly_churn_rate": 0.8,
+        "implied_lifetime_months": 125,
+        "gross_ltv": 500000,
+        "net_ltv": 450000
+      },
+      {
+        "segment": "Mid-Market",
+        "arpc_monthly": 5000,
+        "arpc_annual": 60000,
+        "gross_margin_pct": 75.0,
+        "monthly_churn_rate": 2.0,
+        "implied_lifetime_months": 50,
+        "gross_ltv": 187500,
+        "net_ltv": 168750
+      }
+    ],
+    "by_cohort": [
+      {
+        "cohort": "Q1 2025",
+        "starting_customers": 12,
+        "current_customers": 10,
+        "starting_mrr": 48000,
+        "current_mrr": 52000,
+        "dollar_retention": 108.3,
+        "projected_ltv": 385000
+      },
+      {
+        "cohort": "Q2 2025",
+        "starting_customers": 8,
+        "current_customers": 7,
+        "starting_mrr": 36000,
+        "current_mrr": 42000,
+        "dollar_retention": 116.7,
+        "projected_ltv": 420000
+      },
+      {
+        "cohort": "Q3 2025",
+        "starting_customers": 10,
+        "current_customers": 9,
+        "starting_mrr": 55000,
+        "current_mrr": 58000,
+        "dollar_retention": 105.5,
+        "projected_ltv": 365000
+      }
+    ],
+    "ltv_drivers": [
+      {
+        "driver": "Retention improvement",
+        "current_value": 1.2,
+        "target_value": 0.8,
+        "ltv_impact": 125000,
+        "ltv_increase_pct": 33.3,
+        "effort": "high"
+      },
+      {
+        "driver": "ARPC expansion",
+        "current_value": 5000,
+        "target_value": 5500,
+        "ltv_impact": 37500,
+        "ltv_increase_pct": 10.0,
+        "effort": "medium"
+      },
+      {
+        "driver": "Gross margin improvement",
+        "current_value": 78,
+        "target_value": 82,
+        "ltv_impact": 19200,
+        "ltv_increase_pct": 5.1,
+        "effort": "low"
+      }
+    ]
+  },
+  "efficiency_ratios": {
+    "ltv_cac_ratio": {
+      "value": 8.33,
+      "status": "EXCELLENT",
+      "benchmark": 3.0,
+      "benchmark_comparison": "2.78x above benchmark",
+      "interpretation": "For every $1 spent on acquisition, company generates $8.33 in customer value",
+      "by_channel": [
+        {
+          "channel": "Referrals",
+          "ltv_cac_ratio": 25.0,
+          "status": "EXCELLENT"
+        },
+        {
+          "channel": "Partnerships",
+          "ltv_cac_ratio": 13.4,
+          "status": "EXCELLENT"
+        },
+        {
+          "channel": "Inbound Marketing",
+          "ltv_cac_ratio": 9.9,
+          "status": "EXCELLENT"
+        },
+        {
+          "channel": "Outbound Sales",
+          "ltv_cac_ratio": 7.2,
+          "status": "EXCELLENT"
+        }
+      ],
+      "by_segment": [
+        {
+          "segment": "Enterprise",
+          "ltv_cac_ratio": 7.76,
+          "status": "EXCELLENT"
+        },
+        {
+          "segment": "Mid-Market",
+          "ltv_cac_ratio": 5.27,
+          "status": "EXCELLENT"
+        }
+      ]
+    },
+    "cac_payback": {
+      "value_months": 9.0,
+      "status": "EXCELLENT",
+      "benchmark_months": 18,
+      "benchmark_comparison": "9 months better than benchmark",
+      "calculation": {
+        "cac": 45000,
+        "arpc_monthly": 5000,
+        "gross_margin_pct": 78,
+        "gross_margin_per_month": 3900,
+        "payback_formula": "CAC / (ARPC * Gross_Margin)"
+      },
+      "by_channel": [
+        {
+          "channel": "Referrals",
+          "payback_months": 3.8
+        },
+        {
+          "channel": "Partnerships",
+          "payback_months": 7.2
+        },
+        {
+          "channel": "Inbound Marketing",
+          "payback_months": 9.7
+        },
+        {
+          "channel": "Outbound Sales",
+          "payback_months": 13.3
+        }
+      ],
+      "by_segment": [
+        {
+          "segment": "Enterprise",
+          "payback_months": 12.1
+        },
+        {
+          "segment": "Mid-Market",
+          "payback_months": 8.5
+        }
+      ]
+    },
+    "magic_number": {
+      "value": 0.84,
+      "status": "GOOD",
+      "benchmark": 0.75,
+      "interpretation": "For every $1 spent on S&M, generates $0.84 in net new ARR",
+      "calculation": {
+        "net_new_arr": 960000,
+        "prior_quarter_sm_spend": 285000,
+        "formula": "(Current Quarter Net New ARR) / (Prior Quarter S&M Spend)"
+      }
+    },
+    "sales_efficiency": {
+      "value": 0.67,
+      "status": "GOOD",
+      "interpretation": "CAC is 67% of first-year ACV",
+      "calculation": {
+        "cac": 45000,
+        "first_year_acv": 60000,
+        "formula": "CAC / First_Year_ACV"
+      }
+    }
+  },
+  "profitability_analysis": {
+    "customer_profitability": {
+      "first_year": {
+        "revenue": 60000,
+        "cogs": 13200,
+        "gross_profit": 46800,
+        "cac_amortization": 45000,
+        "contribution_margin": 1800,
+        "contribution_margin_pct": 3.0,
+        "profitable": true
+      },
+      "year_2": {
+        "revenue": 66000,
+        "cogs": 14520,
+        "gross_profit": 51480,
+        "cac_amortization": 0,
+        "contribution_margin": 51480,
+        "contribution_margin_pct": 78.0,
+        "profitable": true
+      },
+      "year_3": {
+        "revenue": 72600,
+        "cogs": 15972,
+        "gross_profit": 56628,
+        "cac_amortization": 0,
+        "contribution_margin": 56628,
+        "contribution_margin_pct": 78.0,
+        "profitable": true
+      },
+      "five_year_total": {
+        "revenue": 380000,
+        "cogs": 83600,
+        "gross_profit": 296400,
+        "cac": 45000,
+        "net_contribution": 251400,
+        "net_contribution_margin": 66.2
+      }
+    },
+    "breakeven_analysis": {
+      "months_to_cac_recovery": 9,
+      "months_to_fully_loaded_breakeven": 12,
+      "revenue_at_breakeven": 45000,
+      "cumulative_revenue_at_cac_recovery": 60000
+    },
+    "margin_stack": {
+      "gross_margin_pct": 78.0,
+      "contribution_margin_pct": 66.2,
+      "operating_margin_pct": -22.0,
+      "unit_margin_pct": 72.0
+    }
+  },
+  "cohort_analysis": {
+    "retention_curves": [
+      {
+        "cohort": "Q1 2025",
+        "month_0": 100,
+        "month_3": 95,
+        "month_6": 92,
+        "month_9": 88,
+        "month_12": 83
+      },
+      {
+        "cohort": "Q2 2025",
+        "month_0": 100,
+        "month_3": 96,
+        "month_6": 94,
+        "month_9": 88
+      },
+      {
+        "cohort": "Q3 2025",
+        "month_0": 100,
+        "month_3": 95,
+        "month_6": 90
+      }
+    ],
+    "revenue_curves": [
+      {
+        "cohort": "Q1 2025",
+        "month_0": 100,
+        "month_3": 102,
+        "month_6": 105,
+        "month_9": 106,
+        "month_12": 108
+      },
+      {
+        "cohort": "Q2 2025",
+        "month_0": 100,
+        "month_3": 105,
+        "month_6": 112,
+        "month_9": 117
+      },
+      {
+        "cohort": "Q3 2025",
+        "month_0": 100,
+        "month_3": 103,
+        "month_6": 105
+      }
+    ],
+    "insights": [
+      "Q2 2025 cohort shows strongest expansion (117% at month 9)",
+      "Logo retention improving with newer cohorts",
+      "Month 3-6 shows highest churn risk - focus onboarding"
+    ]
+  },
+  "recommendations": {
+    "cac_optimization": [
+      {
+        "priority": 1,
+        "recommendation": "Double down on partnership channel",
+        "rationale": "Partnership CAC ($28K) is 38% below blended ($45K)",
+        "action": "Hire partner manager, launch 5 new partnerships in Q2",
+        "expected_impact": "10% reduction in blended CAC",
+        "investment": "$120,000 (partner manager salary + program costs)",
+        "roi": "2.5x in year 1"
+      },
+      {
+        "priority": 2,
+        "recommendation": "Formalize referral program",
+        "rationale": "Referral CAC ($15K) is 67% below blended",
+        "action": "Launch customer referral program with incentives",
+        "expected_impact": "5% more customers from referrals",
+        "investment": "$50,000 (program development + referral bonuses)",
+        "roi": "4x in year 1"
+      },
+      {
+        "priority": 3,
+        "recommendation": "Improve outbound targeting",
+        "rationale": "Outbound CAC ($52K) is highest; opportunity to optimize",
+        "action": "Implement intent data, refine ICP, improve sequences",
+        "expected_impact": "15% reduction in outbound CAC",
+        "investment": "$30,000 (intent data + tooling)",
+        "roi": "1.8x in year 1"
+      }
+    ],
+    "ltv_improvement": [
+      {
+        "priority": 1,
+        "recommendation": "Reduce mid-market churn",
+        "rationale": "Mid-market churn (2.0%) is 2.5x enterprise (0.8%)",
+        "action": "Dedicated CSM for mid-market, proactive health scoring",
+        "expected_impact": "Reduce mid-market churn to 1.5%",
+        "investment": "$75,000 (additional CSM)",
+        "ltv_increase": "$40,000 per mid-market customer"
+      },
+      {
+        "priority": 2,
+        "recommendation": "Accelerate expansion revenue",
+        "rationale": "21% expansion rate can be increased to 30%",
+        "action": "Implement usage-based upsell triggers, CSM incentives",
+        "expected_impact": "9% increase in expansion rate",
+        "investment": "$25,000 (tooling + incentives)",
+        "ltv_increase": "$35,000 per customer"
+      }
+    ],
+    "growth_investment": [
+      {
+        "recommendation": "Increase marketing spend 50%",
+        "rationale": "LTV:CAC of 8.3x indicates under-investment in growth",
+        "target_ltv_cac": 5.0,
+        "additional_spend": "$475,000 annually",
+        "expected_new_customers": 12,
+        "expected_arr_impact": "$720,000"
+      }
+    ]
+  },
+  "metadata": {
+    "data_sources": ["Stripe", "Salesforce", "HubSpot", "QuickBooks"],
+    "calculation_methodology": "Standard SaaS unit economics with trailing 12-month data",
+    "confidence_level": "high",
+    "last_updated": "2026-01-23T10:45:00Z"
+  }
+}

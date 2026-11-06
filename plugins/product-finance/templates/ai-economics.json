@@ -1,0 +1,513 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI Economics Schema",
+  "description": "Schema for AI cost tracking, value attribution, and ROI analysis",
+  "type": "object",
+  "properties": {
+    "ai_costs": {
+      "type": "object",
+      "description": "Comprehensive AI cost breakdown",
+      "properties": {
+        "api_costs": {
+          "type": "object",
+          "description": "AI API and LLM costs",
+          "properties": {
+            "total_monthly": {
+              "type": "number",
+              "description": "Total monthly API costs"
+            },
+            "cost_per_api_call": {
+              "type": "number",
+              "description": "Average cost per API call"
+            },
+            "cost_per_token": {
+              "type": "number",
+              "description": "Average cost per token (for LLM APIs)"
+            },
+            "total_api_calls_monthly": {
+              "type": "integer",
+              "description": "Total API calls per month"
+            },
+            "total_tokens_monthly": {
+              "type": "integer",
+              "description": "Total tokens processed per month"
+            },
+            "by_model": {
+              "type": "array",
+              "description": "Costs broken down by AI model/provider",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "model_name": {
+                    "type": "string",
+                    "description": "Model identifier (e.g., 'gpt-4', 'claude-sonnet-4')"
+                  },
+                  "provider": {
+                    "type": "string",
+                    "description": "Provider name (e.g., 'OpenAI', 'Anthropic')"
+                  },
+                  "monthly_cost": {
+                    "type": "number"
+                  },
+                  "api_calls": {
+                    "type": "integer"
+                  },
+                  "average_cost_per_call": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "infrastructure_costs": {
+          "type": "object",
+          "description": "AI infrastructure and compute costs",
+          "properties": {
+            "compute_monthly": {
+              "type": "number",
+              "description": "GPU/compute costs for AI workloads"
+            },
+            "storage_monthly": {
+              "type": "number",
+              "description": "Storage costs for AI models and data"
+            },
+            "vector_database_monthly": {
+              "type": "number",
+              "description": "Vector database costs (for embeddings, RAG)"
+            },
+            "caching_monthly": {
+              "type": "number",
+              "description": "Caching infrastructure costs"
+            },
+            "monitoring_monthly": {
+              "type": "number",
+              "description": "AI monitoring and observability costs"
+            }
+          }
+        },
+        "development_costs": {
+          "type": "object",
+          "description": "AI development and maintenance costs",
+          "properties": {
+            "ai_engineering_headcount": {
+              "type": "number",
+              "description": "Number of engineers dedicated to AI features"
+            },
+            "monthly_personnel_cost": {
+              "type": "number",
+              "description": "Monthly cost of AI engineering team"
+            },
+            "training_data_costs_monthly": {
+              "type": "number",
+              "description": "Costs for training data acquisition/preparation"
+            },
+            "fine_tuning_costs_monthly": {
+              "type": "number",
+              "description": "Costs for model fine-tuning"
+            }
+          }
+        },
+        "per_user_costs": {
+          "type": "object",
+          "description": "AI costs normalized per user",
+          "properties": {
+            "cost_per_user_monthly": {
+              "type": "number",
+              "description": "Total AI cost per user per month"
+            },
+            "cost_per_active_user_monthly": {
+              "type": "number",
+              "description": "AI cost per active user per month"
+            },
+            "cost_per_interaction": {
+              "type": "number",
+              "description": "AI cost per user interaction"
+            }
+          }
+        },
+        "total_ai_costs": {
+          "type": "object",
+          "description": "Total AI cost summary",
+          "properties": {
+            "monthly": {
+              "type": "number",
+              "description": "Total monthly AI costs"
+            },
+            "annual": {
+              "type": "number",
+              "description": "Total annual AI costs"
+            },
+            "as_pct_revenue": {
+              "type": "number",
+              "description": "AI costs as percentage of revenue"
+            },
+            "as_pct_cogs": {
+              "type": "number",
+              "description": "AI costs as percentage of COGS"
+            }
+          }
+        }
+      }
+    },
+    "ai_value": {
+      "type": "object",
+      "description": "Value and impact of AI capabilities",
+      "properties": {
+        "revenue_impact": {
+          "type": "object",
+          "description": "Direct revenue impact from AI",
+          "properties": {
+            "ai_enabled_revenue_monthly": {
+              "type": "number",
+              "description": "Revenue from AI-powered features"
+            },
+            "ai_enabled_arr": {
+              "type": "number",
+              "description": "ARR attributed to AI capabilities"
+            },
+            "revenue_premium_pct": {
+              "type": "number",
+              "description": "Price premium captured for AI features"
+            },
+            "conversion_rate_lift_pct": {
+              "type": "number",
+              "description": "Conversion rate improvement from AI (e.g., 15% lift)"
+            },
+            "ai_influenced_deals": {
+              "type": "integer",
+              "description": "Number of deals influenced by AI capabilities"
+            }
+          }
+        },
+        "retention_impact": {
+          "type": "object",
+          "description": "Impact on retention metrics",
+          "properties": {
+            "churn_reduction_pct": {
+              "type": "number",
+              "description": "Churn reduction attributable to AI features"
+            },
+            "nrr_improvement_pct": {
+              "type": "number",
+              "description": "NRR improvement from AI-driven expansion"
+            },
+            "customer_satisfaction_lift": {
+              "type": "number",
+              "description": "Customer satisfaction score improvement"
+            }
+          }
+        },
+        "productivity_gains": {
+          "type": "object",
+          "description": "Productivity improvements from AI",
+          "properties": {
+            "time_saved_hours_monthly": {
+              "type": "number",
+              "description": "Total hours saved per month across all users"
+            },
+            "productivity_multiplier": {
+              "type": "number",
+              "description": "Productivity improvement factor (e.g., 2.0 = 2x faster)"
+            },
+            "value_of_time_saved": {
+              "type": "number",
+              "description": "Dollar value of time saved (hours × fully-loaded hourly rate)"
+            },
+            "tasks_automated": {
+              "type": "integer",
+              "description": "Number of tasks/processes automated by AI"
+            }
+          }
+        },
+        "cost_savings": {
+          "type": "object",
+          "description": "Cost savings enabled by AI",
+          "properties": {
+            "support_cost_savings_monthly": {
+              "type": "number",
+              "description": "Support cost reduction from AI automation"
+            },
+            "operational_cost_savings_monthly": {
+              "type": "number",
+              "description": "Other operational cost savings"
+            },
+            "headcount_avoided": {
+              "type": "number",
+              "description": "Headcount avoided due to AI automation"
+            }
+          }
+        },
+        "competitive_advantage": {
+          "type": "object",
+          "description": "Strategic and competitive value",
+          "properties": {
+            "time_to_market_improvement_pct": {
+              "type": "number",
+              "description": "Faster time-to-market from AI"
+            },
+            "feature_velocity_multiplier": {
+              "type": "number",
+              "description": "Feature development speed improvement"
+            },
+            "market_differentiation_score": {
+              "type": "number",
+              "description": "Qualitative score for market differentiation (1-10)"
+            }
+          }
+        },
+        "total_ai_value": {
+          "type": "object",
+          "description": "Total value summary",
+          "properties": {
+            "monthly": {
+              "type": "number",
+              "description": "Total monthly value from AI"
+            },
+            "annual": {
+              "type": "number",
+              "description": "Total annual value from AI"
+            }
+          }
+        }
+      }
+    },
+    "ai_roi": {
+      "type": "object",
+      "description": "AI Return on Investment calculations",
+      "properties": {
+        "roi": {
+          "type": "number",
+          "description": "AI ROI ((Value - Costs) / Costs)"
+        },
+        "payback_period_months": {
+          "type": "number",
+          "description": "Months to recover AI investment"
+        },
+        "break_even_users": {
+          "type": "integer",
+          "description": "Number of users needed to break even on AI costs"
+        },
+        "break_even_revenue": {
+          "type": "number",
+          "description": "Revenue needed to break even on AI costs"
+        },
+        "net_value_monthly": {
+          "type": "number",
+          "description": "Net value per month (Value - Costs)"
+        },
+        "net_value_annual": {
+          "type": "number",
+          "description": "Net value per year (Value - Costs)"
+        },
+        "roi_by_feature": {
+          "type": "array",
+          "description": "ROI broken down by AI feature",
+          "items": {
+            "type": "object",
+            "properties": {
+              "feature_name": {
+                "type": "string"
+              },
+              "monthly_cost": {
+                "type": "number"
+              },
+              "monthly_value": {
+                "type": "number"
+              },
+              "roi": {
+                "type": "number"
+              },
+              "user_adoption_pct": {
+                "type": "number",
+                "description": "Percentage of users using this feature"
+              }
+            }
+          }
+        }
+      }
+    },
+    "usage_patterns": {
+      "type": "object",
+      "description": "AI usage patterns and trends",
+      "properties": {
+        "interactions_monthly": {
+          "type": "integer",
+          "description": "Total AI interactions per month"
+        },
+        "interactions_per_user_monthly": {
+          "type": "number",
+          "description": "Average AI interactions per user per month"
+        },
+        "active_ai_users": {
+          "type": "integer",
+          "description": "Number of users actively using AI features"
+        },
+        "ai_adoption_rate_pct": {
+          "type": "number",
+          "description": "Percentage of users using AI features"
+        },
+        "usage_by_feature": {
+          "type": "array",
+          "description": "Usage breakdown by AI feature",
+          "items": {
+            "type": "object",
+            "properties": {
+              "feature_name": {
+                "type": "string"
+              },
+              "monthly_interactions": {
+                "type": "integer"
+              },
+              "unique_users": {
+                "type": "integer"
+              },
+              "average_interactions_per_user": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "growth_trend": {
+          "type": "object",
+          "description": "AI usage growth trends",
+          "properties": {
+            "month_over_month_growth_pct": {
+              "type": "number"
+            },
+            "year_over_year_growth_pct": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "optimization_opportunities": {
+      "type": "object",
+      "description": "Identified opportunities to optimize AI costs and value",
+      "properties": {
+        "cost_optimization": {
+          "type": "array",
+          "description": "Opportunities to reduce AI costs",
+          "items": {
+            "type": "object",
+            "properties": {
+              "opportunity": {
+                "type": "string",
+                "description": "Description of optimization opportunity"
+              },
+              "potential_savings_monthly": {
+                "type": "number",
+                "description": "Estimated monthly savings"
+              },
+              "implementation_effort": {
+                "type": "string",
+                "enum": ["low", "medium", "high"]
+              },
+              "priority": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "critical"]
+              }
+            }
+          }
+        },
+        "value_optimization": {
+          "type": "array",
+          "description": "Opportunities to increase AI value",
+          "items": {
+            "type": "object",
+            "properties": {
+              "opportunity": {
+                "type": "string",
+                "description": "Description of value enhancement opportunity"
+              },
+              "potential_value_increase_monthly": {
+                "type": "number",
+                "description": "Estimated monthly value increase"
+              },
+              "implementation_effort": {
+                "type": "string",
+                "enum": ["low", "medium", "high"]
+              },
+              "priority": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "critical"]
+              }
+            }
+          }
+        },
+        "strategic_recommendations": {
+          "type": "array",
+          "description": "Strategic recommendations for AI economics",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "benchmarks": {
+      "type": "object",
+      "description": "AI economics benchmarks and comparisons",
+      "properties": {
+        "industry_average_ai_cost_pct_revenue": {
+          "type": "number",
+          "description": "Industry average for AI costs as % of revenue"
+        },
+        "target_ai_cost_pct_revenue": {
+          "type": "number",
+          "description": "Target AI cost as % of revenue"
+        },
+        "target_ai_roi": {
+          "type": "number",
+          "description": "Target AI ROI"
+        },
+        "comparison_to_industry": {
+          "type": "string",
+          "description": "Qualitative comparison to industry benchmarks",
+          "enum": ["below", "at", "above"]
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about this AI economics analysis",
+      "properties": {
+        "analysis_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When this analysis was performed"
+        },
+        "period_start": {
+          "type": "string",
+          "format": "date",
+          "description": "Start of analysis period"
+        },
+        "period_end": {
+          "type": "string",
+          "format": "date",
+          "description": "End of analysis period"
+        },
+        "methodology": {
+          "type": "string",
+          "description": "Methodology used for value attribution"
+        },
+        "data_sources": {
+          "type": "array",
+          "description": "Sources of data",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confidence_level": {
+          "type": "string",
+          "description": "Confidence in the analysis",
+          "enum": ["low", "medium", "high"]
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes or caveats"
+        }
+      }
+    }
+  }
+}

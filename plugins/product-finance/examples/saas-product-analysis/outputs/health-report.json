@@ -1,0 +1,398 @@
+{
+  "report_metadata": {
+    "report_type": "financial_health_assessment",
+    "generated_at": "2026-01-23T10:30:00Z",
+    "period": {
+      "start_date": "2026-01-01",
+      "end_date": "2026-01-31",
+      "period_type": "monthly"
+    },
+    "company": {
+      "name": "DataSync Pro",
+      "stage": "series_a"
+    },
+    "version": "1.0.0"
+  },
+  "overall_health": {
+    "score": "GOOD",
+    "numeric_score": 82,
+    "max_score": 100,
+    "trend": "improving",
+    "previous_score": 78,
+    "score_change": 4
+  },
+  "revenue_health": {
+    "status": "EXCELLENT",
+    "score": 88,
+    "metrics": {
+      "mrr": {
+        "value": 250000,
+        "status": "GOOD",
+        "benchmark": 200000,
+        "benchmark_comparison": "above",
+        "trend": "increasing",
+        "mom_change_pct": 8.7
+      },
+      "arr": {
+        "value": 3000000,
+        "status": "GOOD",
+        "benchmark": 2500000,
+        "benchmark_comparison": "above",
+        "yoy_growth_pct": 104
+      },
+      "mrr_growth_rate": {
+        "value": 8.7,
+        "status": "EXCELLENT",
+        "benchmark": 5.0,
+        "benchmark_comparison": "above",
+        "annualized_rate": 175
+      },
+      "net_new_mrr": {
+        "value": 20000,
+        "components": {
+          "new_mrr": 28000,
+          "expansion_mrr": 12000,
+          "contraction_mrr": -5000,
+          "churned_mrr": -15000
+        },
+        "status": "GOOD"
+      }
+    },
+    "insights": [
+      "Strong MRR growth of 8.7% MoM significantly exceeds 5% benchmark",
+      "ARR of $3M positions company well for Series B discussions",
+      "Net new MRR positive with healthy expansion offsetting churn"
+    ]
+  },
+  "retention_health": {
+    "status": "EXCELLENT",
+    "score": 90,
+    "metrics": {
+      "gross_revenue_retention": {
+        "value": 94.0,
+        "status": "GOOD",
+        "benchmark": 90.0,
+        "benchmark_comparison": "above"
+      },
+      "net_revenue_retention": {
+        "value": 115.0,
+        "status": "EXCELLENT",
+        "benchmark": 110.0,
+        "benchmark_comparison": "above"
+      },
+      "monthly_churn_rate": {
+        "value": 1.2,
+        "status": "GOOD",
+        "benchmark": 1.5,
+        "benchmark_comparison": "better",
+        "annual_equivalent": 13.6
+      },
+      "logo_retention_rate": {
+        "value": 96.0,
+        "status": "GOOD",
+        "benchmark": 92.0,
+        "benchmark_comparison": "above"
+      },
+      "expansion_rate": {
+        "value": 21.0,
+        "status": "EXCELLENT",
+        "benchmark": 15.0,
+        "benchmark_comparison": "above"
+      }
+    },
+    "insights": [
+      "NRR of 115% indicates strong expansion revenue and product-market fit",
+      "Monthly churn of 1.2% is healthy for enterprise SaaS",
+      "Expansion rate of 21% shows effective land-and-expand strategy"
+    ]
+  },
+  "efficiency_health": {
+    "status": "EXCELLENT",
+    "score": 85,
+    "metrics": {
+      "gross_margin": {
+        "value": 78.0,
+        "status": "GOOD",
+        "benchmark": 75.0,
+        "benchmark_comparison": "above"
+      },
+      "operating_margin": {
+        "value": -22.0,
+        "status": "WARNING",
+        "benchmark": -15.0,
+        "benchmark_comparison": "below",
+        "context": "Acceptable for growth-stage company"
+      },
+      "rule_of_40": {
+        "value": 82.0,
+        "calculation": {
+          "arr_growth_rate": 104.0,
+          "operating_margin": -22.0,
+          "formula": "growth_rate + operating_margin"
+        },
+        "status": "EXCELLENT",
+        "benchmark": 40.0,
+        "benchmark_comparison": "above"
+      },
+      "burn_multiple": {
+        "value": 0.92,
+        "status": "EXCELLENT",
+        "benchmark": 2.0,
+        "benchmark_comparison": "better",
+        "interpretation": "Efficient growth with burn under control"
+      },
+      "magic_number": {
+        "value": 0.84,
+        "status": "GOOD",
+        "benchmark": 0.75,
+        "benchmark_comparison": "above",
+        "interpretation": "Strong sales efficiency"
+      }
+    },
+    "insights": [
+      "Rule of 40 score of 82 is exceptional and investor-ready",
+      "Burn multiple under 1.0 indicates highly efficient growth",
+      "Gross margin of 78% provides room for continued investment"
+    ]
+  },
+  "growth_health": {
+    "status": "EXCELLENT",
+    "score": 88,
+    "metrics": {
+      "customer_growth": {
+        "beginning_customers": 48,
+        "ending_customers": 50,
+        "net_new_customers": 2,
+        "growth_rate_pct": 4.2,
+        "status": "GOOD"
+      },
+      "arr_growth_yoy": {
+        "value": 104.0,
+        "status": "EXCELLENT",
+        "benchmark": 100.0,
+        "benchmark_comparison": "above"
+      },
+      "pipeline_health": {
+        "pipeline_coverage": 3.2,
+        "status": "GOOD",
+        "benchmark": 3.0,
+        "benchmark_comparison": "above"
+      }
+    },
+    "insights": [
+      "YoY ARR growth of 104% exceeds target of 100%",
+      "Customer acquisition remains healthy with positive net adds",
+      "Pipeline coverage of 3.2x supports growth projections"
+    ]
+  },
+  "unit_economics_health": {
+    "status": "EXCELLENT",
+    "score": 92,
+    "metrics": {
+      "cac": {
+        "value": 45000,
+        "status": "GOOD",
+        "trend": "stable"
+      },
+      "ltv": {
+        "value": 375000,
+        "status": "EXCELLENT",
+        "calculation_method": "revenue_based"
+      },
+      "ltv_cac_ratio": {
+        "value": 8.33,
+        "status": "EXCELLENT",
+        "benchmark": 3.0,
+        "benchmark_comparison": "above"
+      },
+      "cac_payback_months": {
+        "value": 9.0,
+        "status": "EXCELLENT",
+        "benchmark": 18.0,
+        "benchmark_comparison": "better"
+      }
+    },
+    "insights": [
+      "LTV:CAC ratio of 8.33x far exceeds 3.0x benchmark",
+      "CAC payback of 9 months is half the 18-month target",
+      "Strong unit economics support aggressive growth investment"
+    ]
+  },
+  "runway_health": {
+    "status": "GOOD",
+    "score": 75,
+    "metrics": {
+      "cash_position": {
+        "value": 1320000,
+        "status": "GOOD"
+      },
+      "monthly_burn": {
+        "value": 55000,
+        "status": "GOOD"
+      },
+      "runway_months": {
+        "value": 24,
+        "status": "GOOD",
+        "benchmark": 18,
+        "benchmark_comparison": "above"
+      }
+    },
+    "insights": [
+      "24-month runway provides adequate time for Series B",
+      "Monthly burn of $55K is modest for growth trajectory",
+      "Should begin Series B process within 12 months"
+    ]
+  },
+  "category_scores": [
+    {
+      "category": "Revenue Health",
+      "score": 88,
+      "max_score": 100,
+      "status": "EXCELLENT",
+      "weight": 0.25
+    },
+    {
+      "category": "Retention Health",
+      "score": 90,
+      "max_score": 100,
+      "status": "EXCELLENT",
+      "weight": 0.25
+    },
+    {
+      "category": "Efficiency Health",
+      "score": 85,
+      "max_score": 100,
+      "status": "EXCELLENT",
+      "weight": 0.20
+    },
+    {
+      "category": "Growth Health",
+      "score": 88,
+      "max_score": 100,
+      "status": "EXCELLENT",
+      "weight": 0.15
+    },
+    {
+      "category": "Unit Economics Health",
+      "score": 92,
+      "max_score": 100,
+      "status": "EXCELLENT",
+      "weight": 0.10
+    },
+    {
+      "category": "Runway Health",
+      "score": 75,
+      "max_score": 100,
+      "status": "GOOD",
+      "weight": 0.05
+    }
+  ],
+  "recommendations": {
+    "immediate_actions": [
+      {
+        "priority": 1,
+        "action": "Accelerate growth investment",
+        "rationale": "Rule of 40 score of 82 and LTV:CAC of 8.3x indicate room for aggressive growth",
+        "expected_impact": "Increase ARR growth from 104% to 120%+",
+        "effort": "medium",
+        "timeline": "Q1-Q2 2026"
+      },
+      {
+        "priority": 2,
+        "action": "Begin Series B preparation",
+        "rationale": "Strong metrics position company well for fundraise",
+        "expected_impact": "Secure $25-40M to accelerate growth",
+        "effort": "high",
+        "timeline": "Q2-Q3 2026"
+      },
+      {
+        "priority": 3,
+        "action": "Reduce enterprise segment churn",
+        "rationale": "Enterprise churn at 0.8% can be improved to <0.5%",
+        "expected_impact": "Increase GRR from 94% to 96%+",
+        "effort": "medium",
+        "timeline": "Q1-Q2 2026"
+      }
+    ],
+    "strategic_initiatives": [
+      {
+        "initiative": "Expand customer success team",
+        "rationale": "12.5 customers per CSM is high; target 8-10",
+        "investment": "$150,000 annually (2 additional CSMs)",
+        "expected_roi": "2% churn reduction = $60K ARR saved"
+      },
+      {
+        "initiative": "Launch enterprise tier pricing optimization",
+        "rationale": "Strong value delivery supports 10-15% price increase",
+        "investment": "$25,000 (pricing research)",
+        "expected_roi": "$300,000+ additional ARR"
+      },
+      {
+        "initiative": "Build partner channel",
+        "rationale": "Partnership CAC ($28K) is 38% lower than blended ($45K)",
+        "investment": "$200,000 (partner program development)",
+        "expected_roi": "20% of new ARR at lower CAC"
+      }
+    ],
+    "monitoring_priorities": [
+      "Track enterprise churn weekly during Q1 renewal cycle",
+      "Monitor expansion MRR to maintain 21%+ rate",
+      "Watch burn multiple as growth investments increase"
+    ]
+  },
+  "benchmarks_comparison": {
+    "source": "OpenView SaaS Benchmarks 2025",
+    "peer_group": "Series A B2B SaaS $2-5M ARR",
+    "metrics": [
+      {
+        "metric": "NRR",
+        "company_value": 115,
+        "benchmark_median": 105,
+        "benchmark_top_quartile": 115,
+        "percentile": 75
+      },
+      {
+        "metric": "Gross Margin",
+        "company_value": 78,
+        "benchmark_median": 72,
+        "benchmark_top_quartile": 80,
+        "percentile": 70
+      },
+      {
+        "metric": "ARR Growth",
+        "company_value": 104,
+        "benchmark_median": 80,
+        "benchmark_top_quartile": 120,
+        "percentile": 65
+      },
+      {
+        "metric": "LTV:CAC",
+        "company_value": 8.33,
+        "benchmark_median": 3.5,
+        "benchmark_top_quartile": 5.0,
+        "percentile": 95
+      },
+      {
+        "metric": "Rule of 40",
+        "company_value": 82,
+        "benchmark_median": 35,
+        "benchmark_top_quartile": 55,
+        "percentile": 95
+      }
+    ]
+  },
+  "alerts": [
+    {
+      "type": "info",
+      "category": "retention",
+      "message": "Q1 typically shows elevated churn due to annual renewal concentration",
+      "action": "Monitor weekly and engage at-risk accounts proactively"
+    },
+    {
+      "type": "info",
+      "category": "growth",
+      "message": "Pipeline coverage adequate but could strengthen for Q2 targets",
+      "action": "Increase marketing spend to build Q2/Q3 pipeline"
+    }
+  ]
+}
