@@ -1,7 +1,7 @@
 ---
 name: quick-validate
 description: Skip to opportunity analysis when you already have survey data, a job statement and a needs list. Use when the person has survey ratings and wants scores, value, segments and a price check in one pass, with no agents.
-allowed-tools: AskUserQuestion, Read, Write, Glob
+allowed-tools: AskUserQuestion, Read, Write, Glob, Skill
 ---
 
 # /jtbd-market-discovery:quick-validate
@@ -282,6 +282,8 @@ Would you like to:
 3. Validate pricing more rigorously? (/jtbd-market-discovery:wtp-check)
 4. Export results to JSON/CSV?
 ```
+
+Then ask one question: "Learn these results?" On yes, load the `jtbd-market-discovery:learn` skill and give it the results of this run, so that it writes the pages of the graph. On no, write nothing.
 
 ## Important Notes
 

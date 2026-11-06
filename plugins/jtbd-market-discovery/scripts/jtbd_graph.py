@@ -140,6 +140,17 @@ def cmd_remove(args) -> int:
     return 0
 
 
+def cmd_verify_run(args) -> int:
+    for path in writer.verify_run(args.root, args.key, args.by):
+        print(f"verified {shown(args.root, path)}")
+    return 0
+
+
+def add_verify_run(parser) -> None:
+    parser.add_argument("key", help="a RUN ID such as RUN-01")
+    parser.add_argument("--by", required=True, metavar="human:LOGIN", help="the person who confirms the run")
+
+
 def cmd_resolve(args) -> int:
     print(shown(args.root, writer.resolve_key(args.root, args.key)))
     return 0
@@ -218,6 +229,7 @@ COMMANDS = [
     ("check", add_check, cmd_check, "run the brain check of the jtbd graph"),
     ("log", add_log, cmd_log, "write one log.md entry"),
     ("write-run", add_write_run, cmd_write_run, "write the pages of a run from its session folder and result file"),
+    ("verify-run", add_verify_run, cmd_verify_run, "a person confirms a run: its pages get status stable and a verified entry"),
     ("results", add_results, cmd_results, "print the Result pages of a run as a result file"),
     ("pages", add_pages, cmd_pages, "print the pages of one type as JSON"),
 ]

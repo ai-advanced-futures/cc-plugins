@@ -2,15 +2,22 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.7.0
+**Version:** 1.8.0
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.7.0
+## What's New in v1.8.0
+
+- A run now writes its output as the `jtbd` graph in `docs/jtbd/`. The agents `output-assembler` and `wtp-validator` call `jtbd_graph.py write-run` at the end of a run.
+- Three new skills: `setup`, `ask` and `learn`. A hook checks the graph after each write.
+- At the end of `discover`, `wtp-check` and `quick-validate`, the skill asks one question: "Learn these results?" On yes, `learn` confirms the pages.
+- Four files at the root of `.jtbd-market-discovery/` are not written any more: `job-statement.json`, `job-steps.json`, `customer-segments.json` and `final-output.json`. The graph holds the same values. Four files stay, because other plugins read them: `customer-needs.json`, `opportunity-scores.json`, `evc-analysis.json` and `wtp-validation.json`.
+
+## What Was New in v1.7.0
 
 - The plugin has a brain: a graph of pages in `docs/jtbd/`. The save code is `scripts/jtbd_graph.py`.
 - `jtbd_graph.py write-run` writes the pages of one run: the job, the steps, the outcomes, the segments, the willingness to pay, and the results. `results` and `pages` read them back.
-- `jtbd_graph.py check` is the brain check. The skills that write the pages come in the next version.
+- `jtbd_graph.py check` is the brain check.
 
 ## What Was New in v1.6.0
 
@@ -40,7 +47,8 @@ See `CHANGELOG.md` for the full list.
 
 ## Requirements
 
-- Claude Code.
+- Claude Code 2.1.110 or later.
+- The `knowledge` plugin. It installs with this plugin, because `plugin.json` names it as a dependency.
 - [`uv`](https://docs.astral.sh/uv/) on your path. The plugin scripts run with `uv run`. `uv` installs `pandas`, `numpy` and `scikit-learn` for the scripts that need them.
 
 ## Install
@@ -57,6 +65,21 @@ claude plugin install jtbd-market-discovery@cc-plugins
 | `/jtbd-market-discovery:discover` | Run the 10 phases, from the job to the validated opportunity | 45 to 90 minutes |
 | `/jtbd-market-discovery:quick-validate` | Start at phase 6 when you have survey data | 15 to 30 minutes |
 | `/jtbd-market-discovery:wtp-check` | Test one price with the 6-layer framework | 10 to 20 minutes |
+| `/jtbd-market-discovery:setup` | Add the router block for the `jtbd` graph to `CLAUDE.md` | 1 minute |
+| `/jtbd-market-discovery:ask` | Ask a question about the runs in the graph | 1 minute |
+| `/jtbd-market-discovery:learn` | Confirm the pages of a run, or save other results | 1 minute |
+
+## The jtbd graph
+
+The plugin keeps its output as a graph of pages. The graph is named `jtbd`. Its folder is `docs/jtbd/`, and `.claude/knowledge.json` lists it.
+
+- **Page types.** `Run`, `Job`, `JobStep`, `Outcome`, `Segment`, `WtpValidation` and `Result`. Each page except `Run` links to its run. A new run adds new pages and changes no page of an earlier run.
+- **Write flow.** At the end of a run, an agent calls `jtbd_graph.py write-run`. The pages have `status: draft`. When `write-run` fails, the agent writes the line `GRAPH: FAILED <exit code> <first error line>`. No agent writes a page by hand.
+- **The question.** At the end of `discover`, `wtp-check` and `quick-validate`, the skill asks one question: "Learn these results?" On yes, the `learn` skill sets `status: stable` and adds a `verified` entry to each page of the run. On no, the pages stay `draft`. With `--defaults`, the skill asks nothing.
+- **The hook.** After a write to the graph, a hook runs `regen`, the brain check and the general check of the `knowledge` plugin. The hook runs with `uv`. When `uv` is not on the path, it runs the same steps with `python3`.
+- **Needs.** The `knowledge` plugin, `uv`, and Claude Code 2.1.110 or later.
+- **Version control.** Your version control tracks the folder `docs/jtbd/`. To keep it out, add the line `docs/jtbd/` to `.gitignore`.
+- **Questions.** Run `/jtbd-market-discovery:ask` with a question, for example "which outcomes are most underserved".
 
 ### discover
 
@@ -150,6 +173,7 @@ Example of an opportunity in `final-output.json`:
 - [ADR-001](docs/adr/ADR-001-jtbd-plugin-architecture.md): plugin architecture
 - [ADR-002](docs/adr/ADR-002-orchestrator-architecture.md): orchestrator architecture
 - [ADR-003](docs/adr/ADR-003-plugin-result-file.md): the plugin result file
+- [ADR-004](docs/adr/ADR-004-jtbd-knowledge-graph.md): the jtbd knowledge graph
 - `references/`: ODI, universal job steps, need generation, EVC, WTP and segmentation guides
 - `templates/`: job statement, job steps, survey, forces, time-task and output schema
 

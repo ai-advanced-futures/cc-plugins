@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 
 from jtbdlib import DataError, UsageError, logbook, manifest, regen, schema
-from jtbdlib.bundle import DEFAULT_DIR, GRAPH, bundle_dir, read, ref, registry_add
+from jtbdlib.bundle import DEFAULT_DIR, GRAPH, bundle_dir, check_dir, read, ref, registry_add
 from jtbdlib.ids import next_id, require_type, resolve
 from jtbdlib.page import dump, ordered, parse, write_text
 
@@ -15,15 +15,6 @@ PROTECTED_KEYS = ("type", "generated", "protected")
 
 def stamp(actor=None) -> dict:
     return {"by": actor or schema.plugin_actor(), "at": logbook.stamp()}
-
-
-def check_dir(directory) -> str:
-    value = str(directory).strip()
-    if not value or value.startswith("/") or ".." in Path(value).parts:
-        raise UsageError(f"the folder must be relative to the project root and stay inside it: {directory!r}")
-    while value.startswith("./"):
-        value = value[2:]
-    return value.rstrip("/")
 
 
 def make_folders(folder) -> None:
@@ -204,17 +195,26 @@ def unlink(root, key, field, target, actor=None) -> Path:
 def remove(root, key, actor=None) -> list[Path]:
     """Remove a page. A Run page takes the pages of its run with it, so no page keeps a link to a page that is gone.
 
-    Return the removed paths, the page of the key first. The code removes nothing when one of the pages is protected.
+    Return the removed paths, the page of the key first. The code removes nothing when one of the pages is protected,
+    or when a page that stays has a link into the pages that go (a page of a later run can link to this run).
+    A page takes part in a run only when its `run` field is that Run and no other value, so a page that lists 2 runs stays.
     """
     bundle, path, page = _load(root, key)
     page_ref = ref(bundle.dir, path)
     doomed = [(path, page)]
     if page.type == "Run":
         doomed += [(other, item) for other, item in sorted(bundle.pages.items())
-                   if other != path and page_ref in schema.edge_values(item.frontmatter, "run")]
+                   if other != path and item.frontmatter.get("run") == page_ref]
     for other, item in doomed:
         if item.frontmatter.get("protected") is True:
             raise DataError(f"{ref(bundle.dir, other)} is protected. Only a person can remove protected: true.")
+    going = {other for other, _item in doomed}
+    gone_refs = {ref(bundle.dir, other) for other in going}
+    linkers = sorted(ref(bundle.dir, other) for other, item in bundle.pages.items()
+                     if other not in going and any(gone_refs & set(schema.edge_values(item.frontmatter, name)) for name in schema.edges()))
+    if linkers:
+        raise DataError(f"nothing is removed, because {len(linkers)} page(s) that stay link to the pages that go: {', '.join(linkers)}. "
+                        "Remove those pages first, or take the link out of each one.")
     for other, _item in doomed:
         other.unlink()
         manifest.retire(bundle.dir, other.stem)
@@ -222,6 +222,40 @@ def remove(root, key, actor=None) -> list[Path]:
     logbook.append(bundle.dir / "log.md", "Forget", detail, actor or schema.plugin_actor())
     regen.write(root)
     return [other for other, _item in doomed]
+
+
+def verify_run(root, key, by) -> list[Path]:
+    """A person confirms a run: the Run page and each page of the run get `status: stable` and a `verified` entry.
+
+    Return the changed paths, the Run page first. The code writes nothing when one page is not valid after the change.
+    A page of another run does not change.
+    """
+    if not by or not str(by).startswith("human:") or str(by) == "human:":
+        raise UsageError("verify-run needs --by human:<login>, because only a person confirms a run")
+    bundle, path, page = _load(root, key)
+    if page.type != "Run":
+        raise UsageError(f"verify-run takes a Run page, and {key} is a {page.type} page")
+    if not page.frontmatter.get("finished_at"):
+        raise DataError(f"{page.id} has no finished_at, so the run is not finished and nobody can confirm it")
+    page_ref = ref(bundle.dir, path)
+    pages = [(path, page)] + [(other, item) for other, item in sorted(bundle.pages.items())
+                              if other != path and item.frontmatter.get("run") == page_ref]
+    entry = {"by": by, "at": logbook.stamp()}
+    updated = []
+    for other, item in pages:
+        frontmatter = dict(item.frontmatter)
+        frontmatter["status"] = "stable"
+        frontmatter["verified"] = list(frontmatter.get("verified") or []) + [entry]
+        frontmatter["generated"] = stamp(by)
+        frontmatter = ordered(frontmatter, schema.types()[item.type]["key_order"])
+        problems = schema.validate(item.type, frontmatter)
+        if problems:
+            raise DataError(f"{ref(bundle.dir, other)} is not valid after the change, so nothing is written: " + "; ".join(problems))
+        updated.append((other, item, frontmatter))
+    for other, item, frontmatter in updated:
+        write_text(other, dump(frontmatter, item.body))
+    logbook.append(bundle.dir / "log.md", "Learn", f"{by} confirmed {page_ref} and the {len(pages) - 1} other pages of that run", by)
+    return [other for other, _item in pages]
 
 
 def resolve_key(root, key) -> Path:

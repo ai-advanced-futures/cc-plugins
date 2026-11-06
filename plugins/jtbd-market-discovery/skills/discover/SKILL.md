@@ -1,7 +1,7 @@
 ---
 description: Run the full 10-phase JTBD market opportunity discovery. Use when the person wants to find, score and price the market opportunities of a product or market area, or when another plugin dispatches jtbd-market-discovery:discover.
 argument-hint: "[--defaults] [market area]"
-allowed-tools: Agent, Read, Write, Glob, AskUserQuestion, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *)
+allowed-tools: Agent, Read, Write, Glob, Skill, AskUserQuestion, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *)
 ---
 
 # /jtbd-market-discovery:discover
@@ -35,8 +35,9 @@ Run the orchestrator, which coordinates the 10 phases with a fresh sub-agent for
    2. Ask each item of `questions` with the `AskUserQuestion` tool. For the item `manual_ratings`, ask for the importance and satisfaction ratings of the needs it lists [q: manual_ratings]. Any other item names its own input.
    3. Write the answers to `{session_dir}/answers.json`, as `{"answers": {<input>: {"value": ..., "settled_by": ...}}}`.
    4. Dispatch the orchestrator again with `session_dir`, `market_area`, the `answers` of step 2 and `checkpoints: true`. A dispatch keeps no input of an earlier dispatch, so give them each time.
-6. When the orchestrator ends with a `DONE: jtbd-market-discovery` line, show the top 3 opportunities, the willingness-to-pay verdict, the paths of the output files below, and the path of the result file in `.jtbd-market-discovery/results/`. When the reply has no `DONE:` line and no `QUESTIONS:` line, show the reply, say that the run stopped before the end, and give the path of `{session_dir}/execution-log.md`.
-7. Offer the next steps: `/product:explore` to turn the top opportunity into product requirements, `/gtm` to build a go-to-market strategy around the validated opportunity, `/pricing:price` to compute the right price from the value data, and `/jtbd-market-discovery:wtp-check` to test a price.
+6. When the orchestrator ends with a `DONE: jtbd-market-discovery` line, show the top 3 opportunities, the willingness-to-pay verdict, the paths of the output files below, and the path of the result file in `.jtbd-market-discovery/results/`. When the reply holds a line `GRAPH: FAILED <exit code> <first error line>`, show it, and do not say that the graph holds the results. When the reply has no `DONE:` line and no `QUESTIONS:` line, show the reply, say that the run stopped before the end, and give the path of `{session_dir}/execution-log.md`.
+7. With `--defaults`, ask nothing and go to step 8. Otherwise, Ask one question: "Learn these results?" On yes, load the `jtbd-market-discovery:learn` skill with the Run page named in `run_page` of `{session_dir}/state.json`. On no, the pages stay `draft`.
+8. Offer the next steps: `/product:explore` to turn the top opportunity into product requirements, `/gtm` to build a go-to-market strategy around the validated opportunity, `/pricing:price` to compute the right price from the value data, and `/jtbd-market-discovery:wtp-check` to test a price.
 
 ## Resuming a session
 
@@ -59,13 +60,11 @@ Run the skill again. The orchestrator finds the session with an unfinished `stat
 
 ## Deliverables
 
-- `.jtbd-market-discovery/job-statement.json`
-- `.jtbd-market-discovery/job-steps.json`
 - `.jtbd-market-discovery/customer-needs.json`
 - `.jtbd-market-discovery/opportunity-scores.json`
 - `.jtbd-market-discovery/evc-analysis.json`
-- `.jtbd-market-discovery/customer-segments.json`
 - `.jtbd-market-discovery/wtp-validation.json`
-- `.jtbd-market-discovery/final-output.json` (integrated)
+
+The result file in `.jtbd-market-discovery/results/` and the pages of the run in `docs/jtbd/` (the `jtbd` graph) are also output. The job, the steps, the segments and the integrated output are pages of the graph. The files of a session stay in `.jtbd-market-discovery/{session}/`.
 
 Each file carries `subject`, `session_id`, `case` and `run_id` at the top level, so a reader can tell which run wrote it.

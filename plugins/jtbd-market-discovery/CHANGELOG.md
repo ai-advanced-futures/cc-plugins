@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.8.0
+
+A run writes its output as the `jtbd` graph. This version has the hook, the three skills and the write flow of the agents.
+
+- The agents `output-assembler` and `wtp-validator` call `jtbd_graph.py write-run` at the end of a run. When it fails, the agent writes the line `GRAPH: FAILED <exit code> <first error line>`.
+- New skills: `setup` adds the router block to `CLAUDE.md`, `ask` answers a question from the graph, and `learn` confirms a run or saves other results.
+- `jtbd_graph.py verify-run` sets `status: stable` and a `verified` entry on a run and its pages.
+- The skills `discover`, `wtp-check` and `quick-validate` end with the question "Learn these results?".
+- A hook runs `regen` and both checks after a write. `hooks/brain-hook.sh` is a copy of the file in `system-design`.
+- Four files are not written at the root of `.jtbd-market-discovery/` any more: `job-statement.json`, `job-steps.json`, `customer-segments.json` and `final-output.json`. Four stay, because other plugins read them.
+- `remove` stops when a page that stays links to a page that goes. It matches the run with `==` and not with `in`.
+- The input session of a `wtp-check` run must be a folder beside the session folder. The registry path must stay in the project.
+- The folder name of the graph may hold only letters, digits, and the characters `.`, `_`, `/` and `-` (at most 100). The skills `setup` and `learn` test each text before they put it in a command.
+- ADR-004 records the decision.
+
 ## 1.7.0
 
 The plugin has a brain of the knowledge standard: one graph in `docs/jtbd/`. This version has the schema, the save code and the brain check. The skills `setup`, `learn` and `ask`, the hook, and the write flow of the agents come in the next version.

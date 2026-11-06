@@ -25,14 +25,16 @@ The orchestrator dispatches this agent with a JSON context object:
 
 Extract `session_dir` from the dispatch context at the start of execution. All phase file reads use this absolute path.
 
-Two dispatches write only the result file (see `## Result file`) and skip steps 2 to 5 of the process:
+Two dispatches write only the result file (see `## Result file`) and the pages of the run (see `## Graph write`), and skip steps 2 to 4b of the process:
 
 - `"partial": true`: the run stopped before Phase 10. Read the phase files that exist.
 - `"halt": "<reason>"` with `"session_dir": null`: the orchestrator halted before any session existed.
 
 ## Promised files
 
-`${CLAUDE_PLUGIN_ROOT}/skills/discover/SKILL.md`, section Deliverables, promises eight files. Write them to the `.jtbd-market-discovery/` folder two levels above `session_dir` (`session_dir/../../.jtbd-market-discovery/`). Write nothing into `.jtbd/`, because a new run reads that folder only as a fallback.
+`${CLAUDE_PLUGIN_ROOT}/skills/discover/SKILL.md`, section Deliverables, promises four files. Write them to the `.jtbd-market-discovery/` folder two levels above `session_dir` (`session_dir/../../.jtbd-market-discovery/`). Write nothing into `.jtbd/`, because a new run reads that folder only as a fallback.
+
+Other plugins read these four files today. The graph in `docs/jtbd/` holds the same values (see `## Graph write`). Write no other file of the run into `.jtbd-market-discovery/`, because the graph holds the job, the steps and the segments.
 
 Each file holds the content of its source file. It also holds four top-level keys that identify the run. A key from the source file with the same name is replaced.
 
@@ -45,21 +47,30 @@ When a source file holds a list and not an object, the file holds the list under
 
 | File | Source |
 |---|---|
-| `job-statement.json` | `p1.json` |
-| `job-steps.json` | `p2.json` |
 | `customer-needs.json` | `p3.json` |
 | `opportunity-scores.json` | `p6.json` |
 | `evc-analysis.json` | `p7.json` |
-| `customer-segments.json` | `p8.json` |
 | `wtp-validation.json` | `p9.json` |
-| `final-output.json` | the assembled output of step 3 |
 
 A later run overwrites these files.
 
+## Graph write
+
+After the result file exists, write the pages of the run with the save code. Run `git rev-parse --show-toplevel` on its own for the git root, then run this command on its own, with the paths as plain text and not in quotes:
+
+```bash
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root <git root> write-run --session-dir {session_dir} --result-file <the result file>
+```
+
+- In a halt (`"session_dir": null`), leave out `--session-dir`. The command writes one Run page from the result file.
+- Write no page with the `Write` tool, because the save code checks each page and gives each ID.
+- When the command exits 1 or 2, write the line `GRAPH: FAILED <exit code> <first error line>` before your `DONE:` line. Do not report that the graph holds the results, because the next session trusts that report. The four promised files and the result file are already written, so no reader loses its input.
+
 ## Output Artifacts
 
-- `{session_dir}/final-output.json` — complete structured analysis
-- the eight promised files in `.jtbd-market-discovery/` (see `## Promised files`)
+- `{session_dir}/final-output.json` — complete structured analysis (a state file of the session)
+- the four promised files in `.jtbd-market-discovery/` (see `## Promised files`)
+- the pages of the run in `docs/jtbd/` (see `## Graph write`)
 
 ## Result file
 
@@ -136,7 +147,7 @@ A finished run that rests on every default:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.7.0",
+  "plugin_version": "1.8.0",
   "command": "jtbd-market-discovery:discover",
   "run": {
     "started_at": "2026-10-31T09:00:00Z",
@@ -203,7 +214,7 @@ A run whose answers file gave the labor rate (`settled_by: person`), so `labor_r
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.7.0",
+  "plugin_version": "1.8.0",
   "command": "jtbd-market-discovery:discover",
   "run": {
     "started_at": "2026-10-31T09:00:00Z",
@@ -278,7 +289,7 @@ A run whose answers file gave the labor rate (`settled_by: person`), so `labor_r
        "date": "YYYY-MM-DD",
        "job_statement": "...",
        "respondents": 87,
-       "analyst": "jtbd-market-discovery v1.7.0",
+       "analyst": "jtbd-market-discovery v1.8.0",
        "session_dir": "..."
      },
      "job_steps": [...],
@@ -323,6 +334,8 @@ A run whose answers file gave the labor rate (`settled_by: person`), so `labor_r
 4b. **Write the promised files** to `.jtbd-market-discovery/`, as the `## Promised files` section above says.
 
 5. **Write the result file**, as `## Result file` below says. Do this on every dispatch, a partial or halted one too.
+
+5a. **Write the pages**, as `## Graph write` above says. Do this on every dispatch, a partial or halted one too.
 
 6. **Return an output summary** as your reply:
    - Top 3 opportunities ranked by composite score

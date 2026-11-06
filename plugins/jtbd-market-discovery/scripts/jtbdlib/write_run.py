@@ -36,6 +36,11 @@ def number(value):
     return int(parsed) if parsed == int(parsed) else parsed
 
 
+def section(value):
+    """A section of a phase file when it is an object, else {}. An agent writes a word such as "deferred" for a part it skipped."""
+    return value if isinstance(value, dict) else {}
+
+
 def pick(source, *names):
     for name in names:
         value = (source or {}).get(name)
@@ -345,8 +350,8 @@ class Build:
             target = pool.get(fold(name))
             if target is None:
                 raise DataError(f"p9.json segment {name!r} has no Segment page in the run that it reads")
-            analysis, west = item.get("wtp_analysis") or {}, item.get("van_westendorp") or {}
-            econ, bench = item.get("value_economics") or {}, item.get("competitive_benchmark") or {}
+            analysis, west = section(item.get("wtp_analysis")), section(item.get("van_westendorp"))
+            econ, bench = section(item.get("value_economics")), section(item.get("competitive_benchmark"))
             conf = item.get("confidence_score") if isinstance(item.get("confidence_score"), dict) else {}
             fields = {"confidence_level": pick(conf, "confidence_level") or pick(item, "confidence_level", "confidence") or pick(p9, "confidence_level", "confidence"),
                       "sample_size": number(analysis.get("sample_size")), "cleaned_median": number(analysis.get("cleaned_median")),
@@ -478,14 +483,21 @@ def input_folder(session_dir, state, result):
     p9 = load_json(session_dir / "p9.json") or {}
     value = state.get("input_dir") or p9.get("input_dir")
     if value:
-        path = Path(value)
-        return path.resolve() if path.is_absolute() else (session_dir / path).resolve()
+        return sibling_session(session_dir, session_dir / str(value))
     for entry in (result or {}).get("results") or []:
         if isinstance(entry, dict) and entry.get("kind") == "customer_value" and entry.get("detail"):
             parent = (session_dir.parent.parent / str(entry["detail"])).parent
             if parent.is_dir() and parent.resolve() != session_dir:
-                return parent.resolve()
+                return sibling_session(session_dir, parent)
     return None
+
+
+def sibling_session(session_dir, path) -> Path:
+    """The input session folder. It must be a folder beside the session folder, so a file value cannot reach another place."""
+    path = Path(path).resolve()
+    if path.parent != session_dir.parent or path == session_dir:
+        raise UsageError(f"the input session must be a folder beside the session folder, in {session_dir.parent.name}/: {path}")
+    return path
 
 
 def ensure_input(root, session_dir, state, result, actor, lines):
@@ -495,6 +507,8 @@ def ensure_input(root, session_dir, state, result, actor, lines):
         return None, None
     if not folder.is_dir():
         raise DataError(f"the input session {folder.name} is not a folder")
+    if not (folder / "state.json").is_file() and not any(folder.glob("p*.json")):
+        raise DataError(f"the input session {folder.name} holds no state.json and no p*.json file. No page was written.")
     input_state = session_state(folder)
     page = input_state.get("run_page")
     if not page or not has_entry(root) or not (bundle_dir(root) / str(page).lstrip("/")).is_file():

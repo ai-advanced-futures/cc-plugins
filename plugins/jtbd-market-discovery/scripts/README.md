@@ -23,7 +23,8 @@ The runs of the plugin are saved as pages in `docs/jtbd/`. `jtbd_graph.py` is th
 - `pages TYPE [--run KEY]` prints the pages of one type.
 - Exit code 0 means done, 1 means a data error or a failed check, and 2 means wrong input.
 - `gen-schema.sh` makes `schema/jtbd.schema.json` and `schema/jtbd.slots.json` from `schema/jtbd.yaml`. Run it after each change of the schema.
-- `probe-plugin.sh` is a copy of the file in `plugins/system-design/scripts`. The copy must stay the same, byte for byte. A test of the `knowledge` plugin compares the copies.
+- `verify-run KEY --by ACTOR` sets `status: stable` and one `verified` entry on a `Run` page and on each page of the run.
+- `probe-plugin.sh` and `claude_md_router.py` are copies of the files in `plugins/system-design/scripts`. Each copy must stay the same, byte for byte. A test of the `knowledge` plugin compares the copies. Change all copies together.
 
 ---
 

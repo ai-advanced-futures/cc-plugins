@@ -36,12 +36,12 @@ This plugin's root is `${CLAUDE_PLUGIN_ROOT}`; wherever a file you read writes `
 0. Run `date -u +%Y-%m-%dT%H:%M:%SZ` on its own and keep the output as `started_at`. When a `date` call is denied or fails, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py now` on its own and use its output as that time. Then read `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` and keep its `version` for the result file.
 1. Read `${CLAUDE_PLUGIN_ROOT}/agents/wtp-validator.md` and follow its `## Plugin-run block`: which session to read (through `inputs_from`, or the latest finished session in a person's run), and your session for `p9.json`.
 2. Read the procedure file `${CLAUDE_PLUGIN_ROOT}/skills/wtp-check/procedure.md` and follow its body, with the tools you have, as if the person had run `/jtbd-market-discovery:wtp-check`. You cannot ask the person: take each input from the dispatch fields, and from the answers file in a plugin run. Skip its Step 0 and its Step 10: steps 0 and 1 here do the first, and step 3 the last, through the sections of `wtp-validator.md` that a plugin run follows.
-3. Then follow the `## Workflow` step of `wtp-validator.md` that writes `p9.json`, then its `## Result file`: the result file you write last.
+3. Then follow the `## Workflow` step of `wtp-validator.md` that writes `p9.json`, then its `## Result file`, then its `## Graph write`: the result file is the last file you write.
 4. Run each shell command on its own.
-5. Stop when the result file exists. Every run writes the result file, a person's run too, and it is the last thing you write.
+5. Stop when the result file exists and the `write-run` call of `## Graph write` has run. Every run writes the result file, a person's run too.
 
 ## Output
 
 Output format:
-- Every run: the result file, and a reply whose final line is the result file's path.
+- Every run: the result file, and a reply whose final line is the result file's path. When `write-run` failed, the line `GRAPH: FAILED <exit code> <first error line>` comes before that final line.
 - A person's run also returns the validation report of Step 8 of the procedure file.

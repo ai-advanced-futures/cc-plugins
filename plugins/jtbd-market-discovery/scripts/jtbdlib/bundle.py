@@ -55,12 +55,24 @@ def has_entry(root) -> bool:
     return GRAPH in read_registry(root)
 
 
+def check_dir(directory) -> str:
+    value = str(directory).strip()
+    if not value or value.startswith("/") or ".." in Path(value).parts:
+        raise UsageError(f"the folder must be relative to the project root and stay inside it: {directory!r}")
+    # A skill puts this name in a command, so a shell character must not pass (issue 673).
+    if not re.fullmatch(r"[A-Za-z0-9._/-]{1,100}", value):
+        raise UsageError(f"the folder name may hold only letters, digits, and the characters . _ / - (at most 100): {directory!r}")
+    while value.startswith("./"):
+        value = value[2:]
+    return value.rstrip("/")
+
+
 def bundle_dir(root) -> Path:
     entry = read_registry(root).get(GRAPH)
     if not entry:
         raise UsageError(f"the jtbd graph is not in {REGISTRY}. "
                          "Run /jtbd-market-discovery:setup first.")
-    directory = Path(root) / entry["path"]
+    directory = Path(root) / check_dir(entry["path"])
     if not directory.is_dir():
         raise UsageError(f"the folder {entry['path']} does not exist. Run /jtbd-market-discovery:setup first.")
     return directory

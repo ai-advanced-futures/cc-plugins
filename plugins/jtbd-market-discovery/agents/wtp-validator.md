@@ -572,7 +572,7 @@ A run built on the upstream session, with one answer:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.7.0",
+  "plugin_version": "1.8.0",
   "command": "jtbd-market-discovery:wtp-check",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",
@@ -631,7 +631,7 @@ A run whose upstream entry does not match:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.7.0",
+  "plugin_version": "1.8.0",
   "command": "jtbd-market-discovery:wtp-check",
   "run": {
     "started_at": "2026-10-31T11:00:00Z",
@@ -649,6 +649,21 @@ A run whose upstream entry does not match:
   ]
 }
 ```
+
+## Graph write
+
+Follow this section only in a run of `jtbd-market-discovery:wtp-check`. As Phase 9 of the discover workflow, write no page: output-assembler writes the pages of that run.
+
+After the result file exists, write the pages of the run with the save code. Run `git rev-parse --show-toplevel` on its own for the git root, then run this command on its own, with the paths as plain text and not in quotes:
+
+```bash
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root <git root> write-run --session-dir {session_dir} --result-file <the result file>
+```
+
+- When the run halted and made no session folder, leave out `--session-dir`. The command writes one Run page from the result file.
+- The Run page links to the Run page of the discover run that you read (`input_dir`). When that discover session has no pages yet, the command writes them first.
+- Write no page with the `Write` tool, because the save code checks each page and gives each ID.
+- When the command exits 1 or 2, write the line `GRAPH: FAILED <exit code> <first error line>` before your last line. Do not report that the graph holds the results, because the next session trusts that report. The result file is already written, so no reader loses its input.
 
 ## Success Criteria
 

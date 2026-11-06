@@ -1,7 +1,7 @@
 ---
 name: wtp-check
 description: Check a price against what customers will pay, with the 6-layer willingness-to-pay framework. Use when the person wants to test a price after a discover run, or when another plugin dispatches jtbd-market-discovery:wtp-check.
-allowed-tools: Agent, Read, Write, Glob, AskUserQuestion, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *)
+allowed-tools: Agent, Read, Write, Glob, Skill, AskUserQuestion, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *)
 ---
 
 # /jtbd-market-discovery:wtp-check
@@ -25,5 +25,6 @@ Test a price against what customers will pay. The check is skeptical by design: 
    - `AskUserQuestion`: the path to WTP survey data, if there is any [q: wtp_survey_path]
    - `AskUserQuestion`: the direct competitors, what they charge, and any free alternatives [q: competitor_pricing]
 2. Dispatch `jtbd-market-discovery:wtp-check-runner` with the `Agent` tool, in the foreground. Give it the answers as dispatch fields: `target_price`, `target_segment`, `market_context`, `evc_estimate`, `wtp_survey_path` and `competitor_pricing`. Leave out a field that has no answer. The runner follows `${CLAUDE_PLUGIN_ROOT}/skills/wtp-check/procedure.md`.
-3. Show the validation report and the path of the result file that the runner returns.
-4. Offer the next steps: `/jtbd-market-discovery:discover` with a B2B segment, and `/product:explore` to update the product requirements with the validated price.
+3. Show the validation report and the path of the result file that the runner returns. When the reply holds a line `GRAPH: FAILED <exit code> <first error line>`, show it, and do not say that the graph holds the results, because the pages are missing.
+4. Ask one question: "Learn these results?" On yes, load the `jtbd-market-discovery:learn` skill with the Run page named in `run_page` of `the session folder of the check`. On no, the pages stay `draft`.
+5. Offer the next steps: `/jtbd-market-discovery:discover` with a B2B segment, and `/product:explore` to update the product requirements with the validated price.
