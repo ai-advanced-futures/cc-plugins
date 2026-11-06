@@ -13,6 +13,8 @@ GRAPH = "competitive-intelligence"
 DEFAULT_DIR = "docs/competitive-intelligence"
 REGISTRY = Path(".claude") / "knowledge.json"
 ID_RE = re.compile(r"^([A-Z]+)-(\d{2,})$")
+# The folder name goes into a shell command and into CLAUDE.md, so it holds no quote, space, `$` or new line (#692).
+DIR_RE = re.compile(r"[A-Za-z0-9._/-]{1,100}")
 
 
 @dataclass
@@ -55,12 +57,27 @@ def has_entry(root) -> bool:
     return GRAPH in read_registry(root)
 
 
+def inside(root, value) -> Path:
+    """Return root/value, and refuse a path that leaves the project root (an absolute path, `..`, or a link)."""
+    root = Path(root)
+    given = Path(str(value))
+    if given.is_absolute() or ".." in given.parts:
+        raise UsageError(f"the path must be relative to the project root and stay inside it: {value!r}")
+    target = root / given
+    # The root is not one of its own parents, so this also refuses the root itself.
+    if root.resolve() not in target.resolve().parents:
+        raise UsageError(f"the path must stay inside the project root, and is not the root itself: {value!r}")
+    return target
+
+
 def bundle_dir(root) -> Path:
     entry = read_registry(root).get(GRAPH)
     if not entry:
         raise UsageError(f"the competitive-intelligence graph is not in {REGISTRY}. "
                          "Run /competitive-intelligence:setup first.")
-    directory = Path(root) / entry["path"]
+    if not DIR_RE.fullmatch(str(entry["path"])):
+        raise UsageError(f"the bundle folder in {REGISTRY} must match [A-Za-z0-9._/-]{{1,100}}: {entry['path']!r}")
+    directory = inside(root, entry["path"])
     if not directory.is_dir():
         raise UsageError(f"the folder {entry['path']} does not exist. Run /competitive-intelligence:setup first.")
     return directory

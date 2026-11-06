@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 
 from cilib import DataError, UsageError, logbook, manifest, regen, schema
-from cilib.bundle import DEFAULT_DIR, GRAPH, bundle_dir, read, ref, registry_add
+from cilib.bundle import DEFAULT_DIR, DIR_RE, GRAPH, bundle_dir, read, ref, registry_add
 from cilib.ids import next_id, require_type, resolve
 from cilib.page import dump, ordered, parse, write_text
 
@@ -18,7 +18,10 @@ def stamp(actor=None) -> dict:
 
 
 def check_dir(directory) -> str:
-    value = str(directory).strip()
+    value = str(directory)
+    # Test the text as given: a strip would hide a final new line.
+    if not DIR_RE.fullmatch(value):
+        raise UsageError(f"the folder must match [A-Za-z0-9._/-]{{1,100}}: {directory!r}")
     if not value or value.startswith("/") or ".." in Path(value).parts:
         raise UsageError(f"the folder must be relative to the project root and stay inside it: {directory!r}")
     while value.startswith("./"):
@@ -48,7 +51,7 @@ def init(root, directory=DEFAULT_DIR, actor=None) -> Path:
 
 def upgrade(root, directory=None) -> list[str]:
     """Bring a bundle to the standard: folders, registry entry, manifest fields. Return the changes."""
-    if directory:
+    if directory is not None:  # an empty --dir is a wrong value, not "no value"
         directory = check_dir(directory)
         folder = Path(root) / directory
     else:
@@ -211,6 +214,55 @@ def remove(root, key, actor=None) -> Path:
     logbook.append(bundle.dir / "log.md", "Forget", f"removed {page_ref}", actor or schema.plugin_actor())
     regen.write(root)
     return path
+
+
+def _need_person(by) -> None:
+    if not by or not str(by).startswith("human:") or str(by) == "human:":
+        raise UsageError("verify needs --by human:<login>, because only a person confirms a page")
+
+
+def _confirm(root, bundle, pages, by, what) -> list[Path]:
+    """Give each (path, page) `status: stable` and 1 more `verified` entry. Write nothing when 1 page is not valid."""
+    entry = {"by": by, "at": logbook.stamp()}
+    updated = []
+    for other, item in pages:
+        frontmatter = dict(item.frontmatter)
+        frontmatter["status"] = "stable"
+        frontmatter["verified"] = list(frontmatter.get("verified") or []) + [entry]
+        frontmatter["generated"] = stamp(by)
+        frontmatter = ordered(frontmatter, schema.types()[item.type]["key_order"])
+        problems = schema.validate(item.type, frontmatter)
+        if problems:
+            raise DataError(f"{ref(bundle.dir, other)} is not valid after the change, so nothing is written: "
+                            + "; ".join(problems))
+        updated.append((other, item, frontmatter))
+    for other, item, frontmatter in updated:
+        write_text(other, dump(frontmatter, item.body))
+    logbook.append(bundle.dir / "log.md", "Learn", f"{by} confirmed {what}", by)
+    regen.write(root)
+    return [other for other, _item, _frontmatter in updated]
+
+
+def verify(root, key, by) -> list[Path]:
+    """A person confirms 1 page. A second confirmation adds an entry to `verified`, it does not replace the list."""
+    _need_person(by)
+    bundle, path, page = _load(root, key)
+    return _confirm(root, bundle, [(path, page)], by, ref(bundle.dir, path))
+
+
+def verify_run(root, key, by) -> list[Path]:
+    """A person confirms a run: the Run page and each page of the run get `status: stable` and a `verified` entry.
+
+    Return the changed paths, the Run page first. A page of another run does not change.
+    """
+    _need_person(by)
+    bundle, path, page = _load(root, key)
+    if page.type != "Run":
+        raise UsageError(f"verify-run takes a Run page, and {key} is a {page.type} page")
+    page_ref = ref(bundle.dir, path)
+    pages = [(path, page)] + [(other, item) for other, item in sorted(bundle.pages.items())
+                              if other != path and page_ref in (item.frontmatter.get("run") or [])]
+    return _confirm(root, bundle, pages, by, f"{page_ref} and the {len(pages) - 1} other pages of that run")
 
 
 def resolve_key(root, key) -> Path:

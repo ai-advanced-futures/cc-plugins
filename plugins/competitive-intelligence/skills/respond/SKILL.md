@@ -1,6 +1,7 @@
 ---
 name: respond
 description: Analyzes a competitor move, announcement or threat and plans a response. Use when a competitor launches a product, changes pricing or positioning, or makes a major announcement, or when the person asks "how do we respond to" or says "competitor just announced".
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *), Bash(date *), Skill
 ---
 
 # /competitive-intelligence:respond
@@ -45,6 +46,8 @@ Competitive response uses a focused lens configuration:
    - Parse threat description
    - Check for existing ecosystem mapping (in both .competitive-intelligence/ and .competitive-intel/, newest file first)
    - Determine if this is new competitor or existing
+   - Read a file of an earlier run through the graph: run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> pages Run`, take the newest run whose `file_meta` names the file, and run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> view <RUN ID> <file name>`, because `ingest` moves the files of a run into the graph. Read a file that is still in a session folder directly.
+   - Run `git rev-parse --show-toplevel` on its own (the output is the git root), and `date -u +%Y%m%dT%H%M%SZ` on its own (the output is `{session}`). Write each file of this run to `.competitive-intelligence/{session}/`.
 
 2. THREAT CLASSIFICATION:
    Ask user via AskUserQuestion [q: none]:
@@ -146,6 +149,12 @@ Competitive response uses a focused lens configuration:
 
    Generate detailed response plan?
    ```
+
+10. INGEST THE RUN:
+   - Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> ingest .competitive-intelligence/{session}` on its own. `<git root>` is the output of `git rev-parse --show-toplevel`, run on its own.
+   - When the output holds an `INIT:` line, show that line.
+   - When the command exits 1, show its errors, say that the results stay in the session folder, and do not report success.
+   - Else show the `ingested` line. Ask one question: "Learn these results?" On yes, run the skill `competitive-intelligence:learn` with `{session}`.
 ```
 
 ## Output Artifacts

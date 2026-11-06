@@ -23,8 +23,12 @@ C4Container
         Container(phase6, "deliverable-generator (phase 6)", "Claude Sonnet / .md", "Writes the chosen deliverables and the rules of the result file")
         Container(vendor, "vendor-archetype-classifier-agent", "Claude Sonnet / .md", "Extracts the pricing signals of one vendor and writes the input file. It has no shell")
         Container(scripts, "Python scripts", "Python 3.11", "Result file name, vendor archetype pipeline, and the library modules for scoring, comparison, and schema checks")
+        Container(brainSkills, "Skills setup, learn, ask", "SKILL.md, main conversation", "Make the graph and its router block, confirm the pages of a run, and answer a question from the graph")
+        Container(saveCode, "Save code ci_graph.py", "Python 3.11", "The only writer of the graph: ingest, view, results, pages, regen, and check")
+        Container(hook, "Hook brain-hook.sh", "PostToolUse, bash", "Runs regen and both checks after a write to the bundle or a call of ci_graph.py")
         ContainerDb(session, "Session folder", "JSON", ".competitive-intelligence/<session>/ - session.json, a summary file for each phase, and the full data files")
         ContainerDb(results, "Result files", "JSON", ".competitive-intelligence/results/ - one plugin-result/1 file for each run of discover or analyze")
+        ContainerDb(graph, "Graph", "OKF pages", "docs/competitive-intelligence/ - one page for each run, competitor, offer, source, finding, and result")
         ContainerDb(vendorFiles, "Vendor archetype files", "JSON", ".competitive-intelligence/vendor-archetype-handoff.json")
     }
 
@@ -50,4 +54,12 @@ C4Container
     Rel(vendorSkill, scripts, "Runs the emitter with uv run")
     Rel(scripts, vendorFiles, "Writes")
     Rel(entrySkills, scripts, "Runs result_name.py with uv run")
+    Rel(entrySkills, saveCode, "Runs ingest and view")
+    Rel(fullRun, saveCode, "Runs ingest and view")
+    Rel(vendorSkill, saveCode, "Runs ingest")
+    Rel(analyst, brainSkills, "Starts")
+    Rel(brainSkills, saveCode, "Runs")
+    Rel(saveCode, graph, "Writes")
+    Rel(saveCode, session, "Reads, then removes the ingested files")
+    Rel(hook, saveCode, "Runs regen and check")
 ```

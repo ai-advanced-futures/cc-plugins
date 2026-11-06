@@ -42,5 +42,6 @@ Four facts of this plugin shaped the adoption:
 - The build of STORY-118 removes the 2 runner agents `agents/discover-runner.md` and `agents/analyze-runner.md`, and the text that names them.
 - The tests in `tests/unit/test_plugin_result_contract.py` hold both skills to the rules through `tests/plugin_result/conformance.py`. The fixtures in `tests/fixtures/plugin-result/` are real result files from test runs.
 - `analysis_mode` is not marked as a default. It shapes the framing of the synthesis and the deliverables (`agents/lens-executor.md`), and neither skill runs them.
+- With the graph (STORY-88), each result is a `Result` page in `docs/competitive-intelligence/`. The result file stays beside the graph only until the reader stories merge, because `business-case` still reads it.
 - Stale unfinished sessions stay in the folder, as they did before, because the sweep never ran.
 - A test run has no web search, so every finding in the fixtures rests on the inference of the model. Only an entry with a URL becomes a `published` source. An entry that has a name but no URL, such as `web_research`, stays a `model` source with the inference marker, even in a run that did research.

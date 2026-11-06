@@ -1,6 +1,7 @@
 ---
 name: competitive-intelligence
 description: Runs the full competitive analysis in 6 phases, from the first questions to the final deliverables. Use when the person asks for a competitive analysis, a competitor or market assessment, a feature check against competitors, a technology disruption review, win and loss patterns, or a response to a competitive threat.
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *), Bash(date *), Skill
 ---
 
 # Competitive intelligence: the full run
@@ -61,7 +62,7 @@ Offer Skip for a lens only, because a phase cannot be skipped.
 1. Read `.competitive-intelligence/{session}/session.json` if it exists, and use its `phases_complete` to find the next phase.
 2. If the folder `.competitive-intelligence/{session}/` does not exist but an older run left `.competitive-intel/{session}/session.json`, continue in that old folder. Use it wherever this skill says `.competitive-intelligence/{session}/`. New sessions never go in the old folder.
    - The old name is for old runs only, because the new name replaced it.
-3. Read the earlier analyses in both folders `.competitive-intelligence/` and `.competitive-intel/`, newest file first.
+3. Read the earlier analyses in both folders `.competitive-intelligence/` and `.competitive-intel/`, newest file first. Read a file of an earlier run through the graph: run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> pages Run`, take the newest run whose `file_meta` names the file, and run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> view <RUN ID> <file name>`, because `ingest` moves the files of a run into the graph. Read a file that is still in a session folder directly.
 4. If no session exists, create `.competitive-intelligence/{session}/session.json` and an empty `execution-log.md` in the same folder:
 
 ```json
@@ -80,7 +81,7 @@ Offer Skip for a lens only, because a phase cannot be skipped.
 
 ### 2. Phases 1 to 3: discover
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/discover/SKILL.md` and follow its steps 1 to 7, because step 0 here did its step 0 and this skill writes no result file (its steps 8 and 9). Its step 6 calls the MCP research server first, when the session has one, and gives the gatherer the dispatch field `research_notes`: do that here too, before you dispatch `competitive-intelligence:intelligence-gatherer`.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/discover/SKILL.md` and follow its steps 1 to 7, because step 0 here did its step 0 and this skill writes no result file and runs its own ingest step (its steps 8 to 10). Its step 6 calls the MCP research server first, when the session has one, and gives the gatherer the dispatch field `research_notes`: do that here too, before you dispatch `competitive-intelligence:intelligence-gatherer`.
 After each phase, add its name to `phases_complete` in `session.json`, set `current_phase`, add the checkpoint to `checkpoints_passed`, and log the decision to `execution-log.md`.
 
 ### 3. Phase 4: multi-lens analysis
@@ -105,7 +106,14 @@ CHECKPOINT - Synthesis: show the top recommendations and the SWOT headline, and 
 2. Use JSON outputs when the person gives no answer.
 3. Dispatch `competitive-intelligence:deliverable-generator` with `session_id`, `data_dir` and `deliverables` (a list of `json_outputs`, `python_scripts`, `executive_summary`, `battle_card`, `full_report`), wait for `DONE: deliverables`, and add `deliverables` to `phases_complete`.
 
-### 6. Show the completion summary
+### 6. Ingest the run
+
+1. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> ingest .competitive-intelligence/{session}` on its own. `<git root>` is the output of step 0.3.
+2. When the output holds an `INIT:` line, show that line.
+3. When the command exits 1, show its errors, say that the results stay in the session folder, and report the run as not saved, because the graph has none of its pages.
+4. Else show the `ingested` line. Ask one question: "Learn these results?" On yes, run the skill `competitive-intelligence:learn` with `{session}`.
+
+### 7. Show the completion summary
 
 Show the person the length of the analysis, the number of competitors analyzed, the number of key findings, the confidence levels, and the files that the run made, with their paths. The session folder keeps all the files for later use.
 

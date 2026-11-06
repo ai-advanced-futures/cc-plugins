@@ -18,7 +18,7 @@ import tempfile
 from pathlib import Path
 
 from cilib import DataError, UsageError, check, logbook, regen, schema, view, writer
-from cilib.bundle import DEFAULT_DIR, REGISTRY, bundle_dir, has_entry, page_files, ref
+from cilib.bundle import DEFAULT_DIR, REGISTRY, bundle_dir, has_entry, inside, page_files, ref
 from cilib.ids import fold, next_id
 from cilib.issues import ERROR
 from cilib.page import parse
@@ -158,7 +158,9 @@ class Ingest:
         return self.dir / spec["directory"] / f"{spec['prefix']}-{number:02d}.md"
 
     def upsert(self, type_, title, desc, *, fields=None, links=None, file=None, item=NO, ident=None):
-        fm = {"type": type_, "title": clean(title), "description": clean(desc or title, 200) or clean(title, 200)}
+        # A page that a run writes or adds to is a draft until the person accepts it with `learn` (row 6, row 10).
+        fm = {"type": type_, "title": clean(title), "description": clean(desc or title, 200) or clean(title, 200),
+              "status": "draft"}
         for slot, value in (fields or {}).items():
             if value is not None and schema.slot_ok(type_, slot, value):
                 fm[slot] = value
@@ -424,6 +426,11 @@ class Ingest:
             return f
         sources = [self.ref(self.source(s["url"], s.get("type"), s.get("date")))
                    for s in f.get("sources") or [] if isinstance(s, dict) and isinstance(s.get("url"), str)]
+        if not sources:
+            # A Finding must link a Source page, and a Source page needs a url. A finding with no url source
+            # (`"url": null`, `"sources": []`, no key) becomes a named Gap, so the run still ingests.
+            gap = {"description": f"No source url for this finding: {f['finding']}", "type": "no_source"}
+            return self.gap(name, comp, gap, f"{f.get('id') or slug(f['finding'])[:60]}-no-source")
         page = self.upsert("Finding", f["finding"], f["finding"], file=name, item=f, ident=f.get("id"),
                            fields={"category": f.get("category"), "confidence": f.get("confidence"),
                                    "triangulation": f.get("triangulation"), "relevance": f.get("relevance"),
@@ -877,9 +884,17 @@ def temp_root(root):
 def swap(root, tmp):
     folder = bundle_dir(root)
     fresh, old = folder.with_name(folder.name + ".new"), folder.with_name(folder.name + ".old")
+    # A `.new` or `.old` folder of an earlier stop would make the move put the new folder inside it.
+    for stale in (fresh, old):
+        if stale.exists():
+            shutil.rmtree(stale)
     shutil.move(tmp / folder.relative_to(root), fresh)
     folder.rename(old)
-    fresh.rename(folder)
+    try:
+        fresh.rename(folder)
+    except OSError:
+        old.rename(folder)  # the second rename failed: put the bundle back
+        raise
     shutil.rmtree(old)
 
 
@@ -889,16 +904,16 @@ def inputs(root, path, result_file):
         raise UsageError("give a session folder, a file, or --result FILE")
     session, files = None, []
     if path is not None:
-        target = Path(root) / path
+        target = inside(root, path)
         if target.is_dir():
-            session, files = target, sorted(p for p in target.iterdir() if p.is_file())
+            session, files = target, sorted(inside(root, p.relative_to(root)) for p in target.iterdir() if p.is_file())
         elif target.is_file():
             files = [target]
         else:
             raise UsageError(f"{path} is not a file or a folder")
     result = None
     if result_file is not None:
-        target = Path(root) / result_file
+        target = inside(root, result_file)
         if not target.is_file():
             raise UsageError(f"{result_file} is not a file")
         result = (target.name, read_json(target))

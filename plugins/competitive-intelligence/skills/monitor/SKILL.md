@@ -1,6 +1,7 @@
 ---
 name: monitor
 description: Tracks the changes in a competitive landscape since the last analysis and updates the intelligence. Use when the person asks "what's changed", wants a competitive update or a check of the competitors, or has a regular review (weekly, monthly or quarterly) or a planning session ahead.
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *), Bash(date *), Skill
 ---
 
 # /competitive-intelligence:monitor
@@ -41,6 +42,8 @@ Monitoring uses a focused lens configuration optimized for change detection:
 1. ORIENT:
    - Load previous analysis from both .competitive-intelligence/ and .competitive-intel/, newest file first
    - Determine last analysis date
+   - Read a file of an earlier run through the graph: run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> pages Run`, take the newest run whose `file_meta` names the file, and run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> view <RUN ID> <file name>`, because `ingest` moves the files of a run into the graph. Read a file that is still in a session folder directly.
+   - Run `git rev-parse --show-toplevel` on its own (the output is the git root), and `date -u +%Y%m%dT%H%M%SZ` on its own (the output is `{session}`). Write each file of this run to `.competitive-intelligence/{session}/`.
    - Check for user-specified time range or competitors
 
 2. DETERMINE MONITORING SCOPE:
@@ -144,6 +147,12 @@ Monitoring uses a focused lens configuration optimized for change detection:
    - Save monitoring snapshot to .competitive-intelligence/
    - Update last-monitored timestamp
    - Archive previous state for trend analysis
+
+9. INGEST THE RUN:
+   - Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> ingest .competitive-intelligence/{session}` on its own. `<git root>` is the output of `git rev-parse --show-toplevel`, run on its own.
+   - When the output holds an `INIT:` line, show that line.
+   - When the command exits 1, show its errors, say that the results stay in the session folder, and do not report success.
+   - Else show the `ingested` line. Ask one question: "Learn these results?" On yes, run the skill `competitive-intelligence:learn` with `{session}`.
 ```
 
 ## Output Artifacts

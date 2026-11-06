@@ -44,6 +44,13 @@ def resolve(bundle, key):
         return hits[0]
     if hits:
         raise DataError(f"the alias {key!r} names more than one page")
+    # A session id is the `run_id` of a Run page, as `view` and `results` take it. The skills pass it to `learn`.
+    runs = [path for path, page in bundle.pages.items()
+            if (page.frontmatter or {}).get("type") == "Run" and (page.frontmatter or {}).get("run_id") == key]
+    if len(runs) == 1:
+        return runs[0]
+    if runs:
+        raise DataError(f"the run_id {key!r} names more than one Run page")
     raise DataError(f"no page has the ID or the alias {key!r}")
 
 

@@ -634,6 +634,12 @@ For each competitor: Type, JTBD Alternative, Threat Level, Stage, Market Overlap
 - Timestamped modular files
 - User manages history (git, etc.)
 
+**The graph (STORY-88):**
+- Each run ends with `ci_graph.py ingest`. The files of the run become pages in `docs/competitive-intelligence/`, a bundle of the brain standard. Git keeps the bundle.
+- Only `scripts/ci_graph.py` writes the bundle. A PostToolUse hook runs `regen` and both checks after each write.
+- A later run reads a file of an earlier run with `ci_graph.py view`.
+- The skills `setup`, `learn` and `ask` make the graph, confirm the pages, and answer questions from it.
+
 **Future Enhancement:**
 - Native historical tracking
 - Trend analysis

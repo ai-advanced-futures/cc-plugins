@@ -1,7 +1,7 @@
 ---
 name: vendor-archetype-classify
 description: Classifies the current pricing of a vendor into one of the 5 canonical agentic-pricing archetypes. Use when the person wants to know which archetype the pricing page of a vendor maps to, or wants to refresh the Wave 1 vendor registry.
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Skill
 ---
 
 # Vendor Archetype Classification
@@ -25,6 +25,7 @@ Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<fi
    When the script fails to import a package, show a gap that names the missing package and stop. Make up no output, because the handoff file must come from the emitter.
 5. The deterministic Python classifier (`scripts/vendor_archetype_classifier.py`, which the emitter calls) maps the signals to one of: `pure_outcome_absorbed`, `hybrid_platform_outcome`, `pure_per_seat` (+ `seat_anchor`), `hybrid_seat_meter`, `pure_passthrough`. The emitter writes `.competitive-intelligence/vendor-archetype-classification.json` (the federation artifact, `audience: mixed`) and a handoff file.
 6. Read `.competitive-intelligence/vendor-archetype-handoff.json`. Show the person the `state`. For `success`, show the archetype and the `best_in_class_pattern`. For `blocked` or `error`, show the `reason`.
+7. When the state is `success`, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root . ingest .competitive-intelligence/vendor-archetype-classification.json` on its own, from the project folder, as in step 4. When the output holds an `INIT:` line, show that line. When the command exits 1, show its errors, say that the result stays in the file, and do not report success. Else show the `ingested` line. Ask one question: "Learn these results?" On yes, run the skill `competitive-intelligence:learn` with the run ID in the `ingested` line.
 
 If the agent reports a gap (no pricing page), show the gap to the person and stop.
 

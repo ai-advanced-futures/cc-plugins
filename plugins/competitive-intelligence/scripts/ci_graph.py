@@ -139,6 +139,28 @@ def cmd_remove(args) -> int:
     return 0
 
 
+def cmd_verify(args) -> int:
+    for path in writer.verify(args.root, args.key, args.by):
+        print(shown(args.root, path))
+    return 0
+
+
+def cmd_verify_run(args) -> int:
+    for path in writer.verify_run(args.root, args.key, args.by):
+        print(shown(args.root, path))
+    return 0
+
+
+def add_verify(parser) -> None:
+    parser.add_argument("key", help="an ID, an alias, or a bundle path")
+    parser.add_argument("--by", required=True, help="human:<login>, because only a person confirms a page")
+
+
+def add_verify_run(parser) -> None:
+    parser.add_argument("key", help="a Run page: an ID, an alias, a bundle path, or the session id (run_id)")
+    parser.add_argument("--by", required=True, help="human:<login>, because only a person confirms a run")
+
+
 def cmd_resolve(args) -> int:
     print(shown(args.root, writer.resolve_key(args.root, args.key)))
     return 0
@@ -216,6 +238,8 @@ COMMANDS = [
     ("unlink", add_link, cmd_unlink, "remove a typed link"),
     ("remove", add_key, cmd_remove, "delete a page and retire its ID"),
     ("resolve", add_key, cmd_resolve, "print the path of a page"),
+    ("verify", add_verify, cmd_verify, "a person confirms a page: status stable and one more verified entry"),
+    ("verify-run", add_verify_run, cmd_verify_run, "a person confirms a run: its pages get status stable and a verified entry"),
     ("regen", add_regen, cmd_regen, "write the indexes, the LINKS blocks, and links.tsv"),
     ("check", add_check, cmd_check, "run the brain check of competitive-intelligence"),
     ("log", add_log, cmd_log, "write one log.md entry"),

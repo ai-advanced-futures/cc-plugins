@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.10.0
+
+This version makes the plugin a brain: each run writes its results into a graph (STORY-88, part B). Part A gave the graph and its save code in 1.8.0.
+
+- The plugin needs the plugin `knowledge` (`"dependencies": ["knowledge"]`) and Claude Code 2.1.110 or later.
+- 3 new skills: `competitive-intelligence:setup` (writes the bundle `docs/competitive-intelligence/`, the registry entry, and the router block in `CLAUDE.md`), `competitive-intelligence:learn` (confirms the pages of a run, or saves a fact that the person gives), and `competitive-intelligence:ask` (answers a question from the graph).
+- The skills `competitive-intelligence`, `discover`, `analyze`, `monitor`, `respond`, `validate` and `vendor-archetype-classify` end with an `ingest` step. The step moves the files of the run into pages with `status: draft`. A person's run then asks "Learn these results?". A plugin run asks nothing, and its halt also runs the `ingest` step, with `ingest --result <file>` and no session folder.
+- `ci_graph.py verify-run RUN --by human:<login>` confirms a run and each page of it in one process, and `verify` confirms one page. A second confirmation adds a `verified` entry. `resolve` takes a session id. The skills that call `learn` have `Skill` in `allowed-tools`.
+- `init`, `upgrade` and the bundle folder of `.claude/knowledge.json` must match `[A-Za-z0-9._/-]{1,100}` (#692). `ingest` refuses a path outside the project (#602).
+- A finding with no source that has a `url` (`"url": null`, `"sources": []`, or no `sources` key) becomes a Gap page of type `no_source`, so the run still ingests. A Finding page must link a Source page, and a Source page needs a `url`.
+- A skill that reads a file of an earlier run reads it with `ci_graph.py view`, because `ingest` moves the files of a run into the graph.
+- A PostToolUse hook (`hooks/brain-hook.sh`) runs `regen` and both checks after a write to the bundle and after a call of `ci_graph.py`.
+- `scripts/claude_md_router.py` and `templates/claude-md-block.md` write the router block.
+
 ## 1.9.1
 
 - `result_name.py run-id` refuses the names that the plugin uses at the top of `.competitive-intelligence/` (`results`, `monitoring-history`, a `.json` file, and the name of a person's session, with case ignored), and exits 3 when the session folder of the `run_id` exists. A plugin run with such a `run_id` that the check refuses (exit 2) goes on with no `run_id`. A plugin run whose session folder exists (exit 3) halts with a gap and writes nothing in that folder (#549, STORY-144).
