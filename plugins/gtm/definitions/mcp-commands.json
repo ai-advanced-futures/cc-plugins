@@ -1,0 +1,9 @@
+{
+  "funnel": ["google-analytics", "hubspot"],
+  "prospecting": ["apollo", "hubspot"],
+  "brand": ["canva"],
+  "launch": ["ahrefs", "canva", "notion", "slack"],
+  "content": ["ahrefs", "canva"],
+  "pipeline": ["hubspot"],
+  "learn": ["notion"]
+}

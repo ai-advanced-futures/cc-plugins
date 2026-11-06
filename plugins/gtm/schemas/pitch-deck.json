@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pitch Deck",
+  "description": "Pitch deck structure with slide content, narrative arc, and key differentiators",
+  "type": "object",
+  "properties": {
+    "product_name": {"type": "string"},
+    "target_audience": {"type": "string"},
+    "slides": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {"type": "string"},
+          "content_type": {"type": "string"},
+          "key_points": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "truth_tier": {"type": "integer", "minimum": 1, "maximum": 5}
+        }
+      }
+    },
+    "narrative_arc": {"type": "string"},
+    "key_differentiators": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

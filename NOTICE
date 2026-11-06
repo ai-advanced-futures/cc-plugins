@@ -81,3 +81,7 @@ material, and the Apache License does not replace them.
 13. pricing, by Luis F. Amadeo, MIT License.
     The pricing plugin ports it, with changes.
     The MIT notice is in plugins/pricing/NOTICE.
+
+14. gtm, by Luis F. Amadeo, MIT License.
+   The gtm plugin ports it, with changes.
+   The MIT notice is in plugins/gtm/NOTICE.

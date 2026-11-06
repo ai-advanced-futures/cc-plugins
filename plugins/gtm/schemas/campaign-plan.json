@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Campaign Plan",
+  "description": "Marketing campaign plan including objectives, channels, content calendar, and KPIs",
+  "type": "object",
+  "properties": {
+    "campaign_name": {"type": "string"},
+    "objective": {"type": "string"},
+    "target_segment": {"type": "string"},
+    "channels": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "content_calendar": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "budget_estimate": {"type": "number"},
+    "kpis": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "metric": {"type": "string"},
+          "target": {"type": "string"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Truth Tier Audit",
+  "description": "Audit report for truth-tier classification of GTM claims",
+  "type": "object",
+  "required": ["artifact", "integrity_score", "claims"],
+  "properties": {
+    "artifact": {"type": "string"},
+    "audited_at": {"type": "string", "format": "date-time"},
+    "integrity_score": {"type": "number", "minimum": 0, "maximum": 1},
+    "blocked_count": {"type": "integer"},
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["text", "tier"],
+        "properties": {
+          "text": {"type": "string"},
+          "tier": {"type": "integer", "minimum": 1, "maximum": 5},
+          "blocked": {"type": "boolean"},
+          "language_issues": {"type": "array", "items": {"type": "string"}},
+          "suggested_fix": {"type": "string"}
+        }
+      }
+    }
+  }
+}

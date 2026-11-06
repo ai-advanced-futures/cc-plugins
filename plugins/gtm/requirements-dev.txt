@@ -1,0 +1,4 @@
+# Packages that the tests of the gtm plugin need.
+# The CI job installs them with `pip install -r requirements-dev.txt`.
+jsonschema>=4.17.0
+pytest>=8

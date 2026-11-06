@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Brand Identity",
+  "description": "Aaker four-perspective brand identity model output",
+  "type": "object",
+  "properties": {
+    "brand_name": {"type": "string"},
+    "category": {"type": "string"},
+    "owned_word": {"type": "string"},
+    "promise": {"type": "string"},
+    "brand_as_product": {
+      "type": "object",
+      "description": "Brand identity through the lens of the product itself",
+      "properties": {
+        "category": {"type": "string"},
+        "scope": {"type": "string"},
+        "attributes": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "brand_as_person": {
+      "type": "object",
+      "description": "Brand identity through the lens of personality",
+      "properties": {
+        "personality_traits": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "brand_customer_relationship": {"type": "string"}
+      }
+    },
+    "brand_as_symbol": {
+      "type": "object",
+      "description": "Brand identity through the lens of visual and metaphorical symbols",
+      "properties": {
+        "visual_imagery": {"type": "string"},
+        "metaphor": {"type": "string"},
+        "heritage": {"type": "string"}
+      }
+    },
+    "brand_as_organization": {
+      "type": "object",
+      "description": "Brand identity through the lens of organizational values",
+      "properties": {
+        "organizational_values": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "local_vs_global": {"type": "string"}
+      }
+    }
+  }
+}

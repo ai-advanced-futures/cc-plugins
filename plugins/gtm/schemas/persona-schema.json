@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Persona Schema",
+  "description": "Buyer persona definition including demographics, goals, objections, and buyer journey stages",
+  "type": "object",
+  "properties": {
+    "name": {"type": "string"},
+    "role": {"type": "string"},
+    "industry": {"type": "string"},
+    "company_size": {"type": "string"},
+    "pain_points": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "goals": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "objections": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "preferred_channels": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "buyer_journey": {
+      "type": "object",
+      "description": "How this persona moves through the awareness, consideration, and decision stages",
+      "properties": {
+        "awareness": {"type": "string"},
+        "consideration": {"type": "string"},
+        "decision": {"type": "string"}
+      }
+    }
+  }
+}

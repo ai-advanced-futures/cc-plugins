@@ -1,0 +1,10 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "gtm:marketing:brand",
+  "questions": [
+    {"input": "product_description", "question": "What does the product do, and who uses it?", "type": "text"},
+    {"input": "target_customer", "question": "Which customers is the brand for?", "type": "text"},
+    {"input": "product_capabilities", "question": "What can the product do today that a customer could check?", "type": "text"},
+    {"input": "differentiators", "question": "What makes the product different from what customers use today?", "type": "text"}
+  ]
+}

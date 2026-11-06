@@ -1,0 +1,4 @@
+{
+  "operator_denylist": ["shared risk", "transition", "cost-coverage", "vendor margin", "margin compression", "amplifier"],
+  "customer_allowlist": ["predictable cost", "hard ceilings", "value floors", "quality assurance"]
+}

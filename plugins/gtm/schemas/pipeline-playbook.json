@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pipeline Playbook",
+  "description": "Sales pipeline playbook with deal stages, MEDDPICC scorecard, and deal metrics",
+  "type": "object",
+  "properties": {
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "entry_criteria": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "exit_criteria": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "activities": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "meddpicc_focus": {"type": "string"}
+        }
+      }
+    },
+    "meddpicc_scorecard": {
+      "type": "object",
+      "description": "MEDDPICC qualification framework scorecard",
+      "properties": {
+        "metrics": {"type": "string"},
+        "economic_buyer": {"type": "string"},
+        "decision_criteria": {"type": "string"},
+        "decision_process": {"type": "string"},
+        "identify_pain": {"type": "string"},
+        "champion": {"type": "string"},
+        "competition": {"type": "string"}
+      }
+    },
+    "avg_deal_size": {"type": "number"},
+    "avg_cycle_days": {"type": "integer"}
+  }
+}

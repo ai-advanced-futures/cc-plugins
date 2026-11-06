@@ -1,0 +1,6 @@
+{
+  "wave0": ["knowledge", "codebase_scanner"],
+  "wave1": ["brand", "brand_integrity"],
+  "wave2": ["marketing", "marketing_integrity", "sales", "sales_integrity"],
+  "wave3": ["funnel", "funnel_integrity"]
+}

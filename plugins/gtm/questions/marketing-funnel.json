@@ -1,0 +1,13 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "gtm:marketing:funnel",
+  "questions": [
+    {"input": "product_description", "question": "What does the product do, and who uses it?", "type": "text"},
+    {"input": "period", "question": "Over what window should the funnel be read, for example 30d?", "type": "text", "default": "30d"},
+    {"input": "visitors", "question": "How many visitors reached the site in that window?", "type": "number"},
+    {"input": "signups", "question": "How many of them signed up?", "type": "number"},
+    {"input": "activated", "question": "How many sign-ups reached the product's first value?", "type": "number"},
+    {"input": "mqls", "question": "How many leads met the MQL criteria in that window?", "type": "number"},
+    {"input": "channel_volumes", "question": "For each acquisition channel, how many visitors and MQLs did it bring in that window?", "type": "text"}
+  ]
+}

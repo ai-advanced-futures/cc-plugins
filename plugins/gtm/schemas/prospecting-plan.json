@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Prospecting Plan",
+  "description": "Outbound prospecting plan with target accounts, outreach sequences, and qualification criteria",
+  "type": "object",
+  "properties": {
+    "icp_summary": {"type": "string"},
+    "target_accounts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company": {"type": "string"},
+          "reason": {"type": "string"}
+        }
+      }
+    },
+    "outreach_sequence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": {"type": "integer"},
+          "channel": {"type": "string"},
+          "message_template": {"type": "string"},
+          "timing": {"type": "string"}
+        }
+      }
+    },
+    "qualification_criteria": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "disqualifiers": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

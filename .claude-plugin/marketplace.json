@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.10.0"
+    "version": "2.11.0"
   },
   "plugins": [
     {
@@ -133,6 +133,12 @@
       "name": "pricing",
       "description": "Find the right price for an AI product. Classify a feature, compute its price from willingness to pay and cost, design Good, Better, and Best packages, and audit a price. Use price, audit, package, and value-metric.",
       "source": "./plugins/pricing",
+      "strict": false
+    },
+    {
+      "name": "gtm",
+      "description": "Plan the go-to-market work of a product. Build the brand identity, the marketing plans, the sales playbooks, and the revenue funnel from the real abilities of the product. Check each claim against a five-tier truth scale.",
+      "source": "./plugins/gtm",
       "strict": false
     }
   ]

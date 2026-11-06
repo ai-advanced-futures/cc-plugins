@@ -1,0 +1,42 @@
+{
+  "name": "gtm",
+  "displayName": "gtm",
+  "version": "1.7.0",
+  "description": "Plan the go-to-market work of a product. Build the brand identity, the marketing plans, the sales playbooks, and the revenue funnel from the real abilities of the product. Check each claim against a five-tier truth scale before it is released.",
+  "author": {
+    "name": "ai-advanced-futures"
+  },
+  "keywords": [
+    "gtm",
+    "go-to-market",
+    "marketing",
+    "sales",
+    "brand-identity",
+    "positioning",
+    "icp",
+    "persona",
+    "funnel",
+    "pipeline",
+    "launch",
+    "campaign",
+    "content-marketing",
+    "seo",
+    "plg",
+    "product-led-growth",
+    "storybrand",
+    "spin-selling",
+    "challenger-sale",
+    "meddpicc",
+    "kotler",
+    "moore-chasm",
+    "sinek",
+    "aaker",
+    "truth-tier",
+    "moral-marketing",
+    "brand-voice",
+    "revenue-operations",
+    "revops"
+  ],
+  "homepage": "https://github.com/ai-advanced-futures/cc-plugins",
+  "repository": "https://github.com/ai-advanced-futures/cc-plugins"
+}

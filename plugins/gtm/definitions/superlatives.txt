@@ -1,0 +1,28 @@
+# Superlatives — Canonical List
+# Used by truth_tier_validator.py for word-boundary matching
+# One entry per line; lines starting with # are comments
+# Sorted longest-first in the compiled regex (handled by the validator)
+
+best
+fastest
+leading
+top
+number one
+#1
+premier
+unmatched
+unrivaled
+unparalleled
+world-class
+industry-leading
+most advanced
+most powerful
+only
+first
+most innovative
+most trusted
+most comprehensive
+most reliable
+most scalable
+most secure
+most popular

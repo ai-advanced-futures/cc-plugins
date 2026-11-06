@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ICP Schema",
+  "description": "Ideal Customer Profile definition with firmographic, psychographic, and behavioral attributes",
+  "type": "object",
+  "properties": {
+    "industry": {"type": "string"},
+    "role": {"type": "string"},
+    "pain_points": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "success_metrics": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "firmographic": {
+      "type": "object",
+      "description": "Firmographic attributes for qualifying accounts",
+      "properties": {
+        "company_size": {"type": "string"},
+        "industries": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "geographies": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "psychographic": {
+      "type": "object",
+      "description": "Psychographic attributes describing buyer mindset and behavior",
+      "properties": {
+        "buyer_mindset": {"type": "string"},
+        "risk_tolerance": {"type": "string"},
+        "decision_style": {"type": "string"}
+      }
+    },
+    "trigger_events": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "disqualifiers": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

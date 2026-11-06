@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GTM Context",
+  "description": "Shared persistent state for all GTM agents",
+  "type": "object",
+  "properties": {
+    "business": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "stage": {"type": "string", "enum": ["idea", "pre-pmf", "pmf", "growth", "scale"]},
+        "industry": {"type": "string"}
+      },
+      "required": ["name", "stage"]
+    },
+    "product": {
+      "type": "object",
+      "properties": {
+        "capabilities": {"type": "array", "items": {"type": "object"}},
+        "roadmap_committed": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "market": {
+      "type": "object",
+      "properties": {
+        "icp": {"type": "object"},
+        "icp_segments": {
+          "type": "array",
+          "description": "Role-differentiated ICP segments with persona-specific psychographics",
+          "items": {
+            "type": "object",
+            "properties": {
+              "segment_name": {"type": "string"},
+              "role": {"type": "string"},
+              "firmographics": {"type": "object"},
+              "psychographics": {"type": "object"},
+              "pain_points": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        },
+        "personas": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "positioning": {
+      "type": "object",
+      "properties": {
+        "category": {"type": "string"},
+        "owned_word": {"type": "string"},
+        "frame_of_reference": {"type": "string"},
+        "differentiators": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "messaging": {
+      "type": "object",
+      "properties": {
+        "tagline": {"type": "string"},
+        "elevator_pitch": {"type": "string"},
+        "value_props": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "brand_identity": {
+      "type": "object",
+      "description": "Brand identity output from brand-agent",
+      "properties": {
+        "name": {"type": "string"},
+        "voice": {"type": "object"},
+        "visual_identity": {"type": "object"},
+        "purpose": {"type": "string"},
+        "vision": {"type": "string"},
+        "narrative": {"type": "string"}
+      }
+    },
+    "messaging_architecture": {
+      "type": "object",
+      "description": "Messaging architecture output from messaging-architect script",
+      "properties": {
+        "primary_message": {"type": "string"},
+        "supporting_messages": {"type": "array", "items": {"type": "string"}},
+        "proof_points": {"type": "array", "items": {"type": "object"}},
+        "persona_messages": {"type": "object"}
+      }
+    },
+    "revenue_targets": {
+      "type": "object",
+      "description": "Revenue goals used for funnel backward projection",
+      "properties": {
+        "monthly_arr_target": {"type": "number"},
+        "annual_arr_target": {"type": "number"},
+        "target_period": {"type": "string"},
+        "current_arr": {"type": "number"}
+      }
+    },
+    "plugin_inputs": {
+      "type": "object",
+      "description": "Data from the output of other plugins. value_ip is present only when the project holds a value-ip scorecard.",
+      "properties": {
+        "value_ip": {
+          "type": "object",
+          "properties": {
+            "survived_claims": {
+              "type": "array",
+              "description": "Claims that passed all 4 framework tests in value-ip plugin; classified as COMMITTED (Tier 3) by default",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "text": {"type": "string"},
+                  "tier": {"type": "integer"},
+                  "source": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "competitive_intelligence": {
+          "type": "object",
+          "description": "Paths that scripts/plugin_integrator.py found. The orchestrator writes the paths only, not the content.",
+          "properties": {"paths": {"type": "array", "items": {"type": "string"}}}
+        },
+        "jtbd": {
+          "type": "object",
+          "description": "Paths that scripts/plugin_integrator.py found. The orchestrator writes the paths only, not the content.",
+          "properties": {"paths": {"type": "array", "items": {"type": "string"}}}
+        },
+        "pricing": {
+          "type": "object",
+          "description": "Paths that scripts/plugin_integrator.py found. The orchestrator writes the paths only, not the content.",
+          "properties": {"paths": {"type": "array", "items": {"type": "string"}}}
+        }
+      }
+    },
+    "funnel": {"type": "object"},
+    "learned_knowledge": {"type": "object"},
+    "completion": {"type": "object"},
+    "_meta": {
+      "type": "object",
+      "properties": {
+        "version": {"type": "string"},
+        "sources": {
+          "type": "object",
+          "properties": {
+            "mcp_connections": {"type": "array"},
+            "plugins": {"type": "array"},
+            "codebase_scanned": {"type": "boolean"}
+          }
+        }
+      }
+    }
+  }
+}

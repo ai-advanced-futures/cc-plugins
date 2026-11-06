@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sales-comp-precondition-gate.schema.json",
+  "title": "Sales-Comp Precondition Gate",
+  "type": "object",
+  "required": ["engagement_id", "produced_at", "schema_version", "preconditions_met", "top_quintile_at_risk_pct", "cliff_recommendation", "audience"],
+  "additionalProperties": false,
+  "properties": {
+    "engagement_id": {"type": "string", "format": "uuid"},
+    "produced_at": {"type": "string", "format": "date-time"},
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "preconditions_met": {
+      "type": "object",
+      "required": ["ae_comp_impact_modeled", "top_3_quota_retention_completed", "hire_back_runway_filled", "competitor_comp_benchmarked", "executive_sponsor_named"],
+      "additionalProperties": false,
+      "properties": {
+        "ae_comp_impact_modeled": {"type": "boolean"},
+        "top_3_quota_retention_completed": {"type": "boolean"},
+        "hire_back_runway_filled": {"type": "boolean"},
+        "competitor_comp_benchmarked": {"type": "boolean"},
+        "executive_sponsor_named": {"type": "boolean"}
+      }
+    },
+    "top_quintile_at_risk_pct": {"type": "number"},
+    "cliff_recommendation": {"type": "string", "enum": ["proceed", "pause", "re_pause"]},
+    "audience": {"type": "string", "const": "internal"}
+  }
+}

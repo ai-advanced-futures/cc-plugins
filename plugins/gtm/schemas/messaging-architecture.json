@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Messaging Architecture",
+  "description": "Full messaging architecture including tagline, value props, proof points, and StoryBrand script",
+  "type": "object",
+  "properties": {
+    "tagline": {"type": "string"},
+    "elevator_pitch": {"type": "string"},
+    "value_props": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {"type": "string"},
+          "tier": {"type": "integer", "minimum": 1, "maximum": 5},
+          "evidence": {"type": "string"}
+        }
+      }
+    },
+    "proof_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {"type": "string"},
+          "source": {"type": "string"},
+          "tier": {"type": "integer", "minimum": 1, "maximum": 5}
+        }
+      }
+    },
+    "storybrand_script": {
+      "type": "object",
+      "description": "Donald Miller StoryBrand 7-part framework",
+      "properties": {
+        "character": {"type": "string"},
+        "problem": {"type": "string"},
+        "guide": {"type": "string"},
+        "plan": {"type": "string"},
+        "cta": {"type": "string"},
+        "failure": {"type": "string"},
+        "success": {"type": "string"}
+      }
+    }
+  }
+}

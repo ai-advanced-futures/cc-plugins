@@ -1,0 +1,11 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "gtm:marketing:launch",
+  "questions": [
+    {"input": "product_description", "question": "What does the product do, and who uses it?", "type": "text"},
+    {"input": "target_customer", "question": "Which customers should the launch win first?", "type": "text"},
+    {"input": "self_serve", "question": "Can a customer sign up and reach the product's first value without talking to sales?", "type": "boolean"},
+    {"input": "channels", "question": "Which channels will you use to reach those customers?", "type": "text"},
+    {"input": "year_one_targets", "question": "What should each channel deliver in the first year?", "type": "text"}
+  ]
+}

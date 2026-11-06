@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Consolidated Audit",
+  "description": "Integrity audit across the four content agents, written by integrity-agent on the funnel pass",
+  "type": "object",
+  "required": ["agents_audited", "integrity_scores", "overall_score"],
+  "properties": {
+    "built_at": {"type": "string"},
+    "agents_audited": {"type": "array", "items": {"type": "string"}},
+    "integrity_scores": {
+      "type": "object",
+      "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}
+    },
+    "overall_score": {"type": "number", "minimum": 0, "maximum": 1},
+    "total_claims_across_all_agents": {"type": "integer", "minimum": 0},
+    "total_tier5_blocked": {"type": "integer", "minimum": 0},
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {"source_agent": {"type": "string"}}
+      }
+    }
+  }
+}

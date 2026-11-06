@@ -1,0 +1,16 @@
+{
+  "schema": "plugin-result-adoption/1",
+  "plugin": "gtm",
+  "commands": {
+    "gtm:marketing:launch": {"writer": "agents/marketing-agent.md"},
+    "gtm:marketing:brand": {"writer": "agents/brand-agent.md"},
+    "gtm:marketing:funnel": {"writer": "agents/funnel-agent.md"}
+  },
+  "defaults": [
+    {"command": ["gtm:marketing:launch"], "input": "target_customer", "marker": "target_customer = chosen by the run from the product description", "file": "commands/marketing/launch.md", "anchor": "- **Default:** when nobody answers, the run chooses the beachhead segment from the product description."},
+    {"command": ["gtm:marketing:launch"], "input": "channels", "marker": "channels = 3 to 5 chosen by the run for the target customer", "file": "commands/marketing/launch.md", "anchor": "- **Default:** when nobody answers, the run chooses 3 to 5 channels from step 5's list for the target customer."},
+    {"command": ["gtm:marketing:brand"], "input": "target_customer", "marker": "target_customer = chosen by the run from the product description", "file": "commands/marketing/brand.md", "anchor": "- **Default:** when nobody answers, the run chooses the target customer from the product description."},
+    {"command": ["gtm:marketing:funnel"], "input": "period", "marker": "period = 30d", "file": "commands/marketing/funnel.md", "anchor": "- **Default:** `30d` when nobody answers."}
+  ],
+  "not_defaults": []
+}

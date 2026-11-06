@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Launch Plan",
+  "description": "Product launch plan covering phases, activities, owners, and success metrics",
+  "type": "object",
+  "properties": {
+    "product_name": {"type": "string"},
+    "launch_date": {"type": "string", "format": "date"},
+    "launch_type": {
+      "type": "string",
+      "enum": ["beta", "early_access", "ga", "feature"]
+    },
+    "phases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "weeks": {"type": "string"},
+          "activities": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "owner": {"type": "string"}
+        }
+      }
+    },
+    "success_metrics": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

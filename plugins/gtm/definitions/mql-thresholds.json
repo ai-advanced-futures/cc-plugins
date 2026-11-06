@@ -1,0 +1,6 @@
+{
+  "pre-pmf": {"icp_fit_score_threshold": 40, "engagement_score_minimum": 30},
+  "pmf":     {"icp_fit_score_threshold": 55, "engagement_score_minimum": 40},
+  "growth":  {"icp_fit_score_threshold": 65, "engagement_score_minimum": 55},
+  "scale":   {"icp_fit_score_threshold": 75, "engagement_score_minimum": 65}
+}

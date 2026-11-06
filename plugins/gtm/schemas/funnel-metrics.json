@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Funnel Metrics",
+  "description": "Funnel conversion metrics, bottleneck analysis, and revenue projections for a reporting period",
+  "type": "object",
+  "properties": {
+    "reporting_period": {"type": "string"},
+    "stages": {
+      "type": "object",
+      "description": "Conversion rates for each funnel transition (expressed as 0–1; null when no rate was measured)",
+      "properties": {
+        "visitors_to_signups": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "signups_to_activated": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "activated_to_mql": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "mql_to_sql": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "sql_to_closed": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      }
+    },
+    "bottleneck_stage": {"type": "string"},
+    "monthly_revenue_projection": {"type": "number"},
+    "benchmark_comparison": {"type": "object"}
+  }
+}
