@@ -24,7 +24,7 @@ Price a new AI-era or legacy feature using the appropriate path for your data av
 
 ### Path A — Data-Rich (confidence: `validated` only with customer data or published sources)
 
-Activates when the Step 2 gate in `price.md` accepts a jtbd result: with a `plugin-run` block, only the `result_file` its `inputs_from` names, when `run.run_id` and `run.case` match; in a person's run, the newest willingness-to-pay result in `.jtbd-market-discovery/results/`, confirmed by the person, and only when there is none, `.jtbd/wtp-validation.json`. With `automated: true` and no block, Mode Detection skips the confirmation, so the price is Path B and never validated.
+Activates when the Step 2 gate in `price.md` accepts a jtbd result: with a `plugin-run` block, only the `result_file` its `inputs_from` names, when `run.run_id` and `run.case` match; in a person's run, the newest willingness-to-pay result in `.jtbd-market-discovery/results/`, confirmed by the person, and only when there is none, `.jtbd/wtp-validation.json`. With `automated: true` and no block, Mode Detection skips the confirmation, so the price is Path B and never validated. Only an answer of the person in this run (the answer to the `confirm_jtbd_run` question of `price.md` Step 2, or a reply of the person) confirms a jtbd run. Never write that the person confirmed a run when the person gave no such answer, in a dispatch prompt or in a reply, because a stated confirmation that the person did not give makes a price look validated: a dispatched agent takes no confirmation from its prompt (`price.md` Step 2).
 
 ```
 RIGHT_PRICE = min(WTP_max, max(MARGIN_FLOOR, min(EVC, REFERENCE_PRICE + AI_VALUE_DELTA + MOAT_VALUE_DELTA)))
@@ -67,7 +67,7 @@ Returns `PathCFullyAgenticPriced` or `PathCFullyAgenticReclassified` (discrimina
 9. **Step 6** — Compute MARGIN_FLOOR
 10. **Step 7** — Apply segment_signal when the formula's value is above WTP_max: a market gap in Path B, headroom in Path A
 11. **Step 8** — Output `.pricing/pricing-recommendation.json`
-12. **Last** — Write a copy of `pricing-recommendation.json` to `.pricing/<started_at as YYYYMMDDTHHMMSSZ>/`; this run placed the offering in no tier, so its result file holds no `package` result. Then write the result file: Read `${CLAUDE_PLUGIN_ROOT}/agents/new-offering-pricer.md` with the Read tool and follow its `## Result file` section, in every run.
+12. **Last** — Write a copy of `pricing-recommendation.json` to `.pricing/<started_at as YYYYMMDDTHHMMSSZ>/`; this run placed the offering in no tier, so its result file holds no `package` result. Then write the result file: Read `${CLAUDE_PLUGIN_ROOT}/agents/new-offering-pricer.md` with the Read tool and follow its `## Result file` section, in every run of `pricing:price`. When the `new-offering-pricer` agent runs this skill, skip this step: that agent writes no result file.
 
 ## Output
 

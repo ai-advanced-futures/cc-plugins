@@ -4,6 +4,11 @@ All notable changes to the pricing plugin will be documented in this file.
 
 The first heading is the version in `.claude-plugin/plugin.json`. A test checks that they agree.
 
+## 1.12.1
+
+- A person's run of pricing states no confirmation that the person did not give. The session-start hook only says that a jtbd result exists. A confirmation in a dispatch prompt changes nothing: the pricer reads the file, names it in its reply, and uses Path B (STORY-171).
+- The pricer run as itself writes no result file. Only a run of `pricing:price` writes one.
+
 ## 1.12.0
 
 - The pricing commands quote `run_id` and the JSON arguments. The pricer checks the `run_id` as the runner does, and `price-runner.md` quotes the plugin path. Each JSON argument has the rule to write each `'` as `'\''` (STORY-160).

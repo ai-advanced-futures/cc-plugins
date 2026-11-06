@@ -41,10 +41,10 @@ PY
 fi
 
 if [[ -n "$jtbd_result" ]]; then
-    msgs+=("PRICING: jtbd result found in ${JTBD_NEW_DIR}/results/ — Path A pricing available once you confirm the run.")
+    msgs+=("PRICING: jtbd result found in ${JTBD_NEW_DIR}/results/.")
 else
     if [[ -f "${JTBD_DIR}/wtp-validation.json" ]]; then
-        msgs+=("PRICING: ${JTBD_DIR}/wtp-validation.json found — Path A pricing available.")
+        msgs+=("PRICING: ${JTBD_DIR}/wtp-validation.json found.")
     fi
     if [[ -f "${JTBD_DIR}/evc-analysis.json" ]]; then
         msgs+=("PRICING: ${JTBD_DIR}/evc-analysis.json found — EVC data available for pricing ceiling.")
