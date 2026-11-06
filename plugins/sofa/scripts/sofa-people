@@ -4,6 +4,8 @@
   draft  Gather the people from GitHub collaborators, CODEOWNERS, git log and the
          Slack channel of docs/adlc.md. Print 1 status line for each source, then
          1 row for each person. The human confirms the rows; nothing is written.
+         The Slack source stops after 50 pages or a repeated cursor, and its status line
+         is then "unavailable". The base URL is SOFA_SLACK_API (see slack_web.py).
   add    Write a confirmed batch (a JSON file) into the knowledge brain: 1 new raw
          file, 1 Source page, 1 Entity page for each person (entity_kind person,
          structured tags), and the hub page "The human team" that links each person.
@@ -27,8 +29,6 @@ import re
 import shutil
 import subprocess
 import sys
-import urllib.parse
-import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
@@ -36,12 +36,9 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import readiness as rd  # noqa: E402
+from slack_web import Fail, slack_pages  # noqa: E402
 
 HUB_SLUG = "the-human-team"
-
-
-class Fail(Exception):
-    """An error that stops the command with exit code 1."""
 
 
 # ---------------------------------------------------------------- helpers
@@ -120,27 +117,6 @@ def gh_json(args):
         lines = (out.stderr or out.stdout).strip().splitlines()
         raise Fail(lines[-1] if lines else "gh failed")
     return json.loads(out.stdout or "null")
-
-
-def slack_api(token, method, params):
-    url = f"https://slack.com/api/{method}?{urllib.parse.urlencode(params)}"
-    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        data = json.load(resp)
-    if not data.get("ok"):
-        raise Fail(f"{method}: {data.get('error')}")
-    return data
-
-
-def slack_pages(token, method, params, key):
-    """Each item of a paginated Slack list."""
-    cursor = ""
-    while True:
-        page = slack_api(token, method, {**params, "cursor": cursor})
-        yield from page[key]
-        cursor = page.get("response_metadata", {}).get("next_cursor", "")
-        if not cursor:
-            return
 
 
 GITHUB_QUERY = """query($owner: String!, $name: String!, $endCursor: String) {
@@ -543,7 +519,7 @@ def main(argv=None):
         return {"draft": cmd_draft, "add": cmd_add, "list": cmd_list}[args.command](args)
     except Fail as exc:
         print(f"sofa-people: {exc}", file=sys.stderr)
-        return 1
+        return exc.code
 
 
 if __name__ == "__main__":

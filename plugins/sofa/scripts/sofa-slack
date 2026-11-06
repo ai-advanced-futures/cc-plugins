@@ -36,6 +36,7 @@ The token comes from readiness.slack_token: the environment, else the env block 
 SOFA_SLACK_API (default https://slack.com/api/), so a test can use a fake API. The token
 goes to that URL, so only https://slack.com/api/ and an http address on this computer
 (127.0.0.1, localhost, ::1) are allowed, and a redirect stops the call.
+The Slack calls are in slack_web.py, which sofa-people uses too.
 
 Exit code: 0 on success, 1 on a failed check or a Slack error (for post, replies and
 reactions: also no channel in docs/adlc.md, a channel that the bot cannot see, and a list
@@ -52,15 +53,13 @@ import re
 import stat
 import struct
 import sys
-import urllib.error
-import urllib.parse
-import urllib.request
 from decimal import Decimal
 from pathlib import Path
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import readiness as rd  # noqa: E402
+from slack_web import Fail, SlackError, slack_call, slack_pages  # noqa: E402
 
 # Each Slack method that a script of this plugin calls with the bot token, and the bot
 # scopes that it needs. The manifest scopes are the union of these lists, so a scope
@@ -86,17 +85,9 @@ ICON_MIN, ICON_MAX = 512, 2000
 ICON_NAME_WORDS = ("logo", "icon", "brand", "avatar", "mark")
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
-SLACK_API = "https://slack.com/api/"
 # The most bytes of a text file that post sends. Slack cuts a text of more than 40000 characters,
 # and 40000 bytes of UTF-8 are at most 40000 characters.
 TEXT_FILE_MAX_BYTES = 40000
-LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
-
-
-class Fail(Exception):
-    def __init__(self, message, code=1):
-        super().__init__(message)
-        self.code = code
 
 
 # ---------------------------------------------------------------- manifest
@@ -184,62 +175,6 @@ def bot_token(root):
     return token
 
 
-def api_base():
-    """The base URL of the Slack API. The token goes to this URL, so only Slack or this computer is allowed."""
-    base = os.environ.get("SOFA_SLACK_API", SLACK_API)
-    try:
-        url = urllib.parse.urlsplit(base)
-        host, port = url.hostname, url.port
-    except ValueError:
-        raise Fail(f"SOFA_SLACK_API is not a valid URL: {base!r}", 2)
-    if base.rstrip("/") == SLACK_API.rstrip("/") and port is None:
-        return SLACK_API
-    if url.scheme == "http" and host in LOOPBACK_HOSTS and not url.username:
-        return base
-    raise Fail("SOFA_SLACK_API must be https://slack.com/api/ or an http address on this computer "
-               "(127.0.0.1, localhost or ::1), because the bot token goes to it", 2)
-
-
-class NoRedirect(urllib.request.HTTPRedirectHandler):
-    """urllib keeps the Authorization header on a redirect, so a redirect would send the token to another host."""
-
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        raise Fail(f"Slack answered with a redirect (HTTP {code}). The call stops, because the bot token must go to 1 host only")
-
-
-SETUP_FIX = "Fix: type /sofa:setup, and do step 5 item 6 (it installs the app again with the new scopes)"
-
-
-class SlackError(Fail):
-    """Slack answered with ok false. error is the error code of Slack."""
-
-    def __init__(self, method, error, needed=""):
-        if error == "missing_scope":
-            needed_text = f" (needed: {needed})" if needed else ""
-            super().__init__(f"{method}: {error}{needed_text}. {SETUP_FIX}")
-        else:
-            super().__init__(f"{method}: {error}")
-        self.error = error
-
-
-def slack_call(token, method, params=None, headers=None):
-    """Call a Slack method with the bot token and return the JSON of the reply. When headers is a dict, the
-    headers of the reply go into it, with lower case names."""
-    base = api_base()
-    req = urllib.request.Request(base.rstrip("/") + "/" + method, data=urllib.parse.urlencode(params or {}).encode(),
-                                 method="POST", headers={"Authorization": f"Bearer {token}"})
-    try:
-        with urllib.request.build_opener(NoRedirect).open(req, timeout=20) as resp:
-            data = json.load(resp)
-            if headers is not None:
-                headers.update({k.lower(): v for k, v in resp.headers.items()})
-    except (urllib.error.URLError, ValueError) as e:
-        raise Fail(f"{method}: no answer from Slack ({type(e).__name__})")
-    if not data.get("ok"):
-        raise SlackError(method, data.get("error", "unknown error"), str(data.get("needed", "")))
-    return data
-
-
 def cmd_whoami(args):
     headers = {}
     data = slack_call(bot_token(args.root), "auth.test", headers=headers)
@@ -257,7 +192,7 @@ def cmd_whoami(args):
 
 # ---------------------------------------------------------------- post
 
-THREAD_TS_RE = re.compile(r"\d{1,12}\.\d{1,9}")
+THREAD_TS_RE = re.compile(r"[0-9]{1,12}\.[0-9]{1,9}")
 
 
 def check_ts(option, value):
@@ -361,25 +296,6 @@ def cmd_post(args):
 
 
 # ---------------------------------------------------------------- read
-
-MAX_PAGES = 50
-
-
-def slack_pages(token, method, params, key):
-    """Yield the items of the list KEY of each page of METHOD, and follow next_cursor. Stop with a failure after
-    MAX_PAGES pages, and when Slack gives a cursor that was sent already."""
-    cursor, sent = "", set()
-    for _ in range(MAX_PAGES):
-        page = slack_call(token, method, dict(params, cursor=cursor) if cursor else params)
-        yield from page.get(key, [])
-        cursor = (page.get("response_metadata") or {}).get("next_cursor", "")
-        if not cursor:
-            return
-        if cursor in sent:
-            raise Fail(f"{method}: Slack gave the same cursor 2 times; the search stops")
-        sent.add(cursor)
-    raise Fail(f"{method}: more than {MAX_PAGES} pages; the search stops")
-
 
 def read_call(token, name, run):
     """Run RUN() for a read. A bot that is not in the channel gets the /invite fix."""
