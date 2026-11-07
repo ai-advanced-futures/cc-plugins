@@ -242,8 +242,10 @@ def _move_target(root, container) -> tuple[str, str]:
     """Check the move and return the old container and the new container."""
     from scaffold import ScaffoldError, normalize_container
 
-    entry = registry.read(root).get(GRAPH)
+    graphs = registry.read(root)
+    entry = graphs.get(GRAPH)
     if entry is None:
+        registry.check_root(graphs)
         raise UsageError("the knowledge graph is not in .claude/knowledge.json. Run /knowledge:setup first.")
     if entry.remote:
         raise UsageError("the knowledge graph is a remote graph. Move it in its own repository.")

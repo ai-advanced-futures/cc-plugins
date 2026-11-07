@@ -80,7 +80,10 @@ def resolve(root, graphs, current, link, cache_only=False) -> Target:
 
 
 def cmd_resolve(args) -> int:
-    target = resolve(args.root, registry.read(args.root), args.graph, args.link, args.cache_only)
+    graphs = registry.read(args.root)
+    target = resolve(args.root, graphs, args.graph, args.link, args.cache_only)
+    if target.state == UNKNOWN:
+        registry.check_root(graphs)
     if target.file is None:
         print(f"MISSING {target.node} ({target.state})", file=sys.stderr)
         return 1

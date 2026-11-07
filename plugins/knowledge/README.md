@@ -33,6 +33,8 @@ checks, the reports, `forget`, and writes to a remote graph.
 
 Run them with `uv run`. They need `pyyaml` and `jsonschema`.
 
+`--root` takes the path of the platform. On Windows it also takes the Git Bash form (`/c/x`), the Cygwin form (`/cygdrive/c/x`), and a drive path with `/` or `\` (`C:/x`, `C:\x`).
+
 ## The hook
 
 After each change of the knowledge graph, the hook runs

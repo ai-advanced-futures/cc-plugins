@@ -50,6 +50,7 @@ def stamp(when=None) -> str:
 def bundle_dir(root) -> Path:
     graphs = registry.read(root)
     if GRAPH not in graphs:
+        registry.check_root(graphs)
         raise UsageError("the knowledge graph is not in .claude/knowledge.json. Run /knowledge:setup first.")
     bundle = Path(root) / graphs[GRAPH].path
     if not bundle.is_dir():

@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from knowledgelib import UsageError
+from knowledgelib import UsageError, rootpath
 
 REGISTRY = Path(".claude") / "knowledge.json"
 NAME_RE = re.compile(r"^[a-z][a-z0-9-]*$")
@@ -21,6 +21,14 @@ class Graph:
     @property
     def remote(self) -> bool:
         return self.repo is not None
+
+
+class Graphs(dict):
+    """The graphs of the registry of one root. found is False when the registry file does not exist there."""
+
+    def __init__(self, graphs, root, found: bool):
+        super().__init__(graphs)
+        self.root, self.found = Path(root), found
 
 
 def registry_file(root) -> Path:
@@ -58,7 +66,7 @@ def _load(root) -> dict:
     return data
 
 
-def read(root) -> dict[str, Graph]:
+def read(root) -> Graphs:
     graphs = {}
     for name, entry in _load(root)["graphs"].items():
         check_name(name)
@@ -68,7 +76,7 @@ def read(root) -> dict[str, Graph]:
         if repo is not None and (not isinstance(repo, str) or not repo.strip()):
             raise UsageError(f"the repo of {name!r} in {REGISTRY} is not a string")
         graphs[name] = Graph(name, check_path(entry.get("path"), name), repo.strip() if repo else None)
-    return graphs
+    return Graphs(graphs, root, registry_file(root).is_file())
 
 
 def add(root, name, path, repo=None) -> bool:
@@ -87,8 +95,18 @@ def add(root, name, path, repo=None) -> bool:
     return True
 
 
+def check_root(graphs) -> None:
+    """Raise when the registry file does not exist at the root, so the root and the registry do not match.
+    A plain dict has no found attribute, so it passes."""
+    if getattr(graphs, "found", True) is False:
+        raise UsageError(f"the root does not match a path in {REGISTRY.as_posix()}: "
+                         f"{registry_file(graphs.root)} does not exist (--root {rootpath.given(graphs.root)}). "
+                         "Give the project root, or run /knowledge:setup first.")
+
+
 def require(graphs, name) -> Graph:
     if name not in graphs:
+        check_root(graphs)
         raise UsageError(f"the graph {name!r} is not in {REGISTRY}")
     return graphs[name]
 

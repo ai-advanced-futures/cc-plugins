@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.11
+
+### Fixed
+- `knowledge.py` and `knowledge_graph.py` accept the Git Bash form of `--root` on Windows (`/c/x`, also `/cygdrive/c/x`), and a drive path with `/` or `\`. Windows Python read `/c/x` as the folder `c` on the current drive, so `resolve /index.md` said that the graph is not in `.claude/knowledge.json`.
+- When `.claude/knowledge.json` does not exist at the root, the message says `the root does not match a path in .claude/knowledge.json`, and names the file and the `--root` as given. It does not say that the graph is missing.
+
 ## 1.4.10
 
 ### Fixed

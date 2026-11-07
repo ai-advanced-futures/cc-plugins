@@ -18,7 +18,7 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from knowledgelib import DataError, FileError, UsageError, changes, graph_check, graph_ops, graph_regen, graph_upgrade  # noqa: E402
+from knowledgelib import DataError, FileError, UsageError, changes, graph_check, graph_ops, graph_regen, graph_upgrade, rootpath  # noqa: E402
 from knowledgelib.graph import DEFAULT_DIR  # noqa: E402
 from knowledgelib.issues import report  # noqa: E402
 from knowledgelib.okf import shown  # noqa: E402
@@ -185,7 +185,7 @@ COMMANDS = [
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="knowledge_graph.py", description=__doc__.split("\n\n")[0])
-    parser.add_argument("--root", type=Path, default=Path.cwd(), help="the project root")
+    parser.add_argument("--root", default=str(Path.cwd()), help="the project root")
     sub = parser.add_subparsers(dest="command", required=True)
     for name, add, run, help_text in COMMANDS:
         command = sub.add_parser(name, help=help_text)
@@ -196,7 +196,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
-    args.root = args.root.resolve()
+    args.root = rootpath.resolve(args.root)
     try:
         return args.run(args)
     except UsageError as error:

@@ -30,7 +30,7 @@ except ImportError:
 
 from knowledgelib import DataError, FileError, UsageError  # noqa: E402
 from knowledgelib import (forget, general_check, links, navigate, registry, remote,  # noqa: E402
-                          remote_write, walk)
+                          remote_write, rootpath, walk)
 
 REGISTERS = [registry.register, remote.register, links.register, navigate.register, walk.register,
              general_check.register, forget.register, remote_write.register]
@@ -38,7 +38,7 @@ REGISTERS = [registry.register, remote.register, links.register, navigate.regist
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="knowledge.py", description=__doc__.split("\n\n")[0])
-    parser.add_argument("--root", type=Path, default=Path.cwd(), help="the project root")
+    parser.add_argument("--root", default=str(Path.cwd()), help="the project root")
     sub = parser.add_subparsers(dest="command", required=True)
     for register in REGISTERS:
         register(sub)
@@ -47,7 +47,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
-    args.root = args.root.resolve()
+    args.root = rootpath.resolve(args.root)
     try:
         return args.run(args)
     except UsageError as error:
