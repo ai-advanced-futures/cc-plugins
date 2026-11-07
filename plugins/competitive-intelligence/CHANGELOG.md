@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.6
+
+- A page that a person makes with `new` and no run cites passes the check. The rule `CI-run` accepts a page with no `run` link when its `field_runs` names `(person)` for each field, so a fact that a person saves with `learn` no longer stops each later `ingest`. A page that a run wrote with no `run` link is still an ERROR. `new` refuses a page with no `run` link of each type other than Run, Market, Competitor, Offer and Source, because that page belongs to 1 run (STORY-222).
+
 ## 1.10.5
 
 - Step 1 of `analyze` and `discover` reads an earlier run only with `ci_graph.py pages Run` and `ci_graph.py view`, and names the files to read. Before, it scanned the session folders with `grep` and `cat`, so a person's analyze did not read `intelligence-data.json`, which `ingest` moves into the graph (STORY-209).

@@ -158,6 +158,12 @@ def new(root, type_name, title, description, pairs=(), actor=None) -> Path:
         # The title, the description and each field of a page that a person makes are the person's (STORY-185).
         given = ["title", "description", *(parse_set(item)[0] for item in pairs)]
         fields[FIELD_RUNS] = dict.fromkeys((key for key in given if key != FIELD_RUNS), PERSON_RUN)
+    elif type_name != "Run" and not schema.edge_values(fields, "run"):
+        # A page of this type belongs to 1 run, and the check refuses it with no run (CI-run, STORY-222).
+        shared = ", ".join(name for name in schema.types() if schema.slot_ok(name, FIELD_RUNS, {}))
+        article = "an" if type_name[0] in "AEIOU" else "a"
+        raise DataError(f"{article} {type_name} page belongs to 1 run, so nothing is written: add --set run=[/runs/RUN-NN.md]. "
+                        f"Only a page of the type {shared} can have no run.")
     return create(root, type_name, title, description, fields, None, actor)
 
 

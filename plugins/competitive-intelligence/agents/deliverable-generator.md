@@ -116,7 +116,7 @@ A discover run that rests on every default (some results shown). The person name
 {
   "schema": "plugin-result/1",
   "plugin": "competitive-intelligence",
-  "plugin_version": "1.10.5",
+  "plugin_version": "1.10.6",
   "command": "competitive-intelligence:discover",
   "run": {
     "started_at": "2026-10-31T09:00:00Z",
@@ -181,7 +181,7 @@ A discover run whose answers file gave the depth (`settled_by: person`), so `dep
 {
   "schema": "plugin-result/1",
   "plugin": "competitive-intelligence",
-  "plugin_version": "1.10.5",
+  "plugin_version": "1.10.6",
   "command": "competitive-intelligence:discover",
   "run": {
     "started_at": "2026-10-31T09:00:00Z",
@@ -219,7 +219,7 @@ An analyze run that rests on every default, with one lens skipped:
 {
   "schema": "plugin-result/1",
   "plugin": "competitive-intelligence",
-  "plugin_version": "1.10.5",
+  "plugin_version": "1.10.6",
   "command": "competitive-intelligence:analyze",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",
@@ -272,7 +272,7 @@ An analyze run whose answers file gave the purpose (`settled_by: person`), so `a
 {
   "schema": "plugin-result/1",
   "plugin": "competitive-intelligence",
-  "plugin_version": "1.10.5",
+  "plugin_version": "1.10.6",
   "command": "competitive-intelligence:analyze",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",

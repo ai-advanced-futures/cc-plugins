@@ -30,7 +30,7 @@ When the argument is a RUN ID or a session id:
 When the argument is a fact:
 
 1. For each name in the fact (a competitor, a market, an offer), run `$C resolve <name>`. A hit through `aliases` is the same page. Change that page, because a second page splits one thing in two.
-2. A new page: `$C new <Type> --title "<title>" --description "<one line>" --set KEY=YAML`. A changed field: `$C set <ID> KEY=YAML`. A new link: `$C link <ID> <field> /<folder>/<ID>.md`.
+2. A new page: `$C new <Type> --title "<title>" --description "<one line>" --set KEY=YAML`. A changed field: `$C set <ID> KEY=YAML`. A new link: `$C link <ID> <field> /<folder>/<ID>.md`. A new Market, Competitor, Offer, or Source page needs no `run` link, because the check accepts a page that a person made. A page of each other type belongs to 1 run: add `--set run=[/runs/RUN-NN.md]`. With no run, `new` writes no page and exits 1.
 3. Run `$C verify <ID> --by "human:<login>"` for each page that you made or changed, because the person gave the fact.
 
 ## Step 4: both checks

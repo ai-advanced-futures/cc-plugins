@@ -5,6 +5,7 @@ from cilib import manifest, regen, schema
 from cilib.bundle import ID_RE
 from cilib.ids import fold
 from cilib.issues import ERROR, WARN
+from cilib.writer import FIELD_RUNS, PERSON_RUN
 
 RESULT_ABOUT = {"competitor": "Competitor", "alternative": "Competitor", "timing_reason": "Finding",
                 "differentiator": "SwotItem", "risk": "SwotItem"}
@@ -12,6 +13,12 @@ RESULT_ABOUT = {"competitor": "Competitor", "alternative": "Competitor", "timing
 
 def run_keys(page) -> list[str]:
     return schema.edge_values(page.frontmatter, "run")
+
+
+def made_by_a_person(page) -> bool:
+    """`new` names (person) in `field_runs` for each field of the page. A run names its own run for each field that it gives."""
+    runs = page.frontmatter.get(FIELD_RUNS)
+    return isinstance(runs, dict) and bool(runs) and all(value == PERSON_RUN for value in runs.values())
 
 
 def ci_schema(ctx):
@@ -74,8 +81,9 @@ def ci_run(ctx):
         if page.type == "Run":
             continue
         keys = run_keys(page)
-        if not keys:
-            out.append(ctx.issue(ERROR, "CI-run", path, "the page has no link to a Run page", "run"))
+        # A page that a person made with `new` needs no run (STORY-222). A page that a run wrote links to its run.
+        if not keys and not made_by_a_person(page):
+            out.append(ctx.issue(ERROR, "CI-run", path, "the page has no link to a Run page, and no person made it", "run"))
         for key in keys:
             target = ctx.at(key)
             if target is not None and target.type != "Run":
