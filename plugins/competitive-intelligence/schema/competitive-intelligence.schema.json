@@ -381,6 +381,17 @@
                         "null"
                     ]
                 },
+                "field_runs": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/AnyValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "For each field of a shared page, the run_id of the run that gave its value (STORY-185)."
+                },
                 "generated": {
                     "anyOf": [
                         {
@@ -1008,6 +1019,17 @@
                         "null"
                     ]
                 },
+                "field_runs": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/AnyValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "For each field of a shared page, the run_id of the run that gave its value (STORY-185)."
+                },
                 "generated": {
                     "anyOf": [
                         {
@@ -1228,6 +1250,17 @@
                         "string",
                         "null"
                     ]
+                },
+                "field_runs": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/AnyValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "For each field of a shared page, the run_id of the run that gave its value (STORY-185)."
                 },
                 "generated": {
                     "anyOf": [
@@ -2121,6 +2154,17 @@
                         "string",
                         "null"
                     ]
+                },
+                "field_runs": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/AnyValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "For each field of a shared page, the run_id of the run that gave its value (STORY-185)."
                 },
                 "generated": {
                     "anyOf": [

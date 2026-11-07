@@ -15,6 +15,7 @@ import json
 import re
 import shutil
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 from cilib import DataError, UsageError, check, logbook, regen, schema, view, writer
@@ -45,6 +46,10 @@ REC_LISTS = (("strategic_recommendations", "strategic", "recommendation"),
              ("monitoring_recommendations", "monitoring", "what_to_monitor"))
 FINDING_ID = re.compile(r"\bf-\d+\b")
 PLACEHOLDER_MARKET = "Unnamed market"
+# A shared page (MERGED_KEYS) keeps the value of the newest run for each field (STORY-185).
+# `field_runs` names the run of each value. The order of 2 ingests does not change the graph.
+FIELD_RUNS = writer.FIELD_RUNS
+PERSON_RANK = ("\U0010ffff", "")  # a field that a person set (S1): newer than each run
 
 SCOPED_KEYS = {
     "Finding": lambda f: (f.get("competitor"), f.get("item_id") or fold(f.get("title"))),
@@ -72,6 +77,17 @@ MERGED_KEYS = {
 
 class Skip(Exception):
     """A file that this run cannot map. The file stays where it is."""
+
+
+def started(value) -> str:
+    """A start time that sorts. A run with no start time, or with a time that is not ISO 8601, is the oldest."""
+    try:
+        moment = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return ""
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return moment.astimezone(timezone.utc).isoformat()
 
 
 def kept(name) -> bool:
@@ -125,6 +141,8 @@ class Ingest:
         self.run_p = None
         self.run_ref = None
         self.session_id = ""
+        self.ranks = {}
+        self.start_note = ""
         for path in page_files(self.dir):
             page = parse(path)
             if page.error or not page.type:
@@ -157,10 +175,13 @@ class Ingest:
         self.numbers[type_] += 1
         return self.dir / spec["directory"] / f"{spec['prefix']}-{number:02d}.md"
 
-    def upsert(self, type_, title, desc, *, fields=None, links=None, file=None, item=NO, ident=None):
+    def upsert(self, type_, title, desc, *, fields=None, links=None, file=None, item=NO, ident=None, placeholder=None,
+               gives=True):
         # A page that a run writes or adds to is a draft until the person accepts it with `learn` (row 6, row 10).
-        fm = {"type": type_, "title": clean(title), "description": clean(desc or title, 200) or clean(title, 200),
-              "status": "draft"}
+        # `placeholder` is the description of a new page when the file gives none. It never replaces a description.
+        # A run gets a `field_runs` entry only for a field that it gives: `gives=False` joins the page and claims none (M1).
+        fm = {"type": type_, "title": clean(title),
+              "description": clean(desc or placeholder or title, 200) or clean(title, 200), "status": "draft"}
         for slot, value in (fields or {}).items():
             if value is not None and schema.slot_ok(type_, slot, value):
                 fm[slot] = value
@@ -180,22 +201,43 @@ class Ingest:
             self.pages[path] = page
             self.index[key] = path
             page.fm = fm
+            claimed = {slot: self.session_id for slot in fm
+                       if gives and slot not in ("type", "status", "run") and (slot != "description" or desc)}
+            if type_ in MERGED_KEYS and claimed:
+                page.fm[FIELD_RUNS] = claimed
         else:
             page = self.pages[path]
             for slot, value in fm.items():
                 if slot == "run":
                     page.fm["run"] = list(dict.fromkeys(list(page.fm.get("run") or []) + value))
-                elif slot in ("type", "description") and type_ in MERGED_KEYS:
-                    continue
-                else:
+                elif type_ not in MERGED_KEYS or slot in ("type", "status"):
                     page.fm[slot] = value
+                elif gives and (slot != "description" or desc):
+                    self.merge(page, slot, value)
             page.dirty = True
+        if type_ == "Competitor":
+            self.follow_name(page)
         if file and item is not NO:
             page.fm.setdefault("record", {})[self.record_key(type_, file)] = item
         if file:
             idents = self.touched.setdefault(file, {})
             idents[str(ident if ident is not None else f"item-{len(idents) + 1}")] = self.ref(page)
         return page
+
+    def rank(self, run_id):
+        """The order of a run for a shared page: its start time, then its run_id (STORY-185)."""
+        if run_id == writer.PERSON_RUN:
+            return PERSON_RANK
+        return self.ranks.get(str(run_id), ("", str(run_id)))
+
+    def merge(self, page, slot, value):
+        """A shared page keeps the value of the newest run. In one run, the later file wins (STORY-185)."""
+        runs = page.fm.setdefault(FIELD_RUNS, {})
+        earlier = runs.get(slot)
+        if earlier is not None and slot in page.fm and self.rank(earlier) > self.rank(self.session_id):
+            return
+        page.fm[slot] = value
+        runs[slot] = self.session_id
 
     def record_key(self, type_, file) -> str:
         """A shared page holds the item of each run, so its key names the run. Any other page belongs to one run."""
@@ -244,6 +286,12 @@ class Ingest:
         title = f"{command} run {run_id}"
         self.run_p = self.upsert("Run", title, run.get("subject") or f"A run of {command}.", fields=fields)
         self.run_ref = self.ref(self.run_p)
+        # The rank of each run of the graph (STORY-185). No step of an ingest changes started_at after this line.
+        self.ranks = {str(p.fm["run_id"]): (started(p.fm.get("started_at")), str(p.fm["run_id"]))
+                      for p in self.pages.values() if p.type == "Run" and p.fm.get("run_id")}
+        raw = self.run_p.fm.get("started_at")
+        if raw and not started(raw):
+            self.start_note = f"note: run {run_id} has no readable started_at ({raw!r}); its values rank oldest"
         self.build_index()
         for page in self.run_pages("Competitor"):
             if page.fm.get("item_id"):
@@ -256,11 +304,15 @@ class Ingest:
                 self.run_p.fm[slot] = value
         self.run_p.dirty = True
 
-    def market(self, name=None):
+    def market(self, name=None, gives=None):
+        """The market page of the run. The run gives the name when it names the market (`name`, or its subject).
+        It joins the one market of the graph, and gives no field of it, when it names none (STORY-185)."""
         if self.market_page is None or name:
-            name = clean(name or self.run_p.fm.get("subject") or self.only_market())
+            given = clean(name or self.run_p.fm.get("subject"))
+            name = given or clean(self.only_market())
             self.adopt_placeholder_market(name)
-            self.market_page = self.upsert("Market", name, f"The market: {name}", fields={"name": name})
+            self.market_page = self.upsert("Market", name, f"The market: {name}", fields={"name": name},
+                                           gives=bool(given) if gives is None else gives)
             self.run_p.fm["market"] = self.ref(self.market_page)
             self.run_p.dirty = True
         return self.market_page
@@ -290,10 +342,14 @@ class Ingest:
 
     def source(self, resource, source_type=None, date=None, accessed_at=None, confidence=None, file=None, item=NO,
                ident=None):
-        return self.upsert("Source", resource, f"{source_type or 'A'} source", file=file, item=item,
-                           ident=ident or resource,
+        page = self.upsert("Source", resource, None, file=file, item=item, ident=ident or resource,
                            fields={"resource": resource, "source_type": source_type, "date": date,
                                    "accessed_at": accessed_at, "confidence": confidence})
+        # The description follows the kept source_type, so the 2 fields agree (STORY-185). A description that a
+        # person wrote stays.
+        if (page.fm.get(FIELD_RUNS) or {}).get("description") != writer.PERSON_RUN:
+            page.fm["description"] = f"{page.fm.get('source_type') or 'A'} source"
+        return page
 
     def source_item(self, name, entry, ident=None):
         if not isinstance(entry, dict):
@@ -317,11 +373,32 @@ class Ingest:
                 page.fm["run"] = list(dict.fromkeys(list(page.fm.get("run") or []) + [self.run_ref]))
                 page.dirty = True
                 self.names[fold(name)] = page.path
+                self.link_market(page)
+                # The run gives the name and the market of the page, so these fields follow the rule (STORY-185).
+                for slot, value in (("title", clean(name)), ("name", name), ("market", self.run_p.fm.get("market"))):
+                    if value is not None:
+                        self.merge(page, slot, value)
+                self.follow_name(page)
                 return page
-        page = self.upsert("Competitor", name, fields.pop("description", None) or f"A competitor: {name}",
+        page = self.upsert("Competitor", name, fields.pop("description", None), placeholder=f"A competitor: {name}",
                            fields={"name": name, **fields}, links={"market": self.ref(self.market())})
         self.names[fold(name)] = page.path
         return page
+
+    def link_market(self, page):
+        """A run that adds to a competitor of the graph studies the market of that competitor (STORY-185)."""
+        link = page.fm.get("market")
+        market = next((p for p in self.pages.values() if self.ref(p) == link), None) if link else None
+        if self.market_page is None and market is not None:
+            self.market(market.fm.get("name"), gives=False)
+
+    def follow_name(self, page):
+        """A placeholder description names the kept name, so it does not depend on the order (STORY-185)."""
+        text = clean(f"A competitor: {page.fm.get('name')}", 200)
+        if (page.fm.get(FIELD_RUNS) or {}).get("description") == writer.PERSON_RUN:
+            return
+        if fold(page.fm.get("description")) == fold(text):
+            page.fm["description"] = text
 
     def adopt_blank_competitor(self, name, website):
         """A file with a website finds the page that an earlier file with the same name and no website made."""
@@ -394,8 +471,8 @@ class Ingest:
         fields.update(competitor_type="ai_platform" if platform else entry.get("type"), item_id=entry.get("id"))
         if fields["website"]:
             self.adopt_blank_competitor(entry["name"], fields["website"])
-        page = self.upsert("Competitor", entry["name"], entry.get("description") or entry.get("capability")
-                           or f"A competitor: {entry['name']}", fields={"name": entry["name"], **fields},
+        page = self.upsert("Competitor", entry["name"], entry.get("description") or entry.get("capability"),
+                           placeholder=f"A competitor: {entry['name']}", fields={"name": entry["name"], **fields},
                            links={"market": self.ref(self.market())}, file=name, item=entry,
                            ident=entry.get("id") or entry["name"])
         self.names[fold(entry["name"])] = page.path
@@ -998,6 +1075,7 @@ def run(root, path=None, result_file=None, actor=None) -> list[str]:
         pages_path.write_text(json.dumps({"run": ing.run_ref, "files": known}, indent=2, ensure_ascii=False) + "\n",
                               encoding="utf-8")
     lines += notes
+    lines += [ing.start_note] if ing.start_note else []
     lines.append(f"ingested {run_id} as {ing.run_ref}: {len(done)} files, removed {len(removed)}, "
                  f"kept {len(done) - len(removed)}")
     warnings = [i.text() for i in issues if i.level != ERROR]

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.3
+
+- The ingest order does not change the graph. A shared page (Market, Competitor, Offer, Source) keeps the value of the newest run for each field, and the new field `field_runs` names that run. A later description replaces the placeholder of a competitor. The description of a source follows its type. A run that finds a known competitor by its name gives its name by the same rule, and links the market of that competitor. A run gets a `field_runs` entry only for a field that it gives: a run that names no market changes no field of the market. A field that a person gives with `new` or sets with `set` (the title and the description too) is kept, and no run replaces it. `ingest` prints a `note:` line for a start time that it cannot read (STORY-185).
+
 ## 1.10.2
 
 - The ingest of an analyze run finds the competitor of `swot-<competitor>.json` from `competitor_id`, then `competitor` (as for `analysis-<competitor>.json`), then `competitor_swot.name`, then the name of the file. Before, each analyze run with no `competitor_id` and no `competitor_swot.name` stopped at step 9 with "unknown competitor id None" (STORY-208).

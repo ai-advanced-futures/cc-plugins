@@ -123,14 +123,14 @@ classes:
   Market:
     description: "A market that a run studies."
     annotations: {id_prefix: MARKET, directory: markets}
-    slots: [type, title, description, status, tags, name, run, aliases, generated, verified, protected]
+    slots: [type, title, description, status, tags, name, run, field_runs, aliases, generated, verified, protected]
     slot_usage:
       type: {equals_string: Market}
       name: {required: true}
   Competitor:
     description: "A competitor, an alternative, or an AI platform of a market."
     annotations: {id_prefix: COMPETITOR, directory: competitors}
-    slots: [type, title, description, status, tags, name, website, competitor_type, threat_level, stage, market_overlap, tech_disruption_risk, jtbd_alternative, job_replaceability, timeline, confidence, item_id, market, source_pages, record, run, aliases, generated, verified, protected]
+    slots: [type, title, description, status, tags, name, website, competitor_type, threat_level, stage, market_overlap, tech_disruption_risk, jtbd_alternative, job_replaceability, timeline, confidence, item_id, market, source_pages, record, run, field_runs, aliases, generated, verified, protected]
     slot_usage:
       type: {equals_string: Competitor}
       name: {required: true}
@@ -138,14 +138,14 @@ classes:
   Offer:
     description: "An offer of a competitor, or the own offer."
     annotations: {id_prefix: OFFER, directory: offers}
-    slots: [type, title, description, status, tags, name, owner_kind, key_features, business_model, competitor, run, aliases, generated, verified, protected]
+    slots: [type, title, description, status, tags, name, owner_kind, key_features, business_model, competitor, run, field_runs, aliases, generated, verified, protected]
     slot_usage:
       type: {equals_string: Offer}
       name: {required: true}
   Source:
     description: "A source of a fact: a URL or a file."
     annotations: {id_prefix: SOURCE, directory: sources}
-    slots: [type, title, description, status, tags, resource, source_type, date, accessed_at, confidence, record, run, aliases, generated, verified, protected]
+    slots: [type, title, description, status, tags, resource, source_type, date, accessed_at, confidence, record, run, field_runs, aliases, generated, verified, protected]
     slot_usage:
       type: {equals_string: Source}
       resource: {required: true}
@@ -331,6 +331,9 @@ slots:
   rationale: {}
   rec_kind: {range: RecKind}
   record:
+    range: AnyValue
+  field_runs:
+    description: "For each field of a shared page, the run_id of the run that gave its value (STORY-185)."
     range: AnyValue
   relative_to: {multivalued: true}
   relevance: {multivalued: true}

@@ -101,6 +101,12 @@ def parse_set(item) -> tuple[str, object]:
     return key.strip(), (yaml.safe_load(value) if value.strip() else "")
 
 
+# The slot that names, for each field of a shared page, the run that gave its value. A person who sets a field
+# is the owner of its value, and no run is newer than a person (STORY-185).
+FIELD_RUNS = "field_runs"
+PERSON_RUN = "(person)"
+
+
 def _apply(frontmatter, pairs, verb) -> None:
     for item in pairs:
         key, value = parse_set(item)
@@ -145,8 +151,13 @@ def create(root, type_name, title, description, fields=None, body=None, actor=No
 
 
 def new(root, type_name, title, description, pairs=(), actor=None) -> Path:
+    require_type(type_name)
     fields = {}
     _apply(fields, pairs, "new")
+    if schema.slot_ok(type_name, FIELD_RUNS, {}):
+        # The title, the description and each field of a page that a person makes are the person's (STORY-185).
+        given = ["title", "description", *(parse_set(item)[0] for item in pairs)]
+        fields[FIELD_RUNS] = dict.fromkeys((key for key in given if key != FIELD_RUNS), PERSON_RUN)
     return create(root, type_name, title, description, fields, None, actor)
 
 
@@ -154,6 +165,11 @@ def set_fields(root, key, pairs, actor=None) -> Path:
     _bundle, path, page = _load(root, key)
     frontmatter = dict(page.frontmatter)
     _apply(frontmatter, pairs, "set")
+    if schema.slot_ok(page.type, FIELD_RUNS, {}):
+        # A field that a person sets is kept: no run replaces it (STORY-185). `ingest` ranks PERSON_RUN above each run.
+        runs = dict(frontmatter.get(FIELD_RUNS) or {})
+        runs.update({parse_set(item)[0]: PERSON_RUN for item in pairs if parse_set(item)[0] != FIELD_RUNS})
+        frontmatter[FIELD_RUNS] = runs
     frontmatter["generated"] = stamp(actor)
     write_page(root, path, frontmatter, page.body, page.type)
     return path
