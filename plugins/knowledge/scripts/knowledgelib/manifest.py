@@ -5,7 +5,7 @@ import fnmatch
 import re
 from pathlib import Path
 
-from knowledgelib import DataError, okf
+from knowledgelib import DataError, okf, probe
 
 NAME = "manifest.md"
 FIELDS = ("brain", "plugin", "plugin_version", "ask_skill", "install", "save_code",
@@ -32,6 +32,11 @@ def problems(data: dict) -> list[str]:
             out.append(f"the field {field} is missing")
     if "plugin_version" in data and not VERSION_RE.match(str(data["plugin_version"])):
         out.append("plugin_version must be X.Y.Z")
+    if "plugin" in data and "save_code" in data:
+        try:
+            probe.check(data["plugin"], data["save_code"])
+        except DataError as error:
+            out.append(str(error))
     ask = data.get("ask_skill")
     if "ask_skill" in data and not (isinstance(ask, dict) and isinstance(ask.get("plugin"), str)
                                     and isinstance(ask.get("skills"), str)):

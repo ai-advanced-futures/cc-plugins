@@ -119,7 +119,7 @@ never loads a full graph.
 - `ask_skill`: the skill that answers from this brain, as `plugin` (for
   example `architecture:ask`) and `skills` (for example `architecture-ask`).
 - `install`: the command that installs the plugin.
-- `save_code`: the save script, relative to the plugin root.
+- `save_code`: the save script, relative to the plugin root: a path that is not absolute and has no empty, `.` or `..` part. `plugin` holds a name of the form a-z, 0-9 and -, with a letter or a digit first. The 2 values are a pair of `BRAINS` in `knowledgelib/probe.py`; a new brain plugin adds its pair there.
 - `id_pattern` and `id_folders`: a regular expression for the file name of a
   page with an ID, and the folders that hold those pages (`.` is the root).
 - `answers`: the kinds of question that the brain answers, as short lines.
@@ -208,7 +208,12 @@ it reports the problem and the reason (section 10).
   `probe-plugin.sh <name> <probe-path>`. The probe tries the sibling folder
   first (`<own root>/../<name>`), and uses it only when its `plugin.json`
   names the plugin. Then it tries the installed places. In a check, a probe
-  miss gives one SKIP line for each rule that needs the other plugin.
+  miss gives one SKIP line for each rule that needs the other plugin. It never
+  tries a folder of the project, because Claude Code installs no plugin there.
+  It refuses a plugin name that is not a-z, 0-9 and - (a letter or a digit
+  first), and a probe path that is absolute or has an empty, `.` or `..` part.
+  A caller runs a save code only when its resolved path is in the resolved
+  plugin root, and the root is an install place.
 - `learn` and `forget` run both checks after each write, through the hidden
   skill `knowledge:checking`. They never report success while a check exits 1.
 

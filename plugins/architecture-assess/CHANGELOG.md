@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2
+
+### Changed
+- The plugin finder does not take a plugin from the `.claude/plugins/` folder of the project (STORY-202).
+
 ## 1.0.1
 
 ### Changed

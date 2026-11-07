@@ -505,8 +505,9 @@ Two skills of this plugin call another plugin:
   `scripts/check-relay.sh` is the probe, and it holds the version floor.
 
 Both probes call `scripts/check-plugin.sh`, which holds the candidate search:
-the project root, the home root, then the plugin cache. Each probe holds its
-own probe file, its version floor, and its install message.
+the home root, then the plugin cache. A candidate passes only when its
+`plugin.json` names the plugin. Each probe holds its own probe file, its
+version floor, and its install message.
 
 `/product:specifying-stories` also uses other plugins that do not stop it:
 

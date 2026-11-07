@@ -3,17 +3,18 @@
 #
 # Usage: check-plugin.sh <name> <probe-path> [version-floor]
 #
-# Prints the root of the first candidate that holds the probe file and, with a
-# floor given, a readable manifest with a version at the floor or later, then
-# exits 0. It exits 1 when every candidate fails, and prints no message: the
-# caller owns the install text, because the install command differs per
-# plugin.
+# Prints the root of the first candidate that holds the probe file, whose
+# .claude-plugin/plugin.json names the plugin and, with a floor given, has a
+# version at the floor or later, then exits 0. It exits 1 when every candidate
+# fails, and prints no message: the caller owns the install text, because the
+# install command differs per plugin.
 #
-# The candidate order is the two direct roots first, the project before the
-# home directory, and then the cache sweep hits with their version
-# directories, the highest version first. A direct root that passes ends the
-# search before the sweep runs, so the common case costs a few stat calls
-# instead of a walk of the whole cache. The sweep is rooted at `cache`,
+# The candidate order is the home root first, and then the cache sweep hits
+# with their version directories, the highest version first. It never tries a
+# folder of the project, because Claude Code installs no plugin there, and a
+# project can hold files that the person did not write (STORY-202). A home root
+# that passes ends the search before the sweep runs, so the common case costs a
+# few stat calls instead of a walk of the whole cache. The sweep is rooted at `cache`,
 # because $HOME/.claude/plugins/marketplaces/ holds source checkouts and not
 # installs.
 set -uo pipefail
@@ -22,27 +23,28 @@ name="${1:?a plugin name is required}"
 probe="${2:?a probe path is required}"
 floor="${3:-}"
 
-# The version of one root, or an empty line when the manifest is absent or
-# does not parse. plugins/relay/scripts/record-run-intent.sh reads a plugin
-# manifest the same way.
-version_of() {
+# One field of the manifest of a root, or an empty line when the manifest is
+# absent or does not parse. plugins/relay/scripts/record-run-intent.sh reads a
+# plugin manifest the same way.
+field_of() {
   python3 -c '
 import json, sys
 try:
-    print(json.load(open(sys.argv[1]))["version"])
+    print(json.load(open(sys.argv[1]))[sys.argv[2]])
 except Exception:
     pass
-' "$1/.claude-plugin/plugin.json" 2>/dev/null
+' "$1/.claude-plugin/plugin.json" "$2" 2>/dev/null
 }
 
-# A candidate passes the probe and, with a floor set, the manifest read and
-# the floor test. `sort -V` puts the lower version first, so the floor passes
-# when it sorts first or is equal.
+# A candidate passes the probe, the name test, and, with a floor set, the
+# manifest read and the floor test. `sort -V` puts the lower version first, so
+# the floor passes when it sorts first or is equal.
 accepts() {
   local candidate="$1" version
   test -f "$candidate/$probe" || return 1
+  [ "$(field_of "$candidate" name)" = "$name" ] || return 1
   [ -n "$floor" ] || return 0
-  version="$(version_of "$candidate")"
+  version="$(field_of "$candidate" version)"
   [ -n "$version" ] || return 1
   [ "$(printf '%s\n%s\n' "$floor" "$version" | sort -V | head -n 1)" = "$floor" ]
 }
@@ -56,7 +58,6 @@ try() {
   fi
 }
 
-try "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/plugins/$name"
 try "$HOME/.claude/plugins/$name"
 
 while IFS= read -r cache; do

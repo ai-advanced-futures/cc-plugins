@@ -1,6 +1,6 @@
 {
   "name": "architecture-assess",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Assess an existing architecture, design a new one, review one decision, check agentic delivery readiness, and classify the cost of a new agentic feature. Applies the Architecture Principles together with Fowler, Uncle Bob, Evans DDD and the Cloud Well-Architected frameworks. Saves each decision through the architecture plugin and each design page through the system-design plugin.",
   "author": {
     "name": "ai-advanced-futures"

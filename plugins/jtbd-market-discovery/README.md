@@ -2,7 +2,7 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.9.1
+**Version:** 1.9.2
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 

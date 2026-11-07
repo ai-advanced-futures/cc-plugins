@@ -35,10 +35,10 @@ def _brain(clone, graph, probe_find):
     data = manifest.read(clone / graph.path)
     if data is None:
         raise DataError(f"{graph.name} has no manifest.md. The owner of {graph.repo} must update its brain and run its setup.")
-    plugin_root = probe_find(data["plugin"], data["save_code"])
-    if plugin_root is None:
+    found = probe.locate(data["plugin"], data["save_code"], probe_find)
+    if found is None:
         raise DataError(f"the brain of {graph.name} ({data['plugin']}) is not installed here. Install it: {data['install']}")
-    return data, Path(plugin_root)
+    return data, found[0]
 
 
 def checkout(root, graphs, name, probe_find=None, fresh=False) -> Path:
@@ -72,7 +72,9 @@ def run_checks(clone, data, plugin_root, probe_find) -> list[str]:
     from knowledgelib import general_check
 
     failures = []
-    brain = subprocess.run([sys.executable, str(plugin_root / data["save_code"]), "--root", str(clone), "check"],
+    probe.check(data["plugin"], data["save_code"])
+    save_code = probe.inside(plugin_root, data["save_code"])
+    brain = subprocess.run([sys.executable, str(save_code), "--root", str(clone), "check"],
                            capture_output=True, text=True)
     if brain.returncode != 0:
         failures.append(f"the brain check of {data['plugin']} failed:\n{brain.stdout}{brain.stderr}")

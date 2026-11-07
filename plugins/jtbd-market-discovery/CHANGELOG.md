@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.9.2
+
+- The plugin finder does not take a plugin from the `.claude/plugins/` folder of the project (STORY-202).
+
 ## 1.9.1
 
 The commands that read the graph stop on a page or a folder that they cannot read (STORY-214, FEATURE-26).

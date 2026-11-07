@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pricing"
-version = "1.13.0"
+version = "1.13.1"
 description = "Agentic pricing plugin — canonical math + Phase 1 Insight workflow"
 requires-python = ">=3.11"
 dependencies = [

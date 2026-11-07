@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.3
+
+- The plugin finder does not take a plugin from the `.claude/plugins/` folder of the project (STORY-202).
+
 ## 1.10.2
 
 - On band floor, the orchestrator does step 3 of the integrity pass (phase `write` of `integrity-agent`) before it stops, so the run writes `.gtm/audit/<agent>-integrity-BREACH.json` and the `error_log.<agent>_integrity` object. Before, in 1 of 3 floor runs, it stopped after the script and wrote `error_log` itself as a string (STORY-194).

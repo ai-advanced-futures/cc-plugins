@@ -26,9 +26,9 @@ checks, the reports, `forget`, and writes to a remote graph.
 
 | Script | Use |
 |---|---|
-| `scripts/knowledge.py` | `registry`, `fetch`, `resolve`, `show`, `neighbors`, `pages`, `walk`, `check`, `forget-plan`, `remote-checkout`, `remote-publish`. |
+| `scripts/knowledge.py` | `registry`, `fetch`, `resolve`, `show`, `neighbors`, `pages`, `walk`, `check`, `brain-root`, `forget-plan`, `remote-checkout`, `remote-publish`. |
 | `scripts/knowledge_graph.py` | The save code of the generic graph: `init`, `upgrade`, `move`, `new`, `set`, `body`, `link`, `unlink`, `remove`, `resolve`, `regen`, `check`, `log`. `body KEY --file PATH [--append]` writes the text of a page above its `LINKS` block (`--file -` reads standard input). `link` adds a `sources` entry with `id`, `resource`, `title`, and `last_modified`, read from the target. `new --slug SLUG` names the page file. A Source page with a `raw/` resource takes the base name of its raw file. |
-| `scripts/probe-plugin.sh` | Find another plugin. Each brain has a copy. |
+| `scripts/probe-plugin.sh` | Find another plugin. It never takes a plugin from the project folder. Each brain has a copy. |
 | `scripts/scaffold.py` | Write a new container for `knowledge:setup`. |
 
 Run them with `uv run`. They need `pyyaml` and `jsonschema`.

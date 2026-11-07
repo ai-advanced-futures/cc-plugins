@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.8
+
+- The plugin finder does not take a plugin from the `.claude/plugins/` folder of the project (STORY-202).
+
 ## 1.10.7
 
 - The "Learn these results?" step of `discover`, `analyze`, `monitor`, `respond`, `validate`, `competitive-intelligence` and `vendor-archetype-classify` asks with `AskUserQuestion`, in the same turn, so `learn` runs with the grant of the skill. With no `AskUserQuestion` tool (`claude -p`), the skill asks nothing and writes the line `Next: /competitive-intelligence:learn <session>` (STORY-195).

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.0
+
+### Changed
+- The plugin finder does not take a plugin from the `.claude/plugins/` folder of the project (STORY-202).
+- New: `knowledge.py brain-root --graph <graph>` prints the root of the brain of a graph. The skills `checking` and `forget` use it.
+- The manifest, the check `K-fresh`, `forget` and the remote save code refuse a plugin name or a `save_code` path that is not the pair of a known brain.
+
 ## 1.4.11
 
 ### Fixed

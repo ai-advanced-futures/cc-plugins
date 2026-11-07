@@ -4,6 +4,10 @@ All notable changes to the pricing plugin will be documented in this file.
 
 The first heading is the version in `.claude-plugin/plugin.json`. A test checks that they agree.
 
+## 1.13.1
+
+- The plugin finder does not take a plugin from the `.claude/plugins/` folder of the project (STORY-202).
+
 ## 1.13.0
 
 - Pricing reads the jtbd graph and the competitive-intelligence graph. The new script `scripts/brain_read.py` has the operations `wtp`, `outcomes`, `moats` and `status`. It calls the save script of the writer plugin and reads the JSON that it prints. It reads no page file, and it never runs a save script that the opened project holds. A writer plugin that is installed only in the project folder (`.claude/plugins/<name>`) is not found (STORY-90, ADR-011).

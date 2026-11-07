@@ -38,7 +38,8 @@ The person gives one yes for the whole tree.
 
 For each graph of the plan, read `plugin` and `save_code` in its
 `manifest.md`, and find the plugin:
-`bash ${CLAUDE_PLUGIN_ROOT}/scripts/probe-plugin.sh <plugin> <save_code>`.
+`uv run ${CLAUDE_PLUGIN_ROOT}/scripts/knowledge.py --root "$ROOT" brain-root --graph <graph>`.
+It prints the plugin root. On exit 1, stop and report its stderr line.
 `S` is `uv run <plugin root>/<save_code> --root "$ROOT"`.
 
 Do the steps in this order, for local graphs only:

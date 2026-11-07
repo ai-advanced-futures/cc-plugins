@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.4.4
+
+### Changed
+- The plugin finder does not take a plugin from the `.claude/plugins/` folder of the project (STORY-202).
+- The same holds for the finder of `relay` and `superpowers` in `check-plugin.sh`.
+
 ## 6.4.3
 
 ### Changed

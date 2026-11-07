@@ -125,8 +125,12 @@ def plan(root, graphs, link, probe_find=None) -> Plan:
             owner = f"The owner of {graph.repo} must do this." if graph.remote else "Then run forget again."
             result.stops.append(f"the graph {name} has no manifest.md (registry entry {json.dumps(entry)}). "
                                 f"Update the plugin of that brain and run its setup, which writes the manifest. {owner}")
-        elif probe_find(data["plugin"], data["save_code"]) is None:
-            result.stops.append(f"the plugin {data['plugin']} of the graph {name} is not installed. Install it: {data['install']}")
+        else:
+            try:
+                if probe.locate(data["plugin"], data["save_code"], probe_find) is None:
+                    result.stops.append(f"the plugin {data['plugin']} of the graph {name} is not installed. Install it: {data['install']}")
+            except DataError as error:
+                result.stops.append(f"the graph {name}: {error}")
     return result
 
 

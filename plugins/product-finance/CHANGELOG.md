@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.1
+
+- The plugin finder does not take a plugin from the `.claude/plugins/` folder of the project (STORY-202).
+
 ## 0.13.0
 
 - **fix:** `discover` checks its result file. After the write, it runs `scripts/plugin_result/plugin_result_check.py result` on the file. On a refusal, it corrects the named keys and writes the file once more. On a second refusal, it stops and names each error.

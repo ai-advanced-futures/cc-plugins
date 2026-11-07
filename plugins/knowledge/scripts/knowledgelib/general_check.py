@@ -186,10 +186,14 @@ def check_links(root, graphs, name, bundle, cache_only) -> list[Issue]:
 
 
 def check_fresh(root, name, bundle, data, probe_find) -> list[Issue]:
-    plugin_root = probe_find(data["plugin"], data["save_code"])
-    if plugin_root is None:
+    try:
+        found = probe.locate(data["plugin"], data["save_code"], probe_find)
+    except DataError as error:
+        return [Issue(ERROR, "K-fresh", f"{name}: {error}", shown(root, bundle / manifest.NAME))]
+    if found is None:
         return [Issue(SKIP, "K-fresh", f"{name}: the plugin {data['plugin']} is not installed, so the generated files are not checked")]
-    command = [sys.executable, str(Path(plugin_root) / data["save_code"]), "--root", str(root), "regen", "--check"]
+    save_code = found[1]
+    command = [sys.executable, str(save_code), "--root", str(root), "regen", "--check"]
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode == 0:
         return []
@@ -248,7 +252,29 @@ def cmd_check(args) -> int:
     return report(check_all(args.root, args.graph or (), args.cache_only), strict=args.strict)
 
 
+def cmd_brain_root(args) -> int:
+    """Print the root of the plugin that a graph names. Exit 1 with no output when it is not installed."""
+    graphs = registry.read(args.root)
+    graph = graphs.get(args.graph)
+    if graph is None:
+        raise DataError(f"the graph {args.graph!r} is not in the registry")
+    bundle = links.bundle_dir(args.root, graph, True)
+    if bundle is None:
+        raise DataError(f"{args.graph} is a remote graph with no cache. Run: knowledge.py fetch {args.graph}")
+    data = manifest.read(bundle)
+    if data is None:
+        raise DataError(f"{args.graph} has no manifest.md")
+    found = probe.locate(data.get("plugin"), data.get("save_code"))
+    if found is None:
+        return 1
+    print(found[0])
+    return 0
+
+
 def register(sub) -> None:
+    brain_root = sub.add_parser("brain-root", help="print the root of the plugin that a graph names")
+    brain_root.add_argument("--graph", required=True, help="the name of a graph")
+    brain_root.set_defaults(run=cmd_brain_root)
     parser = sub.add_parser("check", help="run the general check of the standard")
     parser.add_argument("--graph", action="append", help="check this graph only (repeat for more)")
     parser.add_argument("--strict", action="store_true", help="exit 1 on a warning")

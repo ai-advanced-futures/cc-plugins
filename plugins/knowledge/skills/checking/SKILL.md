@@ -20,12 +20,17 @@ Inputs: the names of the graphs that changed.
 2. Find the plugin:
 
    ```bash
-   bash ${CLAUDE_PLUGIN_ROOT}/scripts/probe-plugin.sh <plugin> <save_code>
+   uv run ${CLAUDE_PLUGIN_ROOT}/scripts/knowledge.py --root "$ROOT" brain-root --graph <graph>
    ```
 
-3. When the probe exits 1, record this line and go to the next pair:
-   `SKIP: brain-check (the plugin <plugin> of <graphs> is not installed)`.
-   `<graphs>` names each changed graph of the pair.
+   `<graph>` is 1 changed graph of the pair. The command prints the plugin
+   root. It refuses a pair that is not a known brain, and a root that is not an
+   install place.
+3. When the command exits 1, record this line and go to the next pair:
+   `SKIP: brain-check (<the stderr line, or "the plugin <plugin> of <graphs> is not installed">)`.
+   `<graphs>` names each changed graph of the pair. The general check of
+   Step 2 then gives the `K-manifest` ERROR for a bad pair, so the result is
+   FAILED.
 4. Run the brain check:
 
    ```bash
