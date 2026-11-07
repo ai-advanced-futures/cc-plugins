@@ -6,8 +6,8 @@ from pathlib import Path
 import yaml
 
 from jtbdlib import DataError, UsageError, logbook, manifest, regen, schema
-from jtbdlib.bundle import DEFAULT_DIR, GRAPH, bundle_dir, check_dir, read, ref, registry_add
-from jtbdlib.ids import next_id, require_type, resolve
+from jtbdlib.bundle import DEFAULT_DIR, GRAPH, bundle_dir, check_dir, read_whole, ref, registry_add
+from jtbdlib.ids import next_id, path_key, require_type, resolve
 from jtbdlib.page import dump, ordered, parse, write_text
 
 PROTECTED_KEYS = ("type", "generated", "protected")
@@ -107,8 +107,14 @@ def write_page(root, path, frontmatter, body, type_name, *, regenerate=True) -> 
         regen.write(root)
 
 
+def _whole(root, key):
+    """The bundle for a command on 1 page. A wrong path key is a usage error (exit 2) before the graph is read."""
+    path_key(bundle_dir(root), key)
+    return read_whole(root)
+
+
 def _load(root, key):
-    bundle = read(root)
+    bundle = _whole(root, key)
     path = resolve(bundle, key)
     page = bundle.pages.get(path) or parse(path)
     if page.error:
@@ -259,4 +265,4 @@ def verify_run(root, key, by) -> list[Path]:
 
 
 def resolve_key(root, key) -> Path:
-    return resolve(read(root), key)
+    return resolve(_whole(root, key), key)

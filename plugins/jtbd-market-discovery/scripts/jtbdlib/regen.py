@@ -101,8 +101,15 @@ def expected(root, directory=None) -> dict:
     return result
 
 
+def _differs(path, text) -> bool:
+    try:
+        return not path.is_file() or read_text(path) != text
+    except (OSError, UnicodeDecodeError):
+        return True  # a generated file that cannot be read is not the expected text (STORY-214)
+
+
 def _stale(plan) -> list[Path]:
-    return sorted(path for path, text in plan.items() if not path.is_file() or read_text(path) != text)
+    return sorted(path for path, text in plan.items() if _differs(path, text))
 
 
 def differences(root, directory=None) -> list[Path]:

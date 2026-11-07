@@ -29,7 +29,8 @@ def own_run(page) -> str | None:
 
 
 def j_schema(ctx):
-    out = [ctx.issue(ERROR, "J-schema", p, pg.error) for p, pg in ctx.pages.items() if pg.error]
+    out = [ctx.issue(ERROR, "J-schema", folder, f"cannot read the folder: {reason}") for folder, reason in ctx.unreadable]
+    out += [ctx.issue(ERROR, "J-schema", p, pg.error) for p, pg in ctx.pages.items() if pg.error]
     for path, page in ctx.pages.items():
         if not page.error and not page.type:
             out.append(ctx.issue(ERROR, "J-schema", path, "the page has no type"))

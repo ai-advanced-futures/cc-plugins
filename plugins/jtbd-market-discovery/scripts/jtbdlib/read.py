@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from jtbdlib import DataError, UsageError, regen, schema
-from jtbdlib.bundle import read, ref, shown
+from jtbdlib.bundle import read_whole, ref, shown
 from jtbdlib.ids import require_type, resolve
 
 RUN_FIELDS = ("started_at", "finished_at", "mode", "subject", "case", "run_id", "answers")
@@ -90,7 +90,7 @@ def entry(root, bundle, page):
 
 
 def results(root, run, run_id, latest_flag, command, case) -> dict:
-    bundle = read(root)
+    bundle = read_whole(root)
     page = pick_run(bundle, run, run_id, latest_flag, command, case)
     fm = page.frontmatter
     gaps = fm.get("gaps") or []
@@ -106,7 +106,7 @@ def results(root, run, run_id, latest_flag, command, case) -> dict:
 
 def pages(root, type_name, run) -> list:
     require_type(type_name)
-    bundle = read(root)
+    bundle = read_whole(root)
     wanted = find_run(bundle, run) if run else None
     out = []
     for path, page in sorted(bundle.pages.items()):

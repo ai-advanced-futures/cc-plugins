@@ -503,7 +503,7 @@ A run built on the upstream session, with one answer:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.9.0",
+  "plugin_version": "1.9.1",
   "command": "jtbd-market-discovery:wtp-check",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",
@@ -562,7 +562,7 @@ A run whose upstream entry does not match:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.9.0",
+  "plugin_version": "1.9.1",
   "command": "jtbd-market-discovery:wtp-check",
   "run": {
     "started_at": "2026-10-31T11:00:00Z",

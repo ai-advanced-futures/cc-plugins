@@ -1,7 +1,7 @@
 """The check context: the parsed bundle and helpers that every rule uses."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from jtbdlib.bundle import read, read_registry, shown
@@ -14,6 +14,7 @@ class Ctx:
     dir: Path
     pages: dict
     registry: dict
+    unreadable: list = field(default_factory=list)
 
     def shown(self, path) -> str:
         return shown(self.root, path)
@@ -43,4 +44,4 @@ class Ctx:
 
 def make(root, directory=None) -> Ctx:
     bundle = read(root, directory)
-    return Ctx(Path(root), bundle.dir, bundle.pages, read_registry(root))
+    return Ctx(Path(root), bundle.dir, bundle.pages, read_registry(root), bundle.unreadable)

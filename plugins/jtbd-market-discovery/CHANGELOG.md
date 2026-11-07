@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.9.1
+
+The commands that read the graph stop on a page or a folder that they cannot read (STORY-214, FEATURE-26).
+
+- `results`, `pages`, `resolve`, `verify-run`, `set`, `body`, `link`, `unlink` and `remove` exit 1 with 1 line on stderr that names the file, when a page of the graph does not parse, has no type or cannot be read, or when a folder of the graph cannot be listed. Before, they skipped such a page or folder and gave a wrong answer with exit 0, and a page file with no read access gave a traceback.
+- `check` names a folder that it cannot list as `J-schema`, and it gives no traceback for a file that it cannot read.
+
 ## 1.9.0
 
 No agent runs code that the model writes, and each agent has a narrow `tools:` line (STORY-121, FEATURE-26).

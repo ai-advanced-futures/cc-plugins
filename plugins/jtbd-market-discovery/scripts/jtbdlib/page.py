@@ -72,7 +72,13 @@ def parse_text(path, text) -> Page:
 
 
 def parse(path) -> Page:
-    return parse_text(path, read_text(path))
+    try:
+        text = read_text(path)
+    except (OSError, UnicodeDecodeError) as error:
+        # A file that cannot be read is a page with an error: check names it, and a reader stops (STORY-214).
+        reason = getattr(error, "strerror", None) or error.__class__.__name__
+        return Page(Path(path), None, "", "", f"cannot read the file: {reason}")
+    return parse_text(path, text)
 
 
 def ordered(frontmatter: dict, key_order) -> dict:

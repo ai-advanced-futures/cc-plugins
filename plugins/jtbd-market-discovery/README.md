@@ -2,11 +2,15 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.9.0
+**Version:** 1.9.1
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.9.0
+## What's New in v1.9.1
+
+- The commands that read the graph (`results`, `pages`, `resolve`, `verify-run`, and the writes `set`, `body`, `link`, `unlink` and `remove`) stop with exit 1 when a page of the graph does not parse, has no type or cannot be read, or when a folder of the graph cannot be listed. 1 line on stderr names the file. Before, they skipped the page or the folder and gave a wrong answer with exit 0. `check` names a folder that it cannot list.
+
+## What Was New in v1.9.0
 
 - No agent runs code that the model writes. The agents have no `Bash` tool. The skills `discover` and `wtp-check` run the scripts (`uv run`) between the agent starts, and the agents read the result files.
 - The agents `orchestrator` and `wtp-check-runner` are gone. The `discover` skill runs the phases and the `wtp-check` skill runs the price check.

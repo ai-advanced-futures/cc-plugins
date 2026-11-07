@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from jtbdlib import UsageError
+from jtbdlib import DataError, UsageError
 from jtbdlib.page import parse
 
 GRAPH = "jtbd"
@@ -20,6 +21,7 @@ class Bundle:
     root: Path
     dir: Path
     pages: dict = field(default_factory=dict)
+    unreadable: list = field(default_factory=list)  # (folder, reason) for each folder that cannot be listed
 
 
 def shown(root, path) -> str:
@@ -78,22 +80,51 @@ def bundle_dir(root) -> Path:
     return directory
 
 
-def page_files(directory) -> list[Path]:
+def page_files(directory, unreadable=None) -> list[Path]:
+    """Each page file of the bundle, sorted. When `unreadable` is a list, it gets (folder, reason) for each folder
+    that cannot be listed: rglob skips such a folder with no error (STORY-214)."""
     directory = Path(directory)
     out = []
-    for path in directory.rglob("*.md"):
-        rel = path.relative_to(directory)
-        if path.name == "index.md" or any(part.startswith(".") for part in rel.parts):
-            continue
-        if len(rel.parts) == 1 and path.name in ("log.md", "manifest.md"):
-            continue
-        out.append(path)
+
+    def note(error):
+        if unreadable is not None:
+            unreadable.append((Path(error.filename), error.strerror or error.__class__.__name__))
+
+    for folder, folders, files in os.walk(directory, onerror=note):
+        folders[:] = [name for name in folders if not name.startswith(".")]
+        for name in files:
+            path = Path(folder) / name
+            rel = path.relative_to(directory)
+            if not name.endswith(".md") or name.startswith(".") or name == "index.md":
+                continue
+            if len(rel.parts) == 1 and name in ("log.md", "manifest.md"):
+                continue
+            out.append(path)
     return sorted(out)
 
 
 def read(root, directory=None) -> Bundle:
     directory = Path(directory) if directory else bundle_dir(root)
-    return Bundle(Path(root), directory, {path: parse(path) for path in page_files(directory)})
+    unreadable = []
+    files = page_files(directory, unreadable)
+    return Bundle(Path(root), directory, {path: parse(path) for path in files}, sorted(unreadable))
+
+
+def read_whole(root) -> Bundle:
+    """The bundle for a command that gives an answer from it. Stop on a folder or a page that cannot be read (STORY-214).
+
+    A page that does not parse has no type, so no command can know that it does not need the page.
+    """
+    bundle = read(root)
+    faults = [(folder, f"cannot read the folder: {reason}") for folder, reason in bundle.unreadable]
+    faults += [(path, page.error or "the page has no type") for path, page in sorted(bundle.pages.items())
+               if page.error or not page.type]
+    if faults:
+        path, why = faults[0]
+        # 1 line with no final period: a reader such as gtm puts the line into its own sentence.
+        raise DataError(f"{shown(root, path)}: {why}. The command stops at a page or a folder of the graph that it "
+                        f"cannot read ({len(faults)} in all): run jtbd_graph.py check, then fix or remove each one")
+    return bundle
 
 
 def ref(directory, path) -> str:

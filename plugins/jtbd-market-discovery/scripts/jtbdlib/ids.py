@@ -22,14 +22,25 @@ def next_id(directory, type_name) -> str:
     return f"{prefix}-{max(numbers) + 1:02d}"
 
 
+def path_key(directory, key):
+    """The file of a path key, or None when the key is an ID or an alias.
+
+    A path key must name a page of a type folder inside the bundle. A key such as /../x.md would leave the bundle.
+    This check reads no page, so a command runs it before it reads the graph (STORY-214).
+    """
+    if not key.startswith("/"):
+        return None
+    file = (directory / key.lstrip("/")).resolve()
+    folders = {spec["directory"] for spec in schema.types().values()}
+    if file.parent.parent != directory.resolve() or file.parent.name not in folders:
+        raise UsageError(f"{key} is not a page path: use /<type folder>/<page>.md inside the bundle")
+    return file
+
+
 def resolve(bundle, key):
     directory = bundle.dir
-    if key.startswith("/"):
-        file = (directory / key.lstrip("/")).resolve()
-        # A path key must name a page of a type folder inside the bundle. A key such as /../x.md would leave the bundle.
-        folders = {spec["directory"] for spec in schema.types().values()}
-        if file.parent.parent != directory.resolve() or file.parent.name not in folders:
-            raise UsageError(f"{key} is not a page path: use /<type folder>/<page>.md inside the bundle")
+    file = path_key(directory, key)
+    if file is not None:
         if file.is_file():
             return file
         raise DataError(f"no page is at {key}")
