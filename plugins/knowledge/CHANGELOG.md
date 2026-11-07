@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.9
+
+### Changed
+- `knowledge:ask` allows only its own commands. A run of `uv run` is allowed only for `${CLAUDE_PLUGIN_ROOT}/scripts/knowledge.py`, so `uv run python -c ...` and `uv run --with <package> ...` ask for approval. `mktemp` is allowed only with `-u`, so it makes no file. The walk state file is named by its path: the skill runs `printenv KNOWLEDGE_WALK_STATE` and writes the path it prints in each call, not the variable, because a command with a variable asks for approval. Tests of the skill check that each command of the skill text runs with no prompt, and that the commands above ask for one.
+
 ## 1.4.8
 
 ### Changed

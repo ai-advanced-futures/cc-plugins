@@ -1,7 +1,7 @@
 ---
 description: Answers a question from the knowledge graphs of the project, one step at a time - the generic graph and each brain in .claude/knowledge.json, also a graph in another GitHub repository. The ask skill of each brain uses this procedure for the steps after its shortcuts, and this skill is the fallback when no brain ask fits. Use for "/knowledge:ask", "what do we know about X", "ask the wiki", and a question that crosses two brains.
 argument-hint: "<question>"
-allowed-tools: Read, Grep, Glob, Agent, Skill, Bash(uv run *), Bash(git rev-parse *), Bash(mktemp *)
+allowed-tools: Read, Grep, Glob, Agent, Skill, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/knowledge.py *), Bash(git rev-parse *), Bash(mktemp -u *), Bash(printenv KNOWLEDGE_WALK_STATE)
 ---
 
 # Ask the knowledge graphs
@@ -35,10 +35,12 @@ command, also not in `/tmp`.
    - When the ask skill of a brain called this procedure, use its start nodes.
    - When not, select each graph whose `answers` match the question, and use
      its root index, `<graph>:/index.md`.
-5. Make the walk state file. Use `$KNOWLEDGE_WALK_STATE` when it is set. When
-   not, use the path that `mktemp -u /tmp/knowledge-walk.XXXXXX` prints. The X
-   characters are at the end, because the `mktemp` of macOS replaces only the X
-   characters at the end of the template:
+5. Make the walk state file. Run `printenv KNOWLEDGE_WALK_STATE`. When it prints
+   a path, write that path as the state file in each call, not the variable,
+   because a command with a variable asks for approval. When it prints nothing
+   (exit code 1), use the path that `mktemp -u /tmp/knowledge-walk.XXXXXX`
+   prints. The X characters are at the end, because the `mktemp` of macOS
+   replaces only the X characters at the end of the template:
 
    ```bash
    <K> walk start --state <state file> --question "<the question>" <start node> ...
