@@ -1,0 +1,531 @@
+#!/usr/bin/env python3
+"""sofa-github: the GitHub App identity of a sofa team.
+
+  check [--no-cache] [--db PATH]
+           Get an installation token of the App. Print "login: <slug>[bot]", "expires: <time>"
+           and "permissions: <name>=<level> ...". Exit 0 when the token call works.
+  settings [--output-style STYLE] [--db PATH]
+           Print the --settings JSON of a team session: the output style and an env object
+           (see below). Exit 3 when the store has no App values.
+  gh ARGUMENTS...
+           Run the real gh with GH_TOKEN set to the token, for that 1 command. It refuses the
+           gh commands that print a token or change the login of the person (gh auth token,
+           login, logout, refresh, switch, setup-git, git-credential), and gh alias, gh extension
+           and gh config set, because they run code or change the settings of the person.
+  credential get|store|erase
+           The git credential helper. `get` prints the token, on purpose, for https://github.com
+           only. Any process that can run this command can read the token, so the helper is not
+           a barrier against a session that runs shell commands (see docs/adr/ on the residual
+           risk of the GitHub App key).
+
+The env object puts the folder github-shim/ first on PATH (so each gh of the session runs
+`sofa-github gh`; it removes each other github-shim folder from PATH, because the shims of 2
+copies of sofa would start each other), gives git the helper `sofa-github credential`, sends git
+over https, and sets the commit identity to <slug>[bot], and names the state store
+(SOFA_STATE_DB), so the helper and the shim find it from any folder. The permissions object
+denies the Read tool on the key file and on the token cache. No value of the settings is a secret.
+The key path is in the deny rule: it is a path, not the key.
+
+The machine values are in the state store (sofa-state kv): machine.github-app.app-id,
+machine.github-app.installation-id, machine.github-app.key-path, machine.github-app.slug and
+machine.github-app.bot-user-id. The key file stays where the user saved it. The JWT is signed
+with `openssl dgst -sha256 -sign`, so the key never goes into the memory of this script. No
+command prints the JWT or the key. Only `credential get` prints the token. Only `settings` prints
+the key path (in a deny rule).
+
+The token is cached in .sofa/github-app-token.json (mode 600) next to the state store, under a
+lock, and used while more than 600 seconds are left. The base URL of the GitHub API is
+SOFA_GITHUB_API (default https://api.github.com). The token goes to that URL, so only that URL
+and an http address on this computer (127.0.0.1, localhost, ::1) are allowed, and a redirect
+stops the call. SOFA_GITHUB_GH names the real gh in tests.
+
+Exit code: 0 on success, 1 when the token call fails, 2 on a usage error, a bad machine value or
+a bad key file, 3 when the store has no App values (the fix is /sofa:setup, step 5.5).
+"""
+
+import argparse
+import base64
+import fcntl
+import json
+import os
+import re
+import stat
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+
+sys.dont_write_bytecode = True
+
+SCRIPTS = Path(__file__).resolve().parent
+SHIM_DIR = SCRIPTS / "github-shim"
+SOFA_STATE = SCRIPTS / "sofa-state"
+GITHUB_API = "https://api.github.com"
+LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
+KEY_PREFIX = "machine.github-app."
+SPARE_SECONDS = 600
+SETUP_FIX = "Fix: type /sofa:setup and do step 5.5"
+NO_VALUES = f"the state store has no GitHub App values. {SETUP_FIX}"
+
+
+class Fail(Exception):
+    def __init__(self, message, code=1):
+        super().__init__(message)
+        self.code = code
+
+
+# ---------------------------------------------------------------- machine values
+
+class Store:
+    """The machine values of the App, read with sofa-state when a command needs them."""
+
+    def __init__(self, db):
+        self.db = db
+        self._cache = {}
+
+    def get(self, name):
+        """The value of machine.github-app.<name>, or None when the key is not there."""
+        if name not in self._cache:
+            cmd = [sys.executable, str(SOFA_STATE)] + (["--db", self.db] if self.db else []) + ["kv", "get", KEY_PREFIX + name]
+            run = subprocess.run(cmd, capture_output=True, text=True)
+            if run.returncode == 0:
+                self._cache[name] = run.stdout.strip()
+            elif run.returncode == 1 and "no key" in run.stderr:
+                self._cache[name] = None
+            else:
+                reason = (run.stderr.strip().splitlines() or ["sofa-state kv get failed"])[-1]
+                raise Fail(f"cannot read the state store: {reason}", 2)
+        return self._cache[name]
+
+    def need(self, name, pattern):
+        """A value that must exist and match PATTERN (fullmatch). Exit 3 when it is not there."""
+        value = self.get(name)
+        if not value:
+            raise Fail(NO_VALUES, 3)
+        if not re.fullmatch(pattern, value):
+            raise Fail(f"the machine value {KEY_PREFIX}{name} is not valid", 2)
+        return value
+
+    def app_id(self):
+        return self.need("app-id", r"[0-9]{1,20}")
+
+    def installation_id(self):
+        return self.need("installation-id", r"[0-9]{1,20}")
+
+    def slug(self):
+        return self.need("slug", r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,98}[A-Za-z0-9])?")
+
+    def bot_user_id(self):
+        return self.need("bot-user-id", r"[0-9]{1,20}")
+
+    def key_path(self):
+        value = self.get("key-path")
+        if not value:
+            raise Fail(NO_VALUES, 3)
+        # One expanded path for the key check, the signing and the deny rule. A relative path would name
+        # 1 file for the signing (the folder of the call) and another for the deny rule (issue 789).
+        expanded = os.path.expanduser(value)
+        if not os.path.isabs(expanded):
+            raise Fail(f"the key path in the state store is not an absolute path. {SETUP_FIX}", 2)
+        return os.path.normpath(expanded)
+
+
+def main_folder():
+    """The main folder of the repository, as sofa-state finds it."""
+    try:
+        common = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                                capture_output=True, text=True, check=True).stdout.strip()
+        if os.path.basename(common) == ".git":
+            return os.path.dirname(common)
+        return subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True,
+                              check=True).stdout.strip()
+    except (subprocess.CalledProcessError, OSError):
+        raise Fail("not in a git repository, so the .sofa folder is not known. Pass --db", 2)
+
+
+def sofa_dir(db):
+    """The folder of the state store: it holds the token cache."""
+    if db:
+        return os.path.dirname(os.path.abspath(db))
+    if os.environ.get("SOFA_STATE_DB"):
+        return os.path.dirname(os.path.abspath(os.environ["SOFA_STATE_DB"]))
+    return os.path.join(main_folder(), ".sofa")
+
+
+# ---------------------------------------------------------------- the JWT
+
+def b64url(data):
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+
+def check_key_file(path):
+    """The key file must be a regular file, not a link, with no group or other access bits."""
+    try:
+        st = os.lstat(path)
+    except OSError:
+        raise Fail("the key file of the App is not there", 2)
+    if not stat.S_ISREG(st.st_mode) or stat.S_IMODE(st.st_mode) & 0o077:
+        raise Fail("the key file of the App must be a regular file with mode 600", 2)
+
+
+def make_jwt(app_id, key_path):
+    check_key_file(key_path)
+    now = int(time.time())
+    header = b64url(json.dumps({"alg": "RS256", "typ": "JWT"}, separators=(",", ":")).encode())
+    claims = b64url(json.dumps({"iat": now - 60, "exp": now + 540, "iss": app_id}, separators=(",", ":")).encode())
+    signing_input = f"{header}.{claims}".encode()
+    try:
+        run = subprocess.run(["openssl", "dgst", "-sha256", "-sign", key_path], input=signing_input,
+                             capture_output=True)
+    except FileNotFoundError:
+        raise Fail("openssl is not installed, so the JWT of the App cannot be signed", 2)
+    if run.returncode != 0 or not run.stdout:
+        raise Fail("openssl could not sign the JWT (is the key file an RSA private key?)")
+    return f"{header}.{claims}.{b64url(run.stdout)}"
+
+
+# ---------------------------------------------------------------- the GitHub API
+
+def api_base():
+    """The base URL of the GitHub API. The JWT and the token go to it, so only GitHub or this computer."""
+    base = os.environ.get("SOFA_GITHUB_API", GITHUB_API)
+    try:
+        url = urllib.parse.urlsplit(base)
+        host, port = url.hostname, url.port
+    except ValueError:
+        raise Fail("SOFA_GITHUB_API is not a valid URL", 2)
+    if base.rstrip("/") == GITHUB_API and port is None:
+        return GITHUB_API
+    if url.scheme == "http" and host in LOOPBACK_HOSTS and not url.username:
+        return base.rstrip("/")
+    raise Fail("SOFA_GITHUB_API must be https://api.github.com or an http address on this computer "
+               "(127.0.0.1, localhost or ::1), because the token goes to it", 2)
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    """urllib keeps the Authorization header on a redirect, so a redirect would send the JWT to another host."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise Fail(f"GitHub answered with a redirect (HTTP {code}). The call stops, because the JWT must go to 1 host only")
+
+
+def request_token(app_id, installation_id, key_path):
+    """Call GitHub for an installation token. Return (token, expires_at, permissions)."""
+    base = api_base()
+    jwt = make_jwt(app_id, key_path)
+    req = urllib.request.Request(f"{base}/app/installations/{installation_id}/access_tokens", data=b"", method="POST",
+                                 headers={"Authorization": f"Bearer {jwt}", "Accept": "application/vnd.github+json",
+                                          "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "sofa-github"})
+    status, body = None, b""
+    try:
+        with urllib.request.build_opener(NoRedirect).open(req, timeout=30) as resp:
+            status, body = resp.status, resp.read()
+    except urllib.error.HTTPError as e:
+        status, body = e.code, e.read()
+    except (urllib.error.URLError, OSError) as e:
+        raise Fail(f"no answer from GitHub ({type(e).__name__})")
+    try:
+        data = json.loads(body or b"{}")
+    except ValueError:
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    if status != 201:
+        message = data.get("message") if isinstance(data.get("message"), str) else ""
+        raise Fail(f"the token call failed: HTTP {status}" + (f": {message}" if message else ""))
+    token, expires = data.get("token"), data.get("expires_at")
+    if not isinstance(token, str) or not token or not isinstance(expires, str):
+        raise Fail("the token call gave a reply with no token")
+    permissions = data.get("permissions") if isinstance(data.get("permissions"), dict) else {}
+    return token, expires, permissions
+
+
+def parse_time(text):
+    try:
+        return datetime.strptime(text, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
+    except (TypeError, ValueError):
+        raise Fail("the expiry time of the token is not a time")
+
+
+# ---------------------------------------------------------------- the token cache
+
+class TokenCache:
+    def __init__(self, folder):
+        self.path = os.path.join(folder, "github-app-token.json")
+        self.lock_path = os.path.join(folder, "github-app-token.lock")
+        self.folder = folder
+
+    def erase(self):
+        try:
+            os.unlink(self.path)
+        except FileNotFoundError:
+            pass
+
+    def read(self, app_id, installation_id):
+        """The cached token with more than SPARE_SECONDS left and the same ids, or None."""
+        try:
+            with open(self.path) as f:
+                data = json.load(f)
+            if (data["app_id"] == app_id and data["installation_id"] == installation_id
+                    and parse_time(data["expires_at"]) - time.time() > SPARE_SECONDS and data["token"]):
+                return data["token"], data["expires_at"], data.get("permissions") or {}
+        except (OSError, ValueError, KeyError, TypeError, Fail):
+            pass
+        return None
+
+    def write(self, app_id, installation_id, token, expires, permissions):
+        tmp = f"{self.path}.{os.getpid()}.tmp"
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(fd, "w") as f:
+            json.dump({"token": token, "expires_at": expires, "app_id": app_id, "installation_id": installation_id,
+                       "permissions": permissions}, f)
+        os.replace(tmp, self.path)
+
+
+def get_token(store, no_cache=False):
+    """Return (token, expires_at, permissions) of the App installation, from the cache or from GitHub."""
+    app_id, installation_id = store.app_id(), store.installation_id()
+    folder = sofa_dir(store.db)
+    os.makedirs(folder, exist_ok=True)
+    cache = TokenCache(folder)
+    fd = os.open(cache.lock_path, os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        if not no_cache:
+            hit = cache.read(app_id, installation_id)
+            if hit:
+                return hit
+        token, expires, permissions = request_token(app_id, installation_id, store.key_path())
+        cache.write(app_id, installation_id, token, expires, permissions)
+        return token, expires, permissions
+    finally:
+        os.close(fd)
+
+
+# ---------------------------------------------------------------- commands
+
+def login(store):
+    return f"{store.slug()}[bot]"
+
+
+def require_values(store):
+    """All the machine values or none. Exit 3 when none is there, exit 2 when only some are."""
+    names = ("app-id", "installation-id", "key-path", "slug", "bot-user-id")
+    missing = [n for n in names if not store.get(n)]
+    if len(missing) == len(names):
+        raise Fail(NO_VALUES, 3)
+    if missing:
+        raise Fail("the state store lacks " + ", ".join(KEY_PREFIX + n for n in missing) + f". {SETUP_FIX}", 2)
+    store.app_id(), store.installation_id(), store.bot_user_id(), store.slug()
+
+
+def is_shim_dir(folder):
+    """True for a folder named github-shim that sits beside a sofa-github file: a copy of the shim of sofa."""
+    return (os.path.basename(os.path.normpath(folder)) == "github-shim"
+            and os.path.isfile(os.path.join(folder, os.pardir, "sofa-github")))
+
+
+def cmd_check(args):
+    store = Store(args.db)
+    require_values(store)
+    who = login(store)
+    _, expires, permissions = get_token(store, args.no_cache)
+    print(f"login: {who}")
+    print(f"expires: {expires}")
+    print("permissions: " + " ".join(f"{k}={v}" for k, v in sorted(permissions.items())))
+    return 0
+
+
+def cmd_settings(args):
+    store = Store(args.db)
+    require_values(store)
+    who = login(store)
+    email = f"{store.bot_user_id()}+{who}@users.noreply.github.com"
+    helper = "!'" + str(SCRIPTS / "sofa-github").replace("'", "'\\''") + "' credential"
+    # A shim folder that the session inherited (after an upgrade of sofa, an older copy) would start the other
+    # copy of sofa-github, and the 2 copies would start each other. So only this shim folder stays on PATH.
+    inherited = [f for f in os.environ.get("PATH", "").split(os.pathsep) if f and not is_shim_dir(f)]
+    path = os.pathsep.join([str(SHIM_DIR)] + inherited)
+    env = {
+        "PATH": path,
+        "SOFA_GITHUB_APP": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GIT_CONFIG_COUNT": "4",
+        "GIT_CONFIG_KEY_0": "credential.https://github.com.helper",
+        "GIT_CONFIG_VALUE_0": "",
+        "GIT_CONFIG_KEY_1": "credential.https://github.com.helper",
+        "GIT_CONFIG_VALUE_1": helper,
+        "GIT_CONFIG_KEY_2": "url.https://github.com/.insteadOf",
+        "GIT_CONFIG_VALUE_2": "git@github.com:",
+        "GIT_CONFIG_KEY_3": "url.https://github.com/.insteadOf",
+        "GIT_CONFIG_VALUE_3": "ssh://git@github.com/",
+        "GIT_AUTHOR_NAME": who,
+        "GIT_AUTHOR_EMAIL": email,
+        "GIT_COMMITTER_NAME": who,
+        "GIT_COMMITTER_EMAIL": email,
+    }
+    # The store path goes in the env, so the helper and the shim find the store from any folder.
+    env["SOFA_STATE_DB"] = args.db and os.path.abspath(args.db) or os.environ.get("SOFA_STATE_DB") or os.path.join(sofa_dir(None), "state.db")
+    settings = {"outputStyle": args.output_style} if args.output_style else {}
+    settings["env"] = env
+    # The Read tool of the session may not open the key file or the token cache. A shell command still can
+    # (docs/adr: the residual risk of the GitHub App key), so this lowers the risk and does not remove it.
+    cache_file = os.path.join(sofa_dir(store.db), "github-app-token.json")
+    key_file = store.key_path()
+    settings["permissions"] = {"deny": [f"Read(/{key_file})", f"Read(/{cache_file})"]}  # "//" starts an absolute path
+    print(json.dumps(settings))
+    return 0
+
+
+REFUSED_AUTH = ("token", "login", "logout", "refresh", "switch", "setup-git", "git-credential")
+REFUSED_OTHER = {"alias": "gh alias runs a shell command that the person did not write",
+                 "extension": "gh extension runs code that the person did not review",
+                 "extensions": "gh extension runs code that the person did not review",
+                 "ext": "gh extension runs code that the person did not review"}
+VALUE_OPTIONS = {"-X", "--method", "-H", "--header", "-f", "--raw-field", "-F", "--field", "--input", "-q", "--jq",
+                 "-t", "--template", "--hostname", "--cache", "-p", "--preview"}
+FIELD_OPTIONS = ("-f", "--raw-field", "-F", "--field", "--input")
+
+
+def find_real_gh():
+    """The real gh: SOFA_GITHUB_GH, else the first gh on PATH that is not the shim."""
+    override = os.environ.get("SOFA_GITHUB_GH")
+    if override:
+        return override
+    shim = os.path.realpath(SHIM_DIR)
+    for folder in os.environ.get("PATH", "").split(os.pathsep):
+        # Skip each shim folder, not this one only: the gh of another copy of sofa would start this script again.
+        if not folder or os.path.realpath(folder) == shim or is_shim_dir(folder):
+            continue
+        candidate = os.path.join(folder, "gh")
+        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+            return candidate
+    raise Fail("gh is not installed (no gh on the PATH outside the sofa shim)", 2)
+
+
+def refused(args):
+    """The reason to refuse these gh arguments, or None."""
+    if args and args[0] in REFUSED_OTHER:
+        return f"{REFUSED_OTHER[args[0]]}, so a team session does not run it"
+    if len(args) >= 2 and args[0] == "config" and args[1] == "set":
+        return "gh config set changes the gh settings of the person, so a team session does not run it"
+    if len(args) >= 2 and args[0] == "auth":
+        if args[1] in REFUSED_AUTH:
+            return f"gh auth {args[1]} prints a token or changes the login of the person, so a team session does not run it"
+        if args[1] == "status" and any(a.split("=", 1)[0] == "--show-token" or (a.startswith("-") and not a.startswith("--") and "t" in a[1:])
+                                       for a in args[2:]):
+            return "gh auth status --show-token prints a token, so a team session does not run it"
+    return None
+
+
+def api_user_index(args):
+    """The index of the path argument of `gh api user` (a GET), or None."""
+    if not args or args[0] != "api":
+        return None
+    method, fields, path_at, i = None, False, None, 1
+    while i < len(args):
+        a = args[i]
+        if a == "--":
+            break
+        if a.startswith("-"):
+            name = a.split("=", 1)[0]
+            if name in ("-X", "--method"):
+                method = args[i + 1] if "=" not in a and i + 1 < len(args) else a.split("=", 1)[-1]
+            elif a.startswith("-X") and len(a) > 2 and not a.startswith("--"):
+                method = a[2:]
+            if name in FIELD_OPTIONS or (a[:2] in ("-f", "-F") and len(a) > 2 and not a.startswith("--")):
+                fields = True
+            if name in VALUE_OPTIONS and "=" not in a:
+                i += 1
+        elif path_at is None:
+            path_at = i
+        i += 1
+    if path_at is None or args[path_at] not in ("user", "/user"):
+        return None
+    if method is not None and method.upper() != "GET":
+        return None
+    if method is None and fields:
+        return None
+    return path_at
+
+
+def cmd_gh(argv, db):
+    reason = refused(argv)
+    if reason:
+        raise Fail(reason, 2)
+    real = find_real_gh()
+    env = dict(os.environ)
+    env.pop("GH_DEBUG", None)
+    if argv[:2] == ["auth", "status"]:
+        env.pop("GH_TOKEN", None)
+        env.pop("GITHUB_TOKEN", None)
+    else:
+        store = Store(db)
+        index = api_user_index(argv)
+        if index is not None:
+            argv = argv[:index] + [f"users/{login(store)}"] + argv[index + 1:]
+        env["GH_TOKEN"] = get_token(store)[0]
+    try:
+        os.execve(real, [real] + argv, env)
+    except OSError:
+        raise Fail("gh could not start", 2)
+
+
+def read_attributes():
+    attrs = {}
+    for line in sys.stdin.read().splitlines():
+        if "=" in line:
+            key, value = line.split("=", 1)
+            attrs[key] = value
+    return attrs
+
+
+def cmd_credential(args):
+    if args.action == "store":
+        return 0
+    attrs = read_attributes()
+    if attrs.get("protocol") != "https" or attrs.get("host") != "github.com":
+        return 0
+    store = Store(args.db)
+    if args.action == "erase":
+        TokenCache(sofa_dir(store.db)).erase()
+        return 0
+    token, expires, _ = get_token(store)
+    print("username=x-access-token")
+    print(f"password={token}")
+    print(f"password_expiry_utc={int(parse_time(expires))}")
+    return 0
+
+
+def main(argv):
+    db, rest = None, list(argv)
+    if len(rest) >= 2 and rest[0] == "--db":
+        db, rest = rest[1], rest[2:]
+    if rest and rest[0] == "gh":
+        return cmd_gh(rest[1:], db)
+    parser = argparse.ArgumentParser(prog="sofa-github", description="The GitHub App identity of a sofa team.")
+    sub = parser.add_subparsers(dest="command", required=True)
+    for name in ("check", "settings", "credential"):
+        p = sub.add_parser(name)
+        p.add_argument("--db", default=db)
+        if name == "check":
+            p.add_argument("--no-cache", action="store_true")
+        elif name == "settings":
+            p.add_argument("--output-style", default="")
+        else:
+            p.add_argument("action", choices=["get", "store", "erase"])
+    sub.add_parser("gh", help="run the real gh with the App token (all arguments after gh go to gh)")
+    args = parser.parse_args(rest)
+    return {"check": cmd_check, "settings": cmd_settings, "credential": cmd_credential}[args.command](args)
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except Fail as e:
+        print(f"sofa-github: {e}", file=sys.stderr)
+        sys.exit(e.code)

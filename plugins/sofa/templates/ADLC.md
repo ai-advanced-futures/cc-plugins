@@ -45,7 +45,8 @@ Tools per role. `built-in` means the role uses only the skills of its row.
 Machine values are not in this file, because they are different on each machine. The `sofa:start` skill finds them when it starts the team, and each start prompt gives them (section 8):
 - Main folder: the absolute path of the main checkout on this machine.
 - Skill folder: the absolute path of the installed `sofa` plugin on this machine.
-- GitHub account: the active `gh` account on this machine. Sessions commit, push and open PRs as this account.
+- GitHub account: the account that the team acts as on GitHub. With a team App (`sofa-github check` exits 0), it is `<slug>[bot]`. Without an App, it is the active `gh` account on this machine. Sessions commit, push and open PRs as this account.
+- GitHub person: the active `gh` account of the person who runs `sofa:start`. The claim on the board is this account.
 
 Repository rules:
 - `<rules for this repository only: secrets folders, data that must not leave the repo, who approves destructive actions, which source wins when sources differ>`
@@ -377,7 +378,7 @@ Start prompt:
 You are the <role> of the <prefix> team. Load the skill sofa:station and do what it says at start.
 Your role files: <skill folder>/references/roles/<role>.md, and docs/adlc/roles/<role>.md if it exists.
 The orchestrator is <orchestrator name>.
-Machine values: main folder <main folder>, skill folder <skill folder>, GitHub account <gh account>.
+Machine values: main folder <main folder>, skill folder <skill folder>, GitHub account <gh account>, GitHub person <gh person>.
 ```
 
 The orchestrator start prompt is in the `sofa:start` skill. It gives the machine values, and the orchestrator copies them into each start prompt.

@@ -8,7 +8,7 @@ Section numbers are the sections of `docs/adlc.md`.
 
 ## Claims
 
-Teams on other machines can work on the same repository. A claim on the board tells each team which features another team does. The claim uses the field of the board tool that says who works on an item (for example the assignee). The claim value is the user of the board tool that this machine is logged in as. For GitHub Projects, it is the GitHub account of the machine values.
+Teams on other machines can work on the same repository. A claim on the board tells each team which features another team does. The claim uses the field of the board tool that says who works on an item (for example the assignee). The claim value is the user of the board tool that this machine is logged in as. For GitHub Projects, it is the GitHub person of the machine values, because an App cannot be the assignee of an issue and the claim tells other teams which person runs the team.
 
 - When the orchestrator sends a `TASK` to claim a feature:
   - If the feature has no claim, claim it. Send `DONE` with the feature.

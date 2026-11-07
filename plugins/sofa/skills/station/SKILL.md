@@ -7,7 +7,7 @@ metadata:
 
 # station — how every session of the team works
 
-You are 1 session of a software factory (the team). Your start prompt gives your role, the team prefix, the orchestrator name, and the machine values (main folder, skill folder, GitHub account). Section numbers below are the sections of `docs/adlc.md`.
+You are 1 session of a software factory (the team). Your start prompt gives your role, the team prefix, the orchestrator name, and the machine values (main folder, skill folder, GitHub account, GitHub person). Section numbers below are the sections of `docs/adlc.md`.
 
 ## At start, and after `RELOAD`
 
@@ -45,6 +45,7 @@ Use an answer whose pages are not stale, and name those pages in your PR, spec o
 - Make the worktree from `origin/main`. After your PR merges, run the `wrapup` skill at once: it confirms the work is on `main`, removes the worktree and the branch, and moves you back to the main folder. If the orchestrator stops your item before the merge, also run `wrapup`. If `wrapup` stops (for example on a commit that is not pushed), send `BLOCKED` with the cause and do not delete the work.
 - Read the state of a new item from `main` and from the `TASK`, not from your conversation, because the conversation can hold an older state or a compaction summary.
 - Never read, print or commit secrets or key files, because transcripts, PRs and issues are not private.
+- When GitHub refuses a push or a merge of the team because it changes `.github/workflows/` (the App has no workflows permission), send `BLOCKED · user step` with the exact command for the person. Do not push or merge with the credential of the person yourself, because that brings back the shared account with no person in the step.
 - Before you use a library, get its documentation with the `find-docs` skill (context7).
 - Write all documents in ASD-STE100 Simplified Technical English.
 

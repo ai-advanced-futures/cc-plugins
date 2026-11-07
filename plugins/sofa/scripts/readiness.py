@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Check if a repository is ready for a sofa team. Read-only.
+"""Check if a repository is ready for a sofa team. It changes no file that git tracks.
+
+The 1 write is the token cache of the GitHub App check (.sofa/github-app-token.json).
 
     readiness.py [--repo PATH] [--json]
 
@@ -11,7 +13,8 @@ gives unknown, with the error in detail.
 Exit 0, or 2 when the repository path is not a git repository.
 
 The commands it runs come from the environment, so tests can replace them:
-READINESS_CLAUDE (default claude), READINESS_GH (gh), READINESS_CRONTAB (crontab).
+READINESS_CLAUDE (default claude), READINESS_GH (gh), READINESS_CRONTAB (crontab),
+READINESS_SOFA_GITHUB (scripts/sofa-github).
 """
 import argparse
 import json
@@ -424,6 +427,31 @@ def check_team(repo):
     return items
 
 
+def check_github_app(repo):
+    """The GitHub App of the team (STORY-148). Not blocking: with no App the team acts as the person.
+
+    Missing when the state store has no App values. Else it runs `sofa-github check --no-cache`, which calls
+    GitHub for a new token and writes it to the token cache in .sofa/. This is the 1 write of readiness.py, in
+    a file that is not tracked by git. The detail shows the login of the App and no path, no key and no token."""
+    fix = "/sofa:setup (step 5.5)"
+    db = Path(main_folder(repo.root) or repo.root) / ".sofa" / "state.db"
+    if not db.exists():
+        return item("github-app", "tools", "missing", "no GitHub App values in the state store", fix)
+    command = cmd_name("READINESS_SOFA_GITHUB", str(PLUGIN_ROOT / "scripts" / "sofa-github"))
+    rc, out = run([command, "--db", str(db), "check", "--no-cache"])
+    lines = [l.strip() for l in out.splitlines() if l.strip()]
+    if rc == 3:
+        return item("github-app", "tools", "missing", "no GitHub App values in the state store", fix)
+    if rc != 0:
+        return item("github-app", "tools", "wrong", lines[-1] if lines else f"sofa-github check exit {rc}", fix)
+    who = next((l.split(":", 1)[1].strip() for l in lines if l.startswith("login:")), "the App")
+    perms = next((l for l in lines if l.startswith("permissions:")), "")
+    detail = f"the team App {who} gets a token"
+    if not re.search(r"\bworkflows=", perms):
+        detail += ", no workflows permission"
+    return item("github-app", "tools", "ok", detail)
+
+
 def check_tools(repo):
     items = []
     rc, out = run([cmd_name("READINESS_GH", "gh"), "auth", "status"])
@@ -434,6 +462,8 @@ def check_tools(repo):
     else:
         items.append(item("gh-auth", "tools", "wrong", out.strip().splitlines()[-1] if out.strip() else "gh auth status failed",
                           "gh auth login", True))
+
+    items.append(check_github_app(repo))
 
     if shutil.which("npx"):
         items.append(item("npx", "tools", "ok", "npx is on the PATH (for ctx7)"))

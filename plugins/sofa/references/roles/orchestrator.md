@@ -4,7 +4,7 @@ Section numbers are the sections of `docs/adlc.md`. The `sofa:station` skill app
 
 ## At start
 
-The `sofa:start` skill starts this session. Its start prompt gives the launcher name and the machine values (main folder, skill folder, GitHub account).
+The `sofa:start` skill starts this session. Its start prompt gives the launcher name and the machine values (main folder, skill folder, GitHub account, GitHub person).
 
 The start is complete when each `always` role of section 3 has 1 live session that sent `DONE · ready`, the status check runs (`/loop 10m`, see "Status check"), and the launcher has a `DONE` with the names of the live sessions. Also start monitoring now when section 1 `Environments` names logs or metrics, because a problem can start before the first feature, and name it in the `DONE`. Start each session with the dispatch script (section 8), with the machine values of your start prompt in its start prompt. Start the other `on demand` roles when an item needs them. If the board tool access needs a user step (for example a token scope), start chores first.
 

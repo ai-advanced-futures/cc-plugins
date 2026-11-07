@@ -44,8 +44,11 @@ Find the machine values of this start. They go only in the start prompts, becaus
 
 - Main folder: `git rev-parse --show-toplevel` in the main checkout, not in a worktree.
 - Skill folder: the absolute path of the plugin root.
-- GitHub account: the active account of `gh auth status`.
+- GitHub account: `<slug>[bot]` when `<skill folder>/scripts/sofa-github settings` exits 0 (the team has a GitHub App; the name is the value of `GIT_AUTHOR_NAME` in its output, and the command does not call GitHub), else the active account of `gh auth status`. When `<skill folder>/scripts/sofa-github check` then exits 1, stop the start and show its line.
+- GitHub person: the active account of `gh auth status` in this session.
 - Launcher name: your session name, on the first line of `ListAgents`.
+
+When the state store has the GitHub App values, `dispatch.sh` gives each new session the App identity (`sofa-github settings`): each `gh` and each `git` of the session acts as `<slug>[bot]`. A resumed session keeps the settings of its first start. So after the App setup (`sofa:setup`, step 5.5), stop the team and start it again.
 
 If the `CLAUDE.md` of the repository names a different process or harness for product work, ask the user which one wins before step 2.
 
@@ -68,7 +71,7 @@ The result: `docs/adlc.md` and `docs/adlc/roles/` on `main` meet the current `te
    Then read docs/adlc.md on main, and your role files: <skill folder>/references/roles/orchestrator.md,
    and docs/adlc/roles/orchestrator.md if it exists. Where they differ, the repository file wins.
    Do the role "orchestrator" as written there. Start with "At start".
-   Machine values: main folder <main folder>, skill folder <skill folder>, GitHub account <gh account>.
+   Machine values: main folder <main folder>, skill folder <skill folder>, GitHub account <gh account>, GitHub person <gh person>.
    The launcher is <launcher name>. Send it a DONE message when all always sessions of the team are ready.
    ```
 

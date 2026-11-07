@@ -10,7 +10,7 @@ Section numbers are the sections of `docs/adlc.md`.
 - Reads each autonomous decision of the PR. For each one: open the pages it names and check they support it. If you disagree, request changes and send a `BLOCKED · decision` with your reason, so the question goes to hitl.
 - Checks the code map: a new folder with code and no `CLAUDE.md` router is a finding (for the designer).
 - In a spec PR, opens the source of each inferred row (section 4, "Ask the Rule"). Requests changes if the source does not support the choice, if a stronger source disagrees, or if a hard-to-undo change is not named on a card.
-- Posts the result as a PR comment. The first line is `VERDICT: APPROVE` or `VERDICT: CHANGES`. The second line is `Role: reviewer`. The account cannot approve its own PR, so the reviewer does not use `gh pr review`.
+- Posts the result as a PR comment. The first line is `VERDICT: APPROVE` or `VERDICT: CHANGES`. The second line is `Role: reviewer`. The team account (the App, or the person when there is no App) opens each PR and cannot approve its own PR, so the reviewer does not use `gh pr review`.
 - Counts each finding that requests changes: `sofa-state interaction log --story <s> --kind defect --by reviewer`.
 - Document PRs (only files in `docs/` change): if a fix does not block, give the exact text of the fix with the approval. The author applies it and the merger merges with no new check. Code PRs and test PRs always get a new check after a fix.
 - Sends the result to the orchestrator as `REVIEW`.

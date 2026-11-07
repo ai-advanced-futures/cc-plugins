@@ -11,8 +11,15 @@
 # With --resume it runs only `claude --bg --resume <id> <prompt>`: the session
 # keeps its saved options, and any other option starts a copy.
 #
+# The --settings value comes from `sofa-github settings`. When the state store has
+# the GitHub App values of the team, the value also holds an env object, so each gh
+# and each git of the session acts as the App (STORY-148). With no App values
+# (exit 3 of sofa-github) the value is the output style alone, as before. Any other
+# exit of sofa-github stops the script, so a team never starts as the person when
+# the App setup is broken. DISPATCH_SOFA_GITHUB names another command in tests.
+#
 # Exit 0 when the session started (or on --dry-run), 1 when claude gave no
-# session id, 2 on a bad argument or a bad ADLC file.
+# session id, 2 on a bad argument, a bad ADLC file or a broken App setup.
 set -euo pipefail
 
 usage='usage: dispatch.sh --adlc <path to docs/adlc.md> --role <role> [--n <number>] (--prompt-file <file> | --prompt <text>) [--resume <session id>] [--cwd <main folder>] [--dry-run]'
@@ -94,7 +101,19 @@ else
   cmd=(claude --bg -n "$name" --model "$model")
   if [ -n "$effort" ] && [ "$effort" != "—" ]; then cmd+=(--effort "$effort"); fi
   cmd+=(--autocompact "$compact")
-  [ -z "$style" ] || cmd+=(--settings "{\"outputStyle\":\"$style\"}")
+  settings=""
+  [ -z "$style" ] || settings="{\"outputStyle\":\"$style\"}"
+  github_cmd="${DISPATCH_SOFA_GITHUB:-$(cd "$(dirname "$0")" && pwd)/sofa-github}"
+  github_err="$(mktemp)"
+  github_rc=0
+  github_json="$( (cd "$cwd" 2>/dev/null || true; "$github_cmd" settings --output-style "$style") 2>"$github_err")" || github_rc=$?
+  case "$github_rc" in
+    0) settings="$github_json" ;;
+    3) ;;
+    *) github_msg="$(cat "$github_err")"; rm -f "$github_err"; fail "the GitHub App setup of the team is broken (sofa-github exit $github_rc): ${github_msg:-no message}" ;;
+  esac
+  rm -f "$github_err"
+  [ -z "$settings" ] || cmd+=(--settings "$settings")
   cmd+=(--permission-mode bypassPermissions)
   cmd+=("$prompt")
 fi
