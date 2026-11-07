@@ -1,5 +1,10 @@
 # Test dependencies for the business-case plugin.
 # The job business-case of .github/workflows/ci.yml installs this file, then runs
 # `pytest tests/ -q -rs` from plugins/business-case. lib/ itself uses only the standard library.
+# bc_graph.py needs pyyaml and jsonschema at run time (its PEP 723 header).
+# gen-schema.sh reads the linkml pin from this file.
+jsonschema>=4.17.0
+linkml==1.11.1
+linkml-runtime==1.11.1
 pytest>=7,<9
 pyyaml>=6

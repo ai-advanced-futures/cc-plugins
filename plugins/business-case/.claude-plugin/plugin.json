@@ -1,7 +1,8 @@
 {
   "name": "business-case",
   "displayName": "business-case",
-  "version": "0.6.1",
+  "version": "0.7.0",
+  "dependencies": ["knowledge"],
   "description": "Coaches a thin business case into one a funder can trust. It checks the case against a rubric, asks you to fill each gap, plans evidence runs of other plugins, works out the numbers from the figures you confirm, and has an independent review check the case. Each decision is recorded.",
   "author": {
     "name": "ai-advanced-futures"

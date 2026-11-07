@@ -1,0 +1,423 @@
+{
+  "statuses": [
+    "draft",
+    "stable",
+    "deprecated"
+  ],
+  "types": {
+    "Case": {
+      "prefix": "CASE",
+      "directory": "cases",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "slug",
+        "offering",
+        "market",
+        "rubric_version",
+        "created_rubric_version",
+        "case_folder",
+        "loop_status",
+        "needs_human",
+        "open_items",
+        "absent_categories",
+        "orphaned_conditions",
+        "problems",
+        "completed_at",
+        "funding_decision",
+        "latest_review",
+        "finance",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Run": {
+      "prefix": "RUN",
+      "directory": "runs",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "command",
+        "subject",
+        "run_id",
+        "mode",
+        "person",
+        "started_at",
+        "finished_at",
+        "judge_runs",
+        "plugin_version",
+        "case",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Part": {
+      "prefix": "PART",
+      "directory": "parts",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "section",
+        "lens",
+        "part",
+        "heading",
+        "items",
+        "case",
+        "run",
+        "evidence",
+        "decisions",
+        "next",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Evidence": {
+      "prefix": "EV",
+      "directory": "evidence",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "source",
+        "summary",
+        "method",
+        "grade",
+        "date",
+        "item_ids",
+        "produced_by_plugin",
+        "off_map",
+        "result_ref",
+        "supplied_by",
+        "grade_confirmed_by",
+        "case",
+        "run",
+        "source_results",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Decision": {
+      "prefix": "DECISION",
+      "directory": "decisions",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "kind",
+        "role",
+        "question",
+        "options",
+        "choice",
+        "subject",
+        "item_id",
+        "shown",
+        "cited",
+        "outcome",
+        "name",
+        "date",
+        "case",
+        "run",
+        "review",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "StrategyEntry": {
+      "prefix": "SD",
+      "directory": "strategy",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "category",
+        "choice",
+        "rejected_alternative",
+        "evidence_text",
+        "source",
+        "recorded_by",
+        "date",
+        "reason",
+        "change_source",
+        "confirmed",
+        "case",
+        "run",
+        "supersedes",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Condition": {
+      "prefix": "CONDITION",
+      "directory": "conditions",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "text",
+        "evidence_text",
+        "source",
+        "recorded_by",
+        "date",
+        "reason",
+        "change_source",
+        "marked",
+        "case",
+        "run",
+        "supports",
+        "supersedes",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Note": {
+      "prefix": "NOTE",
+      "directory": "notes",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "text",
+        "source",
+        "failed_tests",
+        "reason",
+        "recorded_by",
+        "date",
+        "case",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Figure": {
+      "prefix": "FIGURE",
+      "directory": "figures",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "kind",
+        "amount",
+        "written_as",
+        "currency",
+        "scenario",
+        "item_id",
+        "quote",
+        "source",
+        "stream",
+        "months",
+        "reason",
+        "recorded_by",
+        "date",
+        "confirmed",
+        "case",
+        "run",
+        "evidence",
+        "replaces",
+        "restates",
+        "supersedes",
+        "figure_parts",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Finance": {
+      "prefix": "FINANCE",
+      "directory": "finance",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "numbers",
+        "verdict_ceiling",
+        "case",
+        "run",
+        "figures",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Review": {
+      "prefix": "REVIEW",
+      "directory": "reviews",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "report",
+        "written_by",
+        "investment_verdict",
+        "manifest_digest",
+        "item_verdicts",
+        "case",
+        "run",
+        "parts",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    }
+  },
+  "edges": {
+    "funding_decision": {
+      "targets": [
+        "Decision"
+      ],
+      "multivalued": false,
+      "inverse_label": "funds"
+    },
+    "latest_review": {
+      "targets": [
+        "Review"
+      ],
+      "multivalued": false,
+      "inverse_label": "latest review of"
+    },
+    "finance": {
+      "targets": [
+        "Finance"
+      ],
+      "multivalued": false,
+      "inverse_label": "finance of"
+    },
+    "case": {
+      "targets": [
+        "Case"
+      ],
+      "multivalued": false,
+      "inverse_label": "holds"
+    },
+    "run": {
+      "targets": [
+        "Run"
+      ],
+      "multivalued": true,
+      "inverse_label": "wrote"
+    },
+    "evidence": {
+      "targets": [
+        "Evidence"
+      ],
+      "multivalued": true,
+      "inverse_label": "supports"
+    },
+    "decisions": {
+      "targets": [
+        "Decision"
+      ],
+      "multivalued": true,
+      "inverse_label": "decides"
+    },
+    "next": {
+      "targets": [
+        "Part"
+      ],
+      "multivalued": false,
+      "inverse_label": "follows"
+    },
+    "source_results": {
+      "targets": [
+        "jtbd:Result",
+        "competitive-intelligence:Result"
+      ],
+      "multivalued": true,
+      "inverse_label": "graded in"
+    },
+    "review": {
+      "targets": [
+        "Review"
+      ],
+      "multivalued": false,
+      "inverse_label": "cited by decision"
+    },
+    "supersedes": {
+      "targets": [
+        "StrategyEntry",
+        "Condition",
+        "Figure"
+      ],
+      "multivalued": false,
+      "inverse_label": "superseded by"
+    },
+    "supports": {
+      "targets": [
+        "StrategyEntry"
+      ],
+      "multivalued": true,
+      "inverse_label": "supported by"
+    },
+    "replaces": {
+      "targets": [
+        "Figure"
+      ],
+      "multivalued": true,
+      "inverse_label": "replaced by"
+    },
+    "restates": {
+      "targets": [
+        "Figure"
+      ],
+      "multivalued": true,
+      "inverse_label": "restated by"
+    },
+    "figures": {
+      "targets": [
+        "Figure"
+      ],
+      "multivalued": true,
+      "inverse_label": "counted in"
+    },
+    "parts": {
+      "targets": [
+        "Part"
+      ],
+      "multivalued": true,
+      "inverse_label": "has finding in"
+    }
+  }
+}

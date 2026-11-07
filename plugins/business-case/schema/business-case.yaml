@@ -1,0 +1,315 @@
+# The page types of the business-case graph (STORY-89 spec, rows 5 and 9, and table "Page types").
+#
+# Two generated files come from this one:
+#   schema/business-case.schema.json   the JSON Schema of rule BC-schema
+#   schema/business-case.slots.json    the types and the edges
+# Run scripts/gen-schema.sh after a change, and commit both outputs.
+#
+# Annotations, read by scripts/gen_slots.py:
+#   class  id_prefix      the ID prefix of the page type
+#   class  directory      the folder of the page type
+#   slot   targets        the page types that a link can point to
+#   slot   inverse_label  the label of the derived line in the LINKS block
+id: https://ai-advanced-futures.github.io/cc-plugins/business-case
+name: business_case
+title: The business-case graph
+description: >-
+  The frontmatter of each page type of the business-case graph. A page holds the fields of one
+  record of a case folder. A field that has no fixed shape holds any value.
+default_range: string
+default_prefix: bc
+prefixes:
+  linkml: https://w3id.org/linkml/
+  bc: https://ai-advanced-futures.github.io/cc-plugins/business-case/
+imports:
+  - linkml:types
+  - ../../knowledge/schema/base
+
+types:
+  CaseLink: {typeof: string, pattern: '^/cases/CASE-\d{2,}\.md$'}
+  RunLink: {typeof: string, pattern: '^/runs/RUN-\d{2,}\.md$'}
+  PartLink: {typeof: string, pattern: '^/parts/PART-\d{2,}\.md$'}
+  EvidenceLink: {typeof: string, pattern: '^/evidence/EV-\d{2,}\.md$'}
+  DecisionLink: {typeof: string, pattern: '^/decisions/DECISION-\d{2,}\.md$'}
+  ReviewLink: {typeof: string, pattern: '^/reviews/REVIEW-\d{2,}\.md$'}
+  FigureLink: {typeof: string, pattern: '^/figures/FIGURE-\d{2,}\.md$'}
+  FinanceLink: {typeof: string, pattern: '^/finance/FINANCE-\d{2,}\.md$'}
+  StrategyLink: {typeof: string, pattern: '^/strategy/SD-\d{2,}\.md$'}
+  SupersedableLink: {typeof: string, pattern: '^/(strategy/SD|conditions/CONDITION|figures/FIGURE)-\d{2,}\.md$'}
+  UpstreamResultLink: {typeof: string, pattern: '^(jtbd|competitive-intelligence):/results/RESULT-\d{2,}\.md$'}
+
+enums:
+  MarketKind:
+    permissible_values: {B2B: {}, B2C: {}, both: {}}
+  RunMode:
+    permissible_values: {interactive: {}, automated: {}}
+  PartName:
+    permissible_values: {job: {}, market: {}, competition: {}, price: {}, gtm: {}, finance: {}, baseline: {}, strategy: {}}
+  DecisionRole:
+    permissible_values: {proposer: {}, funder: {}}
+  ReviewWriter:
+    permissible_values: {judge: {}, coach-copy: {}}
+  Verdict:
+    permissible_values: {supported: {}, undetermined: {}, not_supported: {}}
+
+classes:
+  AnyValue:
+    description: Any YAML value. The record fields keep the shape of the case file.
+    class_uri: linkml:Any
+  Case:
+    description: "One business case: the case folder and its status."
+    annotations: {id_prefix: CASE, directory: cases}
+    slots: [type, title, description, status, tags, slug, offering, market, rubric_version, created_rubric_version, case_folder, loop_status, needs_human, open_items, absent_categories, orphaned_conditions, problems, completed_at, funding_decision, latest_review, finance, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Case}
+      slug: {required: true}
+      offering: {required: true}
+  Run:
+    description: "One session of the coach on a case."
+    annotations: {id_prefix: RUN, directory: runs}
+    slots: [type, title, description, status, tags, command, subject, run_id, mode, person, started_at, finished_at, judge_runs, plugin_version, case, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Run}
+      command: {required: true}
+      case: {required: true}
+      run_id: {required: true}
+  Part:
+    description: "One section of the business case, or one page of a long section."
+    annotations: {id_prefix: PART, directory: parts}
+    slots: [type, title, description, status, tags, section, lens, part, heading, items, case, run, evidence, decisions, next, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Part}
+      section: {required: true}
+      part: {required: true}
+      case: {required: true}
+  Evidence:
+    description: "One piece of evidence of a case."
+    annotations: {id_prefix: EV, directory: evidence}
+    slots: [type, title, description, status, tags, source, summary, method, grade, date, item_ids, produced_by_plugin, off_map, result_ref, supplied_by, grade_confirmed_by, case, run, source_results, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Evidence}
+      case: {required: true}
+  Decision:
+    description: "One decision record of a case."
+    annotations: {id_prefix: DECISION, directory: decisions}
+    slots: [type, title, description, status, tags, kind, role, question, options, choice, subject, item_id, shown, cited, outcome, name, date, case, run, review, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Decision}
+      case: {required: true}
+  StrategyEntry:
+    description: "One entry of the strategy register, with its confirm records."
+    annotations: {id_prefix: SD, directory: strategy}
+    slots: [type, title, description, status, tags, category, choice, rejected_alternative, evidence_text, source, recorded_by, date, reason, change_source, confirmed, case, run, supersedes, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: StrategyEntry}
+      category: {required: true}
+      case: {required: true}
+  Condition:
+    description: "One condition of the plan, with its marks."
+    annotations: {id_prefix: CONDITION, directory: conditions}
+    slots: [type, title, description, status, tags, text, evidence_text, source, recorded_by, date, reason, change_source, marked, case, run, supports, supersedes, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Condition}
+      text: {required: true}
+      case: {required: true}
+  Note:
+    description: "One note of the strategy."
+    annotations: {id_prefix: NOTE, directory: notes}
+    slots: [type, title, description, status, tags, text, source, failed_tests, reason, recorded_by, date, case, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Note}
+      case: {required: true}
+  Figure:
+    description: "One money figure, with its confirm records."
+    annotations: {id_prefix: FIGURE, directory: figures}
+    slots: [type, title, description, status, tags, kind, amount, written_as, currency, scenario, item_id, quote, source, stream, months, reason, recorded_by, date, confirmed, case, run, evidence, replaces, restates, supersedes, figure_parts, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Figure}
+      kind: {required: true}
+      case: {required: true}
+  Finance:
+    description: "The numbers that code computed from the figures of a case."
+    annotations: {id_prefix: FINANCE, directory: finance}
+    slots: [type, title, description, status, tags, numbers, verdict_ceiling, case, run, figures, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Finance}
+      case: {required: true}
+  Review:
+    description: "One saved report of the independent judge."
+    annotations: {id_prefix: REVIEW, directory: reviews}
+    slots: [type, title, description, status, tags, report, written_by, investment_verdict, manifest_digest, item_verdicts, case, run, parts, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Review}
+      report: {required: true}
+      case: {required: true}
+
+slots:
+  case:
+    range: CaseLink
+    annotations: {targets: "Case", inverse_label: holds}
+  run:
+    range: RunLink
+    multivalued: true
+    annotations: {targets: "Run", inverse_label: wrote}
+  evidence:
+    range: EvidenceLink
+    multivalued: true
+    annotations: {targets: "Evidence", inverse_label: supports}
+  decisions:
+    range: DecisionLink
+    multivalued: true
+    annotations: {targets: "Decision", inverse_label: decides}
+  next:
+    range: PartLink
+    annotations: {targets: "Part", inverse_label: follows}
+  review:
+    range: ReviewLink
+    annotations: {targets: "Review", inverse_label: cited by decision}
+  parts:
+    range: PartLink
+    multivalued: true
+    annotations: {targets: "Part", inverse_label: has finding in}
+  supersedes:
+    range: SupersedableLink
+    annotations: {targets: "StrategyEntry Condition Figure", inverse_label: superseded by}
+  supports:
+    range: StrategyLink
+    multivalued: true
+    annotations: {targets: "StrategyEntry", inverse_label: supported by}
+  replaces:
+    range: FigureLink
+    multivalued: true
+    annotations: {targets: "Figure", inverse_label: replaced by}
+  restates:
+    range: FigureLink
+    multivalued: true
+    annotations: {targets: "Figure", inverse_label: restated by}
+  figures:
+    range: FigureLink
+    multivalued: true
+    annotations: {targets: "Figure", inverse_label: counted in}
+  funding_decision:
+    range: DecisionLink
+    annotations: {targets: "Decision", inverse_label: funds}
+  latest_review:
+    range: ReviewLink
+    annotations: {targets: "Review", inverse_label: latest review of}
+  finance:
+    range: FinanceLink
+    annotations: {targets: "Finance", inverse_label: finance of}
+  source_results:
+    range: UpstreamResultLink
+    multivalued: true
+    annotations: {targets: "jtbd:Result competitive-intelligence:Result", inverse_label: graded in}
+  case_folder: {}
+  category: {}
+  change_source: {}
+  command: {}
+  completed_at: {}
+  created_rubric_version: {}
+  currency: {}
+  date: {}
+  finished_at: {}
+  grade: {}
+  grade_confirmed_by: {}
+  heading: {}
+  item_id: {}
+  lens: {}
+  loop_status: {}
+  manifest_digest: {}
+  method: {}
+  name: {}
+  offering: {}
+  person: {}
+  plugin_version: {}
+  produced_by_plugin: {}
+  question: {}
+  reason: {}
+  recorded_by: {}
+  rejected_alternative: {}
+  report: {}
+  rubric_version: {}
+  run_id: {}
+  scenario: {}
+  section: {}
+  slug: {}
+  source: {}
+  started_at: {}
+  stream: {}
+  summary: {}
+  supplied_by: {}
+  text: {}
+  verdict_ceiling: {}
+  written_as: {}
+  market: {range: MarketKind}
+  mode: {range: RunMode}
+  part: {range: PartName}
+  role: {range: DecisionRole}
+  written_by: {range: ReviewWriter}
+  investment_verdict: {range: Verdict}
+  kind: {}
+  absent_categories:
+    range: AnyValue
+    multivalued: true
+  amount:
+    range: AnyValue
+  choice:
+    range: AnyValue
+  cited:
+    range: AnyValue
+  confirmed:
+    range: AnyValue
+    multivalued: true
+  evidence_text:
+    range: AnyValue
+    multivalued: true
+  failed_tests:
+    range: AnyValue
+    multivalued: true
+  figure_parts:
+    range: AnyValue
+    multivalued: true
+  item_ids:
+    range: AnyValue
+    multivalued: true
+  item_verdicts:
+    range: AnyValue
+  items:
+    range: AnyValue
+    multivalued: true
+  judge_runs:
+    range: AnyValue
+  marked:
+    range: AnyValue
+    multivalued: true
+  months:
+    range: AnyValue
+  needs_human:
+    range: AnyValue
+  numbers:
+    range: AnyValue
+  off_map:
+    range: AnyValue
+  open_items:
+    range: AnyValue
+    multivalued: true
+  options:
+    range: AnyValue
+    multivalued: true
+  orphaned_conditions:
+    range: AnyValue
+    multivalued: true
+  outcome:
+    range: AnyValue
+  problems:
+    range: AnyValue
+    multivalued: true
+  quote:
+    range: AnyValue
+  result_ref:
+    range: AnyValue
+  shown:
+    range: AnyValue
+    multivalued: true
+  subject:
+    range: AnyValue

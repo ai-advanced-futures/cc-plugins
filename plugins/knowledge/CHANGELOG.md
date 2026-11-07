@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.1
+
+### Changed
+- `BRAINS` of `knowledgelib/probe.py` has the pair `business-case` with `scripts/bc_graph.py`, so the manifest check, `K-fresh`, `forget` and the remote save code accept the graph `business-case` (STORY-89). Before, `knowledge.py check` of that graph gave the `K-manifest` ERROR "is not the pair of a known brain".
+
 ## 1.5.0
 
 ### Changed

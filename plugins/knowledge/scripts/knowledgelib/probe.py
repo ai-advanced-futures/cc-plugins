@@ -19,6 +19,7 @@ OWN_ROOT = Path(__file__).resolve().parents[2]  # the knowledge plugin, as own_r
 # The known pairs of plugin and save_code (issue #829). A PR that adds a brain plugin adds its pair here.
 BRAINS = {
     "architecture": "scripts/adr.py",
+    "business-case": "scripts/bc_graph.py",
     "business-domain": "scripts/ddd.py",
     "competitive-intelligence": "scripts/ci_graph.py",
     "jtbd-market-discovery": "scripts/jtbd_graph.py",

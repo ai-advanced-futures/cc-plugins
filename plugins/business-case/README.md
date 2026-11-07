@@ -14,6 +14,7 @@ The plugin needs:
 
 - **`uv`**, because the coach calls `uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py"`. The script needs no package.
 - **`python3` 3.9 or later**, for the 3 hooks (see "How it runs, and its limits").
+- **The `knowledge` plugin**, for the case graph (see "The case graph"). The save code `scripts/bc_graph.py` also needs `uv`, because it runs with `pyyaml` and `jsonschema`.
 - **Claude Code 2.1.295 or later**, because the hooks use `"onFailure": "block"`.
 - **The evidence plugins**, when you want the evidence team to run them. Install each one with `claude plugin install <plugin>@cc-plugins`: `jtbd-market-discovery`, `competitive-intelligence`, `pricing`, `product-finance` and `gtm`. `value-ip` is optional and comes from outside this marketplace.
 
@@ -141,6 +142,33 @@ The independent review reads the figures and the numbers and computes nothing. I
 ## Automated mode
 
 Automated mode covers intake, mapping and the independent review only. In mapping it also has the figures proposed and records each one code accepts, but it never confirms one. An automated re-run on an existing case copies the proposal only into the sections that still matched the template before it began. It records only the strategy's claims the case does not already hold, then skips the rest of intake. It records no decision. It ends with `DONE: business-case` and writes `business-case-handoff.json`, which names the open items. A run that stops short prints `FAILED: business-case — <cause>` in place of the DONE line; ADR-003 lists each stop. The run takes its values from the arguments: `/business-case:build <proposal> --automated --offering <name> --market <market> [--strategy <path>]`. When an argument is missing, the run makes no case. Code refuses each decision in an automated run, because every decision needs a person, so a run with no person (`claude -p`) works.
+
+## The case graph
+
+The plugin has the save code for a knowledge graph of its cases: the graph `business-case`, in the folder `docs/business-case/`. It follows the brain standard of the `knowledge` plugin. In this version no command, skill or agent calls the save code yet, so a run of the plugin does not write the graph. You call the save code yourself.
+
+The graph has 11 page types. The schema is `schema/business-case.yaml`. `scripts/gen-schema.sh` writes the JSON files next to it.
+
+| Type | Prefix | Folder | Holds |
+| --- | --- | --- | --- |
+| Case | `CASE` | `cases` | one business case: the case folder and its status |
+| Run | `RUN` | `runs` | one session of the coach on a case |
+| Part | `PART` | `parts` | one section of the business case, or one page of a long section |
+| Evidence | `EV` | `evidence` | one piece of evidence of a case |
+| Decision | `DECISION` | `decisions` | one decision record of a case |
+| StrategyEntry | `SD` | `strategy` | one entry of the strategy register, with its confirm records |
+| Condition | `CONDITION` | `conditions` | one condition of the plan, with its marks |
+| Note | `NOTE` | `notes` | one note of the strategy |
+| Figure | `FIGURE` | `figures` | one money figure, with its confirm records |
+| Finance | `FINANCE` | `finance` | the numbers that code computed from the figures of a case |
+| Review | `REVIEW` | `reviews` | one saved report of the independent review |
+
+Only `scripts/bc_graph.py` writes the graph. Do not edit a page by hand. Run it with `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/bc_graph.py" <operation>`. The operations are `init`, `upgrade`, `new`, `set`, `body`, `link`, `unlink`, `remove`, `resolve`, `verify`, `verify-case`, `regen`, `check`, `log` and `publish`. An operation exits with 0 when it succeeds, with 1 when the data is wrong, and with 2 when the input is wrong.
+
+- `publish --case DIR` writes the case folder `DIR` into pages. It works on a copy, runs `regen` and `check`, and moves the pages only when the check finds no ERROR. It leaves the case folder unchanged. When the project has no graph, it makes one and prints `INIT: docs/business-case/`. When git ignores the case folder, it writes no page and prints a `PRIVATE:` line that says what to add to the ignore file of git. The graph would show a private case otherwise.
+- `check` runs the brain check. Its rules are `BC-schema`, `BC-id`, `BC-link`, `BC-required`, `BC-case`, `BC-run`, `BC-alias`, `BC-part`, `BC-source`, `BC-fresh`, `BC-upstream` and `BC-stale`. `BC-fresh` and `BC-upstream` give a WARN. `BC-upstream` gives a SKIP when the `knowledge` plugin is not there.
+- `verify PAGE --by human:<login>` and `verify-case CASE --by human:<login>` record that a person confirmed a page, or a case and each page of it.
+- An Evidence page links to the Result page of the graph of `jtbd-market-discovery` when the run file names that page.
 
 ## How it runs, and its limits
 
