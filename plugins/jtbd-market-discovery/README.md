@@ -2,13 +2,21 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.8.0
+**Version:** 1.9.0
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.8.0
+## What's New in v1.9.0
 
-- A run now writes its output as the `jtbd` graph in `docs/jtbd/`. The agents `output-assembler` and `wtp-validator` call `jtbd_graph.py write-run` at the end of a run.
+- No agent runs code that the model writes. The agents have no `Bash` tool. The skills `discover` and `wtp-check` run the scripts (`uv run`) between the agent starts, and the agents read the result files.
+- The agents `orchestrator` and `wtp-check-runner` are gone. The `discover` skill runs the phases and the `wtp-check` skill runs the price check.
+- The skill starts the agents one at a time, in the foreground. A person's run works the same as before.
+- New scripts for phases 6 to 9 (`run_phase_6.py` to `run_phase_9.py`), `jtbd_state.py merge-needs` and `jtbd_state.py place-result`.
+- Each agent has a narrow `tools:` line: `Read, Write`, and `Glob` for `output-assembler` and `wtp-validator`.
+
+## What Was New in v1.8.0
+
+- A run now writes its output as the `jtbd` graph in `docs/jtbd/`. The skills `discover` and `wtp-check` call `jtbd_graph.py write-run` at the end of a run.
 - Three new skills: `setup`, `ask` and `learn`. A hook checks the graph after each write.
 - At the end of `discover`, `wtp-check` and `quick-validate`, the skill asks one question: "Learn these results?" On yes, `learn` confirms the pages.
 - Four files at the root of `.jtbd-market-discovery/` are not written any more: `job-statement.json`, `job-steps.json`, `customer-segments.json` and `final-output.json`. The graph holds the same values. Four files stay, because other plugins read them: `customer-needs.json`, `opportunity-scores.json`, `evc-analysis.json` and `wtp-validation.json`.
@@ -22,7 +30,7 @@ Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin gu
 ## What Was New in v1.6.0
 
 - Three skills replace the three commands: `discover`, `quick-validate` and `wtp-check`.
-- The skills ask you the questions. A subagent cannot ask, so the orchestrator writes a questions file and stops. The `discover` skill asks you, then starts the orchestrator again.
+- The skills ask you the questions. A subagent cannot ask, so an agent writes a questions file and stops. The `discover` skill asks you, then goes on with the phase.
 - Scripts run with `uv run`. Each script lists its own packages.
 - The plugin result file standard, its checker and its tests are in the plugin folder.
 - Seven defaults are registered in `result-file.json`. Each default that a run used is named in the result file.
@@ -93,7 +101,7 @@ The 10 phases:
 
 1. Job identification
 2. Job decomposition (12 to 15 universal steps)
-3. Need generation (80 to 100 needs, 4 agents in parallel)
+3. Need generation (80 to 100 needs, 4 agents, one at a time)
 4. Time-task analysis
 5. Survey design (optional)
 6. Opportunity scoring (ODI)
@@ -102,7 +110,7 @@ The 10 phases:
 9. WTP validation
 10. Output generation
 
-To continue a run, start `discover` again. The orchestrator reads `state.json` and starts at the first phase that is not complete.
+To continue a run, start `discover` again. The skill reads `state.json` and starts at the first phase that is not complete.
 
 ### quick-validate
 
@@ -129,16 +137,17 @@ Do you only need to test a price?
 
 ## How it works
 
-The `discover` skill asks the questions in your conversation. It starts the orchestrator (`agents/orchestrator.md`). The orchestrator starts one fresh agent for each phase. Each agent reads its inputs from disk, writes its output to `.jtbd-market-discovery/<session>/pN.json`, and ends.
+The `discover` skill asks the questions in your conversation. It runs the phases itself, and it starts one fresh agent for each phase, one at a time. Between the starts, it runs the scripts with `uv run`. Each agent reads its inputs from disk, writes its output to `.jtbd-market-discovery/<session>/pN.json`, and ends.
 
-- **Small context.** Each phase uses about 5 to 10 thousand tokens. A single agent that does all phases reaches about 143 thousand.
+- **Small context.** Each agent uses about 5 to 10 thousand tokens. A single agent that does all phases reaches about 143 thousand.
 - **Safe state.** The output of each phase is on disk. A run survives a context compaction.
-- **Questions.** At a checkpoint the orchestrator writes `questions.json` and ends with `QUESTIONS: <path>`. The skill asks you, writes `answers.json` and starts the orchestrator again.
+- **No model-written code.** No agent has `Bash`. A script gives each exact number, and the agent reads the result file.
+- **Questions.** At a checkpoint an agent writes `questions.json` and ends with `QUESTIONS: <path>`. The skill asks you, writes `answers.json` and goes on.
 - **No checkpoints.** A start with no `checkpoints` field never stops.
 
 The state folder `.jtbd-market-discovery/` can hold your survey data. Do not commit it.
 
-Phases 6 to 9 write a helper Python file in the session folder and run it with `uv run`. Claude Code asks you to approve each run.
+Phases 6 to 9 run a fixed script of the plugin with `uv run` (`run_phase_6.py` to `run_phase_9.py`). The skill runs it, and no agent writes code.
 
 ### Architecture
 

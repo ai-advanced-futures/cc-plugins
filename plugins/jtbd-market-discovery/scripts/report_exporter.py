@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["pandas>=1.3.0"]
+# dependencies = ["pandas==3.1.1"]
 # ///
 """
 Report Exporter - Structured CSV Output for JTBD Analysis

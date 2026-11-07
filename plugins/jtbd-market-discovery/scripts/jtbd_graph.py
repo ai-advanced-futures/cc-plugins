@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["pyyaml", "jsonschema"]
+# dependencies = ["pyyaml==6.0.3", "jsonschema==4.26.0"]
 # ///
 """jtbd_graph.py: the save code and the brain check of the jtbd graph.
 

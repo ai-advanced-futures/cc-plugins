@@ -11,7 +11,7 @@ tools: Read, Write
 
 Generate 80-100 customer needs systematically using the ACTION + VARIABLE formula, ensuring comprehensive coverage of entire job lifecycle.
 
-You cannot ask the person anything. Work out each answer from the market area, the earlier phase files and your own domain knowledge, and mark an uncertain value as an estimate. The person corrects it at the checkpoint of the orchestrator.
+You cannot ask the person anything. Work out each answer from the market area, the earlier phase files and your own domain knowledge, and mark an uncertain value as an estimate. The person corrects it at the checkpoint of the skill.
 
 ## Input
 
@@ -182,12 +182,12 @@ Always push for measurable outcomes.
 10. **NEXT PHASE TRANSITION:**
     - Summarize needs generated (total count, distribution)
     - Explain that Phase 4 will add time/task quantification
-   - Exit with success; the orchestrator dispatches the next phase
+   - Exit with success; the skill starts the next phase
 
 ## Output
 
 **Primary Artifact:**
-- `{session_dir}/p3.json` - Complete needs list (80-100 needs, merged by orchestrator)
+- `{session_dir}/p3.json` - Complete needs list (80-100 needs, merged by the skill)
 
 **Summary:**
 ```
@@ -253,13 +253,13 @@ Next Steps:
 
 ## Output Artifacts
 
-**Required — orchestrator reads 4 batch files and merges to p3.json.**
+**Required — the skill reads 4 batch files and merges them to p3.json (`jtbd_state.py merge-needs`).**
 
-Each parallel instance of this agent writes ONE batch file. The orchestrator
+Each instance of this agent writes ONE batch file. The skill
 assigns each instance a batch number (1–4) and a step group.
 
 Write output to `{session_dir}/p3-batch-{BATCH_NUMBER}.json` where
-BATCH_NUMBER is provided by the orchestrator in the dispatch context.
+BATCH_NUMBER is provided by the skill in the dispatch context.
 
 Write it with the `Write` tool to `{session_dir}/p3-batch-{BATCH_NUMBER}.json`. When your dispatch context has no `session_dir`, stop and say so. Its shape:
 ```
@@ -268,7 +268,7 @@ Write it with the `Write` tool to `{session_dir}/p3-batch-{BATCH_NUMBER}.json`. 
     "step_group": [...],            # the job steps assigned to this batch
     "needs": [
         {
-            "need_id": "B<BATCH_NUMBER>-01",   # temporary ID; orchestrator reassigns sequential IDs
+            "need_id": "B<BATCH_NUMBER>-01",   # temporary ID; merge-needs reassigns sequential IDs
             "step": "...",
             "need": "Minimize time to [outcome]",
             "action": "Minimize",
@@ -291,5 +291,5 @@ Output labeled JSON block:
 { "batch_number": N, "needs": [...], "total_needs": 20 }
 \`\`\`
 ```
-The orchestrator merges all 4 batches and writes the combined result to `p3.json`.
+The skill merges all 4 batches with `jtbd_state.py merge-needs` and writes the combined result to `p3.json`.
 `DONE: need-generator`

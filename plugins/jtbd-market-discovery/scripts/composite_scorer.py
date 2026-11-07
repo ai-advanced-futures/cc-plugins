@@ -11,11 +11,12 @@ Computes weighted composite scores for JTBD opportunities by combining:
   - Segment Score   (25%) — from p8.json size_percent × p9.json confidence weight
 
 Reads phase output files from a session directory and writes composite scores
-to stdout as JSON.  The output-assembler agent calls this script, then
-incorporates the result into final-output.json.
+to the file of --out (or to stdout as JSON, with no --out).  The skill discover
+runs this script before it starts the output-assembler agent, which reads the file
+and incorporates the result into final-output.json.
 
 Usage:
-    uv run ${CLAUDE_PLUGIN_ROOT}/scripts/composite_scorer.py --session-dir .jtbd-market-discovery/TIMESTAMP/
+    uv run ${CLAUDE_PLUGIN_ROOT}/scripts/composite_scorer.py --session-dir '<session_dir>' --out '<session_dir>/composite-scores.json'
 
 Author: Luis F. Amadeo (Chief Agentic Officer)
 License: MIT
@@ -80,7 +81,7 @@ def compute_composite_scores(session_dir: Path) -> list[dict[str, Any]]:
     # Best segment size_percent from p8
     segments = p8.get("segments", [])
     best_size_pct: float = max(
-        (float(s.get("size_percent", 0)) for s in segments), default=50.0
+        (float(s.get("size_percent") or 0) for s in segments), default=50.0
     )
 
     # Score each opportunity from p6
@@ -129,6 +130,11 @@ def main() -> None:  # pragma: no cover
         required=True,
         help="Absolute path to .jtbd-market-discovery/SESSION/ directory",
     )
+    parser.add_argument(
+        "--out",
+        default=None,
+        help="Write the scores to this file and print one summary line; with no value, print the JSON",
+    )
     args = parser.parse_args()
 
     session_dir = Path(args.session_dir)
@@ -138,10 +144,17 @@ def main() -> None:  # pragma: no cover
 
     try:
         results = compute_composite_scores(session_dir)
-        print(json.dumps(results, indent=2))
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
+    text = json.dumps(results, indent=2)
+    if args.out is None:
+        print(text)
+        return
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text, encoding="utf-8")
+    print(f"scored={len(results)}")
 
 
 if __name__ == "__main__":  # pragma: no cover

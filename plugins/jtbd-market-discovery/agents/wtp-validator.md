@@ -2,12 +2,12 @@
 name: wtp-validator
 description: Phase 9 execution - 6-layer WTP validation framework for pricing strategy
 model: sonnet
-tools: Read, Write, Glob, Bash(uv run *), Bash(git rev-parse *), Bash(date *)
+tools: Read, Write, Glob
 ---
 
 # WTP Validator Agent
 
-Read and list files with the Read and Glob tools, because a shell command for a read needs a permission that this agent does not hold.
+This agent runs no command. Read and list files with the Read and Glob tools.
 
 ## Purpose
 
@@ -79,44 +79,23 @@ Pricing model recommendations based on WTP analysis:
    - Price at: 10-30% of EVC (target 20%+ when market allows)
    - Strategy: Educate market on value creation
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/jtbd-core/platform-detection.md` with the Read tool to understand Claude Code vs Web paths.
-Agent script: scripts/wtp_validator.py (Claude Code, 5 layers) | AI validation 85% parity (Web)
+Read `${CLAUDE_PLUGIN_ROOT}/skills/jtbd-core/platform-detection.md` with the Read tool.
+Use the result file that the dispatch names (`wtp_results_path`). When the dispatch names none, estimate from the data in the dispatch and record the gap.
 
-Library calls: run the code blocks of the Claude Code Path from a helper file, because `uv run` installs the packages only for a file that lists them. Write the helper with the Write tool to `{session_dir}/helper-phase-9.py`, so that the project's own folders stay clean. Start it with a PEP 723 block (`# /// script`, then `# dependencies = ["pandas>=1.3.0", "numpy>=1.21.0"]`, then `# ///`), then `import sys` and `sys.path.insert(0, "${CLAUDE_PLUGIN_ROOT}")`, so that `from scripts.wtp_validator import ...` works. Run it as `uv run {session_dir}/helper-phase-9.py`.
+## Run setup
 
-## Plugin-run block
+This agent runs no command. The skill that starts it finds the folders, runs `scripts/run_phase_9.py` and, after this agent, writes the result file. The dispatch gives `session_dir`, `input_dir` (where `p7.json` and `p8.json` are) and, when the script ran, `wtp_results_path`.
 
-This section applies only when the dispatch context holds a fenced block with the info string `plugin-run` whose `command` is `jtbd-market-discovery:wtp-check`. The block holds `command`, `automated`, `answers_path`, `case`, `run_id` and `inputs_from`.
-
-When the orchestrator dispatches you as Phase 9 of the discover workflow, there is no such block. Then `input_dir` and `session_dir` are both the `session_dir` it passes, and this agent writes no result file: output-assembler writes the one for that run.
-
-With no block and no Phase 9 dispatch (a person's `/jtbd-market-discovery:wtp-check`), run `git rev-parse --show-toplevel` on its own for the git root. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py finished --base <git root>`: `input_dir` is the session it prints. Read `p7.json` and `p8.json` from `input_dir`.
-When it exits 1, no discover run has finished: halt, writing no `p9.json`, and write the result file with `results: []` and the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "no finished jtbd discover session: none holds p7.json and p8.json"}`.
-Otherwise run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py wtp-folder --base <git root>`: `session_dir` is the folder it prints. A person's run writes into no session that it did not start, because that session belongs to another run. The result file is still written, with no `run_id` part.
-When the script fails to import a package, stop and report a gap that names the missing package; never make up its output, because a made-up number reaches the result file as a real one.
-
-In a `jtbd-market-discovery:wtp-check` plugin run:
-
-- Read an earlier run's files only through `inputs_from`. The upstream session is `.jtbd-market-discovery/<run_id>/` under the git root, where `<run_id>` is the `run_id` of the `inputs_from` entry whose `plugin` is `jtbd-market-discovery`. Use it as `input_dir` only when all four hold:
-  1. the `run_id` in that session's `state.json` equals the entry's `run_id`;
-  2. the `run.run_id` of the file at the entry's `result_file` equals the entry's `run_id`;
-  3. the `case` in that session's `state.json` equals the block's `case`;
-  4. the `run.case` of that result file equals the block's `case`.
-- When any of the four fails, read no file of that session. Write no willingness-to-pay or customer-value result, and record two gaps: `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "upstream jtbd run_id or case does not match inputs_from"}` and `{"kind": "customer_value", "label": "Customer value", "why": "upstream jtbd run_id or case does not match inputs_from"}`.
-- When `inputs_from` has no `jtbd-market-discovery` entry, there is no `input_dir`: work from the answers alone. Write no `customer_value` result; record the gap `{"kind": "customer_value", "label": "Customer value", "why": "inputs_from names no jtbd-market-discovery run"}`.
-  When the answers give no `target_price`, write no willingness-to-pay result either; record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "no jtbd-market-discovery run and no price in the answers"}`.
-- Read `p7.json` and `p8.json` from `input_dir`. Your own session is `.jtbd-market-discovery/<run_id of the block>/`: run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py select --base <git root> --run-id <run_id> --case <case>` and use the folder it prints as `session_dir`. Write `p9.json` and `competitive-pricing.json` to that own session.
-  This run writes nothing into the upstream session, because that session belongs to the run that made it. When the script fails to import a package, stop and report a gap that names the missing package; never make up its output, because a made-up number reaches the result file as a real one.
-- End the run with the result file written to `.jtbd-market-discovery/results/` (see `## Result file`).
+- As Phase 9 of the discover workflow (`skills/discover/SKILL.md`), `input_dir` and `session_dir` are both the `session_dir` of the dispatch, and this agent writes no result draft: `output-assembler` writes the one for that run.
+- In a run of `/jtbd-market-discovery:wtp-check` (a person's run or a plugin run), the skill `skills/wtp-check/SKILL.md` finds `input_dir` and `session_dir`, and checks the upstream run (`run_id` and `case` against `inputs_from`). When the dispatch has no `input_dir`, skip the reads of `p7.json` and `p8.json`, and work from the answers alone. This agent writes `p9.json` and `competitive-pricing.json` to `session_dir`, and nothing into the upstream session, because that session belongs to the run that made it. The skill then follows `## Result file`.
 
 ## Workflow
 
 1. **ORIENT:**
    - Read `{input_dir}/p8.json` for segment WTP
    - Read `{input_dir}/p7.json` for value benchmarks
-   - (`input_dir` is set in `## Plugin-run block`. Skip both reads when there is no `input_dir`.)
+   - (`input_dir` is set in `## Run setup`. Skip both reads when there is no `input_dir`.)
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/phase-9-wtp-validation/wtp-framework.md` with the Read tool
-   - Detect platform (Claude Code vs Web)
 
 2. **GATHER COMPETITIVE PRICING DATA:**
 
@@ -138,18 +117,10 @@ In a `jtbd-market-discovery:wtp-check` plugin run:
 
 3. **LOAD WTP SURVEY DATA:**
 
-   **Claude Code Path:**
-   - Take the WTP survey CSV from `wtp_survey_path` in your dispatch context or the answers. With no value, write the gap `willingness_to_pay` and work from the estimates of Phase 8. It holds:
-     - Respondent ID
-     - Segment ID
-     - WTP estimate ($/month)
-     - Van Westendorp 4 questions:
-       - "Too cheap" price
-       - "Bargain" price
-       - "Getting expensive" price
-       - "Too expensive" price
-   - Validate completeness
-   - Document: Response count per segment
+   **With `wtp_results_path`:**
+   - The skill ran `scripts/run_phase_9.py` on the WTP survey CSV (the column `wtp_monthly`) and wrote its numbers to the file `wtp_results_path` (`{session_dir}/wtp-results.json`). Read it.
+   - With no `wtp_results_path`, there was no survey file, or the script failed: write the gap `willingness_to_pay` and work from the estimates of Phase 8.
+   - Document: Response count
 
    **Claude.ai Web Path:**
    - Take the WTP summary statistics from the dispatch context:
@@ -163,19 +134,9 @@ In a `jtbd-market-discovery:wtp-check` plugin run:
 
 4. **LAYER 1: STATISTICAL OUTLIER DETECTION:**
 
-   **Claude Code Path:**
-   ```python
-   import pandas as pd
-   from scripts.wtp_validator import WTPValidator
+   **With `wtp_results_path`:** read the file. `layer1` holds the result of the outlier layer (the number of outliers removed and the clean median WTP). Use these numbers as they are, and estimate none of them, because the script is the source of each number.
 
-   wtp_data = pd.read_csv('survey_wtp.csv')['wtp_monthly']
-   validator = WTPValidator(wtp_data, evc=300)
-   result = validator.layer1_outlier_detection()
-   print(f"Outliers removed: {result['outliers_removed']}")
-   print(f"Clean median WTP: ${result['clean_median']:.2f}")
-   ```
-
-   Script removes:
+   The script removes:
    - Responses >3 SD from segment mean
    - Zero or negative WTP (invalid)
    - Unrealistic high WTP (>$1000/month for consumer product)
@@ -207,21 +168,9 @@ In a `jtbd-market-discovery:wtp-check` plugin run:
 
 6. **LAYER 3: VAN WESTENDORP ANALYSIS (Deferred — v1.2):**
 
-   **Claude Code Path:**
-   ```python
-   import pandas as pd
-   from scripts.wtp_validator import WTPValidator
+   **With `wtp_results_path`:** Van Westendorp PSM is planned for v1.2. Read `validation` in the file: it holds the 5-layer validation (`overall_passed`, `validated_wtp_range` and the result of each layer). `monthly_evc` is the monthly EVC the script used. Use these numbers as they are.
 
-   # Note: Van Westendorp PSM is planned for v1.2.
-   # Use validate_all_layers() for the current 5-layer validation.
-   wtp_data = pd.read_csv('survey_wtp.csv')['wtp_monthly']
-   validator = WTPValidator(wtp_data, evc=300)
-   report = validator.validate_all_layers()
-   print(f"Overall: {'PASSED' if report['overall_passed'] else 'FAILED'}")
-   print(f"WTP range: ${report['validated_wtp_range'][0]:.2f}–${report['validated_wtp_range'][1]:.2f}")
-   ```
-
-   Script calculates:
+   The planned layer calculates:
    - Cumulative frequency curves for 4 thresholds
    - Optimal Price Point (OPP): Intersection of "bargain" and "expensive"
    - Indifference Price Point (IPP): Intersection of "cheap" and "expensive"
@@ -434,15 +383,6 @@ In a `jtbd-market-discovery:wtp-check` plugin run:
 
 11. **GENERATE PRICING STRATEGY REPORT:**
 
-    **Claude Code Path:**
-    - Export Excel pricing strategy report:
-      - Sheet 1: Executive summary
-      - Sheet 2: WTP validation by segment
-      - Sheet 3: Competitive analysis
-      - Sheet 4: Pricing recommendations
-      - Sheet 5: Revenue projections
-
-    **Claude.ai Web Path:**
     - Create markdown pricing strategy doc
     - Include tier recommendations
     - Document confidence levels
@@ -452,16 +392,15 @@ In a `jtbd-market-discovery:wtp-check` plugin run:
     - Show pricing recommendations summary
     - Explain that Phase 10 will test pricing with value proposition
     - Explain importance of pricing experiments
-    - Exit with success; the orchestrator dispatches the next phase
+    - Exit with success; the skill starts the next phase
 
 ## Output
 
 **Primary Artifact:**
 - `{session_dir}/p9.json` — Validated WTP with 6-layer analysis and pricing strategy
 
-**Secondary Artifacts (Claude Code only):**
-- `pricing-strategy-report.xlsx` - Detailed Excel pricing plan
-- `psm-plot.png` - Van Westendorp visualization per segment
+**Other files:**
+- `{session_dir}/wtp-results.json` — the numbers of the script (the skill runs it)
 - `{session_dir}/competitive-pricing.json` — Competitive benchmark data
 
 **Summary:**
@@ -530,31 +469,23 @@ Next Steps:
 
 ## Result file
 
-Follow this section only in a run of `jtbd-market-discovery:wtp-check`: a person's run of `/jtbd-market-discovery:wtp-check`, or a run of `agents/wtp-check-runner.md`. As Phase 9 of the discover workflow, write none.
+The skill `skills/wtp-check/SKILL.md` follows this section in every run of `jtbd-market-discovery:wtp-check`: a person's run of `/jtbd-market-discovery:wtp-check`, or a plugin run. As Phase 9 of the discover workflow, write none.
 
-Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py ...`, one command per Bash call. Run no inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc), write no script to run except the helper file of Library calls, and write every file with the Write tool, because the permission of this agent covers only the plugin's own scripts.
+The skill reads this section and writes the draft with the Write tool. Write the draft at the end of every run, interactive or automated, finished or partial; a person's run writes it with no `run_id` part. A run that produced nothing still writes it, with its `gaps`.
 
-Write one result file at the end of every run, interactive or automated, finished or partial; a person's run writes it with no `run_id` part. A run that produced nothing still writes it, with its `gaps`.
-
-**Where.** Result files go in `.jtbd-market-discovery/results/` under the git root. `git rev-parse --show-toplevel` gives the git root; outside a repository, use the working directory.
-Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py <finished_at> <command> '<run.subject>' <run_id>` on its own, after `run.subject` is written and `finished_at` is read, and leave out `<run_id>` when the run has none. Put `run.subject` in single quotes, with each `'` in it written as `'\''`. Its output is the file name: use it as printed.
-When the name call is denied or fails, set `run.subject` to `name call denied` and name the file `<finished_at as YYYYMMDDTHHMMSSZ>-<command part>-name-call-denied-<run_id>.json`, where `<command part>` is `wtp-check`, leaving out `-<run_id>` when the run has none; never build a name from another subject.
-In that file, record the gap `{"kind": "<a result kind of this command>", "label": "File name", "why": "name call denied; subject: <the subject the run would have written>"}`.
-A denied or failed tool call never ends the run without the result file: write it with what the run has, and record each result a denied call kept from the run as a gap whose `why` names that call.
-
-A run never overwrites an earlier file. An overwrite destroys the record of that run, because the file is that record. When the name is taken and the run has no `run_id`, add `-2` before `.json`, then `-3`, and so on. When the name is taken and the run has a `run_id`, stop, because each run has its own `run_id` and a shared one would make one file name stand for two runs.
+**Where.** Write the draft to `{session_dir}/result-draft.json` (the skill names the folder for a halt). The skill then runs `jtbd_state.py place-result`. That script sets `run.finished_at`, names the file, and writes it to `.jtbd-market-discovery/results/` under the git root. It never overwrites an earlier file, because the file is the record of that run. Do not write `run.finished_at`, a file name, or a time, because the script reads the clock.
+A failed read never ends the run without the draft: write it with what the run has, and record each result a failed read kept from the run as a gap whose `why` names that read.
 
 **Top level.** `schema` is `"plugin-result/1"`, `plugin` is `"jtbd-market-discovery"`, `plugin_version` is the `version` in `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` (read from the file, because an example holds an old version), and `command` is `"jtbd-market-discovery:wtp-check"`.
-`run` holds `started_at` (the time the run read first) and `finished_at` (read from `date -u +%Y-%m-%dT%H:%M:%SZ` at the end; never a made-up time), `mode`, `subject` (the target segment, else the upstream run's `run.subject`, else `"no subject given"`), `case` and `run_id` from the block, and `answers` (the `answers_path`).
-When a `date` call is denied or fails, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py now` on its own and use its output as that time.
+`run` holds `started_at` (the `started_at` that the skill read first), `mode`, `subject` (the target segment, else the upstream run's `run.subject`, else `"no subject given"`), `case` and `run_id` from the block, and `answers` (the `answers_path`). Leave out `finished_at`: `place-result` sets it.
 `run.mode` is `automated` only when a plugin-run block is present, and `interactive` otherwise. With no plugin-run block, leave out `case`, `run_id` and `answers`, because a file the run read can hold the values of another run. Leave out a key that has no value.
-`run` holds only `started_at`, `finished_at`, `mode` and `subject` and, under a plugin-run block, `case`, `run_id` and `answers`; put no other key in it.
+`run` holds only `started_at`, `mode` and `subject` and, under a plugin-run block, `case`, `run_id` and `answers`; put no other key in it. `place-result` adds `finished_at`.
 
 **Results.**
 
 - One `willingness_to_pay` result per segment of `p9.json` that has a number (a segment with none gets a gap, not a result): `value` `{"point": <validated_wtp>, "low": <wtp_range[0]>, "high": <wtp_range[1]>, "segment": "<name>"}`, copied as written, because the phase file is the source of each number; never computed or estimated. `unit` `"USD"`, `period` `"month"`, `detail` `.jtbd-market-discovery/<session folder name>/p9.json`.
 - One `customer_value` result from `p7.json` of `input_dir`: `value` is `total_annual_evc` of the `rank: 1` opportunity, `unit` `"USD"`, `period` `"year"`, `detail` `.jtbd-market-discovery/<upstream run_id>/p7.json`, and `cites` the upstream result file's `customer_value` result when it has one.
-- `detail` always points into a session folder. In a person's run, the result file still goes to `.jtbd-market-discovery/results/`; the `willingness_to_pay` `detail` names the folder `wtp-folder` printed, and the `customer_value` `detail` names `p7.json` of `input_dir`, `.jtbd/<session_id>/p7.json` when that is an old session.
+- `detail` always points into a session folder. In a person's run, the result file still goes to `.jtbd-market-discovery/results/`; the `willingness_to_pay` `detail` names the folder of `session_dir`, and the `customer_value` `detail` names `p7.json` of `input_dir`, `.jtbd/<session_id>/p7.json` when that is an old session.
 
 **Sources.** A value from the answers file is `{"type": "person", "ref": "answers:<input>", "date": null}` when `settled_by` is `person`, and `{"type": "default", "ref": "answers:<input>", "date": null}` when it is `recommended`. A survey file is a `customer_data` source with the file as `ref`. What the six layers inferred is a `model` source.
 A value built on the upstream run carries the defaults of the upstream result of the same kind. Copy that result's `defaults` strings, such as `labor_rate = 75`, into this result's `defaults`. Copy each of its sources whose type is `default` into this result's `sources`.
@@ -564,7 +495,7 @@ In a person's run, a value the run takes from another plugin's file, or from an 
 In a person's run, an answer the person picked from an option labelled as the default or as recommended is a `default` source with `ref` `asked in this run: <input>`, and that default's marker goes in `defaults`.
 A source `type` is one of `customer_data`, `published`, `person`, `model` or `default`, never `defaults`, because `defaults` names the list of marker strings, not a type. `rests_on_default` is true when a source has type `default`. It is also true when the `defaults` list of marker strings is not empty; otherwise it is false.
 
-**Gaps.** `## Plugin-run block` names the upstream gaps. A layer skipped for lack of data is not a gap: say so in `method`.
+**Gaps.** The `## Plugin-run block` of `skills/wtp-check/SKILL.md` names the upstream gaps. The examples below show the finished file: the `finished_at` in them is the value that `place-result` adds to the draft. A layer skipped for lack of data is not a gap: say so in `method`.
 
 A run built on the upstream session, with one answer:
 
@@ -572,7 +503,7 @@ A run built on the upstream session, with one answer:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.8.0",
+  "plugin_version": "1.9.0",
   "command": "jtbd-market-discovery:wtp-check",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",
@@ -631,7 +562,7 @@ A run whose upstream entry does not match:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.8.0",
+  "plugin_version": "1.9.0",
   "command": "jtbd-market-discovery:wtp-check",
   "run": {
     "started_at": "2026-10-31T11:00:00Z",
@@ -652,18 +583,7 @@ A run whose upstream entry does not match:
 
 ## Graph write
 
-Follow this section only in a run of `jtbd-market-discovery:wtp-check`. As Phase 9 of the discover workflow, write no page: output-assembler writes the pages of that run.
-
-After the result file exists, write the pages of the run with the save code. Run `git rev-parse --show-toplevel` on its own for the git root, then run this command on its own, with the paths as plain text and not in quotes:
-
-```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root <git root> write-run --session-dir {session_dir} --result-file <the result file>
-```
-
-- When the run halted and made no session folder, leave out `--session-dir`. The command writes one Run page from the result file.
-- The Run page links to the Run page of the discover run that you read (`input_dir`). When that discover session has no pages yet, the command writes them first.
-- Write no page with the `Write` tool, because the save code checks each page and gives each ID.
-- When the command exits 1 or 2, write the line `GRAPH: FAILED <exit code> <first error line>` before your last line. Do not report that the graph holds the results, because the next session trusts that report. The result file is already written, so no reader loses its input.
+The skill `skills/wtp-check/SKILL.md` writes the pages of a `wtp-check` run (`jtbd_graph.py write-run`) after `place-result` has written the result file. The Run page links to the Run page of the discover run that was read (`input_dir`); when that discover session has no pages yet, the command writes them first. This agent writes no page and runs no command, because the save code checks each page and gives each ID. As Phase 9 of the discover workflow, `output-assembler` and the skill `discover` write the pages.
 
 ## Success Criteria
 
@@ -703,11 +623,11 @@ uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root <git root> write-run -
 
 ## Output Artifacts
 
-**Required — orchestrator reads this for Phase 10 (final output assembly).**
+**Required — the skill reads this for Phase 10 (final output assembly).**
 
 Write phase output to `{session_dir}/p9.json` before signaling completion.
 
-Write it with the `Write` tool to `{session_dir}/p9.json`, the `session_dir` that `## Plugin-run block` names for this run: the one the orchestrator passes in Phase 9, the `select` folder in a plugin run, or the `wtp-folder` folder in a person's `/jtbd-market-discovery:wtp-check`. Make no other folder for it, because a second folder splits the files of one run. Its shape:
+Write it with the `Write` tool to `{session_dir}/p9.json`, the `session_dir` that `## Run setup` names for this run. Make no other folder for it, because a second folder splits the files of one run. Its shape:
 ```
 {
     "validation_result": "PASS",       # PASS | CHALLENGED | FAIL

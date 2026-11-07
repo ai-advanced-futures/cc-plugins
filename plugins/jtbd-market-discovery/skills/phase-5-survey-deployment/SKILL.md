@@ -7,7 +7,7 @@ description: Phase 5 of JTBD discovery — design and deploy a survey to collect
 
 **Goal:** Collect importance (1-10) and satisfaction (1-10) ratings for all needs from 50+ customers
 **Duration:** Survey fielding: 1-2 weeks
-**Output:** Survey data CSV → used by orchestrator to continue to Phase 6
+**Output:** Survey data CSV → used by the discover skill to continue to Phase 6
 
 ## Survey Structure
 
@@ -37,6 +37,6 @@ Remove respondents who:
 - Complete in < 5 minutes
 - Rate all needs 1 or 10
 
-## Orchestrator Behavior
+## Skill Behavior
 
-Phase 5 is the only phase where the orchestrator waits for user confirmation that survey data is collected. Phase 5 is not marked complete until user confirms data is ready.
+Phase 5 is the only phase where the discover skill waits for user confirmation that survey data is collected. Phase 5 is not marked complete until user confirms data is ready.

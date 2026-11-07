@@ -2,12 +2,12 @@
 name: evc-calculator
 description: Phase 7 execution - Calculate Economic Value to Customer using 4-dimension framework
 model: sonnet
-tools: Read, Write, Bash(uv run *), Bash(git rev-parse *)
+tools: Read, Write
 ---
 
 # EVC Calculator Agent
 
-Run one command per Bash call.
+This agent runs no command. The skill that starts it runs `scripts/run_phase_7.py` between the two steps of this agent. The dispatch has a `step` field: `inputs` or `report`.
 
 ## Purpose
 
@@ -18,6 +18,7 @@ Calculate Economic Value to Customer (EVC) by quantifying dollar value across fo
 - **opportunity_scores**: Top opportunities from Phase 6
 - **baseline_metrics**: Time/task data from Phase 4
 - **cost_assumptions**: Labor rates, error costs, revenue impact (from user)
+- **step**: `inputs` or `report`
 
 ## Injected Directives
 
@@ -42,272 +43,112 @@ Economic Value to Customer (4 Dimensions):
 
 Total EVC = Sum of all 4 dimensions
 
-**Script interface note:** `scripts/evc_calculator.py` accepts per-occurrence values.
-Pre-multiply by Frequency before calling the script:
-- `add_time_savings(hours_saved=hours_per_week * 52, hourly_rate=rate)` (annual)
-- `add_error_reduction(errors_prevented=count_per_month * 12, cost_per_error=cost)` (annual)
-- `add_revenue_increase(additional_revenue=per_deal * deals_per_year, margin=rate)` (annual)
-Store the annualized total in `total_annual_evc` in p7.json.
+The script does the multiplication. You give it annual quantities (hours per year, errors per year, revenue per year, a probability, a prevention rate and a loss), and it gives the dollar values back.
 </evc_framework>
 
 <platform_detection>
-Read `${CLAUDE_PLUGIN_ROOT}/skills/jtbd-core/platform-detection.md` with the Read tool to understand Claude Code vs Web paths.
-Agent script: scripts/evc_calculator.py (Claude Code) | AI approximation 90% parity (Web)
-
-Library calls: run the code blocks of the Claude Code Path from a helper file, because `uv run` installs the packages only for a file that lists them. Write the helper with the Write tool to `{session_dir}/helper-phase-7.py`, so that the project's own folders stay clean. Start it with a PEP 723 block (`# /// script`, then `# dependencies = []`, then `# ///`), then `import sys` and `sys.path.insert(0, "${CLAUDE_PLUGIN_ROOT}")`, so that `from scripts.evc_calculator import ...` works. Run it as `uv run {session_dir}/helper-phase-7.py`.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/jtbd-core/platform-detection.md` with the Read tool.
+Use the result file that the dispatch names. In step `report`, never estimate a number that `evc-results.json` gives, because the script computed it and an estimate would differ.
 </platform_detection>
 
-## Workflow
+## Step `inputs`
+
+Read the sources, decide the assumptions and the quantities, and write `{session_dir}/evc-input.json`. Do not calculate a dollar value in this step, because `run_phase_7.py` calculates each one.
 
 1. **ORIENT:**
-   - Read `{session_dir}/p6.json` to get top opportunities
+   - Read `{session_dir}/p6.json` to get the top opportunities
    - Read `{session_dir}/p4.json` for time/task data
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/phase-7-evc-calculation/evc-framework.md` with the Read tool
-   - Detect platform (Claude Code vs Web)
 
 2. **GATHER COST ASSUMPTIONS:**
 
    The economic parameters are:
-   - **Labor Rate:** Hourly cost of customer's time
-     - Example: $75/hr for mid-level professional
-     - Example: $150/hr for senior executive
-   - **Error Costs:** Average cost per error/mistake
-     - Example: $500 for data entry error
-     - Example: $5,000 for compliance violation
-   - **Revenue Context:** Average deal size or transaction value
-     - Example: $50K average sale
-     - Example: $2K average order
-   - **Risk Tolerance:** Cost of worst-case scenarios
-     - Example: $100K for security breach
-     - Example: $50K for service downtime
+   - **Labor Rate:** Hourly cost of customer's time (example: $75/hr for a mid-level professional)
+   - **Error Costs:** Average cost per error (example: $500 for a data entry error)
+   - **Revenue Context:** Average deal size or transaction value (example: $2K average order)
+   - **Risk Tolerance:** Cost of worst-case scenarios (example: $100K for a security breach)
 
-   In a plugin run the orchestrator gives the answers for `labor_rate`, `average_error_cost`, `average_revenue`, `revenue_margin` and `risk_tolerance` in your dispatch context. Use an answered value as given. When the run has `checkpoints: true` and a value is neither answered nor in the answers file, write an item for that input to `{session_dir}/questions.json` (the shape of an item in `${CLAUDE_PLUGIN_ROOT}/questions/discover.json`), end your reply with the line `QUESTIONS: {session_dir}/questions.json`, and stop. With no `checkpoints` field, use the default.
+   The skill gives the answers for `labor_rate`, `average_error_cost`, `average_revenue`, `revenue_margin` and `risk_tolerance` in your dispatch context. Use an answered value as given. When the run has `checkpoints: true` and a value is neither answered nor in the answers file, write an item for that input to `{session_dir}/questions.json` (the shape of an item in `${CLAUDE_PLUGIN_ROOT}/questions/discover.json`), end your reply with the line `QUESTIONS: {session_dir}/questions.json`, and stop. With no `checkpoints` field, use the default.
    - When nobody gives a labor rate, use `labor_rate = 75` (USD per hour).
    - When nobody gives an error cost, use `average_error_cost = 50` (USD per error).
    - When nobody gives a deal size, use `average_revenue = 5000` (USD per sale).
    - When nobody gives a margin, use `revenue_margin = 0.20` (share of revenue).
    - When nobody gives a risk tolerance, use `risk_tolerance = moderate`.
-   - Record how each of the five was settled in p7.json under `assumption_sources`, one plain string per input such as `"default"`: `person` or `recommended` (from the answers, by their `settled_by`), `asked` (the person answered in this run) or `default`.
-
-   **Claude Code Path:**
-   - Save assumptions to `{session_dir}/evc-assumptions.json`
-   - Validate ranges (sanity check)
-
-   **Claude.ai Web Path:**
-   - Document assumptions in conversation
-   - Note: Calculations will be approximate
+   - Record how each of the five was settled under `assumption_sources`, one plain string per input such as `"default"`: `person` or `recommended` (from the answers, by their `settled_by`), `asked` (the person answered in this run) or `default`.
 
 3. **SELECT TOP NEEDS FOR EVC:**
-   - Focus on top 15-20 opportunities (score ≥ 12)
+   - Focus on the top 15-20 opportunities (score ≥ 12)
    - Prioritize needs with quantifiable impact
-   - Skip purely qualitative needs (e.g., "feel confident")
-   - Document: Selected needs count
+   - Skip purely qualitative needs (for example, "feel confident")
 
-4. **CALCULATE TIME VALUE:**
+4. **ESTIMATE THE QUANTITIES OF EACH NEED:**
 
-   For each need with time impact:
-
-   **Claude Code Path:**
-   ```python
-   from scripts.evc_calculator import EVCCalculator
-
-   calc = EVCCalculator()
-   # Time savings: hours_saved per month × hourly rate
-   calc.add_time_savings(hours_saved=13.0, hourly_rate=75)
-   result = calc.calculate_total_evc(differentiation_level='medium')
-   print(f"Time value: ${result['time_savings']:,.0f}/month")
-   ```
-
-   **Claude.ai Web Path:**
-   - For each need:
-     - Identify baseline time from Phase 4
-     - Estimate time saved if need is perfectly met
-     - Calculate: Time_Saved × Labor_Rate × Frequency
-     - Document calculation in table
+   For each selected need, estimate the annual quantities from the baseline of Phase 4. Give a short `basis` that says where each number comes from.
 
    Example:
    - Need: "Minimize time to identify traffic delays"
-   - Baseline: 15 min/day checking multiple apps
-   - Potential: 2 min/day with perfect solution
-   - Savings: 13 min/day × 260 days/year = 56 hours/year
-   - Value: 56 hrs × $75/hr = $4,200/year
+   - Baseline: 15 min/day checking multiple apps; potential: 2 min/day
+   - Savings: 13 min/day × 260 days/year = 56 hours/year → `hours_saved_per_year: 56`
+   - Errors: 20% of estimates are off by 10+ min; with the need met, 5%. 3 prevented errors/month → `errors_avoided_per_year: 36`
+   - Revenue: no revenue link → `revenue_increase_per_year: 0`
+   - Risk: 2% chance of a missed critical meeting, 90% prevented, loss $10K → `risk_probability: 0.02`, `prevention_rate: 0.9`, `risk_impact: 10000`
 
-5. **CALCULATE ERROR REDUCTION VALUE:**
-
-   For each need related to accuracy/quality:
-
-   **Claude Code Path:**
-   - Script identifies error-prone tasks from baseline
-   - Calculates prevented errors × error cost
-   - Outputs error-reduction value per need
-
-   **Claude.ai Web Path:**
-   - Identify error frequency from Phase 4
-   - Estimate error reduction if need is met
-   - Calculate: Errors_Prevented × Cost_Per_Error × Frequency
-
-   Example:
-   - Need: "Ensure accuracy of route time estimates"
-   - Baseline: 20% of estimates are off by 10+ min
-   - Potential: 5% error rate with perfect solution
-   - Impact: 15% reduction × 20 trips/month = 3 prevented errors/month
-   - Value: 3 × $50 (late meeting cost) × 12 = $1,800/year
-
-6. **CALCULATE REVENUE IMPACT VALUE:**
-
-   For each need affecting revenue generation:
-
-   **Claude Code Path:**
-   - Script models revenue scenarios
-   - Considers conversion rates, deal sizes
-   - Outputs revenue impact per need
-
-   **Claude.ai Web Path:**
-   - Estimate revenue increase if need is met
-   - Calculate: Revenue_Increase × Margin × Frequency
-
-   Example:
-   - Need: "Reduce time to respond to customer inquiries"
-   - Baseline: 4-hour response time
-   - Potential: 30-min response time
-   - Impact: 15% increase in conversions (industry benchmark)
-   - Value: 100 inquiries/month × 15% × $5K avg sale × 20% margin = $15,000/year
-
-7. **CALCULATE RISK MITIGATION VALUE:**
-
-   For each need reducing risk:
-
-   **Claude Code Path:**
-   ```python
-   from scripts.evc_calculator import EVCCalculator
-
-   calc = EVCCalculator()
-   # Risk reduction: probability of loss × impact
-   calc.add_risk_reduction(probability=0.02, impact=10000)
-   result = calc.calculate_total_evc(differentiation_level='medium')
-   print(f"Risk value: ${result['risk_reduction']:,.0f}/month")
+5. **WRITE `{session_dir}/evc-input.json`** with the Write tool:
+   ```json
+   {
+     "assumptions": {"labor_rate": 75, "average_error_cost": 50, "average_revenue": 5000,
+                     "revenue_margin": 0.2, "risk_tolerance": "moderate"},
+     "assumption_sources": {"labor_rate": "default", "average_error_cost": "default",
+                            "average_revenue": "default", "revenue_margin": "default",
+                            "risk_tolerance": "default"},
+     "differentiation_level": "medium",
+     "needs": [
+       {"need_id": "N015", "need": "Minimize time to identify traffic delays", "opportunity_score": 15.3,
+        "hours_saved_per_year": 56, "errors_avoided_per_year": 36, "revenue_increase_per_year": 0,
+        "risk_probability": 0.02, "prevention_rate": 0.9, "risk_impact": 10000,
+        "basis": "15 min/day to 2 min/day over 260 days"}
+     ]
+   }
    ```
+   Every number is a JSON number, because the script refuses a string. `differentiation_level` is `low`, `medium` or `high`.
 
-   Monte Carlo simulation for risk scenarios.
+   Return 1 line, and no more: `evc-input.json written: <n> needs`.
 
-   **Claude.ai Web Path:**
-   - Estimate risk probability and cost
-   - Calculate: Risk_Probability × Risk_Cost × Prevention_Rate
+## Step `report`
 
-   Example:
-   - Need: "Minimize likelihood of missing critical meetings"
-   - Baseline: 2% chance of missing critical meeting/year
-   - Cost: $10K (lost deal, relationship damage)
-   - Potential: 90% prevention rate
-   - Value: 2% × $10K × 90% = $180/year
+Read `{session_dir}/evc-results.json`, check it, and write `{session_dir}/p7.json`.
 
-8. **AGGREGATE EVC SCORES:**
+1. **READ THE RESULTS.** Each item of `results` has `need_id`, `need`, `opportunity_score`, `basis`, `time_savings`, `error_reduction`, `revenue_increase`, `risk_reduction`, `subtotal`, `performance_premium_pct`, `performance_premium` and `total_evc`. Use these numbers as they are.
 
-   For each opportunity:
-   - Sum all 4 dimension values
-   - Calculate total annual EVC
-   - Rank opportunities by EVC (high to low)
-   - Identify top 10 needs by economic value
+2. **AGGREGATE EVC SCORES:**
+   - Rank the needs by `subtotal` (high to low). Identify the top 10 by economic value.
+   - Set `total_annual_evc` to the `subtotal` of the need. Set `evc_breakdown` to `time_value` = `time_savings`, `error_value` = `error_reduction`, `revenue_value` = `revenue_increase`, `risk_value` = `risk_reduction`.
+   - Count the distribution:
+     - $10K+/year: strategic
+     - $5K-10K/year: tactical
+     - $1K-5K/year: incremental
+     - <$1K/year: deprioritize
 
-   Typical distribution:
-   - $10K-50K/year: Strategic opportunities
-   - $5K-10K/year: Tactical opportunities
-   - $1K-5K/year: Incremental opportunities
-   - <$1K/year: Deprioritize
+3. **VALIDATE EVC ESTIMATES:**
+   - Are the values reasonable for the market? Do the top EVCs align with customer pain? Is any value too high or too low?
+   - When one input is wrong, change it in `{session_dir}/evc-input.json` with the Write tool, and end your reply with the line `RERUN: evc-input.json`. The skill runs the script again once. Write no `p7.json` in that reply.
+   - When the inputs are right, write `p7.json`.
 
-9. **VALIDATE EVC ESTIMATES:**
-   - Sanity check results:
-     - Are values reasonable for the market?
-     - Do top EVCs align with customer pain?
-     - Any outliers that seem too high/low?
-   - Compare to industry benchmarks
-   - Adjust assumptions if needed
-   - Document validation notes
+4. **FINALIZE EVC ANALYSIS:** write `{session_dir}/p7.json` with the shape under "Output Artifacts".
 
-10. **FINALIZE EVC ANALYSIS:**
-    - Write output to `{session_dir}/p7.json`:
-      ```json
-      {
-        "job": "Get to destinations on time",
-        "assumptions": {
-          "labor_rate": 75,
-          "average_error_cost": 50,
-          "average_revenue": 5000,
-          "revenue_margin": 0.20,
-          "risk_tolerance": "moderate"
-        },
-        "top_evc_opportunities": [
-          {
-            "rank": 1,
-            "need_id": 15,
-            "need": "Minimize time to identify traffic delays",
-            "opportunity_score": 15.3,
-            "evc_breakdown": {
-              "time_value": 4200,
-              "error_value": 1800,
-              "revenue_value": 0,
-              "risk_value": 180
-            },
-            "total_annual_evc": 6180,
-            "per_customer_value": "High",
-            "market_multiplier": 1000000
-          },
-          {
-            "rank": 2,
-            "need_id": 23,
-            "need": "Determine alternative routes during congestion",
-            "opportunity_score": 14.1,
-            "evc_breakdown": {
-              "time_value": 3600,
-              "error_value": 900,
-              "revenue_value": 500,
-              "risk_value": 150
-            },
-            "total_annual_evc": 5150,
-            "per_customer_value": "High",
-            "market_multiplier": 1000000
-          }
-        ],
-        "evc_distribution": {
-          "strategic_10k_plus": 5,
-          "tactical_5k_10k": 8,
-          "incremental_1k_5k": 12,
-          "low_value_under_1k": 60
-        },
-        "platform": "claude-code",
-        "created_at": "2026-01-24T15:00:00Z"
-      }
-      ```
-
-11. **GENERATE EVC REPORT:**
-
-    **Claude Code Path:**
-    - Export Excel report with:
-      - EVC summary by need
-      - Dimension breakdown (4 columns)
-      - Scenario analysis (conservative/aggressive)
-      - Market sizing estimates
-
-    **Claude.ai Web Path:**
-    - Create markdown table with EVC rankings
-    - Include dimension breakdowns
-    - Note assumptions used
-
-12. **NEXT PHASE TRANSITION:**
-    - Show top 10 opportunities by EVC
-    - Explain that Phase 8 will identify customer segments
-    - Explain that different segments may value needs differently
-    - Exit with success; the orchestrator dispatches the next phase
+5. **NEXT PHASE TRANSITION:**
+   - Show the top 10 opportunities by EVC
+   - Say that Phase 8 identifies customer segments, and that segments may value needs differently
+   - Exit with success; the skill starts the next phase
 
 ## Output
 
 **Primary Artifact:**
 - `{session_dir}/p7.json` — Economic value by need with dimension breakdown
 
-**Secondary Artifacts (Claude Code only):**
-- `evc-report.xlsx` - Detailed Excel report with scenarios
-- `evc-summary.csv` - Top 20 needs by economic value
-- `{session_dir}/evc-assumptions.json` — Cost assumptions for transparency
+**Other files (the skill and the script write them):**
+- `{session_dir}/evc-input.json` — the quantities and the assumptions (step `inputs`)
+- `{session_dir}/evc-results.json` — the dollar values (the script)
 
 **Summary:**
 ```
@@ -328,20 +169,13 @@ TOP 10 OPPORTUNITIES BY ECONOMIC VALUE:
    EVC: $5,150/year per customer
    Breakdown: Time ($3,600) + Errors ($900) + Revenue ($500) + Risk ($150)
 
-3. Reduce uncertainty about arrival time
-   EVC: $4,800/year per customer
-   Breakdown: Time ($3,200) + Errors ($1,200) + Risk ($400)
-
-... (7 more)
+... (8 more)
 
 EVC Distribution:
   Strategic ($10K+): 5 needs
   Tactical ($5K-10K): 8 needs
   Incremental ($1K-5K): 12 needs
   Low value (<$1K): 60 needs
-
-Market Impact (1M customers):
-  Top 10 needs: $45M-$60M annual value creation
 
 Next Steps:
 1. Proceed to Phase 8: Segmentation Analysis
@@ -351,25 +185,25 @@ Next Steps:
 
 ## Success Criteria
 
-- ✅ EVC calculated for top 15-20 opportunities
+- ✅ EVC calculated for the top 15-20 opportunities
 - ✅ All 4 dimensions considered (Time, Errors, Revenue, Risk)
 - ✅ Cost assumptions documented and validated
 - ✅ Results sanity-checked against market reality
-- ✅ Output artifact created and ready for Phase 8
+- ✅ `p7.json` written and ready for Phase 8
 
 ## Common Issues
 
 **Issue:** User doesn't know labor rate or error costs
-- **Fix:** Provide industry benchmarks; when the person still gives none, use the step 2 defaults and record them as `default` in `assumption_sources`
+- **Fix:** Provide industry benchmarks; when the person still gives none, use the defaults of step `inputs` and record them as `default` in `assumption_sources`
 
 **Issue:** Some needs map to no EVC dimension
 - **Fix:** Mark as "qualitative value" and list it with no dollar number
 
 **Issue:** EVC seems too high or too low
-- **Fix:** Review assumptions, compare to competitor pricing, adjust
+- **Fix:** Review assumptions, compare to competitor pricing, change `evc-input.json`, and end the reply with `RERUN: evc-input.json`
 
-**Issue:** Python script fails on risk calculations
-- **Fix:** Fall back to simple expected value formula (probability × cost)
+**Issue:** `evc-results.json` is missing in step `report`
+- **Fix:** Stop and say so. Never make up the dollar values, because a made-up number reaches the result file as a real one.
 
 **Issue:** Revenue impact is speculative
 - **Fix:** Use conservative estimates, mark as "hypothetical", validate in Phase 10
@@ -378,15 +212,13 @@ Next Steps:
 
 **Author:** Luis F. Amadeo (Chief Agentic Officer)
 **License:** MIT
-**For:** JTBD Market Discovery Plugin v1.0
+**For:** JTBD Market Discovery Plugin
 
 ## Output Artifacts
 
-**Required — orchestrator reads this for Phase 9 (WTP validation).**
+**Required — the skill reads this for Phase 9 (WTP validation).**
 
-Write phase output to `{session_dir}/p7.json` before signaling completion.
-
-Write it with the `Write` tool to `{session_dir}/p7.json`. When your dispatch context has no `session_dir`, run `git rev-parse --show-toplevel` on its own, then `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py latest --base <git root>`, and use the folder it prints. Its shape: When the script fails to import a package, stop and report a gap that names the missing package; never make up its output, because a made-up number reaches the result file as a real one.
+Write phase output to `{session_dir}/p7.json` before signaling completion. Write it with the `Write` tool. When your dispatch context has no `session_dir`, stop and say so. Its shape:
 ```
 {
     "job": "<job statement>",
@@ -423,18 +255,8 @@ Write it with the `Write` tool to `{session_dir}/p7.json`. When your dispatch co
 }
 ```
 
-**Note:** `total_annual_evc` is the annualized value (pre-multiplied by frequency from p4.json).
-Phase 9 (WTP validation) divides by 12 to compare to monthly WTP values.
+**Note:** `total_annual_evc` is the annual value (the `subtotal` of the script). Phase 9 (WTP validation) divides it by 12 to compare it to monthly WTP values.
 
 After writing p7.json, emit your completion signal as the final line:
 
-
-**Claude.ai Web path:**
-Output labeled JSON block:
-```
-## Phase 7 Output
-\`\`\`json
-{ "job": "...", "top_evc_opportunities": [{"need_id": "N015", "total_annual_evc": N, ...}], ... }
-\`\`\`
-```
 `DONE: evc-calculator`

@@ -7,8 +7,8 @@
   },
   "defaults": [
     {"command": ["jtbd-market-discovery:discover"], "input": "ratings_source",
-     "marker": "importance_satisfaction = expert estimates", "file": "agents/orchestrator.md",
-     "anchor": "use `expert_estimates` unless dispatch context specifies `survey_data_path`"},
+     "marker": "importance_satisfaction = expert estimates", "file": "skills/discover/SKILL.md",
+     "anchor": "use `expert_estimates` unless the run gives `survey_data_path`"},
     {"command": ["jtbd-market-discovery:discover"], "input": "labor_rate",
      "marker": "labor_rate = 75", "file": "agents/evc-calculator.md",
      "anchor": "When nobody gives a labor rate, use `labor_rate = 75`"},

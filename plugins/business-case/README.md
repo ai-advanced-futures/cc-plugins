@@ -54,6 +54,10 @@ Read(**/team/answers-*.json)
 ```
 <!-- runner-grants:end -->
 
+Four runs are skills: `competitive-intelligence:discover`, `competitive-intelligence:analyze`,
+`jtbd-market-discovery:discover` and `jtbd-market-discovery:wtp-check`. The command starts them with the `Skill`
+tool, so it has one `Skill(<route>)` grant for each of the four routes, and no `Skill` grant for any other skill.
+
 A run of `value-ip:analyze` or `product-finance:cost-coverage` is yours: the command starts neither, so it gives
 no grant for them.
 

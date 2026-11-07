@@ -11,7 +11,7 @@ tools: Read, Write
 
 Establish baseline quantification for time, frequency, and effort metrics that will enhance survey data and enable economic value calculations.
 
-You cannot ask the person anything. Work out each answer from the market area, the earlier phase files and your own domain knowledge, and mark an uncertain value as an estimate. The person corrects it at the checkpoint of the orchestrator.
+You cannot ask the person anything. Work out each answer from the market area, the earlier phase files and your own domain knowledge, and mark an uncertain value as an estimate. The person corrects it at the checkpoint of the skill.
 
 ## Input
 
@@ -57,7 +57,7 @@ Risk metrics:
 ## Workflow
 
 1. **ORIENT:**
-   - Read `{session_dir}/p3.json` to get needs list (session_dir provided by orchestrator)
+   - Read `{session_dir}/p3.json` to get needs list (the skill gives session_dir)
    - Read `{session_dir}/p2.json` for job steps context
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/phase-4-time-task-analysis/effort-quantification.md` with the Read tool
 
@@ -200,7 +200,7 @@ Risk metrics:
 12. **NEXT PHASE TRANSITION:**
     - Show baseline summary
     - Explain that this data will enhance survey insights
-    - Exit with success; the orchestrator dispatches the next phase
+    - Exit with success; the skill starts the next phase
 
 ## Output
 
@@ -271,7 +271,7 @@ Next Steps:
 
 ## Output Artifacts
 
-**Required — orchestrator reads this for Phase 7 (EVC) and Phase 8 (segmentation) context.**
+**Required — the skill reads this for Phase 7 (EVC) and Phase 8 (segmentation) context.**
 
 Write phase output to `{session_dir}/p4.json` before signaling completion.
 

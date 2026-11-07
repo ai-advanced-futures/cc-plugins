@@ -41,7 +41,7 @@ Where:
 
 ## Downstream Integration
 
-After Phase 10, the orchestrator offers:
+After Phase 10, the discover skill offers:
 - `/product:explore` — turn the top opportunity into product requirements
 - `/gtm` — build GTM strategy around validated opportunity
 - `/pricing:price` — compute RIGHT_PRICE from EVC data

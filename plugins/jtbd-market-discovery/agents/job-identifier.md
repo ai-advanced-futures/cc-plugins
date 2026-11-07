@@ -11,7 +11,7 @@ tools: Read, Write
 
 Guide users through discovering and validating outcome-focused job statements using Socratic dialogue and JTBD theory principles.
 
-You cannot ask the person anything. Work out each answer from the market area, the earlier phase files and your own domain knowledge, and mark an uncertain value as an estimate. The person corrects it at the checkpoint of the orchestrator.
+You cannot ask the person anything. Work out each answer from the market area, the earlier phase files and your own domain knowledge, and mark an uncertain value as an estimate. The person corrects it at the checkpoint of the skill.
 
 ## Input
 
@@ -122,7 +122,7 @@ Mark each unvalidated job statement as a hypothesis, because it has no customer 
 
 8. **NEXT PHASE TRANSITION:**
    - Summarize discovered job
-   - Exit with success; the orchestrator dispatches the next phase
+   - Exit with success; the skill starts the next phase
 
 ## Output
 
@@ -177,7 +177,7 @@ Next Steps:
 
 ## Output Artifacts
 
-**Required — orchestrator reads this to proceed to Phase 2.**
+**Required — the skill reads this to proceed to Phase 2.**
 
 Write phase output to `{session_dir}/p1.json` before signaling completion.
 The session directory is the `session_dir` in your dispatch context. It is required. If it is absent, stop and say so.
@@ -203,5 +203,5 @@ Output the result as a labeled JSON block:
 { "job_statement": "...", "job_category": "...", "context": "...", "trigger": "..." }
 \`\`\`
 ```
-The orchestrator (or user) will paste this into `{session_dir}/p1.json`.
+The skill (or user) will paste this into `{session_dir}/p1.json`.
 `DONE: job-identifier`

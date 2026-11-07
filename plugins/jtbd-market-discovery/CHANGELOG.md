@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.9.0
+
+No agent runs code that the model writes, and each agent has a narrow `tools:` line (STORY-121, FEATURE-26).
+
+- No agent has the `Bash` tool. The skills `discover` and `wtp-check` run the scripts with `uv run` between the agent starts, and the agents read the result files.
+- The agents `orchestrator` and `wtp-check-runner` are removed. The `discover` skill runs the 10 phases, and the `wtp-check` skill runs the price check and writes its result file.
+- The grants are `Read, Write` for seven agents, and `Read, Write, Glob` for `output-assembler` and `wtp-validator`.
+- The skill starts the 4 `need-generator` agents one at a time, in the foreground, because an agent that runs in the background returns in a new turn that has no tool grant from the skill. A run of Phase 3 is slower than before.
+- New scripts: `run_phase_6.py` to `run_phase_9.py`, `jtbd_state.py merge-needs` and `jtbd_state.py place-result`. `composite_scorer.py` has `--out`.
+- `evc-calculator` has two steps, `inputs` and `report`. It writes `evc-input.json`, the skill runs `run_phase_7.py`, and the agent reads `evc-results.json`. When the agent changes an input, it ends with `RERUN: evc-input.json` and the skill runs the script one more time.
+- The agents no longer write the Excel and PNG secondary files. The skill writes the CSV reports with `report_exporter.py`.
+- The skill writes the pages of the graph (`jtbd_graph.py write-run`) after `place-result` has written the result file.
+- A value that the person gave (the survey path, a column name, `run_id`, `case`) goes into a command in single quotes, and each `'` in it is written as `'\''` (issue #742).
+- Tests: `tests/unit/test_agent_grants.py` fails when an agent has `Bash`, `Agent`, `Skill`, an `mcp__` tool or `general-purpose`, and when a `uv run` line of a skill has an unquoted `<...>` placeholder.
+- `composite_scorer.py` counts a segment with `"size_percent": null` as 0, and no longer stops with a `TypeError`.
+- The skill `discover` says that a request to not ask the questions of step 2 again does not change `checkpoints`, and that a reply the person types in the chat is written to `answers.json` before the next phase.
+- The live tier loads the `knowledge` plugin that `plugin.json` depends on (`--plugin-dir` and `--add-dir`). The Phase 8 live test agrees with the skill: with no survey file, no `run_phase_8.py` runs and the dispatch of `segmentation-analyst` holds the segment count of the person.
+
 ## 1.8.0
 
 A run writes its output as the `jtbd` graph. This version has the hook, the three skills and the write flow of the agents.

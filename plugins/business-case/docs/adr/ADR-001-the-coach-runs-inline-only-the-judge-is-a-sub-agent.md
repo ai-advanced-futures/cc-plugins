@@ -52,8 +52,8 @@ names with the `Agent` tool and the map's `subagent_type`, and waits for it to
 end. It runs one command at a time, and starts the next run or asks the next
 card only after that. A route ran in the
 background in every spike run, so the coach ends its turn after a dispatch,
-and the completion notice starts its next turn. The coach uses the `Skill` tool only for the two routes of
-`competitive-intelligence`, which are skills: a skill runs in the main
+and the completion notice starts its next turn. The coach uses the `Skill` tool only for the four routes of
+`competitive-intelligence` and `jtbd-market-discovery`, which are skills: a skill runs in the main
 conversation and dispatches its own agents. For any other map command it uses the
 `Agent` tool: told only to dispatch an agent, Desktop's model ran the skill in
 the main session instead.

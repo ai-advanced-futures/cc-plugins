@@ -75,7 +75,7 @@ pip install pandas numpy scikit-learn scipy
 
 ### Standalone Script Usage
 
-`opportunity_scorer.py`, `segmentation_engine.py` and `evc_calculator.py` are libraries. They have no argument parser. Their `__main__` block prints a demo. A phase agent writes a helper file that imports them.
+`opportunity_scorer.py`, `segmentation_engine.py` and `evc_calculator.py` are libraries. They have no argument parser. Their `__main__` block prints a demo. The scripts `run_phase_6.py` to `run_phase_9.py` import them.
 
 ```bash
 # Print the demo of a library
@@ -83,6 +83,21 @@ uv run ${CLAUDE_PLUGIN_ROOT}/scripts/opportunity_scorer.py
 uv run ${CLAUDE_PLUGIN_ROOT}/scripts/segmentation_engine.py
 uv run ${CLAUDE_PLUGIN_ROOT}/scripts/evc_calculator.py
 ```
+
+### Phase scripts
+
+The skills `discover` and `wtp-check` run these scripts. No agent has `Bash`, so each agent reads the result file of its script. Each script has a parser and writes one JSON file. A script exits 1 with a message when its input is not valid, and the skill records a gap.
+
+| Script | Phase | Input | Result file |
+|---|---|---|---|
+| `run_phase_6.py` | 6 | the ODI-mapped survey CSV | `p6-scores.json` |
+| `run_phase_7.py` | 7 | `evc-input.json` | `evc-results.json` |
+| `run_phase_8.py` | 8 | the survey CSV and the segment count | `p8-clusters.json` |
+| `run_phase_9.py` | 9 | the WTP survey CSV and `p7.json` | `wtp-results.json` |
+| `jtbd_state.py merge-needs` | 3 | the four batch files | `p3.json` |
+| `jtbd_state.py place-result` | 10 | `result-draft.json` | the file in `.jtbd-market-discovery/results/` |
+
+Run each with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/NAME.py`, and put each placeholder in single quotes.
 
 ### Python API Usage
 

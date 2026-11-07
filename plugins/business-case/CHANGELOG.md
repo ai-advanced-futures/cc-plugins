@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1
+
+- The plugin map routes `jtbd-market-discovery:discover` and `jtbd-market-discovery:wtp-check` to the skills of the same name, and the floor is `1.9.0` (STORY-121, D-393). Version 1.9.0 of `jtbd-market-discovery` removes the agents `orchestrator` and `wtp-check-runner`. The command starts these 2 routes with the `Skill` tool, as it does for the 2 routes of `competitive-intelligence`.
+- The command has one `Skill(<route>)` grant for each of the 4 routes that are skills (`competitive-intelligence:discover`, `competitive-intelligence:analyze`, `jtbd-market-discovery:discover`, `jtbd-market-discovery:wtp-check`). Without the grant, Claude Code refused the `Skill` call of a route (verifier, PR 730). A test fails when a route has no grant, or when the line has a `Skill` grant for another skill.
+
 ## 0.6.0
 
 The port to this marketplace.

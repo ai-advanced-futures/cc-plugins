@@ -1,12 +1,12 @@
 ---
 name: phase-3-need-generation
-description: Phase 3 of JTBD discovery — generate 80-100 customer needs using the ACTION + VARIABLE formula across all job steps (4 parallel agents by step group in orchestrated mode)
+description: Phase 3 of JTBD discovery — generate 80-100 customer needs using the ACTION + VARIABLE formula across all job steps (4 agents by step group, started one after the other by the discover skill)
 ---
 
 # Phase 3: Need Generation
 
 **Goal:** Generate 80-100 customer needs across all job steps
-**Duration:** 60-90 minutes (4 parallel agents in orchestrated mode)
+**Duration:** 60-90 minutes (4 agents, one after the other)
 **Output:** Customer needs → written to `.jtbd-market-discovery/{session}/p3-batch-{1..4}.json`
 
 ## Need Formula
@@ -39,9 +39,9 @@ Each need must be:
 - **Stable** — no product references
 - **Singular** — one outcome per need (no "and")
 
-## Parallel Execution (Orchestrator Mode)
+## Batches (Discover Skill)
 
-Phase 3 uses 4 parallel agents:
+Phase 3 uses 4 agents, one for each batch. The skill starts them one at a time, then runs `jtbd_state.py merge-needs`:
 - Batch 1: Steps 1-3 (UNDERSTAND phase)
 - Batch 2: Steps 4-6 (PLAN phase)
 - Batch 3: Steps 7-9 (EXECUTE + ASSESS)

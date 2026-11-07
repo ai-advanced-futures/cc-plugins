@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["pyyaml"]
+# dependencies = ["pyyaml==6.0.3"]
 # ///
 """Write schema/jtbd.slots.json from schema/jtbd.yaml.
 

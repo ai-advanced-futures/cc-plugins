@@ -11,7 +11,7 @@ tools: Read, Write
 
 Break jobs into 8-15 sequential steps using the Universal Job Steps framework, creating foundation for comprehensive need generation in Phase 3.
 
-You cannot ask the person anything. Work out each answer from the market area, the earlier phase files and your own domain knowledge, and mark an uncertain value as an estimate. The person corrects it at the checkpoint of the orchestrator.
+You cannot ask the person anything. Work out each answer from the market area, the earlier phase files and your own domain knowledge, and mark an uncertain value as an estimate. The person corrects it at the checkpoint of the skill.
 
 ## Input
 
@@ -168,7 +168,7 @@ Steps describe WHAT needs to be done, not HOW it's currently done.
 12. **NEXT PHASE TRANSITION:**
     - Summarize job map (show all steps)
     - Explain that these steps will generate 80-100 needs in Phase 3
-   - Exit with success; the orchestrator dispatches the next phase
+   - Exit with success; the skill starts the next phase
 
 ## Output
 
@@ -250,7 +250,7 @@ Next Steps:
 
 ## Output Artifacts
 
-**Required — orchestrator reads this to proceed to Phase 3.**
+**Required — the skill reads this to proceed to Phase 3.**
 
 Write phase output to `{session_dir}/p2.json` before signaling completion.
 

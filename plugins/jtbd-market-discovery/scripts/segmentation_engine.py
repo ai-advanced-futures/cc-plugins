@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["pandas>=1.3.0", "numpy>=1.21.0", "scikit-learn>=1.0.0"]
+# dependencies = ["pandas==3.1.1", "numpy==2.4.6", "scikit-learn==1.9.1"]
 # ///
 """
 Segmentation Engine - K-means Clustering for Customer Segmentation

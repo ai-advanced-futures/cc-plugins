@@ -2,12 +2,12 @@
 name: segmentation-analyst
 description: Phase 8 execution - Multi-dimensional customer segmentation using k-means clustering
 model: sonnet
-tools: Read, Write, Bash(uv run *), Bash(git rev-parse *)
+tools: Read, Write
 ---
 
 # Segmentation Analyst Agent
 
-Run one command per Bash call.
+This agent runs no command. The skill that starts it runs `scripts/run_phase_8.py`, and gives you the result as the file `clusters_path`.
 
 ## Purpose
 
@@ -63,10 +63,8 @@ K-means clustering approach:
    - Between-cluster variance (high = good)
    - Segment stability (consistent across runs)
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/jtbd-core/platform-detection.md` with the Read tool to understand Claude Code vs Web paths.
-Agent script: scripts/segmentation_engine.py (Claude Code) | AI pattern recognition 75-85% parity (Web)
-
-Library calls: run the code blocks of the Claude Code Path from a helper file, because `uv run` installs the packages only for a file that lists them. Write the helper with the Write tool to `{session_dir}/helper-phase-8.py`, so that the project's own folders stay clean. Start it with a PEP 723 block (`# /// script`, then `# dependencies = ["pandas>=1.3.0", "numpy>=1.21.0", "scikit-learn>=1.0.0"]`, then `# ///`), then `import sys` and `sys.path.insert(0, "${CLAUDE_PLUGIN_ROOT}")`, so that `from scripts.segmentation_engine import ...` works. Run it as `uv run {session_dir}/helper-phase-8.py`.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/jtbd-core/platform-detection.md` with the Read tool.
+Use the result file that the dispatch names. When the dispatch names none, estimate the segments from the data in the dispatch and record the gap.
 
 ## Workflow
 
@@ -74,28 +72,15 @@ Library calls: run the code blocks of the Claude Code Path from a helper file, b
    - Read `{session_dir}/p6.json` for top needs
    - Read `{session_dir}/p7.json` for value context
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/phase-8-segmentation/segmentation-methods.md` with the Read tool
-   - Detect platform (Claude Code vs Web)
 
 2. **SURVEY DATA PREPARATION:**
 
-   **Claude Code Path:**
-   - Take the full survey CSV from `survey_data_path` in your dispatch context. It holds:
-     - Respondent ID
-     - All importance ratings (top 20 needs)
-     - All satisfaction ratings (top 20 needs)
-     - Demographics (age, industry, role)
-     - Behavioral data (frequency, current tools)
-   - Validate data completeness:
-     ```python
-     import pandas as pd
-     df = pd.read_csv('survey_full.csv')
-     row_completeness = df.notna().mean(axis=1)
-     valid = (row_completeness >= 0.80).sum()
-     print(f"Valid rows (≥80% complete): {valid}/{len(df)}")
-     df = df[row_completeness >= 0.80]  # drop incomplete responses
-     ```
-   - Remove incomplete responses (<80% answered)
-   - Document: Valid responses count
+   **With `clusters_path`:**
+   - Read the file `clusters_path` (`{session_dir}/p8-clusters.json`). It holds `rows_used` (the responses with 80% of the answers or more), `feature_columns`, `optimal_k`, `recommendation`, and two clusterings: `segment_count_clustering` (the count that was asked) and `optimal_clustering` (the count with the best silhouette). Each has `k`, `silhouette_at_k` and `segments` (`segment_id`, `size`, `size_percent`, `top_needs`, `avg_importance`, `avg_satisfaction`, `gap`, `characteristics`). The file `p8-respondents.json` next to it maps each respondent to a segment.
+   - Never estimate a number that the file gives, because the file holds the exact result of the script.
+   - Document: `rows_used`
+
+   **With no `clusters_path`:** the script did not run, or it failed. Estimate the segments from the survey data in the dispatch, as under the Web Path, and record the gap in `p8.json`.
 
    **Claude.ai Web Path:**
    - Take the survey summary statistics by respondent from the dispatch context
@@ -122,9 +107,8 @@ Library calls: run the code blocks of the Claude Code Path from a helper file, b
      - When job occurs (time of day, day of week)
      - Where job occurs (office, home, transit)
 
-   **Claude Code Path:**
-   - Script automatically extracts and normalizes features
-   - Applies StandardScaler for clustering
+   **With `clusters_path`:**
+   - The script chose and normalized the features. They are in `feature_columns`.
 
    **Claude.ai Web Path:**
    - Guide user to manually identify key differentiating features
@@ -132,24 +116,12 @@ Library calls: run the code blocks of the Claude Code Path from a helper file, b
 
 4. **DETERMINE OPTIMAL CLUSTER COUNT:**
 
-   The starting count is `segment_count`: the answered value from your dispatch context when the orchestrator gives one, else `segment_count = 4`.
+   The starting count is `segment_count`: the answered value from your dispatch context when the skill gives one, else `segment_count = 4`.
    Record how it was settled in p8.json under `assumption_sources`, one plain string per input such as `"default"`: `person` or `recommended` (from the answers, by its `settled_by`), `asked` (the person chose it in this run), `default`, or `model` when the elbow and silhouette results led you to another count.
 
-   **Claude Code Path:**
-   ```python
-   import pandas as pd
-   from scripts.segmentation_engine import SegmentationEngine
-
-   df = pd.read_csv('survey_full.csv')
-   engine = SegmentationEngine(df)
-   result = engine.find_optimal_k(k_range=range(2, 9))
-   print(f"Recommended K: {result['optimal_k']} (silhouette: {result['silhouette_score']:.3f})")
-   ```
-
-   Script outputs:
-   - Elbow plot (inertia vs K from 2-8)
-   - Silhouette scores for each K
-   - Recommended K (typically 3-5)
+   **With `clusters_path`:**
+   - Read `optimal_k` and `recommendation` from the file. Compare `silhouette_at_k` of `segment_count_clustering` and of `optimal_clustering`.
+   - Use `segment_count_clustering` unless `optimal_clustering` has a silhouette score that is 0.05 or more higher. When you use the other one, set the source of `segment_count` to `model`.
 
    **Claude.ai Web Path:**
    - Group respondents by similarity
@@ -159,17 +131,8 @@ Library calls: run the code blocks of the Claude Code Path from a helper file, b
 
 5. **RUN K-MEANS CLUSTERING:**
 
-   **Claude Code Path:**
-   ```python
-   import pandas as pd
-   from scripts.segmentation_engine import SegmentationEngine
-
-   df = pd.read_csv('survey_full.csv')
-   engine = SegmentationEngine(df)
-   segmented = engine.cluster(n_clusters=segment_count)
-   profiles = engine.generate_segment_profiles()
-   segmented.to_json(session_dir / 'p8-respondents.json', orient='records', indent=2)
-   ```
+   **With `clusters_path`:**
+   - The script ran the clustering. Take the segments of the clustering you chose, and give each a name from its `top_needs` and `characteristics`.
 
    **Claude.ai Web Path:**
    - For each segment (manually or AI-guided):
@@ -340,31 +303,23 @@ Library calls: run the code blocks of the Claude Code Path from a helper file, b
 
 11. **GENERATE SEGMENT PROFILES:**
 
-    **Claude Code Path:**
-    - Export Excel workbook:
-      - Sheet 1: Segment overview
-      - Sheet 2-5: Detailed profiles per segment
-      - Sheet 6: Segment comparison matrix
-
-    **Claude.ai Web Path:**
-    - Create markdown persona cards
+    - Create markdown persona cards in the summary
     - Include segment names, sizes, top needs, WTP
 
 12. **NEXT PHASE TRANSITION:**
     - Show segment profiles summary
     - Explain that Phase 9 will validate willingness-to-pay
     - Explain importance of segment-specific pricing
-    - Exit with success; the orchestrator dispatches the next phase
+    - Exit with success; the skill starts the next phase
 
 ## Output
 
 **Primary Artifact:**
 - `{session_dir}/p8.json` — Segment profiles with needs, economics, behaviors
 
-**Secondary Artifacts (Claude Code only):**
-- `segment-profiles.xlsx` - Detailed Excel profiles
-- `elbow-plot.png` - K-selection visualization
-- `cluster-analysis.json` - Statistical quality metrics
+**Other files (the script writes them):**
+- `{session_dir}/p8-clusters.json` — the clusters and their quality numbers
+- `{session_dir}/p8-respondents.json` — the segment of each respondent
 
 **Summary:**
 ```
@@ -442,11 +397,9 @@ Next Steps:
 
 ## Output Artifacts
 
-**Required — orchestrator reads this for Phase 9 (WTP validation). **
+**Required — the skill reads this for Phase 9 (WTP validation).**
 
-Write phase output to `{session_dir}/p8.json` before signaling completion.
-
-Write it with the `Write` tool to `{session_dir}/p8.json`. When your dispatch context has no `session_dir`, run `git rev-parse --show-toplevel` on its own, then `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py latest --base <git root>`, and use the folder it prints. Its shape: When the script fails to import a package, stop and report a gap that names the missing package; never make up its output, because a made-up number reaches the result file as a real one.
+Write phase output to `{session_dir}/p8.json` before signaling completion. Write it with the `Write` tool. When your dispatch context has no `session_dir`, stop and say so. Its shape:
 ```
 {
     "job": "...",

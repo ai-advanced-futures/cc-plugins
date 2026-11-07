@@ -410,7 +410,7 @@ The plugin will be implemented as:
 
 ---
 
-## Amendment: v1.2.0 — Orchestrator Architecture
+## Amendment: v1.2.0 — Sub-Agent Architecture (v1.9.0: the skill runs the phases)
 
 **Status:** Accepted
 **Date:** 2026-02-27
@@ -421,26 +421,28 @@ The plugin will be implemented as:
 The original v1.0 architecture specified a single sequential SKILL.md workflow. In practice, users and agents running the full 10-phase workflow accumulated ~143k tokens of context, causing:
 1. Context compaction mid-session — precision loss on later phases
 2. No resume capability after compaction events
-3. No parallelism — Phases 1-10 executed strictly sequentially even when independence allowed parallelism
+3. Each phase ran in one context, so a long run had no fresh start for a phase
 
 ### Decision
 
-Introduce an **orchestrator agent** that:
-- Dispatches each phase as a fresh sub-agent via the Task tool (zero context accumulation in orchestrator)
-- Persists all state to `.jtbd/{session}/pN.json` files (compact-resilient)
-- Runs Phase 3 with 4 parallel agents (one per job-step group)
-- Runs Phases 7+8 in parallel after Phase 6 completes
+The `discover` skill runs the 10 phases in the main conversation (v1.9.0; it replaced an orchestrator agent). The skill:
+- Starts each phase as a fresh sub-agent with the `Agent` tool, one at a time, in the foreground (little context accumulates in the skill)
+- Runs the scripts with `uv run` between the agent starts. No agent has `Bash`, so no agent runs code that the model writes (D-266, FEATURE-26)
+- Persists all state to `.jtbd-market-discovery/{session}/pN.json` files (compact-resilient)
+- Runs Phase 3 with 4 agents (one per job-step group), one at a time, then runs `jtbd_state.py merge-needs`. An agent that runs in the background returns in a new turn that has no tool grant from the skill (D-377)
+- Runs Phase 8 after Phase 7, because segmentation reads `p7.json`
 - Can be resumed: re-reading `state.json` → resuming from `current_phase`
 
 ### Architectural Changes
 
 | Component | v1.0 | v1.2.0 |
 |-----------|------|--------|
-| Execution model | Sequential SKILL.md | Orchestrator + fresh sub-agents |
+| Execution model | Sequential SKILL.md | Skill + fresh sub-agents |
 | State persistence | Context window only | `.jtbd/{session}/pN.json` files |
-| Context per session | ~143k tokens | ~5-10k tokens (orchestrator only) |
-| Phase 3 | Sequential | 4 parallel agents |
-| Phases 7+8 | Sequential | Parallel after Phase 6 |
+| Context per session | ~143k tokens | ~5-10k tokens (skill only) |
+| Phase 3 | Sequential | 4 agents, one at a time |
+| Phases 7+8 | Sequential | Sequential: 8 after 7 |
+| Agent tools | Wide | `Read, Write` (`Glob` for two), no `Bash` |
 | Resume capability | None | Re-read state.json, resume from current_phase |
 | Python helper | None | `scripts/jtbd_state.py` |
 
@@ -449,13 +451,13 @@ Introduce an **orchestrator agent** that:
 | Aspect | Pro | Con |
 |--------|-----|-----|
 | Context efficiency | 95% reduction in context usage | More complex orchestration logic |
-| Parallelism | Phase 3 ×4 parallel, 7+8 parallel | Requires careful output file coordination |
+| Fresh context | Each phase starts clean | The skill starts the 4 Phase 3 agents one at a time, so Phase 3 is slower |
 | Resilience | Zero data loss across compaction events | File I/O dependency (disk required) |
 | Resume | Full session resume capability | State schema must be versioned |
 
 ### New Files
 
-- `agents/orchestrator.md` — orchestrator agent definition
+- `skills/discover/SKILL.md` — the skill that runs the phases
 - `scripts/jtbd_state.py` — Python helper for session state I/O
 - `tests/unit/test_jtbd_state.py` — 19 unit tests for jtbd_state.py
 - `tests/unit/test_orchestrator_state_integration.py` — 5 integration tests
@@ -475,7 +477,7 @@ Introduce an **orchestrator agent** that:
 
 ### See Also
 
-ADR-002: Orchestrator Agent Architecture — detailed decisions for orchestrator implementation
+ADR-002: Orchestrator Architecture — detailed decisions for the phase flow
 
 ---
 

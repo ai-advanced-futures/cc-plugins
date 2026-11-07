@@ -54,7 +54,7 @@ This skill guides you through 10 phases:
 
 **Available:**
 - ✅ All 10 phases
-- ✅ Python script execution (opportunity_scorer.py, segmentation_engine.py, etc.)
+- ✅ Python script execution by the skill (opportunity_scorer.py, segmentation_engine.py, etc.); the agents read the result files and run no code
 - ✅ Full statistical analysis (pandas, numpy, scikit-learn)
 - ✅ CSV data import/export
 - ✅ Automated calculations and visualizations

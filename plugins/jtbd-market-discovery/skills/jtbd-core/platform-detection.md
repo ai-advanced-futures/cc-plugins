@@ -1,20 +1,20 @@
 ---
 name: jtbd-market-discovery:platform-detection
-description: How to detect Claude Code vs Claude.ai Web and adapt agent behavior
+description: How a phase agent finds out whether a script gave its numbers, and what it does when none did
 ---
 
 # Platform Detection
 
 ## Auto-Detect
 
-Check whether the **Bash tool** is available:
-- **Bash available** → Claude Code (CLI) → use Python scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`
-- **Bash unavailable** → Claude.ai Web → use AI-powered analysis
+No agent of this plugin has the `Bash` tool. In Claude Code (CLI), the skill runs the Python scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/` before it starts the agent, and it names the result file in the dispatch (for example `scores_path`, `evc-results.json`, `clusters_path` or `wtp_results_path`). Check the dispatch:
+- **The dispatch names a result file** → read it with the Read tool. Use each number in it as written. Estimate no number that the file gives, because a script computed it.
+- **The dispatch names no result file** (Claude.ai Web, or a script that failed) → use AI-powered analysis. Estimate only what no file gives, mark each estimate as an estimate, and record a gap.
 
 ## Claude Code (CLI) Path
 
-- Precise calculations using pandas/numpy/scikit-learn
-- Run Python scripts directly (import from `${CLAUDE_PLUGIN_ROOT}/scripts/` or call via `uv run`)
+- Precise calculations by the scripts, with pandas/numpy/scikit-learn
+- The skill runs each script with `uv run`; the agent reads the result file
 - CSV import/export, JSON output for downstream tools
 - Full statistical analysis (ODI, k-means, Monte Carlo)
 

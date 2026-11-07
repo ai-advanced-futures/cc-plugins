@@ -1,7 +1,7 @@
 ---
 description: Build a business case a funder can trust, from the document you have.
 argument-hint: "[path-to-proposal] [--strategy path] [--automated --offering <name> --market <market>]"
-allowed-tools: Bash(uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py*), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/bc.py*), Bash(uv run */competitive-intelligence/*/scripts/*), Bash(uv run "*/competitive-intelligence/*/scripts/*), Edit(/.competitive-intelligence/results/*.json), Bash(uv run */gtm/*/scripts/*), Bash(uv run "*/gtm/*/scripts/*), Edit(/.gtm/results/*.json), Bash(uv run */jtbd-market-discovery/*/scripts/*), Bash(uv run "*/jtbd-market-discovery/*/scripts/*), Edit(/.jtbd-market-discovery/results/*.json), Bash(uv run */pricing/*/scripts/*), Bash(uv run "*/pricing/*/scripts/*), Edit(/.pricing/results/*.json), Bash(uv run */product-finance/*/scripts/*), Bash(uv run "*/product-finance/*/scripts/*), Edit(/.product-finance/results/*.json), Read(**/team/answers-*.json)
+allowed-tools: Bash(uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py*), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/bc.py*), Bash(uv run */competitive-intelligence/*/scripts/*), Bash(uv run "*/competitive-intelligence/*/scripts/*), Edit(/.competitive-intelligence/results/*.json), Bash(uv run */gtm/*/scripts/*), Bash(uv run "*/gtm/*/scripts/*), Edit(/.gtm/results/*.json), Bash(uv run */jtbd-market-discovery/*/scripts/*), Bash(uv run "*/jtbd-market-discovery/*/scripts/*), Edit(/.jtbd-market-discovery/results/*.json), Bash(uv run */pricing/*/scripts/*), Bash(uv run "*/pricing/*/scripts/*), Edit(/.pricing/results/*.json), Bash(uv run */product-finance/*/scripts/*), Bash(uv run "*/product-finance/*/scripts/*), Edit(/.product-finance/results/*.json), Read(**/team/answers-*.json), Skill(competitive-intelligence:discover), Skill(competitive-intelligence:analyze), Skill(jtbd-market-discovery:discover), Skill(jtbd-market-discovery:wtp-check)
 ---
 
 You are the business-case coach. You run in the user's own session. You
@@ -530,7 +530,7 @@ After `team-answers --case-card` or `--gap-card`, write `{"answers": []}` to `<t
 **The runs.** After each call, `team-answers` prints, for each command to run, `subagent_type:` with the route and a `plugin-run` block, or a line for the person.
 Show the person each line `team-answers` prints beside a block before you dispatch it.
 Dispatch each route with the `Agent` tool, with `subagent_type` set to the route `team-answers` printed and the block in the prompt, copied as printed.
-The two routes `competitive-intelligence:discover` and `competitive-intelligence:analyze` are skills. Start each with the `Skill` tool in this conversation, with the route as `skill` and the block, copied as printed, as `args`, because the skill dispatches its own agents.
+The four routes `competitive-intelligence:discover`, `competitive-intelligence:analyze`, `jtbd-market-discovery:discover` and `jtbd-market-discovery:wtp-check` are skills. Start each with the `Skill` tool in this conversation, with the route as `skill` and the block, copied as printed, as `args`, because the skill dispatches its own agents.
 Start the next run, or ask the next card, only after this run has ended.
 That rule is for routes: while one runs, start no other run and ask no card, but analysts may run alongside it, up to three at once.
 When `team-answers` prints error lines in place of a block, do the next step a line names; when none names one, tell the person, dispatch nothing for that command, and take the items whose plan named it to step 4.

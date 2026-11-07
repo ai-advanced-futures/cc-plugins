@@ -1,9 +1,8 @@
 # WTP check procedure
 
-The skill `jtbd-market-discovery:wtp-check` asks the questions of Step 1 and dispatches `jtbd-market-discovery:wtp-check-runner`. The runner follows this file. It cannot ask the person anything, so it takes each input from the dispatch fields.
+The skill `jtbd-market-discovery:wtp-check` runs this file in the main conversation. It asks the questions of Step 1 (a person's run) or reads them from the answers file (a plugin run), and it starts no agent.
 
-Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py ...`, one command per Bash call. Never run inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc), never write a script of your own and run it, and write every file with the Write tool, never with a shell command.
-Run every agent you dispatch in the foreground and wait for it to finish; never run one in the background (`run_in_background: true`) before the result file is written.
+Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/NAME.py ...` (NAME is the script name), one command per Bash call. Put each `<...>` placeholder of a `uv run` line in single quotes. Run no inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc), write no script of your own, and write every file with the Write tool, because a file that a shell command writes is not a file that this run can account for.
 This plugin's root is `${CLAUDE_PLUGIN_ROOT}`; wherever a file you read writes `${CLAUDE_PLUGIN_ROOT}`, use that path.
 
 ## Purpose
@@ -26,13 +25,13 @@ Validate pricing decisions with rigorous multi-layer analysis because unrealisti
 
 ### Step 0: Read the Start Time and the Version
 
-Run `date -u +%Y-%m-%dT%H:%M:%SZ` on its own and keep it as `started_at`, and keep the `version` of `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`. When a `date` call is denied or fails, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py now` on its own and use its output as that time. The result file needs both.
+The skill does this step before Step 1, with the scripts it is allowed to run. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py now` on its own and keep the output as `started_at`, and keep the `version` of `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`. The result file needs both.
 
-Then run `git rev-parse --show-toplevel` on its own; its output is the git root, and when it fails the git root is the working directory. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py finished --base <git root>`: `input_dir` is the session it prints. Read `p7.json` and `p8.json` from `input_dir`. When it exits 1, no discover run has finished: halt, writing no `p9.json`, and write the result file with `results: []` and the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "no finished jtbd discover session: none holds p7.json and p8.json"}`. Otherwise run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py wtp-folder --base <git root>`: `session_dir` is the folder it prints. A person's run writes into no session that it did not start, because that session belongs to another run. When the script fails to import a package, stop and report a gap that names the missing package; never make up its output, because a made-up number reaches the result file as a real one.
+Then run `git rev-parse --show-toplevel` on its own; its output is the git root, and when it fails the git root is the working directory. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py finished --base '<git root>'`: `input_dir` is the session it prints. Read `p7.json` and `p8.json` from `input_dir`. When it exits 1, no discover run has finished: halt, writing no `p9.json`, and write the result file with `results: []` and the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "no finished jtbd discover session: none holds p7.json and p8.json"}`. Otherwise run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py wtp-folder --base '<git root>'`: `session_dir` is the folder it prints. A person's run writes into no session that it did not start, because that session belongs to another run. When the script fails to import a package, stop and report a gap that names the missing package; never make up its output, because a made-up number reaches the result file as a real one.
 
 ### Step 1: Collect Pricing Hypothesis
 
-Take the pricing to validate from the dispatch fields:
+Take the pricing to validate from the answers of the skill:
 
 ```
 I'll rigorously validate your pricing using a 6-layer framework.
@@ -51,7 +50,7 @@ Also helpful (but optional):
 - WTP survey data if you have it
 ```
 
-Take each input from the dispatch fields. In a plugin run, take each answer from the answers file instead. An input that neither gives is not known; ask for nothing, because an agent cannot ask the person.
+Take each input from the answers of the skill. In a plugin run, take each answer from the answers file instead. An input that neither gives is not known; ask for nothing in a plugin run, because nobody is there to answer.
 - the target price per month, from `target_price`
 - the target segment (role, industry), from `target_segment`
 - B2B or B2C, from `market_context`
@@ -373,7 +372,7 @@ Which scenario would you like to explore?
 
 ### Step 10: Write p9.json and the Result File
 
-Write `{session_dir}/p9.json` as step 10, SYNTHESIZE VALIDATION RESULTS, of the `## Workflow` of `${CLAUDE_PLUGIN_ROOT}/agents/wtp-validator.md` says. Then Read `${CLAUDE_PLUGIN_ROOT}/agents/wtp-validator.md` with the Read tool and follow its `## Result file` section, in every run.
+Write `{session_dir}/p9.json` as step 10, SYNTHESIZE VALIDATION RESULTS, of the `## Workflow` of `${CLAUDE_PLUGIN_ROOT}/agents/wtp-validator.md` says. Then Read `${CLAUDE_PLUGIN_ROOT}/agents/wtp-validator.md` with the Read tool and follow its `## Result file` section, in every run. That section writes a draft. Then run `jtbd_state.py place-result` on the draft, as step 7 of `${CLAUDE_PLUGIN_ROOT}/skills/wtp-check/SKILL.md` says.
 
 ## Important Notes
 

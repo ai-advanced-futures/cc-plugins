@@ -136,9 +136,9 @@ A complete example:
 
 **R4.** The file passes this standard's checker, in each plugin's tests. The tests load the checker by path from `docs/plugin-result/schemas/`. They import nothing from business-case and need nothing beyond what CI installs (`pytest pyyaml` and each plugin's requirements files). Only the checker holds the rules the schema cannot state, so `jsonschema` alone is not enough.
 
-**R5.** Accept answers and run for the coach. The coach runs an adopting command from the main session with the `Agent` tool, never the `Skill` tool. The prompt carries the invocation block (see "The invocation contract").
+**R5.** Accept answers and run for the coach. The coach runs an adopting command from the main session: with the `Agent` tool when the route is an agent, and with the `Skill` tool when the route is a skill. The prompt (or the arguments of the skill) carries the invocation block (see "The invocation contract").
 
-- The route of each adopting command is the agent the coach dispatches with the block (see "Adopting commands").
+- The route of each adopting command is the agent or the skill that the coach starts with the block (see "Adopting commands").
 - The answers file is keyed by the canonical command name. Each plugin reads only its own section.
 - A value the answers file gives is used in place of the plugin's default. A value marked `settled_by: person` gets a source of type `person`. A value marked `settled_by: recommended` is recorded as a default: a source of type `default`, and `rests_on_default: true`. A value neither the answers file nor the run supplies stays a default and is marked as one (R2).
 - A value taken from the answers file is the source `{"type": "person", "ref": "answers:<input>", "date": null}` for `settled_by: person`, and `{"type": "default", "ref": "answers:<input>", "date": null}` for `settled_by: recommended`.
@@ -190,6 +190,7 @@ The coach dispatches the route with a prompt that holds one fenced block with th
 The standard records one route for each adopting command (see "Adopting commands"). Where the plugin's own agent did not run the command's instructions, the route is a thin runner, `agents/<command part>-runner.md`. A runner reads the command file and follows its body.
 
 - A route cannot ask the person: Claude Code removes `AskUserQuestion` from every subagent. Its frontmatter `tools:` line does not name `AskUserQuestion`. The first `## ` heading of the route is `## Plugin-run block`, so no block about the mode of the run comes before it.
+- A route under `skills/` has no `tools:` line. It cannot ask when the first `## ` heading of its `SKILL.md` is `## Plugin-run block` and that section holds the sentence `Ask the person nothing.` The checker then applies the checks of a route that cannot ask, and reads no `tools:` line. The section names the 2 input forms: the arguments of the skill hold a fenced block with the info string `plugin-run`, or they are 1 line that is the path of a file that holds the block.
 - The `## Plugin-run block` section names each of these in backticks, as a whole span: the command (`` `pricing:price` ``), `` `answers_path` ``, `` `case` ``, `` `inputs_from` ``, `` `run_id` ``, `` `settled_by` `` and the folder (`` `.pricing/results/` ``). When another agent writes the result file, the section names that agent's path in backticks (`` `agents/new-offering-pricer.md` ``). The section also holds the precedence rule: "the invocation block wins over any config file's automation setting".
 - `${CLAUDE_PLUGIN_ROOT}` is substituted in an agent's own text, and it is never a shell variable: never write it as `$CLAUDE_PLUGIN_ROOT`, and never rely on it being set in the shell. A file loaded with Read keeps the token, and the route maps it to the plugin's root.
 
@@ -268,8 +269,8 @@ R1 to R7 apply to these 2 commands and to no other. `route` is relative to the p
 <!-- adopting-commands:start -->
 | command | route | runner | depth |
 |---|---|---|---|
-| `jtbd-market-discovery:discover` | `agents/orchestrator.md` | no | 1 |
-| `jtbd-market-discovery:wtp-check` | `agents/wtp-check-runner.md` | yes | 1 |
+| `jtbd-market-discovery:discover` | `skills/discover/SKILL.md` | no | 1 |
+| `jtbd-market-discovery:wtp-check` | `skills/wtp-check/SKILL.md` | no | 1 |
 <!-- adopting-commands:end -->
 
 ## The adoption manifest
@@ -318,7 +319,7 @@ This check is total. Every leaf of every JSON file under `config/` and of every 
 
 ### Ask sites
 
-The ask files of a command are its command file, its route, the skill files it reaches, and the agents it reaches by a dispatch line. A dispatch line names the agent together with "dispatch" (any case), `Task(`, `subagent_type` or `Agent`.
+The ask files of a command are its command file, its route (an agent file or a skill file), the skill files it reaches, and the agents it reaches by a dispatch line. A dispatch line names the agent together with "dispatch" (any case), `Task(`, `subagent_type` or `Agent`.
 
 - Each line of an ask file that names `AskUserQuestion` carries an id on the same line. Frontmatter is left out. The words around the token do not matter.
 - An ask site carries `[q: <input>]`. `<input>` is a question of an adopting command whose scan set holds the file. Only the first id on a line counts, so ask one question per line.
