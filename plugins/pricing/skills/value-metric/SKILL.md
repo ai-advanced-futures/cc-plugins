@@ -51,7 +51,7 @@ Flags `per_user_antipattern: true` when:
 
 ## Cross-References
 
-- **Reads from:** `.jtbd-market-discovery/wtp-validation.json`, else `.jtbd/wtp-validation.json` (if present — informs metric selection). When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing.
+- **Reads from:** the jtbd graph, through `brain_read.py wtp` (if it holds data — informs metric selection). When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing.
 - **Next step:** `/pricing:price` — use selected metric when computing RIGHT_PRICE
 - **Orchestrated by:** `pricing-auditor` and `new-offering-pricer` agents
 - **Full prompt:** See `value-metric.md` in this directory

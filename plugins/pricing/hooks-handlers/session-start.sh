@@ -3,60 +3,28 @@
 # Surfaces available upstream data so the agent can activate Path A or B
 # without re-asking questions already answered by partner plugins.
 #
-# Outputs advisory messages to stdout when relevant data files are present.
+# Outputs advisory messages to stdout when relevant upstream data or prior pricing files are present.
 # Silent when no pricing-relevant context exists.
 
 set -euo pipefail
 
-JTBD_NEW_DIR=".jtbd-market-discovery"
-JTBD_DIR=".jtbd"
 PRICING_DIR=".pricing"
-CI_DIR=".competitive-intelligence"
+
+# The plugin folder, found from the path of this file (as probe-plugin.sh does).
+PLUGIN_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
 msgs=()
 
-# A jtbd result in the new folder comes first (activates Path A once the person confirms it).
-# The old folder's files are announced only when there is no such result.
-# Usable means the file parses and its `results` (not its `gaps`) hold a willingness_to_pay entry.
-jtbd_result=""
-if [[ -d "${JTBD_NEW_DIR}/results" ]] && command -v python3 >/dev/null 2>&1; then
-    # -I: isolated mode. The cwd is the opened repo, so it must not be on sys.path,
-    # and PYTHON* environment variables must not apply.
-    jtbd_result=$(python3 -I - "$(pwd)/${JTBD_NEW_DIR}/results" <<'PY' || true
-import json, pathlib, sys
-found = ""
-for path in sorted(pathlib.Path(sys.argv[1]).glob("*.json")):
-    try:
-        doc = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        continue
-    results = doc.get("results") if isinstance(doc, dict) else None
-    if isinstance(results, list) and any(
-        isinstance(r, dict) and r.get("kind") == "willingness_to_pay" for r in results
-    ):
-        found = "yes"
-print(found)
-PY
-)
-fi
-
-if [[ -n "$jtbd_result" ]]; then
-    msgs+=("PRICING: jtbd result found in ${JTBD_NEW_DIR}/results/.")
-else
-    if [[ -f "${JTBD_DIR}/wtp-validation.json" ]]; then
-        msgs+=("PRICING: ${JTBD_DIR}/wtp-validation.json found.")
-    fi
-    if [[ -f "${JTBD_DIR}/evc-analysis.json" ]]; then
-        msgs+=("PRICING: ${JTBD_DIR}/evc-analysis.json found — EVC data available for pricing ceiling.")
-    fi
-    if [[ -f "${JTBD_DIR}/opportunity-scores.json" ]]; then
-        msgs+=("PRICING: ${JTBD_DIR}/opportunity-scores.json found — opportunity scores available for audit context.")
-    fi
-fi
-
-# Check for competitive intelligence strategic analysis (moat rarity data)
-if [[ -f "${CI_DIR}/strategic-analysis.json" ]]; then
-    msgs+=("PRICING: .competitive-intelligence/strategic-analysis.json found — competitor moat data available for MOAT_MULTIPLIER elicitation.")
+# The jtbd graph and the competitive-intelligence graph. brain_read.py status prints 0, 1 or 2 plain lines,
+# only for a graph that holds usable data. It names no file and no page.
+# -I: isolated mode. The cwd is the opened repo, so it must not be on sys.path,
+# and PYTHON* environment variables must not apply.
+if command -v python3 >/dev/null 2>&1; then
+    while IFS= read -r line; do
+        if [[ -n "$line" ]]; then
+            msgs+=("$line")
+        fi
+    done < <(python3 -I "${PLUGIN_ROOT}/scripts/brain_read.py" status --root "$(pwd)" 2>/dev/null || true)
 fi
 
 # Check for existing pricing recommendation (prior run present)

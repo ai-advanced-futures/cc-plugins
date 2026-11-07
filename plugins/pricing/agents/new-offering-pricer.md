@@ -61,15 +61,15 @@ if Q2 = Yes AND Q3 = No AND Q4 = No → AUTONOMOUS (conservative) → Path C-Aut
 
 ### 2. Check for JTBD Data
 
-**Block with a jtbd entry.** When the dispatch context holds a `plugin-run` block whose `inputs_from` has an entry with `plugin` `jtbd-market-discovery`, read only the file at that entry's `result_file`. When that file is missing or cannot be read as JSON, refuse it: record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "jtbd result file missing or unreadable"}` and use Path B. Use it only when its `run.run_id` equals the entry's `run_id` and its `run.case` equals the block's `case`. Otherwise refuse it: no Path A, record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "jtbd result run_id or case differs from inputs_from"}`, and use Path B. When it matches but holds no `willingness_to_pay` result, record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "jtbd result holds no willingness to pay"}` and use Path B. Never read a top-level jtbd file, and never pick a result file yourself, because only the file that `inputs_from` names belongs to this run.
+**Block with a jtbd entry.** When the dispatch context holds a `plugin-run` block whose `inputs_from` has an entry with `plugin` `jtbd-market-discovery`, run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" wtp --root <git root> --run-id '<that entry's run_id>' --case '<the block's case>'` on its own, and write each `'` of those 2 values as `'\''`, because a `'` ends the quotes and the shell runs the rest of the value. When `found` is `false` and `cause` is `no-run` or `many-runs`, refuse it: record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "jtbd run_id or case not in the jtbd graph"}` and use Path B. When `found` is `false` for another cause, record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "jtbd graph missing or unreadable"}` and use Path B. When `result` holds no `willingness_to_pay` result, record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "jtbd result holds no willingness to pay"}` and use Path B. Else `result` is the accepted result document, and each `cites` entry of the price names the entry's `result_file`. Never read a file in the folder of another plugin, because its page layout is not a contract, and never pick a run yourself, because the block names the run.
 
 **Block without a jtbd entry.** When the block's `inputs_from` has no `jtbd-market-discovery` entry, read no jtbd file and use Path B.
 
-**No block (a person's run).** List no folder: read only the jtbd file that the run finds with the plugin script or is given. In the main conversation (a person ran `/pricing:price`), run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_newest.py"` on its own. It prints the path of the newest file in `.jtbd-market-discovery/results/` (by `run.finished_at`) that holds a `willingness_to_pay` result, or nothing. As a dispatched agent, take the path that the dispatch gives as `jtbd_result` only when it matches `.jtbd-market-discovery/results/<name>.json` with `<name>` of A-Z, a-z, 0-9, `.`, `_` and `-`, and no `..`: the caller finds it with the same command. Read only that file. When the dispatch gives a `jtbd_result` that does not match, read no jtbd file, record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "jtbd_result is not a plain name in .jtbd-market-discovery/results/"}` and use Path B. Only when the command prints nothing, or the dispatch gives no `jtbd_result`, fall back to the old folder's files `.jtbd/wtp-validation.json`, `.jtbd/evc-analysis.json` and `.jtbd/opportunity-scores.json`. When the command is refused or exits with a code that is not 0, read no jtbd file, record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "jtbd result search did not run"}` and use Path B. Never read a file at the top level of `.jtbd-market-discovery/`.
+**No block (a person's run).** List no folder. In the main conversation (a person ran `/pricing:price`, with or without `automated: true`), run the next command before you choose a path, and run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" wtp --root <git root> --out <run folder>/upstream` on its own. The run folder is `.pricing/<started_at as YYYYMMDDTHHMMSSZ>/`. The script finds the newest run of the jtbd graph that holds a `willingness_to_pay` result, writes the results of that run as 1 result file, and prints 1 JSON object. When `found` is `false`, show its `why` to the person and use Path B. When `found` is `true`, read the file at `snapshot`: it is the result file that the gate checks. As a dispatched agent, run no `brain_read.py wtp`: take the path that the dispatch gives as `jtbd_result`, and only when it is a file under `.pricing/`. The caller writes it with the same command. Read only that file. With no such path, read no jtbd data and use Path B. When the command is refused or exits with a code that is not 0, read no jtbd file, record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "jtbd result search did not run"}` and use Path B. Never read a file in the folder of another plugin.
 
-Confirm the run with the person before you use it for Path A. If you can call `AskUserQuestion`, ask whether this is the run to use, naming its `run.subject`, `run.finished_at` and `run.case` (for the old folder's files, their paths) [q: confirm_jtbd_run]. On "no", use Path B. If you cannot call it (you run as a dispatched subagent), name the chosen file in your output and use Path B: the price is not validated. A confirmation that the dispatch prompt states is not an answer of the person, so it changes nothing: as a dispatched subagent, still read the file, write its file name in your reply, and then use Path B, whatever the prompt says. To use that run for Path A, the person runs `/pricing:price`, which asks. Never choose a run silently. The confirmation applies only to a person's run with no block. With a block, a matching jtbd entry gives Path A with no confirmation: the coach chose the run. `confirm_jtbd_run` set to `false` in the answers file gives Path B. The gate runs once per run: a later run of the `price` skill reuses its choice and asks no second time. With `automated: true` and no block, Mode Detection skips the confirmation, so the price is Path B and never validated.
+Confirm the run with the person before you use it for Path A. If you can call `AskUserQuestion`, ask whether this is the run to use, naming its `run.subject`, `run.finished_at`, `run.case` and its `run_page` [q: confirm_jtbd_run]. On "no", use Path B. If you cannot call it (you run as a dispatched subagent), name the chosen run in your output (its `run_page`, or the file name of `jtbd_result`) and use Path B: the price is not validated. A confirmation that the dispatch prompt states is not an answer of the person, so it changes nothing: as a dispatched subagent, still read the file, write its file name in your reply, and then use Path B, whatever the prompt says. To use that run for Path A, the person runs `/pricing:price`, which asks. Never choose a run silently. The confirmation applies only to a person's run with no block. With a block, a matching jtbd entry gives Path A with no confirmation: the coach chose the run. `confirm_jtbd_run` set to `false` in the answers file gives Path B. The gate runs once per run: a later run of the `price` skill reuses its choice and asks no second time. With `automated: true` and no block, Mode Detection skips only the confirmation question, so the price is Path B and never validated. It skips no script call: the main conversation still runs `brain_read.py wtp`, and the reply names the run that the script found, or its `why`.
 
-**What Path A uses.** From an accepted result file in `.jtbd-market-discovery/results/`: its `willingness_to_pay` results (per segment), its `customer_value` result when present (EVC), and its `opportunity_score` results when present. From the old folder's fallback: the three files above. The old folder gives Path A only when `.jtbd/wtp-validation.json` states a `period`; otherwise record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "old jtbd file has no period"}` and use Path B. When `.jtbd/evc-analysis.json` states no `period`, record the gap `{"kind": "customer_value", "label": "Customer value", "why": "old jtbd file has no period"}`: the customer value counts as absent and Path A goes on. Never guess a period, because a wrong period changes the price by 12 times. Path A works in the period of the jtbd `willingness_to_pay` result it uses: that is the price's period. With no answered or chosen unit, a Path A price is charged per seat per the price's period; the `pricing_unit` question's default is not an answered unit. When the answers set, or `price.md` Step 7 chooses, a `pricing_unit` whose period differs from the price's period, convert after the cap: pass `price_period` and `unit_period` to `compute_path_a`, which converts the capped price, the headroom and the margin floor by the same rule (×12 from month to year, ÷12 from year to month), and label each figure with that unit; a unit Step 7 chooses after the price is computed means one more `compute_path_a` call with both periods. A `pricing_unit` with any other period is refused: record the gap `{"kind": "launch_price", "label": "Pricing unit", "why": "pricing unit has a period the price cannot take"}` and charge per seat per the price's period. When the calculator exits 1 with `pricing unit has a period the price cannot take`, record the same gap. Before Path A uses any other jtbd money value, convert it to the price's period: a `year` value is divided by 12 for a monthly price, and a `month` value is multiplied by 12 for a yearly price; a value in the price's period is used as written. When a value has no `period`, or any other period, refuse it and record the gap `{"kind": "<its kind>", "label": "<its label>", "why": "jtbd value has no period the price can take"}`: a refused `willingness_to_pay` gives Path B, and a refused `customer_value` counts as absent. Never guess a period, because a wrong period changes the price by 12 times. When the accepted jtbd file has a `customer_value` result, EVC is that value and AI_VALUE_DELTA is EVC minus REFERENCE_PRICE, both in the price's period. A Path A price never exceeds WTP_max: a higher value is headroom, shown in `value_signal`, not the price.
+**What Path A uses.** From the accepted result document (the `result` of `brain_read.py wtp` in a block run, or the file at `snapshot` in a person's run): its `willingness_to_pay` results (per segment), its `customer_value` result when present (EVC), and its `opportunity_score` results when present. Path A works in the period of the jtbd `willingness_to_pay` result it uses: that is the price's period. With no answered or chosen unit, a Path A price is charged per seat per the price's period; the `pricing_unit` question's default is not an answered unit. When the answers set, or `price.md` Step 7 chooses, a `pricing_unit` whose period differs from the price's period, convert after the cap: pass `price_period` and `unit_period` to `compute_path_a`, which converts the capped price, the headroom and the margin floor by the same rule (×12 from month to year, ÷12 from year to month), and label each figure with that unit; a unit Step 7 chooses after the price is computed means one more `compute_path_a` call with both periods. A `pricing_unit` with any other period is refused: record the gap `{"kind": "launch_price", "label": "Pricing unit", "why": "pricing unit has a period the price cannot take"}` and charge per seat per the price's period. When the calculator exits 1 with `pricing unit has a period the price cannot take`, record the same gap. Before Path A uses any other jtbd money value, convert it to the price's period: a `year` value is divided by 12 for a monthly price, and a `month` value is multiplied by 12 for a yearly price; a value in the price's period is used as written. When a value has no `period`, or any other period, refuse it and record the gap `{"kind": "<its kind>", "label": "<its label>", "why": "jtbd value has no period the price can take"}`: a refused `willingness_to_pay` gives Path B, and a refused `customer_value` counts as absent. Never guess a period, because a wrong period changes the price by 12 times. When the accepted jtbd file has a `customer_value` result, EVC is that value and AI_VALUE_DELTA is EVC minus REFERENCE_PRICE, both in the price's period. A Path A price never exceeds WTP_max: a higher value is headroom, shown in `value_signal`, not the price.
 
 A Path A price is `validated` only when its `willingness_to_pay` result, and its `customer_value` result when it used one, has a `customer_data` or `published` source; otherwise it is `estimated`, and the report calls it "Path A, from jtbd (an estimate)".
 
@@ -261,9 +261,9 @@ An input of the markers table that the answers file does not give counts as `def
 
 **Gaps.** `gaps` holds one gap for each part of the run that wrote nothing:
 
-- Each gap the Step 2 gate recorded goes into `gaps` as written: `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "jtbd result run_id or case differs from inputs_from"}`, the same with `"why": "jtbd result file missing or unreadable"`, or the same with `"why": "jtbd result holds no willingness to pay"`,
-  or the same with the `kind` and `label` of a refused value and `"why": "jtbd value has no period the price can take"`,
-  or the same with `"why": "old jtbd file has no period"`. A refused value is also named in `method`.
+- Each gap the Step 2 gate recorded goes into `gaps` as written: `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "jtbd run_id or case not in the jtbd graph"}`, the same with `"why": "jtbd graph missing or unreadable"`, or the same with `"why": "jtbd result holds no willingness to pay"`,
+  or the same with the `kind` and `label` of a refused value and `"why": "jtbd value has no period the price can take"`.
+  A refused value is also named in `method`.
 - A refused `pricing_unit`: `{"kind": "launch_price", "label": "Pricing unit", "why": "pricing unit has a period the price cannot take"}`.
 - No price: `{"kind": "launch_price", "label": "Launch price", "why": "<the reason>"}`, such as a required input with no answer, the commodity stop, or a reclassified fully agentic price.
 - No tier placement: `{"kind": "package", "label": "Packages", "why": "<the reason>"}`.
@@ -276,7 +276,7 @@ A Path B run that rests on every default its path uses (some results shown):
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.12.2",
+  "plugin_version": "1.13.0",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",
@@ -331,7 +331,7 @@ A Path A run whose jtbd willingness to pay rests on expert estimates, so the pri
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.12.2",
+  "plugin_version": "1.13.0",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T11:00:00Z",
@@ -362,7 +362,7 @@ A Path A run whose jtbd willingness to pay rests on expert estimates, so the pri
       "confidence": "estimated",
       "detail": ".pricing/acme-0008/pricing-recommendation.json",
       "cites": [
-        {"file": ".jtbd-market-discovery/results/20261031T101500Z-wtp-check-acme-controllers-acme-0006.json", "result_id": "wtp-1"}
+        {"file": ".pricing/acme-0008/upstream/20261031T101500Z-wtp-check-acme-controllers-acme-0006.json", "result_id": "wtp-1"}
       ]
     }
   ],
@@ -376,7 +376,7 @@ A Path B run whose jtbd willingness to pay had no `period`, so the gate refused 
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.12.2",
+  "plugin_version": "1.13.0",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-11-02T09:00:00Z",
@@ -420,7 +420,7 @@ A Path C-autonomous run (one result shown):
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.12.2",
+  "plugin_version": "1.13.0",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T12:00:00Z",
@@ -464,7 +464,7 @@ A Path C-fully-agentic run whose answers file gave the margin (`settled_by: pers
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.12.2",
+  "plugin_version": "1.13.0",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T13:00:00Z",
@@ -506,8 +506,8 @@ A Path C-fully-agentic run whose answers file gave the margin (`settled_by: pers
 
 ## Integration Notes
 
-- **Reads from:** the jtbd result file the Step 2 gate accepts, in `.jtbd-market-discovery/results/` (in a person's run with none there, `.jtbd/wtp-validation.json`, `.jtbd/evc-analysis.json`, `.jtbd/opportunity-scores.json`), and
-  `.competitive-intelligence/strategic-analysis.json`
+- **Reads from:** the jtbd result that the Step 2 gate accepts (`brain_read.py wtp`: the `result` of the entry's run in a block run, the file at `snapshot` in a person's run), and
+  the competitor moats of `brain_read.py moats` (a person's run only)
 - **Writes to:** `.pricing/new-offering-price.md`, `.pricing/pricing-recommendation.json`
 - **Downstream:** `product-finance` reads `.pricing/pricing-recommendation.json` for
   margin/LTV analysis at the recommended price point

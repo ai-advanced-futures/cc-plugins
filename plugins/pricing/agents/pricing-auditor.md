@@ -38,14 +38,20 @@ Check `feature_list` first. When it is missing or empty, write `.pricing/open-qu
 ### 2. Check for Upstream Data
 
 ```
-jtbd folder = .jtbd-market-discovery/ if it exists, else .jtbd/
-if the jtbd folder exists:
-    import wtp-validation.json → customer WTP per segment
-    import opportunity-scores.json → underserved outcomes (for comparison)
+run brain_read.py wtp --root <git root>, on its own, with no --out
+if found: import result → customer WTP per segment
+else: show why; go on with no WTP comparison
 
-if .competitive-intelligence/ exists:
-    import strategic-analysis.json → competitor moat scores for Layer 1 rarity assessment
+run brain_read.py outcomes --root <git root>, on its own
+if found: import outcomes → underserved outcomes (for comparison)
+else: show why; go on with no outcome comparison
+
+run brain_read.py moats --root <git root>, on its own
+if found: import competitors → competitor moat kinds and strengths for Layer 1 rarity assessment
+else: show why; go on with no moat comparison
 ```
+
+Run each as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" <operation> --root <git root>`.
 
 ### 3. Run `audit` Skill
 
@@ -123,7 +129,7 @@ Write `.pricing/audit-data.json` (machine-readable, includes all temporal fields
 
 ## Integration Notes
 
-- **Reads from:** `.jtbd-market-discovery/wtp-validation.json` (else `.jtbd/wtp-validation.json`), `.competitive-intelligence/strategic-analysis.json`
+- **Reads from:** the jtbd graph (`brain_read.py wtp`, `brain_read.py outcomes`) and the competitive-intelligence graph (`brain_read.py moats`)
 - **Writes to:** `.pricing/audit-report.md`, `.pricing/audit-data.json`
 - **Downstream:** `product-finance` can read `.pricing/audit-data.json` for margin analysis
   at recommended price points

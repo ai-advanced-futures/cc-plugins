@@ -49,7 +49,7 @@ An agent runs as a subagent. It cannot ask the person. It takes each answer from
 | `new-offering-pricer` | `offering` |
 | `pricing-auditor` | `feature_list` |
 
-A dispatch with no `plugin-run` block can give `jtbd_result`: the path of the jtbd result to use, in `.jtbd-market-discovery/results/`. The caller finds it with `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_newest.py"`.
+A dispatch with no `plugin-run` block can give `jtbd_result`: the path of the jtbd result to use, a file under `.pricing/`. The caller writes it with `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" wtp --root <git root> --out <run folder>/upstream`.
 
 The file has this shape:
 
@@ -63,7 +63,7 @@ The `price-runner` agent keeps its halt: when an input is missing, it stops and 
 
 ### Path A (data-rich)
 
-Path A starts when the price gate accepts a jtbd result in `.jtbd-market-discovery/results/`. In a person's run with no result there, the old file `.jtbd/wtp-validation.json` can start it.
+Path A starts when the price gate accepts a jtbd result from the jtbd graph. The plugin reads the graph with `scripts/brain_read.py`, which calls the save script of the `jtbd-market-discovery` plugin.
 
 ```
 EVC = Reference_Price + Differentiation_Value
@@ -74,8 +74,6 @@ confidence_tier: "validated" with customer data or published sources, else "esti
 `EVC` is the customer value. It bounds the formula, and WTP_max caps the price.
 
 Path A works in the period of the jtbd `willingness_to_pay` result it uses: that is the price's period. With no answered or chosen unit, a Path A price is charged per seat per the price's period; the `pricing_unit` question's default is not an answered unit. When the answers set, or `price.md` Step 7 chooses, a `pricing_unit` whose period differs from the price's period, convert after the cap: pass `price_period` and `unit_period` to `compute_path_a`, which converts the capped price, the headroom and the margin floor by the same rule (×12 from month to year, ÷12 from year to month), and label each figure with that unit; a unit Step 7 chooses after the price is computed means one more `compute_path_a` call with both periods. A `pricing_unit` with any other period is refused: record the gap `{"kind": "launch_price", "label": "Pricing unit", "why": "pricing unit has a period the price cannot take"}` and charge per seat per the price's period. When the calculator exits 1 with `pricing unit has a period the price cannot take`, record the same gap.
-
-The old folder is read only after `.jtbd-market-discovery/results/`. The old folder gives Path A only when `.jtbd/wtp-validation.json` states a `period`; otherwise record the gap `{"kind": "willingness_to_pay", "label": "Willingness to pay", "why": "old jtbd file has no period"}` and use Path B. When `.jtbd/evc-analysis.json` states no `period`, record the gap `{"kind": "customer_value", "label": "Customer value", "why": "old jtbd file has no period"}`: the customer value counts as absent and Path A goes on. Never guess a period, because a wrong period changes the price by 12 times.
 
 ### Path B (data-poor, estimated)
 
@@ -143,12 +141,12 @@ The review window is `36 / log₂(1 + competitor_count)` months, from 6 to 36.
 
 | Plugin | Role | Data |
 |---|---|---|
-| `jtbd-market-discovery` | Upstream | Reads a jtbd result in `.jtbd-market-discovery/results/` (old fallback: `.jtbd/wtp-validation.json`, only when it states a `period`) → activates Path A |
-| `jtbd-market-discovery` | Upstream | Reads `.jtbd/evc-analysis.json` (customer value, only when it states a `period`) and `.jtbd/opportunity-scores.json` (tier placement) in the old folder |
-| `competitive-intelligence` | Upstream | Reads `.competitive-intelligence/strategic-analysis.json` for the moat |
+| `jtbd-market-discovery` | Upstream | Reads the willingness-to-pay result of the jtbd graph (`brain_read.py wtp`) → activates Path A |
+| `jtbd-market-discovery` | Upstream | Reads the outcome scores of the jtbd graph (`brain_read.py outcomes`): tier placement and audit context |
+| `competitive-intelligence` | Upstream | Reads the competitor moats of the competitive-intelligence graph (`brain_read.py moats`) |
 | `product-finance` | Downstream | Reads `.pricing/pricing-recommendation.json` for margin and LTV work |
 
-A plugin run reads only the jtbd result that its `inputs_from` field names. A person's run takes the newest result and asks the person to confirm it. The old folder holds `.jtbd/wtp-validation.json` (Path A only when it states a `period`).
+A plugin run reads only the jtbd run that its `inputs_from` field names. A person's run takes the newest run that holds a willingness to pay and asks the person to confirm it. When a graph is not there, pricing shows a plain message and goes on with no input.
 
 ### SessionStart hook
 

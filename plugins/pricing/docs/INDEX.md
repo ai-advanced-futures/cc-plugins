@@ -16,6 +16,7 @@ ADRs live in `docs/adr/`. Each ADR records a specific architectural decision wit
 - **[ADR-008-publication-gate](adr/ADR-008-publication-gate.md)** — Charter §17 publication gate: scanner that runs as a test in CI against `multiplicative score` / `pricing power index` / `pricing risk index` / `single numeric pricing risk` with mandatory-reason `check42-allow:` directive .
 - **[ADR-009-gm-trajectory-vertical-alignment](adr/ADR-009-gm-trajectory-vertical-alignment.md)** — Align gm_trajectory vertical-archetype caps to the C4 values (60/70/80, step +7); makes `requires_vertical_anchor_for_70plus` reachable.
 - **[ADR-010-plugin-result-file](adr/ADR-010-plugin-result-file.md)** — Adopt the plugin result file for `pricing:price`: the price runner, the Path A gate and person-run confirmation, the grade of a Path A price, and scripts that run with `uv run` from a rooted path.
+- **[ADR-011-read-the-upstream-graphs](adr/ADR-011-read-the-upstream-graphs.md)** — `brain_read.py` reads the jtbd graph and the competitive-intelligence graph through the save scripts of their writers; the snapshot a price cites; the session-start note.
 
 ## C4 Architecture Diagrams
 

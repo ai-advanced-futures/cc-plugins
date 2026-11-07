@@ -54,6 +54,6 @@ Agent-driven workflow that walks you through building a tier architecture step b
 ## Cross-References
 
 - **Reads from:** `.pricing/pricing-recommendation.json` (RIGHT_PRICE as anchor)
-- **Reads from:** `.jtbd-market-discovery/opportunity-scores.json`, else `.jtbd/opportunity-scores.json` (if present — for tier placement signal). When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing.
+- **Reads from:** the jtbd graph, through `brain_read.py outcomes` (if it holds data — for tier placement signal). When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing.
 - **Orchestrated by:** `new-offering-pricer` agent
 - **Full prompt:** See `package.md` in this directory

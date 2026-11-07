@@ -61,8 +61,8 @@ Ask (AskUserQuestion) [q: feature_list]:
    Which AI capabilities are table stakes vs. differentiators?
 
 Check for existing data:
-- If `.jtbd-market-discovery/wtp-validation.json` exists (else `.jtbd/wtp-validation.json`) → import WTP per segment for comparison
-- If `.competitive-intelligence/strategic-analysis.json` exists → import competitor moat scores
+- Run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" wtp --root <git root>` on its own. When `found` is `true`, import `result` as the WTP per segment for comparison. When `found` is `false`, show its `why` and go on.
+- Run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" moats --root <git root>` on its own. When `found` is `true`, import the competitor moats. When `found` is `false`, show its `why` and go on.
 
 ### Step 2 — Apply Layer 1 Triage (all features)
 

@@ -61,7 +61,7 @@ Ask one question per AskUserQuestion call [q: none]:
 Map the outcome to a JTBD job statement:
 > "When [context], I want to [motivation], so I can [expected outcome]."
 
-When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing. In a standalone run, read `.jtbd-market-discovery/opportunity-scores.json` if it exists (else `.jtbd/opportunity-scores.json`) and surface the top-scored job from that file.
+When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing. In a standalone run, run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" outcomes --root <git root>` on its own. When `found` is `true`, surface the top-scored outcome. When `found` is `false`, show its `why` and go on.
 
 ### Step 3 — Apply Campbell's Gut-Check Test
 

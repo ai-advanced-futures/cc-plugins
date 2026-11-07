@@ -23,9 +23,9 @@ Four facts shaped the adoption:
 
 2. **A thin runner is the route.** `agents/price-runner.md` reads the price skill and follows it, places the offering in the tiers with the package skill (as Step 6 of the pricer does), and writes the result file by the rules in the `## Result file` section of `agents/new-offering-pricer.md`. Run as itself, the pricer writes no result file. Each run keeps a copy of its files in its own folder, `.pricing/<run_id>/`, and a result's `detail` names that copy; the files at the `.pricing/` root stay as before.
 
-3. **The Path A gate.** With a `plugin-run` block, the price skill reads only the jtbd result file that `inputs_from` names, and uses it only when its `run.run_id` and `run.case` match. A missing or unreadable file, a mismatch, or a file with no willingness to pay is refused: the run uses Path B, and the gate's gap goes into the result's `gaps` as written.
+3. **The Path A gate.** With a `plugin-run` block, the price skill reads only the run of the jtbd graph that `inputs_from` names (`brain_read.py wtp --run-id R --case C`, ADR-011). A missing graph, a run that is not there, or a result with no willingness to pay is refused: the run uses Path B, and the gate's gap goes into the result's `gaps` as written.
 
-4. **The person-run confirmation.** With no block, the skill reads the newest jtbd result, and the old `.jtbd/` files only when there is none. It asks the person to confirm the run (`confirm_jtbd_run`, a boolean question). When it cannot ask, it names the file it chose in its output and in the result's `method`, and uses Path B.
+4. **The person-run confirmation.** With no block, the skill reads the newest run of the jtbd graph that holds a willingness to pay (ADR-011). It asks the person to confirm the run (`confirm_jtbd_run`, a boolean question). When it cannot ask, it names the run it chose in its output and in the result's `method`, and uses Path B.
 
 5. **An automated run with no block is Path B and never validated.** Mode Detection skips the confirmation, so no jtbd result is accepted.
 

@@ -24,7 +24,7 @@ Price a new AI-era or legacy feature using the appropriate path for your data av
 
 ### Path A — Data-Rich (confidence: `validated` only with customer data or published sources)
 
-Activates when the Step 2 gate in `price.md` accepts a jtbd result: with a `plugin-run` block, only the `result_file` its `inputs_from` names, when `run.run_id` and `run.case` match; in a person's run, the newest willingness-to-pay result in `.jtbd-market-discovery/results/`, confirmed by the person, and only when there is none, `.jtbd/wtp-validation.json`. With `automated: true` and no block, Mode Detection skips the confirmation, so the price is Path B and never validated. Only an answer of the person in this run (the answer to the `confirm_jtbd_run` question of `price.md` Step 2, or a reply of the person) confirms a jtbd run. Never write that the person confirmed a run when the person gave no such answer, in a dispatch prompt or in a reply, because a stated confirmation that the person did not give makes a price look validated: a dispatched agent takes no confirmation from its prompt (`price.md` Step 2).
+Activates when the Step 2 gate in `price.md` accepts a jtbd result: with a `plugin-run` block, only the run of the jtbd graph that its `inputs_from` entry names (its `run_id` and the block's `case`); in a person's run, the newest run of the jtbd graph that holds a willingness-to-pay result, confirmed by the person. With `automated: true` and no block, Mode Detection skips only the confirmation question, so the price is Path B and never validated. It skips no script call: the main conversation still runs `brain_read.py wtp`, and the reply names the run that the script found, or its `why`. Only an answer of the person in this run (the answer to the `confirm_jtbd_run` question of `price.md` Step 2, or a reply of the person) confirms a jtbd run. Never write that the person confirmed a run when the person gave no such answer, in a dispatch prompt or in a reply, because a stated confirmation that the person did not give makes a price look validated: a dispatched agent takes no confirmation from its prompt (`price.md` Step 2).
 
 ```
 RIGHT_PRICE = min(WTP_max, max(MARGIN_FLOOR, min(EVC, REFERENCE_PRICE + AI_VALUE_DELTA + MOAT_VALUE_DELTA)))
@@ -59,11 +59,11 @@ Returns `PathCFullyAgenticPriced` or `PathCFullyAgenticReclassified` (discrimina
 1. **Before Step 0** — run `date -u +%Y-%m-%dT%H:%M:%SZ` on its own and keep it as `started_at`, and keep the `version` of `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`. When a `date` call is denied or fails, run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py" now` on its own and use its output as that time. The result file needs both.
 2. **Step 0** — Classify agentic tier (Q1–Q4): route to Path A/B or Path C
 3. **Step 1** — Collect inputs for the determined path
-4. **Step 2** — Path A gate: the jtbd result in `.jtbd-market-discovery/results/` named by `inputs_from` (or, in a person's run, the newest, confirmed; with none there, `.jtbd/wtp-validation.json`)
+4. **Step 2** — Path A gate: the jtbd graph run named by `inputs_from` (or, in a person's run, the newest run with a willingness to pay, confirmed). With no block, run `brain_read.py wtp` first, also with `automated: true`; that mode skips only the confirmation question
 5. **Step 2b** — Path A reference price: `alternative_price`, asked only when Path A uses no customer value
 6. **Step 3** — Compute with `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/pricing_calculator.py" <function> '<JSON arguments>'` with each `'` in a value written as `'\''`. When the calculator cannot run, stop as `price.md` Step 6 says: compute no figure yourself, write no price file, write the result file with its gap, and end the reply with the line `BLOCKED: pricing calculator <function>: <reason>`.
 7. **Step 4** — Apply fear signal checks (accuracy < 0.8 → AI_MULTIPLIER = 1.0)
-8. **Step 5** — Compute MOAT_MULTIPLIER (Helmer 7 Powers)
+8. **Step 5** — Compute MOAT_MULTIPLIER (Helmer 7 Powers). With no block, run `brain_read.py moats` first, also with `automated: true` and also when the inputs give the competitors
 9. **Step 6** — Compute MARGIN_FLOOR
 10. **Step 7** — Apply segment_signal when the formula's value is above WTP_max: a market gap in Path B, headroom in Path A
 11. **Step 8** — Output `.pricing/pricing-recommendation.json`

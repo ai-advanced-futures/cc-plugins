@@ -42,8 +42,8 @@ C4Context
         System(constants, "pricing_constants.py", "CI gate for config drift")
     }
 
-    System_Ext(jtbd, "jtbd-market-discovery", "Produces .jtbd/wtp-validation.json")
-    System_Ext(competitive, "competitive-intelligence", "Produces strategic-analysis.json")
+    System_Ext(jtbd, "jtbd-market-discovery", "Writes the jtbd graph")
+    System_Ext(competitive, "competitive-intelligence", "Writes the competitive-intelligence graph")
     System_Ext(product_finance, "product-finance", "Reads pricing-recommendation.json")
 
     Rel(pm, skill_price, "'/pricing:price'")
@@ -63,7 +63,7 @@ C4Context
 
 ### Path A — EVC-Validated (confidence: `validated`)
 
-Activates when `.jtbd/wtp-validation.json` exists. Uses Economic Value to Customer as the ceiling, not WTP_max:
+Activates when the price gate accepts a jtbd result from the jtbd graph (ADR-011). Uses Economic Value to Customer as the ceiling, not WTP_max:
 
 ```
 RIGHT_PRICE = max(MARGIN_FLOOR, min(EVC, REFERENCE_PRICE + AI_VALUE_DELTA + MOAT_VALUE_DELTA))
@@ -210,7 +210,7 @@ A decision of the maintainers, after a recorded run priced a seat at 515 USD a m
 1. **The cap.** A Path A price never exceeds WTP_max, the willingness to pay jtbd measured for the segment: `RIGHT_PRICE = min(WTP_max, max(MARGIN_FLOOR, min(EVC, REFERENCE_PRICE + AI_VALUE_DELTA + MOAT_VALUE_DELTA)))`. `compute_path_a` applies it in code. A null `wtp_max` leaves the price uncapped.
 2. **The headroom.** The `PathAResult` field `value_signal` is the price before the cap. Its excess over the price is headroom, shown and never charged, and never called a market gap. Path A's `segment_signal` says so in its own wording.
 3. **The floor advisory.** In Path A the cap wins over the margin floor, which is the opposite of Path B. When the margin floor is above WTP_max, the price is WTP_max and the `PathAResult` field `floor_advisory` says the offering does not clear its margin floor at this willingness to pay. The advisory reaches `pricing-recommendation.json`, the report and the result file's `method`. This replaces the deferral above that left the `margin_floor > wtp_max` guard to callers.
-4. **The period rule.** Path A works in the period of the jtbd `willingness_to_pay` result: that is the price's period. Every other jtbd money value is converted to it (a year value divided by 12 for a monthly price, a month value multiplied by 12 for a yearly price). When AI_VALUE_DELTA comes from a customer value, it is EVC minus REFERENCE_PRICE in that period. A value with no period, or any other period, is refused with a gap and never guessed. An old `.jtbd/` file states no period. The old folder gives Path A only when `wtp-validation.json` states one; otherwise the gap is `old jtbd file has no period` and the run uses Path B. When only `evc-analysis.json` lacks a period, the same gap is recorded for the customer value: the customer value counts as absent and Path A goes on, as for the new folder. When the answers set a `pricing_unit` in another period, `compute_path_a` takes `price_period` and `unit_period` and converts the capped price, the headroom and the floor after the cap; any other period is refused with a gap.
+4. **The period rule.** Path A works in the period of the jtbd `willingness_to_pay` result: that is the price's period. Every other jtbd money value is converted to it (a year value divided by 12 for a monthly price, a month value multiplied by 12 for a yearly price). When AI_VALUE_DELTA comes from a customer value, it is EVC minus REFERENCE_PRICE in that period. A value with no period, or any other period, is refused with a gap and never guessed. When only the customer value has no period, the customer value counts as absent and Path A goes on. When the answers set a `pricing_unit` in another period, `compute_path_a` takes `price_period` and `unit_period` and converts the capped price, the headroom and the floor after the cap; any other period is refused with a gap.
 
 One consequence: once a customer value sets AI_VALUE_DELTA, `REFERENCE_PRICE + AI_VALUE_DELTA + MOAT_VALUE_DELTA` is at least EVC, so MOAT_VALUE_DELTA no longer moves the price.
 

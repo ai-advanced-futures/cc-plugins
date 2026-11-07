@@ -54,7 +54,7 @@ Check dispatch context for `automated: true` before proceeding.
 
 Check for upstream data first:
 - If `.pricing/audit-data.json` exists -> import feature list and any prior classifications
-- When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing. In a standalone run, read `.jtbd-market-discovery/opportunity-scores.json` if it exists (else `.jtbd/opportunity-scores.json`) -> import opportunity scores as classification signal.
+- When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing. In a standalone run, run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" outcomes --root <git root>` on its own. When `found` is `true`, import the opportunity scores as classification signal. When `found` is `false`, show its `why` and go on.
 
 If upstream data found, present it:
 
@@ -464,5 +464,5 @@ they use. Fewer benefits with stronger positioning is almost always better.
 
 - **Reads from:** `.pricing/pricing-recommendation.json` (RIGHT_PRICE as anchor)
 - **Reads from:** `.pricing/audit-data.json` (feature classifications)
-- **Reads from:** `.jtbd-market-discovery/opportunity-scores.json`, else `.jtbd/opportunity-scores.json` (tier placement signal). When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing.
+- **Reads from:** the jtbd graph, through `brain_read.py outcomes` (tier placement signal). When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing.
 - **Orchestrated by:** `new-offering-pricer` agent

@@ -612,7 +612,7 @@ jtbd measured: a Path A price never exceeds either.
 
 | Path | Activated when | Confidence | Formula |
 |---|---|---|---|
-| **Path A** | the price gate accepts a jtbd result in `.jtbd-market-discovery/results/` (person's run with none: `.jtbd/wtp-validation.json` (Path A only when it states a `period`)) | "validated" with customer data or published sources, else "estimated" | `min(WTP, max(FLOOR, min(EVC, REF + AI_Δ + MOAT_Δ)))` |
+| **Path A** | the price gate accepts a jtbd result from the jtbd graph | "validated" with customer data or published sources, else "estimated" | `min(WTP, max(FLOOR, min(EVC, REF + AI_Δ + MOAT_Δ)))` |
 | **Path B** | No JTBD data | "estimated" | `max(FLOOR, min(WTP_max, BASE × AI_MULT × MOAT_MULT))` |
 
 **The strategic implication:** Running `jtbd-market-discovery` before `pricing` replaces the multiplicative Path B formula
@@ -632,13 +632,13 @@ When `jtbd-market-discovery` has run, its opportunity scores inform tier placeme
 
 | Component | How it's used |
 |---|---|
-| Path A activation | `price` skill Step 2 gate: a jtbd result in `.jtbd-market-discovery/results/` (old fallback: `.jtbd/wtp-validation.json`, only when it states a `period`) |
+| Path A activation | `price` skill Step 2 gate: a jtbd result from the jtbd graph (`brain_read.py wtp`) |
 | `PathAResult.evc` | EVC from `jtbd-market-discovery` data; it bounds the formula, and WTP_max caps the price |
 | `PathAResult.value_signal` | the Path A price before the WTP_max cap; its excess over the price is headroom |
 | `PathAResult.floor_advisory` | set when the margin floor is above WTP_max: the capped price is below the floor |
 | `segment_signal` | Path B: the gap between VALUE_SIGNAL and WTP_max → recommendation to run JTBD. Path A: headroom above WTP_max, not a market gap |
 | Opportunity score → tier | High-score outcomes → Killer/Leader; low-score → Filler |
-| `pricing-auditor` agent | Imports `.jtbd-market-discovery/opportunity-scores.json` (else `.jtbd/opportunity-scores.json`) for audit context |
+| `pricing-auditor` agent | Imports the outcome scores of the jtbd graph (`brain_read.py outcomes`) for audit context |
 
 ---
 

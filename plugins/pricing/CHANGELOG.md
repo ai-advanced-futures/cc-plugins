@@ -4,6 +4,16 @@ All notable changes to the pricing plugin will be documented in this file.
 
 The first heading is the version in `.claude-plugin/plugin.json`. A test checks that they agree.
 
+## 1.13.0
+
+- Pricing reads the jtbd graph and the competitive-intelligence graph. The new script `scripts/brain_read.py` has the operations `wtp`, `outcomes`, `moats` and `status`. It calls the save script of the writer plugin and reads the JSON that it prints. It reads no page file, and it never runs a save script that the opened project holds. A writer plugin that is installed only in the project folder (`.claude/plugins/<name>`) is not found (STORY-90, ADR-011).
+- The Path A gate reads the run that `inputs_from` names with `brain_read.py wtp --run-id --case`. A person's run takes the newest run that holds a willingness to pay and asks the person to confirm it. A price cites a snapshot that `wtp --out` writes under `.pricing/`.
+- When a graph is not there, pricing shows a plain message and goes on with no input (Path B, or no moat context). The gap texts are `jtbd run_id or case not in the jtbd graph` and `jtbd graph missing or unreadable`.
+- The session-start hook runs `brain_read.py status`. It prints a note only for a graph that holds usable data.
+- The reads of the value-metric and package skills, the auditor, and the moats step use `brain_read.py`. The files that the writer plugins wrote before the graphs are not read any more. The script that found the newest jtbd result is removed.
+- New file `scripts/probe-plugin.sh`, a copy of the file in the other plugins.
+- `automated: true` skips only a question. A run of `/pricing:price` with no block still runs `brain_read.py wtp` (Step 2) and `brain_read.py moats` (Step 5), also when the inputs already give the competitors. A live run showed that a skill with `automated: true` ran neither call.
+
 ## 1.12.2
 
 - The `run-id` form of `scripts/result_name.py` and the `run_id` of a file name use the `_RUN_ID` pattern of the result-file checker: 4 to 64 of a-z, 0-9 and `-`, with a-z or 0-9 first and last. A value such as `Run_1`, `ab` or `a..b` now exits 2, as the checker refuses it (STORY-164). The command part keeps the plain-name rule.
@@ -19,7 +29,7 @@ The first heading is the version in `.claude-plugin/plugin.json`. A test checks 
 - The pricing commands quote `run_id` and the JSON arguments. The pricer checks the `run_id` as the runner does, and `price-runner.md` quotes the plugin path. Each JSON argument has the rule to write each `'` as `'\''` (STORY-160).
 - The session-start hook says that a jtbd result exists. It prints no file name.
 - When the calculator cannot run, the run stops. It computes no figure, writes no price file, writes the result file with the gap `Pricing calculator`, and ends with `BLOCKED: pricing calculator <function>: <reason>`. The old rule to work the figure out by hand is gone (STORY-157).
-- New script `scripts/jtbd_newest.py` finds the newest jtbd result in the main conversation. A dispatched agent reads only the file that `inputs_from` or the new dispatch field `jtbd_result` names, and lists no folder. It takes `jtbd_result` only as a plain name in that folder, with no `..`; else it records a gap and uses Path B.
+- A new script finds the newest jtbd result in the main conversation. A dispatched agent reads only the file that `inputs_from` or the new dispatch field `jtbd_result` names, and lists no folder. It takes `jtbd_result` only as a plain name in that folder, with no `..`; else it records a gap and uses Path B.
 
 ## 1.11.0
 
