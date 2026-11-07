@@ -871,6 +871,10 @@ HANDLERS = (
     ("battle-card-*.md", "h_battle_card"),
 )
 
+# The handlers whose file the Run page holds by design: in Run fields (metadata, context), in the Run body (notes),
+# or only in `file_meta` (monitoring, plan). Such a file can give no item page, and ingest still removes it (STORY-217).
+RUN_PAGE_HANDLERS = ("h_metadata", "h_context", "h_notes", "h_monitoring", "h_plan")
+
 
 def handler_for(ing, spec):
     if isinstance(spec, str):
@@ -936,6 +940,8 @@ def process(ing, files, result):
             if skeleton is not NO:
                 store_skeleton(ing, path.name, skeleton)
             done.append(path.name)
+            if spec in RUN_PAGE_HANDLERS:
+                ing.touched.setdefault(path.name, {})  # so pages.json names the file
     if result is not None:
         ing.result_file(result[0], result[1])
     return done, notes
@@ -1065,7 +1071,9 @@ def run(root, path=None, result_file=None, actor=None) -> list[str]:
             swap(root, tmp)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
-    removed = [name for name in done if not kept(name)]
+    # A file that no page holds stays where it is, so no data goes with no trace (STORY-217).
+    no_page = [name for name in done if name not in ing.touched]
+    removed = [name for name in done if name in ing.touched and not kept(name)]
     for name in removed:
         ((session or files[0].parent) / name).unlink()
     if session is not None:
@@ -1075,9 +1083,10 @@ def run(root, path=None, result_file=None, actor=None) -> list[str]:
         pages_path.write_text(json.dumps({"run": ing.run_ref, "files": known}, indent=2, ensure_ascii=False) + "\n",
                               encoding="utf-8")
     lines += notes
+    lines += [f"NO PAGE: {name}: no page holds an item of the file, so ingest did not remove it" for name in no_page]
     lines += [ing.start_note] if ing.start_note else []
     lines.append(f"ingested {run_id} as {ing.run_ref}: {len(done)} files, removed {len(removed)}, "
-                 f"kept {len(done) - len(removed)}")
+                 f"kept {len(done) - len(removed)}" + (f", no page {len(no_page)}" if no_page else ""))
     warnings = [i.text() for i in issues if i.level != ERROR]
     lines += warnings[:10] + ([f"... and {len(warnings) - 10} more warnings"] if len(warnings) > 10 else [])
     return lines

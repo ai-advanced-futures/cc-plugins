@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.4
+
+- `ingest` removes a file only when a page holds it. A file that gave no page stays where it is, the output names it in a `NO PAGE:` line, and the `ingested` line ends with `, no page N`. The files of metadata, context, notes, monitoring and plan have the Run page, so `ingest` removes them as before, and `pages.json` now names them. Before, a file that gave no page went from the session folder, and no line named it (STORY-217).
+
 ## 1.10.3
 
 - The ingest order does not change the graph. A shared page (Market, Competitor, Offer, Source) keeps the value of the newest run for each field, and the new field `field_runs` names that run. A later description replaces the placeholder of a competitor. The description of a source follows its type. A run that finds a known competitor by its name gives its name by the same rule, and links the market of that competitor. A run gets a `field_runs` entry only for a field that it gives: a run that names no market changes no field of the market. A field that a person gives with `new` or sets with `set` (the title and the description too) is kept, and no run replaces it. `ingest` prints a `note:` line for a start time that it cannot read (STORY-185).
