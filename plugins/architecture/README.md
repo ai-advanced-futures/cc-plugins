@@ -38,8 +38,7 @@ never fires on its own either; the rest are invoked by a human.
   session, mid-flow, without stopping to ask. Applies the distillation standard from
   `skills/learn/distillation.md`.
 - **`/architecture:ask`** — recall. Answers a question from the corpus with `path:line` citations. Backed
-  by the `architecture:ask` skill, which is read-only by construction — its tool list holds only
-  `Read, Grep, Glob, AskUserQuestion, Skill`, and none of them can change a file — and reads `index.md` first, or the register when that file does not
+  by the `architecture:ask` skill, which reads only: it reads files with Read and searches them with `grep` through Bash, and it writes no file. It reads `index.md` first, or the register when that file does not
   exist, before it opens any single ADR.
 - **`/architecture:index`** — regenerate the register and lint the corpus. Backed by the `indexing-adrs`
   skill, which never reports success on a red lint and never hand-edits between the generated

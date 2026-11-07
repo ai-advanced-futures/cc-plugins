@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.9
+
+### Changed
+- The text searches with `grep -n -E` through Bash, because Claude Code gives no Glob or Grep tool there. The macOS `grep` has no `-P`, so the patterns use `[[:blank:]]` for the tab of `links.tsv`. The text tells the model to write each `'` in a search term as `'\''`.
+
 ## 1.0.8
 
 ### Changed

@@ -1,6 +1,6 @@
 # architecture:ask — graph walk rules
 
-Read this file only for a `partial` note, a `now=` note, or a set question. The 2 edge Grep
+Read this file only for a `partial` note, a `now=` note, or a set question. The 2 edge search
 patterns and the classification rules are in [`../SKILL.md`](../SKILL.md).
 
 ## The `partial` rule
@@ -19,10 +19,10 @@ names can be proposed: look at its index line before you give it as a decision i
 ## A set question about one area `Z`
 
 1. Read the `### accepted` lines of `## Z` in `index.md`.
-2. Grep `links.tsv` with this pattern:
+2. Search `links.tsv` with this pattern:
 
    ```
-   ^[^\t]+\t(supersedes|amends|deviates_from|refines)\t[^\t]+\tlive\t.*\tZ\t
+   ^[^[:blank:]]+[[:blank:]](supersedes|amends|deviates_from|refines)[[:blank:]][^[:blank:]]+[[:blank:]]live[[:blank:]].*[[:blank:]]Z[[:blank:]]
    ```
 
 3. Answer from the index lines.
@@ -30,6 +30,6 @@ names can be proposed: look at its index line before you give it as a decision i
 5. List in Gaps each accepted ADR that was not opened. Name the proposed ADRs of the area as
    candidates, not as constraints.
 
-A Grep for `\tZ\t` alone gives too many rows. On a large corpus it gave 394 rows and
+A search for `[[:blank:]]Z[[:blank:]]` alone gives too many rows. On a large corpus it gave 394 rows and
 20,065 tokens, which is more than the stop rule and the `head_limit` permit. The pattern above
 gave 41 rows and 1,986 tokens. The worst-case degrees of the corpus are 20 out and 38 in.
