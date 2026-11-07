@@ -35,6 +35,7 @@ You assess 1 question that a role of the team could not answer. The role wrote t
 - **Reversible:** a later PR undoes it with no loss: a name, a default, a layout, an internal structure.
 - **Hard to reverse:** a data shape, a public API, a migration, a permission, a limit, security, money, or a hidden change that nobody sees early.
 - **Irreversible:** data is deleted, money is spent, or a public promise is made.
+- Money is only a cost that the team pays per use: a paid API with an API key, a paid service, a plan change. A Claude run on the subscription (a session, a subagent, a workflow, a live test with `claude -p` or `claude --bg`) spends no money, so an option that adds such runs is not `hard to reverse` or `irreversible` for its cost.
 
 **The visibility:**
 - **Visible:** each person who uses or tests the product sees the result at once: a screen, a message, a flow, an output.

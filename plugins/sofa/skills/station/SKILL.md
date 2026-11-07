@@ -93,7 +93,7 @@ Each PR description, from every role, ends with this block. Each line has a link
 - <D-id> (<level>, <confidence>, <reversibility>, <visibility>): <one line> | none
 ```
 
-Before you write a line of `Autonomous decisions`, record the decision with no `--id`: `sofa-state decision log --story <story> --level ... --confidence ... --reversibility ... --visibility ... --by <your role> --summary "<1 line>"`. Write the ID that it prints as `<D-id>`. Do not choose a number yourself, because 2 sessions can choose the same number.
+Before you write a line of `Autonomous decisions`, record the decision with no `--id`: `sofa-state decision log --story <story> --level ... --confidence ... --reversibility ... --visibility ... --by <your role> --summary "<1 line>"`. Write the ID that it prints as `<D-id>`. Do not choose a number yourself, because 2 sessions can choose the same number. The 4 values are the words of the decision tables (section 4 of `docs/adlc.md`): `--level detail|middle|direction`, `--confidence high|medium|low`, `--reversibility reversible|"hard to reverse"|irreversible`, `--visibility visible|hidden`. Another word exits 2 and writes no row.
 
 The author writes the block when it opens the PR. The `product` line says `pending` until the verifier writes it, and the merger does not merge while a line says `pending`.
 

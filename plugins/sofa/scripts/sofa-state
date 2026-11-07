@@ -48,6 +48,11 @@ CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
 """
 
 INTERACTION_KINDS = ["ask", "answer", "veto", "request", "defect"]
+# The values of the decision tables (docs/adlc.md, section 4).
+DECISION_LEVELS = ["detail", "middle", "direction"]
+DECISION_CONFIDENCES = ["high", "medium", "low"]
+DECISION_REVERSIBILITIES = ["reversible", "hard to reverse", "irreversible"]
+DECISION_VISIBILITIES = ["visible", "hidden"]
 
 
 class UsageError(Exception):
@@ -552,10 +557,12 @@ def build_parser():
     sp.add_argument("--id", help="the id; with no --id, the next free D-<n>")
     sp.add_argument("--replace", action="store_true", help="write over the decision with this --id")
     sp.add_argument("--story", required=True)
-    sp.add_argument("--level", required=True)
-    sp.add_argument("--confidence", required=True)
-    sp.add_argument("--reversibility", required=True)
-    sp.add_argument("--visibility", required=True)
+    # The 4 values of the decision tables of docs/adlc.md, section 4. A value outside
+    # the list exits 2 and writes nothing, so the digest and the band audit can read each row.
+    sp.add_argument("--level", required=True, choices=DECISION_LEVELS)
+    sp.add_argument("--confidence", required=True, choices=DECISION_CONFIDENCES)
+    sp.add_argument("--reversibility", required=True, choices=DECISION_REVERSIBILITIES)
+    sp.add_argument("--visibility", required=True, choices=DECISION_VISIBILITIES)
     sp.add_argument("--by", required=True, help="who decided, for example decision-judge or hitl")
     sp.add_argument("--summary", required=True)
     sp = leaf(d, "veto", cmd_decision_veto, "mark a decision as vetoed")
