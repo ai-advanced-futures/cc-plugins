@@ -15,7 +15,7 @@ Ask a number or a free-text input as a text question with `AskUserQuestion` [q: 
 
 A run is a plugin run when the arguments of this skill hold a fenced block with the info string `plugin-run`, or when the arguments are 1 line that is the path of a file that holds that block (read the block from that file with the Read tool). Another plugin calls this skill with the `Skill` tool in its own conversation. The block holds `command`, `automated`, `answers_path`, `case`, `run_id` and `inputs_from`. With no block, this is a person's run: skip this section, and ask the person as the steps say.
 
-In a plugin run, you cannot ask the person, so the answers file gives each answer. In a plugin run of `competitive-intelligence:analyze`:
+In a plugin run, the answers file gives each answer. Ask the person nothing. In a plugin run of `competitive-intelligence:analyze`:
 
 - Read the answers file at `answers_path` and use its `competitive-intelligence:analyze` section. A value it gives replaces the default for that input. Each answer has `settled_by`. A value with `settled_by: person` is a source of type `person`; a value with `settled_by: recommended` is a source of type `default`. When an input has no answer, use the default of `${CLAUDE_PLUGIN_ROOT}/result-file.json` and record it in `defaults`.
 - The arguments are not the `competitor`: the answers file gives it. Do not call `AskUserQuestion` [q: none] and do not show a checkpoint: skip the questions of steps 1 and 2, the checkpoint of step 6, the question "Retry, Skip or Cancel?" (skip the lens), and the question of step 9.

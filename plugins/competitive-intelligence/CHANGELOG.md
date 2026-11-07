@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.1
+
+- The contract test fails a skill route that can ask. A route under `skills/` cannot ask only when the first `##` heading of its `SKILL.md` is `## Plugin-run block` and that section holds the sentence `Ask the person nothing.`. Before, the test applied no ask check to a skill route. The `## Plugin-run block` of the skills `discover` and `analyze` now holds that sentence (STORY-173).
+
 ## 1.10.0
 
 This version makes the plugin a brain: each run writes its results into a graph (STORY-88, part B). Part A gave the graph and its save code in 1.8.0.
