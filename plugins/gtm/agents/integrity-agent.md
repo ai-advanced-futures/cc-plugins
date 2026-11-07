@@ -163,6 +163,9 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
        Tier 4: {"type": "vision", "source": "<where the evidence is>"}
        Tier 5: null
      The script reads only these evidence values. It counts a claim with another type as Tier 5.
+   - When step 2 finds no claim, write `"claims": []`. Do not add a claim to get a score. An audit with 0 claims
+     has no integrity score: `truth_tier_validator.py` exits 3 with the gap `no_claims`, and the run stops with no
+     file in `gtm-output/`.
 
 9. WRITE THE CLEANED DRAFTS AND THE PER-AGENT AUDIT:
    - Write each cleaned draft (Tier 5 removed, Tiers 2 to 4 reworded) to its own path in .gtm/working/{target_agent}/ with the Write tool. Phase write and the override read them there.

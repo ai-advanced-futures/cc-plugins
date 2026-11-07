@@ -148,6 +148,11 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
         .gtm/audit/<agent>-integrity.json and prints 1 line. The Bash tool shows "Exit code <n>" for an exit
         that is not 0. With no such line, the exit is 0.
         → Exit 0: go to step 3.
+        → Exit 3 (the line names no_claims): An audit with 0 claims has no integrity score: `truth_tier_validator.py`
+          exits 3 with the gap `no_claims`, and the run stops with no file in `gtm-output/`. Do not do step 3, and
+          leave completion_flags.<agent>_integrity false. Add "integrity pass of <agent> not scored: no_claims, the audit holds 0 claims"
+          and the output to _meta.execution_log. Stop the run. In the reply, name the gap no_claims and say that
+          the drafts of <agent> hold no claim to check. End the reply with `DONE: gtm`.
         → Each other result (a refused call, an exit that is not 0): do not count the score yourself.
           A score counted by hand is not a score. Do not do step 3, and leave completion_flags.<agent>_integrity false.
           Add "integrity pass of <agent> not scored: truth_tier_validator.py did not run" and the output to

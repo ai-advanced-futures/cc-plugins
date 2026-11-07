@@ -5,6 +5,7 @@
 **Updated:** 2026-02-28 (thin coordinator, parallel waves, definitions as the source of truth, integrity hardening)
 **Updated:** 2026-11-05 (port to this marketplace: the run order, the optional tools)
 **Updated:** 2026-11-06 (STORY-177: the score and band come from truth_tier_validator.py; band choice holds the output)
+**Updated:** 2026-11-07 (STORY-187: an audit with 0 claims has no integrity score, and the run stops)
 
 ---
 
@@ -153,6 +154,7 @@ The file `scripts/gtm_constants.py` holds the agent name lists and the integrity
 - A score from 0.60 to 0.84 (band `choice`) writes no file to `gtm-output/`. The flag `completion_flags.<agent>_integrity` stays false until the person chooses rerun or override.
 - When the person overrides a score from 0.60 to 0.84, the integrity agent runs again in phase `write` with `override_flag=true`. It writes the drafts, with the Tier 5 claims removed, to `gtm-output/`.
 - A score below 0.60 (band `floor`) always stops the run.
+- An audit with 0 claims has no integrity score: `truth_tier_validator.py` exits 3 with the gap `no_claims`, and the run stops with no file in `gtm-output/`. (STORY-187)
 - The consolidated audit runs only when all four audits exist and no band is `floor` (a band `choice` counts only after its override).
 - A superlative with no source is Tier 5. It is blocked.
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.1
+
+- An audit with 0 claims has no integrity score. `scripts/truth_tier_validator.py` exits 3 with the gap `no_claims` and writes nothing, and the orchestrator stops the run with no file in `gtm-output/` (STORY-187). Before, 0 claims gave the score 1.00 and the band `pass`, so a run that checked nothing wrote its output as checked.
+- When the integrity agent finds no claim, it writes `"claims": []` and adds no claim to get a score. `/gtm:audit` gives no score for an artifact with no claims.
+- `definitions/integrity-score.md`, `definitions/truth-tiers.md` and ADR-001 state the rule. New tests: `test_no_claims.py` and 1 live test.
+
 ## 1.9.0
 
 - Each output of a pass agrees with its schema. Each content agent names the schema of each JSON file with `${CLAUDE_PLUGIN_ROOT}/schemas/<file>` at its write step, and the integrity agent names the 9 schemas of `gtm-output/` (STORY-166).

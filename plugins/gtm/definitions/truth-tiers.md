@@ -36,7 +36,7 @@ integrity_score = (total_claims - tier_5_blocked) / total_claims
 - Range: 0.0 to 1.0
 - Floor: 0.60 (below this, return artifact to calling agent for revision)
 - Target: 0.85+
-- Empty claim set: score = 1.0 (no violations)
+- Empty claim set: no score. An audit with 0 claims has no integrity score: `truth_tier_validator.py` exits 3 with the gap `no_claims`, and the run stops with no file in `gtm-output/`.
 - All blocked: score = 0.0
 
 ## Value-IP Survived Claims

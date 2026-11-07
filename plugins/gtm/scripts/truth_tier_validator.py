@@ -12,6 +12,9 @@ It reads .gtm/audit/<agent>-integrity.json, which holds a list `claims`. It adds
 `band` and `scored_by`, and writes the file back. The band is "floor" below
 INTEGRITY_FLOOR, "choice" below INTEGRITY_TARGET, and "pass" above. It prints one
 line and exits 0. Exit 2: the file cannot be read or does not hold valid claims.
+Exit 3: the list `claims` is empty, and the script writes nothing. An audit with 0 claims
+has no integrity score: `truth_tier_validator.py` exits 3 with the gap `no_claims`, and the
+run stops with no file in `gtm-output/`.
 """
 from __future__ import annotations
 
@@ -67,6 +70,10 @@ class TierResult:
     reason: str = ""
 
 
+class NoClaims(Exception):
+    """The audit holds 0 claims, so it has no integrity score (STORY-187)."""
+
+
 @dataclass
 class AuditReport:
     claims: list[dict]
@@ -117,6 +124,8 @@ class TruthTierValidator:
         return bool(_SUPERLATIVE_PATTERN.search(text))
 
     def audit(self, claims: list[dict[str, Any]]) -> AuditReport:
+        if not claims:
+            raise NoClaims("no_claims: the audit holds 0 claims, so there is no integrity score")
         tier_results = [self.classify(c) for c in claims]
         all_issues: list[str] = []
         for c in claims:
@@ -128,13 +137,9 @@ class TruthTierValidator:
         #   integrity_score = (total_claims - Tier_5_blocked) / total_claims
         # The denominator is total_claims (INCLUDING Tier 5) — Tier 5 (blocked) claims
         # reduce the score. When all claims are Tier 5: blocked == total → score = 0.0.
-        # Empty claim set (total == 0) → score = 1.0 (no claims reviewed = no violations).
+        # An empty claim set has no score: audit() raises NoClaims above (STORY-187).
         # Language issues are advisory only — they appear in language_issues but do NOT reduce the score.
-        eligible = total - blocked
-        if total == 0:
-            score = 1.0  # no claims reviewed = no violations
-        else:
-            score = eligible / total
+        score = (total - blocked) / total
 
         return AuditReport(
             claims=claims,
@@ -192,6 +197,9 @@ def main(argv: list[str]) -> int:
     try:
         data = score_audit(json.loads(path.read_text(encoding="utf-8")))
         path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    except NoClaims as gap:
+        print(f"truth_tier_validator.py: {path}: {gap}")
+        return 3
     except (OSError, ValueError) as error:
         print(f"truth_tier_validator.py: {path}: {error}")
         return 2

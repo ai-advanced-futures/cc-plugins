@@ -56,7 +56,7 @@ The rules are in two files. Read both before you start:
    - Future-tense-as-present ("you will see") → rewrite as "designed to help you" or add qualifier
    - Competitor naming without factual basis → legal risk flag
 
-7. **Calculate the integrity score by the formula of `integrity-score.md`** — `integrity_score = (total_claims - tier_5_blocked) / total_claims`, a number from 0.0 to 1.0. The total stays fixed when claims are blocked. With no claims, the score is 1.0. Below 0.60 the artifact fails the floor. Set `floor_breached` to `true` and hold the artifact back, because most of its claims have no proof. With `--strict`, the artifact also fails below 0.85.
+7. **Calculate the integrity score by the formula of `integrity-score.md`** — `integrity_score = (total_claims - tier_5_blocked) / total_claims`, a number from 0.0 to 1.0. The total stays fixed when claims are blocked. With no claims, there is no score (the gap `no_claims` of `integrity-score.md`): write no `truth-tier-audit.json` and no cleaned file for that artifact, and tell the person that it holds no claim to check. Below 0.60 the artifact fails the floor. Set `floor_breached` to `true` and hold the artifact back, because most of its claims have no proof. With `--strict`, the artifact also fails below 0.85.
 
 8. **Write `truth-tier-audit.json`** — structured audit report. The fields follow `${CLAUDE_PLUGIN_ROOT}/schemas/truth-tier-audit.json`:
    ```json

@@ -29,7 +29,9 @@ Where:
 | 10 claims, 1 blocked            | 0.90  |
 | 10 claims, 5 blocked            | 0.50  |
 | All claims blocked              | 0.00  |
-| No claims reviewed              | 1.00  |
+| No claims reviewed              | none  |
+
+An audit with 0 claims has no integrity score: `truth_tier_validator.py` exits 3 with the gap `no_claims`, and the run stops with no file in `gtm-output/`. A score of 1.00 for 0 claims passes a run that checked nothing.
 
 ## Thresholds
 
