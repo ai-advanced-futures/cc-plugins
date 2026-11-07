@@ -23,13 +23,13 @@ The plugin runs in two ways:
 
 Each skill works alone. The skill `/aiml:orchestrate` is a convenience: it reads `.aiml/handoff.json` and runs the next skill. Three producer skills (`cost-amplifier-readout`, `p15-trigger-detection`, `archetype-baseline-telemetry`) turn a JSON file into a result file. They are not part of the pipeline order.
 
-### An 11-agent roster with model tiers
+### A 13-agent roster with model tiers
 
-- **opus** (3 agents): `decision-agent`, `design-agent`, `simulator-agent`. They reason under doubt, make choices that add up, or look for failures.
+- **opus** (5 agents): `decision-agent`, `design-agent`, `simulator-agent`, and the small agents `design-analyst` and `simulation-checker` that the skills `design` and `simulate` start before them. They reason under doubt, make choices that add up, or look for failures.
 - **sonnet** (5 agents): `plan-agent`, `scaffold-agent`, `tune-agent`, `evaluate-agent`, `ops-agent`. They do structured work.
 - **haiku** (3 agents): the three producer agents. They run one script.
 
-The agent `orchestrator` of earlier versions does not exist. The skill `orchestrate` runs in the main conversation, because only the main conversation can ask the person a question (see ADR-002).
+No agent has `Agent`, so no agent starts an agent: a skill starts every agent in the main conversation (ADR-002). The agent `orchestrator` of earlier versions does not exist. The skill `orchestrate` runs in the main conversation, because only the main conversation can ask the person a question (see ADR-002).
 
 ### The plugin does not know its caller
 

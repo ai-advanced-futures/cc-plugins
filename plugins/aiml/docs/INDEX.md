@@ -3,7 +3,7 @@
 ## Architecture
 
 - [ADR-001: Plugin Architecture](adr/ADR-001-plugin-architecture.md) — the pipeline, the model tiers, the artifact paths
-- [ADR-002: Agent Patterns](adr/ADR-002-agent-patterns.md) — skills only, parallel sub-tasks, who asks the person, model tiers
+- [ADR-002: Agent Patterns](adr/ADR-002-agent-patterns.md) — skills only, parallel small agents, who asks the person, model tiers
 - [ADR-003: Telemetry-Enriched Cost-Amplifier Readout](adr/ADR-003-charter-readout-producer.md) — both readout modes together, the three modules, the golden values
 - [ADR-004: P15 Trigger Detector](adr/ADR-004-p15-trigger-detector.md) — 14 decisions for the `p15-trigger-event.json` producer (cost rate and quality floor)
 - [ADR-005: Archetype Baseline Telemetry](adr/ADR-005-archetype-baseline-telemetry.md) — the producer of measured archetype baselines, with median aggregation

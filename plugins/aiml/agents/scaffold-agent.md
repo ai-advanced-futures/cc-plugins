@@ -5,7 +5,6 @@ model: sonnet
 tools:
   - Read
   - Write
-  - Bash
   - mcp__context7__*
 ---
 

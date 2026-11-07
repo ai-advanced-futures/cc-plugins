@@ -2,7 +2,7 @@
 
 Helps a software engineer build an AI or ML feature. It covers the choice of approach (LLM, classical ML or hybrid), the design, the plan, a check of the plan, the starter code, training guidance, evaluation, and MLOps. You need no data science background. The plugin asks short questions and writes specs, plans and code.
 
-11 agents, 12 skills, 14 Python scripts.
+13 agents, 12 skills, 15 Python scripts.
 
 ## Install
 
@@ -19,15 +19,17 @@ Run the skills in this order. Each skill works alone, so you can start at any st
 | Step | Skill | Agent (model) | Writes |
 |---|---|---|---|
 | 1 | `/aiml:decide` | `decision-agent` (opus) | `docs/aiml/decision.md` |
-| 2 | `/aiml:design` | `design-agent` (opus) | `docs/aiml/spec.md`, `docs/adr/aiml-approach.md` |
+| 2 | `/aiml:design` | `design-analyst` (opus, 2 runs), `design-agent` (opus) | `docs/aiml/spec.md`, `docs/adr/aiml-approach.md` |
 | 3 | `/aiml:plan` | `plan-agent` (sonnet) | `docs/aiml/plan.md` |
-| 4 | `/aiml:simulate` | `simulator-agent` (opus) | `docs/aiml/simulation-report.md` |
+| 4 | `/aiml:simulate` | `simulation-checker` (opus, 3 runs), `simulator-agent` (opus) | `docs/aiml/simulation-report.md` |
 | 5 | `/aiml:scaffold` | `scaffold-agent` (sonnet) | `src/`, `requirements.txt` |
 | 6 | `/aiml:tune` | `tune-agent` (sonnet) | `docs/aiml/tune-recommendations.md` |
 | 6 | `/aiml:evaluate` | `evaluate-agent` (sonnet) | `docs/aiml/evaluation/iteration-N.md` |
 | 7 | `/aiml:ops` | `ops-agent` (sonnet) | `docs/aiml/ops/pipeline.md`, `.github/workflows/ml-pipeline.yml` |
 
 `/aiml:tune` runs during training. `/aiml:evaluate` runs before training (it checks the dataset) or after training (it scores the model).
+
+The skills start the agents in the main conversation. No agent starts another agent. The skill `design` runs `feasibility_check.py` between the `design-analyst` runs and `design-agent`. Only 5 agents have `Bash` (`evaluate-agent`, `tune-agent` and the three producer agents), and no agent has `Skill`.
 
 `/aiml:orchestrate [phase]` reads `.aiml/handoff.json` and runs the next skill. With a phase name, it runs that skill.
 
@@ -120,6 +122,7 @@ The folder `scripts/` holds math and validation helpers and the helpers of the t
 | `metric_calculator.py` | Precision, recall, F1, accuracy, ROC-AUC |
 | `data_validator.py` | Split ratios, class balance, minimum samples, leakage |
 | `cost_estimator.py` | Training and inference cost |
+| `feasibility_check.py` | The feasibility check of `/aiml:design`: training cost, inference cost and minimum samples from one input file |
 | `hyperparameter_validator.py` | Learning rate, batch size, epochs, LoRA settings |
 | `amplifier_telemetry_loader.py`, `amplifier_composer.py`, `cost_amplifier_readout_emitter.py` | The cost-amplifier readout |
 | `p15_trigger_input_loader.py`, `p15_trigger_detector.py`, `p15_trigger_emitter.py` | The P15 trigger event |

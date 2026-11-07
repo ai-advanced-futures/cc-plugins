@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.0
+
+### Changed
+
+- The skill `design` starts the new agent `design-analyst` 2 times (data requirements and model architecture), runs the new script `scripts/feasibility_check.py`, and then starts `design-agent`. The skill `simulate` starts the new agent `simulation-checker` 3 times (ML gaps, timeline and risks), and then starts `simulator-agent`. The two parent agents no longer start `general-purpose` sub-tasks, and they merge the result files.
+- `design-agent` and `simulator-agent` have `Read` and `Write`. `scaffold-agent` has no `Bash`, because no step runs a command. The new agents have `Read` and `Write`.
+- The feasibility check runs in the skill: the model run writes `.aiml/design/feasibility-input.json`, and the script writes `.aiml/design/feasibility.json`. The script refuses a word that `cost_estimator.py` does not know. When the check fails, the spec says that the cost and minimum-samples numbers are not computed.
+
+- The skill `design` starts the 2 `design-analyst` runs one at a time, in the foreground (D-377), and runs the check command on its own, with no `echo`. The script refuses a number that is NaN or Infinity, and writes `ok: false` when a cost is too large.
+
+### Added
+
+- `tests/unit/test_agent_grants.py` fails on an `Agent` grant, a `Skill` grant, a `Bash` grant outside the 5 agents that run scripts, and a `general-purpose` agent in a prompt file.
+- The live tiers `design` and `simulate` (`make itest TIER=design`).
+
 ## 0.5.0
 
 First version in this repository. The plugin is a port of `aiml` 0.4.2. Versions 0.1.0 to 0.4.2 came before the port, from commit `c2a329f` of a private repository.

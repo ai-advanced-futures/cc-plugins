@@ -12,9 +12,11 @@ C4Container
         Container(skills, "12 skills", "Markdown (skills/*/SKILL.md)", "Ask the person. Dispatch one agent each with the Agent tool. orchestrate runs the next skill with the Skill tool.")
 
         Container(decision, "decision-agent", "Agent / opus", "LLM, ML or hybrid. Writes decision.md.")
-        Container(design, "design-agent", "Agent / opus", "AIML spec and feasibility. Three parallel sub-tasks. Writes spec.md and the ADR.")
+        Container(design_analyst, "design-analyst", "Agent / opus", "Data requirements and model architecture. Two parallel runs. Writes the input file of the feasibility check.")
+        Container(design, "design-agent", "Agent / opus", "AIML spec. Merges the analyses and the feasibility result. Writes spec.md and the ADR.")
         Container(plan, "plan-agent", "Agent / sonnet", "Implementation plan. Writes plan.md.")
-        Container(simulator, "simulator-agent", "Agent / opus", "Adversarial plan review. Three parallel sub-tasks. Writes simulation-report.md.")
+        Container(sim_checker, "simulation-checker", "Agent / opus", "Adversarial plan review of one part. Three parallel runs.")
+        Container(simulator, "simulator-agent", "Agent / opus", "Merges the three checks. Writes simulation-report.md.")
         Container(scaffold, "scaffold-agent", "Agent / sonnet", "Runnable starter code. HuggingFace for LLM, scikit-learn for ML.")
         Container(tune, "tune-agent", "Agent / sonnet", "Loss curve diagnosis. Writes tune-recommendations.md.")
         Container(evaluate, "evaluate-agent", "Agent / sonnet", "Pre-training and post-training evaluation.")
@@ -24,6 +26,7 @@ C4Container
         Container(metric_calc, "metric_calculator.py", "Python script", "Precision, recall, F1, accuracy, ROC-AUC")
         Container(data_val, "data_validator.py", "Python script", "Split ratios, class balance, minimum samples, leakage")
         Container(cost_est, "cost_estimator.py", "Python script", "Training and inference cost")
+        Container(feasibility, "feasibility_check.py", "Python script", "Feasibility check of the design skill. Calls cost_estimator and data_validator.")
         Container(hp_val, "hyperparameter_validator.py", "Python script", "Learning rate, batch size, epochs, LoRA settings")
         Container(emitters, "emitter scripts", "Python scripts", "Load, compose and write the three producer files. Validate against schemas/.")
 
@@ -34,8 +37,11 @@ C4Container
 
     Rel(engineer, skills, "Runs and answers")
     Rel(skills, decision, "Dispatches")
+    Rel(skills, design_analyst, "Dispatches 2 runs")
+    Rel(skills, feasibility, "Runs between the analysts and the design agent")
     Rel(skills, design, "Dispatches")
     Rel(skills, plan, "Dispatches")
+    Rel(skills, sim_checker, "Dispatches 3 runs")
     Rel(skills, simulator, "Dispatches")
     Rel(skills, scaffold, "Dispatches")
     Rel(skills, tune, "Dispatches")
@@ -43,9 +49,8 @@ C4Container
     Rel(skills, ops, "Dispatches")
     Rel(skills, producers, "Dispatches")
 
-    Rel(design, metric_calc, "Feasibility check")
-    Rel(design, data_val, "Data sufficiency check")
-    Rel(design, cost_est, "Cost estimate")
+    Rel(feasibility, data_val, "Data sufficiency check")
+    Rel(feasibility, cost_est, "Cost estimate")
     Rel(tune, hp_val, "Validates each change")
     Rel(evaluate, metric_calc, "Model metrics")
     Rel(evaluate, data_val, "Dataset checks")
@@ -75,7 +80,7 @@ C4Container
 | Agent | Model | Reason |
 |---|---|---|
 | decision-agent | opus | The tradeoffs of LLM and ML are not obvious. It needs multi-step reasoning under doubt. |
-| design-agent | opus | Architecture choices add up. A wrong model family means a full redesign. |
-| simulator-agent | opus | It must find the gaps that the engineer missed. |
+| design-agent, design-analyst | opus | Architecture choices add up. A wrong model family means a full redesign. |
+| simulator-agent, simulation-checker | opus | It must find the gaps that the engineer missed. |
 | plan-agent, scaffold-agent, tune-agent, evaluate-agent, ops-agent | sonnet | Structured work: planning, code, scoring, pipeline design. |
 | 3 producer agents | haiku | They run one script and report. The result is deterministic. |

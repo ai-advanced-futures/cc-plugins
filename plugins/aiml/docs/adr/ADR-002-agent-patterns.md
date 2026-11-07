@@ -8,7 +8,7 @@
 
 ## Context
 
-This ADR records how the plugin shows its features to the user, how an agent gets parallel work done, who asks the person questions, and how the model cost is shared between the agents. ADR-001 records the overall design.
+This ADR records how the plugin shows its features to the user, how parallel work gets done, who asks the person questions, and how the model cost is shared between the agents. ADR-001 records the overall design.
 
 ---
 
@@ -20,7 +20,7 @@ The plugin has no `commands/` folder. Each entry point (`/aiml:decide`, `/aiml:d
 
 ### Rationale
 
-Each feature starts an agent that reads files, runs scripts, starts sub-tasks and writes files. A skill can state all of this. A command adds one more layer between the command and the agent, and gives no gain.
+Each feature starts an agent that reads files, runs scripts and writes files. A skill can state all of this. A command adds one more layer between the command and the agent, and gives no gain.
 
 ### Consequences
 
@@ -29,24 +29,24 @@ Each feature starts an agent that reads files, runs scripts, starts sub-tasks an
 
 ---
 
-## Decision 2: Sub-tasks of `design-agent` and `simulator-agent` run in parallel
+## Decision 2: The skill runs the parallel analyses of `design` and `simulate` as small agents
 
 ### Context
 
-`design-agent` and `simulator-agent` each have three independent analysis tasks. The tasks do not depend on each other.
+`design` and `simulate` each have independent analysis tasks. A subagent cannot start an agent, and a `general-purpose` agent has each tool of the session, so an agent must not start the tasks.
 
 ### Decision
 
-Both agents have the `Agent` tool. Each starts three general-purpose sub-agents in one message, and merges the results. A sub-agent has no named agent file. It gets a prompt with the full context from its parent. A sub-agent cannot start another agent, so the depth is two.
+The skill starts the small agents in the main conversation, in one message. `design` starts `design-analyst` 2 times (`data-requirements`, `model-architecture`), runs `feasibility_check.py` on the input file that the model run wrote, and starts `design-agent`. `simulate` starts `simulation-checker` 3 times (`ml-gaps`, `timeline`, `risks`) and then `simulator-agent`. Each small agent has `Read` and `Write`, and writes its result to a file. The parent agent reads the files and merges them. No agent has `Agent`, `Bash` or `Skill` in these flows.
 
 ### Rationale
 
-The wall-clock time is that of the slowest sub-task, not the sum of the three. A sub-task is not used by anyone else, so a named file gives no gain.
+The wall-clock time is that of the slowest run, not the sum. The feasibility values depend on the architecture, so the script runs after the analyses and before the merge, in the skill.
 
 ### Consequences
 
-- The parent agent must put enough context in each sub-task prompt.
-- When the `Agent` tool is not available, the agent does the three tasks in order. The result is the same and the run is slower.
+- The skill must give each small agent its input paths and its output path.
+- A run that returns no file is recorded as `status: "unavailable"` by the parent agent, and the report names the gap.
 
 ---
 
@@ -82,7 +82,7 @@ The rule follows what Claude Code allows. It also keeps the agents free of dialo
 
 ---
 
-## Decision 4: Opus for 3 agents, sonnet for 5, haiku for 3
+## Decision 4: Opus for 5 agents, sonnet for 5, haiku for 3
 
 ### Context
 
@@ -94,6 +94,7 @@ The agents have different reasoning needs. Opus costs about 5 times more per tok
 - `decision-agent`: the choice of LLM, ML or hybrid fixes all later work.
 - `design-agent`: architecture choices add up. A wrong choice means rework in each later step.
 - `simulator-agent`: it must find the failures of a plan that the engineer did not see.
+- `design-analyst` and `simulation-checker`: small agents that the skills `design` and `simulate` start. They make the analyses that `design-agent` and `simulator-agent` merge, and they have the same needs.
 
 **sonnet**:
 - `plan-agent`, `scaffold-agent`, `tune-agent`, `evaluate-agent`, `ops-agent`: the input is well defined and the output has a fixed form.

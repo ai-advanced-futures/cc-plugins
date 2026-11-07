@@ -1,11 +1,10 @@
 ---
 name: simulator-agent
-description: Stress-tests the AIML implementation plan for ML-specific gaps before any code exists. Runs three parallel sub-tasks (ml-gap-checker, timeline-validator, risk-assessor) and writes docs/aiml/simulation-report.md with a verdict. Needs docs/aiml/plan.md. Uses opus for failure-mode reasoning.
+description: Stress-tests the AIML implementation plan for ML-specific gaps before any code exists. Merges the results of three simulation-checker runs (ml-gaps, timeline, risks) and writes docs/aiml/simulation-report.md with a verdict. Needs docs/aiml/plan.md. Uses opus for failure-mode reasoning.
 model: opus
 tools:
   - Read
   - Write
-  - Agent
 ---
 
 ## Role
@@ -24,47 +23,7 @@ Your review uses ideas from:
 - `docs/aiml/plan.md`: the AIML implementation plan from `/aiml:plan`. It must exist. If it is missing, print `ERROR: docs/aiml/plan.md not found. Run /aiml:plan first.` and end the run.
 - **Optional:** `docs/aiml/spec.md` — AIML specification for additional context
 - **Optional:** `.aiml/handoff.json` — prior session state (approach, constraints, prior decisions)
-
-## Parallel Sub-Tasks
-
-Dispatch all three sub-tasks in parallel with the `Agent` tool. Each sub-task is an `Agent` call with `subagent_type: general-purpose` and a focused prompt — not a reference to a named agent file. A sub-task asks the person nothing. Pass the full `plan.md` and `spec.md` contents to each sub-task prompt so they can reason independently.
-
-### ml-gap-checker
-
-Examine the plan for missing ML engineering steps. Look for:
-- Missing baseline model (random classifier, majority-class predictor, or simple heuristic — every ML project needs one)
-- No data validation step before training begins
-- No class balance check (for classification problems)
-- No leakage detection (features derived from future data, target encoded with full dataset)
-- Training loop missing checkpointing (no recovery from interrupted runs)
-- No early stopping (wasteful training, risk of overfitting)
-- Evaluation on training or validation data only, with no test set held out until the final evaluation
-- No error analysis step (where does it fail?)
-- No rollback strategy if the model degrades
-- For LLM fine-tuning: no base model evaluation before fine-tuning begins
-- For RAG: no retrieval quality evaluation (precision@k, recall@k)
-
-### timeline-validator
-
-Examine the plan timeline and resource estimates for realism. Check:
-- Is training time estimated? (GPU hours, wall-clock time, cost)
-- Is data collection and labeling time accounted for? (often the longest phase)
-- Is hyperparameter search time included? (can multiply training time by 10–100x)
-- Are GPU/compute costs estimated? (training cost, inference cost, storage cost)
-- Is model deployment time realistic? (containerization, serving infrastructure, latency testing)
-- Are iteration cycles budgeted? (first model is rarely production-ready)
-- Does the plan account for data pipeline iteration time?
-
-### risk-assessor
-
-Assess the plan against ML-specific production risks:
-- **Distribution shift risk**: Will production data look like training data? What is the deployment domain gap?
-- **Cold start problem**: What happens at day 0 with no user data or interaction history?
-- **Label noise risk**: How was ground truth created? Human annotation quality, programmatic labeling reliability
-- **Data leakage risk**: Are there any temporal or target-related features that could leak future information?
-- **Class imbalance risk**: Is the target distribution acknowledged? Is the evaluation metric appropriate (accuracy fails on imbalanced data)?
-- **Catastrophic forgetting risk**: For fine-tuning — does the plan address capability regression on base tasks?
-- **Infrastructure risk**: Is the serving infrastructure specified? Latency SLOs? Rollback strategy?
+- **Dispatch fields:** the paths of the 3 results that the skill made before it started you: `.aiml/simulation/ml-gaps.md`, `.aiml/simulation/timeline.md` and `.aiml/simulation/risks.md` (from the agent `simulation-checker`).
 
 ## Workflow
 
@@ -72,15 +31,13 @@ Assess the plan against ML-specific production risks:
 
 Read `docs/aiml/plan.md` in full. Also read `docs/aiml/spec.md` (the original requirements and approach) and `.aiml/handoff.json` (prior decisions and constraints) when they exist.
 
-### Step 2 — Dispatch parallel sub-tasks
+### Step 2 — Read the results
 
-Start `ml-gap-checker`, `timeline-validator` and `risk-assessor` with the `Agent` tool, in one message.
-
-If a sub-task returns no result, record `status: "unavailable"` for it, continue with the other results, and note the gap in the report. If the `Agent` tool is unavailable, do the three checks in order, yourself.
+Read the 3 result files of the dispatch. If a file is missing, or its text says `status: "unavailable"`, record `status: "unavailable"` for that check, continue with the other results, and note the gap in the report.
 
 ### Step 3 — Synthesize findings
 
-Collect the results of the three sub-tasks into one list, and merge findings that overlap. Give each finding one severity:
+Collect the results of the three checks into one list, and merge findings that overlap. Give each finding one severity:
 - **Critical**: the project would fail without a sign, or give misleading results.
 - **Important**: a significant risk or a missing good practice. Fix it before `/aiml:scaffold`.
 - **Minor**: a low-risk improvement that can wait for the implementation.
@@ -142,6 +99,7 @@ PROCEED | FIX_THEN_PROCEED | REDESIGN
 
 | Direction | Path | Description |
 |-----------|------|-------------|
+| Reads | `.aiml/simulation/ml-gaps.md`, `.aiml/simulation/timeline.md`, `.aiml/simulation/risks.md` | Results of the checks |
 | Reads | `docs/aiml/plan.md` | AIML implementation plan (needed) |
 | Reads | `docs/aiml/spec.md` | AIML specification (optional) |
 | Reads | `.aiml/handoff.json` | Prior session state (optional) |

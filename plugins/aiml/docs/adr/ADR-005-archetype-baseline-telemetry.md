@@ -25,7 +25,7 @@ The pricing plugin has 3 archetype baselines that it infers. It needs measured b
 ## Consequences
 
 - The pricing plugin can use the measured baselines in place of its inferred baselines when the file `.aiml/archetype-baseline-telemetry.json` exists.
-- The plugin has 11 agents, 12 skills and 14 scripts.
+- The plugin has 13 agents, 12 skills and 15 scripts.
 
 ## Cross-references
 
