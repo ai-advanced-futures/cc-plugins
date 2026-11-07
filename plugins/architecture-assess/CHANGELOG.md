@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1
+
+### Changed
+- The skill `design` lists the component pages with `find` through Bash. Claude Code gives no Glob tool there.
+
 ## 1.0.0
 
 First version in this repository. The plugin is a port of the `architecture` plugin, version 2.10.2, under a new name. Versions 1.0.0 to 2.10.2 of the `architecture` plugin came before the port, from commit `c2a329f` of a private repository.

@@ -157,7 +157,7 @@ The goal is to finish without waking the user.
 ## Honesty constraint (carry it into every artifact)
 
 What you claim must match what you proved. If live persistence is an in-memory overlay, the honest
-claim is "durable for the session," not "stored in the database." Grep your own closeout docs for
+claim is "durable for the session," not "stored in the database." Search your own closeout docs with `grep` for
 affirmative claims about anything you did not actually verify live, and downgrade each to its true
 status (negative guard or explicit "stretch / not wired"). A reader of the artifacts must be able
 to trust every "live" word.

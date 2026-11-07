@@ -380,7 +380,7 @@ reads.
   instead of the acpx `~/.acpx/sessions/${session}.env`. Branch the poll target on
   which sidecar was found — the acpx sidecar carries `ACPX_SESSION_NAME`; the bg
   sidecar carries `RELAY_BG_HANDOFF`.
-- **Poll target substitution.** Grep `$RELAY_BG_HANDOFF` instead of the acpx turn
+- **Poll target substitution.** Search `$RELAY_BG_HANDOFF` with `grep` instead of the acpx turn
   log.
 - **Liveness escape substitution.** The escape is `bg-liveness.sh --short-id
   "$RELAY_BG_SHORT_ID"` reporting `stopped` (exit `1`), instead of polling a process

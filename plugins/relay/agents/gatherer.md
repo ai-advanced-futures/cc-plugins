@@ -4,7 +4,7 @@ description: >
   Phase-1 context collector for /relay:diagnose. Reads codebase files, logs, and
   requested paths to produce structured findings for the strategist phase.
 model: haiku  # haiku: cheap evidence gathering — reads files, no complex reasoning required
-tools: Bash, Grep, Read, WebFetch, WebSearch
+tools: Bash, Read, WebFetch, WebSearch
 ---
 
 # Gatherer Agent

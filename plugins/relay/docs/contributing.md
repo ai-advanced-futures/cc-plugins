@@ -83,7 +83,7 @@ key. The non-obvious part is that **the current version is exact-pinned in a tes
 
 ```python
 # tests/unit/skill-structure/test_plugin.py
-assert manifest["version"] == "5.4.3"
+assert manifest["version"] == "5.4.4"
 ```
 
 Bumping fails the suite until you do the ratchet:
@@ -240,7 +240,7 @@ reports CLEAN while checking nothing.
 
 **`grep -q` on a pipe causes false failures.** It exits at first match and closes the
 pipe; the writer dies of SIGPIPE and `pipefail` promotes 141 into the pipeline
-status. Grep the file directly.
+status. Run `grep` on the file directly.
 
 ## Git workflow
 

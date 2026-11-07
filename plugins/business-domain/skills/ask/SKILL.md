@@ -37,7 +37,7 @@ If `uv` is not installed, run `python3` with the same path.
 
 ## Step 3: read in order
 
-Each Read of one file counts as one read. The limit is 8 reads. A Grep does not count.
+Each Read of one file counts as one read. The limit is 8 reads. A search with `grep` does not count.
 
 1. Read `<dir>/index.md`. It has one line for each context.
 2. Select the context of the question. Read its page, `<dir>/contexts/<ID>.md`. Its `LINKS`
@@ -46,10 +46,11 @@ Each Read of one file counts as one read. The limit is 8 reads. A Grep does not 
 3. If the answer needs more, Read one page from that `LINKS` block. The frontmatter gives the
    stored edges. The `LINKS` block gives the reverse edges.
 4. For a question about the full graph, as in "which contexts consume `OrderPlaced`?", get the
-   ID from the type index, then Grep `<dir>/links.tsv` for the ID. Do not read each page,
+   ID from the type index, then search `<dir>/links.tsv` for the ID with `grep`. Do not read each page,
    because `links.tsv` holds each edge in one file.
-5. To find a name, Grep the type indexes, `<dir>/*/index.md`, and ignore letter case. A name
-   can also be in `aliases`: Grep `<dir>` for `^aliases:.*<name>` with the glob `*.md`.
+5. To find a name, search the type indexes, `<dir>/*/index.md`, with `grep -i`. A name
+   can also be in `aliases`: run `grep -r -i --include='*.md' '^aliases:.*<name>' <dir>`.
+   Put a search term in single quotes, and write each `'` in the term as `'\''` (or use a term with no `'`), because the shell reads the rest of the term as part of the command.
 
 After 8 reads, stop reading. Say which pages you read, and that the bundle did not give the
 answer in 8 reads.

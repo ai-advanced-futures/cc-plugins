@@ -514,7 +514,7 @@ own probe file, its version floor, and its install message.
   to record a decision. Without an ADR corpus, the skill notes "no ADR
   corpus" and goes on.
 - The `relay:scout` agent, for a summary of the code. Without relay, the
-  skill runs a short `Glob` and `Grep` sweep instead.
+  skill runs a short sweep with `find` and `grep` instead.
 
 Every other skill of this plugin needs no other plugin.
 

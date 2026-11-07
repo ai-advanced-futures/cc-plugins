@@ -1,7 +1,7 @@
 {
   "name": "relay",
   "displayName": "relay",
-  "version": "5.4.3",
+  "version": "5.4.4",
   "description": "Multi-agent orchestration toolkit for Claude Code \u2014 ACPX-driven parallel implementation + adversarial refinement loops, layered on superpowers.",
   "author": {
     "name": "Yassel Piloto",

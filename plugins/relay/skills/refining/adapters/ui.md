@@ -79,7 +79,7 @@ adapter) and as the website-style scored history.
 
 Resume after a crash by reading the git log for the most recent score-commit:
 
-1. Grep git log for the latest commit whose subject matches the regex
+1. Search `git log` for the latest commit whose subject matches the regex
    `/^refine\(ui\): round \d+/`.
 2. Parse its `key=value` tokens with the regex `(\w+)=([^\s]+)` to extract the round number and
    per-dimension scores (`design_quality`, `originality`, `craft`, `functionality`,

@@ -32,7 +32,7 @@ find "$source_root" -name "*.tsx" -o -name "*.jsx" -o -name "*.vue" -o -name "*.
 find "$source_root" -name "tokens*" -o -name "theme*" -o -name "variables*" | grep -v node_modules
 ```
 
-Use Bash and Grep to count what you report (unique hardcoded values, font sizes, colors). Evaluate:
+Use `grep` and other commands through Bash to count what you report (unique hardcoded values, font sizes, colors). Put a search term in single quotes, and write each `'` in the term as `'\''` (or use a term with no `'`), because the shell reads the rest of the term as part of the command. Evaluate:
 
 1. Spacing system. Are values on one scale (multiples of 4px or 8px) or arbitrary? Hardcoded or from tokens/variables/Tailwind classes? Count the unique hardcoded pixel values; a high count is a low score.
 2. Typography hierarchy. How many font sizes? Is there a clear semantic order (h1 > h2 > body > small)? Are weights from one set? Is there a display + body pairing? Generic families (Inter, Roboto, Arial, system-ui) are a penalization signal.

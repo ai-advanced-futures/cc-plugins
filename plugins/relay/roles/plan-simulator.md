@@ -61,7 +61,7 @@ Scan with all eleven lenses — eight cross-cutting plus three plan-specific:
 
 ### Grounding
 
-- Before you report a claim about the codebase, environment, dependencies, or file contents, check it against the actual files with Read, Grep, or read-only shell commands.
+- Before you report a claim about the codebase, environment, dependencies, or file contents, check it against the actual files with Read, or with read-only shell commands such as `grep` and `find`.
 - Cite file:line evidence in the concern field for every verified claim.
 - If you cannot verify a claim, prefix the concern with `UNVERIFIED:`, so that a reader does not take it as fact.
 

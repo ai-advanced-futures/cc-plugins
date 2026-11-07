@@ -25,10 +25,12 @@ Use the first shortcut that fits. Each one gives start nodes.
 | Question | Shortcut |
 |---|---|
 | A broad question: what the product is, for whom, and why | Start at `docs/product/prd/product.md` (`prd:/product.md`). |
-| A capability by name | Grep `docs/product/prd/capabilities/index.md`, then the `aliases` of the capability pages. |
+| A capability by name | Search `docs/product/prd/capabilities/index.md` with `grep -i`, then the `aliases` of the capability pages. |
 | The PRD reason of a roadmap item | Read the `traces` of the item: each entry names `prd:/<path>`. |
 | The work state: ready, blocked, in progress | `prd.py list`: `$P list <Type> --where state=<state> --fields title,state`. |
 | What traces a capability | Read the LINKS block of the capability: "traced by" lines. |
+
+Put a search term in single quotes, and write each `'` in the term as `'\''` (or use a term with no `'`), because the shell reads the rest of the term as part of the command.
 
 ## Step 2: the generic procedure
 

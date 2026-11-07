@@ -3,6 +3,11 @@
 All notable changes to relay are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 5.4.4 — 2026-11-06
+
+### Changed
+- The text lists files with `find` and searches with `grep` through Bash, because Claude Code gives no Glob or Grep tool there. The 5 agents with Bash (`code-reviewer`, `gatherer`, `scout`, `leaf-reader`, `leaf-worker`) drop Glob and Grep.
+
 ## 5.4.3 — 2026-11-05
 
 ### Changed

@@ -145,8 +145,8 @@ large bundle fills the context.
 
    On a code that is not 0, or when the `CONTEXT_SUMMARY_PATH=` line is
    absent, or when the file is absent or empty, treat relay as absent. Then
-   run a short `Glob` and `Grep` sweep of the directories that the traced
-   capabilities of the Feature name. Say in your report which of the two
+   run a short sweep with `find` and `grep` through Bash of the directories that the traced
+   capabilities of the Feature name. Put a search term in single quotes, and write each `'` in the term as `'\''` (or use a term with no `'`), because the shell reads the rest of the term as part of the command. Say in your report which of the two
    paths you took.
 6. The system design, when `.claude/knowledge.json` names the graph
    `system-design`. Ask `system-design:ask` (or run

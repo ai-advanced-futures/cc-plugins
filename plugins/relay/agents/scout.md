@@ -1,7 +1,7 @@
 ---
 name: scout
 description: Read-only project context discovery to seed downstream design, planning, and implementation phases without re-discovering project state. Read-only except its single output artifact (Write justified for the context-summary output; Bash for discovery commands).
-tools: Read, Write, Bash, Grep, Glob
+tools: Read, Write, Bash
 model: sonnet
 relay:
   envelope_tokens: [ROLE_DONE, CONTEXT_SUMMARY_PATH]

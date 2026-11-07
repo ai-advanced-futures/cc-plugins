@@ -8,8 +8,6 @@ description: >
   No standalone behavior without an injected role body. Do not invoke directly.
 tools:
   - Read
-  - Grep
-  - Glob
   - Bash
 ---
 

@@ -16,7 +16,7 @@ requires: [read_files, run_bash]
 
 ## Purpose
 
-Score WCAG compliance of the live site. Use `npx playwright` through Bash for live checks and Grep for static checks. Be skeptical.
+Score WCAG compliance of the live site. Use `npx playwright` through Bash for live checks, and `grep` through Bash for static checks. Be skeptical.
 
 ## Inputs (received in Task prompt)
 
@@ -77,7 +77,7 @@ const { chromium } = require('playwright');
 
 ### Static checks
 
-Grep the source for: `role=` (are custom interactive elements labeled?), `tabIndex="-1"` (is focus management intentional?), `aria-` (used where needed?), and `<img` without `alt=`.
+Search the source with `grep` for: `role=` (are custom interactive elements labeled?), `tabIndex="-1"` (is focus management intentional?), `aria-` (used where needed?), and `<img` without `alt=`. Put a search term in single quotes, and write each `'` in the term as `'\''` (or use a term with no `'`), because the shell reads the rest of the term as part of the command.
 
 ## WCAG Rubric (vendored inline)
 

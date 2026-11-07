@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Read-only review that verifies an implementer's diff is well-built — clean, tested, maintainable, and consistent with existing codebase patterns.
-tools: Read, Bash, Grep, Glob
+tools: Read, Bash
 # 4.14.0: keep in lockstep with the flat tier in bindings/presets.yaml (opus —
 # critic whose miss mode is a false CLEAN); this default governs whenever a
 # dispatch omits opts.model.

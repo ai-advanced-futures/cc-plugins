@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.6
+
+### Changed
+- The text lists files with `find` and searches with `grep` through Bash, because Claude Code gives no Glob or Grep tool there.
+
 ## 1.0.5
 
 ### Changed

@@ -8,8 +8,8 @@ execution leaves (`leaf-worker`, `leaf-reader`), 3 Workflow-only diagnosis agent
 
 | agent | tools | description |
 |-------|-------|-------------|
-| `relay:code-reviewer` | Read, Bash, Grep, Glob | PR review primitive; referenced externally |
-| `relay:scout` | Read, Bash, Grep, Glob, WebFetch, WebSearch | Context-gathering primitive |
+| `relay:code-reviewer` | Read, Bash | PR review primitive; referenced externally |
+| `relay:scout` | Read, Write, Bash | Context-gathering primitive |
 
 ## Generic execution leaves
 
@@ -17,8 +17,8 @@ The leaves execute injected role bodies from `roles/<slug>.md`. Do not invoke di
 
 | agent | tools | role-class |
 |-------|-------|-----------|
-| `relay:leaf-worker` | Read, Write, Edit, Bash, Grep, Glob | writer |
-| `relay:leaf-reader` | Read, Grep, Glob, Bash | reader |
+| `relay:leaf-worker` | Read, Write, Edit, Bash | writer |
+| `relay:leaf-reader` | Read, Bash | reader |
 
 **Leaf enforcement:** neither leaf lists `Agent` or `Skill` in its `tools:`. Tools not
 listed are **absent** from the session at session initialization (S2 spike). This is the
@@ -31,7 +31,7 @@ Workflow `agent()` requires registered agentTypes and they carry distinct tool g
 
 | agent | tools | model |
 |-------|-------|-------|
-| `relay:gatherer` | Bash, Grep, Read, WebFetch, WebSearch | haiku |
+| `relay:gatherer` | Bash, Read, WebFetch, WebSearch | haiku |
 | `relay:strategist` | Read, Grep | opus |
 | `relay:analyst` | Read, Grep, WebSearch, WebFetch | opus |
 

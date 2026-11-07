@@ -54,7 +54,7 @@ Save pages only through `system_design.py` of the `system-design` plugin.
 
 1. Run `bash ${CLAUDE_PLUGIN_ROOT}/scripts/probe-plugin.sh system-design scripts/system_design.py`. It prints the plugin root `<root>`. When it exits 1, `system-design` is not installed: keep the plain files, name the plugin, and go to "Result".
 2. Run `uv run <root>/scripts/system_design.py --root <project root> resolve system`. When it exits 2, say "Run `/system-design:setup` first", keep the plain files, and go to "Result".
-3. Glob `components/*.md` in the folder of the `system.md` path that step 2 printed. When a `Component` page exists, write no page. Name `/system-design:learn building-blocks` with the plain file as the next step, and go to "Result".
+3. List the `*.md` files of the `components` folder in the folder of the `system.md` path that step 2 printed, with `find '<folder>/components' -name '*.md'` (write each `'` in the folder path as `'\''`). When a `Component` page exists, write no page. Name `/system-design:learn building-blocks` with the plain file as the next step, and go to "Result".
 4. Ask with `AskUserQuestion`: "Save the design in the system-design graph?" On yes, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/design_to_graph.py --system-design <root> --root <project root> <output_dir>/design-pages.json`. When it exits 1, show the failed command and its error, list the pages that exist, and name `/system-design:learn building-blocks` to finish. The plain file keeps the full design.
 5. Call the `knowledge:checking` skill with the graph `system-design`. Show each ERROR, WARN and SKIP line.
 6. When step 4 of "Save the decision" saved an ADR, name `/system-design:learn building-blocks` as the step that adds the row that links the area to the ADR.

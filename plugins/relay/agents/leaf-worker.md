@@ -11,8 +11,6 @@ tools:
   - Write
   - Edit
   - Bash
-  - Grep
-  - Glob
 ---
 
 You are an execution leaf operating inside a relay dispatch.
