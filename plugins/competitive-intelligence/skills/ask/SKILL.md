@@ -11,8 +11,10 @@ The question is: **$ARGUMENTS**
 Never write a page, because the person makes each change through the
 `competitive-intelligence:learn` skill or a run. Answer from the graphs only.
 
-`C` is `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root "$(git rev-parse --show-toplevel)"`.
-`K` is `uv run <knowledge plugin>/scripts/knowledge.py --root "$(git rev-parse --show-toplevel)"`.
+Run `git rev-parse --show-toplevel` on its own. Its output is `<git root>`. When that command fails, stop with: "This is not a git repository." Write that path itself in each command, and not a command or a variable, because Claude Code cannot check such a command before it runs, and it then asks the person or refuses the command.
+Run each command on its own: one command per Bash call, with no pipe (`|`), no `;` and no `&&`. Also, do not add an `echo` of the exit code, because the Bash tool shows the exit code of a command that fails.
+`C` is `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root>`.
+`K` is `uv run <knowledge plugin>/scripts/knowledge.py --root <git root>`.
 Find the knowledge plugin with
 `bash ${CLAUDE_PLUGIN_ROOT}/scripts/probe-plugin.sh knowledge scripts/knowledge.py`.
 When the probe exits 1, stop with: "competitive-intelligence:ask needs the knowledge

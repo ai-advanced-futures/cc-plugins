@@ -7,9 +7,8 @@ allowed-tools: Bash, Read, Skill
 
 # Set up the competitive-intelligence graph
 
-`ROOT` is `$(git rev-parse --show-toplevel)`. When that command fails, stop
-with: "This is not a git repository."
-`S` is `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root "$ROOT"`.
+Run `git rev-parse --show-toplevel` on its own. Its output is `<git root>`. When that command fails, stop with: "This is not a git repository." Write that path itself in each command, and not a command or a variable, because Claude Code cannot check such a command before it runs, and it then asks the person or refuses the command.
+`S` is `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root>`.
 
 ## Step 1: make or upgrade the bundle
 
@@ -25,12 +24,12 @@ Read the bundle folder in `.claude/knowledge.json`. When it holds a character ou
 
 ```bash
 sed -e 's|{{DIR}}|<folder>|g' "${CLAUDE_PLUGIN_ROOT}/templates/claude-md-block.md" \
-| python3 "${CLAUDE_PLUGIN_ROOT}/scripts/claude_md_router.py" --plugin competitive-intelligence --repo-root "$ROOT"
+| python3 "${CLAUDE_PLUGIN_ROOT}/scripts/claude_md_router.py" --plugin competitive-intelligence --repo-root "<git root>"
 ```
 
 ## Step 3: the earlier runs
 
-List each session folder in `$ROOT/.competitive-intelligence/` and `$ROOT/.competitive-intel/` that has no `pages.json`, newest file first. When there is one or more, show the list. Ask one question: "Ingest these earlier runs?" On yes, run `$S ingest <session folder>` for each one, oldest first, and show each `ingest` error.
+List each session folder in `<git root>/.competitive-intelligence/` and `<git root>/.competitive-intel/` that has no `pages.json`, newest file first. When there is one or more, show the list. Ask one question: "Ingest these earlier runs?" On yes, run `$S ingest <session folder>` for each one, oldest first, and show each `ingest` error.
 
 ## Step 4: both checks
 

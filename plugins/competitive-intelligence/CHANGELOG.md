@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.7
+
+- The "Learn these results?" step of `discover`, `analyze`, `monitor`, `respond`, `validate`, `competitive-intelligence` and `vendor-archetype-classify` asks with `AskUserQuestion`, in the same turn, so `learn` runs with the grant of the skill. With no `AskUserQuestion` tool (`claude -p`), the skill asks nothing and writes the line `Next: /competitive-intelligence:learn <session>` (STORY-195).
+- `learn`, `ask` and `setup` run `git rev-parse --show-toplevel` on its own and write the path in each command, because Claude Code refuses a command with a command substitution. `learn` and `ask` say to run one command per Bash call, with no pipe, `;` or `&&` (STORY-195).
+
 ## 1.10.6
 
 - A page that a person makes with `new` and no run cites passes the check. The rule `CI-run` accepts a page with no `run` link when its `field_runs` names `(person)` for each field, so a fact that a person saves with `learn` no longer stops each later `ingest`. A page that a run wrote with no `run` link is still an ERROR. `new` refuses a page with no `run` link of each type other than Run, Market, Competitor, Offer and Source, because that page belongs to 1 run (STORY-222).

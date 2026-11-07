@@ -135,7 +135,7 @@ Only `scripts/ci_graph.py` writes the graph. Do not edit a page by hand. The com
 
 1. Each skill writes its files into the session folder, as before.
 2. The last step of the skill runs `ci_graph.py ingest`. The pages have `status: draft`.
-3. In a run with a person, the skill asks one question: "Learn these results?" On yes, `learn` sets `status: stable` on each page of the run.
+3. In a run with a person, the skill asks one question with `AskUserQuestion`: "Learn these results?" On yes, `learn` sets `status: stable` on each page of the run. When the session has no `AskUserQuestion` tool, for example in `claude -p`, the skill asks nothing, and it writes the line `Next: /competitive-intelligence:learn <session>`. Run that command to confirm the pages.
 4. In a plugin run, the skill asks nothing, and the pages stay `draft`. A halted plugin run has no session folder of its own, so it runs `ingest --result <result file>` with no path.
 5. A skill that reads a file of an earlier run runs `view`, because `ingest` moved the file into the graph.
 
