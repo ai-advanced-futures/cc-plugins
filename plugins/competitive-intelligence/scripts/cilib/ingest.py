@@ -532,6 +532,9 @@ class Ingest:
         return skel
 
     def swot_item(self, name, item, quadrant, text_key, side, comp, i):
+        if isinstance(item, str) and item.strip():
+            # The SWOT Format Standard of agents/synthesizer.md writes an item as 1 sentence (STORY-208).
+            item = {text_key: item}
         if not isinstance(item, dict) or not isinstance(item.get(text_key), str):
             return item
         text = item[text_key]
@@ -556,8 +559,18 @@ class Ingest:
         return self.swot_block(name, data, "own", None)
 
     def h_swot_competitor(self, name, data):
+        """The competitor of swot-<competitor>.json is, in this order: competitor_id, the name in competitor (as
+        h_analysis reads it), the name in competitor_swot, and the <competitor> part of the file name (STORY-208)."""
         swot = data.get("competitor_swot") if isinstance(data.get("competitor_swot"), dict) else {}
-        comp = self.comp_by_id(data.get("competitor_id"), swot.get("name"))
+        cid = data.get("competitor_id")
+        named = next((v for v in (data.get("competitor"), swot.get("name")) if isinstance(v, str) and v.strip()), None)
+        if cid in self.cids or named:
+            comp = self.comp_by_id(cid, named)
+        else:
+            comp = self.comp_by_slug(name[len("swot-"):-len(".json")])
+        if comp is None:
+            raise DataError(f"{name}: no competitor of the run matches competitor_id, competitor, "
+                            "competitor_swot.name or the name of the file")
         skel = dict(data)
         for key, side in (("competitor_swot", "competitor"), ("your_swot", "own")):
             if isinstance(data.get(key), dict):

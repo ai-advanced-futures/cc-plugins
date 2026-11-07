@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.10.2
+
+- The ingest of an analyze run finds the competitor of `swot-<competitor>.json` from `competitor_id`, then `competitor` (as for `analysis-<competitor>.json`), then `competitor_swot.name`, then the name of the file. Before, each analyze run with no `competitor_id` and no `competitor_swot.name` stopped at step 9 with "unknown competitor id None" (STORY-208).
+- A SWOT item that is 1 sentence (the SWOT Format Standard of `agents/synthesizer.md`) becomes a SwotItem page, as an item object does. Before, the ingest kept the sentence and made no page, so the SWOT of an analyze run gave no page.
+- Step 7 of `analyze` writes `competitor`, and `competitor_id` when the ecosystem mapping has one, in `analysis-<competitor>.json` and `swot-<competitor>.json`.
+- The ingest step of `analyze` and of `discover` gives `--result` as a path relative to the git root, because `ingest` refuses an absolute path.
+
 ## 1.10.1
 
 - The contract test fails a skill route that can ask. A route under `skills/` cannot ask only when the first `##` heading of its `SKILL.md` is `## Plugin-run block` and that section holds the sentence `Ask the person nothing.`. Before, the test applied no ask check to a skill route. The `## Plugin-run block` of the skills `discover` and `analyze` now holds that sentence (STORY-173).

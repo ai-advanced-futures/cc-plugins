@@ -174,12 +174,14 @@ You run in the main conversation, so you ask the person. You read each lens skil
    - .competitive-intelligence/{session}/swot-{competitor}.json
    - .competitive-intelligence/{session}/recommendations-{competitor}.json
    - In `analysis-{competitor}.json`, record each lens that did not run in `lens_failures`, as `{"<lens>": "<reason>"}`.
+   - `{competitor}` in each file name is the name of the competitor in lowercase, with 1 `-` for each run of other characters (`Acme Rival` gives `acme-rival`).
+   - At the top level of `analysis-{competitor}.json` and of `swot-{competitor}.json`, write `competitor`, the name of the competitor. When the ecosystem mapping gives the competitor an `id`, also write `competitor_id`, that id. Ingest uses them to link the pages of the files to the competitor.
 
 8. WRITE THE RESULT FILE:
    - Read `${CLAUDE_PLUGIN_ROOT}/agents/deliverable-generator.md` with the Read tool and follow its `## Result file` section, in every run.
 
 9. INGEST THE RUN:
-   - Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> ingest .competitive-intelligence/{session} --result <the result file of step 8>` on its own. `<git root>` is the output of `git rev-parse --show-toplevel`, run on its own. A halt has no session folder of its own: run `ingest --result <the result file of step 8>` with no path.
+   - Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> ingest .competitive-intelligence/{session} --result .competitive-intelligence/results/<the file name of the result file of step 8>` on its own. `<git root>` is the output of `git rev-parse --show-toplevel`, run on its own. A halt has no session folder of its own: run `ingest --result .competitive-intelligence/results/<the file name of the result file of step 8>` with no path. Give each path relative to the git root, not as an absolute path: `ingest` refuses an absolute path (exit 2).
    - When the output holds an `INIT:` line, show that line.
    - When the command exits 1, show its errors, say that the results stay in the session folder, and do not report success.
    - Else show the `ingested` line. In a person's run, ask one question: "Learn these results?" On yes, run the skill `competitive-intelligence:learn` with `{session}`.
