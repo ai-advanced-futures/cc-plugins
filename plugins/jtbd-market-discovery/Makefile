@@ -4,17 +4,22 @@ SHELL := /bin/bash
 
 TIER ?=
 
-# A tier is the first part of a test name: checkpoint (the Phase 6 checkpoint of
-# /jtbd-market-discovery:discover and 1 resume with continue, 2 turns, guards 1 + 2 USD against a runaway turn).
-PYTEST := JTBD_MARKET_DISCOVERY_ITEST=1 uv run --quiet --no-project --with-requirements requirements-dev.txt python -m pytest tests/integration -m integration -rs
+# A tier is the first part of a test name:
+# - checkpoint: the Phase 6 checkpoint of /jtbd-market-discovery:discover and 1 resume with continue (2 turns).
+# - nosurvey: discover with no survey from Phase 9, then learn (2 turns).
+# - wtpcheck: wtp-check with a survey file, then learn (1 or 2 turns).
+# - quickvalidate: quick-validate, then learn Step 3 (1 or 2 turns).
+# Each turn has a --max-budget-usd guard against a runaway turn.
+PYTEST := JTBD_MARKET_DISCOVERY_ITEST=1 uv run --quiet --no-project --with-requirements requirements-dev.txt python -m pytest tests/integration -m integration -rs -p no:cacheprovider
+TIERS := checkpoint nosurvey wtpcheck quickvalidate
 
 .PHONY: itest
 itest:
-	@test -n "$(TIER)" || { echo "TIER is required: make itest TIER=checkpoint|all"; exit 2; }
+	@test -n "$(TIER)" || { echo "TIER is required: make itest TIER=checkpoint|nosurvey|wtpcheck|quickvalidate|all"; exit 2; }
 ifeq ($(TIER),all)
 	$(PYTEST)
-else ifeq ($(TIER),checkpoint)
-	$(PYTEST) -k "test_checkpoint_"
+else ifneq ($(filter $(TIER),$(TIERS)),)
+	$(PYTEST) -k "test_$(TIER)_"
 else
-	@echo "unknown TIER '$(TIER)': use checkpoint|all"; exit 2
+	@echo "unknown TIER '$(TIER)': use checkpoint|nosurvey|wtpcheck|quickvalidate|all"; exit 2
 endif
