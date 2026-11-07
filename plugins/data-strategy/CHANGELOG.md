@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0
+
+- No agent has `Bash`, `Agent`, `WebSearch`, or `Glob`. The agents have `Read`, `Write`, and `Grep`, and `deliverable-generator` has `Read` and `Write`.
+- The agent `orchestrator` is removed. The skill `data-strategy` runs the scripts and starts the 5 agents in the main conversation, one at a time, each in the foreground. The line `DONE: data-strategy` is removed.
+- `product-analyst` and `synthesizer` take the field `step` with the values `inputs` and `report`. With `inputs`, the agent writes the input file of a script. The skill runs the script. With `report`, the agent reads the result file and writes the report.
+- `strategy-assessor` and `platform-auditor` read the result files that the skill writes (`dama_result.json`, `gartner_result.json`, `mesh_result.json`). The agents write no `.done` flag. The skill writes the flags.
+- The 5 scoring scripts take `--out <output.json>`. With the option, a script writes its result to the file and prints one line. After an error, a script writes no file.
+- `session_manager.py` has the command `new <parent_dir> <domain...>`. It makes the session id and the session, and prints the id. The skills no longer run inline code.
+- Each skill says to run every command on its own, with no heredoc, no `; echo`, and no loop.
+- The skill `roadmap` tests the `output_dir` (`[A-Za-z0-9._/-]{1,100}`, no `..` part) before it builds a command line with it.
+- The agents find the markers of a framework slice with the Grep tool, and not with `grep -n`.
+- The skills have `allowed-tools` for the scripts that they run, and a path in a `uv run` line is in single quotes.
+- The project scan lists file names with `find` through the Bash tool of the skill.
+- New test `tests/test_agent_grants.py`: it fails when an agent has a wide tool grant.
+
 ## 0.2.0
 
 - The plugin is a port of version 0.1.0 from commit `c2a329f` of a private repository.

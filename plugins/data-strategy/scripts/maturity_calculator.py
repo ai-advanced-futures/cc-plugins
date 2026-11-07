@@ -11,8 +11,10 @@ Maps intake answers to one of 5 Gartner D&A Maturity levels:
   4 — Prescriptive  (what should we do)
   5 — Cognitive     (automated decision-making)
 
-Command line: maturity_calculator.py <input.json>
-The input file holds the gartner_answers object. The script prints one JSON object.
+Command line: maturity_calculator.py <input.json> [--out <output.json>]
+The input file holds the gartner_answers object. Without --out, the script prints one JSON object.
+With --out, the script writes the JSON object to the output file and prints one line.
+After an error, the script writes no output file.
 """
 from __future__ import annotations
 
@@ -67,15 +69,21 @@ def calculate_overall_maturity(answers: dict[str, int | float]) -> dict:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 2:
-        print("Usage: maturity_calculator.py <input.json>", file=sys.stderr)
+    if len(argv) == 2:
+        out = None
+    elif len(argv) == 4 and argv[2] == "--out":
+        out = Path(argv[3])
+    else:
+        print("Usage: maturity_calculator.py <input.json> [--out <output.json>]", file=sys.stderr)
         return 1
     try:
         result = calculate_overall_maturity(json.loads(Path(argv[1]).read_text()))
+        if out is not None:
+            out.write_text(json.dumps(result))
     except (OSError, ValueError, TypeError, AttributeError) as exc:
         print(f"maturity_calculator.py: {exc}", file=sys.stderr)
         return 1
-    print(json.dumps(result))
+    print(json.dumps(result) if out is None else f"level={result['level']}")
     return 0
 
 

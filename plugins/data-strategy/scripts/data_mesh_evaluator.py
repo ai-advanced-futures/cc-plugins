@@ -6,8 +6,10 @@
 
 Scores each of the four Data Mesh principles on a 0.0–1.0 scale.
 
-Command line: data_mesh_evaluator.py <input.json>
-The input file holds the mesh_answers object. The script prints one JSON object.
+Command line: data_mesh_evaluator.py <input.json> [--out <output.json>]
+The input file holds the mesh_answers object. Without --out, the script prints one JSON object.
+With --out, the script writes the JSON object to the output file and prints one line.
+After an error, the script writes no output file.
 """
 from __future__ import annotations
 
@@ -56,15 +58,21 @@ def score_all_principles(answers: dict[str, float]) -> dict:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 2:
-        print("Usage: data_mesh_evaluator.py <input.json>", file=sys.stderr)
+    if len(argv) == 2:
+        out = None
+    elif len(argv) == 4 and argv[2] == "--out":
+        out = Path(argv[3])
+    else:
+        print("Usage: data_mesh_evaluator.py <input.json> [--out <output.json>]", file=sys.stderr)
         return 1
     try:
         result = score_all_principles(json.loads(Path(argv[1]).read_text()))
+        if out is not None:
+            out.write_text(json.dumps(result))
     except (OSError, ValueError, TypeError, AttributeError) as exc:
         print(f"data_mesh_evaluator.py: {exc}", file=sys.stderr)
         return 1
-    print(json.dumps(result))
+    print(json.dumps(result) if out is None else f"compliance={result['compliance']}")
     return 0
 
 

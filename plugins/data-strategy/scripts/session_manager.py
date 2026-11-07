@@ -5,13 +5,16 @@
 """Session manager — session.json and .done flag file helpers.
 
 All run signaling is file-based: a domain agent writes a .done flag file when
-it finishes, and the orchestrator reads the flag files.
+it finishes, and the skill reads the flag files.
 
 Command line:
+  session_manager.py new <parent_dir> <domain...>
   session_manager.py create <session_id> <output_dir> <domain...>
   session_manager.py done <output_dir> <slug>
   session_manager.py all-done <output_dir> <slug...>
   session_manager.py has-files <output_dir> <file...>
+The command new makes a session id, makes the session in <parent_dir>/<id>, and
+prints only the id. It exits 1 when it cannot make the folder.
 The command all-done exits 0 when every slug has a flag. Else it prints the
 missing slugs and exits 1. The command has-files does the same for output
 files. A skill decides that a run is done with these 2 commands, and not with
@@ -21,6 +24,7 @@ from __future__ import annotations
 
 import json
 import sys
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -71,7 +75,8 @@ def missing_files(session_dir: Path, names: list[str]) -> list[str]:
 
 
 USAGE = (
-    "Usage: session_manager.py create <session_id> <output_dir> <domain...>\n"
+    "Usage: session_manager.py new <parent_dir> <domain...>\n"
+    "       session_manager.py create <session_id> <output_dir> <domain...>\n"
     "       session_manager.py done <output_dir> <slug>\n"
     "       session_manager.py all-done <output_dir> <slug...>\n"
     "       session_manager.py has-files <output_dir> <file...>"
@@ -80,6 +85,16 @@ USAGE = (
 
 def main(argv: list[str]) -> int:
     command, args = (argv[1], argv[2:]) if len(argv) > 1 else ("", [])
+    if command == "new" and len(args) >= 2:
+        parent, *domains = args
+        session_id = uuid.uuid4().hex[:8]
+        try:
+            create_session(Path(parent) / session_id, session_id, domains)
+        except OSError as exc:
+            print(f"session_manager.py: {exc}", file=sys.stderr)
+            return 1
+        print(session_id)
+        return 0
     if command == "create" and len(args) >= 3:
         session_id, out, *domains = args
         try:

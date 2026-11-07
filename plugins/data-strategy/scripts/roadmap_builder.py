@@ -10,8 +10,10 @@ Uses the classic 2x2 effort × impact matrix:
   - Fill-ins:       low effort + low impact    (do if capacity)
   - Thankless:      high effort + low impact   (avoid or defer)
 
-Command line: roadmap_builder.py <input.json>
-The input file holds the list of gap and opportunity items. The script prints one JSON object.
+Command line: roadmap_builder.py <input.json> [--out <output.json>]
+The input file holds the list of gap and opportunity items. Without --out, the script prints one JSON object.
+With --out, the script writes the JSON object to the output file and prints one line.
+After an error, the script writes no output file.
 """
 from __future__ import annotations
 
@@ -66,15 +68,21 @@ def build_roadmap(items: list[dict]) -> dict:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 2:
-        print("Usage: roadmap_builder.py <input.json>", file=sys.stderr)
+    if len(argv) == 2:
+        out = None
+    elif len(argv) == 4 and argv[2] == "--out":
+        out = Path(argv[3])
+    else:
+        print("Usage: roadmap_builder.py <input.json> [--out <output.json>]", file=sys.stderr)
         return 1
     try:
         result = build_roadmap(json.loads(Path(argv[1]).read_text()))
+        if out is not None:
+            out.write_text(json.dumps(result))
     except (OSError, ValueError, TypeError, AttributeError) as exc:
         print(f"roadmap_builder.py: {exc}", file=sys.stderr)
         return 1
-    print(json.dumps(result))
+    print(json.dumps(result) if out is None else f"items={sum(len(v) for v in result.values())}")
     return 0
 
 

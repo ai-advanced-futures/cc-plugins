@@ -32,28 +32,30 @@ The plugin is separate from any codebase-architecture plugin.
 The agents share data through files in the session folder `.data-strategy-tmp/{session_id}/`:
 
 - **Intake:** a skill asks the person and writes `context.yaml`.
-- **Assessment:** 3 domain agents run in parallel and write 3 domain files.
+- **Assessment:** 3 domain agents run one after the other and write 3 domain files.
 - **Synthesis:** the `synthesizer` (opus, two passes) writes `synthesis.md`.
 - **Deliverables:** the `deliverable-generator` writes 3 output documents.
 
-**Reason:** The 3 domains are independent when they assess, and they depend on each other when they are joined. Parallel assessment saves time. A separate synthesizer finds the conflicts between frameworks, and a domain agent cannot see them alone.
+**Reason:** The 3 domains are independent when they assess, and they depend on each other when they are joined. Separate assessment keeps each domain agent small: it reads only its part of `frameworks.md`. A separate synthesizer finds the conflicts between frameworks, and a domain agent cannot see them alone.
 
 ### D3: Only the skills ask the person
 
-Claude Code removes `AskUserQuestion` from each subagent. So only a skill asks the person a question. A skill reads `docs/intake.md`, asks, writes `context.yaml`, and starts one agent. The `orchestrator` and the other agents ask nothing.
+Claude Code removes `AskUserQuestion` from each subagent. So only a skill asks the person a question. A skill reads `docs/intake.md`, asks, writes `context.yaml`, and starts the agents. The agents ask nothing.
 
 The full run goes in this order:
 
-1. The skill `data-strategy` asks all the questions, makes the session with `session_manager.py create`, and writes `context.yaml`.
-2. The skill starts `data-strategy:orchestrator` with `session_id` and `output_dir`.
-3. The orchestrator starts the 3 domain agents with 3 `Agent` calls in one message. Each call waits for its agent.
-4. The orchestrator runs `session_manager.py all-done` to check the 3 `.done` flags.
-5. The orchestrator starts the `synthesizer`, then the `deliverable-generator`.
-6. The orchestrator ends with the line `DONE: data-strategy`.
+1. The skill `data-strategy` asks all the questions, makes the session with `session_manager.py new`, and writes `context.yaml`.
+2. The skill writes the answer files and runs the 3 scorers of the strategy and platform domains with `--out`.
+3. The skill starts the 3 domain agents with 3 `Agent` calls, one at a time, each in the foreground. An agent that runs in the background returns in a new turn that does not have the `allowed-tools` of the skill, and the next script is then refused. `product-analyst` writes its input file (`step: inputs`).
+4. The skill runs `product_portfolio_scorer.py`, and starts `product-analyst` again (`step: report`).
+5. The skill writes the 3 `.done` flags, and runs `session_manager.py all-done` to check them.
+6. The skill starts the `synthesizer` (`step: inputs`), runs `roadmap_builder.py`, starts the `synthesizer` again (`step: report`), and starts the `deliverable-generator`.
+
+No agent starts an agent, so the skill does this work in the main conversation.
 
 The skills `strategy`, `platform`, and `products` ask only the questions that their agent reads, make a session with one domain, and start the domain agent directly. The skill `roadmap` asks nothing. It starts the `deliverable-generator` with an earlier session.
 
-**Reason:** A file flag shows completion with no other channel. Each step is a plain call that the orchestrator can check. No agent talks to another agent by message, so a failure shows as a missing file.
+**Reason:** A file flag shows completion with no other channel. Each step is a plain call that the skill can check. No agent talks to another agent by message, so a failure shows as a missing file.
 
 ### D4: Six frameworks, three domains
 
@@ -96,7 +98,7 @@ constitution_check: {pass|partial|fail}
 
 Scripts do all scoring, maturity levels, roadmap groups, and session flags. The agents do not calculate them. The same input gives the same score on each run, and the unit tests cover the scripts.
 
-The agent writes the input to a JSON file in the session folder and runs `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py <input.json>`. Each scoring script prints one JSON object. A bad or missing file gives one line on stderr and exit code 1. Each script starts with a PEP 723 block, so `uv run` needs no setup.
+A JSON file in the session folder holds the input. The skill runs `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py <input.json> --out <output.json>`, and the agent reads the output file. When an agent makes the input, it writes the input file and returns, and the skill runs the script. So no agent has `Bash`. A scoring script writes its JSON object to the output file and prints one line. Without `--out`, it prints the object. A bad or missing file gives one line on stderr and exit code 1. Each script starts with a PEP 723 block, so `uv run` needs no setup.
 
 There are 6 scripts: `dama_scorer.py`, `maturity_calculator.py`, `data_mesh_evaluator.py`, `product_portfolio_scorer.py`, `roadmap_builder.py`, and `session_manager.py`.
 
@@ -112,14 +114,14 @@ There are 6 scripts: `dama_scorer.py`, `maturity_calculator.py`, `data_mesh_eval
 - The 3 deliverables serve three audiences.
 
 ### Bad
-- The 3 domain agents run in parallel. The synthesizer must wait for all 3.
+- The 3 domain agents run one after the other, so the run is slower than a parallel start. The synthesizer must wait for all 3.
 - The opus synthesizer costs more time and money than a smaller model.
 - Six frameworks make `frameworks.md` long. Each agent reads only its own part, marked with `§` comments.
 
 ### Risks
 - **Gartner maturity is subjective.** The person gives the ratings, and `maturity_calculator.py` scores them. The agents do not guess a rating.
 - **The synthesizer can miss the DAMA and Data Mesh conflict.** The header value `framework_conflict: detected` forces the full read.
-- **Web search can send company words.** The 3 domain agents have `WebSearch`. A query can hold words from the company context.
+- **The main conversation holds all the dispatches.** The skill `data-strategy` starts 7 agent runs, one at a time in the foreground, and runs 15 script calls, so its context grows. Each agent returns one line and each script prints one line. No agent has `WebSearch`, `Bash`, or `Agent`.
 
 ---
 

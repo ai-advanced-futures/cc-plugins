@@ -5,8 +5,8 @@ private repository of ai-advanced-futures. Luis F. Amadeo wrote it. It is under
 the MIT license. This plugin takes its agents, scripts, and tests from it,
 with these changes:
 
-  - The skills ask the person the intake questions. The orchestrator and the
-    agents ask nothing. The intake agent and the wave orchestrator are removed.
+  - The skills ask the person the intake questions. The agents ask nothing.
+    The intake agent, the orchestrator, and the wave orchestrator are removed.
   - The parts for a mission runner of the source repository are removed: the
     release file, the unattended mode, and the handoff script.
   - The deck output and the offer to make a deck are removed. The plugin writes

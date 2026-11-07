@@ -28,7 +28,7 @@ Only a skill asks you questions. The agents ask nothing. The questions are in `d
 2. DAMA: a rating from 0 to 4 for each of the 11 knowledge areas.
 3. Gartner: a rating from 0 to 4 for 5 analytics abilities.
 4. Data Mesh: a value from 0.0 to 1.0 for each of the 4 principles.
-5. Codebase scan (optional): if you agree, the plugin lists file names in the current project with Glob to find data pipeline tools.
+5. Codebase scan (optional): if you agree, the plugin lists file names in the current project with `find` to find data pipeline tools.
 
 ## Frameworks
 
@@ -56,11 +56,11 @@ The plugin writes to the folder `.data-strategy-tmp/<session_id>/` of the curren
 
 ## Agents
 
-The skill `data-strategy` starts `data-strategy:orchestrator`. The orchestrator starts the other agents in this order: the 3 domain agents (`strategy-assessor`, `platform-auditor`, `product-analyst`) in parallel, then `synthesizer`, then `deliverable-generator`. See `docs/adr/ADR-001-data-strategy-plugin-architecture.md` and `docs/diagrams/data-strategy-c4.md`.
+The skill `data-strategy` runs the scripts and starts the agents, in the main conversation. No agent has `Bash` or `Agent`: an agent writes files and the skill runs the scripts on them. The skill starts the agents in this order: the 3 domain agents (`strategy-assessor`, `platform-auditor`, `product-analyst`) one at a time, each in the foreground, then `synthesizer`, then `deliverable-generator`. `product-analyst` and `synthesizer` run 2 times each, with the field `step` set to `inputs` and then to `report`. The skill runs a scoring script between the 2 runs. See `docs/adr/ADR-001-data-strategy-plugin-architecture.md` and `docs/diagrams/data-strategy-c4.md`.
 
 ## Scripts
 
-Scripts do the scoring, so the agents do not calculate the numbers. Run each one with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py <input.json>`.
+Scripts do the scoring, so the agents do not calculate the numbers. The skills run each one with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py <input.json> --out <output.json>`. The script writes the result to the output file and prints one line.
 
 | Script | Purpose |
 |--------|---------|
@@ -69,11 +69,11 @@ Scripts do the scoring, so the agents do not calculate the numbers. Run each one
 | `data_mesh_evaluator.py` | Scores the 4 Data Mesh principles |
 | `product_portfolio_scorer.py` | Scores each data product and the portfolio |
 | `roadmap_builder.py` | Sorts items into 4 groups by effort and impact |
-| `session_manager.py` | Makes the session, and checks the `.done` flags and the output files |
+| `session_manager.py` | Makes the session (`new` prints the session id), and writes and checks the `.done` flags and the output files |
 
 ## Data and privacy
 
-The plugin reads your answers. With your consent, it reads file names in the current project with Glob. It writes only to `.data-strategy-tmp/`. The 3 domain agents can use web search, and a search query can hold words from your company context. Do not give secrets in your answers.
+The plugin reads your answers. With your consent, it reads file names in the current project with `find`. It writes only to `.data-strategy-tmp/`. No agent can search the web or run a shell command. Do not give secrets in your answers.
 
 ## Tests
 

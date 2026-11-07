@@ -39,7 +39,7 @@ Ask the person to rate each area from 0 (none) to 4 (optimised):
 
 > "Do you have a codebase available for scanning? This improves the platform audit. (Yes / No)"
 
-If the person says yes, use Glob to find signs of data pipelines in the current project: Airflow DAGs, dbt configs, `pipeline/` folders, feature store definitions, and CDC configs. The scan reads file names only. Write the names of the tools that you find to `codebase_signals`. If the person says no, write an empty list.
+If the person says yes, list the files of the current project with `find` through the Bash tool, and look for signs of data pipelines: Airflow DAGs, dbt configs, `pipeline/` folders, feature store definitions, and CDC configs. The scan reads file names only. Write the names of the tools that you find to `codebase_signals`. If the person says no, write an empty list.
 
 ## Key map
 

@@ -7,8 +7,10 @@
 Scores intake answers against the 11 DAMA Knowledge Areas (DMBOK2).
 All scoring is deterministic — no LLM calls.
 
-Command line: dama_scorer.py <input.json>
-The input file holds the dama_answers object. The script prints one JSON object.
+Command line: dama_scorer.py <input.json> [--out <output.json>]
+The input file holds the dama_answers object. Without --out, the script prints one JSON object.
+With --out, the script writes the JSON object to the output file and prints one line.
+After an error, the script writes no output file.
 """
 from __future__ import annotations
 
@@ -67,15 +69,21 @@ def score_all_kas(answers: dict[str, int | float]) -> dict:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 2:
-        print("Usage: dama_scorer.py <input.json>", file=sys.stderr)
+    if len(argv) == 2:
+        out = None
+    elif len(argv) == 4 and argv[2] == "--out":
+        out = Path(argv[3])
+    else:
+        print("Usage: dama_scorer.py <input.json> [--out <output.json>]", file=sys.stderr)
         return 1
     try:
         result = score_all_kas(json.loads(Path(argv[1]).read_text()))
+        if out is not None:
+            out.write_text(json.dumps(result))
     except (OSError, ValueError, TypeError, AttributeError) as exc:
         print(f"dama_scorer.py: {exc}", file=sys.stderr)
         return 1
-    print(json.dumps(result))
+    print(json.dumps(result) if out is None else f"overall_score={result['overall_score']}")
     return 0
 
 

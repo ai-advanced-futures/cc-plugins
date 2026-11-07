@@ -6,8 +6,10 @@
 
 Scores data products against data-as-product rubric and contract maturity.
 
-Command line: product_portfolio_scorer.py <input.json>
-The input file holds the list of data products. The script prints one JSON object.
+Command line: product_portfolio_scorer.py <input.json> [--out <output.json>]
+The input file holds the list of data products. Without --out, the script prints one JSON object.
+With --out, the script writes the JSON object to the output file and prints one line.
+After an error, the script writes no output file.
 """
 from __future__ import annotations
 
@@ -63,15 +65,21 @@ def score_portfolio(products: list[dict]) -> dict:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 2:
-        print("Usage: product_portfolio_scorer.py <input.json>", file=sys.stderr)
+    if len(argv) == 2:
+        out = None
+    elif len(argv) == 4 and argv[2] == "--out":
+        out = Path(argv[3])
+    else:
+        print("Usage: product_portfolio_scorer.py <input.json> [--out <output.json>]", file=sys.stderr)
         return 1
     try:
         result = score_portfolio(json.loads(Path(argv[1]).read_text()))
+        if out is not None:
+            out.write_text(json.dumps(result))
     except (OSError, ValueError, TypeError, AttributeError) as exc:
         print(f"product_portfolio_scorer.py: {exc}", file=sys.stderr)
         return 1
-    print(json.dumps(result))
+    print(json.dumps(result) if out is None else f"portfolio_maturity={result['portfolio_maturity']}")
     return 0
 
 
