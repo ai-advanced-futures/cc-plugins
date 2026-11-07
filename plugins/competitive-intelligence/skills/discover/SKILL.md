@@ -6,7 +6,7 @@ allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Skill
 
 # /competitive-intelligence:discover
 
-Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py <args>`, one command per Bash call. Never run inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc), never write a script of your own and run it, and write every file with the Write tool, never with a shell command, because only this plugin's scripts run with no question to the person.
+Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py <args>`, one command per Bash call, with no pipe (`|`), no `;` and no `&&`. Never run inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc), never write a script of your own and run it, and write every file with the Write tool, never with a shell command, because only this plugin's scripts run with no question to the person.
 Run every agent you dispatch in the foreground and wait for it to finish; never run one in the background (`run_in_background: true`) before the result file is written, because the result file needs the output of each agent.
 This plugin's root is `${CLAUDE_PLUGIN_ROOT}`; wherever a file you read writes `${CLAUDE_PLUGIN_ROOT}`, use that path.
 Ask a number or a free-text input as a text question (see the steps below), or offer options that are real values; never offer an option that only says to type, such as "Type amount", "Type it", "Enter figures" or "List them", because a person who picks such an option gives no value.
@@ -54,10 +54,9 @@ You run in the main conversation, so you ask the person. The agents ask nothing.
    - In a plugin run, write `session.json` in that folder: `session_id`, `mode`, `started_at`, `run_id` and `case`, `phases_complete: []` and `lens_failures: {}`. After each phase, add the phase to `phases_complete`.
 
 1. ORIENT:
-   - Check current directory for existing analyses
-   - Check if .competitive-intelligence/ or .competitive-intel/ exists, and read both, newest file first
-   - Look for previous ecosystem mappings
-   - Read a file of an earlier run through the graph: run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> pages Run`, take the newest run whose `file_meta` names the file, and run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> view <RUN ID> <file name>`, because `ingest` moves the files of a run into the graph. Read a file that is still in a session folder directly.
+   - Find the earlier runs: run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> pages Run` on its own. Each Run page names the files of its run in `file_meta`. The RUN ID of a Run page is the file name of the page with no `.md`, for example `RUN-01`.
+   - Look for previous ecosystem mappings: read `competitive-ecosystem.json` of the newest Run page whose `file_meta` names it, with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> view <RUN ID> competitive-ecosystem.json` on its own.
+   - Read the files of an earlier run only with these 2 commands. Do not read a session folder of an earlier run with `grep`, `cat`, `ls`, `head`, `find`, the Read tool, the Grep tool or the Glob tool, because `ingest` moves most of its files into the graph, and `view` gives each file of `file_meta`, also a file that stays in the folder.
 
 2. ASK THE INTAKE QUESTIONS, THEN DISPATCH THE CONTEXT ANALYST:
    - Ask only the questions whose answer is not yet known. The text after the skill name is the `market`. An answer in the dispatch context is also known.

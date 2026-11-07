@@ -6,7 +6,7 @@ allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Skill
 
 # /competitive-intelligence:analyze
 
-Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py <args>`, one command per Bash call. Never run inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc), never write a script of your own and run it, and write every file with the Write tool, never with a shell command, because only this plugin's scripts run with no question to the person.
+Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py <args>`, one command per Bash call, with no pipe (`|`), no `;` and no `&&`. Never run inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc), never write a script of your own and run it, and write every file with the Write tool, never with a shell command, because only this plugin's scripts run with no question to the person.
 Run every agent you dispatch in the foreground and wait for it to finish; never run one in the background (`run_in_background: true`) before the result file is written, because the result file needs the output of each agent.
 This plugin's root is `${CLAUDE_PLUGIN_ROOT}`; wherever a file you read writes `${CLAUDE_PLUGIN_ROOT}`, use that path.
 Ask a number or a free-text input as a text question with `AskUserQuestion` [q: none], 1 question for each call, or offer options that are real values; never offer an option that only says to type, such as "Type amount", "Type it", "Enter figures" or "List them", because a person who picks such an option gives no value.
@@ -67,14 +67,14 @@ You run in the main conversation, so you ask the person. You read each lens skil
    - In a plugin run, write `session.json` in that folder: `session_id`, `mode`, `started_at`, `run_id` and `case`, `lenses_complete: []` and `lens_failures: {}`. Record each finished lens in `lenses_complete`, and each lens that did not run in `lens_failures` with the reason.
 
 1. ORIENT:
-   - Check if competitor exists in ecosystem mapping (in both .competitive-intelligence/ and .competitive-intel/, newest file first)
+   - Find the earlier runs: run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> pages Run` on its own. Each Run page names the files of its run in `file_meta`. Take the newest Run page (the latest `finished_at`) whose `file_meta` names `competitive-ecosystem.json`. The RUN ID of a Run page is the file name of the page with no `.md`, for example `RUN-01`.
    - In a person's run, a value taken from another run's ecosystem mapping is a `default` source naming that file, as the result file section says; never write into that run's folder.
-   - If no ecosystem: Offer to run /competitive-intelligence:discover first
+   - If no Run page names `competitive-ecosystem.json`: offer to run /competitive-intelligence:discover first
    - The text after the skill name is the competitor. If no competitor is named, ask with AskUserQuestion which competitor to analyze [q: competitor]
    - Unless the person has named it, ask with AskUserQuestion which product of yours the analysis compares with this competitor [q: offering].
    - Unless the person has named it, ask with AskUserQuestion what evidence about this competitor they have, such as lost deals, churned customers or battle cards, and where the files are [q: available_data].
-   - Load existing intelligence data for this competitor
-   - Read a file of an earlier run through the graph: run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> pages Run`, take the newest run whose `file_meta` names the file, and run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> view <RUN ID> <file name>`, because `ingest` moves the files of a run into the graph. Read a file that is still in a session folder directly.
+   - Read `competitive-ecosystem.json` and `intelligence-data.json` of that run, and find the competitor in them: run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> view <RUN ID> <file name>` on its own, 1 file for each call.
+   - Read the files of an earlier run only with these 2 commands. Do not read a session folder of an earlier run with `grep`, `cat`, `ls`, `head`, `find`, the Read tool, the Grep tool or the Glob tool, because `ingest` moves most of its files into the graph, and `view` gives each file of `file_meta`, also a file that stays in the folder.
    - Keep a list of the inputs that you asked in this run, and of the default options that the person picked. The result file step needs the list.
 
 2. DETERMINE ANALYSIS SCOPE:

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.5
+
+- Step 1 of `analyze` and `discover` reads an earlier run only with `ci_graph.py pages Run` and `ci_graph.py view`, and names the files to read. Before, it scanned the session folders with `grep` and `cat`, so a person's analyze did not read `intelligence-data.json`, which `ingest` moves into the graph (STORY-209).
+- `analyze` and `discover` say to run each command on its own, with no pipe, `;` or `&&`, because each compound command asks the person in the default mode.
+
 ## 1.10.4
 
 - `ingest` removes a file only when a page holds it. A file that gave no page stays where it is, the output names it in a `NO PAGE:` line, and the `ingested` line ends with `, no page N`. The files of metadata, context, notes, monitoring and plan have the Run page, so `ingest` removes them as before, and `pages.json` now names them. Before, a file that gave no page went from the session folder, and no line named it (STORY-217).

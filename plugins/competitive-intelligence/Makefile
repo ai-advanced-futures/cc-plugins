@@ -9,7 +9,7 @@ TIERS := registration discover pluginrun analyzerun analyze
 # discover (1 live /competitive-intelligence:discover quick scan, cap 0.9 USD),
 # pluginrun (1 live plugin run of discover, cap 0.9 USD),
 # analyzerun (1 live plugin run of analyze, cap 1.5 USD),
-# analyze (1 live person's run of analyze after an ingested discover run, cap 1.5 USD).
+# analyze (1 live person's run of analyze after an ingested discover run, in the default mode, cap 1.5 USD).
 # TIER=all is at most 5.05 USD at list price (the caps of the 5 sessions).
 PYTEST := COMPETITIVE_INTELLIGENCE_ITEST=1 uv run --quiet --with-requirements requirements-dev.txt python -m pytest tests/integration -m integration -rsxX -p no:cacheprovider
 
