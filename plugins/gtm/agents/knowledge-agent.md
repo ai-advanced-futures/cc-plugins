@@ -2,7 +2,7 @@
 name: knowledge-agent
 description: Ingest unstructured human knowledge files — transcripts, playbooks, notes — and extract GTM intelligence
 model: sonnet
-tools: Read(*), Write(*), Glob(*), Grep(*), Skill
+tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Skill
 ---
 
 # Knowledge Agent
@@ -77,7 +77,7 @@ Churn signals come only from the files in `files` (Gong transcripts preferred). 
 ```
 1. RECEIVE FILE LIST:
    - Identify all files provided by the user for ingestion
-   - If no files provided: do not ask. Report that there is nothing to ingest, and end with the Completion signal.
+   - If no files provided: do not ask. Report that there is nothing to ingest, do step 9, and end with the Completion signal.
    - Catalog file types and sizes
    - Prioritize: Gong transcripts first → win/loss data → playbooks → other
 
@@ -171,6 +171,7 @@ Churn signals come only from the files in `files` (Gong transcripts preferred). 
    - Contradictions must be surfaced for resolution (see step 7)
 
 6. WRITE TO gtm-context.json:
+   - Change only these keys of `gtm-context.json` with the Edit tool: `learned_knowledge`, `_meta.last_updated`, `completion_log.knowledge` and `completion_flags.knowledge`. Do not write the whole file.
    - Append all extracted intelligence to gtm-context.json.learned_knowledge:
      {
        "learned_knowledge": {
@@ -218,7 +219,7 @@ Churn signals come only from the files in `files` (Gong transcripts preferred). 
      - If the field is absent: do not guess. Write `.gtm/open-questions.json`:
        {"agent": "knowledge", "question": "How should this be resolved? Should positioning be updated, or is the transcript an edge case?",
         "contradictions": [...], "options": ["update_positioning", "edge_case"]}
-       Finish steps 6 and 8, then end the reply with the line `OPEN: .gtm/open-questions.json` in place of the DONE line.
+       Finish steps 6 and 8, and do not do step 9, so a resume dispatches this agent again. Then end the reply with the line `OPEN: .gtm/open-questions.json` in place of the DONE line.
        The command that dispatched this agent asks the person and dispatches it again with the field.
 
 8. KNOWLEDGE INGESTION SUMMARY:
@@ -232,6 +233,10 @@ Churn signals come only from the files in `files` (Gong transcripts preferred). 
      - Loss patterns identified: N
      - Competitor mentions: [competitor names and frequency]
    - Contradictions requiring resolution: N (if any)
+
+9. SIGNAL COMPLETION (only in a run that ends with DONE: gtm):
+   - Write one-paragraph summary → gtm-context.json.completion_log.knowledge
+   - Set gtm-context.json.completion_flags.knowledge: true
 ```
 
 ## Output

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.10.1
+
+- `knowledge-agent`, `brand-agent` and `codebase-scanner` have the Edit tool, as the orchestrator tells them. Before, each of 6 verifier runs of `/gtm:run` got "No such tool available: Edit" from `knowledge-agent`, and 4 of them saved nothing and stopped in Wave 0 (STORY-210). Each of the 6 agents that set a completion flag now has Edit.
+- Each of the 3 agents names its keys of `gtm-context.json` at its write step and changes only those keys with the Edit tool.
+- `knowledge-agent` (new step 9) and `codebase-scanner` (new step 13) write `completion_log.<key>` and set `completion_flags.<key>`. Before, they set no flag, so Wave 0 could not see that they ran. A knowledge run that ends with `OPEN:` does not do step 9, so a resume dispatches it again.
+- New test file: `test_context_writers.py` (4 tests).
+
 ## 1.10.0
 
 - gtm reads the knowledge graphs of `jtbd-market-discovery` and `competitive-intelligence`, not their old output files (STORY-92). New `scripts/brain_read.py` runs the save code of each writer (`jtbd_graph.py`, `ci_graph.py`) as a subprocess and writes the pages to `.gtm/upstream/<graph>/`. It finds the writer with its own copy of `scripts/probe-plugin.sh`.

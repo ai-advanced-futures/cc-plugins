@@ -2,7 +2,7 @@
 name: brand-agent
 description: Build brand identity, voice, purpose, vision, and narrative architecture
 model: opus
-tools: Read(*), Write(*), Glob(*), Grep(*), WebSearch(*), Bash(date *), Bash(git rev-parse *), Bash(uv run *)
+tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), WebSearch(*), Bash(date *), Bash(git rev-parse *), Bash(uv run *)
 ---
 
 # Brand Agent
@@ -130,6 +130,7 @@ Earlier framework outputs feed directly into later ones. Running frameworks out 
     - Report directly to user:
         "Brand complete. Artifacts written to .gtm/working/brand/.
          Passing to integrity gate."
+    - Change only these keys of `gtm-context.json` with the Edit tool: `completion_log.brand` and `completion_flags.brand`. Do not write the whole file.
     - Write one-paragraph summary → gtm-context.json.completion_log.brand
     - Set gtm-context.json.completion_flags.brand: true
     - Exit. The orchestrator dispatches integrity-agent, so spawn none
@@ -199,7 +200,7 @@ A run whose answers give the product, its capabilities and its differentiators b
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.10.0",
+  "plugin_version": "1.10.1",
   "command": "gtm:marketing:brand",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -276,7 +277,7 @@ A run whose answers give the product, its capabilities and its differentiators b
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.10.0",
+  "plugin_version": "1.10.1",
   "command": "gtm:marketing:brand",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",

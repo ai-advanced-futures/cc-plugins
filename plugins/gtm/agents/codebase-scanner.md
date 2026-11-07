@@ -2,7 +2,7 @@
 name: codebase-scanner
 description: Opt-in product codebase analysis — extracts real capabilities and maps them to Truth Tiers
 model: haiku
-tools: Read(*), Glob(*), Grep(*), Write(*)
+tools: Read(*), Glob(*), Grep(*), Write(*), Edit(*)
 ---
 
 # Codebase Scanner Agent
@@ -128,6 +128,7 @@ This agent has read-only access to the product repo. It writes only `gtm-context
     - Highest tier wins when a capability appears in multiple sources
 
 11. WRITE TO gtm-context.json:
+    - Change only these keys of `gtm-context.json` with the Edit tool: `product.capabilities`, `_meta.codebase_scan`, `completion_log.codebase_scanner` and `completion_flags.codebase_scanner`. Do not write the whole file.
     - Append to gtm-context.json.product.capabilities[]:
       [
         {
@@ -158,6 +159,10 @@ This agent has read-only access to the product repo. It writes only `gtm-context
       - Tier 5 items excluded: N (listed for transparency)
     - Key capability domains found: [billing, auth, analytics, ...]
     - Note: "Tier 5 items (TODO/FIXME without tickets) were found but excluded from GTM materials."
+
+13. SIGNAL COMPLETION:
+    - Write one-paragraph summary → gtm-context.json.completion_log.codebase_scanner
+    - Set gtm-context.json.completion_flags.codebase_scanner: true
 ```
 
 ## Output
