@@ -14,7 +14,7 @@ Ask a number or a free-text input in one chat message, or offer options that are
 
 0. **Read the start time and the version** — run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py now` on its own and keep its output as `started_at`, and keep the `version` of `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`. Never type a time yourself, because a typed time is a guess and not the time of the run. The result file needs both.
 1. Do the work the rest of this file describes.
-2. **Write the result file** — Read `${CLAUDE_PLUGIN_ROOT}/agents/market-analyzer.md` with the Read tool and follow its `## Result file` section, in every run.
+2. **Write and check the result file** — Read `${CLAUDE_PLUGIN_ROOT}/agents/market-analyzer.md` with the Read tool and follow its `## Result file` section, in every run. The section ends with the check of the file.
 
 ## Purpose
 

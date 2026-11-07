@@ -537,7 +537,7 @@ The run never overwrites an earlier file: when the name is taken and there is no
 - In a person's run, a value the run takes from another plugin's file, or from an earlier run's file, is a `default` source with `ref` `<file>: <key>`, and its marker is `<input> = <value> (<file>)`.
 - In a person's run, an answer the person picked from an option labelled as the default or as recommended is a `default` source with `ref` `asked in this run: <input>`, and that default's marker goes in `defaults`.
 - `rests_on_default` is true when a source has type `default`. It is also true when the `defaults` list of marker strings is not empty; otherwise it is false.
-- `detail` is the copy in the run's own folder, `.product-finance/<run_id>/<file>`. A person's run has no run folder and leaves out `detail`.
+- `detail` is the copy in the run's own folder, `.product-finance/<run_id>/<file>`. A person's run has no run folder and leaves out `detail`. Leave out the key; do not write `"detail": null`, because the checker refuses a null.
 - `gaps` lists each figure the run did not produce, with its `kind`, `label` and `why`. A gap's `kind` is one of the result kinds named below: the one the missing figure belongs with, for example `unit_economics` for a Magic Number the run could not work out. A halt writes `results: []` and the gap `{"kind": "unit_economics", "label": "Unit economics", "why": "product required for a plugin run"}`.
 
 Results, from the `unit-economics.json` this run wrote: one `unit_economics` result whose `value` holds each of `cac`, `ltv`, `ltv_cac`, `payback_months`, `churn` (monthly, in percent) and `arpa` (monthly revenue per customer) that the file holds, `unit` `"USD"`, `period` `"month"`.
@@ -548,7 +548,7 @@ A defaults run of `product-finance:unit-economics`, then the same run with `data
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.12.0",
+  "plugin_version": "0.13.0",
   "command": "product-finance:unit-economics",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",
@@ -600,7 +600,7 @@ A defaults run of `product-finance:unit-economics`, then the same run with `data
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.12.0",
+  "plugin_version": "0.13.0",
   "command": "product-finance:unit-economics",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",

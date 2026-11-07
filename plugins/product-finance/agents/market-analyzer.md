@@ -729,7 +729,10 @@ Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py <finished_at> <command>
 When the name call is denied or fails, set `run.subject` to `name call denied` and name the file `<finished_at as YYYYMMDDTHHMMSSZ>-<command part>-name-call-denied-<run_id>.json`, where `<command part>` is `discover`, leaving out `-<run_id>` when the run has none; never build a name from another subject.
 In that file, record the gap `{"kind": "<a result kind of this command>", "label": "File name", "why": "name call denied; subject: <the subject the run would have written>"}`.
 A denied or failed tool call never ends the run without the result file: write it with what the run has, and record each result a denied call kept from the run as a gap whose `why` names that call.
-The run never overwrites an earlier file: when the name is taken and there is no `run_id`, add `-2` before `.json`, then `-3`; when it is taken and there is a `run_id`, stop and say so.
+The run never overwrites an earlier file: when the name is taken and there is no `run_id`, add `-2` before `.json`, then `-3`; when it is taken and there is a `run_id`, stop and say so. The one exception is the rewrite after a refused check, below: it writes this run's own file again, under the same name.
+After the Write, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/plugin_result/plugin_result_check.py result '<git root>/.product-finance/results/<file name>'` on its own. Exit 0 means that the file meets the standard.
+On exit 1, each line on stderr names a rule and a key. Read the file with the Read tool, and run no shell command on it. Correct each named key from the run's files, write the file again with the Write tool under the same name, and run the check once more.
+On a second exit 1, on exit 2, or when the check call is denied or fails, stop. The reply names the file and each error line, and says that the checker refused the file or did not run. Never report the run as passed when the check did not exit 0.
 
 - `schema` is `"plugin-result/1"`, `plugin` is `"product-finance"`, `plugin_version` is the `version` in `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`, and `command` is `"product-finance:discover"`.
 - `run.started_at` is the `started_at` the run read first. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py now` once, on its own, just before you write: its output is `run.finished_at`, and the file name's timestamp is that same time written as `YYYYMMDDTHHMMSSZ`.
@@ -753,14 +756,16 @@ The run never overwrites an earlier file: when the name is taken and there is no
 - In a person's run, a value the run takes from another plugin's file, or from an earlier run's file, is a `default` source with `ref` `<file>: <key>`, and its marker is `<input> = <value> (<file>)`.
 - In a person's run, an answer the person picked from an option labelled as the default or as recommended is a `default` source with `ref` `asked in this run: <input>`, and that default's marker goes in `defaults`.
 - `rests_on_default` is true when a source has type `default`. It is also true when the `defaults` list of marker strings is not empty; otherwise it is false.
-- `detail` is the copy in the run's own folder, `.product-finance/<run_id>/<file>`. A person's run has no run folder and leaves out `detail`.
+- `detail` is the copy in the run's own folder, `.product-finance/<run_id>/<file>`. A person's run has no run folder and leaves out `detail`. Leave out the key; do not write `"detail": null`, because the checker refuses a null.
 - `gaps` lists each figure the run did not produce, with its `kind`, `label` and `why`. A gap's `kind` is one of the result kinds named below: the one the missing figure belongs with, for example `unit_economics` for a Magic Number the run could not work out. A halt writes `results: []` and the gap `{"kind": "market_size", "label": "Market size", "why": "market required for a plugin run"}`.
 
 Results, from the `discovery-report.json` this run wrote:
 
-- One `market_size` result: `value` is `{"tam", "sam", "som"}` from `market_sizing`, `unit` `"USD"`, and `period` the SOM timeframe in years.
+- One `market_size` result: `value` is `{"tam", "sam", "som"}` from `market_sizing`, `unit` `"USD"`, and `period` the SOM timeframe in years. The result needs all three values.
+  When the run has no value for one of them, write no `market_size` result, and record the gap `{"kind": "market_size", "label": "Market size", "why": "<each input the run lacks>: the answers give none, and the command states no default"}`.
+  `sam` needs `sam_percent` or the three shares of Phase 2b, and `som` needs `market_share_percent`. Never write a `value` with only some of the three keys, and never fill a share that no answer and no stated default gives. A person's run asks for these shares (Phase 2b and 2c), so there the rule applies only when the person gives none.
 - One `unit_economics` result for each channel with a worked-out acquisition cost: `value` is `{"cac": <the channel's CAC>}`, `unit` `"USD"`.
-- One `customer_segment` result for each segment of `customer_segments`: `value` is `{"name": <segment_name>}`. A segment from a jtbd result uses that `customer_segment` result and the segment's own `willingness_to_pay` result, which gave its ACV, so it copies and cites both. Its `method` states the ACV as `ACV = <n> USD a year`.
+- One `customer_segment` result for each segment of `customer_segments`: `value` is `{"name": <segment_name>}`, with no `unit` and no `period`. A segment from a jtbd result uses that `customer_segment` result and the segment's own `willingness_to_pay` result, which gave its ACV, so it copies and cites both. Its `method` states the ACV as `ACV = <n> USD a year`.
 
 A defaults run of `product-finance:discover`, then the same run with `sdr_annual_cost` answered by the person (only the outbound result shown):
 
@@ -768,7 +773,7 @@ A defaults run of `product-finance:discover`, then the same run with `sdr_annual
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.12.0",
+  "plugin_version": "0.13.0",
   "command": "product-finance:discover",
   "run": {
     "started_at": "2026-11-01T09:00:00Z",
@@ -864,7 +869,7 @@ A defaults run of `product-finance:discover`, then the same run with `sdr_annual
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.12.0",
+  "plugin_version": "0.13.0",
   "command": "product-finance:discover",
   "run": {
     "started_at": "2026-11-01T09:00:00Z",
@@ -901,5 +906,102 @@ A defaults run of `product-finance:discover`, then the same run with `sdr_annual
     }
   ],
   "gaps": []
+}
+```
+
+A person's run of `product-finance:discover` (`mode` `interactive`). The values come from `.product-finance/assumptions.json`, and the person answered the market share in this run. The file has no `case`, `run_id` or `answers`, and no result has `detail` (only the market size result shown):
+
+```json
+{
+  "schema": "plugin-result/1",
+  "plugin": "product-finance",
+  "plugin_version": "0.13.0",
+  "command": "product-finance:discover",
+  "run": {
+    "started_at": "2026-11-02T10:00:00Z",
+    "finished_at": "2026-11-02T10:12:00Z",
+    "mode": "interactive",
+    "subject": "Invoice automation for mid-size finance teams"
+  },
+  "results": [
+    {
+      "id": "market_size-1",
+      "kind": "market_size",
+      "label": "Market size, invoice automation",
+      "value": {
+        "tam": 72000000,
+        "sam": 28800000,
+        "som": 1440000
+      },
+      "unit": "USD",
+      "period": "3 years",
+      "sources": [
+        {"type": "default", "ref": ".product-finance/assumptions.json", "date": null},
+        {"type": "person", "ref": "asked in this run: market_share_percent", "date": null}
+      ],
+      "method": "market_sizing_calculator.py: bottom-up TAM is the potential customers times the target ACV; SAM is TAM times the reachable share; SOM is SAM times the market share.",
+      "rests_on_default": true,
+      "defaults": [
+        "potential_customers = 12000 (assumptions.json)",
+        "target_acv = 6000 (assumptions.json)",
+        "sam_percent = 40 (assumptions.json)",
+        "som_timeframe_years = 3 (assumptions.json)"
+      ]
+    }
+  ],
+  "gaps": []
+}
+```
+
+A plugin run whose answers give no `sam_percent`, none of the three shares of Phase 2b, and no `market_share_percent`. The file has no `market_size` result, and the gap names those inputs (only the outbound result shown):
+
+```json
+{
+  "schema": "plugin-result/1",
+  "plugin": "product-finance",
+  "plugin_version": "0.13.0",
+  "command": "product-finance:discover",
+  "run": {
+    "started_at": "2026-11-03T09:00:00Z",
+    "finished_at": "2026-11-03T09:05:00Z",
+    "mode": "automated",
+    "subject": "Invoice automation for mid-size finance teams",
+    "case": "business-cases/acme",
+    "run_id": "acme-0103",
+    "answers": "/abs/business-cases/acme/team/answers-0103.json"
+  },
+  "results": [
+    {
+      "id": "unit_economics-1",
+      "kind": "unit_economics",
+      "label": "Customer acquisition cost, outbound sales",
+      "value": {
+        "cac": 7777.78
+      },
+      "unit": "USD",
+      "sources": [
+        {"type": "person", "ref": "answers:sdr_count", "date": null},
+        {"type": "person", "ref": "answers:opps_per_sdr_month", "date": null},
+        {"type": "person", "ref": "answers:ae_count", "date": null},
+        {"type": "person", "ref": "answers:close_rate_percent", "date": null},
+        {"type": "default", "ref": "commands/discover.md: sdr_annual_cost", "date": null},
+        {"type": "default", "ref": "commands/discover.md: ae_annual_cost", "date": null}
+      ],
+      "method": "Monthly sales cost of the reps and account executives divided by the customers their opportunities close each month. Computed by the model from the formula stated in the command; no script ran.",
+      "rests_on_default": true,
+      "defaults": [
+        "sdr_annual_cost = 100000",
+        "ae_annual_cost = 200000"
+      ],
+      "detail": ".product-finance/acme-0103/discovery-report.json"
+    }
+  ],
+  "gaps": [
+    {
+      "kind": "market_size",
+      "label": "Market size",
+      "why": "sam_percent, the three shares of Phase 2b and market_share_percent: the answers give none, and the command states no default"
+    }
+  ]
 }
 ```

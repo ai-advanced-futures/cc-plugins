@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.0
+
+- **fix:** `discover` checks its result file. After the write, it runs `scripts/plugin_result/plugin_result_check.py result` on the file. On a refusal, it corrects the named keys and writes the file once more. On a second refusal, it stops and names each error.
+- **fix:** a person's run leaves out the `detail` key and never writes `"detail": null`. The `discover` section has an example of a person's run, and the person-run example of `feature-roi` has no `detail`.
+- **fix:** when `discover` has no value for `sam` or `som`, it writes no `market_size` result and records a gap that names each input it lacks.
+- **change:** the checker of the result file and its schemas are in `scripts/plugin_result/`, so the plugin ships them. They are byte copies of the files of business-case.
+
 ## 0.12.0
 
 - **feat:** `discover` and `setup` read the jtbd graph of the project. The new script `scripts/jtbd_read.py` finds the jtbd plugin, runs its save code, and writes the jtbd run as a file in `.product-finance/upstream/`. A plugin run writes it in `.product-finance/<run_id>/upstream/`.

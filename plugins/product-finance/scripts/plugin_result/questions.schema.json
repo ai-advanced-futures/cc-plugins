@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:plugin-questions:1",
+  "title": "Questions list, version 1",
+  "description": "The questions an adopting command would ask in an interactive run. It lives at questions/<command part>.json in the plugin's folder. This schema cannot state the rules below, so plugin_result_check.py checks them and names each by its id. R-INPUTS: the input of each question is unique in the file. R-OPTIONS: a choice question lists its options.",
+  "type": "object",
+  "required": ["schema", "command", "questions"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "plugin-questions/1" },
+    "command": { "type": "string", "pattern": "^[a-z0-9-]+(:[a-z0-9-]+)+$" },
+    "questions": { "type": "array", "items": { "$ref": "#/$defs/question" } }
+  },
+  "$defs": {
+    "question": {
+      "type": "object",
+      "required": ["input", "question", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "input": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "question": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "enum": ["choice", "number", "text", "path", "boolean"] },
+        "options": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/option" } },
+        "default": {},
+        "unit": { "type": "string", "minLength": 1 }
+      }
+    },
+    "option": {
+      "type": "object",
+      "required": ["value", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "value": {},
+        "label": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -4,7 +4,7 @@
 **Date:** 2026-11-01
 **Author:** Luis F. Amadeo (Chief Agentic Officer)
 **Adopts:** the repository standard for the plugin result file (repo ADR-001)
-**Plugin:** product-finance v0.8.0, amended in v0.9.0, v0.11.0 and v0.12.0
+**Plugin:** product-finance v0.8.0, amended in v0.9.0, v0.11.0, v0.12.0 and v0.13.0
 
 ---
 
@@ -98,3 +98,18 @@ Five facts shaped the adoption:
 9. **The old paths are gone.** No file of this plugin names the old output folders of jtbd. `test_no_old_jtbd_output.py` holds the rule.
 
 **Consequences.** A project with no jtbd graph, or with no jtbd plugin, gets a plain line and a run with no jtbd input. A project with a graph gets the segments and the prices of its newest fitting run. The CI job of this plugin installs the packages of the jtbd plugin, because the tests run its real save code.
+
+## Amendment (v0.13.0, STORY-184): discover checks its result file
+
+**Date:** 2026-11-06.
+
+**Context.** In 2 of 5 person runs of `discover`, the result file had `"detail": null`. In 2 plugin runs whose answers gave no SAM share, it had a `market_size` with only `tam`. The checker refused each file, but only the tests ran the checker, and the release does not ship `tests/`.
+
+**Decision.**
+
+1. **The plugin ships the checker.** The checker and its four schema files are in `scripts/plugin_result/`, not in `tests/support/`. The five files are byte copies of the files in `plugins/business-case/schemas/`, with its PEP 723 block. This replaces decision 3 of the amendment (v0.11.0) for the checker. The Charter schemas stay in `schemas/agentic-pricing/`.
+2. **discover checks its result file.** After the Write, the run runs `plugin_result_check.py result` on the file. On a refusal, it corrects the named keys and writes the file once more. On a second refusal, it stops and names each error. It never reports a refused file as a pass.
+3. **A person's run writes no `detail` key.** Each writer says so, and no example of a person's run has `detail`.
+4. **A partial market size is a gap.** A `market_size` result needs `tam`, `sam` and `som`. With no value for one of them, the run writes no `market_size` result and records a gap that names each input it lacks, as decision 1 of the amendment (v0.11.0) says for each figure.
+
+**Consequences.** A file that the checker refuses does not pass as a result: the run corrects it once, or the reply names the errors. The other four writers do not run the check yet.

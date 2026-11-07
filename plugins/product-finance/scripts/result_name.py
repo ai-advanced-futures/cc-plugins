@@ -9,7 +9,7 @@ usage: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py <finished_at> <comman
        uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py now
 
 The name is the one that result_file_name() of the checker
-tests/support/schemas/plugin-result/plugin_result_check.py builds. `now` prints the UTC
+scripts/plugin_result/plugin_result_check.py builds. `now` prints the UTC
 time to the second. `run-id` prints the value when it is a plain name, and exits 2 when it is not.
 The run_id and the command part go into a file name and a folder name, so each must be a plain
 name. Standard library only.
