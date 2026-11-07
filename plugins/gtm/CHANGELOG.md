@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.2
+
+- On band floor, the orchestrator does step 3 of the integrity pass (phase `write` of `integrity-agent`) before it stops, so the run writes `.gtm/audit/<agent>-integrity-BREACH.json` and the `error_log.<agent>_integrity` object. Before, in 1 of 3 floor runs, it stopped after the script and wrote `error_log` itself as a string (STORY-194).
+- New test: `test_floor_breach_order.py`.
+
 ## 1.10.1
 
 - `knowledge-agent`, `brand-agent` and `codebase-scanner` have the Edit tool, as the orchestrator tells them. Before, each of 6 verifier runs of `/gtm:run` got "No such tool available: Edit" from `knowledge-agent`, and 4 of them saved nothing and stopped in Wave 0 (STORY-210). Each of the 6 agents that set a completion flag now has Edit.

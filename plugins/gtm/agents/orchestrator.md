@@ -158,7 +158,7 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
         (<project> as in step 3.) The script writes integrity_score and band into
         .gtm/audit/<agent>-integrity.json and prints 1 line. The Bash tool shows "Exit code <n>" for an exit
         that is not 0. With no such line, the exit is 0.
-        → Exit 0: go to step 3.
+        → Exit 0: go to step 3, also when the band is floor.
         → Exit 3 (the line names no_claims): An audit with 0 claims has no integrity score: `truth_tier_validator.py`
           exits 3 with the gap `no_claims`, and the run stops with no file in `gtm-output/`. Do not do step 3, and
           leave completion_flags.<agent>_integrity false. Add "integrity pass of <agent> not scored: no_claims, the audit holds 0 claims"
@@ -245,7 +245,8 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
    - If completion_flags.{agent}_integrity == false after step 3 of an INTEGRITY PASS:
        → Read band and integrity_score from .gtm/audit/{agent}-integrity.json, and the top issues from
          gtm-context.json.error_log.{agent}_integrity
-       → Band floor: stop. Offer no override. Dispatch no further agent.
+       → Band floor: after step 3, stop. Offer no override. Dispatch no further agent.
+         Do not write error_log.{agent}_integrity yourself: step 3 writes it, for each band.
          Report the score and top issues in the reply. Write no question file.
        → Band choice: the person must choose. You cannot ask. Do this:
            1. Write .gtm/open-questions.json:
@@ -291,7 +292,7 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
 - Before you use a dispatch value that a prior session may hold, check the existing `gtm-context.json`.
 - Run `integrity-agent` after each content agent in Mode 1. Only the orchestrator starts it, so the order of the audits stays fixed.
 - If MCP servers are offline, log this and tell the user in the summary which data sources are limited.
-- On band floor (integrity_score under 0.60), report it in the reply at once and dispatch no further wave.
+- On band floor (integrity_score under 0.60), after step 3 of the INTEGRITY PASS, report it in the reply and dispatch no further wave.
 - Only truth_tier_validator.py gives integrity_score and band. A score counted by hand is not a score.
 
 ## Completion signal
