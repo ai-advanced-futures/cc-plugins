@@ -289,6 +289,10 @@ class TokenCache:
 def get_token(store, no_cache=False):
     """Return (token, expires_at, permissions) of the App installation, from the cache or from GitHub."""
     app_id, installation_id = store.app_id(), store.installation_id()
+    # The key checks run before the cache is read: a valid cache must not hide a bad key file. The settings
+    # check looks at the path only, so only this call and the next start refuse the file (STORY-229).
+    key_path = store.key_path()
+    check_key_file(key_path)
     folder = sofa_dir(store.db)
     os.makedirs(folder, exist_ok=True)
     cache = TokenCache(folder)
@@ -299,7 +303,7 @@ def get_token(store, no_cache=False):
             hit = cache.read(app_id, installation_id)
             if hit:
                 return hit
-        token, expires, permissions = request_token(app_id, installation_id, store.key_path())
+        token, expires, permissions = request_token(app_id, installation_id, key_path)
         cache.write(app_id, installation_id, token, expires, permissions)
         return token, expires, permissions
     finally:
