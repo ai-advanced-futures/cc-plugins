@@ -111,7 +111,7 @@ Manual path, if neither plugin is in this session: take the competitor context f
    - Teach: What does the Economic Buyer not know that they need to know?
      - Identify 1 industry insight or reframe that challenges the buyer's current thinking
      - This must be backed by data, case study, or market evidence — not just opinion
-     - Pull from competitive-intelligence if available for market movement data
+     - Pull market movement data from the pages in the files of `plugin_inputs.competitive_intelligence.paths` when the key is there (each file is a JSON list of `Competitor`, `Offer`, `SwotItem` and `LensResult` pages). If the key is absent, the project has no such graph.
    - Tailor: How does the teaching narrative shift by role?
      - Economic Buyer version: revenue and risk language
      - Champion version: team efficiency and career safety language

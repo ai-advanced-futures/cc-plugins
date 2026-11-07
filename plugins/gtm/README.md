@@ -7,7 +7,7 @@ This plugin plans the go-to-market work of a product. It builds the brand identi
 The plugin treats the go-to-market work of a company as one system, from brand identity to closed revenue. It uses three sources of truth at the same time:
 
 1. **What the product does.** The plugin scans the codebase when you agree. It also reads the output of the optional `value-ip` plugin.
-2. **What customers need.** The plugin reads the output files of `jtbd-market-discovery` and `competitive-intelligence`.
+2. **What customers need.** The plugin reads the knowledge graphs of `jtbd-market-discovery` and `competitive-intelligence`.
 3. **What the masters say works.** The plugin uses the work of Kotler, Moore, Sinek, Miller, Aaker, Rackham, Pine, and Cornell marketing science.
 
 ### Moral marketing
@@ -94,10 +94,13 @@ The plugin has 30 skills. A skill gives a framework or a rule to an agent or to 
 - Your answers to the questions of each command.
 - Files that you name for `/gtm:learn` and `/gtm:audit`.
 - The codebase, only when you agree to the scan. The scan is read-only.
-- The output files of other plugins, when they are in the project:
-  - `competitive-intelligence`: the files in `.competitive-intelligence/`.
-  - `jtbd-market-discovery`: the files in `.jtbd-market-discovery/`.
-  - `pricing`: the pricing files that the plugin finds, such as `evc-analysis.json`.
+- The knowledge graphs of two plugins, when the project has them. Step 3 of `/gtm:run` runs `scripts/plugin_integrator.py`. It reads each graph through the save code of the plugin that wrote it. It does not read the files of that plugin.
+  - `competitive-intelligence`: the `Competitor`, `Offer`, and `SwotItem` pages of all runs, and the `LensResult` pages of the `jtbd-performance` lens. Make the graph with `/competitive-intelligence:discover` or `/competitive-intelligence:analyze`.
+  - `jtbd-market-discovery`: the `Run`, `Outcome`, `Segment`, and result pages of the newest finished `discover` run. Make the graph with `/jtbd-market-discovery:discover`.
+  - The plugin writes a copy of each page list to `.gtm/upstream/<graph>/`. Each run of step 3 writes the copies again. The agents read the copies.
+  - If a graph is absent, the run goes on with no input from it. The plugin writes one line that starts with `NO-GRAPH:` or `GRAPH-READ-FAILED:` to `.gtm-graph-notes.txt` in the project folder (outside `.gtm/`, so the lines reach you also when `.gtm` is a link), and `/gtm:run` shows each line of that file.
+  - The plugin reads no old output file of these two plugins. If you have such a file, run the discover command again to make the graph.
+  - `pricing`: the file `right-price` that the plugin finds in the project.
   - `value-ip`: the scorecard at `.value-ip/<run>/output/value-ip-scorecard.md`. This plugin is optional. The GTM steps work without it.
   - `aiml`: the `p15-trigger-event` file that `agentic-pricing-comms` reads.
 
@@ -167,7 +170,7 @@ Two of these plugins, `value-ip` and `tech-contracts`, are optional plugins from
 
 ### Plugins of this marketplace
 
-`competitive-intelligence`, `jtbd-market-discovery`, and `pricing` write files that this plugin reads. `aiml` writes the `p15-trigger-event` file. Run them before `/gtm:run`.
+`competitive-intelligence` and `jtbd-market-discovery` save a knowledge graph that this plugin reads. `pricing` writes a file that this plugin reads. `aiml` writes the `p15-trigger-event` file. Run them before `/gtm:run`. To read a graph, this plugin needs the plugin that wrote it, and its Python dependencies (`uv` gives them). Set `GTM_GRAPH_PYTHON` to the Python that runs the save code when you do not use `uv`.
 
 ## Privacy
 

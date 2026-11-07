@@ -33,7 +33,7 @@ gtm does not compete with these plugins on generic work. It uses this pattern:
 
 ```
 value-ip, competitive-intelligence, jtbd-market-discovery, pricing   (optional evidence)
-    -> plugin_integrator.py finds their files
+    -> plugin_integrator.py reads the graphs of jtbd-market-discovery and competitive-intelligence, and finds the files of the others
 gtm   (strategy, wave order, integrity engine)
     -> calls a skill of an Anthropic plugin for commodity work, when the plugin is in the session
 Anthropic plugins: sales, marketing, data, enterprise-search, customer-support   (optional)

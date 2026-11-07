@@ -47,7 +47,7 @@ This agent retrieves and structures. It draws no conclusions and makes no strate
      ]
    - Note: volume and difficulty are inferred. Give no number that no source states.
 
-3. COMPETITOR VOICE ANALYSIS (when competitive-intelligence plugin output is absent):
+3. COMPETITOR VOICE ANALYSIS (when `gtm-context.json` has no `plugin_inputs.competitive_intelligence` key, that is, when the project has no competitive-intelligence graph):
    - Target: how competitors talk about themselves and their category
    - Method per competitor (max 3 competitors per call):
      - WebFetch competitor homepage → extract: headline, subheadline, primary CTA, trust signals

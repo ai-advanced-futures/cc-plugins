@@ -59,7 +59,7 @@ Earlier framework outputs feed directly into later ones. Running frameworks out 
 
 3. FRAMEWORK 2 — RIES & TROUT CATEGORY POSITIONING:
    - Define the one word or concept this brand can own in the customer's mind
-   - Test: Is this word already owned by a competitor? (check competitive-intelligence if available)
+   - Test: Is this word already owned by a competitor? (read each file of `plugin_inputs.competitive_intelligence.paths` when the key is there: a JSON list of `Competitor`, `Offer`, `SwotItem` and `LensResult` pages. If the key is absent, the project has no such graph.)
    - Test: Is this word specific enough to be meaningful?
    - Test: Does this word connect to a real customer pain?
    - If word is already owned: reframe to a subcategory or adjacent position
@@ -199,7 +199,7 @@ A run whose answers give the product, its capabilities and its differentiators b
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.9.1",
+  "plugin_version": "1.10.0",
   "command": "gtm:marketing:brand",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -276,7 +276,7 @@ A run whose answers give the product, its capabilities and its differentiators b
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.9.1",
+  "plugin_version": "1.10.0",
   "command": "gtm:marketing:brand",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",

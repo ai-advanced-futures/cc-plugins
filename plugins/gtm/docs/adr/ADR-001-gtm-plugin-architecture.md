@@ -6,6 +6,7 @@
 **Updated:** 2026-11-05 (port to this marketplace: the run order, the optional tools)
 **Updated:** 2026-11-06 (STORY-177: the score and band come from truth_tier_validator.py; band choice holds the output)
 **Updated:** 2026-11-07 (STORY-187: an audit with 0 claims has no integrity score, and the run stops)
+**Updated:** 2026-11-07 (STORY-92: gtm reads the jtbd and competitive-intelligence graphs, not their files)
 
 ---
 
@@ -77,7 +78,7 @@ The folder `definitions/` holds the shared concepts that each agent and skill mu
 
 The file `gtm-context.json` is at the git root. It holds the product, the market, the brand, the learned knowledge, the plugin inputs, and the completion flags. Lists append and remove duplicates. Objections merge by their text, and their counts add up.
 
-The key `plugin_inputs` holds `competitive_intelligence`, `jtbd`, and `pricing`, each with a list of paths from `plugin_integrator.py`. It holds `value_ip` only when the script finds the scorecard of `value-ip`.
+The key `plugin_inputs` holds `competitive_intelligence`, `jtbd`, and `pricing`, each with a list of paths from `plugin_integrator.py`. For `competitive_intelligence` and `jtbd` the paths are files under `.gtm/upstream/<graph>/`: `scripts/brain_read.py` reads the graph through the save code of the writer plugin and writes the pages there, and it reads no file of that plugin. A key is absent when the graph gives no input. It holds `value_ip` only when the script finds the scorecard of `value-ip`.
 
 ---
 

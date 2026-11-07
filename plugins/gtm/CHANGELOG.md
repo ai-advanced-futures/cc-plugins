@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.10.0
+
+- gtm reads the knowledge graphs of `jtbd-market-discovery` and `competitive-intelligence`, not their old output files (STORY-92). New `scripts/brain_read.py` runs the save code of each writer (`jtbd_graph.py`, `ci_graph.py`) as a subprocess and writes the pages to `.gtm/upstream/<graph>/`. It finds the writer with its own copy of `scripts/probe-plugin.sh`.
+- `plugin_integrator.py --root` prints the keys `jtbd` and `competitive_intelligence` from the graphs. A graph that gives no input writes 1 line on stderr (`NO-GRAPH:` or `GRAPH-READ-FAILED:`), and its key is absent. The orchestrator writes `plugin_inputs` again at each step 3. The script also writes the lines to `.gtm-graph-notes.txt` in the project folder (an empty file when there is none, written on each read), and `/gtm:run` shows each line of that file, because the reply of the orchestrator can shorten them.
+- `PLUGIN_PATTERNS` keeps only `value_ip` and `pricing: ["*right-price*"]`. The `customer_support` pattern for churn files now starts at the file name (`churn*`), so a file of another plugin with churn in its name gives no key. No old output file gives a key.
+- The marketing, brand and sales agents read the graph pages. The research agent runs its competitor step when the project has no competitive-intelligence graph. The integrity agent attributes a page with the link `<graph>:/<page>`.
+- The cause in a note line is the last line of the stderr of the save code (a Python traceback ends with the error). A `NO-GRAPH:` line has the fix text only when the graph or its folder is absent, not when the registry cannot be read.
+- The script writes each file under `.gtm/upstream/` as a new file that replaces the target, so a link at a file never changes the file it points to. When `.gtm` or `.gtm/upstream` is a link or is not a folder inside the project, the script writes nothing there and gives 1 `GRAPH-READ-FAILED:` line for each graph. The lines still go to `.gtm-graph-notes.txt`, so `/gtm:run` shows the refusal.
+- Set `GTM_GRAPH_PYTHON` to choose the Python that runs the save code. Else `uv run --quiet`, else `python3`.
+- ADR-001 and ADR-002 record the change. New tests: `test_brain_read.py`, `test_graph_inputs.py`, `test_graph_reader_text.py`, `test_no_old_output.py`. The job `gtm` of `ci.yml` installs the dev packages of the two writer plugins.
+
 ## 1.9.1
 
 - An audit with 0 claims has no integrity score. `scripts/truth_tier_validator.py` exits 3 with the gap `no_claims` and writes nothing, and the orchestrator stops the run with no file in `gtm-output/` (STORY-187). Before, 0 claims gave the score 1.00 and the band `pass`, so a run that checked nothing wrote its output as checked.

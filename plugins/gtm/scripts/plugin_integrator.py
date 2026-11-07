@@ -2,13 +2,15 @@
 # requires-python = ">=3.11"
 # dependencies = []
 # ///
-"""Find the output files of other plugins in a project.
+"""Find the input that other plugins give to gtm in a project.
 
 Run it by its path. It puts its own plugin folder on sys.path, never the cwd:
     uv run "${CLAUDE_PLUGIN_ROOT}/scripts/plugin_integrator.py" --root <project>
 
-It prints the result of detect_plugin_outputs() as one JSON object and exits 0.
-Each path is a string.
+It prints the result of detect_plugin_outputs() and the snapshot paths of the jtbd and
+competitive-intelligence graphs (scripts/brain_read.py) as one JSON object, and exits 0.
+Each path is a string. A graph that gives no input writes 1 line on stderr that starts with
+NO-GRAPH: or GRAPH-READ-FAILED:, and its key is absent.
 """
 from __future__ import annotations
 
@@ -22,6 +24,7 @@ from pathlib import Path
 if __package__ in (None, ""):  # run by path: uv run "<plugin root>/scripts/<file>.py"
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # its own package, never the cwd
 
+from scripts.brain_read import read_graphs  # noqa: E402
 from scripts.truth_tier_validator import TruthTierValidator  # noqa: E402
 
 
@@ -37,11 +40,11 @@ class ClaimsResult:
 # The orchestrator agent (step 3) writes the found paths into gtm-context.json.
 # The value_ip pattern is the scorecard file that value-ip writes, and the glob
 # starts at the project root. The other patterns use rglob.
+# This table has no key for jtbd-market-discovery or competitive-intelligence:
+# gtm reads their graphs through scripts/brain_read.py, never their old files.
 PLUGIN_PATTERNS = {
     "value_ip": [".value-ip/*/output/value-ip-scorecard.md"],
-    "competitive_intelligence": ["competitive-ecosystem.json", "*swot*", "*competitive*"],
-    "jtbd": ["*opportunity-scores*", "*customer-needs*", "*jtbd*"],
-    "pricing": ["*right-price*", "*evc*"],
+    "pricing": ["*right-price*"],
 }
 
 SURVIVED_PATTERN = re.compile(r'^[-\*]\s+(.+)$', re.MULTILINE)
@@ -64,7 +67,8 @@ class PluginIntegrator:
                 found[plugin] = matches
 
         # Customer Support plugin outputs
-        customer_support_patterns = ["*churn*", "*customer-support*", "*ticket-summary*"]
+        # "churn*" starts at the file name: no file of another plugin starts with churn.
+        customer_support_patterns = ["churn*", "*customer-support*", "*ticket-summary*"]
         for pattern in customer_support_patterns:
             matches = list(self.root.rglob(pattern))
             if matches:
@@ -125,11 +129,15 @@ def _as_json(found: dict) -> dict:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Find the output files of other plugins.")
+    ap = argparse.ArgumentParser(description="Find the input that other plugins give to gtm.")
     ap.add_argument("--root", required=True, help="the project folder to search")
     args = ap.parse_args(argv)
-    found = PluginIntegrator(Path(args.root)).detect_plugin_outputs()
-    print(json.dumps(_as_json(found), indent=2))
+    found = _as_json(PluginIntegrator(Path(args.root)).detect_plugin_outputs())
+    graph_inputs, notes = read_graphs(Path(args.root))
+    found.update(graph_inputs)
+    print(json.dumps(found, indent=2))
+    for note in notes:
+        print(note, file=sys.stderr)
     return 0
 
 

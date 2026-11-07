@@ -133,7 +133,7 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
    - Market size claims ("$X billion market") — without publication, date, and source
 
    For each unattributed quantified claim:
-   - If source exists in learned_knowledge or plugin_inputs: assign appropriate tier, add attribution
+   - If source exists in learned_knowledge or plugin_inputs: assign appropriate tier, add attribution. For a page of the jtbd or competitive-intelligence graph, write the attribution as the link `<graph>:/<page>`. Take the `path` of the page in the file of `plugin_inputs.<key>.paths`, and remove `docs/<graph>/` from the start of it. For example, the path `docs/competitive-intelligence/competitors/COMPETITOR-01.md` gives `competitive-intelligence:/competitors/COMPETITOR-01.md`.
    - If no source: Tier 5, REMOVE or rewrite as directional ("significant time savings" without number)
 
 6. FUTURE-TENSE-AS-PRESENT-TENSE SCAN:

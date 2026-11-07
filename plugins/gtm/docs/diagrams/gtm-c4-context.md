@@ -13,7 +13,7 @@ C4Context
   System_Boundary(mkt, "cc-plugins marketplace") {
     System(gtm, "gtm plugin", "Full-funnel GTM intelligence: orchestrated content, an integrity gate, and a sales-comp gate")
     System_Ext(aiml, "aiml plugin", "Writes the p15-trigger-event file")
-    System_Ext(evidence, "competitive-intelligence, jtbd-market-discovery, pricing", "Write files that gtm reads as evidence")
+    System_Ext(evidence, "competitive-intelligence, jtbd-market-discovery, pricing", "Save graphs (competitive-intelligence, jtbd-market-discovery) and files (pricing) that gtm reads as evidence")
   }
 
   System_Ext(coach, "Coach plugin (business-case)", "Starts the three marketing commands through runners and reads the result files")
@@ -23,7 +23,7 @@ C4Context
   Rel(operator, gtm, "Runs /gtm:* commands and skills")
   Rel(coach, gtm, "Starts a runner with the plugin-run block, reads .gtm/results/ and .gtm/sales-comp-gate-handoff.json")
   Rel(aiml, gtm, "Gives the p15-trigger-event file for auto-comms routing")
-  Rel(evidence, gtm, "Give output files that plugin_integrator.py finds")
+  Rel(evidence, gtm, "Give graph pages that plugin_integrator.py reads, and files that it finds")
   Rel(gtm, servers, "Reads CRM, prospect, SEO, and analytics data; publishes only in a command that the person runs")
   Rel(gtm, skills, "Calls a skill with the Skill tool when the plugin is in the session; else uses its own path")
 ```

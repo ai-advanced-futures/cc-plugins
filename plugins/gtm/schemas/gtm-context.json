@@ -113,12 +113,12 @@
         },
         "competitive_intelligence": {
           "type": "object",
-          "description": "Paths that scripts/plugin_integrator.py found. The orchestrator writes the paths only, not the content.",
+          "description": "Paths of the files under .gtm/upstream/competitive-intelligence/ that scripts/plugin_integrator.py wrote from the graph: a JSON list of pages in each (Competitor, Offer, SwotItem, LensResult). The key is absent when the project has no such graph. The orchestrator writes the paths only, not the content.",
           "properties": {"paths": {"type": "array", "items": {"type": "string"}}}
         },
         "jtbd": {
           "type": "object",
-          "description": "Paths that scripts/plugin_integrator.py found. The orchestrator writes the paths only, not the content.",
+          "description": "Paths of the files under .gtm/upstream/jtbd/ that scripts/plugin_integrator.py wrote from the graph: Run.json, Outcome.json, Segment.json (lists of pages) and results.json (the results of the newest finished discover run). The key is absent when the project has no such graph. The orchestrator writes the paths only, not the content.",
           "properties": {"paths": {"type": "array", "items": {"type": "string"}}}
         },
         "pricing": {

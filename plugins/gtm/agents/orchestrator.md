@@ -18,7 +18,7 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
 - Dispatch fields from `/gtm:run`: `user_type`, `stage`, `goal`, `pmf_gate_bypassed`, `scan_codebase`, `files`. On a second dispatch, also `resume: true` and `breach_choice`, or `answers` (the choices of the person for an `OPEN:` question of an agent: pass each choice to that agent as a dispatch field, for example `competitor_context`, `contradiction_resolution` or `mql_sql_resolution`).
 - `gtm-context.json` if a prior session exists
 - Any files named in `files` (transcripts, decks, playbooks, product docs)
-- Marketplace plugin outputs (competitive-intelligence, jtbd-market-discovery, pricing, product-finance) and the output of value-ip, an optional plugin from outside this marketplace
+- The graphs of jtbd-market-discovery and competitive-intelligence, the output of pricing and product-finance, and the output of value-ip, an optional plugin from outside this marketplace
 
 ## Process
 
@@ -44,10 +44,21 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
    - Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/plugin_integrator.py --root '<project>'
      (<project> is the git root. Keep the single quotes, and write each ' in the path as '\''.) The script prints one JSON object. Each key is a plugin,
      and each value is a list of paths. Run it on its own.
+     The script reads the knowledge graphs of jtbd-market-discovery and competitive-intelligence,
+     and writes a copy of their pages under <project>/.gtm/upstream/. The script runs
+     each time, so it writes the copies again. Each path of the keys jtbd and
+     competitive_intelligence is a file of these copies.
    - Write the keys competitive_intelligence, jtbd and pricing to
      gtm-context.json.plugin_inputs, each as {"paths": [...]}. Write the paths only.
-     Do not copy the content of a file. A path can be a folder.
+     Do not copy the content of a file. Write a key only when the object has it. Remove
+     each key of competitive_intelligence, jtbd and pricing that the object does not have
+     from plugin_inputs, so no old key stays from a run before.
    - The object can also hold the keys customer_support and data_plugin; do not write these two keys into plugin_inputs.
+   - The script writes 0 or more lines on stderr. A line that starts with NO-GRAPH: or
+     GRAPH-READ-FAILED: says that 1 graph gave no input, and the run goes on with no input
+     from it. The script also writes the lines to <project>/.gtm-graph-notes.txt (an empty
+     file when it has none), and /gtm:run shows them from that file. This is not an error of the
+     script. Do not change or delete that file.
    - value-ip step (value-ip is optional — the run works without it):
        - If the object has no value_ip key: write no value_ip entry. Go on to step 4.
        - If the object has a value_ip key: read each value_ip path that is a file.
@@ -55,7 +66,7 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
          gtm-context.json.plugin_inputs.value_ip.survived_claims.
          Give each claim tier 3 (COMMITTED). A claim is SHIPPED (Tier 1) only when it
          has explicit production deployment evidence.
-   - Output of competitive-intelligence, jtbd and pricing is detected but not read here.
+   - The pages of competitive-intelligence and jtbd, and the files of pricing, are not read here.
      Agents read the paths from plugin_inputs when they need them.
    - If the script fails, log the error in _meta.execution_log, write no plugin_inputs, and go on.
 

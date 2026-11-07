@@ -19,7 +19,9 @@ Design the full demand generation system — campaign architecture, content stra
 - `gtm-output/brand-identity.json` and `gtm-output/messaging-architecture.json` — cleaned files from brand integrity pass
 - `gtm-context.json.preliminary_mql` — heuristic MQL baseline seeded by orchestrator during profiling
 - MCP connections: Ahrefs (keyword data), Canva (visual assets), HubSpot (email campaigns), Google Analytics (funnel data)
-- Competitor positioning from `plugin_inputs.competitive_intelligence` if available
+- Competitor positioning: if `gtm-context.json` has `plugin_inputs.competitive_intelligence`, read each file of its `paths`. Each file is a JSON list of pages (`Competitor`, `Offer`, `SwotItem`, `LensResult`). Each page has `path`, `frontmatter` and `body`. Take the competitor, offer, SWOT and customer-job facts from the `body` and `frontmatter` of the pages.
+- Customer needs: if `gtm-context.json` has `plugin_inputs.jtbd`, read the files of its `paths` that are named `Outcome.json` and `Segment.json`. Each is a JSON list of pages. The `Outcome` pages are the customer outcomes. The `Segment` pages are the customer segments.
+- Name the page path (for example `Competitor/<id>`) as the source of each fact that you take from a page. If the key is absent, the project has no such graph: use no input from it.
 
 This agent asks the person nothing. It takes each value from the dispatch fields and from the files named above.
 
@@ -254,7 +256,7 @@ A run whose answers give the product and `self_serve` only, then a run whose ans
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.9.1",
+  "plugin_version": "1.10.0",
   "command": "gtm:marketing:launch",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -306,7 +308,7 @@ A run whose answers give the product and `self_serve` only, then a run whose ans
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.9.1",
+  "plugin_version": "1.10.0",
   "command": "gtm:marketing:launch",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",
