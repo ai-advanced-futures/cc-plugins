@@ -31,8 +31,12 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
 
 2. ENVIRONMENT CHECK:
    - Read .gtm-mcp-status.json at the git root. The command /gtm:setup writes it.
-   - If the file exists: copy its live status to gtm-context.json._meta.sources.mcp_connections
-   - If the file does not exist: write "unknown" for each server. This is not an error.
+   - If the file exists: write the names of its servers whose `connected` is true to
+     gtm-context.json._meta.sources.mcp_connections, as a list (for example ["hubspot"]),
+     because the schema ${CLAUDE_PLUGIN_ROOT}/schemas/gtm-context.json takes a list. Log each other server
+     as offline in _meta.execution_log.
+   - If the file does not exist: write [] and log "MCP status unknown: /gtm:setup did not run"
+     in _meta.execution_log. This is not an error.
    - Note which MCP servers are connected (Ahrefs, Canva, HubSpot, Apollo, Google Analytics)
    - Note which are offline or unknown — agents will fall back to WebSearch/WebFetch where needed
 
@@ -116,9 +120,22 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
    from gtm-context.json. If the flag is not true, log it in _meta.execution_log and go to
    FLOOR BREACH HANDLING (integrity flags) or stop the run, name the agent and its flag in the reply, and end with `DONE: gtm` (content agent flags).
 
+   DISPATCH KEYS: before each Agent call to an agent of this table, add its key to
+   gtm-context.json._meta.dispatched_agents (1 time for each key). A resume reads the
+   flags of the keys in this list only.
+
+   | Agent | Key |
+   |---|---|
+   | knowledge-agent | knowledge |
+   | codebase-scanner | codebase_scanner |
+   | brand-agent | brand |
+   | marketing-agent | marketing |
+   | sales-agent | sales |
+   | funnel-agent | funnel |
+
    Wave 0 — knowledge and codebase (if applicable):
-     → Agent call to knowledge-agent (if files provided) — add "knowledge" to gtm-context.json._meta.dispatched_agents
-     → Agent call to codebase-scanner (if scan_codebase) — add "codebase_scanner" to gtm-context.json._meta.dispatched_agents
+     → Agent call to knowledge-agent (if files provided)
+     → Agent call to codebase-scanner (if scan_codebase)
      → read ONLY completion_flags for agents in _meta.dispatched_agents (do not read flags for agents that were not dispatched)
      → proceed when all dispatched Wave 0 agents are complete (skip entirely if none dispatched)
      → knowledge-agent can end with OPEN: .gtm/open-questions.json (see OPEN QUESTIONS below)
@@ -137,11 +154,26 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
           _meta.execution_log. Stop the run, say this in the reply, and end with `DONE: gtm`.
      3. Agent call to integrity-agent with this prompt: {"target_agent": "<agent>", "phase": "write"}
 
+   SCHEMA CHECK: after each integrity pass whose flag is true, and 1 time at Final:
+     → Run this command alone, with nothing before or after it (no cd, no ;, no echo $?):
+       uv run ${CLAUDE_PLUGIN_ROOT}/scripts/output_check.py --root '<project>' --agent <agent>
+       (<project> as in step 3; at Final, --context in place of --agent <agent>).
+       The Bash tool shows "Exit code <n>" for an exit that is not 0. With no such line, the exit is 0.
+     → Exit 0: go on.
+     → Exit 1, and the last line is "<n> schema errors in <k> files": Agent call to integrity-agent
+       again with target_agent=<agent> and schema_errors=<the error lines>. At Final, fix each
+       named field of gtm-context.json with the Edit tool. Then run the check again 1 time.
+     → Add each error line that stays to _meta.execution_log and to the "Schema errors" list
+       of the final summary. A schema error does not stop the run.
+     → Each other result (a refused call, exit 2, another exit code, or exit 1 with another last line): add
+       "not checked" and the output to _meta.execution_log and to the final summary.
+
    Wave 1 — brand identity (sequential — identity anchor):
      → Agent call to brand-agent
      → read completion_flags.brand == true
      → INTEGRITY PASS of brand
      → read completion_flags.brand_integrity == true
+     → SCHEMA CHECK with --agent brand
 
    Wave 2 — demand generation (parallel — MQL pre-seeding enables this):
      → ONE message with TWO Agent calls: marketing-agent AND sales-agent
@@ -153,6 +185,7 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
        file with the Write tool.
      → read completion_flags.marketing_integrity == true
               AND completion_flags.sales_integrity == true
+     → SCHEMA CHECK with --agent marketing, then with --agent sales
      → NOTE: Wave completion is the set of flags for the wave in
        ${CLAUDE_PLUGIN_ROOT}/definitions/wave-routing.json (wave2: marketing, marketing_integrity,
        sales, sales_integrity). The wave is complete when each of these flags is true.
@@ -162,10 +195,13 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
      → read completion_flags.funnel == true
      → INTEGRITY PASS of funnel
      → read completion_flags.funnel_integrity == true
+     → SCHEMA CHECK with --agent funnel
 
    Final — session summary to user:
      → read gtm-context.json.integrity_scores{} and completion_log{}
+     → SCHEMA CHECK with --context
      → deliver lean summary: integrity scores + artifact paths in gtm-output/ + Tier 5 blocked count
+       + the "Schema errors" list and each "not checked" line (or "Schema check: 0 errors")
 
    Mode 2 — Direct Command (/gtm:marketing:brand, /gtm:sales:pitch, etc.):
    → Load gtm-context.json
@@ -212,6 +248,7 @@ This agent asks the person nothing. The command `/gtm:run` asks the questions in
            and do not run the script again, because the person chose for this score.
          → integrity-agent adds caution banner to each promoted artifact: "⚠️ integrity_score: [X] — below target 0.85"
          → integrity-agent sets completion_flags.{agent}_integrity = true after promotion completes
+         → SCHEMA CHECK with --agent {agent}, because the override wrote the files of gtm-output/ again.
        → Overwrite .gtm/open-questions.json with the Write tool with {"status": "answered"} after the choice is applied. /gtm:run reads this file only after an OPEN line, and each new OPEN question overwrites it.
    - For breach info, read only error_log and the band and integrity_score of the audit file. Do not read agent output content.
 

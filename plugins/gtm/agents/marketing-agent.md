@@ -152,8 +152,9 @@ Proceed with the abbreviated performance summary steps below. In the output, nam
     - Prioritize content investments to address highest-drop stages
 
 11. WRITE ARTIFACTS:
-    - campaign-plan.json: structured channel plan, MQL criteria, AARRR metrics targets
-    - launch-plan.json: phased launch timeline with milestones and go/no-go gates
+    Read the schema of each JSON file before you write it, and give each field the type of the schema.
+    - campaign-plan.json: structured channel plan, MQL criteria, AARRR metrics targets (schema: ${CLAUDE_PLUGIN_ROOT}/schemas/campaign-plan.json)
+    - launch-plan.json: phased launch timeline with milestones and go/no-go gates (schema: ${CLAUDE_PLUGIN_ROOT}/schemas/launch-plan.json)
     - content-calendar.md: 90-day content plan by stage, format, channel, and owner
 
 12. SIGNAL COMPLETION:
@@ -253,7 +254,7 @@ A run whose answers give the product and `self_serve` only, then a run whose ans
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.8.0",
+  "plugin_version": "1.9.0",
   "command": "gtm:marketing:launch",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -305,7 +306,7 @@ A run whose answers give the product and `self_serve` only, then a run whose ans
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.8.0",
+  "plugin_version": "1.9.0",
   "command": "gtm:marketing:launch",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",

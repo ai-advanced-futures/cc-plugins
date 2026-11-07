@@ -170,10 +170,12 @@ Proceed with direct Apollo.io MCP calls below (requires Apollo MCP server connec
     - Write top 10 objection responses in discovery-questions.md
 
 11. WRITE ARTIFACTS:
-    - pitch-deck.json: JSON outline of the pitch, part by part (no slide file)
+    Read the schema of each JSON file before you write it, and give each field the type of the schema.
+    - pitch-deck.json: JSON outline of the pitch, part by part (no slide file) (schema: ${CLAUDE_PLUGIN_ROOT}/schemas/pitch-deck.json)
     - pitch-narrative.md: full talk track for the pitch
-    - prospecting-plan.json: target account list and outreach sequences
-    - pipeline-playbook.json: stage-by-stage playbook with SQL criteria, activities, stall plays
+    - prospecting-plan.json: target account list and outreach sequences (schema: ${CLAUDE_PLUGIN_ROOT}/schemas/prospecting-plan.json)
+    - pipeline-playbook.json: stage-by-stage playbook with SQL criteria, activities, stall plays (schema: ${CLAUDE_PLUGIN_ROOT}/schemas/pipeline-playbook.json).
+      `entry_criteria` and `exit_criteria` of each item of `stages` are lists of strings, also for 1 criterion.
     - discovery-questions.md: SPIN question bank + objection response playbook
     - meddpicc-scorecard.md: deal qualification scorecard template
 

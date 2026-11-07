@@ -51,7 +51,7 @@ A flag answers its question. Skip that question, because the person already answ
    - `DONE: gtm` — go to step 7.
    - Neither line — show the reply to the person, say that the run did not finish, and stop.
 
-7. **Deliver the GTM package** — When the reply names an agent that did not finish, say so first. List the files of `gtm-output/`. Show the integrity scores, the count of blocked Tier 5 claims and the recommended next actions. List the outside tools that would add data to the output if the person connected them (run `/gtm:setup`).
+7. **Deliver the GTM package** — When the reply names an agent that did not finish, say so first. List the files of `gtm-output/`. Show the integrity scores, the count of blocked Tier 5 claims and the recommended next actions. List the outside tools that would add data to the output if the person connected them (run `/gtm:setup`). Show each line of the "Schema errors" list and each "not checked" line of the reply, because such a file does not agree with its schema.
 
 A score below 0.60 stops the run. The orchestrator asks no question for it and ends with `DONE: gtm`. Show its report to the person.
 

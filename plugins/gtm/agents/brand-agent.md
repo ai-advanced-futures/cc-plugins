@@ -113,8 +113,11 @@ Earlier framework outputs feed directly into later ones. Running frameworks out 
    - Grammar and punctuation rules for brand consistency
 
 9. WRITE ARTIFACTS:
-   - brand-identity.json: all framework outputs in structured form
-   - messaging-architecture.json: tagline, value prop, pitch, hero copy, narrative
+   Read the schema of each JSON file before you write it, and give each field the type of the schema.
+   - brand-identity.json: all framework outputs in structured form (schema: ${CLAUDE_PLUGIN_ROOT}/schemas/brand-identity.json)
+   - messaging-architecture.json: tagline, value prop, pitch, hero copy, narrative (schema: ${CLAUDE_PLUGIN_ROOT}/schemas/messaging-architecture.json).
+     `tagline` and `elevator_pitch` are 1 string each. Write a note on one of them (for example a word count)
+     under `tagline_detail` or `elevator_pitch_detail`.
    - voice-guide.md: human-readable voice and tone guide
    - purpose-statement.md: Why statement + Ries & Trout position
    - storybrand-script.md: complete 7-part script
@@ -196,7 +199,7 @@ A run whose answers give the product, its capabilities and its differentiators b
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.8.0",
+  "plugin_version": "1.9.0",
   "command": "gtm:marketing:brand",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -273,7 +276,7 @@ A run whose answers give the product, its capabilities and its differentiators b
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.8.0",
+  "plugin_version": "1.9.0",
   "command": "gtm:marketing:brand",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",

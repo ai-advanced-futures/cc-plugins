@@ -49,4 +49,6 @@ for final file names. See that file for the complete list.
 
 - Directory creation: `scripts/gtm_init.create_directories()`
 - Artifact manifests: `scripts/integrity_manifest.py::AGENT_MANIFESTS`
+- Output schemas: `scripts/integrity_manifest.py::OUTPUT_SCHEMAS`
+- Output check: `scripts/output_check.py`
 - Agent name constants: `scripts/gtm_constants.py::CONTENT_AGENTS`

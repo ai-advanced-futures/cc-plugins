@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.9.0
+
+- Each output of a pass agrees with its schema. Each content agent names the schema of each JSON file with `${CLAUDE_PLUGIN_ROOT}/schemas/<file>` at its write step, and the integrity agent names the 9 schemas of `gtm-output/` (STORY-166).
+- `funnel-metrics.json`: `stages` is the map of the 5 conversion rates of the schema (a number from 0 to 1, or null). The stage table goes under `stages_detail`. `messaging-architecture.json`: `tagline` and `elevator_pitch` are 1 string each, and a note goes under `tagline_detail` or `elevator_pitch_detail`. `pipeline-playbook.json`: `entry_criteria` and `exit_criteria` are lists of strings.
+- `_meta.sources.mcp_connections` is a list of the names of the connected servers (`[]` when `/gtm:setup` did not run), as `schemas/gtm-context.json` says.
+- New script `scripts/output_check.py` (`--root`, and `--agent` or `--context`). The orchestrator runs it after each integrity pass, after an override, and once at the end. Exit 1 gives 1 more dispatch of the integrity agent with `schema_errors` (its new step SCHEMA FIX). An error that stays goes to the "Schema errors" list of the summary, and `/gtm:run` shows it. The run goes on.
+- `scripts/integrity_manifest.py` has `OUTPUT_SCHEMAS`, `CONTEXT_FILE`, `CONSOLIDATED_AUDIT` and `get_checked_outputs()`.
+- `_meta.dispatched_agents` gets each dispatched agent (`knowledge`, `codebase_scanner`, `brand`, `marketing`, `sales`, `funnel`) from 1 table, `DISPATCH KEYS`. Before, `funnel` was missing.
+- New tests: `test_output_check.py`, `test_dispatch_keys.py`, and 9 samples in `tests/fixtures/output-check/`.
+
 ## 1.8.0
 
 - The integrity score comes from `scripts/truth_tier_validator.py`, not from the model. An integrity pass has 3 steps: the integrity agent audits (phase `audit`), the orchestrator runs the script, and the integrity agent writes (phase `write`). The script writes `integrity_score`, `band` and 5 more keys into `.gtm/audit/<agent>-integrity.json` (STORY-177).

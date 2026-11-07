@@ -32,6 +32,29 @@ AGENT_MANIFESTS: dict[str, list[str]] = {
 }
 
 
+CONTEXT_FILE = "gtm-context.json"
+CONSOLIDATED_AUDIT = "gtm-output/consolidated-audit.json"
+
+
+def get_output_path(draft_path: str) -> str:
+    filename = Path(draft_path).name          # e.g. brand-identity.draft.json
+    clean_name = filename.replace(".draft.", ".")  # brand-identity.json
+    return f"gtm-output/{clean_name}"
+
+
+# Each JSON output (path from the project root) and the schema file of the same name in schemas/.
+OUTPUT_SCHEMAS: dict[str, str] = {
+    **{
+        get_output_path(draft): Path(draft).name.replace(".draft.", ".")
+        for drafts in AGENT_MANIFESTS.values()
+        for draft in drafts
+        if draft.endswith(".json")
+    },
+    CONSOLIDATED_AUDIT: Path(CONSOLIDATED_AUDIT).name,
+    CONTEXT_FILE: CONTEXT_FILE,
+}
+
+
 def get_draft_paths(target_agent: str) -> list[str]:
     if target_agent not in AGENT_MANIFESTS:
         raise ValueError(
@@ -40,7 +63,9 @@ def get_draft_paths(target_agent: str) -> list[str]:
     return list(AGENT_MANIFESTS[target_agent])
 
 
-def get_output_path(draft_path: str) -> str:
-    filename = Path(draft_path).name          # e.g. brand-identity.draft.json
-    clean_name = filename.replace(".draft.", ".")  # brand-identity.json
-    return f"gtm-output/{clean_name}"
+def get_checked_outputs(target_agent: str) -> list[str]:
+    """The JSON outputs of one integrity pass. The funnel pass also writes the consolidated audit."""
+    outputs = [get_output_path(draft) for draft in get_draft_paths(target_agent) if draft.endswith(".json")]
+    if target_agent == "funnel":
+        outputs.append(CONSOLIDATED_AUDIT)
+    return outputs

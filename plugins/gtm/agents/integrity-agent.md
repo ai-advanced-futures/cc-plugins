@@ -17,7 +17,10 @@ The marketing truth gate. It runs after every artifact-producing agent, before a
 target_agent: "brand" | "marketing" | "sales" | "funnel"
 phase: "audit" | "write"
 override_flag: true    (only with phase "write", after the person chose override)
+schema_errors: ["<file>: <path>: <message>", ...]    (instead of phase, after the schema check of the orchestrator)
 ```
+
+When the dispatch gives `schema_errors`, do only the step SCHEMA FIX (before step 11), and no other step.
 
 The dispatch prompt holds these fields as 1 JSON object, for example `{"target_agent": "brand", "phase": "audit"}`. An integrity pass has 2 dispatches of this agent. Between the 2 dispatches, the orchestrator runs `${CLAUDE_PLUGIN_ROOT}/scripts/truth_tier_validator.py`, which writes the integrity score. You have no shell tool, so you do not run the script.
 
@@ -62,6 +65,7 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
    - If target_agent is missing or not one of "brand" | "marketing" | "sales" | "funnel":
      HALT immediately and report: "Integrity-agent requires target_agent parameter.
      Valid values: brand | marketing | sales | funnel. Received: [value or MISSING]."
+   - If the dispatch gives schema_errors: go to SCHEMA FIX (before step 11).
    - If phase is missing or is not "audit" | "write": HALT immediately and report: "Integrity-agent requires
      phase. Valid values: audit | write. Received: [value or MISSING]."
    - If phase is "write": go to step 10.
@@ -203,6 +207,9 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
    - choice: integrity_score 0.60 to 0.84. No file in gtm-output/, and completion_flags.<agent>_integrity stays false, until the person chooses rerun or override.
    - pass: integrity_score 0.85 and more. The files go to gtm-output/, and completion_flags.<agent>_integrity is true.
 
+   Each JSON file keeps the shape of its schema (OUTPUT SCHEMAS below). Change only the text of a claim: a string
+   stays a string, and a list stays a list. Write the tier of a claim in the audit file, not in the artifact.
+
    Another integrity-agent can run at the same time and change `gtm-context.json`. Change only these keys of `gtm-context.json` with the Edit tool: `integrity_scores.{target_agent}`, `completion_log.{target_agent}_integrity`, `completion_flags.{target_agent}_integrity` and `error_log.{target_agent}_integrity`. Do not write the whole file.
 
    If band is "pass":
@@ -246,6 +253,29 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
    - Overwrite .gtm/audit/{target_agent}-integrity-BREACH.json with the Write tool with {"status": "resolved"} (state is now pass-with-caveat). No tool of yours deletes a file.
    - Report: "Override accepted for {target_agent}. Score: {score} | Artifacts promoted to gtm-output/ with caution banners."
 
+   SCHEMA FIX (dispatched with schema_errors by the orchestrator, after `${CLAUDE_PLUGIN_ROOT}/scripts/output_check.py`).
+   A dispatch with schema_errors does only this step:
+   - Each line of schema_errors is `<file>: <path>: <message>`. Read that file of gtm-output/ and its schema (OUTPUT SCHEMAS below).
+   - At each path, write the value in the type of the schema: for example a string in place of an object, or a list
+     of strings in place of a string. When the old value holds more than the new value can, keep the old value under
+     the key `<field>_detail` next to it.
+   - Do not audit again. Change no score, no flag and no audit file. Write each file with the Write tool.
+   - Report: "Schema fix for {target_agent}: {N} fields."
+
+   OUTPUT SCHEMAS (the map OUTPUT_SCHEMAS of `${CLAUDE_PLUGIN_ROOT}/scripts/integrity_manifest.py`):
+
+   | File in gtm-output/ | Schema |
+   |---|---|
+   | brand-identity.json | `${CLAUDE_PLUGIN_ROOT}/schemas/brand-identity.json` |
+   | messaging-architecture.json | `${CLAUDE_PLUGIN_ROOT}/schemas/messaging-architecture.json` |
+   | campaign-plan.json | `${CLAUDE_PLUGIN_ROOT}/schemas/campaign-plan.json` |
+   | launch-plan.json | `${CLAUDE_PLUGIN_ROOT}/schemas/launch-plan.json` |
+   | pitch-deck.json | `${CLAUDE_PLUGIN_ROOT}/schemas/pitch-deck.json` |
+   | prospecting-plan.json | `${CLAUDE_PLUGIN_ROOT}/schemas/prospecting-plan.json` |
+   | pipeline-playbook.json | `${CLAUDE_PLUGIN_ROOT}/schemas/pipeline-playbook.json` |
+   | funnel-metrics.json | `${CLAUDE_PLUGIN_ROOT}/schemas/funnel-metrics.json` |
+   | consolidated-audit.json | `${CLAUDE_PLUGIN_ROOT}/schemas/consolidated-audit.json` |
+
 11. CONSOLIDATED AUDIT (funnel pass only):
    Trigger condition: target_agent == "funnel" AND all 4 per-agent audit files exist
    (.gtm/audit/brand-integrity.json, .gtm/audit/marketing-integrity.json,
@@ -276,7 +306,7 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
 
 ## Rules
 
-- Read draft files from .gtm/working/{target_agent}/ per the Artifact Manifest. Do not read gtm-output/ for input, because it holds only audited files.
+- Read draft files from .gtm/working/{target_agent}/ per the Artifact Manifest. Do not read gtm-output/ for input, because it holds only audited files. SCHEMA FIX is the only exception: it reads the files that schema_errors names.
 - This agent is the only writer to gtm-output/, so that no unaudited file reaches the user.
 - Audit every artifact file in the manifest, also a file that looks low-risk.
 - Remove every Tier 5 claim. A reworded Tier 5 claim still has no evidence.

@@ -66,7 +66,7 @@ The integrity score is `(total_claims - tier_5_blocked) / total_claims`. The flo
 
 ### Scripts for exact work
 
-Python scripts do the work that a model must not improvise. A command or an agent runs a script with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py`. Three scripts have a command line and a PEP 723 block: `result_name.py`, `plugin_integrator.py`, and `sales_comp_gate_emitter.py`. The other scripts are library code with unit tests. Where a text once ran a library script, the text now gives a rule that the model applies from a file in `definitions/` or `schemas/`.
+Python scripts do the work that a model must not improvise. A command or an agent runs a script with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py`. Five scripts have a command line and a PEP 723 block: `result_name.py`, `plugin_integrator.py`, `sales_comp_gate_emitter.py`, `truth_tier_validator.py`, and `output_check.py`. The other scripts are library code with unit tests. Where a text once ran a library script, the text now gives a rule that the model applies from a file in `definitions/` or `schemas/`.
 
 ### The definitions folder
 

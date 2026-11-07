@@ -151,7 +151,11 @@ Estimate conversion rates from the data in `gtm-context.json` and proceed with t
    - Define: feedback loop meeting cadence, metrics reviewed, owner
 
 10. WRITE ARTIFACTS:
-   - funnel-metrics.json: stage architecture, conversion rates, volume targets, bottleneck scores
+   Read the schema of each JSON file before you write it, and give each field the type of the schema.
+   - funnel-metrics.json: stage architecture, conversion rates, volume targets, bottleneck scores (schema: ${CLAUDE_PLUGIN_ROOT}/schemas/funnel-metrics.json).
+     `stages` is the map of the 5 conversion rates of the schema (visitors_to_signups, signups_to_activated,
+     activated_to_mql, mql_to_sql, sql_to_closed), each a number from 0 to 1, or null when no rate was measured.
+     It is the input of BottleneckDetector.find_worst(). Write the stage table (name, entry, owner, time) under `stages_detail`.
    - funnel-health.md: human-readable funnel health report with stage analysis
    - handoff-sla.md: MQL→SAL definition, SLA terms, rejection criteria, feedback loop
    - revenue-math.md: revenue model inputs/outputs, sensitivity analysis, capacity requirements
@@ -249,7 +253,7 @@ A run whose answers give the product, the counts and the channel volumes but not
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.8.0",
+  "plugin_version": "1.9.0",
   "command": "gtm:marketing:funnel",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -284,7 +288,7 @@ A run whose answers give the product, the counts and the channel volumes but not
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.8.0",
+  "plugin_version": "1.9.0",
   "command": "gtm:marketing:funnel",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",
