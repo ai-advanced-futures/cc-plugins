@@ -1,14 +1,32 @@
 {
   "schema_version": "1.0",
   "evaluation": {
+    "title": "UX evaluation of the appointment scheduling portal",
+    "evaluation_type": "multi_framework",
+    "frameworks_used": [
+      "nielsen-usability-10",
+      "wcag-2.2",
+      "ai-hci-microsoft-18",
+      "rams-good-design-10",
+      "norman-interaction-principles"
+    ],
+    "target": {
+      "name": "Appointment scheduling portal",
+      "type": "prototype"
+    },
     "evaluation_id": "EVAL-HC-001",
     "timestamp": "2025-01-20T18:00:00Z",
-    "artifacts_evaluated": ["WF-HC-001"],
+    "artifacts_evaluated": [
+      "WF-HC-001"
+    ],
     "context": {
       "platform": "web_responsive",
       "has_ai_features": true,
       "weighting_profile": "accessibility-first",
-      "compliance_requirements": ["wcag_aa", "section_508"]
+      "compliance_requirements": [
+        "wcag_aa",
+        "section_508"
+      ]
     },
     "executive_summary": "UX Health Score: 88/100 (Grade B - Good)\nThe appointment scheduling interface demonstrates excellent accessibility compliance with 94% WCAG 2.2 Level AA conformance. Strong points include high contrast design, large touch targets, and keyboard navigation. Minor improvements needed in error recovery messaging.",
     "ux_health_score": {
@@ -19,7 +37,7 @@
       "breakdown": {
         "nielsen": {
           "score": 85,
-          "weight": 0.20,
+          "weight": 0.2,
           "weighted_contribution": 17.0
         },
         "wcag": {
@@ -35,14 +53,70 @@
         },
         "rams": {
           "score": 82,
-          "weight": 0.10,
+          "weight": 0.1,
           "weighted_contribution": 8.2
         },
         "norman": {
           "score": 85,
-          "weight": 0.10,
+          "weight": 0.1,
           "weighted_contribution": 8.5
         }
+      }
+    },
+    "findings": [
+      {
+        "finding_id": "WCAG-1",
+        "title": "Bypass Blocks",
+        "description": "Skip to main content link present but not first focusable element",
+        "severity": "moderate",
+        "priority": "medium",
+        "tags": [
+          "wcag",
+          "2.4.1"
+        ]
+      },
+      {
+        "finding_id": "WCAG-2",
+        "title": "Timing Adjustable",
+        "description": "Session timeout exists but warning not announced to screen readers",
+        "severity": "moderate",
+        "priority": "medium",
+        "tags": [
+          "wcag",
+          "2.2.1"
+        ]
+      },
+      {
+        "finding_id": "WCAG-3",
+        "title": "Error Suggestion",
+        "description": "Error messages could be more specific about resolution steps",
+        "severity": "minor",
+        "priority": "low",
+        "tags": [
+          "wcag",
+          "3.3.3"
+        ]
+      },
+      {
+        "finding_id": "NIELSEN-1",
+        "title": "Help users recover from errors",
+        "description": "Error states could provide more specific guidance",
+        "severity": "moderate",
+        "priority": "medium",
+        "tags": [
+          "nielsen",
+          "H9"
+        ]
+      }
+    ],
+    "summary": {
+      "total_findings": 4,
+      "findings_by_severity": {
+        "critical": 0,
+        "major": 0,
+        "moderate": 3,
+        "minor": 1,
+        "cosmetic": 0
       }
     },
     "findings_summary": {
@@ -58,28 +132,43 @@
     "critical_findings": [],
     "recommendations": [
       {
-        "priority_rank": 1,
         "recommendation": "Add skip link to main content at page top",
+        "priority_rank": 1,
+        "priority": "medium",
         "effort": "low",
         "impact": "medium",
-        "finding_ids": ["A11Y-HC-001"],
-        "frameworks": ["wcag"]
+        "affected_findings": [
+          "WCAG-1"
+        ],
+        "frameworks": [
+          "wcag"
+        ]
       },
       {
-        "priority_rank": 2,
         "recommendation": "Improve error message specificity for no-availability states",
+        "priority_rank": 2,
+        "priority": "medium",
         "effort": "low",
         "impact": "medium",
-        "finding_ids": ["N-HC-001"],
-        "frameworks": ["nielsen"]
+        "affected_findings": [
+          "NIELSEN-1"
+        ],
+        "frameworks": [
+          "nielsen"
+        ]
       },
       {
-        "priority_rank": 3,
         "recommendation": "Add session timeout warning with extension option",
+        "priority_rank": 3,
+        "priority": "high",
         "effort": "medium",
         "impact": "high",
-        "finding_ids": ["A11Y-HC-002"],
-        "frameworks": ["wcag"]
+        "affected_findings": [
+          "WCAG-2"
+        ],
+        "frameworks": [
+          "wcag"
+        ]
       }
     ],
     "framework_details": {
@@ -93,20 +182,34 @@
         "total_criteria": 50,
         "conformance_score": 0.94,
         "by_principle": {
-          "perceivable": {"passed": 16, "failed": 1},
-          "operable": {"passed": 19, "failed": 1},
-          "understandable": {"passed": 7, "failed": 1},
-          "robust": {"passed": 5, "failed": 0}
+          "perceivable": {
+            "passed": 16,
+            "failed": 1
+          },
+          "operable": {
+            "passed": 19,
+            "failed": 1
+          },
+          "understandable": {
+            "passed": 7,
+            "failed": 1
+          },
+          "robust": {
+            "passed": 5,
+            "failed": 0
+          }
         },
         "findings": [
           {
-            "finding_id": "A11Y-HC-001",
+            "finding_id": "WCAG-1",
             "criterion": "2.4.1",
             "criterion_name": "Bypass Blocks",
             "level": "A",
             "severity": "medium",
             "status": "partial",
-            "affected_components": ["C-001"],
+            "affected_components": [
+              "C-001"
+            ],
             "description": "Skip to main content link present but not first focusable element",
             "impact": "Keyboard users must tab through header before reaching skip link",
             "remediation": {
@@ -116,7 +219,7 @@
             }
           },
           {
-            "finding_id": "A11Y-HC-002",
+            "finding_id": "WCAG-2",
             "criterion": "2.2.1",
             "criterion_name": "Timing Adjustable",
             "level": "A",
@@ -130,7 +233,7 @@
             }
           },
           {
-            "finding_id": "A11Y-HC-003",
+            "finding_id": "WCAG-3",
             "criterion": "3.3.3",
             "criterion_name": "Error Suggestion",
             "level": "AA",
@@ -161,7 +264,7 @@
         "total_criteria": 10,
         "findings": [
           {
-            "finding_id": "N-HC-001",
+            "finding_id": "NIELSEN-1",
             "heuristic": "H9",
             "heuristic_name": "Help users recover from errors",
             "severity": "medium",
@@ -204,8 +307,15 @@
           "environmentally_friendly": 7,
           "minimal": 9
         },
-        "strengths": ["Useful", "Unobtrusive", "Minimal", "Honest"],
-        "opportunities": ["Innovative"]
+        "strengths": [
+          "Useful",
+          "Unobtrusive",
+          "Minimal",
+          "Honest"
+        ],
+        "opportunities": [
+          "Innovative"
+        ]
       },
       "norman": {
         "framework": "norman",
@@ -219,8 +329,15 @@
       }
     },
     "accessibility_testing_summary": {
-      "automated_tools": ["axe", "WAVE", "Lighthouse"],
-      "manual_testing": ["Keyboard navigation", "Screen reader (NVDA, VoiceOver)"],
+      "automated_tools": [
+        "axe",
+        "WAVE",
+        "Lighthouse"
+      ],
+      "manual_testing": [
+        "Keyboard navigation",
+        "Screen reader (NVDA, VoiceOver)"
+      ],
       "user_testing": "Tested with 5 users with disabilities",
       "contrast_verified": true,
       "touch_targets_verified": true
@@ -228,7 +345,13 @@
   },
   "metadata": {
     "generated_by": "UX Evaluator Agent",
-    "frameworks_evaluated": ["nielsen", "wcag", "ai-hci", "rams", "norman"],
+    "frameworks_evaluated": [
+      "nielsen",
+      "wcag",
+      "ai-hci",
+      "rams",
+      "norman"
+    ],
     "profile_used": "accessibility-first",
     "generation_timestamp": "2025-01-20T18:00:00Z"
   }

@@ -1,9 +1,24 @@
 {
   "schema_version": "1.0",
   "evaluation": {
+    "title": "UX evaluation of the AI assistant",
+    "evaluation_type": "multi_framework",
+    "frameworks_used": [
+      "nielsen-usability-10",
+      "wcag-2.2",
+      "ai-hci-microsoft-18",
+      "rams-good-design-10",
+      "norman-interaction-principles"
+    ],
+    "target": {
+      "name": "AI assistant",
+      "type": "prototype"
+    },
     "evaluation_id": "EVAL-AI-001",
     "timestamp": "2025-01-20T16:00:00Z",
-    "artifacts_evaluated": ["WF-AI-001"],
+    "artifacts_evaluated": [
+      "WF-AI-001"
+    ],
     "context": {
       "platform": "desktop_web",
       "has_ai_features": true,
@@ -18,12 +33,12 @@
       "breakdown": {
         "nielsen": {
           "score": 82,
-          "weight": 0.20,
+          "weight": 0.2,
           "weighted_contribution": 16.4
         },
         "wcag": {
           "score": 75,
-          "weight": 0.20,
+          "weight": 0.2,
           "weighted_contribution": 15.0
         },
         "ai_hci": {
@@ -33,7 +48,7 @@
         },
         "rams": {
           "score": 76,
-          "weight": 0.10,
+          "weight": 0.1,
           "weighted_contribution": 7.6
         },
         "norman": {
@@ -41,6 +56,51 @@
           "weight": 0.15,
           "weighted_contribution": 10.8
         }
+      }
+    },
+    "findings": [
+      {
+        "finding_id": "AIHCI-1",
+        "title": "Update and adapt cautiously",
+        "description": "No notification system when AI behavior changes",
+        "severity": "moderate",
+        "priority": "medium",
+        "tags": [
+          "ai-hci",
+          "G14"
+        ]
+      },
+      {
+        "finding_id": "WCAG-1",
+        "title": "Keyboard: Keyboard focus order inconsistent in AI findings list",
+        "description": "Keyboard focus order inconsistent in AI findings list",
+        "severity": "major",
+        "priority": "high",
+        "tags": [
+          "wcag",
+          "2.1.1"
+        ]
+      },
+      {
+        "finding_id": "WCAG-2",
+        "title": "Status Messages",
+        "description": "AI analysis status changes not announced",
+        "severity": "major",
+        "priority": "high",
+        "tags": [
+          "wcag",
+          "4.1.3"
+        ]
+      }
+    ],
+    "summary": {
+      "total_findings": 3,
+      "findings_by_severity": {
+        "critical": 0,
+        "major": 2,
+        "moderate": 1,
+        "minor": 0,
+        "cosmetic": 0
       }
     },
     "findings_summary": {
@@ -56,28 +116,44 @@
     "critical_findings": [],
     "recommendations": [
       {
-        "priority_rank": 1,
         "recommendation": "Improve keyboard navigation between AI findings",
+        "priority_rank": 1,
+        "priority": "high",
         "effort": "medium",
         "impact": "high",
-        "finding_ids": ["A11Y-AI-001"],
-        "frameworks": ["wcag"]
+        "affected_findings": [
+          "WCAG-1"
+        ],
+        "frameworks": [
+          "wcag"
+        ]
       },
       {
-        "priority_rank": 2,
         "recommendation": "Add aria-live announcements for AI status changes",
+        "priority_rank": 2,
+        "priority": "high",
         "effort": "low",
         "impact": "high",
-        "finding_ids": ["A11Y-AI-002"],
-        "frameworks": ["wcag", "ai-hci"]
+        "affected_findings": [
+          "WCAG-2"
+        ],
+        "frameworks": [
+          "wcag",
+          "ai-hci"
+        ]
       },
       {
-        "priority_rank": 3,
         "recommendation": "Implement G14 (cautious updates) notification system",
+        "priority_rank": 3,
+        "priority": "medium",
         "effort": "medium",
         "impact": "medium",
-        "finding_ids": ["AI-HCI-001"],
-        "frameworks": ["ai-hci"]
+        "affected_findings": [
+          "AIHCI-1"
+        ],
+        "frameworks": [
+          "ai-hci"
+        ]
       }
     ],
     "framework_details": {
@@ -89,44 +165,98 @@
         "partially_met": 3,
         "not_met": 1,
         "not_applicable": 0,
-        "compliance_score": 0.80,
+        "compliance_score": 0.8,
         "by_category": {
           "initially": {
             "score": 9.0,
             "guidelines": {
-              "G1": {"status": "met", "note": "Capability indicator in AI panel header"},
-              "G2": {"status": "met", "note": "Confidence scores on all findings"}
+              "G1": {
+                "status": "met",
+                "note": "Capability indicator in AI panel header"
+              },
+              "G2": {
+                "status": "met",
+                "note": "Confidence scores on all findings"
+              }
             }
           },
           "during_interaction": {
             "score": 8.5,
             "guidelines": {
-              "G3": {"status": "met", "note": "AI triggered by explicit user action"},
-              "G4": {"status": "met", "note": "Findings relate to current code context"},
-              "G5": {"status": "met", "note": "Professional tone appropriate for developers"},
-              "G6": {"status": "partial", "note": "Limited bias testing documented"}
+              "G3": {
+                "status": "met",
+                "note": "AI triggered by explicit user action"
+              },
+              "G4": {
+                "status": "met",
+                "note": "Findings relate to current code context"
+              },
+              "G5": {
+                "status": "met",
+                "note": "Professional tone appropriate for developers"
+              },
+              "G6": {
+                "status": "partial",
+                "note": "Limited bias testing documented"
+              }
             }
           },
           "when_wrong": {
             "score": 9.0,
             "guidelines": {
-              "G7": {"status": "met", "note": "Clear 'Analyze' button and keyboard shortcut"},
-              "G8": {"status": "met", "note": "Single-click dismiss with keyboard support"},
-              "G9": {"status": "met", "note": "Edit button allows modification"},
-              "G10": {"status": "met", "note": "AI asks for confirmation on uncertain cases"},
-              "G11": {"status": "met", "note": "'Why?' button shows detailed explanation"}
+              "G7": {
+                "status": "met",
+                "note": "Clear 'Analyze' button and keyboard shortcut"
+              },
+              "G8": {
+                "status": "met",
+                "note": "Single-click dismiss with keyboard support"
+              },
+              "G9": {
+                "status": "met",
+                "note": "Edit button allows modification"
+              },
+              "G10": {
+                "status": "met",
+                "note": "AI asks for confirmation on uncertain cases"
+              },
+              "G11": {
+                "status": "met",
+                "note": "'Why?' button shows detailed explanation"
+              }
             }
           },
           "over_time": {
             "score": 7.0,
             "guidelines": {
-              "G12": {"status": "met", "note": "Session context preserved"},
-              "G13": {"status": "partial", "note": "Learning from feedback planned"},
-              "G14": {"status": "not_met", "note": "No notification system for AI updates"},
-              "G15": {"status": "met", "note": "Granular feedback on each finding"},
-              "G16": {"status": "partial", "note": "Feedback impact could be clearer"},
-              "G17": {"status": "met", "note": "AI Settings accessible from panel"},
-              "G18": {"status": "partial", "note": "Basic changelog exists"}
+              "G12": {
+                "status": "met",
+                "note": "Session context preserved"
+              },
+              "G13": {
+                "status": "partial",
+                "note": "Learning from feedback planned"
+              },
+              "G14": {
+                "status": "not_met",
+                "note": "No notification system for AI updates"
+              },
+              "G15": {
+                "status": "met",
+                "note": "Granular feedback on each finding"
+              },
+              "G16": {
+                "status": "partial",
+                "note": "Feedback impact could be clearer"
+              },
+              "G17": {
+                "status": "met",
+                "note": "AI Settings accessible from panel"
+              },
+              "G18": {
+                "status": "partial",
+                "note": "Basic changelog exists"
+              }
             }
           }
         },
@@ -139,7 +269,7 @@
         },
         "findings": [
           {
-            "finding_id": "AI-HCI-001",
+            "finding_id": "AIHCI-1",
             "guideline": "G14",
             "guideline_name": "Update and adapt cautiously",
             "category": "over_time",
@@ -170,13 +300,16 @@
         },
         "findings": [
           {
-            "finding_id": "A11Y-AI-001",
+            "finding_id": "WCAG-1",
             "criterion": "2.1.1",
             "criterion_name": "Keyboard",
             "level": "A",
             "severity": "high",
             "status": "fail",
-            "affected_components": ["C-005", "C-005-a"],
+            "affected_components": [
+              "C-005",
+              "C-005-a"
+            ],
             "description": "Keyboard focus order inconsistent in AI findings list",
             "impact": "Keyboard users struggle to navigate findings efficiently",
             "remediation": {
@@ -186,13 +319,15 @@
             }
           },
           {
-            "finding_id": "A11Y-AI-002",
+            "finding_id": "WCAG-2",
             "criterion": "4.1.3",
             "criterion_name": "Status Messages",
             "level": "AA",
             "severity": "high",
             "status": "fail",
-            "affected_components": ["C-004"],
+            "affected_components": [
+              "C-004"
+            ],
             "description": "AI analysis status changes not announced",
             "impact": "Screen reader users unaware when AI analysis completes",
             "remediation": {
@@ -231,8 +366,15 @@
           "environmentally_friendly": 6,
           "minimal": 9
         },
-        "strengths": ["Useful", "Honest", "Minimal"],
-        "opportunities": ["Long-lasting", "Environmentally friendly"]
+        "strengths": [
+          "Useful",
+          "Honest",
+          "Minimal"
+        ],
+        "opportunities": [
+          "Long-lasting",
+          "Environmentally friendly"
+        ]
       },
       "norman": {
         "framework": "norman",
@@ -247,7 +389,13 @@
   },
   "metadata": {
     "generated_by": "UX Evaluator Agent",
-    "frameworks_evaluated": ["nielsen", "wcag", "ai-hci", "rams", "norman"],
+    "frameworks_evaluated": [
+      "nielsen",
+      "wcag",
+      "ai-hci",
+      "rams",
+      "norman"
+    ],
     "profile_used": "ai-heavy",
     "generation_timestamp": "2025-01-20T16:00:00Z"
   }

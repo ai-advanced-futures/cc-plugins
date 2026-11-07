@@ -1,6 +1,6 @@
 # ux-hci-design
 
-**Version:** 1.3.2
+**Version:** 1.4.0
 **Author:** Luis F. Amadeo (the original plugin). ai-advanced-futures ported it to this marketplace.
 **License:** MIT (see `NOTICE`)
 
@@ -101,7 +101,7 @@ The paid plugin `tailwind-plus` is not in this marketplace. When you have it and
 
 ## Scripts
 
-The folder `scripts/` has 7 Python scripts that use only the standard library. You need `python3`. Run a script from the plugin folder, for example:
+The folder `scripts/` has 8 Python scripts. Seven use only the standard library, and you need `python3` for them. `check_output.py` checks an output file against its schema, and it needs `uv` (it gets `jsonschema`). The skill `ux-design` runs it after the evaluator. Run a script from the plugin folder, for example:
 
 $ python3 scripts/validate_schemas.py --help
 

@@ -2,6 +2,13 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.4.0 - 2026-11-06
+
+- `ux-evaluator` and the skill `ux-evaluate` name the schema `schemas/outputs/evaluation-report-schema.json` and tell the agent to read it before it writes the report. The dispatch of the evaluator has the field `schema_file`.
+- The report examples of the 2 files, and the 3 example reports in `examples/`, agree with the schema. The evaluator writes `severity` as `critical`, `major`, `moderate` or `minor`, `priority` as the normalized level, and the tag `provisional` for a finding that rests on an assumption.
+- New script `scripts/check_output.py FILE --schema NAME`: it prints 1 line for each schema error. The skill `ux-design` runs it after the evaluator (Step 3) and starts the evaluator 1 more time with the error lines; the skill `ux-evaluate` runs it after a report that it writes itself. A report with errors is not called complete. The check needs `uv`.
+- `requirements-dev.txt` needs `jsonschema>=4.17.0`.
+
 ## 1.3.2 - 2026-11-06
 
 This version closes the 7 follow-up items of the port review (STORY-136).

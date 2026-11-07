@@ -1,6 +1,7 @@
 ---
 name: ux-design
 description: Use for a UX design task, such as personas, journey maps, wireframes, a heuristic evaluation, or an accessibility or AI-HCI audit. Guides the person through the 5 Design Thinking phases, asks the questions of each phase, and starts the agent of the phase.
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/check_output.py *)
 ---
 
 # UX Design Orchestrator
@@ -425,11 +426,20 @@ Context: Project context, weighting profile
 Input: wireframes.json, interaction_patterns.json, and the findings file of each reviewer of Step 1 (<output_dir>/reviews/<reviewer>/findings.json)
 Output: evaluation_report.json
 method_file: ${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md
+schema_file: ${CLAUDE_PLUGIN_ROOT}/schemas/outputs/evaluation-report-schema.json
 ```
 
-The evaluator normalizes the severity, calculates the UX health score with contextual weighting, and writes the prioritized recommendations. When a reviewer wrote `<output_dir>/reviews/<reviewer>/open-questions.md`, handle it as in the dispatch protocol above, and delete that file in the same way after you ask its questions.
+Run the evaluator in the foreground and wait for it, because the check of Step 3 needs the permission of this turn. The evaluator normalizes the severity, calculates the UX health score with contextual weighting, and writes the prioritized recommendations. When a reviewer wrote `<output_dir>/reviews/<reviewer>/open-questions.md`, handle it as in the dispatch protocol above, and delete that file in the same way after you ask its questions.
 
 **After Step 2.** If the evaluator returns a line that starts with `MISSING_REVIEW:`, show the line to the person and stop. Do not write the report in the main conversation, because a report with a missing domain gives a wrong UX health score.
+
+**Step 3.** Check the report, but only when the evaluator ended its reply with the line `REPORT: <path>`. When it did not, say "The evaluation report was not written in this run", do not check an older file, and do not call the evaluation complete, because the person would see the score of an earlier run. Run this command on its own, with no other command and no echo. The Bash tool reports the exit code. Write each `'` in the path as `'\''`, because inside single quotes the shell runs nothing:
+```
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/check_output.py '<output_dir>/evaluation_report.json' --schema evaluation-report-schema.json
+```
+- Exit 0: show the path of the report and the UX health score, then go on.
+- Exit 1, and the last line of the output is `<n> schema errors in <file>`: run the Step 2 dispatch again with the same fields and the field `schema_errors` (the error lines), then run the check again. When the second check also gives exit 1 with that last line, show each error line, say "The evaluation report does not agree with its schema", and do not say that the evaluation is complete, because the person would act on a report that fails its schema.
+- Each other result (exit 2, another exit code, or an exit 1 with another last line, for example when `uv` cannot get `jsonschema`): show the output, say "The evaluation report was not checked", and do not say that the evaluation is complete, because the report has no proof that it agrees with its schema.
 
 **Skill References:**
 - `${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md`

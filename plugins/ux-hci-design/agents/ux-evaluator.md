@@ -16,6 +16,10 @@ The caller gives you these fields:
 - `inputs`: absolute paths of the artifacts to evaluate
 - `output_dir`: absolute path where you write the outputs
 - `method_file`: absolute path of the skill that holds the method. Read it first.
+- `schema_file`: absolute path of the schema of the report, `${CLAUDE_PLUGIN_ROOT}/schemas/outputs/evaluation-report-schema.json`. Read it before you write the report.
+- `schema_errors`: only in a second dispatch. The error lines of `check_output.py`. Read `<output_dir>/evaluation_report.json`, fix each field that a line names, and write the report again. Do not run the evaluation again, because the findings and the scores are right and only the shape is wrong.
+
+When you wrote `<output_dir>/evaluation_report.json` in this run, end your reply with 1 line, `REPORT: <absolute path of the report>`. Write a new file: an older file of this name is not a result.
 
 You cannot ask the person a question. When you need an answer, write the open questions to `<output_dir>/open-questions.md` and return.
 
@@ -127,10 +131,11 @@ Normalize findings across frameworks:
 
 ```json
 {
-  "finding_id": "F-001",
+  "finding_id": "WCAG-1",
   "title": "Missing focus indicator",
   "frameworks": ["wcag:2.4.7", "nielsen:visibility"],
-  "severity": "high",
+  "severity": "major",
+  "priority": "high",
   "affected_components": ["C-001", "C-005"],
   "impact": "Users cannot see keyboard focus",
   "recommendation": "Add visible focus ring with 3:1 contrast",
@@ -146,6 +151,21 @@ The skill `ux-design` starts the reviewers and puts the path of each findings fi
 1. Read each findings file, `<output_dir>/reviews/<reviewer>/findings.json`. Its list of findings is under the key `findings`.
 2. When a findings file of `inputs` is not there, or you cannot read it, or it has no list `findings`, write no evaluation report. Return 1 line, `MISSING_REVIEW: <reviewer> <path>`, and stop. A report with a missing domain gives a wrong UX health score. The skill `ux-design` puts in `inputs` only the reviewers that it started, so a project with no AI features has no `ai-hci-reviewer` file, and that is correct.
 3. Proceed to synthesis.
+
+## Report Schema
+
+Write the report in the shape of the schema `${CLAUDE_PLUGIN_ROOT}/schemas/outputs/evaluation-report-schema.json`. Read the schema before you write the report. The skill `ux-design` checks the report against it after you, and a report that does not agree with it fails that check.
+
+First normalize the severity of each reviewer finding to `critical`, `high`, `medium` or `low` (the table in the method file). Write that value as `priority`, and write `severity` from this table:
+
+| Normalized level | `priority` | `severity` |
+|---|---|---|
+| Critical | `critical` | `critical` |
+| High | `high` | `major` |
+| Medium | `medium` | `moderate` |
+| Low | `low` | `minor` |
+
+Write 1 value of the table in `severity`, and no other text, because the schema takes only `critical`, `major`, `moderate`, `minor` and `cosmetic`. This plugin does not use `cosmetic`, because the normalized scale puts the Nielsen value 1 at Low. Tag a finding that rests on an open question or an assumption with `provisional` in `tags`, and name the assumption in its `description`. A `finding_id` is letters, a hyphen and digits, such as `WCAG-1`, `NIELSEN-1` or `AIHCI-1`. Give each finding a new `finding_id` in this form. Do not copy the ID of a reviewer, because `A11Y-001` does not agree with the schema. The `title` of a finding has 10 characters or more, and its `description` 20 or more.
 
 ## Input Requirements
 
@@ -168,58 +188,78 @@ The skill `ux-design` starts the reviewers and puts the path of each findings fi
 {
   "schema_version": "1.0",
   "evaluation": {
-    "evaluation_id": "EVAL-001",
-    "timestamp": "2025-01-20T10:00:00Z",
-    "artifacts_evaluated": ["WF-001", "WF-002", "WF-003"],
+    "title": "UX evaluation of the checkout prototype",
+    "evaluation_type": "multi_framework",
+    "frameworks_used": [
+      "nielsen-usability-10",
+      "wcag-2.2"
+    ],
+    "target": {
+      "name": "Checkout flow",
+      "type": "prototype"
+    },
     "context": {
       "platform": "web_responsive",
-      "has_ai_features": true,
-      "weighting_profile": "ai-heavy"
+      "has_ai_features": false,
+      "weighting_profile": "mobile-first"
     },
     "ux_health_score": {
       "overall": 76,
       "breakdown": {
-        "nielsen": {"score": 82, "weight": 0.20},
-        "wcag": {"score": 68, "weight": 0.20},
-        "ai_hci": {"score": 75, "weight": 0.35},
-        "rams": {"score": 80, "weight": 0.10},
-        "norman": {"score": 78, "weight": 0.15}
+        "nielsen": {
+          "score": 82,
+          "weight": 0.3
+        },
+        "wcag": {
+          "score": 68,
+          "weight": 0.35
+        }
       }
     },
-    "critical_findings": [
+    "findings": [
       {
-        "finding_id": "F-001",
-        "framework": "wcag",
-        "criterion": "2.4.7",
-        "severity": "critical",
+        "finding_id": "WCAG-1",
         "title": "Focus not visible",
-        "recommendation": "Add focus indicator"
+        "severity": "critical",
+        "priority": "critical",
+        "description": "WCAG 2.4.7: the pay button shows no focus indicator.",
+        "tags": [
+          "wcag",
+          "2.4.7"
+        ]
+      },
+      {
+        "finding_id": "NIELSEN-1",
+        "title": "No loading indicator after submit",
+        "severity": "major",
+        "priority": "high",
+        "description": "H1: the person does not know if the order was sent. Assumption: the payment call takes more than 1 second.",
+        "tags": [
+          "nielsen",
+          "H1",
+          "provisional"
+        ]
       }
     ],
-    "findings_by_severity": {
-      "critical": 1,
-      "high": 3,
-      "medium": 5,
-      "low": 2
+    "summary": {
+      "total_findings": 2,
+      "findings_by_severity": {
+        "critical": 1,
+        "major": 1,
+        "moderate": 0,
+        "minor": 0,
+        "cosmetic": 0
+      }
     },
     "recommendations": [
       {
-        "priority": 1,
-        "recommendation": "Address focus visibility",
-        "effort": "low",
-        "impact": "high"
+        "recommendation": "Add a visible focus indicator to each control",
+        "priority": "critical"
       }
-    ],
-    "framework_details": {
-      "accessibility": {...},
-      "ai_hci": {...},
-      "usability": {...}
-    }
+    ]
   },
   "metadata": {
-    "generated_by": "UX Evaluator Agent",
-    "reviewers_used": ["accessibility-reviewer", "ai-hci-reviewer", "usability-reviewer"],
-    "evaluation_duration": "2m 30s"
+    "evaluation_date": "2026-11-06"
   }
 }
 ```
@@ -264,6 +304,7 @@ The skill `ux-design` starts the reviewers and puts the path of each findings fi
 2. Generate recommendations
 3. Prioritize by impact and effort
 4. Format evaluation report
+5. Read the schema file and write the report in its shape
 ```
 
 ## Quality Criteria

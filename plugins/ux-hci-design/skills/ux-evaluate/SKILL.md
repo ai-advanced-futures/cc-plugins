@@ -1,6 +1,7 @@
 ---
 name: ux-evaluate
 description: Use in the test phase of Design Thinking, when wireframes exist. Holds the method for an evaluation with the Nielsen heuristics, WCAG compliance and the AI-HCI guidelines. The agent ux-evaluator reads it.
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/check_output.py *)
 ---
 
 # TEST Phase Skill (Evaluate)
@@ -218,46 +219,116 @@ WEIGHTING_PROFILES = {
 
 ## Output Format
 
+### Report Schema
+
+Only the evaluator writes this report (the agent `ux-evaluator`, or this skill when it runs alone). A reviewer keeps the shape of its own findings file.
+
+Write the report in the shape of the schema `${CLAUDE_PLUGIN_ROOT}/schemas/outputs/evaluation-report-schema.json`. Read the schema before you write the report. After the normalization above, write the level as `priority`, and write `severity` from this table:
+
+| Normalized level | `priority` | `severity` |
+|---|---|---|
+| Critical | `critical` | `critical` |
+| High | `high` | `major` |
+| Medium | `medium` | `moderate` |
+| Low | `low` | `minor` |
+
+Write 1 value of the table in `severity`, and no other text, because the schema takes only `critical`, `major`, `moderate`, `minor` and `cosmetic`. This plugin does not use `cosmetic`, because the normalized scale puts the Nielsen value 1 at Low. Tag a finding that rests on an open question or an assumption with `provisional` in `tags`, and name the assumption in its `description`. A `finding_id` is letters, a hyphen and digits, such as `WCAG-1`, `NIELSEN-1` or `AIHCI-1`. Give each finding a new `finding_id` in this form. Do not copy the ID of a reviewer, because `A11Y-001` does not agree with the schema. The `title` of a finding has 10 characters or more, and its `description` 20 or more.
+
 ### Evaluation Report Structure
 
 ```json
 {
   "schema_version": "1.0",
   "evaluation": {
-    "evaluation_id": "EVAL-001",
-    "timestamp": "2025-01-20T10:00:00Z",
-    "artifacts_evaluated": ["WF-001", "WF-002"],
+    "title": "UX evaluation of the checkout prototype",
+    "evaluation_type": "multi_framework",
+    "frameworks_used": [
+      "nielsen-usability-10",
+      "wcag-2.2"
+    ],
+    "target": {
+      "name": "Checkout flow",
+      "type": "prototype"
+    },
     "context": {
       "platform": "web_responsive",
-      "has_ai_features": true,
-      "weighting_profile": "ai-heavy"
+      "has_ai_features": false,
+      "weighting_profile": "mobile-first"
     },
     "ux_health_score": {
       "overall": 76,
-      "grade": "B",
       "breakdown": {
-        "nielsen": {"score": 82, "weight": 0.20, "findings": 3},
-        "wcag": {"score": 68, "weight": 0.20, "findings": 5},
-        "ai_hci": {"score": 75, "weight": 0.35, "findings": 4},
-        "rams": {"score": 80, "weight": 0.10, "findings": 2},
-        "norman": {"score": 78, "weight": 0.15, "findings": 1}
+        "nielsen": {
+          "score": 82,
+          "weight": 0.3
+        },
+        "wcag": {
+          "score": 68,
+          "weight": 0.35
+        }
       }
     },
-    "findings_summary": {
-      "total": 15,
-      "by_severity": {
+    "findings": [
+      {
+        "finding_id": "WCAG-1",
+        "title": "Focus not visible",
+        "severity": "critical",
+        "priority": "critical",
+        "description": "WCAG 2.4.7: the pay button shows no focus indicator.",
+        "tags": [
+          "wcag",
+          "2.4.7"
+        ]
+      },
+      {
+        "finding_id": "NIELSEN-1",
+        "title": "No loading indicator after submit",
+        "severity": "major",
+        "priority": "high",
+        "description": "H1: the person does not know if the order was sent. Assumption: the payment call takes more than 1 second.",
+        "tags": [
+          "nielsen",
+          "H1",
+          "provisional"
+        ]
+      }
+    ],
+    "summary": {
+      "total_findings": 2,
+      "findings_by_severity": {
         "critical": 1,
-        "high": 3,
-        "medium": 7,
-        "low": 4
+        "major": 1,
+        "moderate": 0,
+        "minor": 0,
+        "cosmetic": 0
       }
     },
-    "critical_findings": [...],
-    "recommendations": [...],
-    "framework_details": {...}
+    "recommendations": [
+      {
+        "recommendation": "Add a visible focus indicator to each control",
+        "priority": "critical"
+      }
+    ]
+  },
+  "metadata": {
+    "evaluation_date": "2026-11-06"
   }
 }
 ```
+
+### Check the report
+
+After you write the report in the main conversation (a run of `/ux-hci-design:ux-evaluate` alone), run this command on its own, with no other command and no echo. The Bash tool reports the exit code. Write each `'` in the path as `'\''`, because inside single quotes the shell runs nothing.
+
+```
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/check_output.py '<output_dir>/evaluation_report.json' --schema evaluation-report-schema.json
+```
+
+The evaluator agent does not run it, because it has no `Bash`. The skill `ux-design` runs it after the evaluator returns.
+
+- Exit 0: show the path of the report and the UX health score.
+- Exit 1, and the last line of the output is `<n> schema errors in <file>`: fix each field that a line names, write the report again, and run the check 1 more time. When it gives exit 1 again with that last line, show each error line, say "The evaluation report does not agree with its schema", and do not say that the evaluation is complete, because the person would act on a report that fails its schema.
+- Each other result (exit 2, another exit code, or an exit 1 with another last line, for example when `uv` cannot get `jsonschema`): show the output, say "The evaluation report was not checked", and do not say that the evaluation is complete, because the report has no proof that it agrees with its schema.
 
 ### Grade Scale
 
