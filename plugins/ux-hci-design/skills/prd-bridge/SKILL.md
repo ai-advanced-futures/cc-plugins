@@ -1,6 +1,6 @@
 ---
 name: prd-bridge
-description: Use when the person has a product requirements document (a Markdown file) and wants design specifications from it. Holds the rules that map requirements to UX artifacts, with accessibility and AI-HCI checks.
+description: Use when the person has a product requirements document (a PRD Markdown file) and wants design specifications from it. The skill maps it to its JSON structure. Holds the rules that map requirements to UX artifacts, with accessibility and AI-HCI checks.
 ---
 
 # PRD Bridge Skill
@@ -21,6 +21,8 @@ Transform Product Requirements Documents (PRDs) into UX design specifications. B
 | Acceptance Criteria | Validation checklist |
 
 ## PRD Input Schema
+
+The person gives a PRD Markdown file. Map it to this structure before you apply the rules.
 
 ### Expected PRD Structure
 

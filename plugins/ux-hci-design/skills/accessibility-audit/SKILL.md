@@ -23,11 +23,11 @@ This skill implements accessibility evaluation based on:
 
 | Level | Description | Requirements |
 |-------|-------------|--------------|
-| A | Minimum | 25 success criteria (essential) |
+| A | Minimum | 31 success criteria (essential) |
 | AA | Standard | 24 additional criteria (recommended) |
 | AAA | Enhanced | 28 additional criteria (optimal) |
 
-**Target**: Level AA conformance (49 total criteria)
+**Target**: Level AA conformance (55 total criteria)
 
 ## POUR Principles
 
@@ -460,14 +460,14 @@ The reviewer writes this object to `<output_dir>/findings.json`. The list of fin
   "version": "2.2",
   "target_level": "AA",
   "evaluation_summary": {
-    "total_criteria": 49,
-    "passed": 42,
+    "total_criteria": 55,
+    "passed": 47,
     "failed": 6,
     "not_applicable": 2,
     "conformance_score": 0.84
   },
   "by_principle": {
-    "perceivable": {"passed": 15, "failed": 2},
+    "perceivable": {"passed": 20, "failed": 2},
     "operable": {"passed": 16, "failed": 3},
     "understandable": {"passed": 7, "failed": 1},
     "robust": {"passed": 4, "failed": 0}
@@ -481,7 +481,7 @@ The reviewer writes this object to `<output_dir>/findings.json`. The list of fin
 
 Accessibility audit is complete when:
 
-1. **All criteria checked**: 49 Level AA criteria evaluated
+1. **All criteria checked**: 55 Level AA criteria evaluated
 2. **Evidence-based**: Each finding has component reference
 3. **Actionable**: Clear remediation with code examples
 4. **Prioritized**: Findings ranked by severity

@@ -36,13 +36,13 @@ Evaluate design artifacts against WCAG 2.2 Level AA requirements. Identify acces
 
 ## Scope
 
-### WCAG 2.2 Level A (25 criteria)
+### WCAG 2.2 Level A (31 criteria)
 - **Perceivable**: 1.1.1-1.4.2
 - **Operable**: 2.1.1-2.5.2
 - **Understandable**: 3.1.1-3.3.2
 - **Robust**: 4.1.1-4.1.2
 
-### WCAG 2.2 Level AA (24 additional criteria, 49 total at AA)
+### WCAG 2.2 Level AA (24 additional criteria, 55 total at AA)
 - **Perceivable**: 1.4.3-1.4.13
 - **Operable**: 2.4.5-2.5.8
 - **Understandable**: 3.2.3-3.3.4
@@ -216,8 +216,8 @@ Evaluate each relevant WCAG criterion:
   "version": "2.2",
   "target_level": "AA",
   "evaluation_summary": {
-    "total_criteria": 50,
-    "passed": 42,
+    "total_criteria": 55,
+    "passed": 47,
     "failed": 6,
     "not_applicable": 2,
     "conformance_score": 0.84

@@ -212,7 +212,7 @@ for h in nielsen['heuristics']:
 ```
 
 **Conformance Levels:**
-- **Level A:** 32 criteria. This is the minimum level of accessibility.
+- **Level A:** 31 criteria. This is the minimum level of accessibility.
 - **Level AA:** 24 more criteria. This is the recommended target.
 - **Level AAA:** The schema does not include this level. Do not use it as a target for all criteria.
 

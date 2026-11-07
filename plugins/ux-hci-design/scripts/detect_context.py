@@ -47,6 +47,7 @@ class DetectedContext:
             "type": self.project_type,
             "domain": self.domain,
             "ai_intensity": self.ai_intensity,
+            "has_ai_features": self.ai_intensity != "none",
             "accessibility_requirements": self.accessibility_requirements,
             "platforms": self.platforms,
             "user_expertise": self.user_expertise
@@ -735,7 +736,7 @@ Examples:
     if args.save:
         config_path = save_config(args.project, config)
         print(f"\nConfig saved to: {config_path}")
-        print("Run `/ux-design` to confirm or modify this context.")
+        print("Run `/ux-hci-design:ux-design` to confirm or modify this context.")
 
     return 0
 

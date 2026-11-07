@@ -141,7 +141,7 @@ Normalize findings across frameworks:
 
 ## Reviewer Findings
 
-The skill `ux-design` starts the reviewers and puts the path of each findings file in `inputs`. The reviewers are `accessibility-reviewer` and `usability-reviewer` (always), and `ai-hci-reviewer` (only when `project_context.has_ai_features` is true).
+The skill `ux-design` starts the reviewers and puts the path of each findings file in `inputs`. The reviewers are `accessibility-reviewer` and `usability-reviewer` (always), and `ai-hci-reviewer` (only when `project_context.has_ai_features` is true, or `context.has_ai_features` in a config in the shape of the examples).
 
 1. Read each findings file, `<output_dir>/reviews/<reviewer>/findings.json`. Its list of findings is under the key `findings`.
 2. When a findings file of `inputs` is not there, or you cannot read it, or it has no list `findings`, write no evaluation report. Return 1 line, `MISSING_REVIEW: <reviewer> <path>`, and stop. A report with a missing domain gives a wrong UX health score. The skill `ux-design` puts in `inputs` only the reviewers that it started, so a project with no AI features has no `ai-hci-reviewer` file, and that is correct.

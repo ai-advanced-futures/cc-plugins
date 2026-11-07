@@ -2,6 +2,20 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.3.2 - 2026-11-06
+
+This version closes the 7 follow-up items of the port review (STORY-136).
+
+- The skill `ux-design` and the skill `prd-bridge` name 1 PRD format, a PRD Markdown file. The skill `prd-bridge` maps it to its JSON structure.
+- The skill `ux-design` deletes `<output_dir>/open-questions.md` (also the file of a reviewer) after it asks the questions, so an old file does not start the same questions again. The delete is 1 `rm -f --` command with 1 path, and the person approves it.
+- The script `detect_context.py` writes `project_context.has_ai_features` (true when `ai_intensity` is not `none`), and the schema `project-context-schema.json` has this optional key. The skill `ux-design` and the agent `ux-evaluator` say where the key is. Before this version a saved config had no `has_ai_features`, so the skill did not start `ai-hci-reviewer`. To fix a config that version 1.3.1 or earlier saved, run `scripts/detect_context.py --save` again, or add `has_ai_features: true` to it.
+- `docs/AGENTS.md` names the file `mental_models.mmd` (it was `mental_model.json`).
+- The script `detect_context.py` prints `/ux-hci-design:ux-design` (it printed `/ux-design`).
+- `docs/SCHEMAS.md` says 31 Level A criteria (it said 32).
+- When a config has no `has_ai_features` key, the skill `ux-design` does not start `ai-hci-reviewer` and tells the person in 1 line.
+- The skill `accessibility-audit` and the agent `accessibility-reviewer` say 31 Level A criteria and 55 total at AA, the counts of the schema (they said 25 and 49).
+- 3 tests no longer pass when their file scan is empty: `test_no_text_of_the_source_repository_stack_remains`, `test_schema_and_skill_paths_start_with_the_plugin_root_variable` and `test_actual_schemas`.
+
 ## 1.3.1 - 2026-11-06
 
 - The skill `ux-design` runs the reviewers in the foreground, waits for each of them, and checks each findings file before it starts `ux-evaluator`.

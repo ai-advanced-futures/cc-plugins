@@ -67,6 +67,10 @@
           ],
           "default": "none"
         },
+        "has_ai_features": {
+          "type": "boolean",
+          "description": "true when the product has an AI feature; the detection sets it when ai_intensity is not none"
+        },
         "accessibility_requirements": {
           "type": "string",
           "description": "Level of accessibility compliance required",

@@ -73,7 +73,7 @@ The person starts this skill with `/ux-hci-design:ux-design` and an optional arg
 
 **`/ux-hci-design:ux-design integrate`** - Import JTBD/PRD data
 - Process: Auto-generate baseline + guided refinement
-- Input: a JTBD opportunity JSON file and a PRD JSON file in the structure of the skill prd-bridge, both named by the person
+- Input: a JTBD opportunity JSON file and a PRD Markdown file, both named by the person. The skill prd-bridge maps the PRD to its JSON structure.
 - Output: Personas, journey maps, design requirements
 
 ### Quick-Action Commands
@@ -95,7 +95,7 @@ When invoked, follow this sequence:
 1. When .ux-config.json exists in the project root, use its values, ask no context question, and go to step 4.
    Else detect the project context (section 3).
 2. Ask the person to confirm the detected context with AskUserQuestion (options: yes, modify)
-3. Write the confirmed context to .ux-config.json
+3. Write the confirmed context to .ux-config.json, with `has_ai_features` in `project_context`: true when the AI intensity is not `none`. The person can change it in the confirm step.
 4. Determine workflow mode:
    - Full workflow (/ux-hci-design:ux-design)
    - Phase-specific (empathize, define, ideate, prototype, test)
@@ -106,7 +106,9 @@ When invoked, follow this sequence:
 
 When the argument names the phase and the input paths, and .ux-config.json exists, ask nothing and dispatch the agent at once.
 
-Only this skill asks the person. The phase agents ask nothing: AskUserQuestion is not available to a subagent. When an agent needs an answer, it writes the open questions to `<output_dir>/open-questions.md` and returns. Ask these questions with AskUserQuestion, then dispatch the same agent again with the answers.
+Only this skill asks the person. The phase agents ask nothing: AskUserQuestion is not available to a subagent. When an agent needs an answer, it writes the open questions to `<output_dir>/open-questions.md` and returns. Ask these questions with AskUserQuestion. After you ask its questions, delete `<output_dir>/open-questions.md`. Then dispatch the same agent again with the answers.
+
+To delete the file, run 1 Bash command with 1 path: `rm -f -- '<absolute path of the file>'`. Write each `'` in the path as `'\''`. Run this command on its own, with no other command, because a command with a list or a loop is refused. The person approves it, because no rule approves an `rm`. When the command fails or the person refuses it, tell the person the path of the file and to delete it, and stop. Do not dispatch the agent again, because an old file starts the same questions again.
 
 **Artifact Directory:**
 Create `.ux-artifacts/` in the project root for all phase outputs:
@@ -180,7 +182,7 @@ Ask "Is this correct?" with AskUserQuestion. The options are `yes` and `modify`.
 - User Stories → Interaction scenarios
 
 **Process:**
-1. Ask the integration choice with AskUserQuestion (options: JTBD only, PRD only, both). Ask for the path of each file, then load the JTBD JSON file and the PRD Markdown file. Apply `${CLAUDE_PLUGIN_ROOT}/skills/jtbd-bridge/SKILL.md` and `${CLAUDE_PLUGIN_ROOT}/skills/prd-bridge/SKILL.md`.
+1. Ask the integration choice with AskUserQuestion (options: JTBD only, PRD only, both). Ask for the path of each file, then load the JTBD JSON file and the PRD Markdown file. The skill prd-bridge maps the PRD to its JSON structure. Apply `${CLAUDE_PLUGIN_ROOT}/skills/jtbd-bridge/SKILL.md` and `${CLAUDE_PLUGIN_ROOT}/skills/prd-bridge/SKILL.md`.
 2. Auto-generate baseline artifacts
 3. Present for user review
 4. Guide refinement with research insights
@@ -323,7 +325,7 @@ Each dispatch gives the agent these fields:
 - `output_dir`: an absolute path (default `<project>/.ux-artifacts`)
 - `method_file`: the absolute path of the skill that holds the method of the phase, `${CLAUDE_PLUGIN_ROOT}/skills/<phase>/SKILL.md` (the test phase uses `${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md`)
 
-After a dispatch, when `<output_dir>/open-questions.md` exists, ask its questions with AskUserQuestion and dispatch the same agent again with the answers. Then show the paths of the phase outputs and ask the next-phase question with AskUserQuestion (options: yes, no, learn more).
+After a dispatch, when `<output_dir>/open-questions.md` exists, ask its questions with AskUserQuestion. After you ask its questions, delete `<output_dir>/open-questions.md`. Then dispatch the same agent again with the answers. Then show the paths of the phase outputs and ask the next-phase question with AskUserQuestion (options: yes, no, learn more).
 
 ### Empathize Phase → `ux-hci-design:ux-researcher` Agent
 
@@ -408,7 +410,9 @@ A subagent cannot limit the agent types that it starts: Claude Code ignores a ty
 **Step 1.** Start the reviewers with the `Agent` tool, all in one message, so they run in parallel. Run them in the foreground and wait for each of them. Do not run a reviewer in the background, because the evaluator needs the findings file of each reviewer. If Claude Code runs a reviewer in the background, wait for its completion notice. Give each one the 4 dispatch fields. Its `output_dir` is `<output_dir>/reviews/<reviewer>`, and it writes its findings to `<output_dir>/reviews/<reviewer>/findings.json`:
 - `ux-hci-design:accessibility-reviewer` (always): `method_file` `${CLAUDE_PLUGIN_ROOT}/skills/accessibility-audit/SKILL.md`
 - `ux-hci-design:usability-reviewer` (always): `method_file` `${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md`
-- `ux-hci-design:ai-hci-reviewer` (only when `has_ai_features` in `.ux-config.json` is true): `method_file` `${CLAUDE_PLUGIN_ROOT}/skills/ai-hci-audit/SKILL.md`
+- `ux-hci-design:ai-hci-reviewer` (only when `project_context.has_ai_features` in `.ux-config.json` is true, or `context.has_ai_features` in a config in the shape of the examples): `method_file` `${CLAUDE_PLUGIN_ROOT}/skills/ai-hci-audit/SKILL.md`
+
+When the config has neither `project_context.has_ai_features` nor `context.has_ai_features` (a config from before version 1.3.2), do not start `ai-hci-reviewer`, and tell the person in 1 line: `The AI review did not run, because .ux-config.json has no has_ai_features key. Add "has_ai_features": true to project_context to run it.`
 
 Each reviewer returns the paths of the files that it wrote.
 
@@ -423,7 +427,7 @@ Output: evaluation_report.json
 method_file: ${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md
 ```
 
-The evaluator normalizes the severity, calculates the UX health score with contextual weighting, and writes the prioritized recommendations. When a reviewer wrote `open-questions.md`, handle it as in the dispatch protocol above.
+The evaluator normalizes the severity, calculates the UX health score with contextual weighting, and writes the prioritized recommendations. When a reviewer wrote `<output_dir>/reviews/<reviewer>/open-questions.md`, handle it as in the dispatch protocol above, and delete that file in the same way after you ask its questions.
 
 **After Step 2.** If the evaluator returns a line that starts with `MISSING_REVIEW:`, show the line to the person and stop. Do not write the report in the main conversation, because a report with a missing domain gives a wrong UX health score.
 
@@ -536,7 +540,7 @@ I'll help you transform JTBD and PRD outputs into UX artifacts.
 
 Please provide:
 1. JTBD opportunity data (JSON file path or paste)
-2. PRD document (markdown file path or paste)
+2. PRD Markdown file (its path). The skill prd-bridge maps it to its JSON structure.
 
 Or select a transformation:
 - JTBD only → Personas + Journey Maps

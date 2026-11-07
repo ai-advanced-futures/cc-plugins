@@ -69,7 +69,7 @@ UX Design Orchestrator (/ux-hci-design:ux-design skill)
 - Mental model documentation
 - JTBD transformation
 
-**Output**: `personas.json`, `journey_maps.json`, `mental_model.json`
+**Output**: `personas.json`, `journey_maps.json`, `mental_models.mmd`
 
 ---
 
