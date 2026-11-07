@@ -4,12 +4,14 @@
 # ///
 """NPV calculator for the monetize phase of strategic-partnerships.
 
-Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/npv_calculator.py <model.json>
+Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/npv_calculator.py <model.json> [--out FILE]
 The file holds `cash_flows`, `discount_rate` and `program_cost`. The script prints `npv`,
 `roi_multiple` (`npv / program_cost`) and `verdict`. A negative `roi_multiple` gives `NO_GO`.
 
 Implements financial modeling: discounted cash flow NPV, ROI multiple,
 and GO/CONDITIONAL_GO/NO_GO verdict assignment.
+
+With `--out`, the script writes the result to the file and prints 1 line.
 """
 
 import argparse
@@ -108,13 +110,17 @@ def evaluate_model(model: dict) -> dict:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
     parser.add_argument("input", help="path of the JSON file")
+    parser.add_argument("--out", help="write the result to this file and print one line")
     args = parser.parse_args(argv)
     try:
         result = evaluate_model(json.loads(Path(args.input).read_text()))
+        text = json.dumps(result, indent=2)
+        if args.out:
+            Path(args.out).write_text(text + "\n")
     except (OSError, ValueError, TypeError) as err:
         print(f"error: {err}", file=sys.stderr)
         return 1
-    print(json.dumps(result, indent=2))
+    print(f"verdict={result['verdict']}" if args.out else text)
     return 0
 
 

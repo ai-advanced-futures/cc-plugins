@@ -2,7 +2,7 @@
 name: partnerships-recommend
 description: Synthesize the full strategic partnership analysis into a prioritized action plan with go/no-go decisions, using all validated frameworks from Popp, Gawer, Parker, and Jansen. Use when the user wants a final partnership recommendation, a prioritized execution roadmap, a go/no-go decision framework, a board-ready partnership brief, or a 12-month partnership strategy document.
 argument-hint: "[session id]"
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py *)
 ---
 
 ## Routing
@@ -11,8 +11,8 @@ allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
 
 **Full quality** (the person gives a session id, or asks for a scored analysis):
 
-1. Take the session id from `$ARGUMENTS`. With no session id, take the quick interactive path. A full run needs the files of the five earlier phases, and the skill `partnerships` makes them.
-2. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py --phase synthesize --session-id <session id>`. When a script exits 2 (the session id is not a plain name), show its message and stop. Dispatch no agent, and read no file. On LOW confidence, name the missing earlier phases. Then take the quick interactive path.
+1. Take the session id from `$ARGUMENTS`. Test it before you put it in a command, because the shell reads the value before the script does: it must match `[A-Za-z0-9._-]{1,64}` and must not be `.` or `..`. When it does not, say that the value is not allowed, start no agent, run no command, and stop. With no session id, take the quick interactive path. A full run needs the files of the five earlier phases, and the skill `partnerships` makes them.
+2. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py --phase synthesize --session-id '<session id>'`. When a script exits 2 (the session id is not a plain name), show its message and stop. Dispatch no agent, and read no file. On LOW confidence, name the missing earlier phases. Then take the quick interactive path.
 3. Otherwise always dispatch `strategic-partnerships:synthesizer` with the `Agent` tool, also when the phase file exists, because the person asked for a new result. Give it `session_id`. Show the path `.sp-tmp/<session id>/synthesize.md`.
 
 # Strategic Partnership Recommendation

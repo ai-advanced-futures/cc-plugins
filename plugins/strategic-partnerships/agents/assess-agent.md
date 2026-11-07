@@ -1,6 +1,6 @@
 ---
 name: assess-agent
-description: Assesses partnership readiness (archetype, power position, gaps). The orchestrator or the skill partnerships-assess dispatches it.
+description: Assesses partnership readiness (archetype, power position, gaps). The skill partnerships or the skill partnerships-assess dispatches it.
 model: sonnet
 tools: Read, Write
 ---

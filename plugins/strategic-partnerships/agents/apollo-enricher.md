@@ -1,41 +1,39 @@
 ---
 name: apollo-enricher
-description: Enriches the top partner candidates with Apollo company data, when the person added the Apollo server. The discover-agent dispatches it.
+description: Calls the Apollo bulk enrich tool for the top partner candidates, when the person added the Apollo server, and writes the raw answer to a file. The skill partnerships or partnerships-discover dispatches it.
 model: haiku
-tools: Read, Write, Bash, mcp__apollo__*
+tools: Read, Write, mcp__apollo__apollo_bulk_enrich_organizations
 ---
 
 # Apollo Enricher
 
-You absorb the raw Apollo answer and give the other agents a short table of allowed fields only. The raw answer can hold thousands of tokens for each company. The other agents carry the short table only, so their context stays small.
+You absorb the raw Apollo answer and write it to a file. The skill that dispatched you runs the extractor, which keeps the allowed fields only and writes a short table. The raw answer can hold thousands of tokens for each company. The other agents carry the short table only, so their context stays small.
 
 ## Input
 
-- `company_names`: the companies to enrich (Priority A and B only, 10 or fewer)
 - `session_id`: the session folder is `.sp-tmp/{session_id}/`
+- `scores_file`: the path of `partner-scores.json`, the candidates with a `score` and a `priority`, best first
 
 ## Workflow
 
-### Step 1: Apollo Bulk Enrich
+### Step 1: Take the companies
 
-When a tool of the MCP server `apollo` is available, call its `apollo_bulk_enrich_organizations` tool for all the companies. Write the raw answer, as a JSON list with one object for each company, to `.sp-tmp/{session_id}/apollo-raw.json`.
+Read `scores_file`. Take the names of the Priority A and B candidates, best first, 10 or fewer.
 
-### Step 2: Field Allowlist Extraction
+### Step 2: Apollo Bulk Enrich
 
-Run the extractor on the raw answer. It keeps the allowed fields only and prints a markdown table:
+When the tool `mcp__apollo__apollo_bulk_enrich_organizations` is available, call it for all the companies. Write the raw answer, as a JSON list with one object for each company, to `.sp-tmp/{session_id}/apollo-raw.json`.
 
-```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/apollo_extractor.py .sp-tmp/{session_id}/apollo-raw.json
+Output: `DONE: apollo-enricher RAW`
+
+### Step 3: Fallback
+
+When the tool is not available, or the call returns an error or no data, write the notice below to `.sp-tmp/{session_id}/apollo-enrichment.md`, and write no `apollo-raw.json`. The run goes on without enrichment data.
+
+```
+# apollo enrichment: not available
+
+The Apollo server was not available, or it returned an error or no data. This run has no enrichment data.
 ```
 
-The allowed fields are: name, domain, industry, employee_count, annual_revenue, headquarters_city, headquarters_country, linkedin_url, founded_year, description. The script drops all other fields. This is the context firewall.
-
-### Step 3: Write Compact Table
-
-Write the table that the script printed to `.sp-tmp/{session_id}/apollo-enrichment.md`. The table has one row for each company, so the discover-agent can use it when it merges results.
-
-### Step 4: Fallback
-
-When no Apollo tool is available, or the call returns an error or no data, write a fallback notice to `.sp-tmp/{session_id}/apollo-enrichment.md`. The notice says that Apollo enrichment was not available. The discover-agent then goes on without enrichment data.
-
-Output: `DONE: apollo-enricher`
+Output: `DONE: apollo-enricher NOTICE`

@@ -7,7 +7,7 @@ ecosystem_health_scorer.py — Jansen's 5-dimension ecosystem health model.
 
 Used in the discover phase to assess partner ecosystem viability.
 
-Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ecosystem_health_scorer.py <scores.json>
+Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ecosystem_health_scorer.py <scores.json> [--out FILE]
 The file holds an object with the 5 dimensions. The script prints the result.
 
 Formula: (sum of dimension scores / 5) × 4
@@ -17,6 +17,8 @@ Output total range: 4.0 (all 1s) to 20.0 (all 5s)
 at_risk rules:
   - total < 12.0 (Priority C threshold), OR
   - productivity <= 2 AND diversity <= 2 (red-flag: declining productivity + low diversity)
+
+With `--out`, the script writes the result to the file and prints 1 line.
 """
 
 import argparse
@@ -78,16 +80,20 @@ def score_ecosystem(scores: dict) -> dict:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
     parser.add_argument("input", help="path of the JSON file")
+    parser.add_argument("--out", help="write the result to this file and print one line")
     args = parser.parse_args(argv)
     try:
         data = json.loads(Path(args.input).read_text())
         if not isinstance(data, dict):
             raise ValueError("the file must hold an object with the 5 dimensions")
         result = score_ecosystem(data)
+        text = json.dumps(result, indent=2)
+        if args.out:
+            Path(args.out).write_text(text + "\n")
     except (OSError, ValueError, TypeError) as err:
         print(f"error: {err}", file=sys.stderr)
         return 1
-    print(json.dumps(result, indent=2))
+    print(f"total={result['total']} at_risk={str(result['at_risk']).lower()}" if args.out else text)
     return 0
 
 

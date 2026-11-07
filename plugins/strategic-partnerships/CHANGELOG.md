@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.2.0
+
+This version gives each agent a narrow tool grant.
+
+- No agent has the tools `Bash`, `Agent` or `Skill`, and no agent has an `mcp__<server>__*` wildcard. An agent can only read files and write files. The agent `apollo-enricher` also has the one tool `mcp__apollo__apollo_bulk_enrich_organizations`.
+- The skills run each script and start each agent in your conversation. The skill `partnerships` runs the loop of the 5 phases, the pre-flight and evaluator scripts, and the synthesizer.
+- The agents `orchestrator`, `pre-flight-agent` and `evaluator-agent` are removed. The plugin has 8 agents.
+- The agents `discover-agent` and `monetize-agent` run in two steps, `step: inputs` and `step: report`. The skill runs the scorer scripts and the NPV script between the two steps.
+- The skills `partnerships-discover` and `partnerships-monetize` have a section `## Phase steps`. The full run and the single phase follow the same steps.
+- Seven scripts have the new option `--out FILE`. It writes the result to the file and prints one line. `session_manager.py` has the new option `--from-file` for `--update-preflight` and `--update-evaluator`.
+- The run writes new files in `.sp-tmp/<session_id>/`: `preflight-<phase>.json`, `evaluator-<phase>.json`, `partner-scores.json`, `ecosystem-health-result.json`, `power-dynamics-result.json`, `monetize-notes.md` and `npv-result.json`.
+- The skills `partnerships-assess`, `-structure`, `-architect` and `-recommend` allow only the scripts that they run.
+- Each session id and each path in a `uv run` line of a skill is in single quotes. Each skill tests a session id from the arguments before it builds a command, so a value with a quote or a space stops the skill.
+- The skills tell the model to start each agent with `run_in_background: false` and to run each command on its own, with no `;`, no `&&`, no `$?` and no shell variable.
+- The README tells you to add `.sp-tmp/` to your `.gitignore`.
+- New test `tests/unit/test_agent_grants.py` fails on a wide grant of an agent.
+- ADR-002 is amended to match.
+
 ## 2.1.0
 
 This version ports the plugin to this marketplace.

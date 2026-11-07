@@ -1,6 +1,6 @@
 ---
 name: structure-agent
-description: Designs the deal structure (model type, revenue streams, term sheet outline). The orchestrator or the skill partnerships-structure dispatches it.
+description: Designs the deal structure (model type, revenue streams, term sheet outline). The skill partnerships or the skill partnerships-structure dispatches it.
 model: sonnet
 tools: Read, Write
 ---

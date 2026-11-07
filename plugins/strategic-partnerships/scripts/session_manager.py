@@ -9,9 +9,16 @@ Run it with uv, from the folder of the person. It reads and writes `.sp-tmp/<ses
     uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py --init [--session-id ID]
     uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py --sweep [--max-age-minutes 60]
     uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py --update-preflight --session-id ID --phase P --confidence HIGH|MEDIUM|LOW [--missing a,b]
+    uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py --update-preflight --session-id ID --phase P --from-file FILE
     uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py --update-evaluator --session-id ID --phase P --result PASS|FAIL [--gaps a,b]
+    uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py --update-evaluator --session-id ID --phase P --from-file FILE
     uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py --complete-phase --session-id ID --phase P
     uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py --complete --session-id ID
+
+With `--from-file`, the values come from the JSON file that `simulate_phase.py --out` or
+`evaluate_phase.py --out` wrote (`confidence` and `missing`, or `result` and `gaps`), so no
+one copies a value into the command. `--from-file` and `--confidence`, `--missing`, `--result`
+or `--gaps` together are a usage error.
 
 A call that fails prints 1 line to standard error and exits 1.
 """
@@ -189,6 +196,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--result", choices=EVALUATOR_RESULTS)
     parser.add_argument("--missing", help="comma-separated list of missing inputs")
     parser.add_argument("--gaps", help="comma-separated list of rubric gaps")
+    parser.add_argument("--from-file", help="JSON file of simulate_phase.py or evaluate_phase.py (--out)")
     parser.add_argument("--max-age-minutes", type=int, default=60)
     return parser
 
@@ -203,14 +211,33 @@ def _sweep(args: argparse.Namespace, base: Path) -> str:
     return str(sweep_stale_sessions(base, args.max_age_minutes))
 
 
+def _read_values(path: str, value_key: str, list_key: str, choices: list[str]) -> tuple[str, list[str]]:
+    """The value and the list of a `--out` file, checked with the same choices as the flags."""
+    data = json.loads(Path(path).read_text())
+    if not isinstance(data, dict):
+        raise ValueError("the file must hold a JSON object")
+    value, items = data.get(value_key), data.get(list_key, [])
+    if value not in choices:
+        raise ValueError(f"'{value_key}' in the file must be one of {choices}, got {value!r}")
+    if not isinstance(items, list) or not all(isinstance(item, str) for item in items):
+        raise ValueError(f"'{list_key}' in the file must be a list of strings")
+    return value, items
+
+
 def _update_preflight(args: argparse.Namespace, base: Path) -> str:
-    result = record_preflight(base, args.session_id, args.phase, args.confidence, _split(args.missing))
-    return json.dumps(result)
+    if args.from_file:
+        confidence, missing = _read_values(args.from_file, "confidence", "missing", CONFIDENCE_LEVELS)
+    else:
+        confidence, missing = args.confidence, _split(args.missing)
+    return json.dumps(record_preflight(base, args.session_id, args.phase, confidence, missing))
 
 
 def _update_evaluator(args: argparse.Namespace, base: Path) -> str:
-    result = record_evaluator(base, args.session_id, args.phase, args.result, _split(args.gaps))
-    return json.dumps(result)
+    if args.from_file:
+        result, gaps = _read_values(args.from_file, "result", "gaps", EVALUATOR_RESULTS)
+    else:
+        result, gaps = args.result, _split(args.gaps)
+    return json.dumps(record_evaluator(base, args.session_id, args.phase, result, gaps))
 
 
 def _complete_phase(args: argparse.Namespace, base: Path) -> str:
@@ -238,6 +265,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     args = parser.parse_args(argv)
     command = next(name for name in COMMANDS if getattr(args, name))
     required, handler = COMMANDS[command]
+    if args.from_file:
+        if not (args.update_preflight or args.update_evaluator):
+            parser.error("--from-file is for --update-preflight and --update-evaluator")
+        if any(getattr(args, name) is not None for name in ("confidence", "result", "missing", "gaps")):
+            parser.error("--from-file cannot go with --confidence, --result, --missing or --gaps")
+        required = tuple(name for name in required if name not in ("confidence", "result"))
     for name in required:
         if getattr(args, name) is None:
             parser.error(f"--{name.replace('_', '-')} is required for this command")

@@ -14,8 +14,10 @@ The plugin file [frameworks.md](./frameworks.md) names the source of each framew
 
 You can use the plugin in two ways:
 
-- **Full run.** One skill runs all six phases. An agent runs each phase, and Python scripts do the scoring and the math. A full run takes time. Use a phase skill for a short run.
-- **One phase.** A phase skill applies the framework of one phase in your conversation. You can ask it for a scored analysis too. Then it uses the agent of the phase.
+- **Full run.** One skill runs all six phases. The skill runs the Python scripts for the scoring and the math, and it starts an agent for each part that needs judgment. A full run takes time. Use a phase skill for a short run.
+- **One phase.** A phase skill applies the framework of one phase in your conversation. You can ask it for a scored analysis too. Then it starts the agents of the phase and runs the scripts of the phase.
+
+No agent of the plugin has the tools `Bash` or `Agent`. The skills run the scripts and start the agents in your conversation. Each agent can only read files and write files. The agent `apollo-enricher` also has one Apollo tool.
 
 ---
 
@@ -62,7 +64,7 @@ Give them after the skill name, as free text. The skill asks you only for the fa
 ### The two paths of a phase skill
 
 - **Quick interactive.** The skill applies its framework in your conversation. It can ask you questions.
-- **Full quality.** Give a session id, or ask for a scored analysis. The skill checks that the earlier phases have output. When they do not, it names them and takes the quick path. Else it starts the agent of the phase and shows the path of the output file. `partnerships-recommend` starts the synthesizer.
+- **Full quality.** Give a session id, or ask for a scored analysis. The skill checks that the earlier phases have output. When they do not, it names them and takes the quick path. Else it starts the agents of the phase, runs the scripts of the phase, and shows the path of the output file. `partnerships-recommend` starts the synthesizer.
 
 ---
 
@@ -120,15 +122,17 @@ Output: go or no-go decisions, 12-month roadmap, risk register, and board brief.
 
 ## Outputs
 
-A full run writes into the folder `.sp-tmp/<session_id>/` in your current folder. The folder holds:
+A full run writes into the folder `.sp-tmp/<session_id>/` in your current folder. Git shows the folder `.sp-tmp/` as a new folder. To keep it out of your commits, add the line `.sp-tmp/` to the file `.gitignore` of your project. The folder holds:
 
 - `session.json`: the state of the run, the pre-flight confidence and the evaluator result of each phase
+- `preflight-<phase>.json` and `evaluator-<phase>.json`: the result of the pre-flight script and of the evaluator script for each phase
 - `assess.md`, `discover.md`, `structure.md`, `architect.md`, `monetize.md`: the output of each phase
 - `discover-model-<n>.md` and `discover-model-<n>.json`: the candidates of each partnership model (n = 1 to 6)
 - `candidates.json`, `ecosystem-health.json`, `power-dynamics.json`: the input of the scoring scripts
+- `partner-scores.json`, `ecosystem-health-result.json`, `power-dynamics-result.json`: the result of the scoring scripts
 - `apollo-enrichment.md`: the company data from Apollo, or a notice that Apollo was not available
 - `apollo-raw.json`: the raw Apollo answer. The file exists only when Apollo answered.
-- `npv-input.json`: the input of the NPV script
+- `npv-input.json`, `monetize-notes.md`, `npv-result.json`: the input of the NPV script, the projections of the monetize agent, and the result of the NPV script
 - `synthesize.md`: the go or no-go result, the risk register, and the next steps
 
 At the end of a run, the skill shows the go or no-go result, the path of `synthesize.md`, each phase with low pre-flight confidence, and each phase that the evaluator failed.

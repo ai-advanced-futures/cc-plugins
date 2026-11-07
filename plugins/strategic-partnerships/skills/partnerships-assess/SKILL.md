@@ -2,7 +2,7 @@
 name: partnerships-assess
 description: Evaluate a software product's current market position, business model archetype, ecosystem power dynamics, and readiness for strategic partnerships. Use when the user wants to assess partnership readiness, evaluate ecosystem fit, audit current partnerships, analyze competitive moats, understand partner leverage, or identify gaps before approaching partners.
 argument-hint: "[session id, or product name, category, target market, existing integrations, partnership goals]"
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py *)
 ---
 
 ## Routing
@@ -11,9 +11,9 @@ allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
 
 **Full quality** (the person gives a session id, or asks for a scored analysis):
 
-1. Take the session id and the product context from `$ARGUMENTS`. Ask the person for each missing field: product name, category, target market, existing integrations, and partnership goals.
+1. Take the session id and the product context from `$ARGUMENTS`. Test a session id before you put it in a command, because the shell reads the value before the script does: it must match `[A-Za-z0-9._-]{1,64}` and must not be `.` or `..`. When it does not, say that the value is not allowed, start no agent, run no command, and stop. Ask the person for each missing field: product name, category, target market, existing integrations, and partnership goals.
 2. With no session id, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py --init`. It prints the new session id.
-3. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py --phase assess --session-id <session id>`. When a script exits 2 (the session id is not a plain name), show its message and stop. Dispatch no agent, and read no file. On LOW confidence, name the missing earlier phases. Then take the quick interactive path.
+3. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py --phase assess --session-id '<session id>'`. When a script exits 2 (the session id is not a plain name), show its message and stop. Dispatch no agent, and read no file. On LOW confidence, name the missing earlier phases. Then take the quick interactive path.
 4. Otherwise always dispatch `strategic-partnerships:assess-agent` with the `Agent` tool, also when the phase file exists, because the person asked for a new result. Give it `session_id` and `product_context`. Show the path `.sp-tmp/<session id>/assess.md`.
 
 # Strategic Partnership Assessment

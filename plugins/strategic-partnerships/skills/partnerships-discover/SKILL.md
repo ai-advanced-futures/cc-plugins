@@ -11,10 +11,32 @@ allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
 
 **Full quality** (the person gives a session id, or asks for a scored analysis):
 
-1. Take the session id from `$ARGUMENTS`. With no session id, ask the person for the missing product context fields. Then run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py --init`. It prints the new session id.
-2. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py --phase discover --session-id <session id>`. When a script exits 2 (the session id is not a plain name), show its message and stop. Dispatch no agent, and read no file. On LOW confidence, name the missing earlier phases. Then take the quick interactive path.
+1. Take the session id from `$ARGUMENTS`. Test it before you put it in a command, because the shell reads the value before the script does: it must match `[A-Za-z0-9._-]{1,64}` and must not be `.` or `..`. When it does not, say that the value is not allowed, start no agent, run no command, and stop. With no session id, ask the person for the missing product context fields. Then run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py --init`. It prints the new session id.
+2. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py --phase discover --session-id '<session id>'`. When a script exits 2 (the session id is not a plain name), show its message and stop. Dispatch no agent, and read no file. On LOW confidence, name the missing earlier phases. Then take the quick interactive path.
 3. With a session id and no new context, take `product_context` from `.sp-tmp/<session id>/assess.md`. A run with `claude -p` has no person to ask.
-4. Otherwise always dispatch `strategic-partnerships:discover-agent` with the `Agent` tool, also when the phase file exists, because the person asked for a new result. Give it `session_id` and `product_context`. Show the path `.sp-tmp/<session id>/discover.md`.
+4. Otherwise always follow the steps of `## Phase steps` below, also when the phase file exists, because the person asked for a new result. Show the path `.sp-tmp/<session id>/discover.md`.
+
+## Phase steps
+
+The skill starts each agent and runs each script itself. Run each command on its own, as it is written: no `;`, no `&&`, no `$?` and no shell variable, because the grant of this skill allows 1 `uv run` command only. No agent of this plugin has `Bash` or `Agent`. Start each agent with the `Agent` tool in the foreground: set `run_in_background: false` in each `Agent` call. Use its full name, because a bare name finds no agent. Each agent ends with 1 `DONE:` line, so wait for it before the next step. In the steps, `<id>` is the session id.
+
+1. Start 6 `strategic-partnerships:discover-worker` agents in 1 message, with 6 `Agent` calls, so that they run at the same time. Give each call `model_number` (1 to 6), `session_id` and `product_context`. Wait for the 6 lines `DONE: discover-worker-<n>`.
+2. Start `strategic-partnerships:discover-agent` with `step: inputs`, `session_id` and `product_context`. It merges the 6 files `discover-model-<n>.json` and writes `candidates.json`, `ecosystem-health.json` and `power-dynamics.json` in `.sp-tmp/<id>/`. Wait for `DONE: discover inputs`.
+3. Run the 3 scorers, one for each call. Each one writes its result to a file and prints 1 line:
+   - `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/partner_scorer.py '.sp-tmp/<id>/candidates.json' --out '.sp-tmp/<id>/partner-scores.json'`
+   - `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ecosystem_health_scorer.py '.sp-tmp/<id>/ecosystem-health.json' --out '.sp-tmp/<id>/ecosystem-health-result.json'`
+   - `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/power_dynamics_scorer.py '.sp-tmp/<id>/power-dynamics.json' --out '.sp-tmp/<id>/power-dynamics-result.json'`
+
+   When a script exits with a code that is not 0, show its error line and start no more agents of this phase. The full run of the skill `partnerships` goes on with its evaluator step, and the missing `discover.md` gives a FAIL. Run alone, say that the phase failed.
+4. Start `strategic-partnerships:apollo-enricher` with `session_id` and `scores_file` (`.sp-tmp/<id>/partner-scores.json`). The step is optional: the agent takes the names of the Priority A and B candidates from that file, so no candidate list goes through this conversation. Wait for its last line.
+5. When the enricher ends with `DONE: apollo-enricher RAW`, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/apollo_extractor.py '.sp-tmp/<id>/apollo-raw.json' --out '.sp-tmp/<id>/apollo-enrichment.md'`. When the extractor exits with a code that is not 0, or when the enricher ends with another line, write the notice below to `.sp-tmp/<id>/apollo-enrichment.md` with the Write tool. When the enricher ends with `DONE: apollo-enricher NOTICE`, run nothing: the agent wrote the notice. The run goes on in each case, because no agent reads this file. The notice:
+
+   ```
+   # apollo enrichment: not available
+
+   The Apollo server was not available, or it returned an error or no data. This run has no enrichment data.
+   ```
+6. Start `strategic-partnerships:discover-agent` with `step: report`, `session_id` and `product_context`. It reads the 3 result files and writes `discover.md`. Wait for `DONE: discover`.
 
 # Partner Ecosystem Discovery
 

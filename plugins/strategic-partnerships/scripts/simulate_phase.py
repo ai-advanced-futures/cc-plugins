@@ -5,12 +5,14 @@
 """
 simulate_phase.py — Pre-flight simulator for strategic-partnerships phase dispatch.
 
-Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py --phase P --session-id ID
+Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py --phase P --session-id ID [--out FILE]
 The script reads `.sp-tmp/<session_id>/` in the current folder. Each `<x>.md` file counts as
 the available input `<x>_output`. It prints the JSON result.
 
 Checks whether required inputs are available before dispatching a phase agent.
 Returns a confidence rating (HIGH / MEDIUM / LOW) and a list of missing inputs.
+
+With `--out`, the script writes the result to the file and prints 1 line.
 """
 
 import argparse
@@ -96,13 +98,17 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
     parser.add_argument("--phase", required=True, choices=sorted(PHASE_REQUIRED_INPUTS))
     parser.add_argument("--session-id", required=True, type=session_id_arg)
+    parser.add_argument("--out", help="write the result to this file and print one line")
     args = parser.parse_args(argv)
     try:
         result = simulate_phase(args.phase, available_inputs(Path(SP_TMP_DIR) / args.session_id))
+        text = json.dumps(result, indent=2)
+        if args.out:
+            Path(args.out).write_text(text + "\n")
     except (OSError, ValueError) as err:
         print(f"error: {err}", file=sys.stderr)
         return 1
-    print(json.dumps(result, indent=2))
+    print(f"confidence={result['confidence']}" if args.out else text)
     return 0
 
 

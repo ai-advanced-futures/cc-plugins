@@ -5,13 +5,15 @@
 """
 evaluate_phase.py — Post-execution phase output evaluator.
 
-Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/evaluate_phase.py --phase P --session-id ID
+Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/evaluate_phase.py --phase P --session-id ID [--out FILE]
 The script reads `<P>.md` in `.sp-tmp/<session_id>/` of the current folder and prints the
 JSON result.
 
 Checks whether a phase agent's output text contains the expected rubric
 sections. Returns a structured result dict with pass/fail verdict and
 a list of any missing rubric items.
+
+With `--out`, the script writes the result to the file and prints 1 line.
 """
 
 import argparse
@@ -104,14 +106,18 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
     parser.add_argument("--phase", required=True, choices=sorted(PHASE_RUBRICS))
     parser.add_argument("--session-id", required=True, type=session_id_arg)
+    parser.add_argument("--out", help="write the result to this file and print one line")
     args = parser.parse_args(argv)
     try:
-        text = (Path(SP_TMP_DIR) / args.session_id / f"{args.phase}.md").read_text()
-        result = evaluate_phase(args.phase, text)
+        phase_text = (Path(SP_TMP_DIR) / args.session_id / f"{args.phase}.md").read_text()
+        result = evaluate_phase(args.phase, phase_text)
+        text = json.dumps(result, indent=2)
+        if args.out:
+            Path(args.out).write_text(text + "\n")
     except (OSError, ValueError) as err:
         print(f"error: {err}", file=sys.stderr)
         return 1
-    print(json.dumps(result, indent=2))
+    print(f"result={result['result']}" if args.out else text)
     return 0
 
 

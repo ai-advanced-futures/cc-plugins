@@ -1,6 +1,7 @@
-# ADR-002: From Skills Only to an 11-Agent Pipeline
+# ADR-002: From Skills Only to an 8-Agent Pipeline
 
 **Date:** 2026-03-04
+**Amended:** 2026-11-06
 **Status:** Accepted (amended for the marketplace port)
 **Supersedes:** Decision 1 of ADR-001 (Skill-Only Architecture)
 
@@ -14,24 +15,25 @@ The first version of the plugin used only skills: 6 SKILL.md files loaded into t
 
 2. **Apollo response size.** A raw Apollo company enrichment answer has 50 to 100 fields for each company. An answer for 10 companies, passed to an agent, uses 15,000 to 20,000 context tokens. Most of these tokens are noise (social URLs, SEO data, funding metadata).
 
-These two limits needed a change of architecture.
+These two limits needed a change of architecture. A third need is a narrow tool grant: an agent that can run any shell command, or start any agent, has more power than its work needs.
 
 ---
 
 ## Decision
 
-Change the full run from skills only to an **11-agent pipeline that passes data between agents through files**. The phase skills stay as a quick path for interactive use.
+Change the full run from skills only to an **8-agent pipeline that passes data between agents through files**. The skills run the scripts and start the agents. No agent has `Bash`, `Agent` or `Skill`. The phase skills stay as a quick path for interactive use.
 
 The pipeline has:
-- A thin **orchestrator** (sonnet). It starts the agents in order with the `Agent` tool, and it reads only `session.json` between starts.
-- 5 **phase agents** (sonnet): assess, discover, structure, architect, monetize. Each writes its output to `.sp-tmp/<session_id>/<phase>.md` and returns only `DONE: <phase>`.
-- 1 **synthesizer** (opus). It writes `synthesize.md`.
-- A **discover-agent** that starts 6 **discover-worker** agents (haiku) in parallel, one for each partnership model of Popp. It merges their results and starts the apollo-enricher.
-- An **apollo-enricher** (haiku). It calls the Apollo server when the person added one, keeps 10 fields with an allowlist (`apollo_extractor.py`), and writes a compact table of about 600 tokens.
-- A **pre-flight-agent** (haiku). It runs `simulate_phase.py` before each phase to check the inputs (HIGH, MEDIUM, or LOW confidence).
-- An **evaluator-agent** (haiku). It runs `evaluate_phase.py` after each phase to check the output (PASS or FAIL, with a gap list).
+- 5 **phase agents** (sonnet): assess, discover, structure, architect, monetize. Each writes its output to `.sp-tmp/<session_id>/<phase>.md` and returns only `DONE: <phase>`. They have `Read` and `Write`.
+- 1 **synthesizer** (opus). It writes `synthesize.md`. It has `Read` and `Write`.
+- 6 **discover-worker** agents (haiku) in parallel, one for each partnership model of Popp. They have `Read` and `Write`.
+- An **apollo-enricher** (haiku). It has `Read`, `Write` and the one tool `mcp__apollo__apollo_bulk_enrich_organizations`. It calls the Apollo server when the person added one, and it writes the raw answer to `apollo-raw.json`.
 
-The skill `partnerships` starts the full run. It is the only part that asks the person.
+The **discover-agent** and the **monetize-agent** each run in two steps, because a script runs between the two parts that need judgment:
+- discover-agent, `step: inputs`: merge the candidates and score the ecosystem and the power position. `step: report`: write `discover.md` from the results of the scorer scripts.
+- monetize-agent, `step: inputs`: write the revenue projections and the NPV input. `step: report`: write `monetize.md` from the result of the NPV script.
+
+The skill `partnerships` runs the loop of the 5 phases in the main conversation. The skills `partnerships-discover` and `partnerships-monetize` hold a `## Phase steps` section that both the full run and the single phase follow. The skills run `apollo_extractor.py` on the raw Apollo answer, and the scripts `simulate_phase.py`, `evaluate_phase.py`, the 3 scorers and `npv_calculator.py`. The skill `partnerships` is the only part that asks the person.
 
 ---
 
@@ -39,41 +41,47 @@ The skill `partnerships` starts the full run. It is the only part that asks the 
 
 ### Questions only in skills
 
-Claude Code removes `AskUserQuestion` from every subagent. So an agent cannot ask the person. The skill `partnerships` runs in the main conversation. It takes the 5 product context fields from the words of the person (name, category, target market, existing integrations, partnership goals), and it asks for the missing fields. Then it makes the session with `session_manager.py`, and it starts the orchestrator with `session_id` and `product_context`. The orchestrator asks nothing. If a field is absent, it writes no file and ends with `DONE: strategic-partnerships FAILED: session_id and product_context are required`.
+Claude Code removes `AskUserQuestion` from every subagent. So an agent cannot ask the person. The skill `partnerships` runs in the main conversation. It takes the 5 product context fields from the words of the person (name, category, target market, existing integrations, partnership goals), and it asks for the missing fields. Then it makes the session with `session_manager.py`, and it starts each agent with `session_id` and `product_context`. The agents ask nothing.
 
 ### Run order
 
-For each phase in the order assess, discover, structure, architect, monetize, the orchestrator does these steps:
-1. Start `strategic-partnerships:pre-flight-agent`.
-2. Start the phase agent with `session_id` and `product_context`.
-3. Start `strategic-partnerships:evaluator-agent`.
+For each phase in the order assess, discover, structure, architect, monetize, the skill `partnerships` does these steps:
+1. Run `simulate_phase.py` with `--out`, and record the confidence with `session_manager.py --update-preflight --from-file`.
+2. Run the agents of the phase with `session_id` and `product_context`. For discover and monetize, follow the `## Phase steps` of the phase skill.
+3. Run `evaluate_phase.py` with `--out`, and record the result with `session_manager.py --update-evaluator --from-file`.
 4. Run `session_manager.py --complete-phase`.
 
-Then it starts `strategic-partnerships:synthesizer`, runs `session_manager.py --complete`, and ends with `DONE: strategic-partnerships`. The skill reads `session.json` and `synthesize.md`, and it shows the go or no-go result.
+Then it starts `strategic-partnerships:synthesizer` and runs `session_manager.py --complete`. When the synthesizer ends with `DONE: strategic-partnerships`, the skill reads `session.json` and `synthesize.md`, and it shows the go or no-go result.
 
-A LOW pre-flight confidence does not stop the run. The pre-flight agent records it in `session.json`. A FAIL of the evaluator does not stop the run either. The synthesizer puts the gaps in the risk register. No agent can ask the person, so a stop would have no answer.
+A LOW pre-flight confidence does not stop the run. The skill records it in `session.json`. A FAIL of the evaluator does not stop the run either. The synthesizer puts the gaps in the risk register. No agent can ask the person, so a stop would have no answer.
+
+### Narrow grants
+
+An agent with `Bash` can run any command, and an agent with `Agent` can start any agent. A wrong or injected instruction in a file that an agent reads then has a wide effect. The agents of this plugin need only to read and write files, so they have only `Read` and `Write`. The one outside tool has its full name, and no wildcard, so a new tool of the Apollo server does not reach the agent with no review. The test `tests/unit/test_agent_grants.py` fails on a `Bash`, `Agent`, `Skill` or `mcp__<server>__*` entry in `agents/`.
+
+The scripts print one line when they run with `--out`, and the result is in a file. The main conversation carries a small line for each script, and no result text.
 
 ### Nesting
 
-The deepest chain is: main conversation, then `orchestrator` (layer 1), then `discover-agent` (layer 2), then the 6 `discover-worker` agents and the `apollo-enricher` (layer 3). Claude Code allows up to three layers below the main conversation. The agents of layer 3 start no agent. A plugin that starts the orchestrator from a subagent puts the workers in layer 4, and Claude Code then withholds the `Agent` tool from the discover agent.
+Each agent runs one layer below the main conversation. No agent starts another agent, so Claude Code needs no nesting depth and withholds no tool.
 
 ### File-based protocol
 
-Each phase agent writes its output to disk and returns only `DONE: <phase>`. The orchestrator never keeps phase content in its context. Its context stays at about 3K tokens, no matter how many phases are complete.
+Each phase agent writes its output to disk and returns only `DONE: <phase>`. The main conversation never keeps phase content in its context, because it reads `session.json` and the last output file only.
 
 We considered a different design: the Agent tool returns the phase output to the caller. We rejected it, because return values collect in the context of the caller. This is the compaction problem that this change solves.
 
-### Haiku for extraction and checks
+### Haiku for extraction
 
-The apollo-enricher, the discover workers, the pre-flight agent, and the evaluator agent do structured extraction and rule checks. They need no deep judgment. Haiku costs far less than opus and answers faster.
+The apollo-enricher and the discover workers do structured extraction. They need no deep judgment. Haiku costs far less than opus and answers faster.
 
 We considered sonnet for all agents. We rejected it, because haiku does these tasks with the same accuracy at a lower cost.
 
 ### Apollo is optional, and it is isolated
 
-The apollo-enricher is a context firewall. It receives the raw Apollo answer, writes it to `apollo-raw.json`, runs the allowlist in `apollo_extractor.py`, and writes only a compact table to `apollo-enrichment.md`. The raw answer never reaches the orchestrator or the discover agent.
+The apollo-enricher is a context firewall. It receives the raw Apollo answer and writes it to `apollo-raw.json`. The skill runs the allowlist in `apollo_extractor.py`, and the script writes only a compact table to `apollo-enrichment.md`. The raw answer never reaches the main conversation or the discover agent.
 
-Apollo is an outside tool that the person adds with `claude mcp add apollo`. The enricher has the tool entry `mcp__apollo__*`. When the server is absent or the call fails, the enricher writes a notice to `apollo-enrichment.md`, and the discover agent goes on. The plugin starts no outside service and holds no key.
+Apollo is an outside tool that the person adds with `claude mcp add apollo`. When the server is absent or the call fails, the enricher writes a notice to `apollo-enrichment.md`, and the run goes on. The plugin starts no outside service and holds no key.
 
 ### Opus for synthesis
 
@@ -96,17 +104,19 @@ The first agent version wrote a handoff file for a pipeline plugin of the source
 ## Consequences
 
 **Positive:**
-- The context of the orchestrator stays small, no matter how long the pipeline is.
+- The main conversation stays small, no matter how long the pipeline is.
 - Apollo data is about 600 tokens, and not 15,000 to 20,000.
-- The pre-flight agent and the evaluator agent add quality checks with no person in the loop.
+- No agent can run a shell command or start an agent.
+- The pre-flight check and the evaluator check add quality checks with no person in the loop.
 - After a failure, the phase files stay on disk.
 - Python scripts do the math and the checks, and the scripts have tests.
 - The plugin works when no Apollo server is present.
 
 **Negative:**
-- The plugin has 11 agent files to maintain.
+- The plugin has 8 agent files to maintain.
+- The skill `partnerships` holds the run loop, so a long full run keeps its steps in the main conversation.
 - A complete session folder stays in `.sp-tmp/` until the person deletes it.
-- The discover phase is more complex: 6 parallel workers, one enricher, and a merge.
+- The discover phase is more complex: 6 parallel workers, one enricher, two steps of the discover agent, and a merge.
 - A full run takes time and costs more than a phase skill.
 
 **Neutral:**
@@ -116,11 +126,12 @@ The first agent version wrote a handoff file for a pipeline plugin of the source
 
 ## Compliance
 
-- Context protection: the orchestrator reads `session.json` only, and never the phase content.
-- Math and checks in Python: `partner_scorer`, `npv_calculator`, `ecosystem_health_scorer`, `power_dynamics_scorer`, `simulate_phase`, `evaluate_phase`, `apollo_extractor`, and `session_manager`. Agents and skills run them as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py`.
+- Grants: no agent has `Bash`, `Agent`, `Skill` or a `mcp__<server>__*` wildcard in its `tools:` list. `tests/unit/test_agent_grants.py` checks this.
+- Context protection: the main conversation reads `session.json` and the last output file only, and never the phase content of the other phases.
+- Math and checks in Python: `partner_scorer`, `npv_calculator`, `ecosystem_health_scorer`, `power_dynamics_scorer`, `simulate_phase`, `evaluate_phase`, `apollo_extractor`, and `session_manager`. Only skills run them, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py`.
 - Judgment and text in agents.
 - No agent has `AskUserQuestion` or `Task` in its `tools:` list.
-- The orchestrator ends with `DONE: strategic-partnerships` as its last line.
+- The synthesizer ends with `DONE: strategic-partnerships` as its last line.
 
 ---
 

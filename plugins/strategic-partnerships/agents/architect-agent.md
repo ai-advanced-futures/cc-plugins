@@ -1,6 +1,6 @@
 ---
 name: architect-agent
-description: Designs the technical integration blueprint for the partnership. The orchestrator or the skill partnerships-architect dispatches it.
+description: Designs the technical integration blueprint for the partnership. The skill partnerships or the skill partnerships-architect dispatches it.
 model: sonnet
 tools: Read, Write
 ---

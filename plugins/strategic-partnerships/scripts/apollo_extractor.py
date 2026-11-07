@@ -5,14 +5,15 @@
 """
 apollo_extractor.py — Apollo MCP response context firewall for strategic-partnerships.
 
-Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/apollo_extractor.py <raw.json>
+Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/apollo_extractor.py <raw.json> [--out FILE]
 The file holds the raw Apollo answer: a list of companies, or an object with an
-`organizations` or `companies` list. The script prints the markdown table.
+`organizations` or `companies` list. The script prints the markdown table. With `--out`, it
+writes the table to the file and prints `rows=<n>`.
 
 Raw Apollo API responses can be 2,000–5,000 tokens per company. This module
 applies a strict field allowlist and formats the result as a compact markdown
 table (~600 tokens for 15 companies), preventing raw Apollo payloads from ever
-reaching the main orchestrator's context window.
+reaching the main conversation.
 """
 
 from __future__ import annotations
@@ -142,13 +143,17 @@ def load_companies(data) -> list:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
     parser.add_argument("input", help="path of the JSON file")
+    parser.add_argument("--out", help="write the table to this file and print one line")
     args = parser.parse_args(argv)
     try:
-        table = process_batch(load_companies(json.loads(Path(args.input).read_text())))
+        companies = load_companies(json.loads(Path(args.input).read_text()))
+        table = process_batch(companies)
+        if args.out:
+            Path(args.out).write_text(table + "\n")
     except (OSError, ValueError, AttributeError) as err:
         print(f"error: {err}", file=sys.stderr)
         return 1
-    print(table)
+    print(f"rows={len(companies)}" if args.out else table)
     return 0
 
 

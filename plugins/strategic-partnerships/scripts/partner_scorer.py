@@ -5,13 +5,15 @@
 """
 partner_scorer.py — Weighted scoring model for the discover phase of strategic-partnerships.
 
-Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/partner_scorer.py <candidates.json>
+Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/partner_scorer.py <candidates.json> [--out FILE]
 The file holds a list of candidates (or an object with a `candidates` list). The script
 prints the list with `score` and `priority`, sorted by score.
 
 Formula: [(A×0.30) + (S×0.25) + (R×0.25) + (F×0.20)] × 4
 Valid score range per dimension: 1–5 (integer)
 Output score range: 4.0 (all 1s) to 20.0 (all 5s)
+
+With `--out`, the script writes the result to the file and prints 1 line.
 """
 
 import argparse
@@ -103,6 +105,7 @@ def score_candidates(candidates: list[dict]) -> list[dict]:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
     parser.add_argument("input", help="path of the JSON file")
+    parser.add_argument("--out", help="write the result to this file and print one line")
     args = parser.parse_args(argv)
     try:
         data = json.loads(Path(args.input).read_text())
@@ -111,10 +114,13 @@ def main(argv=None) -> int:
         if not isinstance(data, list):
             raise ValueError("the file must hold a list of candidates")
         result = score_candidates(data)
+        text = json.dumps(result, indent=2)
+        if args.out:
+            Path(args.out).write_text(text + "\n")
     except (OSError, ValueError, TypeError) as err:
         print(f"error: {err}", file=sys.stderr)
         return 1
-    print(json.dumps(result, indent=2))
+    print(f"candidates={len(result)}" if args.out else text)
     return 0
 
 

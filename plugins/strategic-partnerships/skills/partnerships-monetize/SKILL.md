@@ -11,10 +11,18 @@ allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
 
 **Full quality** (the person gives a session id, or asks for a scored analysis):
 
-1. Take the session id from `$ARGUMENTS`. With no session id, ask the person for the missing product context fields. Then run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py --init`. It prints the new session id.
-2. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py --phase monetize --session-id <session id>`. When a script exits 2 (the session id is not a plain name), show its message and stop. Dispatch no agent, and read no file. On LOW confidence, name the missing earlier phases. Then take the quick interactive path.
+1. Take the session id from `$ARGUMENTS`. Test it before you put it in a command, because the shell reads the value before the script does: it must match `[A-Za-z0-9._-]{1,64}` and must not be `.` or `..`. When it does not, say that the value is not allowed, start no agent, run no command, and stop. With no session id, ask the person for the missing product context fields. Then run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py --init`. It prints the new session id.
+2. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py --phase monetize --session-id '<session id>'`. When a script exits 2 (the session id is not a plain name), show its message and stop. Dispatch no agent, and read no file. On LOW confidence, name the missing earlier phases. Then take the quick interactive path.
 3. With a session id and no new context, take `product_context` from `.sp-tmp/<session id>/assess.md`. A run with `claude -p` has no person to ask.
-4. Otherwise always dispatch `strategic-partnerships:monetize-agent` with the `Agent` tool, also when `monetize.md` exists, because the person asked for a new result. Give it `session_id` and `product_context`. Show the path `.sp-tmp/<session id>/monetize.md`.
+4. Otherwise always follow the steps of `## Phase steps` below, also when `monetize.md` exists, because the person asked for a new result. Show the path `.sp-tmp/<session id>/monetize.md`.
+
+## Phase steps
+
+The skill starts the agent and runs the NPV script itself. Run each command on its own, as it is written: no `;`, no `&&`, no `$?` and no shell variable, because the grant of this skill allows 1 `uv run` command only. No agent of this plugin has `Bash` or `Agent`. Start each agent with the `Agent` tool in the foreground: set `run_in_background: false` in each `Agent` call. Use its full name, because a bare name finds no agent. In the steps, `<id>` is the session id.
+
+1. Start `strategic-partnerships:monetize-agent` with `step: inputs`, `session_id` and `product_context`. It writes `npv-input.json` and `monetize-notes.md` in `.sp-tmp/<id>/`. Wait for `DONE: monetize inputs`.
+2. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/npv_calculator.py '.sp-tmp/<id>/npv-input.json' --out '.sp-tmp/<id>/npv-result.json'`. It prints `verdict=<GO|CONDITIONAL_GO|NO_GO>`. When it exits with a code that is not 0, show its error line and start no more agents of this phase. The full run of the skill `partnerships` goes on with its evaluator step, and the missing `monetize.md` gives a FAIL. Run alone, say that the phase failed.
+3. Start `strategic-partnerships:monetize-agent` with `step: report`, `session_id` and `product_context`. It reads `monetize-notes.md` and `npv-result.json` and writes `monetize.md`. Wait for `DONE: monetize`.
 
 # Partnership Monetization Model
 

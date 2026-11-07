@@ -5,7 +5,7 @@
 """
 power_dynamics_scorer.py — Jansen's power dynamics model for the discover phase of strategic-partnerships.
 
-Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/power_dynamics_scorer.py <scores.json>
+Run: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/power_dynamics_scorer.py <scores.json> [--out FILE]
 The file holds an object with the 4 power factors. The script prints the result.
 
 Scores your relative power position across 4 structural factors and maps the
@@ -16,6 +16,8 @@ Stance thresholds:
     assertive      — net_balance >= 3.5  (power in your favor)
     collaborative  — 2.5 <= net_balance < 3.5  (balanced)
     value_led      — net_balance < 2.5  (power against you — lead with exceptional value)
+
+With `--out`, the script writes the result to the file and prints 1 line.
 """
 
 import argparse
@@ -80,16 +82,20 @@ def score_power_balance(your_scores: dict) -> dict:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
     parser.add_argument("input", help="path of the JSON file")
+    parser.add_argument("--out", help="write the result to this file and print one line")
     args = parser.parse_args(argv)
     try:
         data = json.loads(Path(args.input).read_text())
         if not isinstance(data, dict):
             raise ValueError("the file must hold an object with the 4 power factors")
         result = score_power_balance(data)
+        text = json.dumps(result, indent=2)
+        if args.out:
+            Path(args.out).write_text(text + "\n")
     except (OSError, ValueError, TypeError) as err:
         print(f"error: {err}", file=sys.stderr)
         return 1
-    print(json.dumps(result, indent=2))
+    print(f"stance={result['stance']}" if args.out else text)
     return 0
 
 

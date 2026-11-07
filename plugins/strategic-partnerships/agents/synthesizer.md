@@ -1,6 +1,6 @@
 ---
 name: synthesizer
-description: Combines the five phase files into a go or no-go recommendation, a risk register and next steps. The orchestrator or the skill partnerships-recommend dispatches it.
+description: Combines the five phase files into a go or no-go recommendation, a risk register and next steps. The skill partnerships or the skill partnerships-recommend dispatches it.
 model: opus
 tools: Read, Write
 ---
