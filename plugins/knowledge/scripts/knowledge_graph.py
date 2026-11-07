@@ -6,7 +6,8 @@
 """knowledge_graph.py: the save code of the generic graph (standard section 8).
 
 Every write of the knowledge graph goes through this script. Exit 0 on
-success, 1 on a graph data error or a stale file, 2 on wrong input.
+success, 1 on a graph data error, a stale file, or a file that cannot be read or written after 5 tries
+(okf.short_lock), 2 on wrong input.
 """
 from __future__ import annotations
 
@@ -17,7 +18,7 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from knowledgelib import DataError, UsageError, changes, graph_check, graph_ops, graph_regen, graph_upgrade  # noqa: E402
+from knowledgelib import DataError, FileError, UsageError, changes, graph_check, graph_ops, graph_regen, graph_upgrade  # noqa: E402
 from knowledgelib.graph import DEFAULT_DIR  # noqa: E402
 from knowledgelib.issues import report  # noqa: E402
 from knowledgelib.okf import shown  # noqa: E402
@@ -29,7 +30,7 @@ def cmd_regen(args) -> int:
         for path in stale:
             print(f"STALE: {shown(args.root, path)}")
         return 1 if stale else 0
-    for path in graph_regen.write(args.root):
+    for path in graph_ops.regen(args.root):
         print(f"wrote {shown(args.root, path)}")
     return 0
 
@@ -201,7 +202,7 @@ def main(argv=None) -> int:
     except UsageError as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 2
-    except DataError as error:
+    except (DataError, FileError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 1
     finally:

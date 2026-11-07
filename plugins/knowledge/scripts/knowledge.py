@@ -9,7 +9,8 @@ The registry, link resolution, the remote cache, navigation, the walk state of
 an ask run, the general check, the forget plan, and remote writes. Each module
 of knowledgelib adds its commands through a register(sub) function.
 
-Exit 0 on success, 1 on a graph data error or a failed check, 2 on wrong input.
+Exit 0 on success, 1 on a graph data error, a failed check, or a file that cannot be read or written after
+5 tries (okf.short_lock), 2 on wrong input.
 """
 from __future__ import annotations
 
@@ -27,7 +28,7 @@ except ImportError:
           "or install pyyaml and jsonschema.", file=sys.stderr)
     sys.exit(2)
 
-from knowledgelib import DataError, UsageError  # noqa: E402
+from knowledgelib import DataError, FileError, UsageError  # noqa: E402
 from knowledgelib import (forget, general_check, links, navigate, registry, remote,  # noqa: E402
                           remote_write, walk)
 
@@ -52,7 +53,7 @@ def main(argv=None) -> int:
     except UsageError as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 2
-    except DataError as error:
+    except (DataError, FileError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 1
 

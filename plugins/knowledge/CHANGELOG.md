@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.10
+
+### Fixed
+- The save code tries a read or a write of a file again when a short file lock stops it, as an antivirus or an indexer does on Windows (errno 13 or 22, or Windows error 32 or 33): 5 tries in 1.5 seconds. Before, `link` could lose its write, and `body` stopped in regen with a traceback (public issues 1 and 2).
+- A write goes to a temporary file in the same folder first, and then takes the place of the file. So a write that fails keeps the old file.
+- When the last try fails, the command exits 1 with 1 line. A page write says that the page was not saved. A failed regen says which page is saved, which file failed, and gives the command `knowledge_graph.py --root "<root>" regen`.
+
 ## 1.4.9
 
 ### Changed

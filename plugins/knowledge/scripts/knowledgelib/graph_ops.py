@@ -7,7 +7,7 @@ from pathlib import Path, PurePosixPath
 
 import yaml
 
-from knowledgelib import DataError, UsageError, changes, graph_regen, links, logbook, manifest, okf, registry
+from knowledgelib import DataError, FileError, UsageError, changes, graph_regen, links, logbook, manifest, okf, registry
 from knowledgelib.graph import (DEFAULT_DIR, GRAPH, LINK_FIELDS, MANIFEST_BODY, OPERATIONS, SLUG_RE, TYPES,
                                 bundle_dir, manifest_fields, plugin_actor, stamp, validate)
 
@@ -56,12 +56,27 @@ def _load(file):
     return page
 
 
+def regen(root, done=None) -> list[Path]:
+    """Run regen. When a file cannot be read or written, name the step and the file, say what is done
+    (for example "the page <path> is saved"), and give the command to run."""
+    try:
+        return graph_regen.write(root)
+    except FileError as error:
+        head = f"{done}, but " if done else ""
+        raise DataError(f"{head}regen of {okf.shown(root, error.path)} failed: {error.reason}. "
+                        f'Run: knowledge_graph.py --root "{root}" regen') from error
+
+
 def _write_page(root, file, frontmatter, body) -> None:
     problems = validate(frontmatter.get("type"), frontmatter)
     if problems:
         raise DataError("the page is not valid, so nothing is written: " + "; ".join(problems))
-    okf.write_text(file, okf.dump(frontmatter, body))
-    graph_regen.write(root)
+    try:
+        okf.write_text(file, okf.dump(frontmatter, body))
+    except FileError as error:
+        raise DataError(f"the page {okf.shown(root, file)} was not saved: {error.reason}. "
+                        "Run the command again.") from error
+    regen(root, done=f"the page {okf.shown(root, file)} is saved")
 
 
 def _edit(root, key, change, actor, new_body=None) -> Path:
@@ -216,7 +231,7 @@ def remove(root, key, actor=None) -> Path:
     changes.note(file)
     manifest.retire(bundle, file.stem)
     _log(bundle, "Forget", f"removed {path}", actor or plugin_actor())
-    graph_regen.write(root)
+    regen(root, done=f"the page {okf.shown(root, file)} is removed")
     return file
 
 

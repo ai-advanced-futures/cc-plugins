@@ -2,13 +2,17 @@
 from __future__ import annotations
 
 import datetime as _dt
+import errno
+import os
 import re
+import shutil
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
 
-from knowledgelib import changes
+from knowledgelib import FileError, changes
 
 FRONTMATTER_RE = re.compile(r"\A---\r?\n(.*?)\r?\n---[ \t]*(?:\r?\n|\Z)", re.DOTALL)
 LINKS_START = "<!-- LINKS:START (generated, do not edit) -->"
@@ -18,6 +22,11 @@ BODY_GRAPH_RE = re.compile(r"(?<![\w/:.-])([a-z][a-z0-9-]*):(/[A-Za-z0-9._-][A-Z
 BODY_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 EXTERNAL_RE = re.compile(r"^(?:[a-z][a-z0-9+.-]*:|//|#)")
 SKIP_KEYS = ("generated", "verified")
+# A short file lock on Windows (an antivirus or an indexer): errno 13 or 22, or Windows error 32 or 33
+# (ERROR_SHARING_VIOLATION, ERROR_LOCK_VIOLATION). 5 tries, with these waits in seconds between them.
+RETRY_ERRNOS = (errno.EACCES, errno.EINVAL)
+RETRY_WINERRORS = (32, 33)
+RETRY_WAITS = (0.1, 0.2, 0.4, 0.8)
 
 
 def oneline(value) -> str:
@@ -48,16 +57,53 @@ class Page:
         return (self.frontmatter or {}).get("type")
 
 
+def short_lock(error) -> bool:
+    """True for an error that a short file lock gives on Windows, so that a new try can pass."""
+    return error.errno in RETRY_ERRNOS or getattr(error, "winerror", None) in RETRY_WINERRORS
+
+
+def _retry(path, verb, action):
+    """Run action. After a short lock, wait and try again, 5 tries in all. Raise FileError at the end."""
+    for tries, wait in enumerate((*RETRY_WAITS, None), start=1):
+        try:
+            return action()
+        except OSError as error:
+            if wait is None or not short_lock(error):
+                raise FileError(path, verb, error, tries) from error
+            time.sleep(wait)
+
+
 def read_text(path) -> str:
-    with open(path, encoding="utf-8", newline="") as handle:
-        return handle.read()
+    def read():
+        with open(path, encoding="utf-8", newline="") as handle:
+            return handle.read()
+
+    return _retry(path, "reading", read)
 
 
 def write_text(path, text) -> None:
+    """Write text to a temporary file in the same folder, then put it at path with os.replace, so a write
+    that fails leaves the old file. A symbolic link keeps its place: the write goes to its target."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
+    target = path.resolve() if path.is_symlink() else path
+    temp = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+
+    def write():
+        try:
+            with open(temp, "w", encoding="utf-8", newline="") as handle:
+                handle.write(text)
+            if target.exists():
+                shutil.copymode(target, temp)
+            os.replace(temp, target)
+        finally:
+            if os.path.lexists(temp):
+                try:
+                    temp.unlink()
+                except OSError:
+                    pass
+
+    _retry(path, "writing", write)
     changes.note(path)
 
 
