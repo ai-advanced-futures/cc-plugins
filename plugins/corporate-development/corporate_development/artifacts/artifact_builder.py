@@ -6,6 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from corporate_development.artifacts.target_manager import make_slug
+
 
 class ArtifactBuilder:
     """Build and write phase artifacts to organized directory structure."""
@@ -23,7 +25,7 @@ class ArtifactBuilder:
 
         # Build target-based directory structure
         base_dir = Path(output_base or ".corporate-development")
-        target_slug = target_name.lower().replace(" ", "-").replace("/", "-").replace("_", "-")
+        target_slug = make_slug(target_name)  # raises ValueError before any folder is made
         self.target_dir = base_dir / "targets" / target_slug
         self.phase_dir = self.target_dir / phase_name
 

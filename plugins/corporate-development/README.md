@@ -95,7 +95,7 @@ Phase 6 combines the scores: operational 30%, financial 25%, strategic fit 20%, 
 
 The agents ask the person nothing. Only the commands ask.
 
-If a phase agent needs an answer, it writes `handoffs/phase_<N>_questions.md` and no handoff. The command `pipeline` starts no later phase. It reads the questions file of the phase that stopped (and of the other parallel phase when Phase 3 and Phase 4 both asked), asks the questions, adds the answers to `pipeline_inputs.json`, and runs the phases again. It skips each phase that has a handoff file.
+If a phase agent needs an answer, it writes `handoffs/phase_<N>_questions.md` and no handoff. The command `pipeline` starts no later phase. It reads the questions file of the phase that stopped (and of the other parallel phase when Phase 3 and Phase 4 both asked), asks the questions, adds the answers to `pipeline_inputs.json`, and runs the phases again. It skips each phase that has a handoff file. The command builds the path of each questions file from the slug and the phase number, and reads no path that an agent returns. When an agent returns another path, the command stops and shows the 2 paths.
 
 To run all phases again, delete the folder `.corporate-development/targets/<slug>/handoffs/` and run the command.
 

@@ -8,7 +8,10 @@ import re
 from pathlib import Path
 from typing import Optional
 
-_SLUG = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")
+# The slug check of docs/pipeline-inputs.md: the first character is a letter or a digit,
+# so "." and ".." are not slugs. A test compares this text with the one in that file.
+SLUG_PATTERN = r"[a-z0-9][a-z0-9-]{0,63}"
+_SLUG = re.compile(SLUG_PATTERN)
 
 
 def check_slug(slug: str) -> str:

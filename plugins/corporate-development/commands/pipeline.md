@@ -16,12 +16,12 @@ Run the complete M&A pipeline (Phase 0 to Phase 6) for one target. This command,
 
 1. Read `${CLAUDE_PLUGIN_ROOT}/docs/pipeline-inputs.md`. It lists the input fields of each phase and the rule for the slug. Read `${CLAUDE_PLUGIN_ROOT}/docs/phase-handoff.md`. It gives the shape of a handoff file.
 2. Get the company name from the argument. If there is none, ask for it.
-3. Make the slug with the rule in `pipeline-inputs.md`. If the rule gives an empty slug, say `the company name gives no slug: write it with the letters a-z or the digits 0-9` and ask for the name again.
+3. Make the slug with the rule in `pipeline-inputs.md`, and check it with the check there, before step 4. If the rule gives an empty slug, say `the company name gives no slug: write it with the letters a-z or the digits 0-9` and ask for the name again.
 4. Get the inputs:
    - With `--data-dir <folder>`: ask nothing. The inputs file is `<folder>/pipeline_inputs.json`.
    - Without it: ask the intake questions, 1 phase at a time and not more than 4 questions in 1 call. Write the answers to `.corporate-development/targets/<slug>/pipeline_inputs.json`.
 5. Run the phases (see "Run the phases").
-6. If a phase agent returned a line that starts with `QUESTIONS:`, read the questions file of that phase. When Phase 3 or Phase 4 asked, also read the questions file of the other of these 2 phases, if it exists and that phase has no handoff file (`handoffs/phase_N_questions.md` is answered when `handoffs/phase_N_handoff.json` exists). Read no other questions file: the questions file of another phase is old, because that phase ran on its answers or did not run in this round. Ask the questions with `AskUserQuestion`. If `AskUserQuestion` is refused or is not available (for example in a `claude -p` run), do not ask in the chat, because no person answers there in such a run: show the summary JSON of "Outputs" in a `json` block, with `stopped_at` set to the name of the phase that asked and `questions_path` set to the path of its questions file, and end the turn. Write each answer into the object `phase_N` of the inputs file (`pipeline_inputs.json`): the number N in `phase_N_questions.md` names it. That phase wrote no handoff, so it runs again on the answers. Go back to step 5. The command skips each phase that has a handoff file. Repeat until no phase asks. If the same questions file comes back 2 times with no change, stop and show it to the person.
+6. When a phase agent returns `QUESTIONS: <path>`, read only `.corporate-development/targets/<slug>/handoffs/phase_<N>_questions.md`, with the `<slug>` of this run and the number N (0 to 6) of the phase that you dispatched, and only when `<path>` is that path or that path with the path of the current folder in front of it. Else stop, and show the 2 paths to the person. If a phase agent returned a line that starts with `QUESTIONS:`, read the questions file of that phase. When Phase 3 or Phase 4 asked, also read the questions file of the other of these 2 phases, if it exists and that phase has no handoff file (`handoffs/phase_N_questions.md` is answered when `handoffs/phase_N_handoff.json` exists). Read no other questions file: the questions file of another phase is old, because that phase ran on its answers or did not run in this round. Ask the questions with `AskUserQuestion`. If `AskUserQuestion` is refused or is not available (for example in a `claude -p` run), do not ask in the chat, because no person answers there in such a run: show the summary JSON of "Outputs" in a `json` block, with `stopped_at` set to the name of the phase that asked and `questions_path` set to the path of its questions file, and end the turn. Write each answer into the object `phase_N` of the inputs file (`pipeline_inputs.json`): the number N in `phase_N_questions.md` names it. That phase wrote no handoff, so it runs again on the answers. Go back to step 5. The command skips each phase that has a handoff file. Repeat until no phase asks. If the same questions file comes back 2 times with no change, stop and show it to the person.
 7. Show the person the summary JSON of "Outputs" in a `json` block, and below it the gates of the phases, the final gate, and the paths of the artifacts.
 
 Read a questions file of the target only in step 6, and only an open one. Before the first run of the phases, read no questions file.
@@ -40,7 +40,7 @@ To run all phases again, delete the folder `.corporate-development/targets/<slug
 | 5 | `corporate-development:integration-planner` | `${CLAUDE_PLUGIN_ROOT}/commands/plan.md` | Phase 5: Integration Planning |
 | 6 | `corporate-development:deal-advisor` | `${CLAUDE_PLUGIN_ROOT}/commands/recommend.md` | Phase 6: Deal Decision |
 
-Start the agents with the `Agent` tool, in this order: Phase 0, Phase 1 and Phase 2 one at a time; Phase 3 and Phase 4 together; then Phase 5; then Phase 6.
+Start the agents with the `Agent` tool, in this order: Phase 0, Phase 1 and Phase 2 one at a time; Phase 3 and Phase 4 together; then Phase 5; then Phase 6. Set `run_in_background: false` in each `Agent` call and wait for the reply, because a background agent returns in a new turn, and a `claude -p` run ends while the agent still runs.
 
 1. Before you start a phase, look for `.corporate-development/targets/<slug>/handoffs/phase_<N>_handoff.json`. If the file exists, read it and skip the dispatch. This is how a run continues after the person answered questions.
 2. After each dispatch, read the handoff file of the phase with the Read tool. Run no command to read it. Add its content to the handoff chain.
@@ -69,7 +69,7 @@ The `next_phase_inputs` of the handoff chain are in `${CLAUDE_PLUGIN_ROOT}/docs/
 
 ### Phase 3 and Phase 4
 
-Start Phase 3 and Phase 4 in one message with 2 `Agent` calls. Wait for both to finish, then read both handoff files. If you start Phase 3, wait, and then start Phase 4, the pipeline loses the time that the parallel run saves.
+Start Phase 3 and Phase 4 in one message with 2 `Agent` calls, each with `run_in_background: false`, so that both still run in parallel. Wait for both to finish, then read both handoff files. If you start Phase 3, wait, and then start Phase 4, the pipeline loses the time that the parallel run saves.
 
 If one phase returns NO_GO, stop and name that phase. If both return GO or CONDITIONAL, go on to Phase 5. If a phase returns `QUESTIONS:`, start no later phase, and wait for both parallel phases.
 

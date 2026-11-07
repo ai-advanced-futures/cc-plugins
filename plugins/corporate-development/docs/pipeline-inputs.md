@@ -12,7 +12,9 @@ slug = company_name.lower().replace(" ", "-").replace("/", "-").replace("_", "-"
 
 Then remove each character that is not `a-z`, `0-9` or `-`. Join each run of `-` into 1. Remove a `-` at the start and at the end. Cut the slug to 64 characters, and remove a `-` at the end again. Examples: "Acme Corp" gives `acme-corp`. "123/XYZ Holdings" gives `123-xyz-holdings`. "Acme, Inc." gives `acme-inc`. Use the same slug in all paths of the same target.
 
-A slug must match `[a-z0-9][a-z0-9-]{0,63}`. When the result is empty, stop with this message and ask for the name again: `the company name gives no slug: write it with the letters a-z or the digits 0-9`.
+When the result is empty, stop with this message and ask for the name again: `the company name gives no slug: write it with the letters a-z or the digits 0-9`.
+
+Then check the slug: it must match `re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", slug)`. The first character must be a letter or a digit, so the check also refuses `.` and `..`. When the check fails, stop before you write a file or dispatch an agent, and ask for the name again, as for an empty slug.
 
 ## Files
 

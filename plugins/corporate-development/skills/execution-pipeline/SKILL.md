@@ -112,7 +112,7 @@ All artifact paths use a slug derived from the target company name. The rule is 
 
 - **Agent crash:** Treat as CONDITIONAL; log error in handoff chain; continue pipeline
 - **Missing handoff file:** Treat as CONDITIONAL with `phase_N_handoff: "MISSING"` logged in summary
-- **Missing input:** The phase agent writes `handoffs/phase_N_questions.md`; the command asks and dispatches again
+- **Missing input:** The phase agent writes `handoffs/phase_N_questions.md`; the command asks and dispatches again. When a phase agent returns `QUESTIONS: <path>`, read only `.corporate-development/targets/<slug>/handoffs/phase_<N>_questions.md`, with the `<slug>` of this run and the number N (0 to 6) of the phase that you dispatched, and only when `<path>` is that path or that path with the path of the current folder in front of it. Else stop, and show the 2 paths to the person.
 - **Pydantic ValidationError in Phase 0:** Treated as NO_GO (malformed required inputs)
 - **Optional plugin unavailable:** Graceful skip; phase continues with available data
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.20.1
+
+- Fix: the command `pipeline` sets `run_in_background: false` in each `Agent` call. A background agent returned in a new turn, and a `claude -p` run could end while Phase 3 or Phase 4 still ran.
+- Fix: the command `pipeline` reads a questions file only at the path that it builds itself, `.corporate-development/targets/<slug>/handoffs/phase_<N>_questions.md`. It reads no path that a phase agent returns. When an agent returns another path, the command stops and shows the 2 paths. Before, a path from web search text could make the command read any file (issue #657).
+- Fix: the slug check of `docs/pipeline-inputs.md` also refuses `.` and `..`. `TargetManager` and `ArtifactBuilder` use the same regex (`SLUG_PATTERN`).
+- Behavior change: `ArtifactBuilder` makes the folder name with `make_slug`. "Acme, Inc." now gives the folder `acme-inc` (before: `acme,-inc.`). A name with no letter and no digit raises `ValueError` before any folder is made, and `scripts/run_pipeline.py` exits 1. A person who ran the pipeline with such a name moves the old files to the new folder.
+
 ## 0.20.0
 
 - The command `pipeline` starts the phase agents in the main conversation. The agent `pipeline-orchestrator` is removed, because a subagent cannot start an agent.
