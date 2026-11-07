@@ -247,7 +247,8 @@ def run(doc, run_dir, iteration, tiers, project_dir, decisions_path=None,
 if __name__ == "__main__":
     import argparse
 
-    ap = argparse.ArgumentParser(description="Run detector tiers over a document")
+    # allow_abbrev=False: `--gate-error` must be an error, not a short form of `--gate-error-file`.
+    ap = argparse.ArgumentParser(description="Run detector tiers over a document", allow_abbrev=False)
     ap.add_argument("doc")
     ap.add_argument("--run-dir", required=True)
     ap.add_argument("--iter", type=int, default=1)
@@ -259,12 +260,19 @@ if __name__ == "__main__":
     ap.add_argument("--genre", choices=question_gate.GENRES,
                     help="override the adjudicator's genre classification")
     ap.add_argument("--original", help="the original document, for original_line")
-    ap.add_argument("--gate-error", help="adjudicator dispatch error, verbatim")
+    ap.add_argument("--gate-error-file",
+                    help="file that holds the adjudicator dispatch error (UTF-8, white space at the ends removed)")
     args = ap.parse_args()
+    gate_error = None
+    if args.gate_error_file:
+        try:
+            gate_error = Path(args.gate_error_file).read_text(encoding="utf-8").strip()
+        except (OSError, UnicodeDecodeError):
+            gate_error = f"gate error file not readable: {args.gate_error_file}"
     out = run(args.doc, args.run_dir, args.iter,
               [t.strip() for t in args.tiers.split(",") if t.strip()], args.project_dir,
               decisions_path=args.decisions, gate_path=args.gate, genre=args.genre,
-              original_path=args.original, gate_error=args.gate_error)
+              original_path=args.original, gate_error=gate_error)
     data = json.loads(out.read_text())
     print(f"{out}\nverdict={data['verdict']['verdict']} tier={data['verdict']['strictest_tier']} "
           f"composite={data['loop_scalar']['composite']}")

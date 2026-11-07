@@ -296,16 +296,29 @@ def reassemble(original_path, run_dir, iteration, suffix=".md"):
 if __name__ == "__main__":
     import argparse
     import json as _json
+    import sys
 
     ap = argparse.ArgumentParser(description="Zone parser / candidate reassembler")
     ap.add_argument("doc")
     ap.add_argument("--reassemble", action="store_true")
     ap.add_argument("--run-dir")
     ap.add_argument("--iter", type=int, default=1)
+    ap.add_argument("--out", help="write the zones JSON to this file and print 'zones=<n>'")
     args = ap.parse_args()
     if args.reassemble:
         if not args.run_dir:
             raise SystemExit("--reassemble requires --run-dir")
         print(reassemble(args.doc, args.run_dir, args.iter))
     else:
-        print(_json.dumps(parse_zones(args.doc), indent=2))
+        zones = parse_zones(args.doc)
+        if args.out:
+            try:
+                _out = Path(args.out)
+                _out.parent.mkdir(parents=True, exist_ok=True)
+                _out.write_text(_json.dumps(zones, indent=2) + "\n", encoding="utf-8")
+            except OSError as exc:
+                print(_json.dumps({"error": "unwritable", "detail": str(exc)}), file=sys.stderr)
+                raise SystemExit(3)
+            print(f"zones={len(zones)}")
+        else:
+            print(_json.dumps(zones, indent=2))

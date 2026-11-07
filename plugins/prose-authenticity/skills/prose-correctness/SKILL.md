@@ -13,8 +13,10 @@ separate scales, because a shared scale would hide one measurement behind
 another. See ADR-010.
 
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/lib/correctness_checker.py <document>
+uv run ${CLAUDE_PLUGIN_ROOT}/lib/correctness_checker.py '<document>'
 ```
+
+Put single quotes around the path, and write each `'` inside it as `'\''`.
 
 Exit codes: `0` clean, `2` at least one fault, `3` the file or config could not
 be read. Exit `1` is reserved for a future WARN rule and no rule emits WARN.

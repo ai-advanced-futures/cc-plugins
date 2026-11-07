@@ -446,6 +446,8 @@ def main(argv=None):
                         help="path to correctness.yaml (default: module-relative)")
     parser.add_argument("--json", action="store_true",
                         help="print the result object instead of one line per finding")
+    parser.add_argument("--out", default=None,
+                        help="write the result object to this file and print 'verdict=<V>'")
     args = parser.parse_args(argv)
 
     try:
@@ -464,7 +466,16 @@ def main(argv=None):
         print(json.dumps({"error": "unreadable", "detail": str(exc)}), file=sys.stderr)
         return 3
 
-    print(json.dumps(result, indent=2) if args.json else _render(result))
+    if args.out:
+        try:
+            Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.out).write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+        except OSError as exc:
+            print(json.dumps({"error": "unwritable", "detail": str(exc)}), file=sys.stderr)
+            return 3
+        print(f'verdict={result["verdict"]}')
+    else:
+        print(json.dumps(result, indent=2) if args.json else _render(result))
     return EXIT_BY_VERDICT[result["verdict"]]
 
 

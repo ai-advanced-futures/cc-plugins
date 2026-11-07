@@ -8,7 +8,7 @@ TIER ?=
 # A tier is hf (the live Hugging Face detectors, with torch), check (1 live /prose-authenticity:check
 # session, about 0.11 USD), humanize (1 live /prose-authenticity:humanize session with the fact check,
 # about 0.71 USD), or all.
-PYTEST_HF := PROSE_AUTHENTICITY_ITEST=1 uv run --no-project --with torch --with transformers --with pyyaml --with pytest python -m pytest tests/integration/test_hf_detectors_live.py -m integration -rs
+PYTEST_HF := PROSE_AUTHENTICITY_ITEST=1 uv run --no-project --with torch==2.15.0 --with transformers==5.22.2 --with pyyaml --with pytest python -m pytest tests/integration/test_hf_detectors_live.py -m integration -rs
 PYTEST_PORT := PROSE_AUTHENTICITY_ITEST=1 uv run --no-project --with pyyaml --with pytest python -m pytest tests/integration/test_live_port.py -m integration -rs
 
 .PHONY: itest

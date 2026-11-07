@@ -3,25 +3,29 @@
 ## Container View
 
 This view expands the system boundary from
-`docs/diagrams/prose-authenticity-context.md`. It shows six agents, a tool-belt
+`docs/diagrams/prose-authenticity-context.md`. It shows three commands, five agents, a tool-belt
 of deterministic Python scripts, a config, and a store of per-run state.
 
 Agents supply judgment only. Every number, parse, verdict, and loop decision is
-in a unit-tested `lib/*.py` script, and an agent calls the script over Bash. This
-is the architecture principle of the plugin. Each script carries a PEP 723
-header and runs with `uv run`.
+in a unit-tested `lib/*.py` script, and a command calls the script over Bash. No
+agent has the tool `Bash` or `Agent`. This is the architecture principle of the
+plugin (STORY-123). Each script carries a PEP 723 header and runs with `uv run`.
+A script gets free text as a file, never as an argument.
 
-The commands start the agents. The command `check` dispatches the
-detection-analyst. The command `profile` dispatches the voice-profiler. The
-command `humanize` dispatches the orchestrator. Each command uses the Agent tool.
-The command `setup` has no agent.
+The commands run the flows in the main conversation and start every agent with
+the Agent tool. The command `check` starts the question-adjudicator and the
+detection-analyst. The command `profile` starts the voice-profiler. The command
+`humanize` starts the extraction-agent, the question-adjudicator, the humanizer,
+the grounded-synthesis orchestrator, and the detection-analyst. The command
+`setup` has no agent. The detection-analyst reads the JSON files that the command
+wrote, and returns the report as text. The command saves it.
 
-The orchestrator does not ask the person a question. The commands `profile` and
-`setup` ask the questions.
+No agent asks the person a question. The commands `profile` and `setup` ask the
+questions.
 
 The diagram also shows the ASD-STE100 conformance checker (`ste_checker.py`,
 `config/ste.yaml`) and the `simplified-technical-english` drafting skill. Since
-v0.5.0, the detection-analyst runs this checker as part of every report. The
+v0.5.0, the commands run this checker as part of every report. The
 checker stays apart from the scoring. STE conformance and AI-likelihood are
 different measurements. So the checker keeps its own verdict and never joins the
 detector composite (ADR-006).
@@ -32,9 +36,9 @@ status as the STE checker, for the same reason. Correctness is a third
 measurement with its own verdict. It joins neither the detector composite nor
 the STE report (ADR-010).
 
-The detection-analyst runs both checkers. It reports their verdicts beside the
-tell score. On a humanize run, it also reports the delta against the original. So
-a reader sees what the rewrite introduced (ADR-012).
+The commands run both checkers. The detection-analyst reports their verdicts
+beside the tell score. On a humanize run, it also reports the delta against the
+original. So a reader sees what the rewrite introduced (ADR-012).
 
 `fault_delta.py` computes that difference. The difference is arithmetic, and this
 plugin keeps arithmetic out of agent prose. Neither check gates the loop. Both
@@ -50,17 +54,19 @@ C4Container
     Person(user, "Author")
 
     Container_Boundary(pa, "prose-authenticity Plugin") {
-        Container(orchestrator, "orchestrator", "Agent / sonnet", "Drives the humanize loop, manages run dir + handoff, emits DONE")
+        Container(checkcommand, "check", "Command (main conversation)", "Scans, adjudicates, scores, runs both checkers, then starts the detection-analyst")
+        Container(humanizecommand, "humanize", "Command (main conversation)", "Drives the humanize loop, manages run dir + handoff, starts the agents")
+        Container(profilecommand, "profile", "Command (main conversation)", "Asks the person, starts the voice-profiler, validates the profile")
         Container(voiceprofiler, "voice-profiler", "Agent / opus", "Distills a voice profile YAML from 3+ writing samples")
         Container(humanizer, "humanizer", "Agent / opus", "Rewrites flagged ai-zones per tell report + voice profile")
-        Container(detectionanalyst, "detection-analyst", "Agent / sonnet", "Runs detector tiers for /check; turns scores into a verdict report")
+        Container(detectionanalyst, "detection-analyst", "Agent / sonnet", "Reads the score, checker and delta JSON files; returns the verdict report as text")
         Container(extractionagent, "extraction-agent", "Agent / haiku", "Resolves ambiguous code-surface zone-mapping calls")
         Container(questionadjudicator, "question-adjudicator", "Agent / sonnet", "Classifies genre + labels interrogatives rhetorical|genuine|quoted")
 
         Container(heuristics, "heuristics.py", "Python Script (uv run, PEP 723)", "Stylometric composite: burstiness, TTR, tell detection")
         Container(zoneparser, "zone_parser.py", "Python Script (uv run, PEP 723)", "Zone parsing, fail-fast validation, --reassemble splicing")
         Container(extractprose, "extract_prose.py", "Python Script (uv run, PEP 723)", "Code-surface comment/docstring extraction + ambiguity flags")
-        Container(verdicts, "verdicts.py", "Python Script (uv run, PEP 723)", "PASS/WARN/FAIL decision table, tier precedence. Invoked only as a run_detectors-internal import, never called directly by an agent")
+        Container(verdicts, "verdicts.py", "Python Script (uv run, PEP 723)", "PASS/WARN/FAIL decision table, tier precedence. Invoked only as a run_detectors-internal import, never called directly by a command")
         Container(loopcontroller, "loop_controller.py", "Python Script (uv run, PEP 723)", "Deterministic humanize-loop state machine: cap/plateau/fact-retry")
         Container(factgate, "fact_gate.py", "Python Script (uv run, PEP 723)", "Parses grounded-synthesis coverage output via --from-handoff")
         Container(profilestore, "profile_store.py", "Python Script (uv run, PEP 723)", "Voice-profile schema validation and storage (stdlib only)")
@@ -91,24 +97,31 @@ C4Container
 
     System_Ext(groundedsynth, "grounded-synthesis-orchestrator", "Fact-coverage audit over source files")
 
-    %% The commands start the agents. The command setup has no agent.
-    Rel(user, detectionanalyst, "Starts /prose-authenticity:check (Agent tool)")
-    Rel(user, voiceprofiler, "Starts /prose-authenticity:profile (Agent tool)")
-    Rel(user, orchestrator, "Starts /prose-authenticity:humanize (Agent tool)")
+    %% The commands run the scripts and start the agents. The command setup has no agent.
+    Rel(user, checkcommand, "Runs /prose-authenticity:check")
+    Rel(user, profilecommand, "Runs /prose-authenticity:profile")
+    Rel(user, humanizecommand, "Runs /prose-authenticity:humanize")
+    Rel(profilecommand, voiceprofiler, "Dispatch (Agent tool)")
+    Rel(profilecommand, profilestore, "Validate the profile (Bash)")
+    Rel(checkcommand, detectionanalyst, "Dispatch for the report (Agent tool)")
+    Rel(humanizecommand, detectionanalyst, "Dispatch for the final report (Agent tool)")
 
-    Rel(orchestrator, zoneparser, "Parse/reassemble zones (Bash)")
-    Rel(orchestrator, extractprose, "Extract/reassemble code-surface prose (Bash)")
-    Rel(orchestrator, loopcontroller, "Next-action decision each iteration (Bash)")
-    Rel(orchestrator, factgate, "Resolve fact-coverage verdict (Bash)")
-    Rel(orchestrator, profilestore, "Load/validate voice profile (Bash)")
+    Rel(humanizecommand, zoneparser, "Parse/reassemble zones (Bash)")
+    Rel(humanizecommand, extractprose, "Extract/reassemble code-surface prose (Bash)")
+    Rel(humanizecommand, loopcontroller, "Next-action decision each iteration (Bash)")
+    Rel(humanizecommand, factgate, "Resolve fact-coverage verdict (Bash)")
+    Rel(humanizecommand, profilestore, "Load/validate voice profile (Bash)")
 
-    Rel(orchestrator, humanizer, "Dispatch per iteration (Agent tool)")
-    Rel(orchestrator, extractionagent, "Dispatch on ambiguous zone mapping (Agent tool)")
-    Rel(orchestrator, questionadjudicator, "Dispatch to adjudicate the question gate (Agent tool)")
-    Rel(orchestrator, groundedsynth, "Dispatch fact-coverage audit (Agent tool)")
+    Rel(humanizecommand, humanizer, "Dispatch per iteration (Agent tool)")
+    Rel(humanizecommand, extractionagent, "Dispatch on ambiguous zone mapping (Agent tool)")
+    Rel(humanizecommand, questionadjudicator, "Dispatch to adjudicate the question gate (Agent tool)")
+    Rel(humanizecommand, groundedsynth, "Dispatch fact-coverage audit (Agent tool)")
 
-    Rel(detectionanalyst, rundetectors, "Run detector tiers (Bash)")
-    Rel(detectionanalyst, questionadjudicator, "Dispatch to adjudicate the question gate (Agent tool)")
+    Rel(checkcommand, rundetectors, "Run detector tiers (Bash)")
+    Rel(humanizecommand, rundetectors, "Run detector tiers each iteration (Bash)")
+    Rel(checkcommand, questiongate, "Scan for interrogatives (Bash)")
+    Rel(humanizecommand, questiongate, "Scan for interrogatives (Bash)")
+    Rel(checkcommand, questionadjudicator, "Dispatch to adjudicate the question gate (Agent tool)")
     Rel(rundetectors, questiongate, "Scan + evaluate the rhetorical-question gate (internal import)")
     Rel(rundetectors, heuristics, "Always-on tier")
     Rel(rundetectors, hfdetectors, "Opt-in tier")
@@ -116,13 +129,16 @@ C4Container
     Rel(rundetectors, config, "Read roster + thresholds")
     Rel(rundetectors, verdicts, "Decide PASS/WARN/FAIL (internal import, not a Bash dispatch)")
 
-    Rel(orchestrator, runstate, "Read/write run state, write handoff before DONE")
+    Rel(humanizecommand, runstate, "Read/write run state, write the handoff file")
+    Rel(detectionanalyst, runstate, "Read the JSON files of the run")
+    Rel(checkcommand, runstate, "Save report.md from the text of the analyst")
+    Rel(humanizecommand, runstate, "Save report.md from the text of the analyst")
 
     %% STE checker + skill. A standalone CLI and a drafting skill. The
-    %% orchestrator does not dispatch them, and they are not part of the
+    %% humanize command does not dispatch them, and they are not part of the
     %% humanize chain above.
     Rel(user, stechecker, "Invokes directly as a CLI (Bash)")
-    Rel(detectionanalyst, stechecker, "Run for the report; delta vs the original on a humanize run (Bash) — never a composite input (ADR-006, ADR-012)")
+    Rel(checkcommand, stechecker, "Run for the report; delta vs the original on a humanize run (Bash) — never a composite input (ADR-006, ADR-012)")
     Rel(stechecker, prosespans, "Extract checked prose spans (import; re-exports checked_spans)")
     Rel(stechecker, zoneparser, "Catches ZoneParseError raised through the seam (import)")
     Rel(stechecker, steconfig, "Reads rule thresholds + word lists")
@@ -130,8 +146,8 @@ C4Container
 
     %% Correctness checker. The second consumer of the shared seam.
     Rel(user, correctnesschecker, "Invokes directly as a CLI (Bash)")
-    Rel(detectionanalyst, correctnesschecker, "Run for the report; delta vs the original on a humanize run (Bash) — never a composite input (ADR-006, ADR-012)")
-    Rel(detectionanalyst, faultdelta, "Run on a humanize run to bucket what the rewrite introduced (Bash)")
+    Rel(checkcommand, correctnesschecker, "Run for the report; delta vs the original on a humanize run (Bash) — never a composite input (ADR-006, ADR-012)")
+    Rel(humanizecommand, faultdelta, "Run on a humanize run to bucket what the rewrite introduced (Bash)")
     Rel(faultdelta, correctnesschecker, "Collect findings for both documents (import)")
     Rel(faultdelta, stechecker, "Collect findings for both documents (import)")
     Rel(correctnesschecker, prosespans, "Extract checked prose spans (import)")
@@ -141,10 +157,12 @@ C4Container
     Rel(user, correctnessskill, "Loads while drafting, independent of /prose-authenticity:* commands")
 
     classDef agent fill:#1a3a5c,stroke:#0d2137,color:#ffffff
+    classDef command fill:#2a4d7a,stroke:#16294a,color:#ffffff
     classDef script fill:#1e4d2b,stroke:#0f2e19,color:#ffffff
     classDef state fill:#7a4a00,stroke:#4d2e00,color:#ffffff
     classDef skill fill:#5c2d5c,stroke:#33193a,color:#ffffff
-    class orchestrator,voiceprofiler,humanizer,detectionanalyst,extractionagent,questionadjudicator agent
+    class voiceprofiler,humanizer,detectionanalyst,extractionagent,questionadjudicator agent
+    class checkcommand,humanizecommand,profilecommand command
     class heuristics,zoneparser,extractprose,verdicts,loopcontroller,factgate,profilestore,apidetectors,hfdetectors,rundetectors,questiongate,stechecker,prosespans,correctnesschecker script
     class runstate state
     class steskill,correctnessskill skill
@@ -156,7 +174,6 @@ C4Container
 |---|---|---|
 | voice-profiler | opus | The agent distills a coherent voice profile from samples. This needs nuanced pattern synthesis, not structured extraction |
 | humanizer | opus | The agent rewrites text to defeat detectors, keeps the meaning, and matches a voice profile. This is the highest-stakes generative task in the plugin |
-| orchestrator | sonnet | Thin coordination: run-dir management and loop dispatch. No open-ended judgment |
 | detection-analyst | sonnet | The agent makes a structured report from scores that the scripts already computed |
 | extraction-agent | haiku | Narrow, bounded include/exclude calls on flagged zones. No open-ended reasoning |
 | question-adjudicator | sonnet | The agent classifies the genre and judges each interrogative as rhetorical, genuine, or quoted, from deterministic signals. This is bounded judgment, not open-ended synthesis |

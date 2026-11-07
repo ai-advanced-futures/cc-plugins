@@ -13,8 +13,8 @@ The `/prose-authenticity:humanize` command runs a loop. The loop repeats until t
 
 Two designs were possible for the part that decides whether to iterate again or stop:
 
-1. **Agent-driven loop.** The orchestrator agent reads the latest verdict and the tier scores in each iteration. It reasons in prose. It decides to continue, to switch the detector tier, or to give up.
-2. **Deterministic loop-control script.** The script `lib/loop_controller.py` holds a pure state machine. The state machine takes three inputs: the current iteration count, the verdict history, and the configured caps. It returns the next action. The orchestrator only runs that decision.
+1. **Agent-driven loop.** An agent reads the latest verdict and the tier scores in each iteration. It reasons in prose. It decides to continue, to switch the detector tier, or to give up.
+2. **Deterministic loop-control script.** The script `lib/loop_controller.py` holds a pure state machine. The state machine takes three inputs: the current iteration count, the verdict history, and the configured caps. It returns the next action. The command `humanize` only runs that decision.
 
 ## Decision
 
@@ -24,7 +24,7 @@ We chose the deterministic loop-control script (option 2). It holds all stop and
 - the score-plateau check
 - the fact-gate retry budget
 
-This logic is in `lib/loop_controller.py` and nowhere else. The script is a pure function. It maps typed inputs to a typed action. The orchestrator agent never reasons about whether to keep iterating. It calls the script and reads the returned action. Then it acts on that action.
+This logic is in `lib/loop_controller.py` and nowhere else. The script is a pure function. It maps typed inputs to a typed action. The command `humanize` never reasons about whether to keep iterating. It calls the script and reads the returned action. Then it acts on that action.
 
 The action vocabulary has exactly seven values. The function `next_action()` returns them:
 
@@ -57,7 +57,7 @@ We rejected the agent-driven loop for three reasons:
 
 ## Consequences
 
-- The orchestrator agent only runs the decision. It never computes iteration counts, plateau deltas, or cap comparisons. `loop_controller.py` returns each of these numbers.
+- The command `humanize` only runs the decision. It never computes iteration counts, plateau deltas, or cap comparisons. `loop_controller.py` returns each of these numbers.
 - Unit tests check `lib/loop_controller.py` against synthetic verdict sequences. The sequences cover four cases:
   - The loop reaches the iteration cap.
   - The score plateaus. N iterations of the same tier show no improvement.

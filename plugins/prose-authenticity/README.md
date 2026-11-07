@@ -76,14 +76,23 @@ degradation. A degradation is never silent.
 
 - **hf tier.** Run `/prose-authenticity:setup`. The first run downloads `torch`,
   `transformers`, and 3 models. The scripts start with
-  `uv run --with torch --with transformers`.
+  `uv run --with torch==2.15.0 --with transformers==5.22.2`.
 - **api tier.** Run `/prose-authenticity:setup`. The document text goes to 3
   outside services, so the plugin asks for your consent first. Export the keys
   `GPTZERO_API_KEY`, `ORIGINALITY_API_KEY`, and `SAPLING_API_KEY`. The keys stay
   in the environment, never in a file.
 - **Fact check.** The humanize loop uses the `grounded-synthesis` plugin to check
   that a rewrite keeps each fact. Without that plugin, or when it fails, the loop
-  runs at most 2 iterations. The report then shows UNVERIFIED FACTS.
+  runs at most 2 iterations. The report then shows UNVERIFIED FACTS. The agent of
+  `grounded-synthesis` runs its own `uv run` scripts. A person who uses `humanize` needs a
+  permission rule for the `lib/` folder of that plugin only:
+  `Bash(uv run <folder of grounded-synthesis>/lib/*)`. Write the full path of the installed
+  plugin folder, for example `/Users/me/.claude/plugins/cache/<marketplace>/grounded-synthesis/<version>/lib/*`.
+  Also allow the agent to read its session folder: `Read(~/.cache/grounded-synthesis-sessions/**)`.
+  Without this rule, its `coverage-checker` cannot read `source-0-facts.json`, the fact baseline fails,
+  and the loop runs at most 2 iterations with the UNVERIFIED FACTS warning.
+  Do not add `Bash(uv run:*)`, because that rule allows each `uv run` command. Without the rule,
+  the run stops at the first prompt of that agent.
 
 ## Zone markers
 
@@ -220,17 +229,19 @@ states the rule for a new entry in the list.
 ## Architecture
 
 Agents give judgment only. Each number, each parse, each verdict, and each loop
-decision is in a tested script in `lib/`. The agents start the scripts with Bash.
-This keeps the context small: the arithmetic goes to Python, and the narrative
-goes to the agents.
+decision is in a tested script in `lib/`. The commands start the scripts with
+Bash. No agent has the tools `Bash` or `Agent`. This keeps the context small: the
+arithmetic goes to Python, and the narrative goes to the agents. A script gets
+free text (for example an error message) as a file, never as an argument.
 
 The humanize flow has these parts:
 
-- The command `humanize` starts the agent `orchestrator`.
-- The orchestrator starts `extraction-agent`, `question-adjudicator`,
+- The command `humanize` runs the loop in the main conversation.
+- The command starts `extraction-agent`, `question-adjudicator`,
   `humanizer`, and `detection-analyst` with full names, such as
-  `prose-authenticity:humanizer`.
-- `loop_controller.py` decides the next action. The orchestrator does not.
+  `prose-authenticity:humanizer`. The command `check` starts
+  `question-adjudicator` and `detection-analyst`.
+- `loop_controller.py` decides the next action. The command does not.
 - The fact check is a handoff file contract with the `grounded-synthesis` plugin
   (ADR-002).
 

@@ -13,7 +13,7 @@ Usage (from run_detectors.py):
     results = score_text_all(text, config)
 
 Check that the hf tier can run (prints True or False):
-    uv run --with torch --with transformers ${CLAUDE_PLUGIN_ROOT}/lib/hf_detectors.py
+    uv run --with torch==2.15.0 --with transformers==5.22.2 ${CLAUDE_PLUGIN_ROOT}/lib/hf_detectors.py
 """
 
 import os

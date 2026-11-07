@@ -13,6 +13,6 @@ Configure the prose-authenticity plugin for this project. Do the steps in order.
    the environment, because a key in a file can reach a commit.
 3. For `hf`: say that the first run downloads `torch`, `transformers` and 3
    models. On consent, run
-   `uv run --with torch --with transformers ${CLAUDE_PLUGIN_ROOT}/lib/hf_detectors.py`.
+   `uv run --with torch==2.15.0 --with transformers==5.22.2 ${CLAUDE_PLUGIN_ROOT}/lib/hf_detectors.py`.
    `True` means that the hf tier is ready.
 4. Show the configured state.

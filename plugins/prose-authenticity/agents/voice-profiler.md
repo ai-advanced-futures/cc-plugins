@@ -33,7 +33,8 @@ already confirmed the sample set with the person.
    (name, version, description, banned_words, favored_words, cadence_rules,
    exemplars, source_samples) to `.prose-authenticity/profiles/<name>.yaml`.
 4. **Validate:** run-instruction for the caller:
-   `uv run ${CLAUDE_PLUGIN_ROOT}/lib/profile_store.py validate .prose-authenticity/profiles/<name>.yaml`.
+   `uv run ${CLAUDE_PLUGIN_ROOT}/lib/profile_store.py validate '.prose-authenticity/profiles/<name>.yaml'`
+   (single quotes around the path; write each `'` inside the name as `'\''`).
    Report the saved path and a 3-line voice summary.
 
 ## Output contract

@@ -93,8 +93,8 @@ on the same check is still honest about what it found.
 We enforce the decision and do not only assert it.
 `tests/unit/test_prompt_quality.py` pins the action set of the loop at seven. It
 fails if any action name mentions correctness or STE. It fails if
-`loop_controller.py` imports either checker. It fails if the orchestrator or the
-loop uses `fault_delta`. To reverse this ADR, change those tests on purpose.
+`loop_controller.py` imports either checker. It fails if the loop steps of the command `humanize` or
+the loop script use `fault_delta`. To reverse this ADR, change those tests on purpose.
 
 ## Consequences
 

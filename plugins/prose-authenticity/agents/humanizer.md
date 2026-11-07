@@ -15,7 +15,8 @@ Inputs (all as file PATHS in the dispatch payload): zones.json, per-zone
 current-latest text paths (null for a zone with no prior rewrite —
 iteration 1) [inferred], scores-iter-<N>.json (which tells fired, with line
 locations), the voice profile YAML, the missing-facts list (on fact-miss
-retries), the fact-baseline path (`<run_id>/facts`), and the output directory
+retries), the fact-baseline file (`<run_id>/facts/gap-report.md`; it lists each fact
+with its verdict, and you can read a file but not a folder), and the output directory
 `run-<id>/rewrites/iter-<N>/`. `zones.json` is a JSON array for markdown/raw
 input and a `{zones, ambiguities}` object for code surfaces — read
 `.zones`/the array accordingly based on the input surface.
@@ -105,7 +106,7 @@ Two of ADR-008's resolutions need no surface knowledge, so apply both:
 
 Output format: one plain-text file per rewritten zone, at
 `rewrites/iter-<N>/zone-<id>.md`, holding the zone text and nothing else.
-Return the list of file paths you wrote (for the run log; the orchestrator
+Return the list of file paths you wrote (for the run log; the command
 re-derives them by globbing the output dir, so the return is informational).
 Stop when every flagged (non-human) zone has a rewrite file in
 `rewrites/iter-<N>/`.

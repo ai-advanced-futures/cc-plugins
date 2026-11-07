@@ -101,9 +101,7 @@ Write `adjudication.json` to the run directory, with exactly these four keys:
 
 Return only the path to that file, then emit `DONE: question-adjudicator` as your
 final line — the short-form per-subagent completion signal that tells the
-dispatching agent this step finished. This is distinct from the plugin-terminal
-signal that only the orchestrator emits; emit only your own signal, because the
-dispatching agent reads the other one as the end of the whole run.
+command this step finished. Emit only your own signal.
 
 Stop when every candidate in `candidates[]` carries a label in `candidates`, and
 the genre is either `expository` or an exempting genre with cited evidence. A

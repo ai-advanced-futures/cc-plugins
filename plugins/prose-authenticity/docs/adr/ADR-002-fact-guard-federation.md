@@ -9,16 +9,16 @@ A rewrite of AI-flagged prose can silently drop or distort the facts of the orig
 We considered three designs:
 
 1. **Re-implement fact extraction and coverage checking** inside the `lib/` folder of prose-authenticity.
-2. **Drive the leaf agents of grounded-synthesis directly** (fact-extractor and coverage-checker) from the prose-authenticity orchestrator.
+2. **Drive the leaf agents of grounded-synthesis directly** (fact-extractor and coverage-checker) from the prose-authenticity command `humanize`.
 3. **Dispatch the orchestrator entry point of grounded-synthesis.** The entry point is `grounded-synthesis:grounded-synthesis-orchestrator`. The dispatch is one call with the Agent tool. We then use its output contract, which is already tested.
 
 ## Decision
 
-We chose option 3. The orchestrator dispatches the entry point of grounded-synthesis. We use its tested contract: source validation, fact-schema validation, and recovery from a partial source failure. We do not re-implement it. We do not drive its leaf agents directly.
+We chose option 3. The command `humanize` dispatches the entry point of grounded-synthesis. We use its tested contract: source validation, fact-schema validation, and recovery from a partial source failure. We do not re-implement it. We do not drive its leaf agents directly.
 
 The dispatch contract has these parts:
 
-- The orchestrator dispatches `grounded-synthesis:grounded-synthesis-orchestrator` with the Agent tool.
+- The command `humanize` dispatches `grounded-synthesis:grounded-synthesis-orchestrator` with the Agent tool.
 - The call gives it three fields: `draft_path`, `source_paths`, and `output_dir_override`.
 - **A failed dispatch is the authoritative trigger to degrade.** The dispatch fails in any of these cases:
   - The Agent tool call gives an error.
@@ -32,10 +32,10 @@ The dispatch contract has these parts:
 
 We rejected option 1. It would copy a capability that the maintainers already test. It would also drift from the fact-schema changes of grounded-synthesis.
 
-We rejected option 2. It would tie prose-authenticity to the internal agent layout of grounded-synthesis, which splits into fact-extractor and coverage-checker. That layout is an implementation detail. Grounded-synthesis can change it at any time. The orchestrator dispatch is the stable, documented integration surface.
+We rejected option 2. It would tie prose-authenticity to the internal agent layout of grounded-synthesis, which splits into fact-extractor and coverage-checker. That layout is an implementation detail. Grounded-synthesis can change it at any time. The dispatch of that entry point is the stable, documented integration surface.
 
 ## Consequences
 
 - prose-authenticity has a hard read dependency on two parts of grounded-synthesis: the `handoff.json` schema (`outputs.session_dir`) and the gap-report format. This is a doc contract between two plugins. The test `test_fact_gate_reads_via_handoff_not_hardcoded_coverage_path` in `tests/unit/test_doc_contracts.py` covers it.
 - A dispatch failure of grounded-synthesis degrades the run in a safe way. The output is an advisory diff with `UNVERIFIED FACTS` and a limit of 2 iterations. The humanize loop does not stop completely. It never silently accepts an unverified rewrite as PASS.
-- Grounded-synthesis can change its internals, for example leaf agent names or the layout of coverage files. prose-authenticity needs no change while the orchestrator dispatch contract and the handoff schema stay stable.
+- Grounded-synthesis can change its internals, for example leaf agent names or the layout of coverage files. prose-authenticity needs no change while the dispatch contract and the handoff schema stay stable.
