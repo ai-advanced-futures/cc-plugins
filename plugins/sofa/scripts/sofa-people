@@ -36,7 +36,7 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import readiness as rd  # noqa: E402
-from slack_web import Fail, slack_pages  # noqa: E402
+from slack_web import Fail, slack_call, slack_pages  # noqa: E402
 
 HUB_SLUG = "the-human-team"
 
@@ -204,8 +204,9 @@ def src_slack(root, channel, fixtures):
     chan_id = next((c["id"] for c in channels if c["name"] == name), None)
     if chan_id is None:
         raise Fail(f"the bot cannot see #{name}. Invite the bot; a private channel also needs groups:read")
-    members = set(slack_pages(token, "conversations.members", {"channel": chan_id, "limit": 1000}, "members"))
-    return [u for u in slack_pages(token, "users.list", {"limit": 200}, "members") if u["id"] in members]
+    # users.info for each member, not users.list: a workspace with many users would pass the page limit.
+    members = dict.fromkeys(slack_pages(token, "conversations.members", {"channel": chan_id, "limit": 1000}, "members"))
+    return [slack_call(token, "users.info", {"user": user_id})["user"] for user_id in members]
 
 
 def github_login_from_email(email):

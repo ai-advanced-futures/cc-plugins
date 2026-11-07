@@ -72,7 +72,7 @@ METHOD_SCOPES = {
     "conversations.members": ["channels:read", "groups:read"],
     "conversations.replies": ["channels:history", "groups:history"],
     "reactions.get": ["reactions:read"],
-    "users.list": ["users:read"],
+    "users.info": ["users:read"],
 }
 
 NAME_MAX = 35          # display_information.name

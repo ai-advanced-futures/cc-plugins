@@ -4,9 +4,18 @@ The base URL is SOFA_SLACK_API (default https://slack.com/api/), so a test can u
 The bot token goes to that URL, so only https://slack.com/api/ and an http address on this
 computer (127.0.0.1, localhost, ::1) are allowed, and a redirect stops the call. slack_pages
 follows next_cursor and stops with a failure after MAX_PAGES pages or a repeated cursor.
+
+A call waits 20 seconds for an answer; SOFA_SLACK_TIMEOUT sets another number of seconds, so a test
+can use 1 second. A call that fails gives 1 line that starts with the Slack method: "<method>: Slack
+answered HTTP <code>" for an HTTP status, and "<method>: no answer from Slack (<class>)" for a
+time-out or another network error. The line holds no token, no reason text and no reply body. For an
+address on this computer (the test mode) the call uses no proxy, so the token does not go to a proxy
+in clear text. For https://slack.com/api/ the proxy settings of the person stay.
 """
 
+import http.client
 import json
+import math
 import os
 import urllib.error
 import urllib.parse
@@ -45,6 +54,18 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         raise Fail(f"Slack answered with a redirect (HTTP {code}). The call stops, because the bot token must go to 1 host only")
 
 
+def call_timeout():
+    """The time-out of 1 call in seconds: SOFA_SLACK_TIMEOUT, else 20."""
+    value = os.environ.get("SOFA_SLACK_TIMEOUT", "20")
+    try:
+        seconds = float(value)
+    except ValueError:
+        seconds = 0.0
+    if not (math.isfinite(seconds) and seconds > 0):
+        raise Fail("SOFA_SLACK_TIMEOUT must be a number of seconds greater than 0", 2)
+    return seconds
+
+
 SETUP_FIX = "Fix: type /sofa:setup, and do step 5 item 6 (it installs the app again with the new scopes)"
 
 
@@ -64,14 +85,20 @@ def slack_call(token, method, params=None, headers=None):
     """Call a Slack method with the bot token and return the JSON of the reply. When headers is a dict, the
     headers of the reply go into it, with lower case names."""
     base = api_base()
+    seconds = call_timeout()
     req = urllib.request.Request(base.rstrip("/") + "/" + method, data=urllib.parse.urlencode(params or {}).encode(),
                                  method="POST", headers={"Authorization": f"Bearer {token}"})
+    # An address on this computer is the test mode: no proxy, so the token does not go to a proxy in clear text.
+    no_proxy = [urllib.request.ProxyHandler({})] if urllib.parse.urlsplit(base).hostname in LOOPBACK_HOSTS else []
     try:
-        with urllib.request.build_opener(NoRedirect).open(req, timeout=20) as resp:
+        with urllib.request.build_opener(*no_proxy, NoRedirect).open(req, timeout=seconds) as resp:
             data = json.load(resp)
             if headers is not None:
                 headers.update({k.lower(): v for k, v in resp.headers.items()})
-    except (urllib.error.URLError, ValueError) as e:
+    except urllib.error.HTTPError as e:  # first, because an HTTPError is also an OSError
+        e.close()
+        raise Fail(f"{method}: Slack answered HTTP {e.code}")
+    except (OSError, http.client.HTTPException, ValueError) as e:
         raise Fail(f"{method}: no answer from Slack ({type(e).__name__})")
     if not data.get("ok"):
         raise SlackError(method, data.get("error", "unknown error"), str(data.get("needed", "")))
