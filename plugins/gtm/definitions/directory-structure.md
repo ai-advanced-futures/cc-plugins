@@ -12,7 +12,7 @@
 
 | Path | Purpose | Writer | Reader |
 |------|---------|--------|--------|
-| `.gtm/open-questions.json` | A question that an agent cannot ask the person. The agent writes it, then ends with the line `OPEN: .gtm/open-questions.json`. | orchestrator, or an agent that a command dispatches | The command that dispatched the agent. It asks the person, then dispatches again. |
+| `.gtm/open-questions.json` | A question that an agent cannot ask the person. The agent writes it, then ends with the line `OPEN: .gtm/open-questions.json`. | `/gtm:run` (floor breach), or an agent that `/gtm:run` starts | The command that dispatched the agent. It asks the person, then dispatches again. |
 
 ## Artifact Path Patterns
 
@@ -37,6 +37,7 @@ for final file names. See that file for the complete list.
 |------|-----------|----------|
 | `{agent}-integrity.json` | integrity-agent (the claims and the issues) and `truth_tier_validator.py` (the score keys) | Claims, issues, integrity score, band, blocked count |
 | `{agent}-integrity-BREACH.json` | integrity-agent | Created on floor breach; overwritten with `{"status": "resolved"}` on override or re-pass |
+| `{agent}-floor-hold.json` | `truth_tier_validator.py` | Created on band floor: the scored audit and the sha256 of each draft. While it holds, the script gives no new score (exit 4, `floor_holds`). Removed by the script on a new band `choice` or `pass` |
 
 ## Key Invariants
 

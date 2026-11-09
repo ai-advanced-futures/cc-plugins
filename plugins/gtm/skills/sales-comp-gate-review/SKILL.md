@@ -2,6 +2,7 @@
 name: sales-comp-gate-review
 description: Run the Phase-3 sales-comp precondition gate. Ask the person for the 5 preconditions, emit a deterministic proceed, pause, or re_pause cliff recommendation, and report the result.
 audience: internal
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/sales_comp_gate_emitter.py *)
 ---
 
 # Sales-Comp Gate Review

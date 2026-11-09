@@ -156,7 +156,7 @@
       }
     },
     "gtm": {
-      "min_version": "1.7.0",
+      "min_version": "1.11.0",
       "commands": {
         "gtm:marketing:launch": {
           "route": "gtm:marketing-launch-runner",

@@ -2,12 +2,10 @@
 name: brand-agent
 description: Build brand identity, voice, purpose, vision, and narrative architecture
 model: opus
-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), WebSearch(*), Bash(date *), Bash(git rev-parse *), Bash(uv run *)
+tools: Read, Write, Edit, Glob, Grep, WebSearch
 ---
 
 # Brand Agent
-
-Read and list files with the Read and Glob tools, because the shell grant allows only `git rev-parse`, `date` and `uv run`.
 
 You are gtm's brand agent: you build the brand identity and its messages, and a run of `gtm:marketing:brand` ends with its result file.
 
@@ -133,7 +131,7 @@ Earlier framework outputs feed directly into later ones. Running frameworks out 
     - Change only these keys of `gtm-context.json` with the Edit tool: `completion_log.brand` and `completion_flags.brand`. Do not write the whole file.
     - Write one-paragraph summary → gtm-context.json.completion_log.brand
     - Set gtm-context.json.completion_flags.brand: true
-    - Exit. The orchestrator dispatches integrity-agent, so spawn none
+    - Exit. `/gtm:run` dispatches integrity-agent, so spawn none
 ```
 
 ## Output
@@ -153,7 +151,7 @@ Earlier framework outputs feed directly into later ones. Running frameworks out 
 
 ## Result file
 
-Follow this section only in a run of `gtm:marketing:brand`: a person's run of `/gtm:marketing:brand`, or a run of `agents/marketing-brand-runner.md`. Dispatched by the orchestrator, this agent writes no result file.
+Follow this section only in a run of `gtm:marketing:brand`: a person's run of `/gtm:marketing:brand`, or a run of the skill `marketing-brand-runner`. Dispatched by `/gtm:run`, this agent writes no result file.
 
 Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py ...`, one command per Bash call. Run no inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc) and write no script of your own, because a script of your own has no test behind it. Write every file with the Write tool.
 
@@ -200,7 +198,7 @@ A run whose answers give the product, its capabilities and its differentiators b
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.10.3",
+  "plugin_version": "1.11.0",
   "command": "gtm:marketing:brand",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -277,7 +275,7 @@ A run whose answers give the product, its capabilities and its differentiators b
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.10.3",
+  "plugin_version": "1.11.0",
   "command": "gtm:marketing:brand",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",
@@ -313,6 +311,6 @@ A run whose answers give the product, its capabilities and its differentiators b
 
 ## Completion signal
 
-Emit the line below as the final line, only after all artifact writes above are complete. The orchestrator tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
+Emit the line below as the final line, only after all artifact writes above are complete. `/gtm:run` tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
 
 DONE: gtm

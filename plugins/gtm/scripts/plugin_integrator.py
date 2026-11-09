@@ -11,6 +11,8 @@ It prints the result of detect_plugin_outputs() and the snapshot paths of the jt
 competitive-intelligence graphs (scripts/brain_read.py) as one JSON object, and exits 0.
 Each path is a string. A graph that gives no input writes 1 line on stderr that starts with
 NO-GRAPH: or GRAPH-READ-FAILED:, and its key is absent.
+With --out <file>, it writes the JSON object to that file, prints one summary line
+(the file and the plugin keys found), and exits 0. A file that cannot be written gives exit 2 and no file.
 """
 from __future__ import annotations
 
@@ -131,13 +133,25 @@ def _as_json(found: dict) -> dict:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Find the input that other plugins give to gtm.")
     ap.add_argument("--root", required=True, help="the project folder to search")
+    ap.add_argument("--out", help="write the JSON object to this file and print one summary line")
     args = ap.parse_args(argv)
     found = _as_json(PluginIntegrator(Path(args.root)).detect_plugin_outputs())
     graph_inputs, notes = read_graphs(Path(args.root))
     found.update(graph_inputs)
-    print(json.dumps(found, indent=2))
     for note in notes:
         print(note, file=sys.stderr)
+    text = json.dumps(found, indent=2)
+    if not args.out:
+        print(text)
+        return 0
+    try:
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text + "\n", encoding="utf-8")
+    except OSError as error:
+        print(f"plugin_integrator error: cannot write {args.out}: {error}", file=sys.stderr)
+        return 2
+    print(f"wrote {args.out}: {len(found)} plugin keys ({', '.join(sorted(found)) or 'none'})")
     return 0
 
 

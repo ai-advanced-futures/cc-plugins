@@ -3,6 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-06-01
 **Updated:** 2026-11-05 (port to this marketplace)
+**Updated:** 2026-11-07 (STORY-146: the gate agent has no shell tool; the skill or the caller runs the emitter)
 **Plugin:** gtm
 **Version introduced:** 1.4.0
 
@@ -79,7 +80,7 @@ The agent sits above the modules. It gives judgment only for the story of the fi
 
 **Context:** The gate is a skill, `sales-comp-gate-review`. The skill reads the gate agent file and follows it in the main conversation, so it can ask the person the five preconditions. A dispatched run cannot ask.
 
-**Decision:** In the main conversation, the skill asks the five preconditions. In a dispatched run, the agent takes the preconditions from the dispatch fields. In both cases, the run writes `.gtm/sales-comp-gate-input.json`, runs `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/sales_comp_gate_emitter.py`, and writes `.gtm/sales-comp-precondition-gate.json` and the handoff file `.gtm/sales-comp-gate-handoff.json`. The run ends with the line `DONE: gtm`. The `completed_skills` value of the emitter is `gtm:sales-comp-gate-review`.
+**Decision:** The gate agent has the tools `Read, Write` and no shell tool. In the main conversation, the skill asks the five preconditions, writes `.gtm/sales-comp-gate-input.json`, and runs `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/sales_comp_gate_emitter.py`, which writes `.gtm/sales-comp-precondition-gate.json` and the handoff file `.gtm/sales-comp-gate-handoff.json`. The skill approves only that one script in its `allowed-tools`. In a dispatched run, the agent takes the preconditions from the dispatch fields, writes `.gtm/sales-comp-gate-input.json`, and ends with the line `INPUT: .gtm/sales-comp-gate-input.json`. The caller then runs the emitter. The `completed_skills` value of the emitter is `gtm:sales-comp-gate-review`.
 
 **Consequence:** The handoff path is fixed and a program can read it. The gate produces a recommendation and has no side effect that is hard to undo.
 
@@ -87,6 +88,6 @@ The agent sits above the modules. It gives judgment only for the story of the fi
 
 **Context:** `sales_comp_model.py` computes a reference calculation with four parts: Land, Expand, Quality-Bonus, and Churn-Clawback. If these pay amounts went into the gate file, the amounts could leave the plugin in a public file.
 
-**Decision:** The comp model is available for an agent to call by hand. It is not in the path from loader to classifier to emitter. The gate file carries precondition signals and no pay amounts. The loader also rejects `at_risk_pct < 0` at load time, although the schema does not check this bound.
+**Decision:** The comp model is a library. No agent calls it, because the script has no command line. It is not in the path from loader to classifier to emitter. The gate file carries precondition signals and no pay amounts. The loader also rejects `at_risk_pct < 0` at load time, although the schema does not check this bound.
 
 **Consequence:** No pay amount is in the gate file by design. A test checks that a negative `at_risk_pct` raises `ValueError` before the classifier runs.

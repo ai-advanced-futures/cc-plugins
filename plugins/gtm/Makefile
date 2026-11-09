@@ -4,17 +4,17 @@ SHELL := /bin/bash
 
 TIER ?=
 
-# A tier is the first part of a test name: orchestrator (the orchestrator agent with resume fields: a resume after
-# a floor question, a resume when each flag is true, the 3 bands of the integrity score), command (/gtm:run --scan-codebase).
+# A tier is the first part of a test name: command (/gtm:run --scan-codebase). The tier orchestrator went with
+# STORY-146, because the waves are text of /gtm:run and the orchestrator agent has no resume fields.
 PYTEST := GTM_ITEST=1 uv run --quiet --no-project --with-requirements requirements-dev.txt python -m pytest tests/integration -m integration -rs
 
 .PHONY: itest
 itest:
-	@test -n "$(TIER)" || { echo "TIER is required: make itest TIER=orchestrator|command|all"; exit 2; }
+	@test -n "$(TIER)" || { echo "TIER is required: make itest TIER=command|all"; exit 2; }
 ifeq ($(TIER),all)
 	$(PYTEST)
-else ifneq ($(filter $(TIER),orchestrator command),)
+else ifneq ($(filter $(TIER),command),)
 	$(PYTEST) -k "test_$(TIER)_"
 else
-	@echo "unknown TIER '$(TIER)': use orchestrator|command|all"; exit 2
+	@echo "unknown TIER '$(TIER)': use command|all"; exit 2
 endif

@@ -25,7 +25,7 @@ C4Context
   Rel(aiml, gtm, "Gives the p15-trigger-event file for auto-comms routing")
   Rel(evidence, gtm, "Give graph pages that plugin_integrator.py reads, and files that it finds")
   Rel(gtm, servers, "Reads CRM, prospect, SEO, and analytics data; publishes only in a command that the person runs")
-  Rel(gtm, skills, "Calls a skill with the Skill tool when the plugin is in the session; else uses its own path")
+  Rel(gtm, skills, "/gtm:run calls enterprise-search and customer-support with the Skill tool when the plugin is in the session; no agent calls a skill")
 ```
 
 ## C4 Container
@@ -36,42 +36,42 @@ C4Container
 
   Container_Boundary(plugin, "plugins/gtm") {
     Container(commands, "commands/", "Markdown", "13 commands. Each asks the person its questions in the main conversation.")
-    Container(orchestrator, "orchestrator.md", "Thin coordinator", "Reads the dispatch fields, runs the waves with foreground Agent calls, and never holds artifact content")
+    Container(orchestrator, "orchestrator.md", "Session preparer", "Profiles the person, writes gtm-context.json, applies the PMF gate, and ends with READY: gtm. It starts no agent and has no shell tool")
     Container(content, "content agents", "Markdown agents", "brand, marketing, sales, funnel, knowledge, codebase-scanner, research")
     Container(integrity, "integrity-agent.md", "Markdown agent", "Truth Tier gate. It runs after each content agent and is the only writer to gtm-output/")
-    Container(runners, "marketing-*-runner.md", "Markdown agents", "Run the brand, launch, and funnel commands for a coach. They follow the Result file section of the writer agent (ADR-005).")
-    Container(scgate, "sales-comp-gate-agent.md", "Markdown agent", "Writes the sales-comp gate file with an exact cliff recommendation (ADR-003)")
-    Container(skillset, "skills/", "Markdown", "30 skills: frameworks, integrity rules, marketing and sales methods, and the gate skill")
+    Container(runners, "skills/marketing-*-runner/", "Markdown skills", "Run the brand, launch, and funnel commands for a coach. They follow the Result file section of the writer agent (ADR-005).")
+    Container(scgate, "sales-comp-gate-agent.md", "Markdown agent", "Judges the 5 preconditions and writes the gate input file. It has no shell tool and runs no script (ADR-003)")
+    Container(skillset, "skills/", "Markdown", "33 skills: frameworks, integrity rules, marketing and sales methods, the 3 runners, and the gate skill")
     Container(scripts, "scripts/", "Python", "Exact work: truth_tier_validator, gtm_constants, sales_comp_gate, funnel_analyzer, plugin_integrator, result_name, and more")
     Container(defs, "definitions/ and schemas/", "Markdown and JSON", "Shared concepts, thresholds, and the schemas of the handoff files")
     ContainerDb(tests, "tests/", "pytest", "Unit tests and tests that read the prompt files")
     Container(adrs, "docs/adr/", "Markdown", "ADR-001, ADR-002, ADR-003, ADR-005")
     ContainerDb(ctx, "gtm-context.json", "Session state", "Completion flags, dispatched agents, plugin inputs, and learned knowledge")
-    ContainerDb(open, ".gtm/open-questions.json", "Choice file", "Written by the orchestrator when the person must choose")
+    ContainerDb(open, ".gtm/open-questions.json", "Choice file", "Written by /gtm:run or an agent when the person must choose")
   }
 
   Rel(commands, orchestrator, "/gtm:run starts it with the dispatch fields")
-  Rel(orchestrator, content, "Dispatches in waves")
-  Rel(orchestrator, integrity, "Dispatches after each content agent")
-  Rel(orchestrator, ctx, "Reads completion_flags")
-  Rel(orchestrator, open, "Writes it and ends with OPEN: when a choice is open")
-  Rel(commands, open, "Reads it, asks the person, starts the orchestrator again")
+  Rel(commands, content, "/gtm:run starts them in waves")
+  Rel(commands, integrity, "/gtm:run starts it after each content agent")
+  Rel(commands, ctx, "Reads completion_flags")
+  Rel(commands, open, "Writes it for a floor breach, asks the person, starts the agent again")
+  Rel(content, open, "Can write it and end with OPEN: when an answer is open")
   Rel(content, ctx, "Write drafts and completion_flags")
-  Rel(orchestrator, scripts, "Runs truth_tier_validator between the 2 dispatches of each integrity pass")
+  Rel(commands, scripts, "/gtm:run runs plugin_integrator, truth_tier_validator and output_check")
   Rel(runners, commands, "Read the command file and follow its body")
   Rel(runners, content, "Follow the Result file section of the writer agent")
-  Rel(scgate, scripts, "Classifies the cliff with the sales_comp_gate emitter")
-  Rel(scgate, defs, "Validates the gate file against the schema in schemas/")
+  Rel(skillset, scripts, "sales-comp-gate-review runs the sales_comp_gate emitter on the gate input file")
+  Rel(scgate, defs, "Writes the gate input file for the schema in schemas/")
   Rel(skillset, scgate, "sales-comp-gate-review follows the agent file in the main conversation")
   Rel(tests, scripts, "Import the scripts and check that the prose matches the constants")
 ```
 
 ## Notes
 
-- The orchestrator is a thin coordinator. It reads only `completion_flags` and one short `completion_log` line of each agent. It never reads artifact content.
+- `/gtm:run` is the coordinator. It reads only `completion_flags` and one short `completion_log` line of each agent. It never reads artifact content.
 - The integrity agent is the only writer to `gtm-output/`. It gates each artifact on the band that `truth_tier_validator.py` writes. The floor is 0.60 and the target is 0.85. Both values come from `gtm_constants`.
-- The deepest chain of agents is `/gtm:run`, then `gtm:orchestrator`, then a content agent or the integrity agent. That is two layers below the main conversation.
+- No gtm agent starts an agent, calls a skill or runs a shell command. `/gtm:run` starts each agent, one layer below the main conversation.
 - No agent asks the person a question. The commands and the skills ask.
-- The three runners dispatch no agent and publish nothing. A person's run of a marketing command writes the same result file as a coach's run.
-- The sales-comp gate has one entry for a person (the skill `sales-comp-gate-review`) and one for a dispatched run (the agent with preconditions from the dispatch fields). Both write `.gtm/sales-comp-gate-handoff.json` and end with the line `DONE: gtm`.
+- The three runner skills dispatch no agent and publish nothing. A person's run of a marketing command writes the same result file as a coach's run.
+- The sales-comp gate has one entry for a person (the skill `sales-comp-gate-review`) and one for a dispatched run (the agent with preconditions from the dispatch fields). The skill runs the emitter and writes `.gtm/sales-comp-gate-handoff.json`. The dispatched agent writes `.gtm/sales-comp-gate-input.json` and ends with the line `INPUT: .gtm/sales-comp-gate-input.json`, and the caller runs the emitter.
 - The plugin has no `.mcp.json` file. It starts no outside service.

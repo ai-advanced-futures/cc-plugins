@@ -37,6 +37,9 @@ An audit with 0 claims has no integrity score: `truth_tier_validator.py` exits 3
 
 - **Floor: 0.60** — Below this, the band is `floor`. No file goes to `gtm-output/`, and there is no override.
   `truth_tier_validator.py` sets `floor_breached: true` in `.gtm/audit/{agent}-integrity.json`.
+  The floor holds until the content agent writes new drafts: the script sets `completion_flags.{agent}` to false,
+  keeps the audit in `.gtm/audit/{agent}-floor-hold.json`, and gives no new score for the same drafts (exit 4,
+  `floor_holds`).
 - **Choice: 0.60 to 0.84** — The band is `choice`. No file goes to `gtm-output/` until the person chooses rerun or override.
 - **Target: 0.85+** — The band is `pass`. The files go to `gtm-output/`.
 
@@ -54,5 +57,5 @@ A low integrity score means too many claims were fabricated (Tier 5) and had to 
 
 ## Implementation
 
-`scripts/truth_tier_validator.py` computes this score and its band. The orchestrator runs it with `--root '<project>' --agent <agent>` between the 2 dispatches of each integrity pass.
+`scripts/truth_tier_validator.py` computes this score and its band. The command `/gtm:run` runs it with `--root '<project>' --agent <agent>` between the 2 dispatches of each integrity pass.
 See `truth-tiers.md` for the full tier classification system.

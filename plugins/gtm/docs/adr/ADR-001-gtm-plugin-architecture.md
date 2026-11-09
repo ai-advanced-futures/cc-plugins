@@ -7,6 +7,8 @@
 **Updated:** 2026-11-06 (STORY-177: the score and band come from truth_tier_validator.py; band choice holds the output)
 **Updated:** 2026-11-07 (STORY-187: an audit with 0 claims has no integrity score, and the run stops)
 **Updated:** 2026-11-07 (STORY-92: gtm reads the jtbd and competitive-intelligence graphs, not their files)
+**Updated:** 2026-11-07 (STORY-146: no agent starts an agent, calls a skill or runs a shell command; `/gtm:run` runs the waves)
+**Updated:** 2026-11-09 (STORY-146: only a command or a skill runs a script; a floor holds until the content agent writes new drafts)
 
 ---
 
@@ -28,11 +30,11 @@ Constraints:
 
 ### Many agents and one mandatory integrity gate
 
-The plugin has 13 agents. The integrity agent runs after each content agent, on every path. No artifact reaches the person before it passes the gate.
+The plugin has 10 agents. No agent has the `Agent`, `Skill` or `Bash` tool; the command `/gtm:run` and the skills do those things. The integrity agent runs after each content agent, on every path. No artifact reaches the person before it passes the gate.
 
 | Agent | Model | Role |
 |---|---|---|
-| `orchestrator` | sonnet | Reads the dispatch fields, runs the waves, and holds the session state |
+| `orchestrator` | sonnet | Profiles the person, prepares the session state, applies the PMF gate, and ends with `READY: gtm`. `/gtm:run` runs the waves. |
 | `brand-agent` | opus | Brand identity, voice, and positioning |
 | `marketing-agent` | sonnet | Campaigns, content, and launch plans |
 | `sales-agent` | sonnet | Pitch outline, prospecting, and pipeline coaching |
@@ -42,15 +44,16 @@ The plugin has 13 agents. The integrity agent runs after each content agent, on 
 | `codebase-scanner` | haiku | Scans the product code for real capabilities |
 | `research-agent` | haiku | Web research when an MCP server is missing |
 | `sales-comp-gate-agent` | sonnet | Sales-comp precondition gate (ADR-003) |
-| `marketing-launch-runner`, `marketing-brand-runner`, `marketing-funnel-runner` | sonnet | Routes for a coach plugin (ADR-005) |
+
+The 3 routes for a coach plugin (ADR-005) are the skills `marketing-launch-runner`, `marketing-brand-runner` and `marketing-funnel-runner`.
 
 ### Questions to the person
 
 No agent asks the person a question, and no agent has the `AskUserQuestion` tool. An agent takes its values from the dispatch fields.
 
-- `/gtm:run` asks first. It asks the role, the stage, the goal, the PMF gate, the codebase scan, and the files to read. It then starts the orchestrator with the dispatch fields.
-- When the orchestrator needs a choice, it writes `.gtm/open-questions.json`, ends with the line `OPEN: .gtm/open-questions.json`, and stops. The command asks the person and starts the orchestrator again with `resume: true`.
-- A score from 0.60 to 0.84 needs a choice: rerun the agent or override. A score below 0.60 stops the run with no question.
+- `/gtm:run` asks first. It asks the role, the stage, the goal, the PMF gate, the codebase scan, and the files to read. It runs `plugin_integrator.py`, and then starts the orchestrator with the dispatch fields.
+- When a choice is open, `/gtm:run` asks the person itself. When an agent needs a choice, it writes `.gtm/open-questions.json`, ends with the line `OPEN: .gtm/open-questions.json`, and stops. The command asks the person and starts the same agent again with the choice as a dispatch field.
+- A score from 0.60 to 0.84 needs a choice: rerun the agent or override. A score below 0.60 stops the run with no question, and the floor holds until the content agent writes new drafts: `truth_tier_validator.py` gives no new score before that (exit 4).
 
 ### Truth Tier system
 
@@ -64,11 +67,11 @@ Each claim gets a tier when the agent writes it.
 | 4 | STRATEGIC_INTENT | Direction stated, not funded | "Our vision is" |
 | 5 | SPECULATION | No evidence | Blocked. It never appears. |
 
-The integrity score is `(total_claims - tier_5_blocked) / total_claims`. The floor is 0.60. The target is 0.85. `scripts/truth_tier_validator.py` computes the score and its band (`floor`, `choice`, `pass`). The orchestrator runs it between the 2 dispatches of each integrity pass. The integrity agent has no shell tool and does not count the score.
+The integrity score is `(total_claims - tier_5_blocked) / total_claims`. The floor is 0.60. The target is 0.85. `scripts/truth_tier_validator.py` computes the score and its band (`floor`, `choice`, `pass`). `/gtm:run` runs it between the 2 dispatches of each integrity pass. The integrity agent has no shell tool and does not count the score.
 
 ### Scripts for exact work
 
-Python scripts do the work that a model must not improvise. A command or an agent runs a script with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py`. Five scripts have a command line and a PEP 723 block: `result_name.py`, `plugin_integrator.py`, `sales_comp_gate_emitter.py`, `truth_tier_validator.py`, and `output_check.py`. The other scripts are library code with unit tests. Where a text once ran a library script, the text now gives a rule that the model applies from a file in `definitions/` or `schemas/`.
+Python scripts do the work that a model must not improvise. A command or a skill runs a script with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py`. No agent runs a script, because no agent has the `Bash` tool. Five scripts have a command line and a PEP 723 block: `result_name.py`, `plugin_integrator.py`, `sales_comp_gate_emitter.py`, `truth_tier_validator.py`, and `output_check.py`. The other scripts are library code with unit tests. Where a text once ran a library script, the text now gives a rule that the model applies from a file in `definitions/` or `schemas/`.
 
 ### The definitions folder
 
@@ -113,13 +116,13 @@ The key `plugin_inputs` holds `competitive_intelligence`, `jtbd`, and `pricing`,
 
 ### Thin coordinator
 
-The orchestrator reads only `completion_flags` and one short `completion_log` line of each agent from `gtm-context.json`. The artifacts move through files:
+`/gtm:run` reads only `completion_flags` and one short `completion_log` line of each agent from `gtm-context.json`. The artifacts move through files:
 
 - `.gtm/working/<agent>/` holds the drafts of the content agents.
 - `gtm-output/` holds the final artifacts. Only the integrity agent writes there.
 - `.gtm/audit/` holds the audit of each agent.
 
-The context use of the orchestrator stays the same for a build of any size.
+The context use of the coordinator stays the same for a build of any size.
 
 ### Waves
 
@@ -130,7 +133,7 @@ Wave 2: marketing-agent and sales-agent in one message, then integrity-agent for
 Wave 3: funnel-agent, then integrity-agent (funnel), then the consolidated audit
 ```
 
-Each wave uses foreground `Agent` calls. After each call, the orchestrator reads `completion_flags`. The file `definitions/wave-routing.json` holds the agents of each wave.
+Each wave uses foreground `Agent` calls. After each call, `/gtm:run` reads `completion_flags`. The file `definitions/wave-routing.json` holds the agents of each wave.
 
 ### Preliminary MQL seed
 

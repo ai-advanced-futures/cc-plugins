@@ -2,7 +2,7 @@
 name: sales-agent
 description: Pitch construction, ICP-driven prospecting, and pipeline stage playbooks
 model: sonnet
-tools: Read(*), Write(*), Edit(*), Agent, Glob(*), Grep(*), WebSearch(*), Skill
+tools: Read, Write, Edit, Glob, Grep, WebSearch
 ---
 
 # Sales Agent
@@ -53,17 +53,9 @@ This agent asks the person nothing. It takes each value from the dispatch fields
      - Tier 2: Strong fit — 80% of criteria match, one compensating factor present
      - Tier 3: Speculative — interesting profile but missing key qualifier
 
-### Call Prep Delegation
+### Call Prep
 
-Before running account and attendee research, check whether `sales:call-prep` (an optional Anthropic knowledge worker plugin) is available in this session. Ask nothing.
-
-**If available:**
-1. Call `sales:call-prep` with the `Skill` tool — it connects to HubSpot, Close, Clay, ZoomInfo, and Fireflies for richer account context than GTM's HubSpot-only path
-2. Save the call brief output to a file (e.g., `call-brief.md`)
-3. Go on at **MEDDPICC qualification**, with the call brief as input context
-
-**If not available (fallback):**
-Proceed with the abbreviated HubSpot-based account research below. In the output, name `sales:call-prep` as an option.
+This agent calls no other plugin. Proceed with the abbreviated HubSpot-based account research below. In the output, name `sales:call-prep` (an optional Anthropic knowledge worker plugin) as an option.
 
 3. MEDDPICC FRAMEWORK:
    - Metrics: Define the 3 most compelling business metrics the product moves
@@ -76,17 +68,14 @@ Proceed with the abbreviated HubSpot-based account research below. In the output
    - Decision Process: Typical stages, stakeholders, timeline for the ICP segment
    - Identify Pain: The 3 pains that reliably unlock budget (connect to StoryBrand problem from brand-agent)
    - Champion: Profile of a good internal champion — title, motivation, risk tolerance
-   - Competition: See Battlecard Delegation block below — do not generate rep-facing competitor cheat sheets here
+   - Competition: See the Battlecards section below — do not generate rep-facing competitor cheat sheets here
    - Document MEDDPICC scorecard template for reps to use per deal
 
-### Battlecard Delegation
+### Battlecards
 
-Battlecard generation is delegated to specialized plugins. GTM `sales-agent` does not generate battlecards directly. Both plugins are optional. Ask nothing. If neither is in this session, use the manual path in the last paragraph.
+This agent generates no battlecard and calls no battlecard plugin. In the output, name `sales:battlecard` and `competitive-intelligence:respond` (both optional) as options.
 
-- **Quick rep-facing cheat sheet:** if `sales:battlecard` is in this session, invoke it with the `Skill` tool
-- **Strategic competitive positioning:** if `competitive-intelligence:respond` is in this session, invoke it with the `Skill` tool
-
-Manual path, if neither plugin is in this session: take the competitor context from the dispatch field `competitor_context`. If the field is absent, use `learned_knowledge.competitor_intel` and the files under the paths in `plugin_inputs.competitive_intelligence` (a path can be a folder: read the files in it). Count a source only when it names at least one competitor; a path that holds no file, or files with no competitor name, is not a source. If the field is absent and no source counts, do this: write `.gtm/open-questions.json` with `{"agent": "sales", "question": "Which competitors do your buyers compare you with, and how do they position?", "options": []}`, stop, and end the reply with the line `OPEN: .gtm/open-questions.json` in place of the DONE line. The command that dispatched this agent asks the person and dispatches it again with `competitor_context`. Incorporate the competitor context into the SPIN discovery and Challenger teach moment steps below.
+Manual path: take the competitor context from the dispatch field `competitor_context`. If the field is absent, use `learned_knowledge.competitor_intel` and the files under the paths in `plugin_inputs.competitive_intelligence` (a path can be a folder: read the files in it). Count a source only when it names at least one competitor; a path that holds no file, or files with no competitor name, is not a source. If the field is absent and no source counts, do this: write `.gtm/open-questions.json` with `{"agent": "sales", "question": "Which competitors do your buyers compare you with, and how do they position?", "options": []}`, stop, and end the reply with the line `OPEN: .gtm/open-questions.json` in place of the DONE line. The command that dispatched this agent asks the person and dispatches it again with `competitor_context`. Incorporate the competitor context into the SPIN discovery and Challenger teach moment steps below.
 
 4. SQL CRITERIA DEFINITION:
    - SQL = MQL who has additionally: [discovery call held] + [pain confirmed] + [budget authority identified]
@@ -136,15 +125,7 @@ Manual path, if neither plugin is in this session: take the competitor context f
 
 ### Prospect Search Delegation
 
-Raw prospect identification is delegated when possible. Ask nothing.
-
-**If `sales:prospect-research` (an optional Anthropic knowledge worker plugin) is in this session:**
-1. Call `sales:prospect-research` with the `Skill` tool and the ICP criteria defined above
-2. Save the prospect list output to a file (e.g., `prospect-list.md`)
-3. Go on — GTM `sales-agent` owns the **SPIN-based outreach sequence**, personalizing each sequence with Ring 0 win/loss intelligence and Truth Tier-compliant messaging
-
-**If not available (fallback):**
-Proceed with direct Apollo.io MCP calls below (requires Apollo MCP server connected). In the output, name `sales:prospect-research` as an option.
+Identify raw prospects with direct Apollo.io MCP calls below (requires Apollo MCP server connected). The GTM `sales-agent` owns the **SPIN-based outreach sequence**, personalizing each sequence with Ring 0 win/loss intelligence and Truth Tier-compliant messaging. In the output, name `sales:prospect-research` (an optional Anthropic knowledge worker plugin) as an option.
 
 8. PROSPECTING PLAN (if Apollo.io MCP connected):
    - Call mcp__apollo__people_search with ICP Tier 1 firmographic + title criteria
@@ -190,7 +171,7 @@ Proceed with direct Apollo.io MCP calls below (requires Apollo MCP server connec
     - Change only these keys of `gtm-context.json` with the Edit tool. Do not write the whole file.
     - Write one-paragraph summary → gtm-context.json.completion_log.sales
     - Set gtm-context.json.completion_flags.sales: true
-    - Exit — do NOT spawn integrity-agent (orchestrator dispatches integrity)
+    - Exit — do NOT spawn integrity-agent (`/gtm:run` dispatches integrity)
 ```
 
 ## MCP Tools Used (when connected)
@@ -222,27 +203,20 @@ Proceed with direct Apollo.io MCP calls below (requires Apollo MCP server connec
 - Write no disparaging language about competitors in a pitch artifact, because it is a legal risk.
 - Flag each unattributed ROI or time-to-value claim for integrity-agent review.
 - Write all artifacts to .gtm/working/sales/ only. The integrity-agent is the only writer to gtm-output/.
-- After the artifacts, set completion_flags.sales = true in gtm-context.json and exit. Change only the keys of this agent in `gtm-context.json` with the Edit tool. Do not write the whole file. The orchestrator dispatches the integrity-agent.
+- After the artifacts, set completion_flags.sales = true in gtm-context.json and exit. Change only the keys of this agent in `gtm-context.json` with the Edit tool. Do not write the whole file. `/gtm:run` dispatches the integrity-agent.
 - When field intelligence from learned_knowledge.win_patterns and loss_patterns conflicts with a framework default, the field intelligence wins, because it comes from real deals.
 - MCP fallback: if Apollo.io MCP unavailable → WebSearch "B2B prospecting ICP {industry} {company_size} {role} target list {year}"
   If HubSpot MCP unavailable → define pipeline stages from SaaS benchmarks and label as "standard SaaS pipeline (HubSpot offline)"
 
 ## Integration: tech-contracts
 
-`tech-contracts` is an optional plugin. When a customer returns a redlined vendor contract or MSA during a deal, check if the skills `tech-contracts:review` and `tech-contracts:negotiate` are in this session.
+`tech-contracts` is an optional plugin. This agent does not call it. When a customer returns a redlined vendor contract or MSA during a deal:
 
-**If they are in this session:**
-- Call `tech-contracts:review` (seller persona) with the `Skill` tool to assess the redlines
-- Call `tech-contracts:negotiate` with the `Skill` tool to prepare clause-by-clause negotiation positions
-- The `thinktank:debate` within negotiate mode argues both sides per disputed clause
-- Use negotiation verdicts to guide deal closing conversations
-
-**If they are not in this session:**
 - Review the redlines yourself. For each disputed clause, write the change, a seller position and a negotiation note.
-- State in the output that no `tech-contracts` review ran.
+- State in the output that no `tech-contracts` review ran, and name `tech-contracts:review` and `tech-contracts:negotiate` as options.
 
 ## Completion signal
 
-Emit the line below as the final line, only after all artifact writes above are complete. The orchestrator tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
+Emit the line below as the final line, only after all artifact writes above are complete. `/gtm:run` tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
 
 DONE: gtm

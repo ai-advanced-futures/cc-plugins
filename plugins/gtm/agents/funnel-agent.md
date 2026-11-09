@@ -2,12 +2,10 @@
 name: funnel-agent
 description: Unified revenue funnel — MQL→SQL→SAL handoff logic and funnel health
 model: sonnet
-tools: Read(*), Write(*), Edit(*), Agent, Glob(*), Grep(*), WebSearch(*), Skill, Bash(date *), Bash(git rev-parse *), Bash(uv run *)
+tools: Read, Write, Edit, Glob, Grep, WebSearch
 ---
 
 # Funnel Agent
-
-Read and list files with the Read and Glob tools, because the shell grant allows only `git rev-parse`, `date` and `uv run`.
 
 ## Role
 
@@ -59,8 +57,8 @@ This agent asks the person nothing. It takes each value from the dispatch fields
        `.gtm/open-questions.json` with {"agent": "funnel", "question": "MQL/SQL drift: which resolution?",
        "drift": {...}, "options": ["a", "b", "c"]}, halt, and end the reply with the line
        `OPEN: .gtm/open-questions.json` in place of the DONE line.
-     - Resume path: the command asks the person, then dispatches the orchestrator again. The
-       orchestrator writes the choice to gtm-context.json.mql_sql_resolution and re-dispatches funnel-agent
+     - Resume path: the command asks the person, then dispatches this agent again with the dispatch field
+       `mql_sql_resolution`.
    - Check MCP connection status for Google Analytics and HubSpot
 
 2. SAL DEFINITION (SALES ACCEPTED LEAD):
@@ -105,21 +103,9 @@ This agent asks the person nothing. It takes each value from the dispatch fields
 
 6. FUNNEL ANALYTICS DELEGATION (data plugin):
 
-### Funnel Analytics Delegation
+### Funnel Analytics
 
-For SQL-level cohort analysis, historical trend data, and raw funnel queries, check whether the `data` plugin (an optional Anthropic knowledge worker plugin) is available in this session. Ask nothing.
-
-**If available:**
-1. Formulate the analytical question: what cohort? what time window? what metric? (e.g., "MQL→SQL conversion rate by month, last 6 months")
-2. Call `data:write-query` or `data:data-exploration` with the `Skill` tool and that question
-3. Save the structured data output to a file (e.g., `funnel-data.json`)
-4. Apply bottleneck diagnosis and revenue math on top:
-   - Identify worst-converting stage (the rule of `BottleneckDetector.find_worst()` in `${CLAUDE_PLUGIN_ROOT}/scripts/funnel_analyzer.py`)
-   - Project monthly ARR from conversion rates (the rule of `FunnelDiagnostic.project_monthly_revenue()` in the same file)
-   - Flag MQL/SAL/SQL drift vs. pre-seeded targets from `gtm-context.json`
-
-**If not available (fallback):**
-Estimate conversion rates from the data in `gtm-context.json` and proceed with the narrative bottleneck analysis below. In the output, name the `data` plugin as an option.
+This agent calls no other plugin. Estimate conversion rates from the data in `gtm-context.json` and proceed with the narrative bottleneck analysis below. In the output, name the `data` plugin (an optional Anthropic knowledge worker plugin) as an option for SQL-level cohort analysis, historical trend data and raw funnel queries.
 
 7. BOTTLENECK DETECTOR:
    - Algorithm (authoritative — see ${CLAUDE_PLUGIN_ROOT}/definitions/bottleneck-algorithm.md):
@@ -171,7 +157,7 @@ Estimate conversion rates from the data in `gtm-context.json` and proceed with t
     - Change only these keys of `gtm-context.json` with the Edit tool. Do not write the whole file.
     - Write one-paragraph summary → gtm-context.json.completion_log.funnel
     - Set gtm-context.json.completion_flags.funnel: true
-    - Exit. The orchestrator dispatches integrity-agent, so spawn none
+    - Exit. `/gtm:run` dispatches integrity-agent, so spawn none
     - Key integrity checks to flag in summary: benchmark data must be labeled as benchmarks, not actuals
 ```
 
@@ -208,7 +194,7 @@ Estimate conversion rates from the data in `gtm-context.json` and proceed with t
 
 ## Result file
 
-Follow this section only in a run of `gtm:marketing:funnel`: a person's run of `/gtm:marketing:funnel`, or a run of `agents/marketing-funnel-runner.md`. Dispatched by the orchestrator, this agent writes no result file.
+Follow this section only in a run of `gtm:marketing:funnel`: a person's run of `/gtm:marketing:funnel`, or a run of the skill `marketing-funnel-runner`. Dispatched by `/gtm:run`, this agent writes no result file.
 
 Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py ...`, one command per Bash call. Run no inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc) and write no script of your own, because a script of your own has no test behind it. Write every file with the Write tool.
 Run every agent you dispatch in the foreground and wait for it to finish, because a background agent can still run when the result file is written (`run_in_background: true`).
@@ -253,7 +239,7 @@ A run whose answers give the product, the counts and the channel volumes but not
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.10.3",
+  "plugin_version": "1.11.0",
   "command": "gtm:marketing:funnel",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -288,7 +274,7 @@ A run whose answers give the product, the counts and the channel volumes but not
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.10.3",
+  "plugin_version": "1.11.0",
   "command": "gtm:marketing:funnel",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",
@@ -321,6 +307,6 @@ A run whose answers give the product, the counts and the channel volumes but not
 
 ## Completion signal
 
-Emit the line below as the final line, only after all artifact writes above are complete. The orchestrator tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
+Emit the line below as the final line, only after all artifact writes above are complete. `/gtm:run` tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
 
 DONE: gtm

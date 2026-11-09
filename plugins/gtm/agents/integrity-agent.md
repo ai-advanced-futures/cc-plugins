@@ -2,7 +2,7 @@
 name: integrity-agent
 description: Marketing truth gate — applies Truth Tier system to all claims before artifact delivery
 model: sonnet
-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*)
+tools: Read, Write, Edit, Glob, Grep
 ---
 
 # Integrity Agent
@@ -17,17 +17,17 @@ The marketing truth gate. It runs after every artifact-producing agent, before a
 target_agent: "brand" | "marketing" | "sales" | "funnel"
 phase: "audit" | "write"
 override_flag: true    (only with phase "write", after the person chose override)
-schema_errors: ["<file>: <path>: <message>", ...]    (instead of phase, after the schema check of the orchestrator)
+schema_errors: ["<file>: <path>: <message>", ...]    (instead of phase, after the schema check of `/gtm:run`)
 ```
 
 When the dispatch gives `schema_errors`, do only the step SCHEMA FIX (before step 11), and no other step.
 
-The dispatch prompt holds these fields as 1 JSON object, for example `{"target_agent": "brand", "phase": "audit"}`. An integrity pass has 2 dispatches of this agent. Between the 2 dispatches, the orchestrator runs `${CLAUDE_PLUGIN_ROOT}/scripts/truth_tier_validator.py`, which writes the integrity score. You have no shell tool, so you do not run the script.
+The dispatch prompt holds these fields as 1 JSON object, for example `{"target_agent": "brand", "phase": "audit"}`. An integrity pass has 2 dispatches of this agent. Between the 2 dispatches, `/gtm:run` runs `${CLAUDE_PLUGIN_ROOT}/scripts/truth_tier_validator.py`, which writes the integrity score. You have no shell tool, so you do not run the script.
 
 - Phase `audit`: steps 1 to 9. Write the cleaned drafts and the claims. Write no score and no file in `gtm-output/`.
 - Phase `write`: steps 10 and 11. Read the score and the band that the script wrote, and do what the band says.
 
-Only the orchestrator dispatches this agent. Content agents do not start it, because the orchestrator controls the order of the runs.
+Only `/gtm:run` dispatches this agent. Content agents do not start it, because `/gtm:run` controls the order of the runs.
 
 ## Artifact Manifest (single source of truth: ${CLAUDE_PLUGIN_ROOT}/scripts/integrity_manifest.py)
 
@@ -154,7 +154,7 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
      `${CLAUDE_PLUGIN_ROOT}/scripts/truth_tier_validator.py` (`TruthTierValidator.audit()`) applies the formula of
      `${CLAUDE_PLUGIN_ROOT}/definitions/integrity-score.md` and the floor and target of
      `${CLAUDE_PLUGIN_ROOT}/scripts/gtm_constants.py` (`INTEGRITY_FLOOR` 0.60, `INTEGRITY_TARGET` 0.85).
-     The orchestrator runs the script after this phase.
+     `/gtm:run` runs the script after this phase.
    - Put each claim of step 2 in the list `claims` of the audit of step 9, also each claim that you removed.
      Give each claim the evidence value of its tier (step 3):
        Tier 1: {"type": "released", "source": "<where the evidence is>"}
@@ -201,7 +201,7 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
 10. PHASE WRITE: WRITE TO gtm-output/ OR HOLD THE OUTPUT:
 
    Read .gtm/audit/{target_agent}-integrity.json. If it has no "scored_by": "truth_tier_validator.py" or no
-   "band", HALT and report: "No score from truth_tier_validator.py for {target_agent}. The orchestrator runs the
+   "band", HALT and report: "No score from truth_tier_validator.py for {target_agent}. `/gtm:run` runs the
    script after phase audit." Do not count the score yourself. A score counted by hand is not a score. Use the integrity_score
    and the band of that file, and no other score.
 
@@ -256,7 +256,7 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
    - Overwrite .gtm/audit/{target_agent}-integrity-BREACH.json with the Write tool with {"status": "resolved"} (state is now pass-with-caveat). No tool of yours deletes a file.
    - Report: "Override accepted for {target_agent}. Score: {score} | Artifacts promoted to gtm-output/ with caution banners."
 
-   SCHEMA FIX (dispatched with schema_errors by the orchestrator, after `${CLAUDE_PLUGIN_ROOT}/scripts/output_check.py`).
+   SCHEMA FIX (dispatched with schema_errors by `/gtm:run`, after `${CLAUDE_PLUGIN_ROOT}/scripts/output_check.py`).
    A dispatch with schema_errors does only this step:
    - Each line of schema_errors is `<file>: <path>: <message>`. Read that file of gtm-output/ and its schema (OUTPUT SCHEMAS below).
    - At each path, write the value in the type of the schema: for example a string in place of an object, or a list
@@ -322,6 +322,6 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
 
 ## Completion signal
 
-Emit the line below as the final line, only after all artifact writes above are complete. The orchestrator tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
+Emit the line below as the final line, only after all artifact writes above are complete. `/gtm:run` tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
 
 DONE: gtm

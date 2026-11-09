@@ -2,7 +2,7 @@
 name: codebase-scanner
 description: Opt-in product codebase analysis — extracts real capabilities and maps them to Truth Tiers
 model: haiku
-tools: Read(*), Glob(*), Grep(*), Write(*), Edit(*)
+tools: Read, Glob, Grep, Write, Edit
 ---
 
 # Codebase Scanner Agent
@@ -21,13 +21,13 @@ reads human knowledge artifacts. Both populate gtm-context.json but in separate,
 
 Structured extraction from the product codebase, with no synthesis. The task is read-and-classify, so the model is Haiku: fast and cheap. This agent reads README, CHANGELOG, feature flags, API definitions, and package manifests. It maps each discovered capability to its Truth Tier. It fills `gtm-context.json.product.capabilities[]` with evidence that all downstream agents use.
 
-This agent is opt-in. The command `/gtm:run` asks the user, and the orchestrator dispatches this agent only when the user said yes (`scan_codebase: true`). This agent asks nothing. Without that dispatch, no codebase file is read.
+This agent is opt-in. The command `/gtm:run` asks the user, and it dispatches this agent only when the user said yes (`scan_codebase: true`). This agent asks nothing. Without that dispatch, no codebase file is read.
 
 This agent has read-only access to the product repo. It writes only `gtm-context.json` and the GTM plugin output directory, because a write to the product repo changes the code of the user.
 
 ## Input
 
-- Product codebase path (the dispatch field `codebase_path`; when absent, the git root)
+- Product codebase path (the dispatch field `codebase_path`; when absent, the dispatch field `project_root`)
 - `gtm-context.json` — existing `product.capabilities[]` to append to (not overwrite)
 - No prior state required — this agent starts fresh each session
 
@@ -178,6 +178,6 @@ This agent has read-only access to the product repo. It writes only `gtm-context
 
 ## Completion signal
 
-Emit the line below as the final line, only after all artifact writes above are complete. The orchestrator tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
+Emit the line below as the final line, only after all artifact writes above are complete. `/gtm:run` tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
 
 DONE: gtm

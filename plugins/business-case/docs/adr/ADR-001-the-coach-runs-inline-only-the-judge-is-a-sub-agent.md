@@ -1,6 +1,6 @@
 # ADR-001 — The coach runs inline; the sub-agents only read and reply
 
-**Status:** Accepted · **Date:** 2026-10-27 · **Amended:** 2026-10-29 (v0.3.0, the figure extractor); 2026-11-03 (v0.5.0, the analysts and the coach's plugin runs)
+**Status:** Accepted · **Date:** 2026-10-27 · **Amended:** 2026-10-29 (v0.3.0, the figure extractor); 2026-11-03 (v0.5.0, the analysts and the coach's plugin runs); 2026-11-09 (v0.7.1, the 3 routes of `gtm` are skills)
 
 ## Context
 
@@ -52,9 +52,10 @@ names with the `Agent` tool and the map's `subagent_type`, and waits for it to
 end. It runs one command at a time, and starts the next run or asks the next
 card only after that. A route ran in the
 background in every spike run, so the coach ends its turn after a dispatch,
-and the completion notice starts its next turn. The coach uses the `Skill` tool only for the four routes of
-`competitive-intelligence` and `jtbd-market-discovery`, which are skills: a skill runs in the main
-conversation and dispatches its own agents. For any other map command it uses the
+and the completion notice starts its next turn. The coach uses the `Skill` tool only for the seven routes of
+`competitive-intelligence`, `jtbd-market-discovery` and `gtm`, which are skills: the `Agent` tool cannot start a skill. A skill runs in the main
+conversation. The four routes of `competitive-intelligence` and `jtbd-market-discovery` dispatch their
+own agents from there, and the three routes of `gtm` dispatch no agent. For any other map command it uses the
 `Agent` tool: told only to dispatch an agent, Desktop's model ran the skill in
 the main session instead.
 

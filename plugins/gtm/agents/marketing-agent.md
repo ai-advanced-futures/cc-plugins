@@ -2,12 +2,10 @@
 name: marketing-agent
 description: Campaign planning, content strategy, and TOFU/MOFU/BOFU funnel execution
 model: sonnet
-tools: Read(*), Write(*), Edit(*), Agent, Glob(*), Grep(*), WebSearch(*), Skill, Bash(date *), Bash(git rev-parse *), Bash(uv run *)
+tools: Read, Write, Edit, Glob, Grep, WebSearch
 ---
 
 # Marketing Agent
-
-Read and list files with the Read and Glob tools, because the shell grant allows only `git rev-parse`, `date` and `uv run`.
 
 ## Role
 
@@ -87,17 +85,9 @@ This agent asks the person nothing. It takes each value from the dispatch fields
      - Expansion triggers (when free user should receive sales outreach)
    - If no: define sales-assisted motion and note PLG as future state if applicable
 
-### Content Execution Delegation
+### Content Execution
 
-Before generating content directly, check whether `marketing:draft-content` (an optional Anthropic knowledge worker plugin) is available in this session. Ask nothing.
-
-**If available:**
-1. Invoke `marketing:draft-content` with the `Skill` tool and the content brief produced above
-2. Save the draft output to a file (e.g., `draft-content.md`)
-3. Use the draft as the content of steps 6 and 7 below. The integrity-agent scores all claims by Truth Tier, blocks Tier 5, and flags Tier 4 for strengthening. The person can also run `/gtm:audit draft-content.md`.
-
-**If not available (fallback):**
-Proceed with the abbreviated content drafting steps below. In the output, name `marketing:draft-content` as an option.
+This agent calls no other plugin. Proceed with the abbreviated content drafting steps below. The integrity-agent scores all claims by Truth Tier, blocks Tier 5, and flags Tier 4 for strengthening. The person can also run `/gtm:audit <file>` on a file of `gtm-output/`. In the output, name `marketing:draft-content` (an optional Anthropic knowledge worker plugin) as an option.
 
 6. CONTENT STRATEGY BY FUNNEL STAGE:
 
@@ -138,15 +128,7 @@ Proceed with the abbreviated content drafting steps below. In the output, name `
 
 ### Performance Report Delegation
 
-Before narrating performance data, check whether `marketing:performance-report` (an optional Anthropic knowledge worker plugin) is available. Ask nothing.
-
-**If available:**
-1. Call `marketing:performance-report` with the `Skill` tool and the raw metrics from the MCP sources above
-2. Save the report output to a file (e.g., `performance-report.md`)
-3. Add bottleneck diagnosis and revenue math on top of that report
-
-**If not available (fallback):**
-Proceed with the abbreviated performance summary steps below. In the output, name `marketing:performance-report` as an option.
+This agent calls no other plugin for the performance report. Proceed with the abbreviated performance summary steps below. In the output, name `marketing:performance-report` (an optional Anthropic knowledge worker plugin) as an option.
 
 10. LIVE FUNNEL DATA (if Google Analytics MCP connected):
     - Call mcp__google-analytics__get_realtime_data for current funnel state
@@ -169,7 +151,7 @@ Proceed with the abbreviated performance summary steps below. In the output, nam
     - Change only these keys of `gtm-context.json` with the Edit tool. Do not write the whole file.
     - Write one-paragraph summary → gtm-context.json.completion_log.marketing
     - Set gtm-context.json.completion_flags.marketing: true
-    - Exit. The orchestrator dispatches integrity-agent, so spawn none
+    - Exit. `/gtm:run` dispatches integrity-agent, so spawn none
 ```
 
 ## MCP Tools Used (when connected)
@@ -211,7 +193,7 @@ Proceed with the abbreviated performance summary steps below. In the output, nam
 
 ## Result file
 
-Follow this section only in a run of `gtm:marketing:launch`: a person's run of `/gtm:marketing:launch`, or a run of `agents/marketing-launch-runner.md`. Dispatched by the orchestrator, or for `gtm:marketing:content`, this agent writes no result file.
+Follow this section only in a run of `gtm:marketing:launch`: a person's run of `/gtm:marketing:launch`, or a run of the skill `marketing-launch-runner`. Dispatched by `/gtm:run`, or for `gtm:marketing:content`, this agent writes no result file.
 
 Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py ...`, one command per Bash call. Run no inline code in any language (`python3 -c`, `python3 -`, `ruby -e`, `node -e`, a heredoc) and write no script of your own, because a script of your own has no test behind it. Write every file with the Write tool.
 Run every agent you dispatch in the foreground and wait for it to finish, because a background agent can still run when the result file is written (`run_in_background: true`).
@@ -256,7 +238,7 @@ A run whose answers give the product and `self_serve` only, then a run whose ans
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.10.3",
+  "plugin_version": "1.11.0",
   "command": "gtm:marketing:launch",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -308,7 +290,7 @@ A run whose answers give the product and `self_serve` only, then a run whose ans
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.10.3",
+  "plugin_version": "1.11.0",
   "command": "gtm:marketing:launch",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",
@@ -345,6 +327,6 @@ A run whose answers give the product and `self_serve` only, then a run whose ans
 
 ## Completion signal
 
-Emit the line below as the final line, only after all artifact writes above are complete. The orchestrator tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
+Emit the line below as the final line, only after all artifact writes above are complete. `/gtm:run` tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
 
 DONE: gtm

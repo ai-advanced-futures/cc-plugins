@@ -63,7 +63,7 @@ The plugin has 13 commands. Each command runs in the main conversation and asks 
 
 | Command | What it does | What it asks |
 |---|---|---|
-| `/gtm:run` | Builds the full GTM package. It starts the orchestrator, and the orchestrator runs the agents in four waves. | Your role, the business stage, and the primary goal. For an idea or pre-PMF stage, it shows the Sean Ellis test and asks if you want to continue. Then it asks if it may scan the codebase, and which files to read. When a score is from 0.60 to 0.84, it asks you to rerun the agent or to override the score. |
+| `/gtm:run` | Builds the full GTM package. It starts the orchestrator to prepare the session, then it starts the agents in four waves itself. | Your role, the business stage, and the primary goal. For an idea or pre-PMF stage, it shows the Sean Ellis test and asks if you want to continue. Then it asks if it may scan the codebase, and which files to read. When a score is from 0.60 to 0.84, it asks you to rerun the agent or to override the score. |
 | `/gtm:setup` | Shows how to add each optional MCP server, then writes `.gtm-mcp-status.json`. | Which servers to set up, one by one. It skips a server that is connected. It asks for no token. |
 | `/gtm:learn [path]` | Reads call transcripts, win and loss notes, and playbooks, and extracts GTM intelligence. | The place of the knowledge files, when you give no path. The option `--notion` reads from Notion. |
 | `/gtm:audit [path]` | Gives each claim of one file a Truth Tier, and writes a cleaned copy. | Which file to audit, when you give no path. The option `--all` audits all files in `gtm-output/`. |
@@ -81,12 +81,13 @@ The three commands `/gtm:marketing:brand`, `/gtm:marketing:launch`, and `/gtm:ma
 
 ## Skills
 
-The plugin has 30 skills. A skill gives a framework or a rule to an agent or to you.
+The plugin has 33 skills. A skill gives a framework or a rule to an agent or to you.
 
 - **Frameworks (16):** `frameworks-aaker-brand-equity`, `frameworks-aarrr-metrics`, `frameworks-ansoff-growth`, `frameworks-campbell-hero`, `frameworks-challenger-sale`, `frameworks-growth-loops`, `frameworks-kotler-stp`, `frameworks-meddpicc`, `frameworks-miller-storybrand`, `frameworks-moore-chasm`, `frameworks-pine-experience`, `frameworks-plg-playbook`, `frameworks-pmf-signal`, `frameworks-ries-trout`, `frameworks-sinek-why`, `frameworks-spin-selling`.
 - **Integrity (3):** `integrity-audit`, `integrity-moral-marketing-principles`, `integrity-truth-tier-system`.
 - **Marketing (5):** `marketing-brand-identity`, `marketing-content`, `marketing-gtm-funnel`, `marketing-launch`, `marketing-unified-funnel`.
 - **Sales (4):** `sales-pe-portfolio-prospecting`, `sales-pipeline`, `sales-pitch`, `sales-prospecting`.
+- **Runners for a coach plugin (3):** `marketing-launch-runner`, `marketing-brand-runner`, `marketing-funnel-runner`. Each one runs the matching command for a coach plugin, asks you nothing, and publishes nothing.
 - **Sales compensation (2):** `sales-comp-gate-review` runs the sales-comp precondition gate. It asks you the five preconditions, then writes a deterministic `proceed`, `pause`, or `re_pause` recommendation. `agentic-pricing-comms` holds six stakeholder message templates for a change to agentic pricing.
 
 ## Inputs
@@ -154,17 +155,17 @@ When a server is missing, the step uses a fallback:
 
 ### Plugins from outside this marketplace
 
-An agent calls a skill of these plugins with the `Skill` tool, only when the plugin is in the session. Without the plugin, the agent runs its own short path, and its output names the plugin as an option.
+The command `/gtm:run` calls the skills `enterprise-search` and `customer-support` with the `Skill` tool, only when the plugin is in the session. No agent calls a skill. Without the plugin, the agent runs its own short path, and its output names the plugin as an option.
 
-| Plugin | Used for |
+| Plugin | How this plugin uses it |
 |---|---|
-| `enterprise-search` | Searching the knowledge base (knowledge agent). |
-| `customer-support` | Churn signals and ticket summaries (knowledge agent). |
-| `sales` | Call prep, battlecards, and prospect research (sales agent). |
-| `marketing` | Content drafts and performance reports (marketing agent). |
-| `data` | SQL queries and data exploration (funnel agent). |
-| `value-ip` | Survived IP claims that anchor the positioning (brand agent and integrity agent). |
-| `tech-contracts` | The review and the negotiation of a redlined vendor contract (sales agent). Without it, the sales agent reviews the redlines itself and says that no `tech-contracts` review ran. |
+| `enterprise-search` | `/gtm:run` calls its skill to search the knowledge base, and gives the answer to the knowledge agent. |
+| `customer-support` | `/gtm:run` calls its skill for churn signals and ticket summaries, and gives the answer to the knowledge agent. |
+| `value-ip` | No call. The plugin reads its output files: the survived IP claims that anchor the positioning (brand agent and integrity agent). |
+| `sales` | No call. The sales agent does the account research and the prospecting itself, and its output names `sales:call-prep` and `sales:prospect-research` as options. |
+| `marketing` | No call. The marketing agent writes the content drafts and the performance summary itself, and its output names `marketing:draft-content` and `marketing:performance-report` as options. |
+| `data` | No call. The funnel agent estimates the conversion rates itself, and its output names the `data` plugin as an option for SQL queries. |
+| `tech-contracts` | No call. The sales agent reviews the redlines of a vendor contract itself, says that no `tech-contracts` review ran, and names `tech-contracts:review` and `tech-contracts:negotiate` as options. |
 
 Two of these plugins, `value-ip` and `tech-contracts`, are optional plugins from outside this marketplace. The plugin works without them. This README gives no install line for `value-ip`.
 
@@ -177,7 +178,7 @@ Two of these plugins, `value-ip` and `tech-contracts`, are optional plugins from
 - The plugin reads the files that you name, the codebase only when you agree, and web pages with `WebSearch` and `WebFetch`.
 - An MCP server that you add can give CRM and prospect data. That data can hold personal data of contacts. The plugin writes it only into the project files in the table above.
 - The publishing steps (a Slack post, a Notion page) run only in a command that you run, and only when the server is added. A runner for a coach plugin never publishes.
-- An optional plugin that an agent calls with `Skill` reads the data that the agent gives it, for example the account and deal data of the sales agent.
+- An optional plugin that `/gtm:run` calls with `Skill` (`enterprise-search`, `customer-support`) reads the request that the command gives it.
 - The plugin writes no credential. `/gtm:setup` asks for no token. The script `setup_mcp.sh` reads each token in your terminal with `read -rsp` and gives it to `claude mcp add-json`.
 
 ## Tests

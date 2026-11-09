@@ -55,9 +55,11 @@ Read(**/team/answers-*.json)
 ```
 <!-- runner-grants:end -->
 
-Four runs are skills: `competitive-intelligence:discover`, `competitive-intelligence:analyze`,
-`jtbd-market-discovery:discover` and `jtbd-market-discovery:wtp-check`. The command starts them with the `Skill`
-tool, so it has one `Skill(<route>)` grant for each of the four routes, and no `Skill` grant for any other skill.
+Seven runs are skills: `competitive-intelligence:discover`, `competitive-intelligence:analyze`,
+`jtbd-market-discovery:discover`, `jtbd-market-discovery:wtp-check`, `gtm:marketing-launch-runner`,
+`gtm:marketing-brand-runner` and `gtm:marketing-funnel-runner`. The command starts them with the `Skill`
+tool, so it has one `Skill(<route>)` grant for each of the seven routes, and no `Skill` grant for any other skill.
+The 3 routes of `gtm` are skills from version 1.11.0 of `gtm`, which is the floor of the plugin map.
 
 A run of `value-ip:analyze` or `product-finance:cost-coverage` is yours: the command starts neither, so it gives
 no grant for them.

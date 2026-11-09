@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.1
+
+- The command starts the 3 routes of `gtm` (`gtm:marketing-launch-runner`, `gtm:marketing-brand-runner` and `gtm:marketing-funnel-runner`) with the `Skill` tool, and has one `Skill(<route>)` grant for each one (STORY-146). Version 1.11.0 of `gtm` makes these 3 runner agents skills with the same names, so a dispatch with the `Agent` tool gets "agent type not found" and writes no result file. The command now has 7 routes that are skills.
+- After a route that is a skill, the command goes on in the same turn: it runs `team-run --done` and then starts the next run or asks the next card. A skill runs in the conversation of the coach, and the text of a skill can say to stop at its result file. Before, the turn ended after the first gtm route in 3 of 3 runs, the runs stayed `open`, and a new turn did not have the grants of the command.
+- The floor of `gtm` in the plugin map is `1.11.0`. The route names do not change. A lower `gtm` has the state `too_old`, so the coach plans no gtm command, and `bc.py evidence --from-result` refuses a gtm result file from below `1.11.0`. Run the route again for such a file.
+- Update `gtm` and `business-case` together. With `gtm` 1.11.0 and a `business-case` below 0.7.1, each gtm route fails with "agent type not found".
+
 ## 0.7.0
 
 The case graph, part A (STORY-89): the schema, the save code and the check. No command, skill or agent calls the save code yet.

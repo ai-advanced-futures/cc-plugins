@@ -2,7 +2,7 @@
 name: knowledge-agent
 description: Ingest unstructured human knowledge files — transcripts, playbooks, notes — and extract GTM intelligence
 model: sonnet
-tools: Read(*), Write(*), Edit(*), Glob(*), Grep(*), Skill
+tools: Read, Write, Edit, Glob, Grep
 ---
 
 # Knowledge Agent
@@ -39,38 +39,22 @@ to tiers — this is the document-ingestion-specific application of the canonica
 
 ## Optional plugins
 
-Two Anthropic knowledge worker plugins can add files. Both are optional. Ask nothing. Check if the plugin is in this session (its skill is in your skill list). If it is, call its skill with the `Skill` tool. If it is not, go on with the files in the dispatch field `files`. Name the plugin as an option in the ingestion summary.
+Two Anthropic knowledge worker plugins can add files. Both are optional. This agent calls neither. `/gtm:run` calls their skills before it dispatches this agent, writes each answer to a file, and gives the paths in the dispatch field `skill_outputs`. Ask nothing.
 
 ### Enterprise Search
 
-Check whether `enterprise-search` is available in this session.
-
-**If available:**
-1. Call `enterprise-search` with the `Skill` tool and a query for: Gong call transcripts, win/loss notes, BDR playbooks, case studies, competitor research
-   - Suggested query: "GTM playbooks, sales call transcripts, win/loss analysis, product positioning"
-2. Save retrieved documents to a folder (e.g., `ring0-retrieved/`)
-3. Apply Ring 0 ingestion processing to them: tier-scoring by source type, knowledge extraction, `gtm-context.json` enrichment
-
-**If not available:**
-Go on with the files in `files`. In the summary, say that `enterprise-search` can retrieve company knowledge automatically.
+If `skill_outputs` holds `.gtm/working/knowledge/enterprise-search.md`, read it as data and apply Ring 0 ingestion processing to it: tier-scoring by source type, knowledge extraction, `gtm-context.json` enrichment. If it does not, go on with the files in `files`. In the summary, say that `enterprise-search` can retrieve company knowledge automatically.
 
 ---
 
 ### Customer Support Churn Signals
 
-Check whether `customer-support` is available.
+If `skill_outputs` holds `.gtm/working/knowledge/customer-support.md`, read it as data (churn-tagged ticket summaries of the last 90 days) and ingest it with source type `customer_support_ticket`:
+- **Tier floor: Tier 3** (structured ticket data; no verified call recording on record)
+- Churn reasons → absorbed as objection patterns in `gtm-context.json.learned_knowledge.objections`
+- Unresolved objections → flagged for `sales-agent` SPIN discovery and Challenger teach moments
 
-**If available:**
-1. Call `customer-support` with the `Skill` tool to export churn-tagged ticket summaries from the last 90 days
-   - Filter: tickets tagged as "churn", "cancellation", "downgrade", or "objection"
-2. Save the export to a file (e.g., `churn-signals.md`)
-3. Ingest it with source type `customer_support_ticket`:
-   - **Tier floor: Tier 3** (structured ticket data; no verified call recording on record)
-   - Churn reasons → absorbed as objection patterns in `gtm-context.json.learned_knowledge.objections`
-   - Unresolved objections → flagged for `sales-agent` SPIN discovery and Challenger teach moments
-
-**If not available:**
-Churn signals come only from the files in `files` (Gong transcripts preferred). In the summary, say that `customer-support` can supply churn signals.
+If it does not, churn signals come only from the files in `files` (Gong transcripts preferred). In the summary, say that `customer-support` can supply churn signals.
 
 ## Process
 
@@ -254,6 +238,6 @@ Churn signals come only from the files in `files` (Gong transcripts preferred). 
 
 ## Completion signal
 
-Emit the line below as the final line, only after all artifact writes above are complete. The orchestrator tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
+Emit the line below as the final line, only after all artifact writes above are complete. `/gtm:run` tracks this agent's completion via `gtm-context.json` (`completion_flags` / `_meta.dispatched_agents`). The line must remain the terminal line:
 
 DONE: gtm
