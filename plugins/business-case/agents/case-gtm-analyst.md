@@ -337,7 +337,7 @@ brief.
   "brief_sha256": "<the value of your brief's sha256: line>",
   "schema": "plugin-result/1",
   "plugin": "business-case",
-  "plugin_version": "0.7.1",
+  "plugin_version": "0.8.0",
   "command": "business-case:case-gtm-analyst",
   "run": {
     "started_at": "2026-10-27T12:00:00Z",

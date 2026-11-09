@@ -4,7 +4,7 @@
 # ///
 """bc.py: the business-case CLI, the only way the prose layer touches a case's files.
 
-Every subcommand but `temp-dir` takes --case DIR. Exit 0 means ok, 1 means not done (`status` only), and 2 means
+Every subcommand takes --case DIR. Exit 0 means ok, 1 means not done (`status` only), and 2 means
 refused or a usage error; a refusal prints one line, `REFUSED: <reason>`, to stderr. Text a person
 typed (a section body, a decision's reason) is read from a file, so it is kept byte for byte with
 no shell quoting. No option sets who wrote a judge report: code decides that from the receipt.
@@ -14,7 +14,11 @@ from __future__ import annotations
 import argparse
 import contextlib
 import dataclasses
+import hashlib
 import json
+import os
+import re
+import stat
 import sys
 import tempfile
 from pathlib import Path
@@ -715,11 +719,54 @@ def cmd_installs(a) -> int:
     return 0
 
 
+def _temp_folder(case) -> Path:
+    """The temporary folder of 1 case. The name holds the case slug and a hash of its path, so 2 cases at the same
+    time use different files."""
+    full = Path(case).expanduser().absolute()
+    slug = re.sub(r"[^a-z0-9-]+", "-", full.name.lower()).strip("-")
+    digest = hashlib.sha256(str(full).encode("utf-8")).hexdigest()[:8]
+    return Path(tempfile.gettempdir()) / f"bc-{slug}-{digest}"
+
+
 def cmd_temp_dir(a) -> int:
-    """The temporary directory, one line: the coach writes its text files there. It names the folder so
-    no command needs a shell default such as `${TMPDIR:-/tmp}`, which always asks for approval."""
-    print(tempfile.gettempdir())
+    """The temporary folder of this case, one line: the coach writes its text files there. It names the folder
+    so no command needs a shell default such as `${TMPDIR:-/tmp}`, which always asks for approval."""
+    folder = _temp_folder(a.case)
+    folder.mkdir(mode=0o700, exist_ok=True)
+    found = os.lstat(folder)
+    if not stat.S_ISDIR(found.st_mode) or found.st_uid != os.getuid():
+        raise Refused(f"the temporary folder {folder} is not a folder of this user")
+    print(folder)
     return 0
+
+
+# The options that name a file of the coach. `bc.py` deletes each such file that is in the temporary folder of
+# its case. test_every_temp_name_of_build_is_an_option_of_the_tuple holds this tuple to the text of build.md.
+TEMP_FILE_OPTIONS = ("question_file", "file", "text_file", "body_file", "page_json", "reason_file", "coach_copy",
+                     "entry_json", "condition_json", "note_json", "answer_file", "proposals_file", "tier2_file",
+                     "answers_file")
+
+
+def _delete_temp_files(a) -> None:
+    """Delete each file that an option of TEMP_FILE_OPTIONS names, when it is in the folder of --case. A file
+    elsewhere is the person's, and it stays."""
+    case = getattr(a, "case", None)
+    if not case:
+        return
+    folder = _temp_folder(case)
+    for option in TEMP_FILE_OPTIONS:
+        given = getattr(a, option, None)
+        if given and Path(given).absolute().parent == folder:
+            try:
+                Path(given).unlink()
+            except OSError:
+                pass
+
+
+def subcommand_names() -> list:
+    """The subcommand names of the parser, which the runner guard allows."""
+    action = next(a for a in build_parser()._actions if isinstance(a, argparse._SubParsersAction))
+    return sorted(action.choices)
 
 
 # -- the parser --------------------------------------------------------------------------------
@@ -876,22 +923,24 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub("handoff", cmd_handoff, "Write business-case-handoff.json; prints its path.")
     p.add_argument("--mode", required=True, choices=handoff.MODES)
 
-    help_text = "Print the temporary directory the coach writes its text files to."
-    p = subs.add_parser("temp-dir", help=help_text, description=help_text)
-    p.set_defaults(func=cmd_temp_dir)
+    sub("temp-dir", cmd_temp_dir, "Make and print the temporary folder of this case, where the coach writes its text "
+                                  "files. A call that names a file there deletes it, whatever the exit code.")
     return parser
 
 
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        return args.func(args)
-    except REFUSALS as exc:
-        reason = str(exc)
-    except Exception as exc:  # the exit code is a contract: a crash is not "not done"
-        reason = f"unexpected error {type(exc).__name__}: {exc}"
-    _refuse(reason)
-    return 2
+        try:
+            return args.func(args)
+        except REFUSALS as exc:
+            reason = str(exc)
+        except Exception as exc:  # the exit code is a contract: a crash is not "not done"
+            reason = f"unexpected error {type(exc).__name__}: {exc}"
+        _refuse(reason)
+        return 2
+    finally:
+        _delete_temp_files(args)
 
 
 if __name__ == "__main__":

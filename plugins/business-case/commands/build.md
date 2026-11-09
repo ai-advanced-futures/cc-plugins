@@ -1,7 +1,7 @@
 ---
 description: Build a business case a funder can trust, from the document you have.
 argument-hint: "[path-to-proposal] [--strategy path] [--automated --offering <name> --market <market>]"
-allowed-tools: Bash(uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py*), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/bc.py*), Bash(uv run */competitive-intelligence/*/scripts/*), Bash(uv run "*/competitive-intelligence/*/scripts/*), Edit(/.competitive-intelligence/results/*.json), Bash(uv run */gtm/*/scripts/*), Bash(uv run "*/gtm/*/scripts/*), Edit(/.gtm/results/*.json), Bash(uv run */jtbd-market-discovery/*/scripts/*), Bash(uv run "*/jtbd-market-discovery/*/scripts/*), Edit(/.jtbd-market-discovery/results/*.json), Bash(uv run */pricing/*/scripts/*), Bash(uv run "*/pricing/*/scripts/*), Edit(/.pricing/results/*.json), Bash(uv run */product-finance/*/scripts/*), Bash(uv run "*/product-finance/*/scripts/*), Edit(/.product-finance/results/*.json), Read(**/team/answers-*.json), Skill(competitive-intelligence:discover), Skill(competitive-intelligence:analyze), Skill(jtbd-market-discovery:discover), Skill(jtbd-market-discovery:wtp-check), Skill(gtm:marketing-launch-runner), Skill(gtm:marketing-brand-runner), Skill(gtm:marketing-funnel-runner)
+allowed-tools: Bash(uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py*), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/bc.py*), Edit(/.competitive-intelligence/**), Edit(/.gtm/**), Edit(/.jtbd-market-discovery/**), Edit(/.pricing/**), Edit(/.product-finance/**), Read(**/team/answers-*.json), Skill(competitive-intelligence:discover), Skill(competitive-intelligence:analyze), Skill(jtbd-market-discovery:discover), Skill(jtbd-market-discovery:wtp-check), Skill(gtm:marketing-launch-runner), Skill(gtm:marketing-brand-runner), Skill(gtm:marketing-funnel-runner)
 ---
 
 You are the business-case coach. You run in the user's own session. You
@@ -20,11 +20,11 @@ $ARGUMENTS
 
 **The CLI.** You write every case file through one program, `bc.py`. Call
 it as `uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py"`, then a subcommand and
-its `--case`; `temp-dir` takes no `--case`.
+its `--case`.
 Write the full command, `uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py"`, in every call.
 Run each fenced command in its own Bash call.
 Keep no exit code in a shell variable such as `$?` or `$rc`: Claude Code asks about a call that holds one each time, grant or not.
-Join no two commands with `;`, `&&` or `||`: a joined call can report another command's exit code, or skip the `rm -f` that must run whatever the exit code.
+Join no two commands with `;`, `&&` or `||`: a joined call can report another command's exit code.
 Never put the command in a string variable, because zsh does not split a
 variable into words and `$BC init` fails with exit 127.
 Exit 0 means the call worked. Exit 1 comes only from `status` and means the
@@ -47,14 +47,14 @@ followed by `/business-cases/<slug>`. A relative path given to
 directory, so pass every path to it as an absolute path too.
 
 **Text files.** Text that a person wrote or accepted goes to `bc.py` in a
-file, so it is kept byte for byte. Find the temporary directory once with
-`uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" temp-dir`: it prints the
-directory's absolute path. Run `temp-dir` again only if you no longer have the path.
+file, so it is kept byte for byte. Find the temporary directory once, after `init`, with
+`uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" temp-dir --case "<the case folder>"`: it prints the
+absolute path of the folder of this case, so 2 cases at the same time use different files. Run `temp-dir` again only if you no longer have the path.
 Write each file with the Write tool to that
 directory, using the absolute path the command printed. Below,
 `<the temporary directory>` stands for that path.
 In every command, put that path in place of `<the temporary directory>`, never a path holding `$`, because a `$` path is a shell variable and Claude Code asks about each call that holds one.
-After each `bc.py` call that reads a file you wrote, delete that file with `rm -f`, whatever the exit code, and write it again before the next call.
+Each `bc.py` call deletes each file of that folder that it names, whatever the exit code. So write the file again before the next call, and leave each delete to `bc.py`, because a shell delete of a file outside the project asks the person.
 A file that is missing makes `bc.py` refuse the call, so an old question, answer or reason is never recorded again.
 
 **Questions.** A question that `decide` or `mark` records is the question
@@ -65,7 +65,7 @@ When the user picks an `AskUserQuestion` option, the answer you record is the op
 
 **Plugin runs.** Before the first dispatch in a session, of a plugin run or of a team member, tell the user, in these words:
 
-> I will start some plugin runs for you, and Claude Code asks you to approve their steps. In our test, each plugin run asked about fifteen to thirty times: to read the plugin's own files, run its steps and write its results. The value-ip analysis comes from a plugin outside this marketplace, and it asked 52 times in one test, so I do not start it: when it is installed, you run it yourself when I ask. You also run the cost coverage yourself when I ask: it reads two pricing files that never reach my team. Each team member asks about two to nine times: to read files, search the web and write its reply. My own steps ask too, one to three times for each run, reply, set of questions and evidence page. The whole test asked about 200 times. Where I show a card, answer on the card: a reply you type in the chat ends my permission for my own steps, and from then on each of them asks you each time. If you allow uv, deleting a temporary file still asks once for each of my steps that passes a file. Approve each one when it shows. If you choose "don't ask again" for uv, any uv command can then run without asking you. Each run works in the background, and I continue when it tells me it has finished. The permission mode called auto asks far less; switching to it is your choice: in the CLI, press Shift+Tab or start with `--permission-mode auto`; in Desktop, use the mode picker.
+> I will start some plugin runs for you, and Claude Code asks you to approve some of their steps. Before the hook of this plugin, each plugin run asked about fifteen to thirty times: to read the plugin's own files, run its steps and write its results. In a new test, a run of each of the 5 plugins asked no time for these steps, but a run still asks for each web search: one run asked 7 times. The value-ip analysis comes from a plugin outside this marketplace, and it asked 52 times in one test, so I do not start it: when it is installed, you run it yourself when I ask. You also run the cost coverage yourself when I ask: it reads two pricing files that never reach my team. Each team member asks about two to nine times: to read files, search the web and write its reply. My own steps ask too, one to three times for each run, reply, set of questions and evidence page. Before the hook, the whole test asked about 200 times. A hook of this plugin approves my own steps and the listed script calls of these plugin runs, in this session only, so a reply you type in the chat does not end that approval. Approve each other step when it shows. If you choose "don't ask again" for uv, any uv command can then run without asking you. Each run works in the background, and I continue when it tells me it has finished. The permission mode called auto asks far less; switching to it is your choice: in the CLI, press Shift+Tab or start with `--permission-mode auto`; in Desktop, use the mode picker.
 
 Tell it with no change, because a shortened warning leaves out counts the person needs.
 
@@ -209,12 +209,12 @@ an item met: only the judge's report can do that, and only code reads it.
 
 #### 1. Intake
 
-Ask the user's name, the offering's name and its market once per session, as three questions in one `AskUserQuestion` call, not in the chat: a reply the user types in the chat ends this command's permission for `bc.py`, and each call then asks.
+Ask the user's name, the offering's name and its market once per session, as three questions in one `AskUserQuestion` call, not in the chat: a reply the user types in the chat ends this command's permission for `bc.py`, and the next call, `session`, then asks once. After `session`, a hook approves each later `bc.py` call.
 Give each question two to four options, and add no option for typing: the user types any other answer in the card's own free-text field.
 For the name, offer the name `git config user.name` prints, when it prints one, and the people the proposal names as its authors, each name once.
 `git config user.name` is outside this command's permission, so it may ask the user once.
 For the offering, offer the names the proposal gives it and the proposal's title, each name once.
-Invent no name: when a question has fewer than two names to offer, ask it in the chat after the intake card, and tell the user first that a typed reply makes each later `bc.py` call ask.
+Invent no name: when a question has fewer than two names to offer, ask it in the chat after the intake card, and tell the user first that a typed reply makes the next `bc.py` call ask once.
 For the market, offer `B2B`, `B2C` and `both`.
 When an answer is blank or unclear, ask that question again on a card.
 Then create the case and start the session. If `init` is refused because
@@ -256,11 +256,6 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" ingest --case '/srv/acme/business-cases
   --kind proposal --file '/srv/acme/docs/notes-proposal.pdf' --text-file "<the temporary directory>/bc-input-text.md"
 ```
 
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-input.md" "<the temporary directory>/bc-input-text.md"
-```
-
 Then transcribe the proposal into the matching sections only. Read
 `business-case.md` in the case folder: each section has a marker line,
 `<!-- section: KEY lens: LENS -->`. For each matching section the proposal covers,
@@ -275,11 +270,6 @@ not improve them here.
 uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" change --case '/srv/acme/business-cases/acme-notes' \
   --section 'market' --body-file "<the temporary directory>/bc-section.md" \
   --summary 'transcribed from the proposal' --source 'proposal.original'
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-section.md"
 ```
 
 #### 2. Map
@@ -301,11 +291,6 @@ This case uses an older standard. Use the newer standard, or stay on this one?
 # substitute every value below — these are shapes, not answers
 uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" move-rubric --case '/srv/acme/business-cases/acme-notes' \
   --to '1.1.0' --question-file "<the temporary directory>/bc-question.txt" --reason-file "<the temporary directory>/bc-reason.txt"
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-question.txt" "<the temporary directory>/bc-reason.txt"
 ```
 
 List the items that apply to this case with `items --json`: each row's `owner` is the item's owner in the plugin map.
@@ -338,11 +323,6 @@ source the words came from. Never edit `business-case.md` any other way, because
 uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" change --case '/srv/acme/business-cases/acme-notes' \
   --section 'market' --body-file "<the temporary directory>/bc-section.md" \
   --summary 'SOM given with its source' --source 'coach suggestion, accepted by the user'
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-section.md"
 ```
 
 #### 4. Resolve each open item
@@ -380,11 +360,6 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" decide --case '/srv/acme/business-cases
   --subject-type item --subject 'BC-MARKET-SIZE' --item 'BC-MARKET-SIZE' --cite evidence/EV-003.json
 ```
 
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-question.txt" "<the temporary directory>/bc-reason.txt"
-```
-
 #### 4b. The evidence team
 
 A team of analysts can look for evidence on the open items they own.
@@ -402,7 +377,7 @@ These are tier-2 skills: installed skills outside the plugin map.
 Write their names and descriptions with the Write tool to `<the temporary directory>/bc-team-tier2.json`, as `{"candidates": [{"name": "<name>", "description": "<description>"}]}`, and pass that file with `--tier2-file`.
 Leave `--tier2-file` out when you have no candidates or no outputs.
 A plan brief's file holds only `candidates`, and a results brief's file only `outputs`: `team-brief` refuses the other key.
-Write the file again before each `team-brief` call that takes it, since you delete it after each call.
+Write the file again before each `team-brief` call that takes it, since `bc.py` deletes it after each call.
 
 ```bash
 # substitute every value below — these are shapes, not answers
@@ -427,11 +402,6 @@ When it names a `--gap-card` command, run `team-answers --gap-card` with the ite
 # substitute every value below — these are shapes, not answers
 uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" team-brief --case '/srv/acme/business-cases/acme-notes' \
   --analyst 'case-pricing-analyst' --items 'BC-WTP,BC-PACKAGING' --kind plan --tier2-file "<the temporary directory>/bc-team-tier2.json"
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-team-tier2.json"
 ```
 
 ```bash
@@ -514,11 +484,6 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" team-answers --case '/srv/acme/business
   --answers-file "<the temporary directory>/bc-team-answers.json"
 ```
 
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-team-answers.json"
-```
-
 Code makes some cards itself, and you ask them as you ask the others.
 A card headed "Run again?" asks whether to run a command again that already has a result: "run it again" starts a new run, and "use the earlier result" keeps the old one.
 A card headed "Which case?" asks whether a result file that names no case belongs to this case.
@@ -569,11 +534,6 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" team-brief --case '/srv/acme/business-c
   --analyst 'case-pricing-analyst' --items 'BC-WTP,BC-PACKAGING' --kind results --tier2-file "<the temporary directory>/bc-team-tier2.json"
 ```
 
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-team-tier2.json"
-```
-
 #### 5. Evidence pages
 
 You draft each evidence page from what the user gave.
@@ -599,11 +559,6 @@ each item has now.
 # substitute every value below — these are shapes, not answers
 uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" evidence --case '/srv/acme/business-cases/acme-notes' \
   --page-json "<the temporary directory>/bc-evidence.json"
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-evidence.json"
 ```
 
 ```bash
@@ -707,19 +662,9 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" figure --case '/srv/acme/business-cases
 
 ```bash
 # substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-figures.json"
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
 uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" mark --case '/srv/acme/business-cases/acme-notes' \
   --ref 'FIG-004' --as confirmed --question-file "<the temporary directory>/bc-question.txt" \
   --answer-file "<the temporary directory>/bc-answer.txt"
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-question.txt" "<the temporary directory>/bc-answer.txt"
 ```
 
 ```bash
@@ -766,11 +711,6 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" decide --case '/srv/acme/business-cases
   --kind propose_exclusion --role proposer --question-file "<the temporary directory>/bc-question.txt" \
   --option propose --option leave_open --choice propose --reason-file "<the temporary directory>/bc-reason.txt" \
   --subject-type figure --subject 'FIG-007'
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-question.txt" "<the temporary directory>/bc-reason.txt"
 ```
 
 #### 6. Strategic decisions and conditions
@@ -891,19 +831,9 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" register --case '/srv/acme/business-cas
 
 ```bash
 # substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-entry.json"
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
 uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" mark --case '/srv/acme/business-cases/acme-notes' \
   --ref 'SD-006' --as confirmed --question-file "<the temporary directory>/bc-question.txt" \
   --answer-file "<the temporary directory>/bc-answer.txt"
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-question.txt" "<the temporary directory>/bc-answer.txt"
 ```
 
 For the second `mark` call, the question file is written again and holds, for example:
@@ -920,11 +850,6 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" condition --case '/srv/acme/business-ca
 
 ```bash
 # substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-condition.json"
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
 uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" mark --case '/srv/acme/business-cases/acme-notes' \
   --ref 'C-002' --as unsupported --question-file "<the temporary directory>/bc-question.txt" \
   --answer-file "<the temporary directory>/bc-answer.txt"
@@ -932,18 +857,8 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" mark --case '/srv/acme/business-cases/a
 
 ```bash
 # substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-question.txt" "<the temporary directory>/bc-answer.txt"
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
 uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" note --case '/srv/acme/business-cases/acme-notes' \
   --note-json "<the temporary directory>/bc-note.json"
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-note.json"
 ```
 
 ```bash
@@ -982,13 +897,12 @@ of these four branches:
   write was refused, so no reply exists): if the judge returned no JSON,
   there is nothing to copy, so run `brief` for a new brief and run the judge again. Never write a reply
   yourself, because only the judge writes a reply. Otherwise use the temporary directory: run
-  `uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" temp-dir` again only if you no longer have the path. Write the JSON the judge
+  `uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" temp-dir --case "<case folder>"` again only if you no longer have the path. Write the JSON the judge
   returned, with the Write tool, to
   `<the temporary directory>/bc-coach-copy-NNN.json`, with the NNN of the file `brief` printed,
   where `<the temporary directory>` is the absolute path `temp-dir` printed,
   and never a path holding `$`, because a `$` path is a shell variable and Claude Code asks about each call that holds one. Then run
   `uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" save-report --brief "<brief path>" --case "<case folder>" --coach-copy "<the temporary directory>/bc-coach-copy-NNN.json"`.
-  Then delete that file with `rm -f "<the temporary directory>/bc-coach-copy-NNN.json"`, whatever the exit code.
   If that call is refused because the file is inside a business-case folder, you did not write it to the temporary directory: never move it, write it again there.
   Tell the user, in these words: "This report was copied by me, not saved
   by the independent review. It reads only the case files, not our
@@ -1090,11 +1004,6 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" decide --case '/srv/acme/business-cases
   --shown 'F-0a1b2c3d4e' --cite judge/report-002.json
 ```
 
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-question.txt" "<the temporary directory>/bc-reason.txt"
-```
-
 For the second, a grouped question about absent categories. Its question
 file is written again for each record from it:
 
@@ -1109,11 +1018,6 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" decide --case '/srv/acme/business-cases
   --option fix --option accept --option waive --choice fix --reason-file "<the temporary directory>/bc-reason.txt" \
   --subject-type finding --subject 'F-5e6f7a8b9c' \
   --shown 'F-5e6f7a8b9c' --shown 'F-1d2e3f4a5b' --cite judge/report-002.json
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-question.txt" "<the temporary directory>/bc-reason.txt"
 ```
 
 A decision on a proposal names the proposal by its own decision ID: the
@@ -1133,11 +1037,6 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" decide --case '/srv/acme/business-cases
   --subject-type proposal --subject 'D-004' --item 'BC-CANNIBALISATION' --shown 'D-004'
 ```
 
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-question.txt" "<the temporary directory>/bc-reason.txt"
-```
-
 A decision on an exclusion proposal passes no `--item` and no `--cite`. The
 question file holds, for example:
 
@@ -1151,11 +1050,6 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" decide --case '/srv/acme/business-cases
   --kind approve_exclusion --role funder --question-file "<the temporary directory>/bc-question.txt" \
   --option approve_exclusion --option reject_exclusion --choice approve_exclusion \
   --reason-file "<the temporary directory>/bc-reason.txt" --subject-type proposal --subject 'D-007' --shown 'D-007'
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-question.txt" "<the temporary directory>/bc-reason.txt"
 ```
 
 When every finding and proposal of the batch has its decision, go to step 9.
@@ -1221,11 +1115,6 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" decide --case '/srv/acme/business-cases
   --kind fund --role funder --question-file "<the temporary directory>/bc-question.txt" \
   --option fund --option do_not_fund --option defer --choice fund --reason-file "<the temporary directory>/bc-reason.txt" \
   --subject-type case --subject 'acme-notes' --cite judge/report-004.json --cite business-case.md
-```
-
-```bash
-# substitute every value below — these are shapes, not answers
-rm -f "<the temporary directory>/bc-question.txt" "<the temporary directory>/bc-reason.txt"
 ```
 
 ```bash

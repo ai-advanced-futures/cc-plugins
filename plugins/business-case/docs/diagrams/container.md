@@ -1,6 +1,7 @@
 # business-case — C4 Container
 
-One command, the agents, three hooks with one handler, one CLI, and the case
+One command, the agents, two hook handlers (the judge guard and the runner guard,
+three modes each), one CLI, and the case
 files. Every file in a case folder is written by code, except two replies:
 the judge's and each analyst's. The hooks guard both. The figures reach the review
 through `finance.json`: code reads `figures.jsonl`, computes, and writes
@@ -29,6 +30,11 @@ graph TB
         predispatch["PreToolUse, pre-dispatch<br/>Agent · Task<br/>onFailure: block"]
         postwrite["PostToolUse, post-write<br/>Write"]
         handler["hooks-handlers/judge_guard.py<br/>one handler, three modes"]
+        prebash["PreToolUse, pre-bash<br/>Bash"]
+        prewriterunner["PreToolUse, pre-write<br/>Write · Edit"]
+        prereadrunner["PreToolUse, pre-read<br/>Read"]
+        postbash["PostToolUse, post-bash<br/>Bash"]
+        runnerguard["hooks-handlers/runner_guard.py<br/>the runner guard, ADR-016<br/>allows only exact script calls in a marked session"]
     end
 
     subgraph code["lib/ (stdlib only, Python 3.9-safe)"]
@@ -95,6 +101,8 @@ graph TB
     extractor -.->|"reads business-case.md, scope.json, the pages"| written
     hooksjson --> prewrite & predispatch & postwrite
     prewrite & predispatch & postwrite --> handler
+    hooksjson --> prebash & prewriterunner & prereadrunner & postbash
+    prebash & prewriterunner & prereadrunner & postbash --> runnerguard
     handler --> receipt
     receipt -->|"an analyst's call first"| teamguardpy
     teamguardpy --> teamfilespy

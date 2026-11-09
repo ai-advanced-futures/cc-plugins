@@ -28,29 +28,20 @@ The analysts search the web (`WebSearch` and `WebFetch`). A search query can hol
 
 The command runs in your own session and asks you each question it needs. It keeps the case in `business-cases/<slug>/` in your repository, and a later session picks the case up from those files.
 
-Claude Code asks you to approve many of the coach's steps and plugin runs: about 200 times in one full test run. The permission mode called auto asks far less; switching to it is your choice: in the CLI, press Shift+Tab or start with `--permission-mode auto`; in Desktop, use the mode picker.
+Claude Code asks you to approve some of the coach's steps and plugin runs: about 200 times in one full test run before the hook of this plugin. The hook approves the steps of a plugin run, but a run still asks for each web search. The permission mode called auto asks far less; switching to it is your choice: in the CLI, press Shift+Tab or start with `--permission-mode auto`; in Desktop, use the mode picker.
 
 The command gives the plugin runs it starts these grants, and no others. A runner gets no permission from its own
-tools list: it uses the rules of the conversation that starts it. Each grant lets a runner run the scripts of its
-own plugin, write its result file to the `.<plugin>/results/` folder, and read the answers file of the case:
+tools list: it uses the rules of the conversation that starts it. Each grant lets a runner write its run folder and
+its session folder in the `.<plugin>/` folder, and read the answers file of the case. The hook of the next paragraph
+approves its script calls:
 
 <!-- runner-grants:start -->
 ```
-Bash(uv run */competitive-intelligence/*/scripts/*)
-Bash(uv run "*/competitive-intelligence/*/scripts/*)
-Edit(/.competitive-intelligence/results/*.json)
-Bash(uv run */gtm/*/scripts/*)
-Bash(uv run "*/gtm/*/scripts/*)
-Edit(/.gtm/results/*.json)
-Bash(uv run */jtbd-market-discovery/*/scripts/*)
-Bash(uv run "*/jtbd-market-discovery/*/scripts/*)
-Edit(/.jtbd-market-discovery/results/*.json)
-Bash(uv run */pricing/*/scripts/*)
-Bash(uv run "*/pricing/*/scripts/*)
-Edit(/.pricing/results/*.json)
-Bash(uv run */product-finance/*/scripts/*)
-Bash(uv run "*/product-finance/*/scripts/*)
-Edit(/.product-finance/results/*.json)
+Edit(/.competitive-intelligence/**)
+Edit(/.gtm/**)
+Edit(/.jtbd-market-discovery/**)
+Edit(/.pricing/**)
+Edit(/.product-finance/**)
 Read(**/team/answers-*.json)
 ```
 <!-- runner-grants:end -->
@@ -64,12 +55,12 @@ The 3 routes of `gtm` are skills from version 1.11.0 of `gtm`, which is the floo
 A run of `value-ip:analyze` or `product-finance:cost-coverage` is yours: the command starts neither, so it gives
 no grant for them.
 
-Claude Code applies a grant only during the turn of the command, so each grant ends when the command ends.
+Claude Code applies a grant only during the turn of the command, so each grant ends when the command ends. A grant ends with the turn, and a run in the background ends the turn. So the hook `hooks-handlers/runner_guard.py` approves, in a session that started a build, only 1 exact call of `bc.py` or of a listed runner script, a write in a runner folder or in the temporary folder of a case, and a read of a file of a runner plugin or of an answers file.
 
 Two limits of these grants:
 
-- A `*` in a `Bash` grant matches any text, with spaces. A `uv run` command with other words in front, and the path of a plugin script at the end, can match a grant and run with no question. The runners call their own scripts, so the command cannot remove these grants. A later change can close this limit with a hook that allows only the exact script calls.
-- The result-file grant is an `Edit` rule, because Claude Code checks a file write against the `Edit` rules. A `Write` rule with a path does not match a write. A runner also writes its run folder (`.<plugin>/<run_id>/`) and its session folder. No grant covers these writes: an interactive run asks you, and an automated run refuses them.
+- A `*` in a `Bash` grant matches any text, with spaces, so the command has no such grant for a runner script. The hook checks the words of the call. It does not check the value of an argument, and `uv run` reads a `pyproject.toml` of the project. A command with other words in front gets no approval from the hook, so it asks you. See ADR-016.
+- The folder grants are `Edit` rules, because Claude Code checks a file write against the `Edit` rules. A `Write` rule with a path does not match a write. Each grant names the whole `.<plugin>/` folder, because the run folder (`.<plugin>/<run_id>/`) has a name that is not known when the command starts, and the folder also holds files at its root.
 
 A run goes like this:
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.0
+
+- A hook, `hooks-handlers/runner_guard.py`, approves the exact script calls of a build session: a call of `bc.py` and a call of a listed script of the 5 runner plugins, in a session that ran `bc.py session`. The `Bash` grants for the runner scripts are removed, because a `*` in a `Bash` pattern matched any text (issue #703) and a grant ends with the turn (STORY-188). See ADR-016.
+- Each case has its own temporary folder: `bc.py temp-dir` now takes `--case` and prints `<tmp>/bc-<slug>-<8 hex>/`. Each `bc.py` call deletes each file of that folder that it names, whatever the exit code. The command text has no `rm -f` (STORY-189).
+- The folder grant of each runner plugin is `Edit(/.<plugin>/**)`, so a runner can write its run folder and its session folder (STORY-190).
+- `bc.py temp-dir` without `--case` is refused.
+
 ## 0.7.1
 
 - The command starts the 3 routes of `gtm` (`gtm:marketing-launch-runner`, `gtm:marketing-brand-runner` and `gtm:marketing-funnel-runner`) with the `Skill` tool, and has one `Skill(<route>)` grant for each one (STORY-146). Version 1.11.0 of `gtm` makes these 3 runner agents skills with the same names, so a dispatch with the `Agent` tool gets "agent type not found" and writes no result file. The command now has 7 routes that are skills.

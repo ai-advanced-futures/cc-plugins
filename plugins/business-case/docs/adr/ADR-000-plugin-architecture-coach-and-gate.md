@@ -2,7 +2,7 @@
 
 **Status:** Accepted · **Date:** 2026-10-27
 
-Start here. This page is the overview of the plugin. ADR-001 to ADR-014 each
+Start here. This page is the overview of the plugin. ADR-001 to ADR-014 and ADR-016 each
 record one decision in full.
 
 ## Context
@@ -185,6 +185,7 @@ And what else §11 decides:
 | [ADR-012](ADR-012-the-figure-run-reports-what-it-left-uncovered.md) | The figure run reports what it left uncovered |
 | [ADR-013](ADR-013-the-evidence-team.md) | The evidence team: analysts that plan and draft, and the grade ceiling for pages built from a result |
 | [ADR-014](ADR-014-the-plugin-map-and-the-install-check.md) | The plugin map and the install check |
+| [ADR-016](ADR-016-the-runner-guard-allows-only-exact-calls.md) | The runner guard: a hook that allows only exact runner calls, and the temporary folder of a case |
 
 ## Consequences
 

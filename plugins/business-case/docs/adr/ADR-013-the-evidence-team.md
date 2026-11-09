@@ -193,7 +193,10 @@ ceiling is known for it.
 
 - The person approves more dialogs: each analyst asks a few times to read,
   search and write, on top of each plugin run. The coach warns before the
-  first dispatch.
+  first dispatch. Since ADR-016, a hook approves the reads, the script calls
+  and the writes of a plugin run in a build session: a live test of the 5 runner
+  plugins had no question for these steps. A run still asks for each web
+  search (7 times in one test of `competitive-intelligence:discover`).
 - A page built from a result can no longer be graded above what its sources
   support. A genuine `primary` finding of an analyst is graded `secondary`
   until a plugin run or the person's own page backs it.

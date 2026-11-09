@@ -12,6 +12,24 @@
         "hooks": [
           {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/judge_guard.py\" pre-dispatch", "timeout": 10, "onFailure": "block"}
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/runner_guard.py\" pre-bash", "timeout": 10}
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/runner_guard.py\" pre-write", "timeout": 10}
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/runner_guard.py\" pre-read", "timeout": 10}
+        ]
       }
     ],
     "PostToolUse": [
@@ -19,6 +37,12 @@
         "matcher": "Write",
         "hooks": [
           {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/judge_guard.py\" post-write", "timeout": 10}
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/runner_guard.py\" post-bash", "timeout": 10}
         ]
       }
     ]

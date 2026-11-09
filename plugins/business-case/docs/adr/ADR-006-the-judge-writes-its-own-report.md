@@ -325,25 +325,24 @@ grant too, and a later card answer does not bring it back: in the 2026-11-04
 live run, every `bc.py` call after the first typed reply asked. It allows any
 `bc.py` subcommand while the command runs, not only the ones the command's
 steps name. The probe also measured that a call with a shell default value in
-it asks every time, grant or no grant.
+it asks every time, grant or no grant. ADR-016 (2026-11-09) adds a hook that
+approves the exact `bc.py` and runner script calls in a session that runs a
+build: that approval does not end with the turn.
 
 The same line holds a second group of grants for the runners the command
-starts (STORY-168, 2026-11-06): for each of the five plugins whose runners the
-coach starts, the scripts of the plugin, the folder of its result files, and
-the answers file of the case. A runner uses the rules of the conversation that
-starts it, so its own tools list gives it nothing. The group is as narrow as
-the pattern syntax allows: it names each plugin, and it grants no wider path.
-The verifier measured it in a live run (2026-11-06): the script grants reach
-the runner, but a `Write` rule with a path does not match a write, because
-Claude Code checks a file write against the `Edit` rules. The result-file
-grant is therefore `Edit(/.<plugin>/results/*.json)`.
+starts (STORY-168, 2026-11-06; changed by STORY-188 and STORY-190, 2026-11-09).
+The verifier measured in a live run (2026-11-06) that a `Write` rule with a path
+does not match a write, because Claude Code checks a file write against the
+`Edit` rules. So the folder grant of each of the five plugins whose runners the
+coach starts is `Edit(/.<plugin>/**)`: it covers the result files, the run
+folder and the session folder of the runner. The answers file of the case has
+the grant `Read(**/team/answers-*.json)`.
 
-Two limits stay open (decision of the orchestrator, 2026-11-06). First, a `*`
-in a `Bash` pattern matches any text, with spaces, so a `uv run` command with
-other words in front and a plugin script path at the end can match a grant.
-The runners call their own scripts, and this plugin cannot change their
-prompts, so a `run-plugin` command in `bc.py` cannot remove the grants. The
-closing step is a hook that allows only the exact script calls; it needs its
-own decision and a security review. Second, no grant covers the run folder
-and the session folder of a runner: those writes ask in an interactive run
-and are refused in an automated run.
+The first version of this group also held a `Bash` grant for each script of
+each plugin. A `*` in a `Bash` pattern matches any text, with spaces, so a
+`uv run` command with other words in front and a plugin script path at the end
+could match such a grant. The grant also ends with the turn. The `Bash` grants
+are therefore removed. The hook `hooks-handlers/runner_guard.py` approves the
+exact script calls of the runners instead, in a session that runs a build,
+and it does not end with the turn. ADR-016 records that decision, its limits
+and its checks.
