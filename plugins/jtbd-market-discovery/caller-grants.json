@@ -1,0 +1,27 @@
+{
+  "schema": "plugin-caller-grants/1",
+  "plugin": "jtbd-market-discovery",
+  "grants": [
+    "Bash(uv run <plugin root>/scripts/composite_scorer.py*)",
+    "Bash(uv run \"<plugin root>/scripts/composite_scorer.py*)",
+    "Bash(uv run <plugin root>/scripts/jtbd_graph.py*)",
+    "Bash(uv run \"<plugin root>/scripts/jtbd_graph.py*)",
+    "Bash(uv run <plugin root>/scripts/jtbd_state.py*)",
+    "Bash(uv run \"<plugin root>/scripts/jtbd_state.py*)",
+    "Bash(uv run <plugin root>/scripts/report_exporter.py*)",
+    "Bash(uv run \"<plugin root>/scripts/report_exporter.py*)",
+    "Bash(uv run <plugin root>/scripts/run_phase_6.py*)",
+    "Bash(uv run \"<plugin root>/scripts/run_phase_6.py*)",
+    "Bash(uv run <plugin root>/scripts/run_phase_7.py*)",
+    "Bash(uv run \"<plugin root>/scripts/run_phase_7.py*)",
+    "Bash(uv run <plugin root>/scripts/run_phase_8.py*)",
+    "Bash(uv run \"<plugin root>/scripts/run_phase_8.py*)",
+    "Bash(uv run <plugin root>/scripts/run_phase_9.py*)",
+    "Bash(uv run \"<plugin root>/scripts/run_phase_9.py*)",
+    "Bash(uv run <plugin root>/scripts/survey_adapter.py*)",
+    "Bash(uv run \"<plugin root>/scripts/survey_adapter.py*)",
+    "Edit(/.jtbd-market-discovery/**)",
+    "Read(/<plugin root>/**)",
+    "Read(/<answers path>)"
+  ]
+}

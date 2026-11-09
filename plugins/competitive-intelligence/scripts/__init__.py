@@ -5,4 +5,4 @@ This package contains executable Python scripts for competitive analysis,
 value calculations, and statistical modeling.
 """
 
-__version__ = "1.10.8"
+__version__ = "1.10.9"

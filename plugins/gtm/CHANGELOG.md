@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.11.1
+
+- The file `caller-grants.json` and a block in the README name the grants that the session which starts a runner must give: the script, the output folder, the plugin files, the answers file, and the optional web and MCP tools. `tests/unit/test_caller_grants.py` checks the list (STORY-168).
+- The README says that a person's command can write any path in the project, because its grant is `Write`.
+
 ## 1.11.0
 
 - No gtm agent starts an agent, calls a skill or runs a shell command. Each agent has a `tools:` line of plain tool names (STORY-146, FEATURE-26). `/gtm:run` now starts each agent itself, in the foreground: the waves, the integrity passes, the schema checks, the floor breach question and the open questions move from `agents/orchestrator.md` to `commands/run.md`. The orchestrator profiles the person, prepares `gtm-context.json`, applies the PMF gate, and ends with `READY: gtm` (or `DONE: gtm` at the PMF stop).

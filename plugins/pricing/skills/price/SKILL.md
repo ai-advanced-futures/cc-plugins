@@ -1,7 +1,7 @@
 ---
 name: price
 description: Compute RIGHT_PRICE for a new feature or offering using a three-path formula — Path A (EVC-validated, when the jtbd gate accepts a jtbd result), Path B (multiplicative estimated, data-poor), or Path C (agentic pricing for Autonomous / Fully Agentic AI features). Applies Amadeo AI_MULTIPLIER, Helmer MOAT_MULTIPLIER, and discriminated output types for each pricing path.
-allowed-tools: Bash(uv run "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
+allowed-tools: Bash(uv run "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Edit(/.pricing/**)
 ---
 
 # Price — Compute RIGHT_PRICE

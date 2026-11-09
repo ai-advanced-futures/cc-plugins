@@ -1,6 +1,7 @@
 ---
 name: value-metric
 description: Select the right pricing axis (value metric) for a feature or product using Campbell's 3 criteria plus Amadeo's AI-era 4th criterion. Detects per-user pricing antipattern and recommends the metric that scales with Speed × Accuracy of Outcome.
+allowed-tools: Edit(/.pricing/**)
 ---
 
 # Value Metric — Select the Right Pricing Axis

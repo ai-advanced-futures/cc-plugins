@@ -39,6 +39,8 @@ The 4 last skills run in the Phase 1 Insight workflow of the `agentic-pricing-st
 | `agentic-pricing-strategist` | Run the Phase 1 Insight workflow: diagnose the offering, walk the value-metric tree, write 3 handoff files |
 | `price-runner` | Run the `price` skill and place the offering in the tiers, when another plugin or session dispatches it |
 
+The session that dispatches `price-runner` must give the grants in [Grants that a caller must give](#grants-that-a-caller-must-give).
+
 ### Agents run as subagents
 
 An agent runs as a subagent. It cannot ask the person. It takes each answer from the dispatch fields. When a required field is missing, the agent writes `.pricing/open-questions.json` and ends with `DONE: pricing OPEN: .pricing/open-questions.json`.
@@ -189,6 +191,24 @@ A plugin run reads only the jtbd run that its `inputs_from` field names. A perso
 | `segment_signal` | Path B: the gap between VALUE_SIGNAL and WTP_max → recommendation to run JTBD. Path A: headroom above WTP_max, not a market gap |
 | `floor_advisory` | A warning when the margin floor is above WTP_max |
 | `moat_advisory` | A note when a Scale Economy moat is present |
+
+## Grants that a caller must give
+
+A plugin run of this plugin gets no permission from its own tools list. The session that starts it must give these grants, or a run in the default mode refuses the calls and writes no result. `<plugin root>` is the absolute path of the install folder of this plugin. `<answers path>` is the file that the `plugin-run` block names, and it needs a grant only when it is outside the project. Each is an absolute path, so a rule has 2 slashes, for example `Read(//srv/plugins/pricing/**)`. `caller-grants.json` holds the same list.
+
+<!-- caller-grants:start -->
+```
+Bash(uv run <plugin root>/scripts/brain_read.py*)
+Bash(uv run "<plugin root>/scripts/brain_read.py*)
+Bash(uv run <plugin root>/scripts/pricing_calculator.py*)
+Bash(uv run "<plugin root>/scripts/pricing_calculator.py*)
+Bash(uv run <plugin root>/scripts/result_name.py*)
+Bash(uv run "<plugin root>/scripts/result_name.py*)
+Edit(/.pricing/**)
+Read(/<plugin root>/**)
+Read(/<answers path>)
+```
+<!-- caller-grants:end -->
 
 ## Development
 

@@ -1,7 +1,7 @@
 ---
 name: validate
 description: Checks a feature decision against the competitive landscape and shows the competitive effect of building or not building it. Use when the person decides whether to build a feature, ranks features under competitive pressure, assesses a "me too" request, or asks "should we build [feature]".
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *), Bash(date *), Skill
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *), Bash(date *), Skill, Edit(/.competitive-intelligence/**)
 ---
 
 # /competitive-intelligence:validate

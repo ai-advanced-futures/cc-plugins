@@ -63,6 +63,14 @@ a call. Each error gives no decision and exit code 0.
   a link out of the plugin folder gets no `allow`. A plugin file is public text.
   A deny rule or an ask rule of the person still wins.
 
+Each of the 5 runner plugins names the grants that its caller must give in its
+own `caller-grants.json` (STORY-168). A test of this plugin compares the scripts
+of each file with `RUNNER_CALLS`, so a new script in a runner fails the test
+until the file names it. The guard gives no `allow` for a web tool or an MCP
+tool, and neither does `build.md`: a web call stays the approval of the person,
+because an `allow` for `WebFetch` would let an agent send data of the case to
+any address.
+
 A session with no mark gets no decision, so a plugin that is only enabled
 changes no permission. A deny rule or an ask rule of the person still wins over
 an `allow` of a hook.

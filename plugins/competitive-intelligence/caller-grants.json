@@ -1,0 +1,21 @@
+{
+  "schema": "plugin-caller-grants/1",
+  "plugin": "competitive-intelligence",
+  "grants": [
+    "Bash(uv run <plugin root>/scripts/ci_graph.py*)",
+    "Bash(uv run \"<plugin root>/scripts/ci_graph.py*)",
+    "Bash(uv run <plugin root>/scripts/result_name.py*)",
+    "Bash(uv run \"<plugin root>/scripts/result_name.py*)",
+    "Edit(/.competitive-intelligence/**)",
+    "Read(/<plugin root>/**)",
+    "Read(/<answers path>)",
+    "WebSearch",
+    "WebFetch",
+    "mcp__<research server>"
+  ],
+  "optional": {
+    "WebSearch": "With no web grant, the run goes on and writes its result file. The result file records the web research as a gap, and the sources of its results have the type `model` or `default`.",
+    "WebFetch": "With no web grant, the run goes on and writes its result file. The result file records the web research as a gap, and the sources of its results have the type `model` or `default`.",
+    "mcp__<research server>": "With no research server, or no grant for it, the gatherer uses `WebSearch` and `WebFetch`."
+  }
+}

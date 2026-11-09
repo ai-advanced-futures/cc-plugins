@@ -1,5 +1,6 @@
 ---
 description: Generate comprehensive instrumentation plan for financial tracking with codebase analysis, event schemas, and implementation guidance
+allowed-tools: Edit(/.product-finance/**)
 ---
 
 # Product Finance Instrumentation Command

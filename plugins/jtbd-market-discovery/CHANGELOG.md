@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.1
+
+- The file `caller-grants.json` and a block in the README name the grants that the session which starts a plugin run must give: the 9 scripts, the output folder, the plugin files, and the answers file. `tests/unit/test_caller_grants.py` checks the list (STORY-168).
+- The README says that a person's command can write any path in the project, because its grant is `Write`.
+
 ## 1.10.0
 
 - `run_phase_9.py --segment-column <column> [--p8 <p8.json>]` writes the survey numbers of each segment: the row count, the outlier layer, the `wtp_analysis` block of `p9.json`, the layer validation and the Van Westendorp points (PMC, OPP, IPP, PME and the acceptable range). wtp-check and discover pass the option when the survey has the column `segment_id`, and wtp-validator copies the numbers. Before, the model split the survey or estimated the numbers, and some of its commands were refused (STORY-224, STORY-193).

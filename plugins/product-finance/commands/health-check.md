@@ -1,5 +1,6 @@
 ---
 description: Comprehensive financial health assessment with board-level KPIs, Rule of 40 analysis, unit economics evaluation, retention metrics, efficiency ratios, benchmark comparison, and strategic recommendations
+allowed-tools: Edit(/.product-finance/**)
 ---
 
 # Health Check Command

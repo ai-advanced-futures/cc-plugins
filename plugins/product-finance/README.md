@@ -148,7 +148,29 @@ The file `.charter-conforms` states this. ADR-002 gives the decision to compute 
 
 ## Result File
 
-Five commands write a result file for other plugins: `discover`, `feature-roi`, `unit-economics`, `ai-economics` and `cost-coverage`. Each run writes one file to `.product-finance/results/`, also a run that halts or is partial. The plugin has one runner for each command, `agents/<command>-runner.md`. A runner asks the person nothing. It takes the answers from the `plugin-run` block of its dispatch. ADR-006 gives the decisions.
+Five commands write a result file for other plugins: `discover`, `feature-roi`, `unit-economics`, `ai-economics` and `cost-coverage`. Each run writes one file to `.product-finance/results/`, also a run that halts or is partial. The plugin has one runner for each command, `agents/<command>-runner.md`. A runner asks the person nothing. It takes the answers from the `plugin-run` block of its dispatch. The session that dispatches a runner must give the grants in [Grants that a caller must give](#grants-that-a-caller-must-give). ADR-006 gives the decisions.
+
+## Grants that a caller must give
+
+A plugin run of this plugin gets no permission from its own tools list. The session that starts it must give these grants, or a run in the default mode refuses the calls and writes no result. `<plugin root>` is the absolute path of the install folder of this plugin. `<answers path>` is the file that the `plugin-run` block names, and it needs a grant only when it is outside the project. Each is an absolute path, so a rule has 2 slashes, for example `Read(//srv/plugins/pricing/**)`. `caller-grants.json` holds the same list.
+
+<!-- caller-grants:start -->
+```
+Bash(uv run <plugin root>/scripts/ai_roi_calculator.py*)
+Bash(uv run "<plugin root>/scripts/ai_roi_calculator.py*)
+Bash(uv run <plugin root>/scripts/jtbd_read.py*)
+Bash(uv run "<plugin root>/scripts/jtbd_read.py*)
+Bash(uv run <plugin root>/scripts/market_sizing_calculator.py*)
+Bash(uv run "<plugin root>/scripts/market_sizing_calculator.py*)
+Bash(uv run <plugin root>/scripts/plugin_result/plugin_result_check.py*)
+Bash(uv run "<plugin root>/scripts/plugin_result/plugin_result_check.py*)
+Bash(uv run <plugin root>/scripts/result_name.py*)
+Bash(uv run "<plugin root>/scripts/result_name.py*)
+Edit(/.product-finance/**)
+Read(/<plugin root>/**)
+Read(/<answers path>)
+```
+<!-- caller-grants:end -->
 
 ## Integration
 

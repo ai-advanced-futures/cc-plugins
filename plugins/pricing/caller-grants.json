@@ -1,0 +1,15 @@
+{
+  "schema": "plugin-caller-grants/1",
+  "plugin": "pricing",
+  "grants": [
+    "Bash(uv run <plugin root>/scripts/brain_read.py*)",
+    "Bash(uv run \"<plugin root>/scripts/brain_read.py*)",
+    "Bash(uv run <plugin root>/scripts/pricing_calculator.py*)",
+    "Bash(uv run \"<plugin root>/scripts/pricing_calculator.py*)",
+    "Bash(uv run <plugin root>/scripts/result_name.py*)",
+    "Bash(uv run \"<plugin root>/scripts/result_name.py*)",
+    "Edit(/.pricing/**)",
+    "Read(/<plugin root>/**)",
+    "Read(/<answers path>)"
+  ]
+}

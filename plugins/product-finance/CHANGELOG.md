@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.2
+
+- The file `caller-grants.json` and a block in the README name the grants that the session which dispatches a runner must give: the 5 scripts (the result check is in `scripts/plugin_result/`), the output folder, the plugin files, and the answers file. `tests/unit/test_caller_grants.py` checks the list (STORY-168).
+- Each of the 9 commands has the grant `Edit(/.product-finance/**)` in its `allowed-tools`. 3 of them had no `allowed-tools` line.
+
 ## 0.13.1
 
 - The plugin finder does not take a plugin from the `.claude/plugins/` folder of the project (STORY-202).

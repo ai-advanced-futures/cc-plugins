@@ -1,0 +1,19 @@
+{
+  "schema": "plugin-caller-grants/1",
+  "plugin": "product-finance",
+  "grants": [
+    "Bash(uv run <plugin root>/scripts/ai_roi_calculator.py*)",
+    "Bash(uv run \"<plugin root>/scripts/ai_roi_calculator.py*)",
+    "Bash(uv run <plugin root>/scripts/jtbd_read.py*)",
+    "Bash(uv run \"<plugin root>/scripts/jtbd_read.py*)",
+    "Bash(uv run <plugin root>/scripts/market_sizing_calculator.py*)",
+    "Bash(uv run \"<plugin root>/scripts/market_sizing_calculator.py*)",
+    "Bash(uv run <plugin root>/scripts/plugin_result/plugin_result_check.py*)",
+    "Bash(uv run \"<plugin root>/scripts/plugin_result/plugin_result_check.py*)",
+    "Bash(uv run <plugin root>/scripts/result_name.py*)",
+    "Bash(uv run \"<plugin root>/scripts/result_name.py*)",
+    "Edit(/.product-finance/**)",
+    "Read(/<plugin root>/**)",
+    "Read(/<answers path>)"
+  ]
+}

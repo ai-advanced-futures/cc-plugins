@@ -1,7 +1,7 @@
 ---
 name: discover
 description: Maps the competitive landscape of a market in 3 phases (context, ecosystem, intelligence) and writes one result file. Use when the person starts a competitive analysis, enters a new market, refreshes old competitive intelligence, or says "map competitors", "competitive landscape" or "who are our competitors".
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Skill
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Skill, Edit(/.competitive-intelligence/**)
 ---
 
 # /competitive-intelligence:discover
@@ -181,6 +181,7 @@ You run in the main conversation, so you ask the person. The agents ask nothing.
    ```
 
 9. WRITE THE RESULT FILE:
+   - When a phase agent says that the web tools were refused, add a gap to the result file with the `kind` `competitor`, the label `Web research`, and a `why` that names the refused tools. Give the type `model` to a source that no web call checked, because a reader must not take that finding as checked.
    - Read `${CLAUDE_PLUGIN_ROOT}/agents/deliverable-generator.md` with the Read tool and follow its `## Result file` section, in every run.
 
 10. INGEST THE RUN:

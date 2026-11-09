@@ -1,7 +1,7 @@
 ---
 name: respond
 description: Analyzes a competitor move, announcement or threat and plans a response. Use when a competitor launches a product, changes pricing or positioning, or makes a major announcement, or when the person asks "how do we respond to" or says "competitor just announced".
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *), Bash(date *), Skill
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *), Bash(date *), Skill, Edit(/.competitive-intelligence/**)
 ---
 
 # /competitive-intelligence:respond

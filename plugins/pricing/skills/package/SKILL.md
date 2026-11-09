@@ -1,6 +1,7 @@
 ---
 name: package
 description: Interactive agent-driven workflow for Good/Better/Best tier packaging. Walks users through feature collection, Killer/Leader/Filler classification, freemium gate decision tree, tier assignment, and 9-benefit complexity validation using Ramanujam's framework.
+allowed-tools: Edit(/.pricing/**)
 ---
 
 # Package — Interactive Good/Better/Best Tier Design

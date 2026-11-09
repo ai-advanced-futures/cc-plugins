@@ -1,6 +1,7 @@
 ---
 name: audit
 description: Audit existing features for AI-era classification and pricing antipatterns using the two-layer Amadeo rubric (Layer 1 fast triage, Layer 2 high-multiplier gate). Classifies each feature as AI_ERA, HYBRID, or LEGACY and outputs a time-bound review schedule.
+allowed-tools: Edit(/.pricing/**)
 ---
 
 # Audit — AI-Era Classification

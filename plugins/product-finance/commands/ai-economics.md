@@ -1,6 +1,6 @@
 ---
 description: Launch AI Economics Calculator to analyze AI costs, value attribution, and ROI with CFO-ready reporting
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Edit(/.product-finance/**)
 ---
 
 # AI Economics Calculator Command

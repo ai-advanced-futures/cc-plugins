@@ -1,5 +1,6 @@
 ---
 description: Financial modeling for consulting and professional services businesses — utilization, capacity, pipeline math, break-even, hiring triggers, and scenario analysis
+allowed-tools: Edit(/.product-finance/**)
 ---
 
 # Services Model Command

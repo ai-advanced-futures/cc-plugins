@@ -2,7 +2,7 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.10.0
+**Version:** 1.10.1
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
@@ -195,6 +195,38 @@ Example of an opportunity in `final-output.json`:
 - [ADR-004](docs/adr/ADR-004-jtbd-knowledge-graph.md): the jtbd knowledge graph
 - `references/`: ODI, universal job steps, need generation, EVC, WTP and segmentation guides
 - `templates/`: job statement, job steps, survey, forces, time-task and output schema
+
+## Grants that a caller must give
+
+A plugin run of this plugin gets no permission from its own tools list. The session that starts it must give these grants, or a run in the default mode refuses the calls and writes no result. `<plugin root>` is the absolute path of the install folder of this plugin. `<answers path>` is the file that the `plugin-run` block names, and it needs a grant only when it is outside the project. Each is an absolute path, so a rule has 2 slashes, for example `Read(//srv/plugins/pricing/**)`. `caller-grants.json` holds the same list.
+
+<!-- caller-grants:start -->
+```
+Bash(uv run <plugin root>/scripts/composite_scorer.py*)
+Bash(uv run "<plugin root>/scripts/composite_scorer.py*)
+Bash(uv run <plugin root>/scripts/jtbd_graph.py*)
+Bash(uv run "<plugin root>/scripts/jtbd_graph.py*)
+Bash(uv run <plugin root>/scripts/jtbd_state.py*)
+Bash(uv run "<plugin root>/scripts/jtbd_state.py*)
+Bash(uv run <plugin root>/scripts/report_exporter.py*)
+Bash(uv run "<plugin root>/scripts/report_exporter.py*)
+Bash(uv run <plugin root>/scripts/run_phase_6.py*)
+Bash(uv run "<plugin root>/scripts/run_phase_6.py*)
+Bash(uv run <plugin root>/scripts/run_phase_7.py*)
+Bash(uv run "<plugin root>/scripts/run_phase_7.py*)
+Bash(uv run <plugin root>/scripts/run_phase_8.py*)
+Bash(uv run "<plugin root>/scripts/run_phase_8.py*)
+Bash(uv run <plugin root>/scripts/run_phase_9.py*)
+Bash(uv run "<plugin root>/scripts/run_phase_9.py*)
+Bash(uv run <plugin root>/scripts/survey_adapter.py*)
+Bash(uv run "<plugin root>/scripts/survey_adapter.py*)
+Edit(/.jtbd-market-discovery/**)
+Read(/<plugin root>/**)
+Read(/<answers path>)
+```
+<!-- caller-grants:end -->
+
+A person's command can write any path in the project, because its grant is `Write`.
 
 ## Troubleshooting
 

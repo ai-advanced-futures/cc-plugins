@@ -1,7 +1,7 @@
 ---
 name: vendor-archetype-classify
 description: Classifies the current pricing of a vendor into one of the 5 canonical agentic-pricing archetypes. Use when the person wants to know which archetype the pricing page of a vendor maps to, or wants to refresh the Wave 1 vendor registry.
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Skill
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Skill, Edit(/.competitive-intelligence/**)
 ---
 
 # Vendor Archetype Classification

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.9
+
+- The file `caller-grants.json` and a block in the README name the grants that the session which starts a plugin run must give: the 2 scripts, the output folder, the plugin files, the answers file, and the web tools. `tests/unit/test_caller_grants.py` checks the list (STORY-168).
+- Each skill that writes under `.competitive-intelligence/` has the grant `Edit(/.competitive-intelligence/**)` in its `allowed-tools`.
+- When a `WebSearch` or `WebFetch` call is refused, the 3 agents with a web tool go on and say so, and `discover` and `analyze` write the gap `Web research` in the result file.
+
 ## 1.10.8
 
 - The plugin finder does not take a plugin from the `.claude/plugins/` folder of the project (STORY-202).

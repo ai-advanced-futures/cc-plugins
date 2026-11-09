@@ -173,6 +173,34 @@ Two of these plugins, `value-ip` and `tech-contracts`, are optional plugins from
 
 `competitive-intelligence` and `jtbd-market-discovery` save a knowledge graph that this plugin reads. `pricing` writes a file that this plugin reads. `aiml` writes the `p15-trigger-event` file. Run them before `/gtm:run`. To read a graph, this plugin needs the plugin that wrote it, and its Python dependencies (`uv` gives them). Set `GTM_GRAPH_PYTHON` to the Python that runs the save code when you do not use `uv`.
 
+## Grants that a caller must give
+
+A plugin run of this plugin gets no permission from its own tools list. The session that starts it must give these grants, or a run in the default mode refuses the calls and writes no result. `<plugin root>` is the absolute path of the install folder of this plugin. `<answers path>` is the file that the `plugin-run` block names, and it needs a grant only when it is outside the project. Each is an absolute path, so a rule has 2 slashes, for example `Read(//srv/plugins/pricing/**)`. `caller-grants.json` holds the same list.
+
+<!-- caller-grants:start -->
+```
+Bash(uv run <plugin root>/scripts/result_name.py*)
+Bash(uv run "<plugin root>/scripts/result_name.py*)
+Edit(/.gtm/**)
+Read(/<plugin root>/**)
+Read(/<answers path>)
+WebSearch
+mcp__ahrefs__get_keyword_ideas
+mcp__ahrefs__get_search_volume
+mcp__google-analytics__run_report
+mcp__google-analytics__get_realtime_data
+mcp__hubspot__hubspot_get_marketing_emails
+```
+<!-- caller-grants:end -->
+
+- `WebSearch`: With no `WebSearch` grant, the run uses only the answers, and records a gap for each input that it lacks.
+- `mcp__ahrefs__get_keyword_ideas` and `mcp__ahrefs__get_search_volume`: With no `ahrefs` server, or no grant for it, the run uses `WebSearch`, and marks the data as approximate.
+- `mcp__google-analytics__run_report`, `mcp__google-analytics__get_realtime_data` and `mcp__hubspot__hubspot_get_marketing_emails`: With no `google-analytics` or `hubspot` server, or no grant for it, the run uses the numbers of the answers, and records a gap for each number that it lacks.
+
+`business-case` does not give these grants. Each runner skill holds `WebSearch` and its MCP read tools in its own `allowed-tools`, so in the turn of the skill these calls do not ask.
+
+A person's command can write any path in the project, because its grant is `Write`.
+
 ## Privacy
 
 - The plugin reads the files that you name, the codebase only when you agree, and web pages with `WebSearch` and `WebFetch`.

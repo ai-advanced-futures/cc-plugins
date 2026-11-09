@@ -1,7 +1,7 @@
 ---
 name: analyze
 description: Analyzes one competitor through the 6 lenses, writes a SWOT and recommendations, and writes one result file. Use when the person wants a deep dive on a named competitor, prepares for a competitive deal or pitch, responds to a competitor move, or says "analyze [competitor]" or "deep dive on [competitor]".
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Skill
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Skill, Edit(/.competitive-intelligence/**)
 ---
 
 # /competitive-intelligence:analyze
@@ -178,6 +178,7 @@ You run in the main conversation, so you ask the person. You read each lens skil
    - At the top level of `analysis-{competitor}.json` and of `swot-{competitor}.json`, write `competitor`, the name of the competitor. When the ecosystem mapping gives the competitor an `id`, also write `competitor_id`, that id. Ingest uses them to link the pages of the files to the competitor.
 
 8. WRITE THE RESULT FILE:
+   - When a phase agent says that the web tools were refused, add a gap to the result file with the `kind` `risk`, the label `Web research`, and a `why` that names the refused tools. Give the type `model` to a source that no web call checked, because a reader must not take that finding as checked.
    - Read `${CLAUDE_PLUGIN_ROOT}/agents/deliverable-generator.md` with the Read tool and follow its `## Result file` section, in every run.
 
 9. INGEST THE RUN:

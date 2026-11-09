@@ -207,6 +207,8 @@ Write ecosystem-summary.json to `.competitive-intelligence/{session_id}/`:
 Return to caller: "DONE: ecosystem"
 ```
 
+When a `WebSearch` or `WebFetch` call is refused, do not call that tool again in this phase, because each call gets the same refusal. Go on with what you have, mark each finding with no web source as not verified, and say in your reply that the web tools were refused.
+
 ## Output Artifacts
 
 - `.competitive-intelligence/{session}/competitive-ecosystem.json` - Full ecosystem map

@@ -216,6 +216,8 @@ Write intelligence-summary.json to `data_dir` (from dispatch context — equals 
 Return to caller: "DONE: intelligence"
 ```
 
+When a `WebSearch` or `WebFetch` call is refused, do not call that tool again in this phase, because each call gets the same refusal. Go on with what you have, mark each finding with no web source as not verified, and say in your reply that the web tools were refused.
+
 ## Output Artifacts
 
 - `.competitive-intelligence/{session}/intelligence-data.json` - All findings

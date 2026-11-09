@@ -1,0 +1,28 @@
+{
+  "schema": "plugin-caller-grants/1",
+  "plugin": "gtm",
+  "grants": [
+    "Bash(uv run <plugin root>/scripts/result_name.py*)",
+    "Bash(uv run \"<plugin root>/scripts/result_name.py*)",
+    "Edit(/.gtm/**)",
+    "Read(/<plugin root>/**)",
+    "Read(/<answers path>)",
+    "WebSearch",
+    "mcp__ahrefs__get_keyword_ideas",
+    "mcp__ahrefs__get_search_volume",
+    "mcp__google-analytics__run_report",
+    "mcp__google-analytics__get_realtime_data",
+    "mcp__hubspot__hubspot_get_marketing_emails"
+  ],
+  "optional": {
+    "WebSearch": "With no `WebSearch` grant, the run uses only the answers, and records a gap for each input that it lacks.",
+    "mcp__ahrefs__get_keyword_ideas": "With no `ahrefs` server, or no grant for it, the run uses `WebSearch`, and marks the data as approximate.",
+    "mcp__ahrefs__get_search_volume": "With no `ahrefs` server, or no grant for it, the run uses `WebSearch`, and marks the data as approximate.",
+    "mcp__google-analytics__run_report": "With no `google-analytics` or `hubspot` server, or no grant for it, the run uses the numbers of the answers, and records a gap for each number that it lacks.",
+    "mcp__google-analytics__get_realtime_data": "With no `google-analytics` or `hubspot` server, or no grant for it, the run uses the numbers of the answers, and records a gap for each number that it lacks.",
+    "mcp__hubspot__hubspot_get_marketing_emails": "With no `google-analytics` or `hubspot` server, or no grant for it, the run uses the numbers of the answers, and records a gap for each number that it lacks."
+  },
+  "not_routes": [
+    "research-agent"
+  ]
+}

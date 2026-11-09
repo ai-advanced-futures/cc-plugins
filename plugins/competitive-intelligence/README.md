@@ -145,7 +145,31 @@ A PostToolUse hook (`hooks/brain-hook.sh`) runs `regen` and both checks after ea
 
 ## Run for a coach
 
-The `business-case` coach calls the skill `competitive-intelligence:discover` or `competitive-intelligence:analyze` with the `Skill` tool. The arguments are a `plugin-run` block, or 1 line that is the path of a file that holds the block. The block has the fields `command`, `automated`, `answers_path`, `case`, `run_id`, and `inputs_from`. In a plugin run, the skill asks nothing and shows no checkpoint. It takes each answer from the answers file, and it uses the default in `result-file.json` for each answer that is missing. It starts the phase agents itself. Then it writes the result file. The run happens in the conversation of the coach, so it has each tool of that session. `questions/discover.json` and `questions/analyze.json` list the inputs of each skill. ADR-004 gives the details.
+The `business-case` coach calls the skill `competitive-intelligence:discover` or `competitive-intelligence:analyze` with the `Skill` tool. The arguments are a `plugin-run` block, or 1 line that is the path of a file that holds the block. The block has the fields `command`, `automated`, `answers_path`, `case`, `run_id`, and `inputs_from`. In a plugin run, the skill asks nothing and shows no checkpoint. It takes each answer from the answers file, and it uses the default in `result-file.json` for each answer that is missing. It starts the phase agents itself. Then it writes the result file. The run happens in the conversation of the coach, so it has each tool of that session. The session of the coach must give the grants in [Grants that a caller must give](#grants-that-a-caller-must-give). `questions/discover.json` and `questions/analyze.json` list the inputs of each skill. ADR-004 gives the details.
+
+## Grants that a caller must give
+
+A plugin run of this plugin gets no permission from its own tools list. The session that starts it must give these grants, or a run in the default mode refuses the calls and writes no result. `<plugin root>` is the absolute path of the install folder of this plugin. `<answers path>` is the file that the `plugin-run` block names, and it needs a grant only when it is outside the project. Each is an absolute path, so a rule has 2 slashes, for example `Read(//srv/plugins/pricing/**)`. `caller-grants.json` holds the same list.
+
+<!-- caller-grants:start -->
+```
+Bash(uv run <plugin root>/scripts/ci_graph.py*)
+Bash(uv run "<plugin root>/scripts/ci_graph.py*)
+Bash(uv run <plugin root>/scripts/result_name.py*)
+Bash(uv run "<plugin root>/scripts/result_name.py*)
+Edit(/.competitive-intelligence/**)
+Read(/<plugin root>/**)
+Read(/<answers path>)
+WebSearch
+WebFetch
+mcp__<research server>
+```
+<!-- caller-grants:end -->
+
+- `WebSearch` and `WebFetch`: With no web grant, the run goes on and writes its result file. The result file records the web research as a gap, and the sources of its results have the type `model` or `default`.
+- `mcp__<research server>`: With no research server, or no grant for it, the gatherer uses `WebSearch` and `WebFetch`.
+
+`business-case` does not give these grants. In a session with a person, Claude Code asks for each call.
 
 ## Configuration
 

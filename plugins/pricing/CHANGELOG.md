@@ -4,6 +4,15 @@ All notable changes to the pricing plugin will be documented in this file.
 
 The first heading is the version in `.claude-plugin/plugin.json`. A test checks that they agree.
 
+## 1.13.3
+
+- The skills `audit`, `package` and `value-metric` have the grant `Edit(/.pricing/**)`, because each of them writes a file in the output folder. The test `tests/unit/test_output_grant.py` now looks for the path `.pricing/` in each skill, and not for the word `Write` (STORY-168, found in the review of PR 1103).
+
+## 1.13.2
+
+- The file `caller-grants.json` and a block in the README name the grants that the session which dispatches `price-runner` must give: the 3 scripts, the output folder, the plugin files, and the answers file. `tests/unit/test_caller_grants.py` checks the list (STORY-168).
+- The `price` skill has the grant `Edit(/.pricing/**)`, so a run can write its output folder.
+
 ## 1.13.1
 
 - The plugin finder does not take a plugin from the `.claude/plugins/` folder of the project (STORY-202).

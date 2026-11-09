@@ -70,7 +70,7 @@ A complete example:
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.10.0",
+  "plugin_version": "1.10.1",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",

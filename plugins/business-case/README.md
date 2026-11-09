@@ -57,6 +57,11 @@ The 3 routes of `gtm` are skills from version 1.11.0 of `gtm`, which is the floo
 A run of `value-ip:analyze` or `product-finance:cost-coverage` is yours: the command starts neither, so it gives
 no grant for them.
 
+The source of each runner list is the `caller-grants.json` of each runner plugin, with the same list in the README of that plugin
+under "Grants that a caller must give". A test of this plugin compares the scripts of each file with the table of the hook, and
+the `Edit` grant of each file with the line above. The web tools and the MCP tools of a runner are not in the command or in the hook:
+in a session with a person, Claude Code asks for each web call, and in a headless run the call is refused and the run goes on with a gap in its result file.
+
 Claude Code applies a grant only during the turn of the command, so each grant ends when the command ends. A grant ends with the turn, and a run in the background ends the turn. So the hook `hooks-handlers/runner_guard.py` approves, in a session that started a build, only 1 exact call of `bc.py`, of `bc_graph.py publish` or of a listed runner script, a write in a runner folder or in the temporary folder of a case, and a read of a file of a runner plugin or of an answers file.
 
 Two limits of these grants:

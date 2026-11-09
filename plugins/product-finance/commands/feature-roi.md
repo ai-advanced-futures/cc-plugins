@@ -1,6 +1,6 @@
 ---
 description: Calculate ROI for specific features or initiatives with build cost estimation, revenue impact, payback period, NPV analysis, and Build/Don't Build/Defer recommendation
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Edit(/.product-finance/**)
 ---
 
 # Feature ROI Command

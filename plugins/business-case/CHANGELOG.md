@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1
+
+- The 5 runner plugins each name the grants that their caller must give, in a file `caller-grants.json` (STORY-168). The README says that this file is the source of each runner list. `test_runner_grants.py` compares the scripts of each file with `RUNNER_CALLS`, and the `Edit` grant of each file with `allowed-tools` of `build.md`. The same test holds that the hook, `hooks.json` and `build.md` name no web tool and no MCP tool, so a web call stays the approval of the person. ADR-016 says this.
+
 ## 0.9.0
 
 The case graph, part B (STORY-89): a run writes the pages, 3 skills use them, and the evidence team reads the graphs of 2 other plugins.

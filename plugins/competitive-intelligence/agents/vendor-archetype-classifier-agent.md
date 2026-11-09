@@ -40,6 +40,8 @@ classifier, which the skill runs, decides the archetype.
    (default false, set true for vendors that run 5+ concurrent SKUs like Salesforce Agentforce).
 4. End your reply with the line `INPUT: .competitive-intelligence/vendor-archetype-input.json` and then the line `DONE: competitive-intelligence`. Run no program: the skill that dispatched you runs the emitter on the file, reads the handoff file and reports the `state` to the person. Make up no handoff file, because it must come from the emitter. Take no archetype decision, because the classifier makes it, as it is deterministic and your reading of the signals is not.
 
+When a `WebSearch` or `WebFetch` call is refused, do not call that tool again in this phase, because each call gets the same refusal. Go on with what you have, mark each finding with no web source as not verified, and say in your reply that the web tools were refused.
+
 ## Handoff states
 
 The emitter, which the skill runs, writes `.competitive-intelligence/vendor-archetype-handoff.json` in all

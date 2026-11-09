@@ -657,7 +657,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.1",
+  "plugin_version": "0.13.2",
   "command": "product-finance:ai-economics",
   "run": {
     "started_at": "2026-11-01T12:00:00Z",
@@ -735,7 +735,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.1",
+  "plugin_version": "0.13.2",
   "command": "product-finance:ai-economics",
   "run": {
     "started_at": "2026-11-01T12:00:00Z",
