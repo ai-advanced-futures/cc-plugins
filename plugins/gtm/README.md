@@ -143,9 +143,39 @@ Run `/gtm:setup` to add the servers. The fixed server names are `hubspot`, `apol
 `/gtm:setup` shows the setup in two ways:
 
 1. **Docker MCP Toolkit.** Use this way when you have the toolkit.
-2. **A script or a `claude mcp add` line.** Run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/setup_mcp.sh" <name>` in your own terminal. `<name>` is `all`, `hubspot`, `apollo`, `ahrefs`, `ga4`, `notion`, `slack`, or `canva`. The script asks for each token in your terminal, and it gives the token to `claude mcp add-json`. Or copy the `claude mcp add` line that the command shows.
+2. **A script or a `claude mcp add` line.** Run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/setup_mcp.sh" <name>` in your own terminal. `<name>` is `all`, `hubspot`, `apollo`, `ahrefs`, `ga4`, `notion`, or `canva`. The script asks for each token in your terminal, and it gives the token to `claude mcp add-json`. Or copy the `claude mcp add` line that the command shows.
 
 A server that you add has tools named `mcp__<server>__<tool>`. To check the names in your session, run `/mcp`.
+
+The script `setup_mcp.sh` starts each server at a pinned version:
+
+| Server | Package | Version | Maintainer |
+|---|---|---|---|
+| `hubspot` | `@hubspot/mcp-server` | 0.4.0 | HubSpot |
+| `apollo` | `@thevgergroup/apollo-io-mcp` | 3.0.0 | 1 person, not Apollo.io (third party) |
+| `notion` | `@notionhq/notion-mcp-server` | 2.6.1 | Notion |
+| `canva` | `@canva/cli` | 2.17.0 | Canva |
+| `google-analytics` | `analytics-mcp` | 0.8.0 | Google (from PyPI, started with `uvx`) |
+
+`ahrefs` is the hosted server of Ahrefs. A pin holds the version of the package, not of the packages that it needs. A server that you added before this version keeps its old package: the script warns you, and you run `claude mcp remove <server>` and then the script again.
+
+Slack has no step in the script. The package `@modelcontextprotocol/server-slack` is deprecated, and the hosted server of Slack (`https://mcp.slack.com/mcp`) takes only a registered Slack app, and has no tool named `slack_post_message`. To post from `/gtm:marketing:launch`, add your own server with the name `slack` that gives this tool. Without it, the command writes no Slack post. The official Slack plugin gives other tool names, so the command does not use them.
+
+The scopes and rights that the script asks for:
+
+| Scope or right | Who needs it |
+|---|---|
+| `crm.objects.contacts.read` | `sales-agent` |
+| `crm.objects.companies.read` | `sales-agent` |
+| `crm.objects.deals.read` | `funnel-agent` |
+| Google Analytics role Viewer | `funnel-agent`, `marketing-agent` |
+| Notion capability Read content | `/gtm:learn` |
+
+The Notion step asks for Read content only. `/gtm:marketing:launch` step 10 names a Notion tool that this server does not give, so the step writes no Notion page with it.
+
+The script asks for no HubSpot write scope. HubSpot has no read-only scope for marketing emails, so the script asks for no scope for them.
+
+`claude mcp add-json` reads its JSON only from its argument, not from standard input. So while the script runs, another user of the machine can read the token with `ps`: the machine must be single-user while the script runs. Claude Code then keeps the token in its configuration file. To keep a token out of both, put a reference in the JSON in place of the token, between single quotes (`"PRIVATE_APP_ACCESS_TOKEN":"${GTM_HUBSPOT_TOKEN}"`), and set that variable in the shell that starts Claude Code. Claude Code reads it when the server starts.
 
 When a server is missing, the step uses a fallback:
 
@@ -207,7 +237,7 @@ A person's command can write any path in the project, because its grant is `Writ
 - An MCP server that you add can give CRM and prospect data. That data can hold personal data of contacts. The plugin writes it only into the project files in the table above.
 - The publishing steps (a Slack post, a Notion page) run only in a command that you run, and only when the server is added. A runner for a coach plugin never publishes.
 - An optional plugin that `/gtm:run` calls with `Skill` (`enterprise-search`, `customer-support`) reads the request that the command gives it.
-- The plugin writes no credential. `/gtm:setup` asks for no token. The script `setup_mcp.sh` reads each token in your terminal with `read -rsp` and gives it to `claude mcp add-json`.
+- The plugin writes no credential. `/gtm:setup` asks for no token. The script `setup_mcp.sh` reads each token in your terminal with `read -rsp` and gives it to `claude mcp add-json` (see "MCP servers" for the limit of this).
 
 ## Tests
 

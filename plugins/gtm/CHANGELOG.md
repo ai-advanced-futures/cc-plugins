@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.12.0
+
+- `scripts/setup_mcp.sh` starts each server at a pinned version, and the versions are in 1 place in the script. The README names each package, its version and its maintainer. A server that you added earlier keeps its old package: the script warns you (issue #559, STORY-145).
+- The Google Analytics step uses the package `analytics-mcp` of Google, started with `uvx`, in place of the deprecated `mcp-server-google-analytics`. The old step set variables that the old package did not read. The step now asks for the Google Cloud project ID, and not for the property ID. The new server has `run_report`; it has no `get_metadata` and no `get_realtime_data`, and the old package also did not have these names.
+- The Slack step is gone, with the deprecated `@modelcontextprotocol/server-slack`. `bash setup_mcp.sh slack` says so and exits 1. `/gtm:marketing:launch` writes a Slack post only when a server named `slack` gives the tool `slack_post_message`. This is a change for a person who adds Slack now. The README says what to do.
+- The script escapes each typed value before it builds the JSON, with shell builtins only, so a `"` in a pasted value cannot add a key. It refuses an empty value and a control character (issue #560).
+- The script asks for HubSpot read scopes only. The README names each scope and who needs it. The Notion step uses `NOTION_TOKEN`. The Notion step asks for Read content only.
+- The README says that `claude mcp add-json` takes its JSON only as an argument, so the machine must be single-user while the script runs, and how to use a `${VAR}` reference in place of a token.
+
 ## 1.11.1
 
 - The file `caller-grants.json` and a block in the README name the grants that the session which starts a runner must give: the script, the output folder, the plugin files, the answers file, and the optional web and MCP tools. `tests/unit/test_caller_grants.py` checks the list (STORY-168).

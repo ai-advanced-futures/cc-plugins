@@ -81,19 +81,20 @@ The person runs this line in a terminal. The script asks for the token there and
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/setup_mcp.sh" <name>
 ```
 
-`<name>` is `all`, `hubspot`, `apollo`, `ahrefs`, `ga4`, `notion`, `slack` or `canva`. Do not put `--server` in front of the name.
+`<name>` is `all`, `hubspot`, `apollo`, `ahrefs`, `ga4`, `notion` or `canva`. Do not put `--server` in front of the name. For Slack, show the sentence below the table.
 
 Or the person runs the `claude mcp add` line of the server. Replace each value in `<angle brackets>` with your own value.
 
 | Name | Line to run |
 |------|-------------|
-| `hubspot` | `claude mcp add-json hubspot '{"command":"npx","args":["-y","@hubspot/mcp-server"],"env":{"PRIVATE_APP_ACCESS_TOKEN":"<token>"}}'` |
-| `apollo` | `claude mcp add-json apollo '{"command":"npx","args":["-y","@thevgergroup/apollo-io-mcp"],"env":{"APOLLO_API_KEY":"<key>"}}'` |
+| `hubspot` | `claude mcp add-json hubspot '{"command":"npx","args":["-y","@hubspot/mcp-server@0.4.0"],"env":{"PRIVATE_APP_ACCESS_TOKEN":"<token>"}}'` |
+| `apollo` | `claude mcp add-json apollo '{"command":"npx","args":["-y","@thevgergroup/apollo-io-mcp@3.0.0"],"env":{"APOLLO_API_KEY":"<key>"}}'` |
 | `ahrefs` | `claude mcp add --transport sse ahrefs https://api.ahrefs.com/mcp/mcp` |
-| `ga4` | `claude mcp add-json google-analytics '{"command":"npx","args":["-y","mcp-server-google-analytics"],"env":{"GA4_PROPERTY_ID":"<property-id>","GOOGLE_APPLICATION_CREDENTIALS":"<path-to-credentials-json>"}}'` |
-| `notion` | `claude mcp add-json notion '{"command":"npx","args":["-y","@notionhq/notion-mcp-server"],"env":{"OPENAPI_MCP_HEADERS":"{\"Authorization\": \"Bearer <token>\"}"}}'` |
-| `slack` | `claude mcp add-json slack '{"command":"npx","args":["-y","@modelcontextprotocol/server-slack"],"env":{"SLACK_BOT_TOKEN":"<xoxb-token>","SLACK_TEAM_ID":"<team-id>"}}'` |
-| `canva` | `claude mcp add-json canva '{"command":"npx","args":["-y","@canva/cli","mcp"]}'` |
+| `ga4` | `claude mcp add-json google-analytics '{"command":"uvx","args":["--from","analytics-mcp==0.8.0","analytics-mcp"],"env":{"GOOGLE_APPLICATION_CREDENTIALS":"<path-to-credentials-json>","GOOGLE_CLOUD_PROJECT":"<project-id>"}}'` |
+| `notion` | `claude mcp add-json notion '{"command":"npx","args":["-y","@notionhq/notion-mcp-server@2.6.1"],"env":{"NOTION_TOKEN":"<token>"}}'` |
+| `canva` | `claude mcp add-json canva '{"command":"npx","args":["-y","@canva/cli@2.17.0","mcp"]}'` |
+
+Slack has no line: the old package is deprecated, and the hosted Slack server needs your own Slack app. The section "MCP servers" of the README says what to do. Until a server named `slack` gives the tool `slack_post_message`, `/gtm:marketing:launch` writes no Slack post.
 
 The server names must be exactly `hubspot`, `apollo`, `ahrefs`, `google-analytics`, `notion`, `slack` and `canva`. A server that has another name does not match the tool names that the GTM agents use (`mcp__<server>__<tool>`).
 
@@ -103,9 +104,9 @@ The server names must be exactly `hubspot`, `apollo`, `ahrefs`, `google-analytic
 |--------|------------|-------------------------------|-----------------|
 | Ahrefs | OAuth, no token | 1 | Keyword research, search volume, backlinks |
 | Canva | OAuth, no token | 2 | Design generation, template autofill, export |
-| GA4 | Property ID + Service Account JSON (free with GA4 access) | 3 | Funnel analytics, acquisition data |
+| GA4 | Service Account JSON + Google Cloud project ID (free with GA4 access); needs `uv` | 3 | Funnel analytics, acquisition data |
 | Notion | Integration token (free) | 4 | Document publishing, knowledge base pull |
-| Slack | Bot token (needs admin approval) | 5 | Team announcements, channel posting |
+| Slack | Your own Slack server: no script line | 5 | Team announcements, channel posting |
 | Apollo.io | API key (free tier at app.apollo.io) | 6 | Prospect search, contact enrichment, org data |
 | HubSpot | Private App token (free CRM) | 7 | Pipeline stages, deal tracking, CRM sync |
 
