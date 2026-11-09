@@ -325,8 +325,8 @@ file in the shared shape, plus `brief_sha256`:
 - When you restate a plugin result, copy its `value`, `unit` and `period`.
 - Name each plugin result a result rests on in `cites`, by its file path and
   result `id`. Copy that result's sources and defaults into your own. A
-  source that points at a file in a plugin's `results/` folder needs its
-  `cites` entry.
+  source that points at a file in a plugin's `results/` folder, or in the
+  `team/upstream/` folder of the case, needs its `cites` entry.
 - A result drafted from the output of a skill the coach ran has no `cites`
   entry: source it as research, `published` with its URL and date for a web
   page and `model` for your own reasoning, and its page is graded no higher
@@ -372,7 +372,7 @@ brief.
   "brief_sha256": "<the value of your brief's sha256: line>",
   "schema": "plugin-result/1",
   "plugin": "business-case",
-  "plugin_version": "0.8.0",
+  "plugin_version": "0.9.0",
   "command": "business-case:case-finance-analyst",
   "run": {
     "started_at": "2026-10-27T12:00:00Z",

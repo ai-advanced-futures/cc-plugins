@@ -5,7 +5,8 @@ A grant of `allowed-tools` ends with the turn, and its `*` matches any text. Thi
 does not end with the turn, for 1 call at a time:
 
 - post-bash: a `bc.py session --id <this session>` call that worked marks the session as a build session.
-- pre-bash: in a marked session, allow a command that is exactly 1 call of a script in RUNNER_CALLS or of bc.py.
+- pre-bash: in a marked session, allow a command that is exactly 1 call of a script in RUNNER_CALLS, of bc.py, or
+  of `bc_graph.py publish`.
 - pre-write: in a marked session, allow a write under `.<plugin>/` of the project, or in a temporary folder of bc.py.
 - pre-read: in a marked session, allow a read of a file of an available runner plugin, or of an answers file of a case.
 
@@ -63,6 +64,9 @@ RUNNER_CALLS = {
         "result_name.py": {"first": ["now", "run-id", "name"]},
     },
 }
+# The save code of the case graph (STORY-89): build.md runs `publish` after each `handoff`, and a judge that runs in
+# the background ends the turn before that call. Each other first word (remove, set, ...) gets no decision.
+BC_GRAPH_CALL = {"before": ["--root"], "first": ["publish"]}
 SESSION_NAME = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 TEMP_FOLDER = re.compile(r"^bc-[a-z0-9-]*-[0-9a-f]{8}$")
 TIME_STAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$")
@@ -149,6 +153,10 @@ def _is_bc(script: str) -> bool:
     return os.path.isabs(script) and Path(script).resolve() == ROOT / "lib" / "bc.py"
 
 
+def _is_bc_graph(script: str) -> bool:
+    return os.path.isabs(script) and Path(script).resolve() == ROOT / "scripts" / "bc_graph.py"
+
+
 def exact_call(command: str, cwd: str) -> bool:
     words = words_of(command)
     if not words or len(words) < 3 or words[:2] != ["uv", "run"]:
@@ -156,6 +164,8 @@ def exact_call(command: str, cwd: str) -> bool:
     script, args = words[2], words[3:]
     if _is_bc(script):
         return bool(args) and args[0] in subcommands()
+    if _is_bc_graph(script):
+        return _form_holds(BC_GRAPH_CALL, args)
     path = Path(script)
     if not path.is_absolute() or ".." in path.parts:
         return False
@@ -182,14 +192,19 @@ def write_allowed(file_path: str, project: str) -> bool:
     return any(path.is_relative_to(top / f".{plugin}") and path != top / f".{plugin}" for plugin in RUNNER_CALLS)
 
 
+# The folders of this plugin that build.md reads in a later turn: the template, the rubric, the extractor rule.
+OWN_FOLDERS = ("templates", "rubric", "agents")
 ANSWERS_FILE = re.compile(r"^answers-[^/]*\.json$")
 
 
 def read_allowed(file_path: str, cwd: str) -> bool:
-    """A file of an available runner plugin, or the answers file of a case."""
+    """A file of an available runner plugin, a file of the template, rubric or agents folder of this plugin, or the
+    answers file of a case."""
     if not file_path or not os.path.isabs(file_path):
         return False
     path = Path(file_path).resolve()
+    if any(path.is_relative_to(ROOT / folder) for folder in OWN_FOLDERS):
+        return True
     if ANSWERS_FILE.match(path.name) and path.parent.name == "team" and path.parent.parent.parent.name == "business-cases":
         return True
     folders = installs(cwd)

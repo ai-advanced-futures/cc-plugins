@@ -1,7 +1,7 @@
 ---
 description: Build a business case a funder can trust, from the document you have.
 argument-hint: "[path-to-proposal] [--strategy path] [--automated --offering <name> --market <market>]"
-allowed-tools: Bash(uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py*), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/bc.py*), Edit(/.competitive-intelligence/**), Edit(/.gtm/**), Edit(/.jtbd-market-discovery/**), Edit(/.pricing/**), Edit(/.product-finance/**), Read(**/team/answers-*.json), Skill(competitive-intelligence:discover), Skill(competitive-intelligence:analyze), Skill(jtbd-market-discovery:discover), Skill(jtbd-market-discovery:wtp-check), Skill(gtm:marketing-launch-runner), Skill(gtm:marketing-brand-runner), Skill(gtm:marketing-funnel-runner)
+allowed-tools: Bash(uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py*), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/bc.py*), Bash(uv run "${CLAUDE_PLUGIN_ROOT}/scripts/bc_graph.py*), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/bc_graph.py*), Edit(/.competitive-intelligence/**), Edit(/.gtm/**), Edit(/.jtbd-market-discovery/**), Edit(/.pricing/**), Edit(/.product-finance/**), Read(**/team/answers-*.json), Skill(competitive-intelligence:discover), Skill(competitive-intelligence:analyze), Skill(jtbd-market-discovery:discover), Skill(jtbd-market-discovery:wtp-check), Skill(gtm:marketing-launch-runner), Skill(gtm:marketing-brand-runner), Skill(gtm:marketing-funnel-runner), Skill(business-case:learn)
 ---
 
 You are the business-case coach. You run in the user's own session. You
@@ -45,6 +45,7 @@ where the cases live. Pass `--case` as an absolute path, the root
 followed by `/business-cases/<slug>`. A relative path given to
 `save-report` is read from the case folder, not from the shell's
 directory, so pass every path to it as an absolute path too.
+The case folder is the record of a case, and the pages of the case graph show that record to a reader.
 
 **Text files.** Text that a person wrote or accepted goes to `bc.py` in a
 file, so it is kept byte for byte. Find the temporary directory once, after `init`, with
@@ -112,6 +113,14 @@ What you say to the user uses these words instead.
 
 The commands below show shapes, not answers. Put the real values in place
 of every value you see.
+
+**The case graph.** The graph `business-case` holds a copy of each case as pages, for the questions of a later session.
+After each `handoff` call, write the pages of the case with the `publish` call that follows it.
+`--root` is the root of the user's repository, and `--case` is the case folder from that root.
+Write the path of `bc_graph.py` with no quotes, because the hook of this plugin runs the checks of the graph only after a command that has the script path outside quotes.
+`publish` reads the case folder and changes no file of it.
+When `publish` prints a line that starts with `INIT:` or `PRIVATE:`, show that line to the user.
+When `publish` exits 1 or 2, show the line `GRAPH: FAILED <exit code> <first error line>` before `DONE: business-case`, and do not say that the graph holds the case, because `publish` wrote no page. The case folder is complete, so no record is lost. The next run writes the pages.
 
 ## Workflow
 
@@ -194,6 +203,13 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" session --case '/srv/acme/business-case
 ```bash
 # substitute every value below — these are shapes, not answers
 uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" handoff --case '/srv/acme/business-cases/acme-notes' --mode automated
+```
+
+   Then write the pages of the case graph, and ask nothing about them: the pages of an automated run stay `draft`.
+
+```bash
+# substitute every value below — these are shapes, not answers
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/bc_graph.py --root '/srv/acme' publish --case 'business-cases/acme-notes'
 ```
 
 6. End with this line, alone, as the last line of your output:
@@ -496,7 +512,7 @@ After `team-answers --case-card` or `--gap-card`, write `{"answers": []}` to `<t
 Show the person each line `team-answers` prints beside a block before you dispatch it.
 Dispatch each route with the `Agent` tool, with `subagent_type` set to the route `team-answers` printed and the block in the prompt, copied as printed.
 The seven routes `competitive-intelligence:discover`, `competitive-intelligence:analyze`, `jtbd-market-discovery:discover`, `jtbd-market-discovery:wtp-check`, `gtm:marketing-launch-runner`, `gtm:marketing-brand-runner` and `gtm:marketing-funnel-runner` are skills. Start each with the `Skill` tool in this conversation, with the route as `skill` and the block, copied as printed, as `args`, because the `Agent` tool cannot start a skill.
-A skill runs in this conversation, so the end of the skill is not the end of your turn. When the skill has written its result file, go on at once in the same turn: run `team-run --done` with its `run_id`, and then start the next run or ask the next card. Do this also when the text of the skill says to stop or to end the reply with the path of the result file, because that text is for the skill. A new turn does not have the grants of this command, so `team-run --done` then asks the person.
+A skill runs in this conversation, so the end of the skill is not the end of your turn. When the skill has written its result file, go on at once in the same turn: run `team-run --done` with its `run_id`, and then start the next run or ask the next card. Do this also when the text of the skill says to stop or to end the reply with the path of the result file, because that text is for the skill. A new turn does not have the grants of this command. The hook still approves each exact quoted `bc.py` call, but the next run must start at once, in this turn.
 Start the next run, or ask the next card, only after this run has ended.
 That rule is for routes: while one runs, start no other run and ask no card, but analysts may run alongside it, up to three at once.
 When `team-answers` prints error lines in place of a block, do the next step a line names; when none names one, tell the person, dispatch nothing for that command, and take the items whose plan named it to step 4.
@@ -1081,7 +1097,8 @@ They never decide when the loop ends; only their findings do, and step 8 decides
 When `status` prints a line under `funding_changes:`, tell the user what it says in plain words and ask the user which to do: restore the changed file (the user puts it back as it was when the funder decided), or run the independent review again (step 7) and record a new funding decision (step 10); when the case changed, the funder decides again (step 10).
 
 If the status says `stopped_by_budget: yes`, write the handoff with
-`handoff --mode interactive`, which records that status, and then stop.
+`handoff --mode interactive`, which records that status, write the pages of the case graph with the `publish` call below, and then stop.
+Ask nothing about the pages, because the case is not finished: they stay `draft`.
 Tell the user that this session has used its independent reviews, and
 that the case resumes from its files in a new session.
 End with the line `DONE: business-case`, as an automated run does: the handoff's status, `stopped_by_budget`, says the case is not finished.
@@ -1094,6 +1111,11 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" status --case '/srv/acme/business-cases
 ```bash
 # substitute every value below — these are shapes, not answers
 uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" handoff --case '/srv/acme/business-cases/acme-notes' --mode interactive
+```
+
+```bash
+# substitute every value below — these are shapes, not answers
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/bc_graph.py --root '/srv/acme' publish --case 'business-cases/acme-notes'
 ```
 
 #### 10. Funding decision
@@ -1122,8 +1144,19 @@ uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" decide --case '/srv/acme/business-cases
 uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py" handoff --case '/srv/acme/business-cases/acme-notes' --mode interactive
 ```
 
+Then write the pages of the case graph:
+
+```bash
+# substitute every value below — these are shapes, not answers
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/bc_graph.py --root '/srv/acme' publish --case 'business-cases/acme-notes'
+```
+
+When `publish` exits 0 and prints no `PRIVATE:` line, ask the user one question with AskUserQuestion: "Learn these results?", with the options "Yes" and "No".
+On "Yes", load the skill `business-case:learn` with the Skill tool, and give it the `case_page` that `publish` printed: the user confirms the pages of the case, and they become `stable`.
+On "No", the pages stay `draft`.
+
 Then give the output summary: the case file, the evidence pages, the
-latest report of the independent review, the decision record and the funding decision, each
+latest report of the independent review, the decision record, the funding decision and the page of the case in the graph, each
 with its path. End with the line `DONE: business-case`.
 
 ## Rules
@@ -1132,6 +1165,7 @@ with its path. End with the line `DONE: business-case`.
 - The two exceptions are the judge's own reply, which only the judge writes, and each analyst's reply, which only that analyst writes, to the `team/reply-NNN.json` its brief names.
 - Never write, copy, move or edit anything in the case folder, `judge/` included, with Write, Edit or Bash, because only `bc.py` records a change. A coach copy goes outside the case folder, and only the fallback in step 7 saves it.
 - In a bash command, write only to the temporary directory `temp-dir` printed, `/dev/null`, `/dev/stdout` or `/dev/stderr`. Write every other file through `bc.py`.
+- Never write a page of the case graph with Write or Edit, because only `bc_graph.py publish` writes the pages, and it writes them from the case folder.
 - Never pass coaching text to the judge, because the independent review reads only the case files. Start the judge only with `Agent`, and pass the text of the file that `brief` wrote.
 - Every decision comes from an explicit answer by the user.
 

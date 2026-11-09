@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "plugins": {
     "jtbd-market-discovery": {
-      "min_version": "1.9.0",
+      "min_version": "1.9.2",
+      "graph": {"name": "jtbd", "save_script": "scripts/jtbd_graph.py"},
       "commands": {
         "jtbd-market-discovery:discover": {
           "route": "jtbd-market-discovery:discover",
@@ -64,7 +65,8 @@
       }
     },
     "competitive-intelligence": {
-      "min_version": "1.9.1",
+      "min_version": "1.10.8",
+      "graph": {"name": "competitive-intelligence", "save_script": "scripts/ci_graph.py"},
       "commands": {
         "competitive-intelligence:discover": {
           "route": "competitive-intelligence:discover",

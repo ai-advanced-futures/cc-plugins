@@ -240,6 +240,14 @@ def bc_fresh(ctx):
             out.append(ctx.issue(WARN, "BC-fresh", path, f"the case folder cannot be read: {error}"))
             continue
         by_alias = publish.pages_by_alias(ctx.pages)
+        want = {item.alias.casefold() for item in items}
+        known = any(i.type == "Case" and i.fields.get("open_item_count") is not None for i in items)
+        for other, other_page in ctx.ok().items() if known else ():  # an open item that the case closed (D-585)
+            # A protected page stays after `publish`, so a warning that says "Run publish" would never go (row 30).
+            if other_page.type == "OpenItem" and other_page.frontmatter.get("case") == "/" + path.relative_to(ctx.dir).as_posix() \
+                    and not other_page.frontmatter.get("protected") \
+                    and not any(str(a).casefold() in want for a in other_page.frontmatter.get("aliases") or []):
+                out.append(ctx.issue(WARN, "BC-fresh", other, "the item is no longer open in the case. Run publish."))
         for item in items:
             have = by_alias.get(item.alias.casefold())
             if have is None:

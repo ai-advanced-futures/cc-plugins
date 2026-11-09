@@ -376,7 +376,8 @@ def plan(case_dir, case_folder=None) -> list:
     rubric = _json(case_dir / "rubric.json", {})
     rubric_items = [i for i in (rubric.get("items") if isinstance(rubric, dict) else []) or [] if isinstance(i, dict)]
     section_of = {i.get("id"): i.get("section") for i in rubric_items}
-    review_items, latest_review = [], None
+    review_items, latest_review, verdict_items, finding_items = [], None, [], []
+    part_of = {key: f"{slug}/{key}" for key in SECTIONS}  # the first Part page of each section
     for file in sorted((case_dir / "judge").glob("report-*.json")) if (case_dir / "judge").is_dir() else []:
         match = _REPORT_RE.search(file.name)
         report = _json(file, None)
@@ -385,19 +386,44 @@ def plan(case_dir, case_folder=None) -> list:
         number = match.group(1)
         verdict = report.get("investment_verdict")
         written = report.get("written_by")
+        verdicts = report.get("items") if isinstance(report.get("items"), dict) else {}
+        verdicts = {iid: v for iid, v in verdicts.items() if isinstance(v, dict)}
+        findings = [f for f in report.get("findings") or [] if isinstance(f, dict) and f.get("id")]
         fields = _clean({"report": number, "written_by": written if written in ("judge", "coach-copy") else None,
                          "investment_verdict": verdict if verdict in ("supported", "undetermined", "not_supported") else None,
-                         "manifest_digest": report.get("manifest_digest"), "item_verdicts": report.get("items")})
-        findings = [f for f in report.get("findings") or [] if isinstance(f, dict)]
+                         "manifest_digest": report.get("manifest_digest"), "verdict_count": len(verdicts),
+                         "finding_count": len(findings)})
         sections = sorted({section_of.get(f.get("item_id")) for f in findings if section_of.get(f.get("item_id"))})
+        review_alias = f"{slug}/report-{number}"
         links = {**case_link, "run": last_run, "parts": [f"{slug}/{s}" for s in sections]}
-        lines = [f"- {f.get('id') or f.get('job')} ({f.get('job')}, {f.get('item_id') or 'no item'}): "
-                 f"{_one_line(f.get('summary'), 240)}" for f in findings]
         review_items.append(Item(
-            "Review", f"{slug}/report-{number}", f"{slug}: report {number}",
+            "Review", review_alias, f"{slug}: report {number}",
             _one_line(f"Report {number} of the independent judge; investment verdict {verdict or 'not given'}.", 300),
-            fields, links, "\n".join(lines) or "The report has no findings."))
-        latest_review = f"{slug}/report-{number}"
+            fields, links, f"Report {number} of the independent judge: {len(verdicts)} item verdicts and "
+                           f"{len(findings)} findings. Each one is a page that links to this page."))
+        latest_review = review_alias
+        for iid, v in verdicts.items():  # 1 page for each item verdict (D-583)
+            cited = [c for c in v.get("evidence") or [] if isinstance(c, str)]
+            v_links = {**case_link, "run": last_run, "in_review": [review_alias],
+                       "cites": [f"{slug}/{c}" for c in cited if c.startswith("EV-")]}
+            if section_of.get(iid):
+                v_links["on_part"] = [part_of[section_of[iid]]]
+            verdict_items.append(Item(
+                "ItemVerdict", f"{review_alias}/{iid}", f"{iid}: {v.get('status')} (report {number})",
+                _one_line(f"Report {number} of the judge rates {iid} {v.get('status')}.", 300),
+                _clean({"item_id": iid, "item_status": v.get("status"), "cited_ids": cited or None,
+                        "met_test_id": v.get("met_test_id")}), v_links,
+                f"Report {number} of the judge rates {iid} {v.get('status')}."))
+        for f in findings:  # 1 page for each finding (D-583)
+            f_links = {**case_link, "run": last_run, "in_review": [review_alias]}
+            if section_of.get(f.get("item_id")):
+                f_links["on_part"] = [part_of[section_of[f["item_id"]]]]
+            finding_items.append(Item(
+                "Finding", f"{review_alias}/{f['id']}", f"{f['id']}: {f.get('job')} (report {number})",
+                _one_line(f.get("summary"), 300, f"Finding {f['id']}."),
+                _clean({"finding_id": f["id"], "job": f.get("job"), "item_id": f.get("item_id"),
+                        "target": f.get("target"), "summary": f.get("summary"), "anchor": f.get("anchor")}),
+                f_links, _text_block(f.get("summary")) or "The finding has no summary."))
 
     # Parts
     doc_path = case_dir / "business-case.md"
@@ -466,12 +492,26 @@ def plan(case_dir, case_folder=None) -> list:
     handoff = _json(case_dir / "business-case-handoff.json", {})
     handoff = handoff if isinstance(handoff, dict) else {}
     scope = _json(case_dir / "scope.json", {})
+    open_items = handoff.get("open_items") if isinstance(handoff.get("open_items"), list) else None
+    open_items = None if open_items is None else [o for o in open_items if isinstance(o, dict) and o.get("item_id")]
+    open_item_items = []
+    for o in open_items or []:  # 1 page for each open item (D-583)
+        iid = o["item_id"]
+        o_links = {**case_link, "run": last_run}
+        if section_of.get(iid):
+            o_links["on_part"] = [part_of[section_of[iid]]]
+        open_item_items.append(Item(
+            "OpenItem", f"{slug}/open/{iid}", f"{iid}: open ({o.get('state')})",
+            _one_line(f"{iid} of the case {slug} is open: {o.get('state')}.", 300),
+            _clean({"item_id": iid, "state": o.get("state")}), o_links,
+            f"{iid} of the case {slug} is open: {o.get('state')}."))
     market = meta.get("market") or (scope.get("market") if isinstance(scope, dict) else None)
     fields = _clean({"slug": slug, "offering": offering, "market": market if market in ("B2B", "B2C", "both") else None,
                      "rubric_version": meta.get("rubric_version"),
                      "created_rubric_version": meta.get("created_rubric_version"), "case_folder": folder,
                      "loop_status": handoff.get("status"), "needs_human": handoff.get("needs_human"),
-                     "open_items": handoff.get("open_items"), "absent_categories": handoff.get("absent_categories"),
+                     "open_item_count": len(open_items) if open_items is not None else None,
+                     "absent_categories": handoff.get("absent_categories"),
                      "orphaned_conditions": handoff.get("orphaned_conditions"), "problems": handoff.get("problems"),
                      "completed_at": handoff.get("completed_at")})
     links = {}
@@ -485,7 +525,8 @@ def plan(case_dir, case_folder=None) -> list:
                      _one_line(f"The business case for {offering}", 300))
 
     items = [case_item, *run_items, *part_items, *evidence_items, *decision_items, *strategy_items,
-             *condition_items, *note_items, *figure_items, *finance_items, *review_items]
+             *condition_items, *note_items, *figure_items, *finance_items, *review_items, *verdict_items,
+             *finding_items, *open_item_items]
     known = {i.alias.casefold() for i in items}
     for item in items:  # a link to a record that has no page is dropped
         item.links = {name: [t for t in targets if ":" in t or t.casefold() in known]
@@ -512,8 +553,24 @@ def _body_text(page) -> str:
     return "\n".join(lines).strip()
 
 
+def _body_parts(page, page_type) -> tuple[str, str]:
+    """The body of a page in 2 parts: the text that `publish` writes, and the text of a person after it.
+
+    Only a Case page has a text of a person. `publish` writes 1 paragraph there, `body --append` adds the note of
+    a person after it (the `learn` skill), and the case folder has no record of that note, so `publish` keeps it.
+    """
+    text = _body_text(page)
+    if page_type != "Case":
+        return text, ""
+    first, _sep, rest = text.partition("\n\n")
+    return first.strip(), rest.strip()
+
+
 def differs(item, page) -> bool:
-    """True when the data fields, the title, the description, or the body of the page differ from the item."""
+    """True when the data fields, the title, the description, or the body of the page differ from the item.
+
+    The text of a person on a Case page is not a difference.
+    """
     fm = page.frontmatter or {}
     if fm.get("title") != item.title or fm.get("description") != item.description:
         return True
@@ -522,7 +579,7 @@ def differs(item, page) -> bool:
     link_names = set(schema.edges())
     if any(k not in item.fields and k not in META_KEYS and k not in link_names for k in fm):
         return True
-    return _body_text(page) != item.body.strip()
+    return _body_parts(page, item.type)[0] != item.body.strip()
 
 
 def snapshot_value(root, case_folder, result_ref, upstream_fm):
@@ -604,6 +661,56 @@ def publish(root, case_dir) -> dict:
     return result
 
 
+def _remove_closed(folder, work, existing, items) -> tuple[list, list]:
+    """Remove the OpenItem page of each item that is no longer open (D-583).
+
+    A closed item has no record in the case folder, so its page cannot hold the value of a case item (row 6). Only
+    an OpenItem page of a case that this publish writes can go. A protected page stays, and the result names it.
+    Return (the removed paths in the work copy, the aliases of the kept pages).
+    When the handoff has no `open_items` list (no handoff yet, or a file that cannot be read), the open items are not
+    known, so no page goes.
+    """
+    case_item = next(i for i in items if i.type == "Case")
+    if case_item.fields.get("open_item_count") is None:
+        return [], []
+    want = {i.alias.casefold() for i in items}
+    case_alias = case_item.alias.casefold()
+    case_paths = {p for p, pg in existing.items() if pg.type == "Case"
+                  and any(str(a).casefold() == case_alias for a in (pg.frontmatter or {}).get("aliases") or [])}
+    case_refs = {"/" + p.relative_to(folder).as_posix() for p in case_paths}
+    removed, kept = [], []
+    for path, page in sorted(existing.items()):
+        fm = page.frontmatter or {}
+        if page.type != "OpenItem" or fm.get("case") not in case_refs:
+            continue
+        aliases = [str(a) for a in fm.get("aliases") or []]
+        if any(a.casefold() in want for a in aliases):
+            continue
+        if fm.get("protected"):
+            kept.append(aliases[0] if aliases else path.name)
+            continue
+        target = work / path.relative_to(folder)
+        target.unlink(missing_ok=True)
+        manifest.retire(work, path.stem)  # as `remove` does: the ID is not given again (section 3)
+        removed.append(target)
+    return removed, kept
+
+
+def _refresh_manifest(work) -> list[str]:
+    """Bring the manifest of the work copy to this version, as `upgrade` does: a bundle of an earlier version lists
+    fewer `id_folders` and `required_links`, and the general check refuses a page outside `id_folders`.
+    Return the names of the changed keys."""
+    current = manifest.read(work)
+    if current is None:
+        return []
+    wanted = manifest.fields()
+    changed = sorted(key for key, value in wanted.items()
+                     if key not in ("generated", "retired_ids") and current.get(key) != value)
+    if changed:
+        manifest.write(work, {**current, **{key: wanted[key] for key in changed}, "generated": wanted["generated"]})
+    return changed
+
+
 def _write_all(root, folder, items, check) -> dict:
     existing = read(root, folder).pages
     by_alias = pages_by_alias(existing)
@@ -637,8 +744,10 @@ def _write_all(root, folder, items, check) -> dict:
                 values = [refs[t.casefold()] if ":" not in t else t for t in targets]
                 frontmatter[name] = values if edges[name]["multivalued"] else values[0]
             if old is not None:
+                # A new session alone is no change: the `run` link of a page whose value is the same stays as it is.
                 same = (not differs(item, old)
-                        and all((old.frontmatter or {}).get(n) == v for n, v in frontmatter.items() if n in edges)
+                        and all((old.frontmatter or {}).get(n) == v for n, v in frontmatter.items()
+                                if n in edges and n != "run")
                         and not any(n in (old.frontmatter or {}) and n not in frontmatter for n in edges))
                 if same:
                     unchanged += 1
@@ -662,16 +771,23 @@ def _write_all(root, folder, items, check) -> dict:
             frontmatter = ordered(frontmatter, schema.types()[item.type]["key_order"])
             page_id = paths[key].stem
             body = f"\n# {page_id}: {item.title}\n\n{item.body.strip()}\n"
+            note = _body_parts(old, item.type)[1] if old is not None else ""
+            if note:
+                body += f"\n{note}\n"
             problems = schema.validate(item.type, frontmatter)
             if problems:
                 raise DataError(f"the page {item.alias} is not valid, so nothing is written: " + "; ".join(problems))
             write_text(paths[key], dump(frontmatter, body))
+        refreshed = _refresh_manifest(work)
+        removed, kept = _remove_closed(folder, work, existing, items)
         # a placeholder that was never replaced cannot stay (a new page is always written in pass 2)
         regen.write(root, work)
         issues = check.run(root, work)
         if any(i.level == "ERROR" for i in issues):
             raise DataError("the check of the new pages found an error, so nothing is written. " + _first_error(issues))
         moved = []
+        for page_path in removed:  # the page of a closed open item goes from the bundle too
+            (folder / page_path.relative_to(work)).unlink(missing_ok=True)
         for path in sorted(work.rglob("*")):
             if not path.is_file():
                 continue
@@ -683,9 +799,14 @@ def _write_all(root, folder, items, check) -> dict:
                 moved.append(target)
         case_page = next(i for i in items if i.type == "Case")
         result = {"case": case_page.alias, "case_page": refs[case_page.alias.casefold()], "created": created,
-                  "updated": updated, "unchanged": unchanged, "files_written": len(moved)}
-        if created or updated:
+                  "updated": updated, "unchanged": unchanged, "removed": len(removed), "files_written": len(moved)}
+        if kept:
+            result["kept"] = [f"{alias} is closed, and its page is protected, so it stays" for alias in kept]
+        if refreshed:
+            result["manifest"] = "updated " + ", ".join(refreshed) + " of manifest.md"
+        if created or updated or removed or refreshed:
             logbook.append(folder / "log.md", "Publish",
-                           f"published the case {case_page.alias}: {created} new pages, {updated} changed pages",
+                           f"published the case {case_page.alias}: {created} new pages, {updated} changed pages, "
+                           f"{len(removed)} removed pages",
                            version)
         return result

@@ -250,9 +250,12 @@ def verify(root, key, by) -> list[Path]:
     return _confirm(root, bundle, [(path, page)], by, ref(bundle.dir, path))
 
 
-def verify_case(root, key, by) -> list[Path]:
+def verify_case(root, key, by, run=None) -> list[Path]:
     """A person confirms a case: the Case page and each page of the case get `status: stable` and a `verified` entry.
 
+    With `run`, a Run page of the case, the person confirms that run only: the Case page, the Run page, and each
+    `draft` page of the case whose `run` holds that Run page. A `draft` page of an older run stays `draft`,
+    because the person did not see it in this run.
     Return the changed paths, the Case page first. A page of another case does not change.
     """
     _need_person(by)
@@ -260,9 +263,21 @@ def verify_case(root, key, by) -> list[Path]:
     if page.type != "Case":
         raise UsageError(f"verify-case takes a Case page, and {key} is a {page.type} page")
     page_ref = ref(bundle.dir, path)
-    pages = [(path, page)] + [(other, item) for other, item in sorted(bundle.pages.items())
-                              if other != path and page_ref == (item.frontmatter.get("case") or "")]
-    return _confirm(root, bundle, pages, by, f"{page_ref} and the {len(pages) - 1} other pages of that case")
+    others = [(other, item) for other, item in sorted(bundle.pages.items())
+              if other != path and page_ref == (item.frontmatter.get("case") or "")]
+    if run is None:
+        what = f"{page_ref} and the {len(others)} other pages of that case"
+    else:
+        run_path = resolve(bundle, run)
+        run_page = dict(others).get(run_path)  # `others` holds only the pages of this case
+        if run_page is None or run_page.type != "Run":
+            raise UsageError(f"--run takes a Run page of the case, and {run} is not a Run page of {page_ref}")
+        run_ref = ref(bundle.dir, run_path)
+        others = [(other, item) for other, item in others
+                  if other == run_path or (item.frontmatter.get("status") == "draft"
+                                           and run_ref in schema.edge_values(item.frontmatter, "run"))]
+        what = f"{page_ref} and the {len(others)} pages of its run {run_ref}"
+    return _confirm(root, bundle, [(path, page)] + others, by, what)
 
 
 def resolve_key(root, key) -> Path:

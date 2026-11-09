@@ -28,6 +28,7 @@ import re
 from pathlib import Path
 
 from lib import (
+    brain_read,
     case_files,
     digest,
     judge_receipt,
@@ -256,13 +257,22 @@ def _cited_path(case: Path, text):
 RESULT_FILE_NAME = re.compile(r"^[0-9]{8}T[0-9]{6}Z-[a-z0-9-]+\.json$")
 
 
-def _results_files(root: Path) -> list:
-    """Every result file (RESULT_FILE_NAME) under a `.<plugin>/results/` folder at the git root."""
+def _results_files(root: Path, case=None) -> list:
+    """Every result file (RESULT_FILE_NAME) under a `.<plugin>/results/` folder at the git root, and every
+    snapshot in `team/upstream/` of the case. The folder of a plugin that has a graph in the plugin map is
+    not read: the case reads a run of such a plugin from its graph, and keeps it as a snapshot."""
+    graph_folders = {"." + name for name in brain_read.graph_plugins()}
     found = []
     for folder in sorted(root.iterdir()):
         results = folder / "results"
+        if folder.name in graph_folders:
+            continue
         if len(folder.name) > 1 and folder.name.startswith(".") and paths.stat_is_dir(results):
             found += [f for f in results.rglob("*") if paths.stat_is_file(f) and RESULT_FILE_NAME.match(f.name)]
+    upstream = brain_read.upstream_dir(case) if case is not None else None
+    if upstream is not None and paths.stat_is_dir(upstream):
+        found += [f for f in sorted(upstream.iterdir())
+                  if paths.stat_is_file(f) and RESULT_FILE_NAME.match(f.name)]
     return found
 
 
@@ -320,7 +330,7 @@ def _result_list_problems(case: Path, results: list):
     """The cites and source rules over results that already passed the checker: (problems, cited)."""
     problems, cited = [], {}
     root = team_files.repo_root(case)
-    files = _results_files(root)
+    files = _results_files(root, case)
     for result in results:
         cite_paths = []
         for entry in result.get("cites", []):
@@ -339,8 +349,8 @@ def _result_list_problems(case: Path, results: list):
             uncited = [f for f in _results_files_named(root, source["ref"], files)
                        if not any(p.is_file() and os.path.samefile(p, f) for p in cite_paths)]
             if uncited:
-                problems.append(f"result {result['id']} has a source {source['ref']} in a plugin's results folder "
-                                "and no cites entry for it")
+                problems.append(f"result {result['id']} has a source {source['ref']} in a plugin's results folder or in the "
+                                "team/upstream/ folder of the case, and no cites entry for it")
     return problems, cited
 
 

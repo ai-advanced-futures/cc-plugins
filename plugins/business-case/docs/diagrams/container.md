@@ -1,8 +1,8 @@
 # business-case — C4 Container
 
-One command, the agents, two hook handlers (the judge guard and the runner guard,
-three modes each), one CLI, and the case
-files. Every file in a case folder is written by code, except two replies:
+One command, 3 skills, the agents, two hook handlers (the judge guard with three modes and
+the runner guard with four), the brain hook, one CLI, the case
+files, and the case graph with its save code. Every file in a case folder is written by code, except two replies:
 the judge's and each analyst's. The hooks guard both. The figures reach the review
 through `finance.json`: code reads `figures.jsonl`, computes, and writes
 `finance.json`, and the brief names both files.
@@ -35,6 +35,17 @@ graph TB
         prereadrunner["PreToolUse, pre-read<br/>Read"]
         postbash["PostToolUse, post-bash<br/>Bash"]
         runnerguard["hooks-handlers/runner_guard.py<br/>the runner guard, ADR-016<br/>allows only exact script calls in a marked session"]
+        brainhook["hooks/brain-hook.sh<br/>PostToolUse · Write · Edit · Bash<br/>regen and the 2 checks after a write to the bundle; blocks nothing"]
+    end
+
+    subgraph graphcode["scripts/ (Python 3.11, pyyaml, jsonschema)"]
+        bcgraph["bc_graph.py · bclib/<br/>the save code of the case graph: publish, verify-case, regen, check"]
+        skills["skills/setup · learn · ask<br/>write pages only through bc_graph.py; ask writes nothing"]
+    end
+
+    subgraph graphs["Knowledge graphs of the repository"]
+        bundle["docs/business-case/<br/>the pages of each case: a copy for a reader, never a judge input"]
+        upstream["docs/jtbd/ · docs/competitive-intelligence/<br/>the graphs of 2 other plugins, read through their save scripts"]
     end
 
     subgraph code["lib/ (stdlib only, Python 3.9-safe)"]
@@ -70,6 +81,7 @@ graph TB
         teamreplypy["team_reply.py<br/>the reply check: an analyst reply against its brief, its receipt and every file it cites"]
         teamrecordpy["team_record.py<br/>the card record and the answers file: merges checked plans, records card answers, makes conflict cards"]
         teamrunspy["team_runs.py<br/>the run list: run_ids, invocation blocks, person-run entries, and team-run's done, fail and status"]
+        brainreadpy["brain_read.py<br/>the read of a run of a plugin that has a graph: starts the save script of that plugin,<br/>and writes the snapshot of the run into team/upstream/"]
         installcheckpy["install_check.py<br/>the install check: each map plugin's state and install path, from installed_plugins.json and the settings files"]
         teambriefpy["team_brief.py<br/>team-brief: an analyst's items in the order of work, and its plan or results brief"]
         paths["paths.py<br/>every case file name"]
@@ -83,7 +95,7 @@ graph TB
 
     subgraph casefolder["Case folder: business-cases/{slug}/"]
         written["case.json · scope.json · rubric.json<br/>inputs/ · changelog.jsonl · business-case.md<br/>evidence/EV-NNN.json · ledger.json · decisions.jsonl<br/>strategy-view.md · finance-view.md · figure-refusals.json<br/>funding/finance-report-NNN.json · business-case-handoff.json"]
-        teamfolder["team/brief-NNN.txt · brief-NNN.cancelled.json · reply-NNN.json · reply-NNN.receipt.json<br/>cards-NNN.json · answers-NNN.json · runs.json<br/>never a judge input"]
+        teamfolder["team/brief-NNN.txt · brief-NNN.cancelled.json · reply-NNN.json · reply-NNN.receipt.json<br/>cards-NNN.json · answers-NNN.json · runs.json<br/>upstream/: 1 snapshot for each ended run of a plugin that has a graph<br/>never a judge input"]
         strategyfiles["register.jsonl · conditions.jsonl · notes.jsonl<br/>hash-chained; judge inputs"]
         figuresfile["figures.jsonl<br/>the financial figures file; hash-chained; a judge input"]
         financejson["finance.json<br/>the numbers and the ceiling; written only by bc.py brief; a judge input, never an input to the arithmetic"]
@@ -99,7 +111,14 @@ graph TB
     build -->|"Agent: a team brief's text only"| pricinganalyst & jobanalyst & marketanalyst & competitionanalyst & financeanalyst & gtmanalyst & strategyanalyst & baselineanalyst
     pricinganalyst & jobanalyst & marketanalyst & competitionanalyst & financeanalyst & gtmanalyst & strategyanalyst & baselineanalyst -->|"Write, once; allowed by pre-write"| teamfolder
     extractor -.->|"reads business-case.md, scope.json, the pages"| written
-    hooksjson --> prewrite & predispatch & postwrite
+    hooksjson --> prewrite & predispatch & postwrite & brainhook
+    build -->|"uv run bc_graph.py publish, after each handoff"| bcgraph
+    skills --> bcgraph
+    brainhook -->|"regen, check"| bcgraph
+    bcgraph -->|"reads through lib/, changes no file"| written
+    bcgraph -->|"writes"| bundle
+    bundle -.->|"source_results"| upstream
+    brainreadpy -->|"pages Run, results, pages Result"| upstream
     prewrite & predispatch & postwrite --> handler
     hooksjson --> prebash & prewriterunner & prereadrunner & postbash
     prebash & prewriterunner & prereadrunner & postbash --> runnerguard
@@ -107,7 +126,10 @@ graph TB
     receipt -->|"an analyst's call first"| teamguardpy
     teamguardpy --> teamfilespy
     teamrecordpy --> teamreplypy & teamfilespy
-    teamrunspy --> teamrecordpy & teamreplypy & teamfilespy
+    teamrunspy --> teamrecordpy & teamreplypy & teamfilespy & brainreadpy
+    teamreplypy --> brainreadpy
+    brainreadpy --> pluginmappy & plugresultpy & teamfilespy
+    brainreadpy -->|"writes a snapshot one time"| teamfolder
     bc --> installcheckpy
     installcheckpy --> pluginmappy & plugresultpy
     bc --> teambriefpy

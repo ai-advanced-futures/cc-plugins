@@ -2,7 +2,7 @@
 
 **Status:** Accepted · **Date:** 2026-10-27
 
-Start here. This page is the overview of the plugin. ADR-001 to ADR-014 and ADR-016 each
+Start here. This page is the overview of the plugin. ADR-001 to ADR-016 each
 record one decision in full.
 
 ## Context
@@ -80,7 +80,7 @@ whose resolved path is not `<anything>/business-cases/<slug>`.
 
 ### The guard hooks
 
-Three plugin hooks share one handler, `hooks-handlers/judge_guard.py`:
+Three guard hooks share one handler, `hooks-handlers/judge_guard.py`. `hooks/hooks.json` also holds the 4 hooks of the runner guard, `hooks-handlers/runner_guard.py` (ADR-016), and the brain hook of the case graph (ADR-015). The 3 hooks of the judge guard are:
 
 - a `PreToolUse` write guard on every file-writing tool (`Write`, `Edit`,
   `MultiEdit`, `NotebookEdit`). Code writes every file in a case folder, so the
@@ -185,6 +185,7 @@ And what else §11 decides:
 | [ADR-012](ADR-012-the-figure-run-reports-what-it-left-uncovered.md) | The figure run reports what it left uncovered |
 | [ADR-013](ADR-013-the-evidence-team.md) | The evidence team: analysts that plan and draft, and the grade ceiling for pages built from a result |
 | [ADR-014](ADR-014-the-plugin-map-and-the-install-check.md) | The plugin map and the install check |
+| [ADR-015](ADR-015-the-case-graph.md) | The case graph: the pages of a case, `publish`, and the read of the graphs of 2 other plugins |
 | [ADR-016](ADR-016-the-runner-guard-allows-only-exact-calls.md) | The runner guard: a hook that allows only exact runner calls, and the temporary folder of a case |
 
 ## Consequences

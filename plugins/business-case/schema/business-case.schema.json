@@ -115,12 +115,9 @@
                 "offering": {
                     "type": "string"
                 },
-                "open_items": {
-                    "items": {
-                        "$ref": "#/$defs/AnyValue"
-                    },
+                "open_item_count": {
                     "type": [
-                        "array",
+                        "integer",
                         "null"
                     ]
                 },
@@ -1119,6 +1116,297 @@
             "title": "Finance",
             "type": "object"
         },
+        "Finding": {
+            "additionalProperties": false,
+            "description": "One finding of the independent judge, in one report.",
+            "properties": {
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "anchor": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "case": {
+                    "pattern": "^/cases/CASE-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "finding_id": {
+                    "type": "string"
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "in_review": {
+                    "pattern": "^/reviews/REVIEW-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "item_id": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "job": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "on_part": {
+                    "pattern": "^/parts/PART-\\d{2,}\\.md$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "run": {
+                    "items": {
+                        "pattern": "^/runs/RUN-\\d{2,}\\.md$",
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "summary": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "target": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/AnyValue"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "Finding",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "finding_id",
+                "case",
+                "in_review"
+            ],
+            "title": "Finding",
+            "type": "object"
+        },
+        "ItemVerdict": {
+            "additionalProperties": false,
+            "description": "The verdict of the independent judge on one rubric item, in one report.",
+            "properties": {
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "case": {
+                    "pattern": "^/cases/CASE-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "cited_ids": {
+                    "items": {
+                        "$ref": "#/$defs/AnyValue"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "cites": {
+                    "items": {
+                        "pattern": "^/evidence/EV-\\d{2,}\\.md$",
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "in_review": {
+                    "pattern": "^/reviews/REVIEW-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "item_id": {
+                    "type": "string"
+                },
+                "item_status": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "met_test_id": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "on_part": {
+                    "pattern": "^/parts/PART-\\d{2,}\\.md$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "run": {
+                    "items": {
+                        "pattern": "^/runs/RUN-\\d{2,}\\.md$",
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "ItemVerdict",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "item_id",
+                "case",
+                "in_review"
+            ],
+            "title": "ItemVerdict",
+            "type": "object"
+        },
         "MarketKind": {
             "description": "",
             "enum": [
@@ -1294,6 +1582,118 @@
             ],
             "title": "OkfStatus",
             "type": "string"
+        },
+        "OpenItem": {
+            "additionalProperties": false,
+            "description": "One open item of a case: a rubric item that the loop of the coach has not closed.",
+            "properties": {
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "case": {
+                    "pattern": "^/cases/CASE-\\d{2,}\\.md$",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "item_id": {
+                    "type": "string"
+                },
+                "on_part": {
+                    "pattern": "^/parts/PART-\\d{2,}\\.md$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "run": {
+                    "items": {
+                        "pattern": "^/runs/RUN-\\d{2,}\\.md$",
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "state": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "const": "OpenItem",
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "type",
+                "item_id",
+                "state",
+                "case"
+            ],
+            "title": "OpenItem",
+            "type": "object"
         },
         "Part": {
             "additionalProperties": false,
@@ -1489,6 +1889,12 @@
                         "null"
                     ]
                 },
+                "finding_count": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
                 "generated": {
                     "anyOf": [
                         {
@@ -1502,16 +1908,6 @@
                 },
                 "investment_verdict": {
                     "$ref": "#/$defs/Verdict"
-                },
-                "item_verdicts": {
-                    "anyOf": [
-                        {
-                            "$ref": "#/$defs/AnyValue"
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ]
                 },
                 "manifest_digest": {
                     "type": [
@@ -1573,6 +1969,12 @@
                     "const": "Review",
                     "description": "The OKF page type.",
                     "type": "string"
+                },
+                "verdict_count": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
                 },
                 "verified": {
                     "description": "Each confirmation by a person.",

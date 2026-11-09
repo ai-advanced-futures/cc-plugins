@@ -38,7 +38,12 @@ a call. Each error gives no decision and exit code 0.
   with no shell feature. The script is `lib/bc.py` of this plugin with a
   subcommand of `bc.py` as first word, or a script of the table `RUNNER_CALLS`
   in the install folder that `install_check.check` gives for that plugin, with a
-  first word that the table allows. Time stamps count as the first word `name`
+  first word that the table allows, or `scripts/bc_graph.py` of this plugin with
+  the first word `publish`, and the option `--root <path>` before it. A judge in
+  the background ends the turn before the `publish` call of `build.md`, and the
+  grant of `bc_graph.py` ends with the turn (the verifier on PR 1034: 1 of 3
+  automated builds wrote no page). `remove`, `set` and each other first word of
+  `bc_graph.py` get no decision. Time stamps count as the first word `name`
   of `result_name.py`. A script sits in the `scripts/` folder of the install
   folder. Only `plugin_result_check.py` of `product-finance` sits in
   `scripts/plugin_result/` (a live run of its `discover-runner` showed this:
@@ -48,7 +53,9 @@ a call. Each error gives no decision and exit code 0.
   temporary folder of `bc.py`. Paths are resolved, so a link out of the folder
   gets no `allow`.
 - `pre-read` gives an `allow` in a marked session for a read of a file in the
-  install folder of 1 of the 5 plugins, and for an answers file
+  install folder of 1 of the 5 plugins, for a file in the `templates/`, `rubric/`
+  or `agents/` folder of this plugin (`build.md` reads the case template and the
+  rule of the figure extractor in a later turn), and for an answers file
   `business-cases/<case>/team/answers-*.json`. A live run showed the need: a
   runner reads its own plugin files (`plugin.json`, an agent file), these files
   are outside the project, and the default mode refused the read (2 refused
@@ -94,6 +101,10 @@ corrects the command and uses the same file. The command text holds no
 - A `pyproject.toml` of the project that `uv run` reads.
 - A plugin that loads with `--plugin-dir` and has no install entry: its script
   calls ask, because the install check does not list it.
+- A plugin that comes from a marketplace with a directory source: Claude Code
+  loads it in place, and not from the install folder. The hook gives no
+  decision for a read of its files, so each read asks. This fails closed.
+  To test such a plugin, load the install folder with `--plugin-dir`.
 - A call in a session that `bc.py session` never marked.
 
 ## Consequences

@@ -14,6 +14,8 @@ REQUIRED_LINKS = {
     "Run": ["case"], "Part": ["case", "run"], "Evidence": ["case", "run"], "Decision": ["case", "run"],
     "StrategyEntry": ["case", "run"], "Condition": ["case", "run", "supports"], "Note": ["case", "run"],
     "Figure": ["case", "run"], "Finance": ["case", "run"], "Review": ["case", "run"],
+    "OpenItem": ["case", "run"], "ItemVerdict": ["case", "run", "in_review"],
+    "Finding": ["case", "run", "in_review"],
 }
 
 

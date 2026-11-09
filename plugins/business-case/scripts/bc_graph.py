@@ -142,13 +142,15 @@ def cmd_remove(args) -> int:
 
 
 def cmd_verify_case(args) -> int:
-    for path in writer.verify_case(args.root, args.key, args.by):
+    for path in writer.verify_case(args.root, args.key, args.by, args.run):
         print(shown(args.root, path))
     return 0
 
 
 def add_verify_case(parser) -> None:
     parser.add_argument("key", help="a Case page: an ID, an alias, a bundle path, or the case slug")
+    parser.add_argument("--run", metavar="RUN", help="a Run page of the case: confirm the Case page, that Run page, "
+                        "and each draft page of that run only")
     parser.add_argument("--by", required=True, help="human:<login>, because only a person confirms a case")
 
 

@@ -38,8 +38,10 @@ A plan brief names its upstream runs in its body under BODY_UPSTREAM_RUNS: a lis
 result_file}` (spec §5.0 step 1, "each ended run that a plan for an upstream item named"). `inputs_from`
 reads it.
 
-`done` and `status` find a run's result file by its `run_id`, with the glob `.<plugin>/results/*-<run_id>.json`
-under the git root (`team_files.repo_root`). A file counts only when its resolved path stays in the git root
+`done` and `status` find the result of a run by its `run_id`. For a plugin that has a `graph` in the plugin map,
+`brain_read.find` reads the run from the graph and gives its snapshot in `team/upstream/` of the case; the run
+entry then also holds `graph_run` and `graph_results`. For each other plugin they use the glob
+`.<plugin>/results/*-<run_id>.json` under the git root (`team_files.repo_root`). A file counts only when its resolved path stays in the git root
 (`team_files.inside_root`, the one path rule), its `run.run_id`
 equals the run_id and its `run.case` equals the case (C14: the glob also matches `foo-acme-0001`). More
 than one such file is refused. The one file must pass `check_result()` and `check_result_file()`.
@@ -55,7 +57,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from lib import digest, plugin_map, plugin_result, team_files, team_record, team_reply
+from lib import brain_read, digest, plugin_map, plugin_result, team_files, team_record, team_reply
 from lib.team_files import TeamRefused
 
 BODY_UPSTREAM_RUNS = "upstream_runs"
@@ -371,7 +373,11 @@ def render(printed: list) -> list:
 # -- finding a result file -------------------------------------------------------------------------
 
 def _find(case: Path, run: dict):
-    """(relative path, doc) of the run's one result file; None when there is none; refused for two."""
+    """(relative path, doc, path, graph fields) of the run's one result file; None when there is none;
+    refused for two. The run of a plugin that has a graph comes from the graph, as a snapshot of the case:
+    `brain_read.NoGraphRun` when the graph gives none. The graph fields are empty for a result file."""
+    if brain_read.graph_of(run["command"]) is not None:
+        return brain_read.find(case, run)
     root = team_files.repo_root(case)
     run_id, want_case = run["run_id"], team_files.repo_relative(case, case)
     folder = root / f".{run['command'].split(':')[0]}" / "results"
@@ -386,7 +392,7 @@ def _find(case: Path, run: dict):
             continue
         meta = doc.get("run") if isinstance(doc, dict) else None
         if isinstance(meta, dict) and meta.get("run_id") == run_id and meta.get("case") == want_case:
-            found.append((rel, doc, path))
+            found.append((rel, doc, path, {}))
     if len(found) > 1:
         raise TeamRefused(f"more than one result file holds run_id {run_id}: "
                           f"{', '.join(f[0] for f in found)}; ask the person which file the run wrote and to move "
@@ -416,16 +422,21 @@ def done(case_dir, run_id) -> dict:
         raise TeamRefused(f"{run_id} has no run_id; a person's run ends by its case card or team-run --fail")
     if run.get("state") != "open":
         raise TeamRefused(f"run {run_id} has already ended ({run.get('state')})")
-    found = _find(case, run)
+    try:
+        found = _find(case, run)
+    except brain_read.NoGraphRun as miss:
+        run.update(state="gap", reason=str(miss))
+        _save_runs(case, runs)
+        return dict(run)
     if found is None:
         run.update(state="gap", reason=f"no result file of this case holds run_id {run_id}")
     else:
-        rel, doc, path = found
+        rel, doc, path, graph = found
         problems = _problems(doc, path)
         if problems:
             run.update(state="gap", reason=f"{rel} fails the checker: " + "; ".join(problems))
         else:
-            run.update(state="ended", result_file=rel, finished_at=doc["run"]["finished_at"])
+            run.update(state="ended", result_file=rel, finished_at=doc["run"]["finished_at"], **graph)
     _save_runs(case, runs)
     return dict(run)
 
@@ -445,7 +456,8 @@ def fail(case_dir, key) -> dict:
 def status(case_dir) -> list:
     """End each open run whose result file now exists and passes; returns every run that was open, as it
     now stands. A person-run entry has no run_id, so nothing finds its file: it stays open. A run with
-    more than one matching file stays open, and its entry carries `refused`, naming the files."""
+    more than one matching file stays open, and its entry carries `refused`, naming the files. A run that
+    its graph does not give yet stays open."""
     case = _case(case_dir)
     runs = load_runs(case)
     out = []
@@ -456,11 +468,14 @@ def status(case_dir) -> list:
         if run.get("run_id"):
             try:
                 found = _find(case, run)
+            except brain_read.NoGraphRun:
+                found = None  # the graph does not hold the run yet: the run stays open
             except TeamRefused as exc:
                 out.append(dict(run, refused=str(exc)))  # two files: the run stays open, and says why
                 continue
             if found is not None and not _problems(found[1], found[2]):
-                run.update(state="ended", result_file=found[0], finished_at=found[1]["run"]["finished_at"])
+                run.update(state="ended", result_file=found[0], finished_at=found[1]["run"]["finished_at"],
+                           **found[3])
                 changed = True
         out.append(dict(run))
     if changed:

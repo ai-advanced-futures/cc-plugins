@@ -13,7 +13,7 @@ claude plugin install business-case@cc-plugins
 The plugin needs:
 
 - **`uv`**, because the coach calls `uv run "${CLAUDE_PLUGIN_ROOT}/lib/bc.py"`. The script needs no package.
-- **`python3` 3.9 or later**, for the 3 hooks (see "How it runs, and its limits").
+- **`python3` 3.9 or later**, for the 7 guard hooks (see "How it runs, and its limits").
 - **The `knowledge` plugin**, for the case graph (see "The case graph"). The save code `scripts/bc_graph.py` also needs `uv`, because it runs with `pyyaml` and `jsonschema`.
 - **Claude Code 2.1.295 or later**, because the hooks use `"onFailure": "block"`.
 - **The evidence plugins**, when you want the evidence team to run them. Install each one with `claude plugin install <plugin>@cc-plugins`: `jtbd-market-discovery`, `competitive-intelligence`, `pricing`, `product-finance` and `gtm`. `value-ip` is optional and comes from outside this marketplace.
@@ -49,13 +49,15 @@ Read(**/team/answers-*.json)
 Seven runs are skills: `competitive-intelligence:discover`, `competitive-intelligence:analyze`,
 `jtbd-market-discovery:discover`, `jtbd-market-discovery:wtp-check`, `gtm:marketing-launch-runner`,
 `gtm:marketing-brand-runner` and `gtm:marketing-funnel-runner`. The command starts them with the `Skill`
-tool, so it has one `Skill(<route>)` grant for each of the seven routes, and no `Skill` grant for any other skill.
+tool, so it has one `Skill(<route>)` grant for each of the seven routes. It has one more, `Skill(business-case:learn)`,
+for the question at the end of an interactive run, and no `Skill` grant for any other skill. The command also has
+the grants for its own 2 scripts, `bc.py` and `bc_graph.py`.
 The 3 routes of `gtm` are skills from version 1.11.0 of `gtm`, which is the floor of the plugin map.
 
 A run of `value-ip:analyze` or `product-finance:cost-coverage` is yours: the command starts neither, so it gives
 no grant for them.
 
-Claude Code applies a grant only during the turn of the command, so each grant ends when the command ends. A grant ends with the turn, and a run in the background ends the turn. So the hook `hooks-handlers/runner_guard.py` approves, in a session that started a build, only 1 exact call of `bc.py` or of a listed runner script, a write in a runner folder or in the temporary folder of a case, and a read of a file of a runner plugin or of an answers file.
+Claude Code applies a grant only during the turn of the command, so each grant ends when the command ends. A grant ends with the turn, and a run in the background ends the turn. So the hook `hooks-handlers/runner_guard.py` approves, in a session that started a build, only 1 exact call of `bc.py`, of `bc_graph.py publish` or of a listed runner script, a write in a runner folder or in the temporary folder of a case, and a read of a file of a runner plugin or of an answers file.
 
 Two limits of these grants:
 
@@ -111,6 +113,7 @@ One case per folder, `business-cases/<slug>/`. Code writes every file in it: `bc
 | `team/cards-NNN.json` | the card record: every card of the merged plans, and its answer |
 | `team/answers-NNN.json` | the answers file the plugin runs read |
 | `team/runs.json` | the run list: each plugin run, the person's runs and their results or gaps |
+| `team/upstream/<name>.json` | a snapshot: the results of one run of `jtbd-market-discovery` or `competitive-intelligence`, as `bc.py team-run` read them from the graph of that plugin; written 1 time |
 | `team/.lock` | the lock each team command holds while it writes |
 | `business-case-handoff.json` | what a run hands to you and to a later session; an interactive run writes it too |
 
@@ -138,9 +141,25 @@ Automated mode covers intake, mapping and the independent review only. In mappin
 
 ## The case graph
 
-The plugin has the save code for a knowledge graph of its cases: the graph `business-case`, in the folder `docs/business-case/`. It follows the brain standard of the `knowledge` plugin. In this version no command, skill or agent calls the save code yet, so a run of the plugin does not write the graph. You call the save code yourself.
+The plugin keeps a knowledge graph of its cases: the graph `business-case`, in the folder `docs/business-case/`. It follows the brain standard of the `knowledge` plugin. The case folder stays the record of a case: the coach writes only the case folder, and the independent review reads only the case folder. The pages are a copy of the case for a reader: you, a later session, or another plugin that links to a part of a case (ADR-015).
 
-The graph has 11 page types. The schema is `schema/business-case.yaml`. `scripts/gen-schema.sh` writes the JSON files next to it.
+The graph needs the `knowledge` plugin and `uv`.
+
+| Skill | What it does |
+| --- | --- |
+| `/business-case:setup [bundle folder]` | Makes the graph, writes a block in `CLAUDE.md` that says where the graph is, and writes the pages of each case folder of the repository. With no argument, the folder is `docs/business-case/` (the `--dir` of `init`). |
+| `/business-case:learn [case page or correction]` | Confirms the pages of a case after you accept them: each page gets `status: stable` and one `verified` entry with your GitHub login. It can also add your note to the page of a case. It changes no value of a case: correct a value with `/business-case:build`. |
+| `/business-case:ask <question>` | Answers a question from the pages, and writes nothing. It follows a link into the graphs of `jtbd-market-discovery` and `competitive-intelligence`, and it writes `(draft)` after each page that no person confirmed. |
+
+**When the pages are written.** At the end of each run, after the handoff, the coach runs `bc_graph.py publish` for the case. `publish` makes the graph when the repository has none, and prints `INIT: docs/business-case/`. A new page and a changed page have `status: draft`. When `publish` fails, the coach shows `GRAPH: FAILED <exit code> <first error line>` and ends as usual: the case folder is complete, and the next run writes the pages. At the end of an interactive run, the coach asks "Learn these results?", and on yes it starts `/business-case:learn`. An automated run, and a run that stopped on its budget of reviews, ask nothing, and their pages stay `draft`.
+
+**The hook.** The brain hook, `hooks/brain-hook.sh`, runs after a write to the folder of the graph and after a command that runs `bc_graph.py`. It runs `regen`, the brain check and the check of the `knowledge` plugin, and it blocks no write. It works with no `uv` on the `PATH`: it then uses `python3`, which must be version 3.11 or later, with `pyyaml` and `jsonschema`.
+
+**The graphs of other plugins.** The evidence team reads a run of `jtbd-market-discovery` (version 1.9.2 or later) and of `competitive-intelligence` (version 1.10.8 or later) from the graph of that plugin, and not from a result file. `bc.py team-run` keeps a copy of each run that the case uses, a snapshot, in `team/upstream/` of the case folder. The snapshot is written 1 time, because an evidence page and a decision pin the bytes that you graded, and a page of another graph can change later. When the other graph gives no run, the run is recorded as a gap.
+
+**Privacy.** The pages hold what the case folder holds: the text of each section, the name that you gave the coach, the reason of each decision, the money figures and the review reports. Git tracks the folder of the graph by default. When git ignores the case folder and does not ignore the folder of the graph, `publish` writes no page and prints a `PRIVATE:` line. The save code and the read of the other graphs make no network call.
+
+The graph has 14 page types. The schema is `schema/business-case.yaml`. `scripts/gen-schema.sh` writes the JSON files next to it.
 
 | Type | Prefix | Folder | Holds |
 | --- | --- | --- | --- |
@@ -155,17 +174,20 @@ The graph has 11 page types. The schema is `schema/business-case.yaml`. `scripts
 | Figure | `FIGURE` | `figures` | one money figure, with its confirm records |
 | Finance | `FINANCE` | `finance` | the numbers that code computed from the figures of a case |
 | Review | `REVIEW` | `reviews` | one saved report of the independent review |
+| OpenItem | `OPEN` | `open-items` | one rubric item that the loop has not closed, with its state |
+| ItemVerdict | `VERDICT` | `verdicts` | the verdict of one report on one rubric item |
+| Finding | `FINDING` | `findings` | one finding of one report |
 
-Only `scripts/bc_graph.py` writes the graph. Do not edit a page by hand. Run it with `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/bc_graph.py" <operation>`. The operations are `init`, `upgrade`, `new`, `set`, `body`, `link`, `unlink`, `remove`, `resolve`, `verify`, `verify-case`, `regen`, `check`, `log` and `publish`. An operation exits with 0 when it succeeds, with 1 when the data is wrong, and with 2 when the input is wrong.
+Only `scripts/bc_graph.py` writes the graph. Do not edit a page by hand. The coach and the 3 skills call it; you can also run it with `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/bc_graph.py" <operation>`. The operations are `init`, `upgrade`, `new`, `set`, `body`, `link`, `unlink`, `remove`, `resolve`, `verify`, `verify-case`, `regen`, `check`, `log` and `publish`. An operation exits with 0 when it succeeds, with 1 when the data is wrong, and with 2 when the input is wrong.
 
 - `publish --case DIR` writes the case folder `DIR` into pages. It works on a copy, runs `regen` and `check`, and moves the pages only when the check finds no ERROR. It leaves the case folder unchanged. When the project has no graph, it makes one and prints `INIT: docs/business-case/`. When git ignores the case folder, it writes no page and prints a `PRIVATE:` line that says what to add to the ignore file of git. The graph would show a private case otherwise.
 - `check` runs the brain check. Its rules are `BC-schema`, `BC-id`, `BC-link`, `BC-required`, `BC-case`, `BC-run`, `BC-alias`, `BC-part`, `BC-source`, `BC-fresh`, `BC-upstream` and `BC-stale`. `BC-fresh` and `BC-upstream` give a WARN. `BC-upstream` gives a SKIP when the `knowledge` plugin is not there.
-- `verify PAGE --by human:<login>` and `verify-case CASE --by human:<login>` record that a person confirmed a page, or a case and each page of it.
-- An Evidence page links to the Result page of the graph of `jtbd-market-discovery` when the run file names that page.
+- `verify PAGE --by human:<login>` and `verify-case CASE --by human:<login>` record that a person confirmed a page, or a case and each page of it. `verify-case CASE --run RUN --by human:<login>` confirms the Case page, that Run page, and each `draft` page of that run only.
+- An Evidence page links to the Result page of the graph of `jtbd-market-discovery` or of `competitive-intelligence` (`source_results`) when the run entry of the case names that page.
 
 ## How it runs, and its limits
 
-Three plugin hooks guard the independent review and the analysts' replies (ADR-006). They run in every session with the plugin enabled, not only during a business-case run.
+Three plugin hooks guard the independent review and the analysts' replies (ADR-006). Four more hooks, `hooks-handlers/runner_guard.py`, approve the exact runner calls (ADR-016), and the brain hook (`hooks/brain-hook.sh`) is the eighth. All of them run in every session with the plugin enabled, not only during a business-case run.
 
 - **Claude Code 2.1.295 or later.** The write guard and the dispatch guard declare `"onFailure": "block"`, which needs 2.1.295. Below that version, the guard makes no promise to fail closed.
 - **A working `python3`, version 3.9 or later.** The hooks run under the `python3` on your `PATH`. The handler and the `lib` modules it imports keep to Python 3.9 syntax, so macOS's `/usr/bin/python3` works.

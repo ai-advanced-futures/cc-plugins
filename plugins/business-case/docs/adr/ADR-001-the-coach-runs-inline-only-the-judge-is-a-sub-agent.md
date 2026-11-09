@@ -53,7 +53,7 @@ end. It runs one command at a time, and starts the next run or asks the next
 card only after that. A route ran in the
 background in every spike run, so the coach ends its turn after a dispatch,
 and the completion notice starts its next turn. The coach uses the `Skill` tool only for the seven routes of
-`competitive-intelligence`, `jtbd-market-discovery` and `gtm`, which are skills: the `Agent` tool cannot start a skill. A skill runs in the main
+`competitive-intelligence`, `jtbd-market-discovery` and `gtm`, which are skills: the `Agent` tool cannot start a skill. At the end of an interactive run, the coach also loads the skill `business-case:learn` with the `Skill` tool (ADR-015). A skill runs in the main
 conversation. The four routes of `competitive-intelligence` and `jtbd-market-discovery` dispatch their
 own agents from there, and the three routes of `gtm` dispatch no agent. For any other map command it uses the
 `Agent` tool: told only to dispatch an agent, Desktop's model ran the skill in

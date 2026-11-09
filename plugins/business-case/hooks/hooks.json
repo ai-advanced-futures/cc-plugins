@@ -44,6 +44,12 @@
         "hooks": [
           {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/runner_guard.py\" post-bash", "timeout": 10}
         ]
+      },
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {"type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/brain-hook.sh\""}
+        ]
       }
     ]
   }

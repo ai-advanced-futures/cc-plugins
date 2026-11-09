@@ -3,7 +3,10 @@
 The data lives in `plugin-map/plugin-map-<MAP_VERSION>.json`. This module reads it and answers questions
 about it. It holds no map data of its own. The file has these parts:
 
-- `plugins`: each plugin's `min_version` and its adopting `commands`. A command holds `route` (the
+- `plugins`: each plugin's `min_version`, its `graph` when the plugin writes its results as a knowledge
+  graph (`{name, save_script}`: the graph name of `.claude/knowledge.json`, and the save script of the
+  plugin, relative to the plugin root; `lib/brain_read.py` reads a run of such a plugin through that
+  script, and not from a result file), and its adopting `commands`. A command holds `route` (the
   agent to dispatch, `<plugin>:<route stem>`), `coach_runs`, `reads_from` (map commands whose results it
   reads through `inputs_from`), `kinds` (result kinds it produces), `phases` and `never_set` (inputs the
   coach never sets).
@@ -78,6 +81,12 @@ def never_set(m, command) -> frozenset:
 
 def min_version(m, plugin) -> str:
     return m["plugins"][plugin]["min_version"]
+
+
+def graph(m, plugin):
+    """The `graph` object of a plugin that writes its results as a knowledge graph (`{name, save_script}`),
+    or None for a plugin with no graph and for a name that is not in the map."""
+    return m.get("plugins", {}).get(plugin, {}).get("graph")
 
 
 def owner(m, item_id) -> str:

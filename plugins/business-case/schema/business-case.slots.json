@@ -22,7 +22,7 @@
         "case_folder",
         "loop_status",
         "needs_human",
-        "open_items",
+        "open_item_count",
         "absent_categories",
         "orphaned_conditions",
         "problems",
@@ -292,10 +292,80 @@
         "written_by",
         "investment_verdict",
         "manifest_digest",
-        "item_verdicts",
+        "verdict_count",
+        "finding_count",
         "case",
         "run",
         "parts",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "OpenItem": {
+      "prefix": "OPEN",
+      "directory": "open-items",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "item_id",
+        "state",
+        "case",
+        "run",
+        "on_part",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "ItemVerdict": {
+      "prefix": "VERDICT",
+      "directory": "verdicts",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "item_id",
+        "item_status",
+        "cited_ids",
+        "met_test_id",
+        "case",
+        "run",
+        "in_review",
+        "on_part",
+        "cites",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Finding": {
+      "prefix": "FINDING",
+      "directory": "findings",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "finding_id",
+        "job",
+        "item_id",
+        "target",
+        "summary",
+        "anchor",
+        "case",
+        "run",
+        "in_review",
+        "on_part",
         "aliases",
         "generated",
         "verified",
@@ -418,6 +488,27 @@
       ],
       "multivalued": true,
       "inverse_label": "has finding in"
+    },
+    "on_part": {
+      "targets": [
+        "Part"
+      ],
+      "multivalued": false,
+      "inverse_label": "item of"
+    },
+    "in_review": {
+      "targets": [
+        "Review"
+      ],
+      "multivalued": false,
+      "inverse_label": "holds"
+    },
+    "cites": {
+      "targets": [
+        "Evidence"
+      ],
+      "multivalued": true,
+      "inverse_label": "cited by"
     }
   }
 }

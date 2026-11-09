@@ -59,7 +59,7 @@ classes:
   Case:
     description: "One business case: the case folder and its status."
     annotations: {id_prefix: CASE, directory: cases}
-    slots: [type, title, description, status, tags, slug, offering, market, rubric_version, created_rubric_version, case_folder, loop_status, needs_human, open_items, absent_categories, orphaned_conditions, problems, completed_at, funding_decision, latest_review, finance, aliases, generated, verified, protected]
+    slots: [type, title, description, status, tags, slug, offering, market, rubric_version, created_rubric_version, case_folder, loop_status, needs_human, open_item_count, absent_categories, orphaned_conditions, problems, completed_at, funding_decision, latest_review, finance, aliases, generated, verified, protected]
     slot_usage:
       type: {equals_string: Case}
       slug: {required: true}
@@ -137,11 +137,38 @@ classes:
   Review:
     description: "One saved report of the independent judge."
     annotations: {id_prefix: REVIEW, directory: reviews}
-    slots: [type, title, description, status, tags, report, written_by, investment_verdict, manifest_digest, item_verdicts, case, run, parts, aliases, generated, verified, protected]
+    slots: [type, title, description, status, tags, report, written_by, investment_verdict, manifest_digest, verdict_count, finding_count, case, run, parts, aliases, generated, verified, protected]
     slot_usage:
       type: {equals_string: Review}
       report: {required: true}
       case: {required: true}
+  OpenItem:
+    description: "One open item of a case: a rubric item that the loop of the coach has not closed."
+    annotations: {id_prefix: OPEN, directory: open-items}
+    slots: [type, title, description, status, tags, item_id, state, case, run, on_part, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: OpenItem}
+      item_id: {required: true}
+      state: {required: true}
+      case: {required: true}
+  ItemVerdict:
+    description: "The verdict of the independent judge on one rubric item, in one report."
+    annotations: {id_prefix: VERDICT, directory: verdicts}
+    slots: [type, title, description, status, tags, item_id, item_status, cited_ids, met_test_id, case, run, in_review, on_part, cites, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: ItemVerdict}
+      item_id: {required: true}
+      case: {required: true}
+      in_review: {required: true}
+  Finding:
+    description: "One finding of the independent judge, in one report."
+    annotations: {id_prefix: FINDING, directory: findings}
+    slots: [type, title, description, status, tags, finding_id, job, item_id, target, summary, anchor, case, run, in_review, on_part, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Finding}
+      finding_id: {required: true}
+      case: {required: true}
+      in_review: {required: true}
 
 slots:
   case:
@@ -169,6 +196,16 @@ slots:
     range: PartLink
     multivalued: true
     annotations: {targets: "Part", inverse_label: has finding in}
+  in_review:
+    range: ReviewLink
+    annotations: {targets: "Review", inverse_label: holds}
+  on_part:
+    range: PartLink
+    annotations: {targets: "Part", inverse_label: item of}
+  cites:
+    range: EvidenceLink
+    multivalued: true
+    annotations: {targets: "Evidence", inverse_label: cited by}
   supersedes:
     range: SupersedableLink
     annotations: {targets: "StrategyEntry Condition Figure", inverse_label: superseded by}
@@ -241,6 +278,12 @@ slots:
   text: {}
   verdict_ceiling: {}
   written_as: {}
+  state: {}
+  item_status: {}
+  met_test_id: {}
+  finding_id: {}
+  job: {}
+  anchor: {}
   market: {range: MarketKind}
   mode: {range: RunMode}
   part: {range: PartName}
@@ -272,8 +315,17 @@ slots:
   item_ids:
     range: AnyValue
     multivalued: true
-  item_verdicts:
+  target:
     range: AnyValue
+  cited_ids:
+    range: AnyValue
+    multivalued: true
+  open_item_count:
+    range: integer
+  verdict_count:
+    range: integer
+  finding_count:
+    range: integer
   items:
     range: AnyValue
     multivalued: true
@@ -290,9 +342,6 @@ slots:
     range: AnyValue
   off_map:
     range: AnyValue
-  open_items:
-    range: AnyValue
-    multivalued: true
   options:
     range: AnyValue
     multivalued: true

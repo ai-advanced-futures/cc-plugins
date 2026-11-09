@@ -12,7 +12,8 @@ LINKS_START = "<!-- LINKS:START (generated, do not edit) -->"
 LINKS_END = "<!-- LINKS:END -->"
 HEADINGS = {"cases": "Cases", "runs": "Runs", "parts": "Parts", "evidence": "Evidence", "decisions": "Decisions",
             "strategy": "Strategy entries", "conditions": "Conditions", "notes": "Notes", "figures": "Figures",
-            "finance": "Finance", "reviews": "Reviews"}
+            "finance": "Finance", "reviews": "Reviews", "open-items": "Open items", "verdicts": "Item verdicts",
+            "findings": "Findings"}
 TYPE_TEXT = {"cases": "The business cases, one page for each case folder.",
              "runs": "The sessions of the coach on a case.",
              "parts": "The text of each section of a case, split into pages that a reader can open.",
@@ -23,7 +24,10 @@ TYPE_TEXT = {"cases": "The business cases, one page for each case folder.",
              "notes": "The notes of the strategy.",
              "figures": "The money figures that the plans use.",
              "finance": "The numbers that code computed from the figures.",
-             "reviews": "The reports of the independent judge."}
+             "reviews": "The reports of the independent judge.",
+             "open-items": "The rubric items that the loop of the coach has not closed, one page for each item.",
+             "verdicts": "The verdict of each report of the judge on each rubric item.",
+             "findings": "The findings of each report of the judge, one page for each finding."}
 
 
 def _rel(target, start) -> str:

@@ -28,4 +28,5 @@ Start with ADR-000. It is the one-page overview of the plugin.
 | [ADR-012](adr/ADR-012-the-figure-run-reports-what-it-left-uncovered.md) | The figure run reports what it left uncovered: the `uncovered` record, `figure --clear-refusals` and the extractor's `cannot_read` reply |
 | [ADR-013](adr/ADR-013-the-evidence-team.md) | The evidence team: the analysts, the two reply kinds, the card record, the round cap, the budget, the analyst write allow and the grade ceiling |
 | [ADR-014](adr/ADR-014-the-plugin-map-and-the-install-check.md) | The plugin map and the install check: the map file, `min_version`, the files Claude Code writes, and each plugin's state |
+| [ADR-015](adr/ADR-015-the-case-graph.md) | The case graph: the case folder is the record and the pages are a copy, `publish` at the end of each run, the separate save script, the read of the graphs of 2 other plugins, and the snapshots |
 | [ADR-016](adr/ADR-016-the-runner-guard-allows-only-exact-calls.md) | The runner guard: a hook that allows only exact runner script calls in a build session, the `Edit` folder grants, and the temporary folder of each case |

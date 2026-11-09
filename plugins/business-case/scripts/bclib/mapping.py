@@ -18,6 +18,9 @@ ALIAS_TAIL = {
     "StrategyEntry": re.compile(r"SD-\d{2,}"), "Condition": re.compile(r"C-\d{2,}"),
     "Note": re.compile(r"N-\d{2,}"), "Figure": re.compile(r"FIG-\d{2,}"),
     "Review": re.compile(r"report-\d{2,}"), "Finance": re.compile(r"finance"),
+    # The item pages (D-583): 1 page for each open item, item verdict and finding.
+    "OpenItem": re.compile(r"open/BC-[A-Z0-9-]+"), "ItemVerdict": re.compile(r"report-\d{2,}/BC-[A-Z0-9-]+"),
+    "Finding": re.compile(r"report-\d{2,}/F-[0-9A-Za-z]+"),
 }
 
 # The snapshot folder of the case that `result_ref.path` of an Evidence page names (spec, row 14).
