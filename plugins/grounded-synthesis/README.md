@@ -22,13 +22,13 @@ You can also ask for the audit in plain words. The skill `grounded-synthesis-aud
 
 - `draft_path` (required): the draft.
 - `source_path` (required, 1 or more): the primary source files. A path must not hold a quote, `$(`, or a backtick. A source must be `.md`, `.markdown`, `.txt` or `.pdf`. Other types are rejected. A PDF that is encrypted or has bad OCR fails with a message.
-- `--facts N` (optional): the number of key facts for each source. Default 12, range [8, 20].
+- `--facts N` (optional): the most key facts for each source. Default 12, range [8, 20]. A source that holds fewer facts gives fewer.
 - `--output <path>` (optional): the path of the gap report. Default: `<draft_path>.grounded-synthesis-report.md`, next to the draft.
 
 ### How it works
 
 1. The orchestrator checks each source.
-2. Wave 1: one `fact-extractor` agent for each source extracts the facts (12 facts by default) with a place in the source for each fact.
+2. Wave 1: one `fact-extractor` agent for each source extracts the facts (at most 12 by default, fewer when the source holds fewer) with a place in the source for each fact.
 3. The orchestrator checks the fact files.
 4. Wave 2: one `coverage-checker` agent for each source judges each fact as `PRESENT` or `MISSING` in the draft. The judgment is about meaning, not about words.
 5. `lib/gap_report.py` reads all JSON files and writes the gap report and `handoff.json`.

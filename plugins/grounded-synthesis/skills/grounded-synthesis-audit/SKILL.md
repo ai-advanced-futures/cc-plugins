@@ -15,7 +15,7 @@ A source must be `.md`, `.markdown`, `.txt` or `.pdf`. Reject any other type wit
 
 ## Options
 
-- `--facts N`: facts for each source. Default 12, range [8, 20]. Pass it as `key_facts_per_source`.
+- `--facts N`: the most facts for each source. Default 12, range [8, 20]. A source that holds fewer facts gives fewer. Pass it as `key_facts_per_source`.
 - `--output <path>`: path of the gap report. Default: `<draft_path>.grounded-synthesis-report.md`. Pass it as `output_path`.
 
 ## Workflow

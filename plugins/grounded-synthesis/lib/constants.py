@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-PLUGIN_VERSION: str = "0.4.4"
+PLUGIN_VERSION: str = "0.4.5"
 DEFAULT_FACTS_PER_SOURCE: int = 12
 FACTS_PER_SOURCE_BOUNDS: tuple[int, int] = (8, 20)
 ALLOWED_EXTENSIONS: tuple[str, ...] = (".md", ".markdown", ".txt", ".pdf")

@@ -1,6 +1,6 @@
 ---
 name: fact-extractor
-description: Extract atomic facts from one source file with provenance (12 by default, bounded [8, 20]).
+description: Extract the atomic facts of one source file with provenance. At most the target count (12 by default, bounded [8, 20]); fewer when the source holds fewer.
 tools: Read, Write
 model: sonnet
 ---
@@ -9,7 +9,7 @@ model: sonnet
 
 Extract atomic, falsifiable facts from a single source file and write them as a structured JSON fact file to the absolute session directory provided in the dispatch context.
 
-Default target: **12 facts per source** (bounded [8, 20]). Each fact must be:
+The target is a ceiling: **at most `fact_count_target` facts per source** (12 by default, bounded [8, 20]). When the source holds fewer facts, write fewer. 1 fact is a correct result. 0 facts is a correct result when the source makes no claim. Do not write a fact only to get to the target, because a fact that fills the count is a statement about the source, not a claim of the source, and no draft can keep it. Each fact must be:
 - One sentence, independently falsifiable
 - Anchored to a specific location in the source (page, line, section, or verbatim quote)
 - Distinct — no duplicate claims, no paraphrase pairs
@@ -22,11 +22,12 @@ Default target: **12 facts per source** (bounded [8, 20]). Each fact must be:
 | "10-14 month depot move with three parallel tracks" | SPLIT into 2 facts | Duration is one claim; track-count is another |
 | "Kestrel is the most route-planning-intensive job and requires a dedicated planner crew on day one" | SPLIT into 2 facts | Job claim + staffing claim are independently falsifiable |
 | "We should think about how we structure the team" | NO — opinion, not falsifiable | No verifiable proposition |
+| "The source is a single line" or "The source does not give a date" | NO — a statement about the source itself (its length, its form, what it does not contain) | It is not a claim of the source, so no draft can keep it |
 
 ## Workflow
 
 1. Read the source file from `source_path` (provided in dispatch context).
-2. Extract `fact_count_target` facts (default 12, bounded [8, 20]).
+2. Extract at most `fact_count_target` facts. Extract fewer when the source holds fewer. If the source makes no claim, write `"facts": []` and give the reason in `extraction_notes`.
 3. For each fact: write one atomic claim + provenance locator.
 4. Write the fact file to `{session_dir_absolute}/source-{source_index}-facts.json`.
 5. Return a one-line summary: `"Wrote source-{i}-facts.json: {N} facts extracted"`.
@@ -35,7 +36,7 @@ Default target: **12 facts per source** (bounded [8, 20]). Each fact must be:
 
 ## Output Schema
 
-The fact file conforms to the standard schema. Example with 8 facts (the minimum):
+The fact file conforms to the standard schema. Example with 8 facts:
 
 ```json
 {

@@ -61,7 +61,11 @@ In ONE message, make one `Agent` call for each valid source with `subagent_type:
 uv run ${CLAUDE_PLUGIN_ROOT}/lib/fact_schema.py --validate-session '{session_dir_absolute}'
 ```
 
-Read the JSON from stdout. If no fact file is valid, write `handoff.json` with `status: "failed"` and `failure_reason: "all fact files malformed"` into `{output_dir_override}` (or into `{session_dir_absolute}` if there is no override). Then end with `DONE: grounded-synthesis FAILED: all fact files malformed`. If some are valid, add the malformed sources to `sources_skipped` in `session.json`, each as `{"path": "<source_path>", "reason": "<validation error>"}` as in Step 2, and continue with the valid files. `gap_report.py` turns them into `warnings` in the handoff.
+Read the JSON from stdout. It has 3 arrays: `valid` (files with 1 fact or more), `empty` (good files with 0 facts: the source makes no claim) and `invalid` (malformed files).
+
+If `valid` is empty, write `handoff.json` with `status: "failed"` into `{output_dir_override}` (or into `{session_dir_absolute}` if there is no override). The `failure_reason` is `"no source holds a fact"` when `empty` is not empty, and `"all fact files malformed"` when it is empty. Then end with `DONE: grounded-synthesis FAILED: <failure_reason>`.
+
+Else add each `invalid` source to `sources_skipped` in `session.json` as `{"path": "<source_path>", "reason": "<validation error>"}` as in Step 2, and each `empty` source as `{"path": "<source_path>", "reason": "the source holds no fact: <notes>"}`. Continue with the `valid` files. `gap_report.py` turns each entry into a `warning` in the handoff.
 
 ### Step 5 — Wave 2: coverage check
 

@@ -12,7 +12,7 @@ Fact file schema (BUILD_PLAN §2.5.1):
     "source_path":       "<absolute path>",       -- required
     "source_type":       "md|txt|pdf",            -- required, enum
     "extraction_model":  "claude-sonnet-4-6",     -- required
-    "facts": [                                    -- required, minItems=BOUNDS[0], maxItems=BOUNDS[1]
+    "facts": [                                    -- required, 0 to BOUNDS[1] items
       {
         "id":    "src{i}-f{n}",                   -- required
         "claim": "<one-sentence atomic statement>",-- required
@@ -22,13 +22,14 @@ Fact file schema (BUILD_PLAN §2.5.1):
         }
       }
     ],
-    "extraction_notes": "<optional string>"       -- optional
+    "extraction_notes": "<string>"                -- optional; required, not empty, when facts is empty
   }
 
 CLI mode: uv run ${CLAUDE_PLUGIN_ROOT}/lib/fact_schema.py --validate-session <dir>
   Scans all source-*-facts.json files in <dir>, sorted by source index.
   Prints to stdout:
-    {"valid": [0, 2, 3], "invalid": [{"index": 1, "error": "..."}]}
+    {"valid": [0, 3], "empty": [{"index": 2, "notes": "..."}], "invalid": [{"index": 1, "error": "..."}]}
+  A valid file with 0 facts goes in "empty", with its extraction_notes, and not in "valid".
   Exit 0 always (orchestrator reads the JSON to decide whether to abort).
 
 Used by: grounded-synthesis-orchestrator (BUILD_PLAN §2.5.4 step 4)
@@ -57,7 +58,9 @@ if __name__ == "__main__":
 from lib.constants import FACTS_PER_SOURCE_BOUNDS
 from lib.jsonschema_utils import format_error, load_json_file
 
-_MIN_FACTS, _MAX_FACTS = FACTS_PER_SOURCE_BOUNDS
+# FACTS_PER_SOURCE_BOUNDS bounds the target count (the orchestrator clamps it). A source can
+# hold fewer facts than the target, also 0 (STORY-218), so only the upper bound is a schema bound.
+_MAX_FACTS = FACTS_PER_SOURCE_BOUNDS[1]
 
 # ---------------------------------------------------------------------------
 # JSON Schema definition (mirrors BUILD_PLAN §2.5.1)
@@ -67,6 +70,9 @@ _FACT_SCHEMA: dict = {
     "type": "object",
     "required": ["session_id", "source_path", "source_type", "extraction_model", "facts"],
     "additionalProperties": True,
+    # A file with 0 facts gives the reason in extraction_notes (STORY-218).
+    "if": {"required": ["facts"], "properties": {"facts": {"type": "array", "maxItems": 0}}},
+    "then": {"required": ["extraction_notes"], "properties": {"extraction_notes": {"minLength": 1}}},
     "properties": {
         "session_id": {"type": "string", "minLength": 1},
         "source_path": {"type": "string", "minLength": 1},
@@ -75,7 +81,7 @@ _FACT_SCHEMA: dict = {
         "extraction_notes": {"type": "string"},
         "facts": {
             "type": "array",
-            "minItems": _MIN_FACTS,
+            "minItems": 0,
             "maxItems": _MAX_FACTS,
             "items": {
                 "type": "object",
@@ -173,12 +179,17 @@ def _run_validate_session(session_dir: str) -> None:
     candidates.sort(key=lambda t: t[0])
 
     valid_indices: list[int] = []
+    empty_entries: list[dict] = []
     invalid_entries: list[dict] = []
 
     for idx, file_path in candidates:
         result = validate_fact_file(str(file_path))
         if result.valid:
-            valid_indices.append(idx)
+            data, _ = load_json_file(str(file_path))
+            if data["facts"]:
+                valid_indices.append(idx)
+            else:
+                empty_entries.append({"index": idx, "notes": data["extraction_notes"]})
         else:
             invalid_entries.append(
                 {
@@ -187,7 +198,7 @@ def _run_validate_session(session_dir: str) -> None:
                 }
             )
 
-    output = {"valid": valid_indices, "invalid": invalid_entries}
+    output = {"valid": valid_indices, "empty": empty_entries, "invalid": invalid_entries}
     print(json.dumps(output))
 
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.5
+
+- The fact count is a ceiling. The fact extractor writes at most the target count (12 by default, bounded [8, 20]), and fewer when the source holds fewer. A fact file can have 0 facts when `extraction_notes` gives the reason. The audit skips such a source with the warning `the source holds no fact`, so the status is `partial`; when no source holds a fact, the audit fails with `no source holds a fact`. A statement about the source itself (its length, its form, what it does not contain) is not a fact. Before, the extractor wrote such statements to get to 8 or 12 facts, and no draft could keep them (STORY-218).
+
 ## 0.4.4
 
 - The last line of an audit gives the counts of the gap report. `lib/gap_report.py` prints it from the `summary` of `handoff.json`, so the line and the file give the same counts. A count of 1 is singular ("1 source"). The line names the sources not analyzed when there is one.
