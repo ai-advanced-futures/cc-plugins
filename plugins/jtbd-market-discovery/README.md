@@ -2,11 +2,16 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.10.1
+**Version:** 1.10.2
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.10.0
+## What's New in v1.10.2
+
+- `jtbd_graph.py set` and `new --set` keep a value that YAML reads as a date or a time as the text that the person gave. Before, `set RUN-01 finished_at=2026-11-06T22:21:48Z` exited 1, because the schema wants a string, so the Run page got no `finished_at` and `verify-run` refused it.
+- `learn`, Step 3, sets `finished_at` of a quick validation from `date` and confirms the run. It names the form of the `run` field and the schema file that lists the fields of each type.
+
+## What Was New in v1.10.0
 
 - `run_phase_9.py --segment-column` gives the survey numbers and the Van Westendorp points of each segment.
 - `write-run` and `verify-run` refuse a check with a survey and no survey value.

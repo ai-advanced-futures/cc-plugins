@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.2
+
+- `jtbd_graph.py set` and `new --set` keep a value that YAML reads as a date or a time as the text that the person gave. Before, `set RUN-01 finished_at=2026-11-06T22:21:48Z` exited 1, because the schema wants a string, so the Run page got no `finished_at` and `verify-run` refused it (STORY-186).
+- `learn`, Step 3, sets `finished_at` of a quick validation from `date` and confirms the run. It names the form of the `run` field and the schema file that lists the fields of each type (STORY-186).
+
 ## 1.10.1
 
 - The file `caller-grants.json` and a block in the README name the grants that the session which starts a plugin run must give: the 9 scripts, the output folder, the plugin files, and the answers file. `tests/unit/test_caller_grants.py` checks the list (STORY-168).

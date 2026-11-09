@@ -1,7 +1,7 @@
 ---
 description: Confirms the pages of a market discovery run in the jtbd graph, or saves other results and corrections through jtbd_graph.py. Sets status stable and a verified entry on the Run page and on each page of the run. Use for "/jtbd-market-discovery:learn", "confirm these results", and "correct this outcome".
 argument-hint: "[run page or correction]"
-allowed-tools: Read, Write, Glob, Skill, Bash(uv run *), Bash(git rev-parse *), Bash(gh api user *), Bash(gh issue create *)
+allowed-tools: Read, Write, Glob, Skill, Bash(uv run *), Bash(git rev-parse *), Bash(gh api user *), Bash(gh issue create *), Bash(date *)
 ---
 
 # Learn from a run
@@ -42,9 +42,23 @@ Write pages only through the operations `new`, `set`, `link` and `body` of
 `jtbd_graph.py`, each in a command that starts as in Step 0. Never
 use `Write` or `Edit` on a file in the bundle folder.
 
-For the result of a quick validation, write a Run page first, so that each
-item page has its `run` link. Set `command` of that page to the plugin name,
-a colon, and the word `quick-validate`. Then write the item pages.
+For the result of a quick validation, do these steps in this order:
+
+1. Write a Run page first, so that each item page has its `run` link. Set
+   `command` of that page to the plugin name, a colon, and the word
+   `quick-validate`.
+2. Write the item pages. The `run` field of an item page is the path of the
+   Run page, such as `/runs/RUN-01.md`. To see the fields of a page type, read
+   `${CLAUDE_PLUGIN_ROOT}/schema/jtbd.yaml` with the Read tool. Give only the
+   fields that the `slots` line of the type lists. Write 1 Outcome page for
+   each need of the results, with the `importance` and the `satisfaction` of
+   that need from the survey.
+3. Run `date -u +%Y-%m-%dT%H:%M:%SZ` on its own. Its output is `<time>`. Run
+   `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root '<git root>' set '<key>' 'finished_at=<time>'`,
+   where `<key>` is the ID of the Run page. Write the time itself in the
+   command, because Claude Code cannot check a command with a command
+   substitution before it runs.
+4. Confirm the run as in Step 2, because the person said yes to the results.
 
 Put each text of the person in single quotes, and write each `'` in it as
 `'\''`, because inside single quotes the shell runs nothing.
