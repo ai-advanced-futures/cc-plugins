@@ -43,13 +43,13 @@ Run every agent you dispatch in the foreground and wait for it to finish, becaus
 
 The run writes one result file at the end of every run: a finished run, a partial one and a halt, interactive or automated.
 
-**Where.** Result files go in `.competitive-intelligence/results/` under the git root.
-Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py <finished_at> <command> '<run.subject>' <run_id>` on its own, after `run.subject` is written and `finished_at` is read, and leave out `<run_id>` when the run has none. Put `run.subject` in single quotes, with each `'` in it written as `'\''`. Its output is the file name: use it as printed.
+**Where.** The result file is `result.json` in the session folder, `.competitive-intelligence/{session}/result.json` under the git root. It is a state file of the session: `ingest` reads it, and it stays. A halt with no session folder of its own writes its result file in `.competitive-intelligence/`, with the name below. After a clean `ingest`, that file is not in the folder, because the Run page holds its values.
+For that halt file, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py <finished_at> <command> '<run.subject>' <run_id>` on its own, after `run.subject` is written and `finished_at` is read, and leave out `<run_id>` when the run has none. Put `run.subject` in single quotes, with each `'` in it written as `'\''`. Its output is the file name: use it as printed.
 When the name call is denied or fails, set `run.subject` to `name call denied` and name the file `<finished_at as YYYYMMDDTHHMMSSZ>-<command part>-name-call-denied-<run_id>.json`, where `<command part>` is `analyze` for `/competitive-intelligence:analyze` and `discover` for `/competitive-intelligence:discover`, leaving out `-<run_id>` when the run has none; the `<run_id>` of that name is the `run_id` that passed the check of step 0 of the skill, and a run with no such `run_id` leaves out `-<run_id>`; never build a name from another subject.
 In that file, record the gap `{"kind": "<a result kind of this command>", "label": "File name", "why": "name call denied; subject: <the subject the run would have written>"}`.
 A denied or failed tool call never ends the run without the result file: write it with what the run has, and record each result a denied call kept from the run as a gap whose `why` names that call.
 
-A run never overwrites an earlier file. When the name is taken and the run has no `run_id`, add `-2` before `.json`, then `-3`, and so on. When the name is taken and the run has a `run_id`, stop and say so, because each run has its own `run_id`.
+A run never overwrites an earlier file. When the session folder holds `result.json`, write `result-2.json`, then `result-3.json`, and so on. When the name of a halt file is taken and the run has no `run_id`, add `-2` before `.json`, then `-3`, and so on. When the name is taken and the run has a `run_id`, stop and say so, because each run has its own `run_id`.
 
 Take every time from `date -u +%Y-%m-%dT%H:%M:%SZ`. `started_at` is the time the run read first. Read `finished_at` just before you write the file. Never type a time yourself.
 When a `date` call is denied or fails, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py now` on its own and use its output as that time.
@@ -116,7 +116,7 @@ A discover run that rests on every default (some results shown). The person name
 {
   "schema": "plugin-result/1",
   "plugin": "competitive-intelligence",
-  "plugin_version": "1.10.9",
+  "plugin_version": "1.11.0",
   "command": "competitive-intelligence:discover",
   "run": {
     "started_at": "2026-10-31T09:00:00Z",
@@ -181,7 +181,7 @@ A discover run whose answers file gave the depth (`settled_by: person`), so `dep
 {
   "schema": "plugin-result/1",
   "plugin": "competitive-intelligence",
-  "plugin_version": "1.10.9",
+  "plugin_version": "1.11.0",
   "command": "competitive-intelligence:discover",
   "run": {
     "started_at": "2026-10-31T09:00:00Z",
@@ -219,7 +219,7 @@ An analyze run that rests on every default, with one lens skipped:
 {
   "schema": "plugin-result/1",
   "plugin": "competitive-intelligence",
-  "plugin_version": "1.10.9",
+  "plugin_version": "1.11.0",
   "command": "competitive-intelligence:analyze",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",
@@ -272,7 +272,7 @@ An analyze run whose answers file gave the purpose (`settled_by: person`), so `a
 {
   "schema": "plugin-result/1",
   "plugin": "competitive-intelligence",
-  "plugin_version": "1.10.9",
+  "plugin_version": "1.11.0",
   "command": "competitive-intelligence:analyze",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",

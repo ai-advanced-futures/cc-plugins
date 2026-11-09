@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.11.0
+
+- The result file of `discover` and `analyze` is `result.json` in the session folder (`result-2.json` if that name is taken). The folder `.competitive-intelligence/results/` is gone. No file of a run stays beside the graph (STORY-113, D-056).
+- A halt with no session folder writes its file in `.competitive-intelligence/`, named by `result_name.py`. A clean `ingest --result <file>` removes it and prints `removed <path>`. A failed ingest keeps it.
+- `ingest` keeps no file for the readers: `READER_FILES` is empty. `analyze` reads an earlier run through `ci_graph.py view`.
+
 ## 1.10.9
 
 - The file `caller-grants.json` and a block in the README name the grants that the session which starts a plugin run must give: the 2 scripts, the output folder, the plugin files, the answers file, and the web tools. `tests/unit/test_caller_grants.py` checks the list (STORY-168).

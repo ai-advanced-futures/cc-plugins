@@ -29,14 +29,8 @@ MARK, COMPUTED = view.MARK, view.COMPUTED
 NO = object()
 
 # The files that a reader reads. `ingest` writes their pages and keeps the file with the same bytes.
-# The last reader story empties this list. Reader stories: STORY-92 (gtm) and STORY-89 (business-case).
-READER_FILES = (
-    "competitive-ecosystem.json",  # STORY-92
-    "swot-analysis.json",  # STORY-92
-    "swot-*.json",  # STORY-92
-    "jtbd-analysis.json",  # STORY-92
-    "results/*.json",  # STORY-89
-)
+# Empty since STORY-113 (D-056): the readers read the graph, so no file of a run stays beside it.
+READER_FILES = ()
 LENSES = ("jtbd-performance", "forces-analysis", "economic-value", "strategic-positioning",
           "technology-disruption", "loss-churn")
 QUADRANTS = (("strengths", "strength"), ("weaknesses", "weakness"), ("opportunities", "opportunity"),
@@ -796,7 +790,7 @@ class Ingest:
         return hits[0] if len(hits) == 1 else None
 
     def result_file(self, name, data):
-        skel_name = f"results/{name}"
+        skel_name = name
         for gap in data.get("gaps") or []:
             if isinstance(gap, dict):
                 label = clean(gap.get("label")) or "A gap"
@@ -1076,6 +1070,12 @@ def run(root, path=None, result_file=None, actor=None) -> list[str]:
     removed = [name for name in done if name in ing.touched and not kept(name)]
     for name in removed:
         ((session or files[0].parent) / name).unlink()
+    halt = inside(root, result_file) if session is None and not files and result_file is not None else None
+    if halt is not None and halt.parent == root / CI_DIR:
+        # A halt with no session folder of its own: the Run page holds the values of the file (STORY-113, D-083).
+        # This code runs only after `swap`, so a failed ingest never gets here and the file stays.
+        halt.unlink()
+        lines.append(f"removed {halt.relative_to(root).as_posix()}")
     if session is not None:
         pages_path = session / "pages.json"
         known = read_json(pages_path).get("files", {}) if pages_path.is_file() else {}

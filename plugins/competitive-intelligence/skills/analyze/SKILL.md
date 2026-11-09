@@ -23,7 +23,7 @@ In a plugin run, the answers file gives each answer. Ask the person nothing. In 
 - Read an earlier run's files only through `inputs_from`; with no entry for `competitive-intelligence`, read no earlier session and do not offer to run discover first, because `inputs_from` is the only list of earlier runs and you cannot ask. `case` goes in `run.case`, and `run_id` goes in `run.run_id` and in the file name.
 - The session folder is `.competitive-intelligence/<run_id>/`, when the `run_id` passes the check of step 0, under the git root, and it holds every file of the skill.
 - When the answers give no `competitor`, run only step 0, step 8 and step 9, and write the result file with the halt gap.
-- The run ends with the result file written to `.competitive-intelligence/results/` by the rules of `agents/deliverable-generator.md`. Step 9 then ingests the run, with no question. The last line of your reply is the path of the result file.
+- The run ends with the result file `result.json` written to the session folder by the rules of `agents/deliverable-generator.md`. Step 9 then ingests the run, with no question. The last line of your reply is the path of the result file.
 
 ## Purpose
 
@@ -182,7 +182,7 @@ You run in the main conversation, so you ask the person. You read each lens skil
    - Read `${CLAUDE_PLUGIN_ROOT}/agents/deliverable-generator.md` with the Read tool and follow its `## Result file` section, in every run.
 
 9. INGEST THE RUN:
-   - Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> ingest .competitive-intelligence/{session} --result .competitive-intelligence/results/<the file name of the result file of step 8>` on its own. `<git root>` is the output of `git rev-parse --show-toplevel`, run on its own. A halt has no session folder of its own: run `ingest --result .competitive-intelligence/results/<the file name of the result file of step 8>` with no path. Give each path relative to the git root, not as an absolute path: `ingest` refuses an absolute path (exit 2).
+   - Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> ingest .competitive-intelligence/{session} --result .competitive-intelligence/{session}/<the file name of the result file of step 8>` on its own. `<git root>` is the output of `git rev-parse --show-toplevel`, run on its own. A halt has no session folder of its own: run `ingest --result .competitive-intelligence/<the file name of the halt file of step 8>` with no path. After a clean `ingest`, the halt file is not in `.competitive-intelligence/`, because the Run page holds its values. Give each path relative to the git root, not as an absolute path: `ingest` refuses an absolute path (exit 2).
    - When the output holds an `INIT:` line, show that line.
    - When the command exits 1, show its errors, say that the results stay in the session folder, and do not report success.
    - Else show the `ingested` line. In a person's run, ask one question: "Learn these results?" Ask it with `AskUserQuestion` [q: none], with the options `Yes` and `No`, in this turn. On yes, run the skill `competitive-intelligence:learn` with `{session}`. When you have no `AskUserQuestion` tool, for example in `claude -p`, do not write the question as text, because the answer then comes in a new turn, and the new turn does not have the tools of this skill. Write this line in your reply, on its own line: `Next: /competitive-intelligence:learn {session}`.
@@ -193,7 +193,7 @@ You run in the main conversation, so you ask the person. You read each lens skil
 - `.competitive-intelligence/{session}/analysis-{competitor}.json` - Full lens outputs
 - `.competitive-intelligence/{session}/swot-{competitor}.json` - Competitor SWOT
 - `.competitive-intelligence/{session}/recommendations-{competitor}.json` - Actions
-- `.competitive-intelligence/results/` - The result file
+- `.competitive-intelligence/{session}/result.json` - The result file, a state file of the session
 - The pages of the run in the graph `competitive-intelligence`, with `status: draft`
 
 ## Lens Execution Order

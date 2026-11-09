@@ -27,7 +27,7 @@ C4Container
         Container(saveCode, "Save code ci_graph.py", "Python 3.11", "The only writer of the graph: ingest, view, results, pages, regen, and check")
         Container(hook, "Hook brain-hook.sh", "PostToolUse, bash", "Runs regen and both checks after a write to the bundle or a call of ci_graph.py")
         ContainerDb(session, "Session folder", "JSON", ".competitive-intelligence/<session>/ - session.json, a summary file for each phase, and the full data files")
-        ContainerDb(results, "Result files", "JSON", ".competitive-intelligence/results/ - one plugin-result/1 file for each run of discover or analyze")
+        ContainerDb(results, "Result file", "JSON", ".competitive-intelligence/<session>/result.json - one plugin-result/1 file for each run of discover or analyze; ingest reads it")
         ContainerDb(graph, "Graph", "OKF pages", "docs/competitive-intelligence/ - one page for each run, competitor, offer, source, finding, and result")
         ContainerDb(vendorFiles, "Vendor archetype files", "JSON", ".competitive-intelligence/vendor-archetype-handoff.json")
     }

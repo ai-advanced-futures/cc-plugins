@@ -21,7 +21,8 @@ Four facts of this plugin shaped the adoption:
 
 ## Decision
 
-1. **Adopt the standard.** `discover` and `analyze` write one result file to `.competitive-intelligence/results/` at the end of every run. This includes a partial run, a halted run, and a run of a person (R1). `result-file.json` names the writer and the defaults registry. `questions/discover.json` and `questions/analyze.json` list the inputs. Each question in the skill carries its `[q: <input>]` id.
+1. **Adopt the standard.** `discover` and `analyze` write one result file at the end of every run. This includes a partial run, a halted run, and a run of a person (R1). `result-file.json` names the writer and the defaults registry. `questions/discover.json` and `questions/analyze.json` list the inputs. Each question in the skill carries its `[q: <input>]` id.
+   2026-11 (STORY-113, D-056): the result file is `result.json` in the session folder, and no file of a run stays beside the graph. A halt with no session folder of its own writes its file in `.competitive-intelligence/`, and a clean `ingest` removes it.
 
 2. **The skill is the route.** A coach calls the skill `competitive-intelligence:discover` or `competitive-intelligence:analyze` with the `Skill` tool, in the conversation of the coach. The arguments are the `plugin-run` block, or the path of a file that holds it. The `## Plugin-run block` section of the skill reads the block. In a plugin run, the skill asks the person nothing and shows no checkpoint: it takes each answer from the answers file of the block, and it starts the phase agents itself. A person who runs `/competitive-intelligence:discover` uses the same skill, and the skill asks the questions. No agent of this plugin starts an agent, because a subagent cannot limit the agent types that it starts (D-212, STORY-118).
 
@@ -42,6 +43,6 @@ Four facts of this plugin shaped the adoption:
 - The build of STORY-118 removes the 2 runner agents `agents/discover-runner.md` and `agents/analyze-runner.md`, and the text that names them.
 - The tests in `tests/unit/test_plugin_result_contract.py` hold both skills to the rules through `tests/plugin_result/conformance.py`. The fixtures in `tests/fixtures/plugin-result/` are real result files from test runs.
 - `analysis_mode` is not marked as a default. It shapes the framing of the synthesis and the deliverables (`agents/lens-executor.md`), and neither skill runs them.
-- With the graph (STORY-88), each result is a `Result` page in `docs/competitive-intelligence/`. The result file stays beside the graph only until the reader stories merge, because `business-case` still reads it.
+- With the graph (STORY-88), each result is a `Result` page in `docs/competitive-intelligence/`. 2026-11 (STORY-113, D-056): the result file is `result.json` in the session folder, and no file of a run stays beside the graph. The readers read the graph.
 - Stale unfinished sessions stay in the folder, as they did before, because the sweep never ran.
 - A test run has no web search, so every finding in the fixtures rests on the inference of the model. Only an entry with a URL becomes a `published` source. An entry that has a name but no URL, such as `web_research`, stays a `model` source with the inference marker, even in a run that did research.

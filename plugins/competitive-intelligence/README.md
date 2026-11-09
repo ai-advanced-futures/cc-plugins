@@ -1,6 +1,13 @@
 # competitive-intelligence
 
-This plugin maps the competitors of a market, gathers public facts about them, and analyzes a competitor through six lenses. It writes a SWOT, recommendations, and structured JSON files that other plugins read.
+This plugin maps the competitors of a market, gathers public facts about them, and analyzes a competitor through six lenses. It writes a SWOT, recommendations, and the pages of a graph that other plugins read.
+
+## What's New in v1.11.0
+
+- The graph in `docs/competitive-intelligence/` is the only output of a run. After `ingest`, no content file of the run stays beside the graph: `READER_FILES` in `scripts/cilib/ingest.py` is empty, and the `results/` folder is not written.
+- The result file is `result.json` in the session folder, a state file of the run: `ingest` reads it, and it stays.
+- A halt with no session folder of its own writes its result file in `.competitive-intelligence/`. After a clean `ingest --result <that file>`, the file is not in the folder, because the Run page holds its values.
+- The plugin does not read or remove the files of an earlier version (the `results/` folder and the kept content files). A person can delete them.
 
 ## What the plugin does
 
@@ -10,7 +17,7 @@ This plugin maps the competitors of a market, gathers public facts about them, a
 - It gives each finding a confidence level, and it checks each finding against more than one source.
 - It has two analysis modes: strategic planning (honest about weaknesses) and sales enablement (framed for customers).
 - It classifies the pricing of a vendor into one of five archetypes.
-- Its output is JSON files and Python scripts that other plugins and tools can read.
+- Its output is the graph in `docs/competitive-intelligence/`, and the Python scripts that you choose in the full run. Other plugins read the graph.
 
 ## Install
 
@@ -110,7 +117,7 @@ The plugin writes into `.competitive-intelligence/` under the git root of your p
 - **Session folder.** `.competitive-intelligence/<session>/` holds one run. The name is the `run_id` of a coach run, or the start time of your run. It holds `session.json`, `context-config.json`, `competitive-ecosystem.json`, `intelligence-data.json`, a summary file for each phase, the lens analysis files, and the deliverables.
 - **Analysis files.** `jtbd-analysis.json`, `forces-analysis.json`, `value-analysis.json`, `strategic-analysis.json`, `technology-disruption.json`, `loss-churn-analysis.json`, `swot-analysis.json`, and `recommendations.json`.
 - **Deliverables.** JSON outputs, Python scripts, an executive summary, a battle card, and a full report. You choose them in the full run. The plugin does not run the scripts that it writes.
-- **Result files.** `discover` and `analyze` write one result file (`plugin-result/1`) to `.competitive-intelligence/results/` at the end of each run. A partial run and a halted run also write one. The file says which findings the research found and which findings the model inferred.
+- **Result files.** `discover` and `analyze` write one result file (`plugin-result/1`) as `result.json` in the session folder at the end of each run. A partial run and a halted run also write one. The file says which findings the research found and which findings the model inferred.
 - **The graph.** At the end of a run, the skill runs `ingest`, and the files of the run become pages in `docs/competitive-intelligence/` (see "The graph"). Git keeps this folder, so the pages hold the market, the offering, and the competitor names of your project. To keep them out of git, add the folder to `.gitignore`.
 - **Vendor archetype files.** `.competitive-intelligence/vendor-archetype-handoff.json` and the classification artifact.
 
@@ -124,7 +131,7 @@ The plugin keeps what it learns in a knowledge graph: `docs/competitive-intellig
 
 Only `scripts/ci_graph.py` writes the graph. Do not edit a page by hand. The commands are `init`, `upgrade`, `new`, `set`, `body`, `link`, `unlink`, `remove`, `resolve`, `regen`, `check`, `log`, `ingest`, `view`, `results`, `pages`, `verify`, and `verify-run`.
 
-- `ingest <session folder> [--result FILE]` writes the pages of a run. It works on a copy of the graph, and it changes the graph only when the check passes. When the check fails, no page changes and no file is removed. When the project has no graph, it makes one and prints `INIT: docs/competitive-intelligence/`. After a good run it removes each file that a page holds: an item page, or the Run page for the files of `RUN_PAGE_HANDLERS` in `scripts/cilib/ingest.py`. A file that gave no page stays, and the output names it in a `NO PAGE:` line. It keeps the files that another plugin still reads (`READER_FILES` in `scripts/cilib/ingest.py`), the state files, and the result files. It writes `pages.json` into the session folder. The file names each removed file and lists the page of each item.
+- `ingest <session folder> [--result FILE]` writes the pages of a run. It works on a copy of the graph, and it changes the graph only when the check passes. When the check fails, no page changes and no file is removed. When the project has no graph, it makes one and prints `INIT: docs/competitive-intelligence/`. After a good run it removes each file that a page holds: an item page, or the Run page for the files of `RUN_PAGE_HANDLERS` in `scripts/cilib/ingest.py`. A file that gave no page stays, and the output names it in a `NO PAGE:` line. It keeps the state files, `result.json` included. After a clean `ingest --result F` with no session folder, `F` is not in `.competitive-intelligence/`. It writes `pages.json` into the session folder. The file names each removed file and lists the page of each item.
 - `verify KEY --by human:<login>` and `verify-run RUN --by human:<login>` confirm one page, or a run and each page of it. Each page gets `status: stable` and one more `verified` entry, so a second confirmation keeps the first. `resolve` and `verify-run` take a session id (the `run_id` of the Run page).
 - `view RUN FILE` builds a session file again from the pages. The new file has the same content as the file that `ingest` read.
 - `results` prints the result file (`plugin-result/1`) of a run from the Result pages. `pages TYPE [--run KEY]` prints the pages of one type as JSON. Neither command writes a file.
@@ -136,7 +143,7 @@ Only `scripts/ci_graph.py` writes the graph. Do not edit a page by hand. The com
 1. Each skill writes its files into the session folder, as before.
 2. The last step of the skill runs `ci_graph.py ingest`. The pages have `status: draft`.
 3. In a run with a person, the skill asks one question with `AskUserQuestion`: "Learn these results?" On yes, `learn` sets `status: stable` on each page of the run. When the session has no `AskUserQuestion` tool, for example in `claude -p`, the skill asks nothing, and it writes the line `Next: /competitive-intelligence:learn <session>`. Run that command to confirm the pages.
-4. In a plugin run, the skill asks nothing, and the pages stay `draft`. A halted plugin run has no session folder of its own, so it runs `ingest --result <result file>` with no path.
+4. In a plugin run, the skill asks nothing, and the pages stay `draft`. A halted plugin run has no session folder of its own, so it runs `ingest --result <halt file>` with no path.
 5. A skill that reads a file of an earlier run runs `view`, because `ingest` moved the file into the graph.
 
 A PostToolUse hook (`hooks/brain-hook.sh`) runs `regen` and both checks after each write to the bundle and each call of `ci_graph.py`.
