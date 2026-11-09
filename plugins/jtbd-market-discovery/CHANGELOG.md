@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.0
+
+- `run_phase_9.py --segment-column <column> [--p8 <p8.json>]` writes the survey numbers of each segment: the row count, the outlier layer, the `wtp_analysis` block of `p9.json`, the layer validation and the Van Westendorp points (PMC, OPP, IPP, PME and the acceptable range). wtp-check and discover pass the option when the survey has the column `segment_id`, and wtp-validator copies the numbers. Before, the model split the survey or estimated the numbers, and some of its commands were refused (STORY-224, STORY-193).
+- `write-run` refuses a `p9.json` with no survey value when the session has a survey, and `verify-run` refuses a Run page with a survey count (the new slot `wtp_sample_size`) and no WtpValidation page with a survey value (STORY-193).
+- `learn`, `ask` and `setup` run `git rev-parse --show-toplevel` on its own and write the path in each command, because Claude Code refuses a command with a command substitution or a shell variable. `learn` and `ask` say to run one command per Bash call (STORY-175).
+
 ## 1.9.2
 
 - The plugin finder does not take a plugin from the `.claude/plugins/` folder of the project (STORY-202).

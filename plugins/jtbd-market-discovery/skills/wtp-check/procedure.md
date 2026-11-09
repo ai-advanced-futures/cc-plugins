@@ -119,6 +119,8 @@ Recommendation: Explain differentiation or pivot to B2B
 
 ### Step 4: Execute Layer 3 - Van Westendorp PSM (if available)
 
+When `wtp-results.json` has `segments`, each entry has `van_westendorp`: the script computes the price points from the 4 answers (`scripts/run_phase_9.py`). Use them as they are, and compute none. When it is null, the survey has no Van Westendorp answers: show the SKIPPED block below.
+
 If user has PSM survey data:
 
 **Van Westendorp questions:**
@@ -309,7 +311,8 @@ Layer 4: Confidence Score
 Layer 5: B2C Benchmark
 ❌ FAILED - Ultra-luxury pricing without luxury positioning
 
-[Van Westendorp PSM deferred to v1.2 — skipped]
+Layer 3: Van Westendorp PSM
+[the acceptable range and the optimal price point of each segment, or SKIPPED when `van_westendorp` is null]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OVERALL VALIDATION: ❌ FAILED

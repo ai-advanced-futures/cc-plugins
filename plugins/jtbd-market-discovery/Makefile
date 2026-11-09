@@ -8,7 +8,7 @@ TIER ?=
 # - checkpoint: the Phase 6 checkpoint of /jtbd-market-discovery:discover and 1 resume with continue (2 turns).
 # - survey: Phase 6 with a survey file: the scripts run, the scorer reads the result file (1 turn).
 # - nosurvey: discover with no survey from Phase 9, then learn (2 turns).
-# - wtpcheck: wtp-check with a survey file, then learn (1 or 2 turns).
+# - wtpcheck: wtp-check with a survey file, then learn, then ask in a new session (2 or 3 turns).
 # - quickvalidate: quick-validate, then learn Step 3 (1 or 2 turns).
 # Each turn has a --max-budget-usd guard against a runaway turn.
 PYTEST := JTBD_MARKET_DISCOVERY_ITEST=1 uv run --quiet --no-project --with-requirements requirements-dev.txt python -m pytest tests/integration -m integration -rs -p no:cacheprovider

@@ -118,7 +118,7 @@ This agent runs no command. The skill that starts it finds the folders, runs `sc
 3. **LOAD WTP SURVEY DATA:**
 
    **With `wtp_results_path`:**
-   - The skill ran `scripts/run_phase_9.py` on the WTP survey CSV (the column `wtp_monthly`) and wrote its numbers to the file `wtp_results_path` (`{session_dir}/wtp-results.json`). Read it.
+   - The skill ran `scripts/run_phase_9.py` on the WTP survey CSV (the column `wtp_monthly`) and wrote its numbers to the file `wtp_results_path` (`{session_dir}/wtp-results.json`). Read it. When the survey has the column `segment_id`, the file also has `segments`: 1 entry for each segment of the survey, with `segment_id`, `name` (the name of the p8 segment with that `segment_id`), `rows`, `layer1`, `wtp_analysis`, `validation` and `van_westendorp`.
    - With no `wtp_results_path`, there was no survey file, or the script failed: write the gap `willingness_to_pay` and work from the estimates of Phase 8.
    - Document: Response count
 
@@ -134,7 +134,7 @@ This agent runs no command. The skill that starts it finds the folders, runs `sc
 
 4. **LAYER 1: STATISTICAL OUTLIER DETECTION:**
 
-   **With `wtp_results_path`:** read the file. `layer1` holds the result of the outlier layer (the number of outliers removed and the clean median WTP). Use these numbers as they are, and estimate none of them, because the script is the source of each number.
+   **With `wtp_results_path`:** read the file. `layer1` holds the result of the outlier layer of the full survey (the number of outliers removed and the clean median WTP), and `layer1` of each entry of `segments` holds it for 1 segment. Use these numbers as they are, and estimate none of them, because the script is the source of each number.
 
    The script removes:
    - Responses >3 SD from segment mean
@@ -166,15 +166,16 @@ This agent runs no command. The skill that starts it finds the folders, runs `sc
    - ⚠️ WTP >50% above competitors = may be overestimating
    - ⚠️ WTP >50% below competitors = may be underestimating
 
-6. **LAYER 3: VAN WESTENDORP ANALYSIS (Deferred — v1.2):**
+6. **LAYER 3: VAN WESTENDORP ANALYSIS:**
 
-   **With `wtp_results_path`:** Van Westendorp PSM is planned for v1.2. Read `validation` in the file: it holds the 5-layer validation (`overall_passed`, `validated_wtp_range` and the result of each layer). `monthly_evc` is the monthly EVC the script used. Use these numbers as they are.
+   **With `wtp_results_path`:** read `validation` in the file: it holds the 5-layer validation (`overall_passed`, `validated_wtp_range` and the result of each layer). `monthly_evc` is the monthly EVC the script used. With `segments`, `van_westendorp` of each entry holds the median of each of the 4 answers, `point_of_marginal_cheapness`, `optimal_price_point`, `indifference_price_point`, `point_of_marginal_expensiveness`, `acceptable_range` and `rows`. The script uses the rows that layer 1 keeps and whose 4 answers are in order. When it is null (the survey has no Van Westendorp columns: `van_westendorp_gap` says which), write `van_westendorp: null`. When `acceptable_range` is null, show `range_gap` and give no range. Use these numbers as they are.
 
-   The planned layer calculates:
-   - Cumulative frequency curves for 4 thresholds
-   - Optimal Price Point (OPP): Intersection of "bargain" and "expensive"
-   - Indifference Price Point (IPP): Intersection of "cheap" and "expensive"
-   - Acceptable price range
+   The script calculates (a "cheap" curve falls, an "expensive" curve rises):
+   - Point of Marginal Cheapness (PMC): the crossing of "too cheap" and "getting expensive"
+   - Optimal Price Point (OPP): the crossing of "too cheap" and "too expensive"
+   - Indifference Price Point (IPP): the crossing of "bargain" and "getting expensive"
+   - Point of Marginal Expensiveness (PME): the crossing of "bargain" and "too expensive"
+   - Acceptable price range: PMC to PME
 
    **Claude.ai Web Path:**
    - For each segment, calculate percentiles:
@@ -265,12 +266,15 @@ This agent runs no command. The skill that starts it finds the folders, runs `sc
 
 10. **SYNTHESIZE VALIDATION RESULTS:**
 
-    Combine all 5 implemented layers (Van Westendorp PSM deferred to v1.2):
+    For each segment of p8.json, take the entry of `segments` of wtp-results.json whose `segment_id` is the `segment_id` of that segment (compare them as text). Use its `name` as the `name` of the p9 segment, and copy its `wtp_analysis` and its `van_westendorp` into the p9 segment as they are. A p8 segment with no entry gets `wtp_analysis: null` and `van_westendorp: null`; name it in `notes`. When wtp-results.json has no `segments` (the survey has no column `segment_id`), the numbers are of the full survey: give each segment `wtp_analysis` with `sample_size` = `validation.sample_size`, `outliers_removed` = `layer1.outliers_removed`, `cleaned_median` = `layer1.clean_median`, `cleaned_mean` = `layer1.clean_mean`, `cleaned_std_dev` = `layer1.clean_std` and the other keys null, and write in `notes` that the survey has no segment column. With a survey, `jtbd_graph.py write-run` refuses a `p9.json` in which no segment holds a survey value.
+
+    Combine the layers:
     - Layer 1: Cleaned data, outliers removed
     - Layer 2: Competitive context, market positioning
-    - Layer 3: Value capture ratios (10-30% of EVC)
-    - Layer 4: Confidence scores
-    - Layer 5: Segment differentiation
+    - Layer 3: Van Westendorp price points (null with no Van Westendorp answers)
+    - Layer 4: Value capture ratios (10-30% of EVC)
+    - Layer 5: Confidence scores
+    - Layer 6: Segment differentiation
 
     Write output to `{session_dir}/p9.json`:
     ```json
@@ -503,7 +507,7 @@ A run built on the upstream session, with one answer:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.9.2",
+  "plugin_version": "1.10.0",
   "command": "jtbd-market-discovery:wtp-check",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",
@@ -562,7 +566,7 @@ A run whose upstream entry does not match:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.9.2",
+  "plugin_version": "1.10.0",
   "command": "jtbd-market-discovery:wtp-check",
   "run": {
     "started_at": "2026-10-31T11:00:00Z",

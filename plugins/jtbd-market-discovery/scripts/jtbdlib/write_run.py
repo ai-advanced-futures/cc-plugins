@@ -64,6 +64,17 @@ def load_json(path, required=False):
     return data
 
 
+def survey_answers(session_dir):
+    """The number of WTP survey answers that run_phase_9.py read in this session (STORY-193), else None."""
+    data = load_json(Path(session_dir) / "wtp-results.json") if session_dir else None
+    size = section(section(data).get("validation")).get("sample_size")
+    return size if isinstance(size, int) and not isinstance(size, bool) and size > 0 else None
+
+
+def holds_survey_value(fields) -> bool:
+    return any(fields.get(name) not in (None, "", []) for name in schema.WTP_SURVEY_FIELDS)
+
+
 class Draft:
     def __init__(self, type_, path, title, description, fields, body=None):
         self.type, self.path = type_, path
@@ -207,6 +218,7 @@ class Build:
             "plugin_version": self.result.get("plugin_version") or schema.plugin_version(),
             "ratings_source": pick(p5.get("assumption_sources"), "ratings_source") or pick(p5, "method"),
             "evc_inputs": p7.get("assumptions"), "wtp_verdict": pick(p9, "validation_result"),
+            "wtp_sample_size": survey_answers(self.session),
             "gaps": self.result.get("gaps"),
         }
         return fields, session_id or run_id
@@ -363,6 +375,11 @@ class Build:
             page = self.w.make("WtpValidation", f"Willingness to pay of {name}", f"Willingness to pay of the segment {name}, after the validation layers",
                                fields, {"segment": target, "run": self.run_ref})
             self.wtp[fold(name)] = page
+        answers = survey_answers(self.session)
+        if answers and not any(holds_survey_value(page.fields) for page in self.wtp.values()):
+            raise DataError(f"wtp-results.json has {answers} survey answers, but no segment of p9.json holds a survey value "
+                            f"({', '.join(schema.WTP_SURVEY_FIELDS)}). Write the numbers of wtp-results.json into p9.json, "
+                            "then run write-run again. No page was written.")
 
     # ---- the Result pages ------------------------------------------------------------------------
 

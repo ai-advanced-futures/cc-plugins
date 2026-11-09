@@ -246,6 +246,12 @@ def verify_run(root, key, by) -> list[Path]:
     page_ref = ref(bundle.dir, path)
     pages = [(path, page)] + [(other, item) for other, item in sorted(bundle.pages.items())
                               if other != path and item.frontmatter.get("run") == page_ref]
+    answers = page.frontmatter.get("wtp_sample_size")
+    if isinstance(answers, int) and not isinstance(answers, bool) and answers > 0 and not [
+            item for _other, item in pages if item.type == "WtpValidation"
+            and any(item.frontmatter.get(name) not in (None, "", []) for name in schema.WTP_SURVEY_FIELDS)]:
+        raise DataError(f"{page.id} has a survey of {answers} answers, but no WtpValidation page of the run holds a "
+                        "survey value, so nobody can confirm it. Nothing is written.")
     entry = {"by": by, "at": logbook.stamp()}
     updated = []
     for other, item in pages:

@@ -61,7 +61,7 @@ classes:
   Run:
     description: "One run of discover or wtp-check, or one quick validation."
     annotations: {id_prefix: RUN, directory: runs}
-    slots: [type, title, description, status, tags, command, subject, session_id, run_id, case, mode, answers, started_at, finished_at, plugin_version, ratings_source, evc_inputs, wtp_verdict, gaps, input_run, top_outcomes, aliases, generated, verified, protected]
+    slots: [type, title, description, status, tags, command, subject, session_id, run_id, case, mode, answers, started_at, finished_at, plugin_version, ratings_source, evc_inputs, wtp_verdict, wtp_sample_size, gaps, input_run, top_outcomes, aliases, generated, verified, protected]
     slot_usage:
       type: {equals_string: Run}
       command: {required: true}
@@ -219,5 +219,8 @@ slots:
   wtp_range:
     range: float
     multivalued: true
+  wtp_sample_size:
+    description: "The number of WTP survey answers that run_phase_9.py read (validation.sample_size of wtp-results.json). Empty with no survey."
+    range: integer
   wtp_to_evc_ratio: {range: float}
   wtp_verdict: {}

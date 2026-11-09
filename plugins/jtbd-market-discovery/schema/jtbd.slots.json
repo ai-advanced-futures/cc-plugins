@@ -27,6 +27,7 @@
         "ratings_source",
         "evc_inputs",
         "wtp_verdict",
+        "wtp_sample_size",
         "gaps",
         "input_run",
         "top_outcomes",

@@ -6,18 +6,18 @@ allowed-tools: Read, Write, Glob, Skill, Bash(uv run *), Bash(git rev-parse *), 
 
 # Learn from a run
 
-`ROOT` is `$(git rev-parse --show-toplevel)`.
-`J` is `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root "$ROOT"`.
+Run `git rev-parse --show-toplevel` on its own. Its output is `<git root>`. When that command fails, stop with: "This is not a git repository." Write that path itself in each command, and not a command or a variable, because Claude Code cannot check such a command before it runs, and it then asks the person or refuses the command. Write each path in single quotes, and write each `'` in a path as `'\''`, because inside single quotes the shell runs nothing and keeps a space in the path.
+Run each command on its own: one command per Bash call, with no pipe (`|`), no `;` and no `&&`. Also, do not add an `echo` of the exit code, because the Bash tool shows the exit code of a command that fails.
 
 ## Step 0: the guards
 
-1. Run `$J pages Run`. When it exits 2, stop with: "This repository has no
+1. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root '<git root>' pages Run`. When it exits 2, stop with: "This repository has no
    jtbd graph. Run `/jtbd-market-discovery:setup` first." The output also
    lists the Run pages and their `status`.
-2. `LOGIN` is the output of `gh api user --jq .login`. When that command
-   fails, ask the person for a name in chat text. A login is safe in a command
-   only when it matches `[A-Za-z0-9-]{1,39}`. When `LOGIN` does not match, it
-   is not a login: do not put it in a command; stop and show it.
+2. Run `gh api user --jq .login` on its own. Its output is `<login>`. When
+   that command fails, ask the person for a name in chat text. A login is safe
+   in a command only when it matches `[A-Za-z0-9-]{1,39}`. When `<login>` does
+   not match, it is not a login: do not put it in a command; stop and show it.
 
 ## Step 1: choose the case
 
@@ -32,13 +32,14 @@ allowed-tools: Read, Write, Glob, Skill, Bash(uv run *), Bash(git rev-parse *), 
 
 ## Step 2: confirm a run
 
-Run `$J verify-run <key> --by human:$LOGIN`. It sets `status: stable` and
+Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root '<git root>' verify-run '<key>' --by 'human:<login>'`. It sets `status: stable` and
 adds one `verified` entry on the Run page and on each page whose `run` is
 that page. When it exits 1 or 2, stop and show its output.
 
 ## Step 3: save other results
 
-Write pages only through `$J new`, `$J set`, `$J link`, and `$J body`. Never
+Write pages only through the operations `new`, `set`, `link` and `body` of
+`jtbd_graph.py`, each in a command that starts as in Step 0. Never
 use `Write` or `Edit` on a file in the bundle folder.
 
 For the result of a quick validation, write a Run page first, so that each
@@ -51,7 +52,7 @@ Put each text of the person in single quotes, and write each `'` in it as
 ## Step 4: direct edits
 
 When the save code cannot make a change, edit the page directly. Then write
-one Report entry: `$J log Report '<operation> failed: <error>. I edited <page>: <edit>. Reason: <reason>.'`
+one Report entry: `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root '<git root>' log Report '<operation> failed: <error>. I edited <page>: <edit>. Reason: <reason>.'`
 Write each `'` in that text as `'\''`, because inside single quotes the shell
 runs nothing, and an error text can hold any character.
 

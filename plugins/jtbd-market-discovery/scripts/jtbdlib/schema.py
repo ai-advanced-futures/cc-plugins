@@ -15,6 +15,9 @@ REQUIRED_LINKS = {
     "WtpValidation": ["segment", "run"], "Result": ["run"],
 }
 
+# The fields of a WtpValidation page that only a survey gives (STORY-193): with a survey, 1 page of the run holds 1.
+WTP_SURVEY_FIELDS = ("sample_size", "cleaned_median", "cleaned_mean", "optimal_price_point", "acceptable_range")
+
 
 @lru_cache(maxsize=1)
 def slots() -> dict:

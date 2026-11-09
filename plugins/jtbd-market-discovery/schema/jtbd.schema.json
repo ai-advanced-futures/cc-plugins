@@ -802,6 +802,13 @@
                         "null"
                     ]
                 },
+                "wtp_sample_size": {
+                    "description": "The number of WTP survey answers that run_phase_9.py read (validation.sample_size of wtp-results.json). Empty with no survey.",
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
                 "wtp_verdict": {
                     "type": [
                         "string",

@@ -7,14 +7,12 @@ allowed-tools: Bash, Read, Skill
 
 # Set up the jtbd graph
 
-`ROOT` is `$(git rev-parse --show-toplevel)`. When that command fails, stop
-with: "This is not a git repository."
-`S` is `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root "$ROOT"`.
+Run `git rev-parse --show-toplevel` on its own. Its output is `<git root>`. When that command fails, stop with: "This is not a git repository." Write that path itself in each command, and not a command or a variable, because Claude Code cannot check such a command before it runs, and it then asks the person or refuses the command. Write each path in single quotes, and write each `'` in a path as `'\''`, because inside single quotes the shell runs nothing and keeps a space in the path.
 
 ## Step 1: make or upgrade the bundle
 
-- When `.claude/knowledge.json` names the graph `jtbd`, run `$S upgrade`.
-- When not, run `$S init`. Add `--dir $ARGUMENTS` when the person gave a
+- When `.claude/knowledge.json` names the graph `jtbd`, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root '<git root>' upgrade`.
+- When not, run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root '<git root>' init`. Add `--dir $ARGUMENTS` when the person gave a
   folder. A folder name is safe in a command only when it matches
   `[A-Za-z0-9._/-]{1,100}`, has no `..` part and does not start with `/`.
   When it does not match, it is not a folder name: do not put it in a
@@ -33,7 +31,7 @@ show it. Then run:
 
 ```bash
 sed -e "s|{{DIR}}|<folder>|g" "${CLAUDE_PLUGIN_ROOT}/templates/claude-md-block.md" \
-| uv run --no-project "${CLAUDE_PLUGIN_ROOT}/scripts/claude_md_router.py" --plugin jtbd-market-discovery --repo-root "$ROOT"
+| uv run --no-project "${CLAUDE_PLUGIN_ROOT}/scripts/claude_md_router.py" --plugin jtbd-market-discovery --repo-root '<git root>'
 ```
 
 ## Step 3: both checks
