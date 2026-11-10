@@ -1,7 +1,7 @@
 ---
 description: Confirms the pages of a market discovery run in the jtbd graph, or saves other results and corrections through jtbd_graph.py. Sets status stable and a verified entry on the Run page and on each page of the run. Use for "/jtbd-market-discovery:learn", "confirm these results", and "correct this outcome".
 argument-hint: "[run page or correction]"
-allowed-tools: Read, Write, Glob, Skill, Bash(uv run *), Bash(git rev-parse *), Bash(gh api user *), Bash(gh issue create *), Bash(date *)
+allowed-tools: Read, Write, Glob, Skill, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py *), Bash(git rev-parse *), Bash(gh api user --jq .login), Bash(gh issue create --repo ai-advanced-futures/cc-plugins *), Bash(date *)
 ---
 
 # Learn from a run

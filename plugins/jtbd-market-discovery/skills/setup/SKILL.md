@@ -2,12 +2,12 @@
 description: Sets up the jtbd graph of this repository - the bundle at docs/jtbd/, the manifest, the registry entry, and the router block in CLAUDE.md. Use for "/jtbd-market-discovery:setup".
 argument-hint: "[bundle folder]"
 disable-model-invocation: true
-allowed-tools: Bash, Read, Skill
+allowed-tools: Read, Skill, Bash(git rev-parse *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py *), Bash(uv run --no-project ${CLAUDE_PLUGIN_ROOT}/scripts/claude_md_router.py *), Bash(sed -e "s|{{DIR}}|docs/jtbd|g"), Read(//**/jtbd-market-discovery/**/templates/claude-md-block.md)
 ---
 
 # Set up the jtbd graph
 
-Run `git rev-parse --show-toplevel` on its own. Its output is `<git root>`. When that command fails, stop with: "This is not a git repository." Write that path itself in each command, and not a command or a variable, because Claude Code cannot check such a command before it runs, and it then asks the person or refuses the command. Write each path in single quotes, and write each `'` in a path as `'\''`, because inside single quotes the shell runs nothing and keeps a space in the path.
+Run `git rev-parse --show-toplevel` on its own. Its output is `<git root>`. When that command fails, stop with: "This is not a git repository." Write that path itself in each command, and not a command or a variable, because Claude Code cannot check such a command before it runs, and it then asks the person or refuses the command. Write the `<git root>` path in single quotes, and write each `'` in a path as `'\''`, because inside single quotes the shell runs nothing and keeps a space in the path. Write a path that starts with `${CLAUDE_PLUGIN_ROOT}` with no quotes, because the grants of this skill name those paths with no quotes.
 
 ## Step 1: make or upgrade the bundle
 
@@ -27,13 +27,14 @@ success, because the command refused or failed, and the graph is not set up.
 Read the bundle folder in `.claude/knowledge.json`. The same rule holds,
 because a registry entry of a cloned repository can hold any text: a folder
 that does not match is not a folder name; do not put it in a command; stop and
-show it. Then run the command below. Give the template to `sed` on standard
-input (`<`), and not as a file name, because Claude Code refuses a command
-that names a file of a loaded plugin as a file that the command can change:
+show it. Then run the command below on 1 line. Give the template to `sed` on
+standard input (`<`), and not as a file name, because Claude Code refuses a
+command that names a file of a loaded plugin as a file that the command can
+change. Write the 2 paths of the plugin with no quotes, because the grants of
+this skill name them with no quotes:
 
 ```bash
-sed -e "s|{{DIR}}|<folder>|g" < "${CLAUDE_PLUGIN_ROOT}/templates/claude-md-block.md" \
-| uv run --no-project "${CLAUDE_PLUGIN_ROOT}/scripts/claude_md_router.py" --plugin jtbd-market-discovery --repo-root '<git root>'
+sed -e "s|{{DIR}}|<folder>|g" < ${CLAUDE_PLUGIN_ROOT}/templates/claude-md-block.md | uv run --no-project ${CLAUDE_PLUGIN_ROOT}/scripts/claude_md_router.py --plugin jtbd-market-discovery --repo-root '<git root>'
 ```
 
 ## Step 3: both checks

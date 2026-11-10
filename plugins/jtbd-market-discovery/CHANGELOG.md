@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.11.4
+
+- `setup`, `learn` and `ask` grant only the commands of their steps: the graph script and the router script by their paths, `git rev-parse`, and the `gh` commands of `learn`. `setup` had the whole shell, and `learn` and `ask` had each program that `uv run` can start. `ask` runs no `knowledge.py` command and has no `Agent` grant, because `knowledge:ask` runs them under its own grant (STORY-263, #1044).
+- The router command of `setup` is on 1 line, with the template path and the router path in no quotes, because the grants name them with no quotes. The grant of the `sed` part names the default folder `docs/jtbd`: a `setup` with another folder asks the person to approve that command. A `Read` grant of the template lets `sed` take it on standard input, also in an install, where the plugin folder has a version folder.
+
 ## 1.11.3
 
 - `write-run` gives a score to each scored need of `p6.json`. It reads each list of `p6.json` whose items have a need and a score field. Before, it read 6 fixed keys, and an agent run that gave its full list as `scored`, `all_scored_needs` or `additional_high_opportunity_needs` got a score on the Outcome pages of its top list only. When 2 lists give a field of the same need, the value of the later list is kept. The shapes of `opportunity-scorer` and `phase-6-opportunity-scoring` give the full list as `scored` (STORY-288).

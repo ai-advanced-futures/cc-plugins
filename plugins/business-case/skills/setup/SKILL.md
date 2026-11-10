@@ -2,7 +2,7 @@
 description: Sets up the business-case graph of this repository - the bundle at docs/business-case/, the manifest, the registry entry, and the router block in CLAUDE.md - and writes the pages of each case folder that the repository has. Use for "/business-case:setup".
 argument-hint: "[bundle folder]"
 disable-model-invocation: true
-allowed-tools: Bash, Read, Skill
+allowed-tools: Read, Skill, Bash(git rev-parse *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/bc_graph.py *), Bash(uv run --no-project ${CLAUDE_PLUGIN_ROOT}/scripts/claude_md_router.py *)
 ---
 
 # Set up the business-case graph
@@ -22,10 +22,15 @@ success, because the command refused or failed, and the graph is not set up.
 
 Read the bundle folder in `.claude/knowledge.json`. The rule of Step 1 holds for it too, because a repository that you clone can set any text there. When the folder does not match, stop and show it.
 
-Else read `${CLAUDE_PLUGIN_ROOT}/templates/claude-md-block.md` with the Read tool, and not with a command, because Claude Code refuses a `sed` command on this file. Put the folder in place of each `{{DIR}}`, and give that text to the router script on standard input:
+Else read `${CLAUDE_PLUGIN_ROOT}/templates/claude-md-block.md`
+with the Read tool, and not with a command, because Claude Code refuses a command that names
+a file of a loaded plugin as a file that the command can change. Put the folder
+in place of each `{{DIR}}`, and give that text to the router script on
+standard input. Write the script path with no quotes, because the grant of this
+skill names the path with no quotes:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/claude_md_router.py" --plugin business-case --repo-root "<git root>" <<'EOF'
+uv run --no-project ${CLAUDE_PLUGIN_ROOT}/scripts/claude_md_router.py --plugin business-case --repo-root "<git root>" <<'EOF'
 <the text of the template, with the folder in place of each {{DIR}}>
 EOF
 ```

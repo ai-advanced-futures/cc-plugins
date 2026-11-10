@@ -322,7 +322,7 @@ brief.
   "brief_sha256": "<the value of your brief's sha256: line>",
   "schema": "plugin-result/1",
   "plugin": "business-case",
-  "plugin_version": "0.9.3",
+  "plugin_version": "0.9.4",
   "command": "business-case:case-pricing-analyst",
   "run": {"started_at": "2026-10-27T12:00:00Z", "finished_at": "2026-10-27T12:00:00Z", "mode": "interactive",
           "subject": "Willingness to pay", "case": "business-cases/acme"},

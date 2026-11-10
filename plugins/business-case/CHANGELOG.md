@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.4
+
+- `setup`, `learn` and `ask` grant only the commands of their steps: the graph script and the router script by their paths, `git rev-parse`, and the `gh` commands of `learn`. `setup` had the whole shell, and `learn` and `ask` had each program that `uv run` can start. `ask` runs no `knowledge.py` command and has no `Agent` grant, because `knowledge:ask` runs them under its own grant (STORY-263, #1044).
+- The router command of `setup` runs with `uv run --no-project`, as in the other brains.
+
 ## 0.9.3
 
 - `brain_read.snapshot` refuses a snapshot name that is not 1 file name. The run ends as a gap with "is not 1 file name", because `command` and `run_id` go into the name unchanged and a `/` or `..` in them named a file outside `team/upstream/` (STORY-264).

@@ -1,7 +1,7 @@
 ---
 description: Answers a question about the market discovery runs from the jtbd graph - which outcomes are most underserved, which segment values an outcome most, what a segment will pay, how a job changed between runs, and which result rests on a default. Use for "/jtbd-market-discovery:ask" and "which needs are underserved".
 argument-hint: "<question>"
-allowed-tools: Read, Grep, Glob, Agent, Skill, Bash(uv run *), Bash(git rev-parse *), Bash(bash *probe-plugin.sh *)
+allowed-tools: Read, Grep, Glob, Skill, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py *), Bash(git rev-parse *), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/probe-plugin.sh *)
 ---
 
 # Ask the jtbd graph
@@ -13,10 +13,12 @@ Never write a page, because the person confirms a run through the
 
 Run `git rev-parse --show-toplevel` on its own. Its output is `<git root>`. When that command fails, stop with: "This is not a git repository." Write that path itself in each command, and not a command or a variable, because Claude Code cannot check such a command before it runs, and it then asks the person or refuses the command. Write each path in single quotes, and write each `'` in a path as `'\''`, because inside single quotes the shell runs nothing and keeps a space in the path.
 Run each command on its own: one command per Bash call, with no pipe (`|`), no `;` and no `&&`. Also, do not add an `echo` of the exit code, because the Bash tool shows the exit code of a command that fails.
-Find the root of the knowledge plugin with
+Check that the knowledge plugin is installed with
 `bash ${CLAUDE_PLUGIN_ROOT}/scripts/probe-plugin.sh knowledge scripts/knowledge.py`.
-It prints `<knowledge root>`. `<knowledge command>` is `uv run`, then the path of the file `knowledge.py` in the
-`scripts` folder of `<knowledge root>` in single quotes, then `--root '<git root>'`.
+Give each start node to the `knowledge:ask` skill. It runs each `knowledge.py` command and
+starts the `knowledge:neighbor-judge` agent under its own grant.
+This skill grants no `knowledge.py` command, so Claude Code asks the person before such a
+command runs here.
 When the probe exits 1, stop with: "jtbd-market-discovery:ask needs the
 knowledge plugin. Install it: claude plugin install knowledge@cc-plugins."
 
@@ -27,8 +29,8 @@ Use the first shortcut that fits the question. Each one gives start nodes.
 | Question | Shortcut |
 |---|---|
 | Which outcomes are most underserved? | `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root '<git root>' results --latest`. Keep the `opportunity_score` results, and follow their `about` links to the Outcome pages. |
-| Which segment values outcome X most? | `<knowledge command> neighbors 'jtbd:/outcomes/<X>.md'`. Keep the `in` rows of type Segment. |
-| What will segment S pay? | `<knowledge command> neighbors 'jtbd:/segments/<S>.md'`. Keep the `in` rows of type WtpValidation. |
+| Which segment values outcome X most? | The start node is `jtbd:/outcomes/<X>.md`. Tell `knowledge:ask` to keep the `in` neighbors of type Segment. |
+| What will segment S pay? | The start node is `jtbd:/segments/<S>.md`. Tell `knowledge:ask` to keep the `in` neighbors of type WtpValidation. |
 | How did job J change between runs? | `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root '<git root>' pages Run`. Keep the Run pages with the same `subject`, then read the Job page of each. |
 | Which result rests on a default? | `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root '<git root>' results --latest`. Keep each entry with `rests_on_default: true`. |
 
