@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.2
+
+- `/prose-authenticity:profile` starts the agent `voice-profiler` in the foreground with `run_in_background: false`, and says so in a line at the top. Before, the agent could start in the background and return in a new turn that did not have the `allowed-tools` of the command, and `profile_store.py validate` was refused (STORY-312).
+
 ## 0.7.1
 
 - `/prose-authenticity:humanize` no longer adds a sentence about shell commands to the prompt of the `grounded-synthesis` agent, because that agent now holds the rule, from `grounded-synthesis` 0.4.7 (STORY-191). Use `grounded-synthesis` 0.4.7 or later.

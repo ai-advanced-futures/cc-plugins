@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.2
+
+- The skills `strategy`, `platform`, `products`, `roadmap` and `data-strategy` start each agent in the foreground with `run_in_background: false`, and say so in a line at the top. Before, an agent could start in the background and return in a new turn that did not have the `allowed-tools` of the skill, and the next script was refused (STORY-312).
+
 ## 0.3.1
 
 - Each skill names each script that it runs in its Bash grant (`scripts/<file> *`). Before, the grant `scripts/*` also permitted `uv run` of a file outside the scripts folder through a path with `..`, also a file of the project (STORY-283).

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.7
+
+- The skill `vendor-archetype-classify` starts its agent in the foreground with `run_in_background: false`, and says so in a line at the top. Before, the agent could start in the background and return in a new turn that did not have the `allowed-tools` of the skill, and the emitter was refused (STORY-312).
+
 ## 1.11.6
 
 - Each skill that names a file of its own folder reads it in a headless run: `competitive-intelligence` reads `reference/run-rules.md`, and `vendor-archetype-classify` reads `reference/archetype-reference-card.md` when the person asks what a signal or an archetype means, or asks for the anchor vendors of an archetype. The skill text names the file as `${CLAUDE_SKILL_DIR}/reference/<file>`, and `allowed-tools` has a `Read` rule for that 1 file. Before, a run with `claude -p` in the default mode refused the `Read`, and the skill went on with no file (STORY-289).
