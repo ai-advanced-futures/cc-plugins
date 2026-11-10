@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.3
+
+### Changed
+- The hidden skill `knowledge:checking` grants only its 2 check commands and `git rev-parse`. Before, it granted the whole shell, and each skill that called it kept the whole shell after the check.
+- New: `knowledge.py brain-check --graph <graph>` runs the check of the save code of each named graph. `brain-check` and `check` take `--root` after the command name too (STORY-282).
+
 ## 1.5.2
 
 ### Changed

@@ -1,6 +1,7 @@
 """The general check: the rules of the brain standard (standard section 9)."""
 from __future__ import annotations
 
+import argparse
 import re
 import subprocess
 import sys
@@ -271,12 +272,62 @@ def cmd_brain_root(args) -> int:
     return 0
 
 
+def cmd_brain_check(args) -> int:
+    """Run the brain check of each named graph, one time for each pair of plugin and save_code.
+
+    The skill `checking` runs this command, so its grant names only a script of this plugin (STORY-282).
+    The output and the exit code of each save code go through. A graph with no brain check gives one
+    `SKIP: brain-check (...)` line and exit 1, so the caller never reports a pass for it.
+    """
+    graphs = registry.read(args.root)
+    seen, worst = set(), 0
+    for name in args.graph:
+        try:
+            graph = graphs.get(name)
+            if graph is None:
+                raise DataError(f"the graph {name!r} is not in the registry")
+            bundle = links.bundle_dir(args.root, graph, True)
+            if bundle is None:
+                raise DataError(f"{name} is a remote graph with no cache. Run: knowledge.py fetch {name}")
+            data = manifest.read(bundle)
+            if data is None:
+                raise DataError(f"{name} has no manifest.md")
+            pair = (data.get("plugin"), data.get("save_code"))
+            if pair in seen:
+                continue
+            seen.add(pair)
+            found = probe.locate(*pair)
+            if found is None:
+                raise DataError(f"the plugin {pair[0]} of {name} is not installed")
+        except DataError as error:
+            print(f"SKIP: brain-check ({error})", flush=True)
+            worst = max(worst, 1)
+            continue
+        result = subprocess.run([sys.executable, str(found[1]), "--root", str(args.root), "check"],
+                                capture_output=True, text=True)
+        sys.stdout.write(result.stdout)
+        sys.stdout.flush()
+        sys.stderr.write(result.stderr)
+        worst = max(worst, abs(result.returncode))
+    return worst
+
+
+def _root_option(parser) -> None:
+    """Let `--root` come after the command name, so a grant can name the command first (STORY-282)."""
+    parser.add_argument("--root", default=argparse.SUPPRESS, help="the project root (also valid before the command)")
+
+
 def register(sub) -> None:
     brain_root = sub.add_parser("brain-root", help="print the root of the plugin that a graph names")
     brain_root.add_argument("--graph", required=True, help="the name of a graph")
     brain_root.set_defaults(run=cmd_brain_root)
+    brain_check = sub.add_parser("brain-check", help="run the check of the save code of each named graph")
+    brain_check.add_argument("--graph", action="append", required=True, help="the name of a changed graph (repeat for more)")
+    _root_option(brain_check)
+    brain_check.set_defaults(run=cmd_brain_check)
     parser = sub.add_parser("check", help="run the general check of the standard")
     parser.add_argument("--graph", action="append", help="check this graph only (repeat for more)")
     parser.add_argument("--strict", action="store_true", help="exit 1 on a warning")
     parser.add_argument("--cache-only", action="store_true", help="never clone a remote graph (hook mode)")
+    _root_option(parser)
     parser.set_defaults(run=cmd_check)
