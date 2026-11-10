@@ -1,7 +1,7 @@
 ---
 description: Score a document or pasted text for AI-generation tells — PASS/WARN/FAIL report with line-level findings, no rewriting
 argument-hint: "<file-or-text> [--tier heuristics|hf|api|all] [--genre expository|literary|verbatim]"
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/*), Bash(uv run --with torch==2.15.0 --with transformers==5.22.2 ${CLAUDE_PLUGIN_ROOT}/lib/run_detectors.py *)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/question_gate.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/run_detectors.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/correctness_checker.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/ste_checker.py *), Bash(uv run --with torch==2.15.0 --with transformers==5.22.2 ${CLAUDE_PLUGIN_ROOT}/lib/run_detectors.py *)
 ---
 
 Score the file path or pasted text in `$ARGUMENTS` for AI-generation likelihood. A single pass

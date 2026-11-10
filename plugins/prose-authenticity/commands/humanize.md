@@ -1,7 +1,7 @@
 ---
 description: Auto-loop a document through detect → rewrite → fact-check → re-verify until it passes AI detectors, preserving meaning and human-authored zones
 argument-hint: "<file-or-text> [--profile <name>] [--tier heuristics|hf|api|all] [--genre expository|literary|verbatim] [--in-place]"
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/*), Bash(uv run --with torch==2.15.0 --with transformers==5.22.2 ${CLAUDE_PLUGIN_ROOT}/lib/run_detectors.py *)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/zone_parser.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/extract_prose.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/profile_store.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/fact_gate.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/loop_controller.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/question_gate.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/run_detectors.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/fault_delta.py *), Bash(uv run --with torch==2.15.0 --with transformers==5.22.2 ${CLAUDE_PLUGIN_ROOT}/lib/run_detectors.py *)
 ---
 
 Run the full humanize loop on the file path or pasted text in `$ARGUMENTS`. You are the

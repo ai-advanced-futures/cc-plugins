@@ -1,7 +1,7 @@
 ---
 description: Build or update a voice profile from 3+ writing samples so humanize rewrites sound like a specific author
 argument-hint: "<name> --samples <file> <file> <file> [<file> ...]"
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/*)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/lib/profile_store.py *)
 ---
 
 Build a voice profile from the arguments in `$ARGUMENTS`: `<name> --samples <file> [<file> ...]`.

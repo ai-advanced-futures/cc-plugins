@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.3
+
+- The commands `check`, `humanize` and `profile` name each `lib/` file that they run in their Bash grant (`lib/<file> *`). Before, the grant `lib/*` also permitted `uv run` of a file outside the `lib/` folder through a path with `..`, and of each `lib/` file that the command does not run (STORY-313).
+
 ## 0.7.2
 
 - `/prose-authenticity:profile` starts the agent `voice-profiler` in the foreground with `run_in_background: false`, and says so in a line at the top. Before, the agent could start in the background and return in a new turn that did not have the `allowed-tools` of the command, and `profile_store.py validate` was refused (STORY-312).
