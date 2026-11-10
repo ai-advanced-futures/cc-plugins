@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.10
+
+### Changed
+- `probe-plugin.sh` finds another plugin in the Claude config folder: `$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`. Before, a session with the variable set found no install of another plugin, and the step that needed it gave no result and no error (STORY-281).
+
 ## 0.2.9
 
 ### Changed

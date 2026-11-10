@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.1
+
+- `probe-plugin.sh` finds another plugin in the Claude config folder: `$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`. Before, a session with the variable set found no install of another plugin, and the step that needed it gave no result and no error (STORY-281).
+
 ## 1.11.0
 
 - The result file of `discover` and `analyze` is `result.json` in the session folder (`result-2.json` if that name is taken). The folder `.competitive-intelligence/results/` is gone. No file of a run stays beside the graph (STORY-113, D-056).

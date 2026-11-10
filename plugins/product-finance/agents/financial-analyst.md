@@ -548,7 +548,7 @@ A defaults run of `product-finance:unit-economics`, then the same run with `data
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.2",
+  "plugin_version": "0.13.3",
   "command": "product-finance:unit-economics",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",
@@ -600,7 +600,7 @@ A defaults run of `product-finance:unit-economics`, then the same run with `data
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.2",
+  "plugin_version": "0.13.3",
   "command": "product-finance:unit-economics",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.1
+
+- `probe-plugin.sh` finds another plugin in the Claude config folder: `$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`. Before, a session with the variable set found no install of another plugin, and the step that needed it gave no result and no error (STORY-281).
+
 ## 1.12.0
 
 - `scripts/setup_mcp.sh` starts each server at a pinned version, and the versions are in 1 place in the script. The README names each package, its version and its maintainer. A server that you added earlier keeps its old package: the script warns you (issue #559, STORY-145).

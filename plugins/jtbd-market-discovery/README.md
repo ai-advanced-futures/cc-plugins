@@ -2,11 +2,15 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.11.4
+**Version:** 1.11.5
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.11.4
+## What's New in v1.11.5
+
+- `probe-plugin.sh` finds another plugin in the Claude config folder: `$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`. Before, a session with the variable set found no install of another plugin, and the step that needed it gave no result and no error (STORY-281).
+
+## What Was New in v1.11.4
 
 - `setup`, `learn` and `ask` grant only the commands of their steps. `setup` had the whole shell, and `learn` and `ask` had each program that `uv run` can start. `ask` runs no `knowledge.py` command, because `knowledge:ask` runs them. A `setup` with a bundle folder other than `docs/jtbd` asks the person to approve the `sed` command.
 

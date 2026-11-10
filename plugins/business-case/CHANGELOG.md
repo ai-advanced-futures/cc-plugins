@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.5
+
+- `probe-plugin.sh` finds another plugin in the Claude config folder: `$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`. Before, a session with the variable set found no install of another plugin, and the step that needed it gave no result and no error (STORY-281).
+
 ## 0.9.4
 
 - `setup`, `learn` and `ask` grant only the commands of their steps: the graph script and the router script by their paths, `git rev-parse`, and the `gh` commands of `learn`. `setup` had the whole shell, and `learn` and `ask` had each program that `uv run` can start. `ask` runs no `knowledge.py` command and has no `Agent` grant, because `knowledge:ask` runs them under its own grant (STORY-263, #1044).

@@ -6,6 +6,7 @@ is one of a known brain, the root is an install place, and the save code is insi
 """
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -40,12 +41,26 @@ def check(name, probe_path) -> None:
         raise DataError(f"{name} with {probe_path} is not the pair of a known brain")
 
 
+def config_dir() -> Path | None:
+    """The Claude config folder: $CLAUDE_CONFIG_DIR when it is set and not empty, else ~/.claude (STORY-281).
+
+    A relative value gives None, because it would name a folder of the current project (STORY-202). The script
+    probe-plugin.sh reads the same variable in the same way.
+    """
+    config = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+    return config if config.is_absolute() else None
+
+
 def install_place(root, name) -> bool:
     root = Path(root).resolve()
-    plugins = Path.home() / ".claude" / "plugins"
     fixed = [OWN_ROOT.parent / name, OWN_ROOT.parent / f"{name}-runtime",
-             OWN_ROOT.parent.parent / name / f"{name}-runtime", plugins / name]
-    return any(root == place.resolve() for place in fixed) or root.is_relative_to((plugins / "cache").resolve())
+             OWN_ROOT.parent.parent / name / f"{name}-runtime"]
+    config = config_dir()
+    if config is not None:
+        fixed.append(config / "plugins" / name)
+    if any(root == place.resolve() for place in fixed):
+        return True
+    return config is not None and root.is_relative_to((config / "plugins" / "cache").resolve())
 
 
 def find(name: str, probe_path: str) -> Path | None:

@@ -4,6 +4,10 @@ All notable changes to the pricing plugin will be documented in this file.
 
 The first heading is the version in `.claude-plugin/plugin.json`. A test checks that they agree.
 
+## 1.13.4
+
+- `probe-plugin.sh` finds another plugin in the Claude config folder: `$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`. Before, a session with the variable set found no install of another plugin, and the step that needed it gave no result and no error (STORY-281).
+
 ## 1.13.3
 
 - The skills `audit`, `package` and `value-metric` have the grant `Edit(/.pricing/**)`, because each of them writes a file in the output folder. The test `tests/unit/test_output_grant.py` now looks for the path `.pricing/` in each skill, and not for the word `Write` (STORY-168, found in the review of PR 1103).

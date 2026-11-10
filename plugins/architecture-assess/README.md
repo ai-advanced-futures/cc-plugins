@@ -1,6 +1,6 @@
 # architecture-assess
 
-Assess an existing architecture. Design a new one. Review one decision. Check the delivery readiness of an organization for agentic work. This is version v1.0.2.
+Assess an existing architecture. Design a new one. Review one decision. Check the delivery readiness of an organization for agentic work. This is version v1.0.3.
 
 The plugin puts **business strategy before technical decisions**. It covers all layers from UI to AIOps. It applies one method: the Architecture Principles, together with Fowler, Uncle Bob, Evans DDD, and the Cloud Well-Architected frameworks.
 

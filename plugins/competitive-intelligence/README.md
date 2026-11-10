@@ -2,7 +2,11 @@
 
 This plugin maps the competitors of a market, gathers public facts about them, and analyzes a competitor through six lenses. It writes a SWOT, recommendations, and the pages of a graph that other plugins read.
 
-## What's New in v1.11.0
+## What's New in v1.11.1
+
+- `probe-plugin.sh` finds another plugin in the Claude config folder: `$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`. Before, a session with the variable set found no install of another plugin, and the step that needed it gave no result and no error (STORY-281).
+
+## What Was New in v1.11.0
 
 - The graph in `docs/competitive-intelligence/` is the only output of a run. After `ingest`, no content file of the run stays beside the graph: `READER_FILES` in `scripts/cilib/ingest.py` is empty, and the `results/` folder is not written.
 - The result file is `result.json` in the session folder, a state file of the run: `ingest` reads it, and it stays.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.3
+
+- `probe-plugin.sh` finds another plugin in the Claude config folder: `$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`. Before, a session with the variable set found no install of another plugin, and the step that needed it gave no result and no error (STORY-281).
+
 ## 0.13.2
 
 - The file `caller-grants.json` and a block in the README name the grants that the session which dispatches a runner must give: the 5 scripts (the result check is in `scripts/plugin_result/`), the output folder, the plugin files, and the answers file. `tests/unit/test_caller_grants.py` checks the list (STORY-168).
