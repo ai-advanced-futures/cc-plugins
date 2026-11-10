@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.2
+
+- **fix:** each result figure of `ai-economics` comes from `ai_roi_calculator.py`, and its `method` names the script. The new `--format result` prints the 3 monthly figures under the keys that the result rules name. Before, the rules named keys that the script did not print, so the model worked the figures out and wrote "no script ran".
+- **feat:** the script takes the optional inputs `infrastructure_monthly_cost` (multiplied by the months of the period), and `ai_engineers` with `ai_engineer_annual_cost` (the monthly development cost).
+- **fix:** the command lists the script input of each answer, so the model does not read the script to find the names. A run in the default mode refused each such read, and in 2 runs it wrote no result file.
+- **fix:** each result keeps the key `defaults`, `[]` when there is none. The 5 runners run `git rev-parse --show-toplevel` with no `-C`.
+- **test:** `tests/unit/test_ai_economics_result_keys.py` fails when a result rule names a key that the script does not print, or when the input list leaves out an answer.
+
 ## 0.14.1
 
 - **fix:** in a headless run in the default mode, each command can read the plugin files that it needs. The `allowed-tools` line of 8 commands has 1 `Read(/${CLAUDE_PLUGIN_ROOT}/<file>)` rule for each such file, and no other `Read` rule. Before, Claude Code refused the read of `plugin.json` and of the agent file, and the run wrote no result file.

@@ -614,10 +614,25 @@ Next Steps
 - Ensure total revenue = AI revenue + non-AI revenue
 
 **Python Script Integration:**
-1. Prepare input JSON matching `AIROIInput` schema from `ai_roi_calculator.py`
+1. Prepare the input JSON from the answers with this list. Do not read the script to find the names, because this list gives each input name of `ai_roi_calculator.py`, and in a person's run in the default mode, Claude Code refuses each read of the script. The JSON is 1 object with the 2 objects `cost_data` and `value_data`. Put each value under the name that the list gives, as written, and write no other key, because the script ignores a key that it does not know, and a value under another name is lost with no error. Leave out a key when its answer is not given and no default is stated. An input that is in no list below goes to no script input.
+   - `analysis_period` → `cost_data.period_months`: `1_month` is 1, `3_months` is 3, `6_months` is 6, `12_months` is 12.
+   - `total_ai_api_cost` → `cost_data.total_ai_cost`.
+   - `ai_interactions` → `cost_data.ai_interactions`, a whole number.
+   - `active_users` → `cost_data.active_users`, a whole number.
+   - `providers` → `cost_data.provider_breakdown`: 1 object, each provider or model name to its cost.
+   - `infrastructure_monthly_cost` → `cost_data.infrastructure_monthly_cost`, 1 number: the monthly total. Do not write `cost_data.infrastructure_cost`, because the script adds it to the cost of the period a second time.
+   - `ai_engineers` → `cost_data.ai_engineers`, and `ai_engineer_annual_cost` → `cost_data.ai_engineer_annual_cost`, both or neither. Write them only when `include_dev_costs` is yes.
+   - `total_revenue` → `cost_data.total_revenue`.
+   - `ai_revenue` → `value_data.ai_enabled_revenue`.
+   - `non_ai_revenue` → `value_data.non_ai_revenue`.
+   - `ai_premium_percent` → `value_data.premium_pricing_uplift`.
+   - `hours_saved_per_month` → `value_data.time_saved_hours`: the hours of the whole period, that is the answer times the months of `period_months`. `cost_per_hour` → `value_data.employee_fully_loaded_cost`. Write both or neither.
+   - `churn_with_ai` → `value_data.ai_feature_churn_rate`, and `churn_without_ai` → `value_data.non_ai_churn_rate`. Write both or neither.
+   - `ai_expansion_revenue` → `value_data.ai_expansion_revenue`.
+   - `days_faster` → `value_data.time_to_value_reduction_days`.
 2. Write the input JSON with the Write tool to `<run folder>/ai-roi-input.json`, where the run folder is `.product-finance/<run_id>/` in a plugin run and `.product-finance/` in a person's run. Write each number as a JSON number, not as text and not as `true` or `false`, because the script refuses these. Then call the script as one command: `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ai_roi_calculator.py --input <run folder>/ai-roi-input.json --format json`. An exit with code 3 lists each input that the script refused, one on each line. When a listed value is a plain number that you wrote as text (digits, an optional sign, 1 decimal point, no unit or letter), or a listed input is `missing` because you wrote it under another name, write each such value again as a JSON number under the name that the line gives, and run the command 1 more time. When no listed line is one of those, or the second run exits with code 3 again, record each listed input as a gap, work out only the figures that do not need it with the formulas of this file, with no code at all, and end each such result's `method` with: Computed by the model from the formula stated in the command; no script ran. When the first run exits with code 2, or with code 1 and `Error: cannot read` or `Error: Invalid JSON input:`, correct the command, the path or the file, and run the command 1 more time in the same session. When the run after a correction or a rewrite exits with a code other than 0 and 3, stop the run: compute no figure, write the result file with `results: []` and the gap `{"kind": "ai_run_cost", "label": "AI ROI script", "why": "ai_roi_calculator.py failed 2 times: exit <code>: <first line of the message>"}`, and write the line `BLOCKED: ai_roi_calculator.py failed 2 times: exit <code>: <first line of the message>`. When the first run exits with a code other than 0, 1, 2 and 3, or with code 1 and another message, work the figures out with the formulas of this file, with no code at all, and end each result's `method` with: Computed by the model from the formula stated in the command; no script ran.
 3. Parse JSON output
-4. When the last JSON run exited with code 0, run the same command with `--format markdown` for the report. When no JSON run exited with code 0, or the markdown run exits with a code other than 0, write the report yourself from the figures in the result, with no code at all. When step 2 stopped the run, write no report and no `ai-economics.json`, and show no console summary.
+4. When the last JSON run exited with code 0, run the same command with `--format markdown` for the report, then run the same command with `--format result`. Its output gives the monthly figures of the result file: write each of them, as printed, under the same key in `ai-economics.json`. When no JSON run exited with code 0, or the markdown run exits with a code other than 0, write the report yourself from the figures in the result, with no code at all. When step 2 stopped the run, write no report and no `ai-economics.json`, and show no console summary.
 5. Save both formats under `.product-finance/`
 
 **Error Handling:**

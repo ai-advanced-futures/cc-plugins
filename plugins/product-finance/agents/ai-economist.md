@@ -642,14 +642,15 @@ The run never overwrites an earlier file: when the name is taken and there is no
 - In a person's run, a value the run takes from another plugin's file, or from an earlier run's file, is a `default` source with `ref` `<file>: <key>`, and its marker is `<input> = <value> (<file>)`.
 - In a person's run, an answer the person picked from an option labelled as the default or as recommended is a `default` source with `ref` `asked in this run: <input>`, and that default's marker goes in `defaults`.
 - `rests_on_default` is true when a source has type `default`. It is also true when the `defaults` list of marker strings is not empty; otherwise it is false.
+- Each result has the key `defaults`: the list of marker strings, `[]` when there is none. Never leave out the key, because the checker refuses a result with no `defaults`.
 - `detail` is the copy in the run's own folder, `.product-finance/<run_id>/<file>`. A person's run has no run folder and leaves out `detail`. Leave out the key; do not write `"detail": null`, because the checker refuses a null.
 - `gaps` lists each figure the run did not produce, with its `kind`, `label` and `why`. A gap's `kind` is one of the result kinds named below: the one the missing figure belongs with, for example `unit_economics` for a Magic Number the run could not work out. A halt writes `results: []` and the gap `{"kind": "ai_run_cost", "label": "AI run cost", "why": "AI product required for a plugin run"}`. A run that step 2 of the `Python Script Integration` list of the command stops writes `results: []` and the gap of that step, and `run.subject` stays the answer to `ai_product`.
 
-Results, from the `ai-economics.json` this run wrote, each with `unit` `"USD"` and `period` `"month"`:
+Results, each with `unit` `"USD"` and `period` `"month"`, from the output of the `--format result` run of `ai_roi_calculator.py` (step 4 of the `Python Script Integration` list of the command). Copy each value as printed. Each such result's `method` starts with `ai_roi_calculator.py: `. When that run did not run or exited with a code other than 0, work each figure out from the formula stated in the command, with no code at all, and end its `method` with the sentence above. `ai-economics.json` holds the same values under the same keys.
 
 - One `ai_run_cost` result: `value` is `ai_costs.api_costs.total_monthly`.
 - One `operating_cost` result for the total AI cost: `value` is `ai_costs.total_ai_costs.monthly`. The total `operating_cost` is the API cost plus the infrastructure cost only; the development cost is its own result and is never added in.
-- One `operating_cost` result for AI development when the run included it: `value` is `ai_costs.development_costs.monthly_personnel_cost`.
+- One `operating_cost` result for AI development when the output gives it: `value` is `ai_costs.development_costs.monthly_personnel_cost`.
 
 A defaults run of `product-finance:ai-economics`, then the same run with `ai_engineer_annual_cost` answered by the person (only the development result shown):
 
@@ -657,7 +658,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.14.1",
+  "plugin_version": "0.14.2",
   "command": "product-finance:ai-economics",
   "run": {
     "started_at": "2026-11-01T12:00:00Z",
@@ -673,14 +674,14 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
       "id": "ai_run_cost-1",
       "kind": "ai_run_cost",
       "label": "AI model and API cost, invoice capture assistant",
-      "value": 50000,
+      "value": 50000.0,
       "unit": "USD",
       "period": "month",
       "sources": [
         {"type": "person", "ref": "answers:total_ai_api_cost", "date": null},
         {"type": "default", "ref": "commands/ai-economics.md: analysis_period", "date": null}
       ],
-      "method": "The AI model and API cost the person gave, for the default one-month period. Computed by the model from the formula stated in the command; no script ran.",
+      "method": "ai_roi_calculator.py: the AI model and API cost the person gave for the period, divided by the months of the period.",
       "rests_on_default": true,
       "defaults": [
         "analysis_period = 1_month"
@@ -691,7 +692,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
       "id": "operating_cost-2",
       "kind": "operating_cost",
       "label": "Total AI cost, invoice capture assistant",
-      "value": 59000,
+      "value": 59000.0,
       "unit": "USD",
       "period": "month",
       "sources": [
@@ -699,7 +700,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
         {"type": "person", "ref": "answers:infrastructure_monthly_cost", "date": null},
         {"type": "default", "ref": "commands/ai-economics.md: analysis_period", "date": null}
       ],
-      "method": "AI model and API cost plus the monthly AI infrastructure cost. Computed by the model from the formula stated in the command; no script ran.",
+      "method": "ai_roi_calculator.py: the AI model and API cost of 1 month plus the monthly AI infrastructure cost.",
       "rests_on_default": true,
       "defaults": [
         "analysis_period = 1_month"
@@ -718,7 +719,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
         {"type": "default", "ref": "commands/ai-economics.md: ai_engineer_annual_cost", "date": null},
         {"type": "default", "ref": "commands/ai-economics.md: analysis_period", "date": null}
       ],
-      "method": "AI engineers times the annual cost of one, by month. Computed by the model from the formula stated in the command; no script ran.",
+      "method": "ai_roi_calculator.py: AI engineers times the annual cost of one, divided by 12.",
       "rests_on_default": true,
       "defaults": [
         "analysis_period = 1_month",
@@ -735,7 +736,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.14.1",
+  "plugin_version": "0.14.2",
   "command": "product-finance:ai-economics",
   "run": {
     "started_at": "2026-11-01T12:00:00Z",
@@ -759,7 +760,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
         {"type": "person", "ref": "answers:ai_engineer_annual_cost", "date": null},
         {"type": "default", "ref": "commands/ai-economics.md: analysis_period", "date": null}
       ],
-      "method": "AI engineers times the annual cost of one, by month. Computed by the model from the formula stated in the command; no script ran.",
+      "method": "ai_roi_calculator.py: AI engineers times the annual cost of one, divided by 12.",
       "rests_on_default": true,
       "defaults": [
         "analysis_period = 1_month"

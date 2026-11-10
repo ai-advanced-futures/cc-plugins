@@ -69,7 +69,15 @@ class AICostInput:
         period_months: Number of months (default: 1)
         provider_breakdown: Optional breakdown by provider (dict of provider: cost)
         infrastructure_cost: Optional AI infrastructure costs (hosting, storage)
+        infrastructure_monthly_cost: Optional AI infrastructure cost of 1 month; the period
+            holds it once for each month, added to infrastructure_cost
+        ai_engineers: Optional number of engineers on the AI features
+        ai_engineer_annual_cost: Optional fully loaded annual cost of 1 AI engineer
     """
+
+    TOGETHER: ClassVar[Tuple[Tuple[str, str], ...]] = (
+        ("ai_engineers", "ai_engineer_annual_cost"),
+    )
 
     total_ai_cost: float = limits(gt=0, le=1_000_000_000)
     ai_interactions: int = limits(gt=0)
@@ -78,6 +86,9 @@ class AICostInput:
     period_months: int = limits(gt=0, le=60, default=1)
     provider_breakdown: Optional[Dict[str, float]] = limits(each=dict(ge=0), default=None)
     infrastructure_cost: Optional[float] = limits(ge=0, default=None)
+    infrastructure_monthly_cost: Optional[float] = limits(ge=0, default=None)
+    ai_engineers: Optional[float] = limits(ge=0, default=None)
+    ai_engineer_annual_cost: Optional[float] = limits(gt=0, default=None)
 
 
 @dataclass
@@ -156,6 +167,9 @@ class AICostResult:
     provider_breakdown_analysis: Optional[dict[str, dict[str, Number]]]
     health_status: MetricHealth
     optimization_opportunities: list[str]
+    api_cost_monthly: Number = Fraction(0)
+    total_cost_monthly: Number = Fraction(0)
+    development_cost_monthly: Optional[Number] = None
 
 
 @dataclass
@@ -271,6 +285,19 @@ def calculate_ai_costs(data: AICostInput) -> AICostResult:
         infrastructure_cost = as_written(data.infrastructure_cost)
         total_cost += infrastructure_cost
         annualized_ai_cost += infrastructure_cost * Fraction(12, period_months)
+    if data.infrastructure_monthly_cost:
+        infrastructure_for_period = as_written(data.infrastructure_monthly_cost) * period_months
+        total_cost += infrastructure_for_period
+        annualized_ai_cost += infrastructure_for_period * Fraction(12, period_months)
+
+    # The monthly figures of the result file (STORY-326)
+    api_cost_monthly = total_ai_cost / period_months
+    total_cost_monthly = total_cost / period_months
+    development_cost_monthly = None
+    if data.ai_engineers is not None and data.ai_engineer_annual_cost is not None:
+        development_cost_monthly = (
+            as_written(data.ai_engineers) * as_written(data.ai_engineer_annual_cost) / 12
+        )
 
     # Assess health based on AI cost as % of revenue
     if ai_cost_percentage < 5:
@@ -326,6 +353,9 @@ def calculate_ai_costs(data: AICostInput) -> AICostResult:
         provider_breakdown_analysis=provider_breakdown_analysis,
         health_status=health,
         optimization_opportunities=optimization_opportunities,
+        api_cost_monthly=api_cost_monthly,
+        total_cost_monthly=total_cost_monthly,
+        development_cost_monthly=development_cost_monthly,
     )
 
 
@@ -779,6 +809,24 @@ def format_result_as_json(result: AIROIResult) -> str:
     return json.dumps(output, indent=2)
 
 
+def format_result_figures(result: AIROIResult) -> str:
+    """The monthly figures that the result file of `ai-economics` copies, as JSON.
+
+    The keys are the keys that the `## Result file` section of `agents/ai-economist.md`
+    names. `development_costs` is there only when the input gives both development inputs.
+    """
+    cost = result.cost_result
+    costs: Dict[str, Any] = {
+        "api_costs": {"total_monthly": float(shown(cost.api_cost_monthly, 2))},
+        "total_ai_costs": {"monthly": float(shown(cost.total_cost_monthly, 2))},
+    }
+    if cost.development_cost_monthly is not None:
+        costs["development_costs"] = {
+            "monthly_personnel_cost": float(shown(cost.development_cost_monthly, 2))
+        }
+    return json.dumps({"ai_costs": costs}, indent=2)
+
+
 def format_result_as_markdown(result: AIROIResult) -> str:
     """Format AI ROI result as CFO-ready Markdown report.
 
@@ -949,14 +997,15 @@ Examples:
   # Output formats
   python ai_roi_calculator.py --format json
   python ai_roi_calculator.py --format markdown
+  python ai_roi_calculator.py --format result
         """,
     )
 
     parser.add_argument(
         "--format",
-        choices=["json", "markdown"],
+        choices=["json", "markdown", "result"],
         default="markdown",
-        help="Output format (default: markdown)",
+        help="Output format (default: markdown); result: the monthly figures of the result file",
     )
 
     parser.add_argument(
@@ -1050,6 +1099,8 @@ Examples:
     print()
     if args.format == "json":
         print(format_result_as_json(result))
+    elif args.format == "result":
+        print(format_result_figures(result))
     else:
         print(format_result_as_markdown(result))
 

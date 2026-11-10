@@ -38,6 +38,9 @@ Comprehensive AI cost analysis including:
 | period_months | int | No | Period in months (default: 1) |
 | provider_breakdown | dict | No | Cost breakdown by AI provider |
 | infrastructure_cost | float | No | Additional AI infrastructure costs |
+| infrastructure_monthly_cost | float | No | AI infrastructure cost of 1 month; the script adds it once for each month of the period |
+| ai_engineers | float | No | Engineers on the AI features; give it with ai_engineer_annual_cost |
+| ai_engineer_annual_cost | float | No | Fully loaded annual cost of 1 AI engineer; give it with ai_engineers |
 
 ## Key Metrics
 
