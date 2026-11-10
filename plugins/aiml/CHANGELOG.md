@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.1
+
+### Fixed
+
+- The agents `cost-amplifier-readout-agent`, `p15-trigger-detector-agent` and `archetype-baseline-telemetry-agent` run the emitter as their first command. The step "Validate input file exists" is removed: the model ran `test -f` for it, and a session that allows `uv run` only refused that command, so the agent could stop with no file. The emitter checks the input, and exits 1 with `Input file not found: <path>` when it is missing.
+
+### Added
+
+- `tests/unit/test_emitter_first_step.py`: step 1 of each emitter agent is the `uv run` command of its emitter, no step checks the input file with a shell command, and each emitter exits 1 with the message `Input file not found: <path>` and writes no file when the input is missing.
+
 ## 0.6.0
 
 ### Changed

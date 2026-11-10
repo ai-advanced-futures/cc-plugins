@@ -13,7 +13,7 @@ tools: [Bash, Read, Write]
 
 ## Role
 
-Produce `.aiml/cost-amplifier-readout.json` from a developer-curated `amplifier-telemetry-input.json`. The agent is intentionally thin: load + validate the input, invoke the LogNormal composer + emitter via Bash, write the handoff, signal DONE. It asks the person nothing.
+Produce `.aiml/cost-amplifier-readout.json` from a developer-curated `amplifier-telemetry-input.json`. The agent is intentionally thin: invoke the emitter via Bash (it loads and validates the input, and runs the LogNormal composer), write the handoff, signal DONE. It asks the person nothing.
 
 ## Dispatch fields
 
@@ -21,13 +21,13 @@ Produce `.aiml/cost-amplifier-readout.json` from a developer-curated `amplifier-
 
 ## Workflow
 
-1. **Validate input file exists.** If not, write a one-line stderr message and exit 1.
-2. **Invoke the emitter via Bash:**
+1. **Invoke the emitter via Bash:**
    ```
    uv run ${CLAUDE_PLUGIN_ROOT}/scripts/cost_amplifier_readout_emitter.py --input <input_path> --out .aiml/cost-amplifier-readout.json --verbose
    ```
+   Run this command first, as the first `Bash` call. The emitter checks the input file, so do not check it with another command, such as `test -f` or `ls`, because the session can allow `uv run` only and then refuses that command.
    The emitter internally calls `load_and_validate(input_path)` → `compose(input.amplifiers)` → `emit(...)` and validates the output against `schemas/cost-amplifier-readout.schema.json` before writing.
-3. **Write the handoff file** `.aiml/handoff.json`. If the file exists, keep its keys and set these keys:
+2. **Write the handoff file** `.aiml/handoff.json`. If the file exists, keep its keys and set these keys:
    ```json
    {
      "plugin": "aiml",
@@ -37,7 +37,7 @@ Produce `.aiml/cost-amplifier-readout.json` from a developer-curated `amplifier-
      "summary": "<one-line composite p75/p95 summary>"
    }
    ```
-4. **Emit DONE signal** as the agent's last output line.
+3. **Emit DONE signal** as the agent's last output line.
 
 ## Output spec
 
@@ -47,7 +47,7 @@ Produce `.aiml/cost-amplifier-readout.json` from a developer-curated `amplifier-
 
 ## Error handling
 
-- Input file missing → exit 1 with `Input file not found: <path>` to stderr.
+- Input file missing → the emitter exits 1 and writes `Input file not found: <path>` to stderr. Give that line in your reply and stop. Write no handoff.
 - Input schema validation fails → exit 1 with JSON Pointer path of failure.
 - Output schema validation fails → exit 2 (logic bug, not user error).
 - Notes template >2000 chars → emitter raises `ValueError`; agent surfaces and exits 1.

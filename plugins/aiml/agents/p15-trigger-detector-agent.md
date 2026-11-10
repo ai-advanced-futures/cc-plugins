@@ -13,7 +13,7 @@ tools: [Bash, Read, Write]
 
 ## Role
 
-Produce `.aiml/p15-trigger-event.json` from a developer-curated `amplifier-telemetry-input.json` v1.1.0 (plus optional sidecar history). The agent is thin: load + validate → invoke the emitter via Bash → write the handoff → signal DONE. It asks the person nothing.
+Produce `.aiml/p15-trigger-event.json` from a developer-curated `amplifier-telemetry-input.json` v1.1.0 (plus optional sidecar history). The agent is thin: invoke the emitter via Bash (it loads and validates the input) → write the handoff → signal DONE. It asks the person nothing.
 
 ## Dispatch fields
 
@@ -27,8 +27,7 @@ The skill `p15-trigger-detection` takes these from its argument text.
 
 ## Workflow
 
-1. **Validate input file exists.** If not, write a one-line stderr message and exit 1.
-2. **Invoke the emitter via Bash:**
+1. **Invoke the emitter via Bash:**
    ```
    uv run ${CLAUDE_PLUGIN_ROOT}/scripts/p15_trigger_emitter.py \
      --input <input_path> \
@@ -38,8 +37,9 @@ The skill `p15-trigger-detection` takes these from its argument text.
      [--quality-floor-target metric_id=value ...] \
      --output .aiml/p15-trigger-event.json
    ```
-3. **Read `.aiml/p15-trigger-event.json` to confirm exit status.** If schema-invalid or non-zero exit, surface the emitter's stderr.
-4. **Write the handoff file** `.aiml/handoff.json`. If the file exists, keep its keys and set these keys:
+   Run this command first, as the first `Bash` call. The emitter checks the input file, so do not check it with another command, such as `test -f` or `ls`, because the session can allow `uv run` only and then refuses that command.
+2. **Read `.aiml/p15-trigger-event.json` to confirm exit status.** If schema-invalid or non-zero exit, surface the emitter's stderr.
+3. **Write the handoff file** `.aiml/handoff.json`. If the file exists, keep its keys and set these keys:
    ```json
    {
      "plugin": "aiml",
@@ -51,7 +51,7 @@ The skill `p15-trigger-detection` takes these from its argument text.
      "done": true
    }
    ```
-5. **Emit DONE signal** as the agent's last output line.
+4. **Emit DONE signal** as the agent's last output line.
 
 ## Output spec
 
@@ -61,7 +61,7 @@ The skill `p15-trigger-detection` takes these from its argument text.
 
 ## Error handling
 
-- Input file missing → exit 1 with `Input file not found: <path>` to stderr
+- Input file missing → the emitter exits 1 and writes `Input file not found: <path>` to stderr. Give that line in your reply and stop. Write no handoff.
 - Input schema validation fails → exit 1 with JSON Pointer path of failure
 - NoThresholdsResolvedError → exit 1 with both source-paths named
 - Output schema validation fails → exit 2 (logic bug, not user error)
