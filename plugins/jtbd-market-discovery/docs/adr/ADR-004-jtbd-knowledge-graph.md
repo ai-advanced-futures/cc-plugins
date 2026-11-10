@@ -27,7 +27,7 @@ The `knowledge` plugin has a standard for a brain: a folder of pages, a schema, 
 
 4. **Result pages.** One `Result` page holds one entry of a result file. A fact lives in one place: the `Outcome`, `WtpValidation` and `Job` pages do not repeat a value of their `Result` page (check rule `J-once`). `results` prints the entries again, so a reader gets the same shape as before.
 
-5. **Kept files.** Four files stay beside the graph, because other plugins read them by name: `customer-needs.json`, `opportunity-scores.json`, `evc-analysis.json` and `wtp-validation.json` in `.jtbd-market-discovery/`. The result files stay in `.jtbd-market-discovery/results/`. The four other root files (`job-statement.json`, `job-steps.json`, `customer-segments.json`, `final-output.json`) are not written there any more, because no reader reads them. The last reader story removes the kept files.
+5. **Kept files.** Four files stay beside the graph, because other plugins read them by name: `customer-needs.json`, `opportunity-scores.json`, `evc-analysis.json` and `wtp-validation.json` in `.jtbd-market-discovery/`. The result files stay in the `results/` folder. The four other root files (`job-statement.json`, `job-steps.json`, `customer-segments.json`, `final-output.json`) are not written there any more, because no reader reads them. The last reader story removes the kept files. 2026-11 (STORY-113, D-056): the result file is `result.json` in the session folder, and no file stays beside the graph.
 
 6. **Hook and skills.** A hook runs `regen`, the brain check and the general check after each write. The skills `setup`, `ask` and `learn` are the entry points. `learn` is the only skill that confirms a run.
 

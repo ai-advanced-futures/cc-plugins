@@ -10,6 +10,7 @@ Keeps orchestrator context window lean by persisting all phase data to disk.
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import sys
 from datetime import datetime, timezone
@@ -30,6 +31,7 @@ PHASE_NAMES = {
 
 
 NEW_ROOT = ".jtbd-market-discovery"
+RESULT_NAME = "result.json"  # the result file of a run, in its session folder (STORY-113)
 OLD_ROOT = ".jtbd"
 FINAL_PHASE = PHASE_NAMES[10]
 
@@ -266,12 +268,16 @@ class NameTaken(Exception):
     """The result file name of a run with a run_id exists already."""
 
 
-def place_result(draft_path: Path, base: Path) -> Path:
-    """Set run.finished_at to the UTC time now, name the file, and write it into
-    base/.jtbd-market-discovery/results/. Returns the path.
+def place_result(draft_path: Path, base: Path, session_dir: Path | None = None) -> Path:
+    """Set run.finished_at to the UTC time now and write the result file. Returns the path.
 
-    Raises ValueError for a bad draft, and NameTaken when the name is taken and the run has a run_id.
-    A run without a run_id gets -2, -3, and so on before .json. A file is never overwritten.
+    With a session folder, the file is `result.json` in it. When the folder holds that file, the next file is
+    `result-2.json`, then `result-3.json`, and so on (a resumed run). No name is refused.
+    With no session folder (a halt), the file goes to base/.jtbd-market-discovery/, with the name that
+    result_name.py gives. When the draft is in that folder, the draft goes away, so the halt file is the only file.
+
+    Raises ValueError for a bad draft, and NameTaken for a halt file when the name is taken and the run has a run_id.
+    A halt of a run without a run_id gets -2, -3, and so on before .json. A file is never overwritten.
     """
     try:
         draft = json.loads(Path(draft_path).read_text(encoding="utf-8"))
@@ -284,21 +290,30 @@ def place_result(draft_path: Path, base: Path) -> Path:
         raise ValueError("the draft needs command")
     run["finished_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     run_id = run.get("run_id") or None
-    name = _load_result_name().result_name(run["finished_at"], draft["command"], run["subject"], run_id)
-    folder = Path(base) / NEW_ROOT / "results"
-    folder.mkdir(parents=True, exist_ok=True)
     text = json.dumps(draft, indent=2) + "\n"
-    stem, n = name[: -len(".json")], 1
-    while True:
-        target = folder / (name if n == 1 else f"{stem}-{n}.json")
+    if session_dir is not None:
+        folder = Path(session_dir)
+        if not folder.is_dir():
+            raise ValueError(f"the session folder {folder.name} is not a folder")
+        names = (RESULT_NAME if n == 1 else f"result-{n}.json" for n in itertools.count(1))
+    else:
+        name = _load_result_name().result_name(run["finished_at"], draft["command"], run["subject"], run_id)
+        folder = Path(base) / NEW_ROOT
+        folder.mkdir(parents=True, exist_ok=True)
+        stem = name[: -len(".json")]
+        names = (name if n == 1 else f"{stem}-{n}.json" for n in itertools.count(1))
+    for target_name in names:
+        target = folder / target_name
         try:
             with open(target, "x", encoding="utf-8") as handle:  # "x": never overwrite
                 handle.write(text)
-            return target.resolve()
+            break
         except FileExistsError:
-            if run_id:
+            if session_dir is None and run_id:
                 raise NameTaken(f"{target.name} exists, and run_id {run_id!r} is set") from None
-            n += 1
+    if session_dir is None and Path(draft_path).resolve().parent == folder.resolve():
+        Path(draft_path).unlink()
+    return target.resolve()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -310,9 +325,11 @@ def main(argv: list[str] | None = None) -> int:
     `now`: print the UTC time to the second, as `YYYY-MM-DDTHH:MM:SSZ`.
     `merge-needs --session-dir <dir> [--batches 4]`: merge p3-batch-1.json to p3-batch-N.json into
     p3.json with the ids N001, N002, ...; print `needs=<n>`. Exit 1 for a missing or bad batch file.
-    `place-result --draft <file> --base <git root>`: set run.finished_at to now, name the file,
-    write it into `.jtbd-market-discovery/results/`, print its path. Exit 0 placed, 1 bad draft,
-    3 name taken (a run with a run_id)."""
+    `place-result --draft <file> --base <git root> [--session-dir <dir>]`: set run.finished_at to now
+    and write the result file, then print its path. With `--session-dir` the file is `result.json` in
+    that folder (`result-2.json`, `result-3.json` when the name is taken). Without it (a halt) the file
+    goes into `.jtbd-market-discovery/` and a draft in that folder goes away. Exit 0 placed, 1 bad draft,
+    3 name taken (a halt file of a run with a run_id)."""
     parser = argparse.ArgumentParser(prog="jtbd_state.py")
     sub = parser.add_subparsers(dest="command", required=True)
     pick = sub.add_parser("select", help="print the session folder for this run")
@@ -332,6 +349,7 @@ def main(argv: list[str] | None = None) -> int:
     place = sub.add_parser("place-result", help="name and write the result file of a run")
     place.add_argument("--draft", required=True, type=Path)
     place.add_argument("--base", required=True, type=Path)
+    place.add_argument("--session-dir", default=None, type=Path)
     args = parser.parse_args(argv)
     if args.command == "merge-needs":
         try:
@@ -342,7 +360,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "place-result":
         try:
-            print(place_result(args.draft, args.base))
+            print(place_result(args.draft, args.base, args.session_dir))
         except NameTaken as err:
             print(f"jtbd_state.py: {err}", file=sys.stderr)
             return 3

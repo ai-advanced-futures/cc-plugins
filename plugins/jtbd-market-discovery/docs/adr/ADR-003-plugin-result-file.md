@@ -19,7 +19,7 @@ Three facts of this plugin shaped the adoption:
 
 ## Decision
 
-1. **Adopt the standard.** Both commands write one result file to `.jtbd-market-discovery/results/` at the end of every run, a partial or halted one too (R1). `agents/output-assembler.md` writes it for `discover`, and `agents/wtp-validator.md` holds the rules for `wtp-check`. `result-file.json` names the writers and the defaults registry. `questions/discover.json` and `questions/wtp-check.json` list the inputs.
+1. **Adopt the standard.** Both commands write one result file at the end of every run, a partial or halted one too (R1). `agents/output-assembler.md` writes it for `discover`, and `agents/wtp-validator.md` holds the rules for `wtp-check`. `result-file.json` names the writers and the defaults registry. `questions/discover.json` and `questions/wtp-check.json` list the inputs. 2026-11 (STORY-113, D-056): the result file is `result.json` in the session folder, and no file stays beside the graph.
 
 2. **A session per run.** A coach run with a `run_id` uses the session `.jtbd-market-discovery/<run_id>/` and never another one. `jtbd_state.py select` decides, so the rule lives in code and not in each agent's text. A person's run without a `run_id` resumes only a person's own unfinished session, one with no `run_id` and no `case`, and otherwise starts a new one.
 

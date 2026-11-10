@@ -477,7 +477,7 @@ The skill `skills/wtp-check/SKILL.md` follows this section in every run of `jtbd
 
 The skill reads this section and writes the draft with the Write tool. Write the draft at the end of every run, interactive or automated, finished or partial; a person's run writes it with no `run_id` part. A run that produced nothing still writes it, with its `gaps`.
 
-**Where.** Write the draft to `{session_dir}/result-draft.json` (the skill names the folder for a halt). The skill then runs `jtbd_state.py place-result`. That script sets `run.finished_at`, names the file, and writes it to `.jtbd-market-discovery/results/` under the git root. It never overwrites an earlier file, because the file is the record of that run. Do not write `run.finished_at`, a file name, or a time, because the script reads the clock.
+**Where.** Write the draft to `{session_dir}/result-draft.json` (the skill names the folder for a halt). The skill then runs `jtbd_state.py place-result`. That script sets `run.finished_at` and writes the result file. The result file is `result.json` in the session folder of the run, `{session_dir}/result.json`. It is a state file of the session: the save code reads it, and it stays. A run that halts before it has a session folder writes its result file in `.jtbd-market-discovery/` under the git root, with the name that the script gives. After a clean `write-run`, that file is not in the folder, because the Run page holds its values. The script never overwrites an earlier file, because the file is the record of that run: when the session folder holds `result.json`, it writes `result-2.json`, then `result-3.json`, and so on. Do not write `run.finished_at`, a file name, or a time, because the script reads the clock.
 A failed read never ends the run without the draft: write it with what the run has, and record each result a failed read kept from the run as a gap whose `why` names that read.
 
 **Top level.** `schema` is `"plugin-result/1"`, `plugin` is `"jtbd-market-discovery"`, `plugin_version` is the `version` in `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` (read from the file, because an example holds an old version), and `command` is `"jtbd-market-discovery:wtp-check"`.
@@ -489,7 +489,7 @@ A failed read never ends the run without the draft: write it with what the run h
 
 - One `willingness_to_pay` result per segment of `p9.json` that has a number (a segment with none gets a gap, not a result): `value` `{"point": <validated_wtp>, "low": <wtp_range[0]>, "high": <wtp_range[1]>, "segment": "<name>"}`, copied as written, because the phase file is the source of each number; never computed or estimated. `unit` `"USD"`, `period` `"month"`, `detail` `.jtbd-market-discovery/<session folder name>/p9.json`.
 - One `customer_value` result from `p7.json` of `input_dir`: `value` is `total_annual_evc` of the `rank: 1` opportunity, `unit` `"USD"`, `period` `"year"`, `detail` `.jtbd-market-discovery/<upstream run_id>/p7.json`, and `cites` the upstream result file's `customer_value` result when it has one.
-- `detail` always points into a session folder. In a person's run, the result file still goes to `.jtbd-market-discovery/results/`; the `willingness_to_pay` `detail` names the folder of `session_dir`, and the `customer_value` `detail` names `p7.json` of `input_dir`, `.jtbd/<session_id>/p7.json` when that is an old session.
+- `detail` always points into a session folder. In a person's run, the result file goes to `session_dir`, never to the session of `input_dir`; the `willingness_to_pay` `detail` names the folder of `session_dir`, `.jtbd-market-discovery/<session folder name>/p9.json`, and the `customer_value` `detail` names `p7.json` of `input_dir`, `.jtbd/<session_id>/p7.json` when that is an old session. In a person's run, the upstream result file is `result.json` of `input_dir`.
 
 **Sources.** A value from the answers file is `{"type": "person", "ref": "answers:<input>", "date": null}` when `settled_by` is `person`, and `{"type": "default", "ref": "answers:<input>", "date": null}` when it is `recommended`. A survey file is a `customer_data` source with the file as `ref`. What the six layers inferred is a `model` source.
 A value built on the upstream run carries the defaults of the upstream result of the same kind. Copy that result's `defaults` strings, such as `labor_rate = 75`, into this result's `defaults`. Copy each of its sources whose type is `default` into this result's `sources`.
@@ -507,7 +507,7 @@ A run built on the upstream session, with one answer:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.10.5",
+  "plugin_version": "1.11.0",
   "command": "jtbd-market-discovery:wtp-check",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",
@@ -552,7 +552,7 @@ A run built on the upstream session, with one answer:
                    "revenue_margin = 0.20", "risk_tolerance = moderate"],
       "detail": ".jtbd-market-discovery/acme-0006/p7.json",
       "cites": [
-        {"file": ".jtbd-market-discovery/results/20261031T091500Z-discover-invoice-automation-for-mid-size-finance-acme-0006.json", "result_id": "value-1"}
+        {"file": "/abs/business-cases/acme/team/upstream/20261031T091500Z-discover-invoice-automation-for-mid-size-finance-acme-0006.json", "result_id": "value-1"}
       ]
     }
   ],
@@ -566,7 +566,7 @@ A run whose upstream entry does not match:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.10.5",
+  "plugin_version": "1.11.0",
   "command": "jtbd-market-discovery:wtp-check",
   "run": {
     "started_at": "2026-10-31T11:00:00Z",

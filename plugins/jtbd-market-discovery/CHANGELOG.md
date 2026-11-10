@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.11.0
+
+The plugin writes no old output file. The graph in `docs/jtbd/` is the only output of a run (STORY-113, D-056).
+
+- The 4 files `customer-needs.json`, `opportunity-scores.json`, `evc-analysis.json` and `wtp-validation.json` at the top of `.jtbd-market-discovery/` are not written any more. The agent `output-assembler` has the section `## No file beside the graph` in place of `## Promised files`, and the skill `discover` names the graph as its output.
+- The result file is `result.json` in the session folder, and not a file in `.jtbd-market-discovery/results/`. It is a state file of the session: the save code reads it, and it stays. A resumed run writes `result-2.json`, then `result-3.json`.
+- `jtbd_state.py place-result` has the option `--session-dir`. With it, the command writes `result.json` (or the next number) in that folder. With no option, for a halt before a session folder, it writes the halt file in `.jtbd-market-discovery/` with the name that `result_name.py` gives, and it removes the draft that is in that folder.
+- `write-run` with no `--session-dir` removes a result file when the file is at the top of `.jtbd-market-discovery/` and the write is clean. It prints `removed <path>`. After a failed write, the file stays. A result file in another place is never removed.
+- `write-run` reads the upstream result file of a `wtp-check` run from the session folder of that run: `result.json`, `result-2.json`, and so on, in number order, and the last file that matches. It does not read `results/` any more. A discover session of an earlier version has its file in `results/`: the `wtp-check` of such a session stops with `no result file of the discover run ... is in its session folder`. Run discover again, or move that file into the session as `result.json`.
+- The files of an earlier version (the `results/` folder and the 4 root files) are not removed and not read. A person can delete them.
+- The conformance copy `tests/plugin_result_conformance.py` checks for the file name `result.json` in place of the folder `.jtbd-market-discovery/results/`.
+
 ## 1.10.5
 
 - `learn`, Step 6, shows the full issue body in a fenced block after the first yes. It then asks a second question that says the repository `ai-advanced-futures/cc-plugins` is public. It opens the issue only after a yes to the second question, because the first yes is to the offer and not to the text (STORY-264).

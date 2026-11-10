@@ -95,7 +95,7 @@ The skills `discover` and `wtp-check` run these scripts. No agent has `Bash`, so
 | `run_phase_8.py` | 8 | the survey CSV and the segment count | `p8-clusters.json` |
 | `run_phase_9.py` | 9 | the WTP survey CSV and `p7.json` | `wtp-results.json` |
 | `jtbd_state.py merge-needs` | 3 | the four batch files | `p3.json` |
-| `jtbd_state.py place-result` | 10 | `result-draft.json` | the file in `.jtbd-market-discovery/results/` |
+| `jtbd_state.py place-result` | 10 | `result-draft.json` | `result.json` in the session folder (`--session-dir`), or the halt file in `.jtbd-market-discovery/` |
 
 Run each with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/NAME.py`, and put each placeholder in single quotes.
 

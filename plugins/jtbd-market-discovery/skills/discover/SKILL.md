@@ -25,7 +25,7 @@ When the arguments of the skill hold a fenced block with the info string `plugin
   Pass nothing for an input the answers file does not give, because the phase agent applies its own default and a value chosen here would hide that. Pass the `plugin-run` block itself to no phase agent, because each phase agent gets its inputs as dispatch fields.
 - Pass `run_id` and `case` to `jtbd_state.py select` (see ORIENT). The result file puts `case` in `run.case`, and `run_id` in `run.run_id` and in the file name.
 - This command builds on no earlier run, so `inputs_from` is `[]`. Read an earlier run's files only through `inputs_from`.
-- End the run with the result file written to `.jtbd-market-discovery/results/` by `jtbd_state.py place-result` from the draft that `agents/output-assembler.md` writes. A run that stops before Phase 10 ends that way too: start output-assembler with `partial: true`.
+- End the run with the result file `result.json`, written to the session folder by `jtbd_state.py place-result` from the draft that `agents/output-assembler.md` writes. A run that stops before Phase 10 ends that way too: start output-assembler with `partial: true`.
 
 ## Purpose
 
@@ -47,7 +47,7 @@ Run the 10 phases with a fresh sub-agent for each phase, so the context of each 
    Each answer has the form `{"value": ..., "settled_by": "person"}`; an answer that is the recommended option has `"settled_by": "recommended"`. Leave out an input that has no answer. A person's run has `checkpoints: true`. A request to not ask the questions of this step again (for example, "do not ask them again") does not change `checkpoints`: each checkpoint of `## Phases` still stops the run.
 3. Run `## Phases` (below) with `market_area`, `answers` and `checkpoints`. A phase agent keeps no input of an earlier dispatch, so give them each time.
 4. At a checkpoint, and when the reply of a phase agent ends with `QUESTIONS: <path>`, `## Phases` tells you to ask the person. Ask each item with the `AskUserQuestion` tool. For the item `manual_ratings`, ask for the importance and satisfaction ratings of the needs it lists [q: manual_ratings]. Ask any other item as its own input [q: none]. Write the answers to `{session_dir}/answers.json`, as `{"answers": {<input>: {"value": ..., "settled_by": ...}}}`. When the person does not answer (for example, the tool is refused in a run with no screen), end your reply with the line `QUESTIONS: {session_dir}/questions.json` and stop; the next run of the skill resumes at that phase.
-5. When Phase 10 is done, show the top 3 opportunities, the willingness-to-pay verdict, the paths of the output files below, and the path of the result file in `.jtbd-market-discovery/results/`. When a `GRAPH: FAILED <exit code> <first error line>` line exists (see Phase 10), show it, and do not say that the graph holds the results. When the run stopped before the end, show why, and give the path of `{session_dir}/execution-log.md`.
+5. When Phase 10 is done, show the top 3 opportunities, the willingness-to-pay verdict, the `Run` page of the run in `docs/jtbd/`, and the path of the result file. When a `GRAPH: FAILED <exit code> <first error line>` line exists (see Phase 10), show it, and do not say that the graph holds the results. When the run stopped before the end, show why, and give the path of `{session_dir}/execution-log.md`.
 6. With `--defaults`, ask nothing and go to step 7. Otherwise, ask one question: "Learn these results?" On yes, load the `jtbd-market-discovery:learn` skill with the Run page named in `run_page` of `{session_dir}/state.json`. On no, the pages stay `draft`.
 7. Offer the next steps: `/product:explore` to turn the top opportunity into product requirements, `/gtm` to build a go-to-market strategy around the validated opportunity, `/pricing:price` to compute the right price from the value data, and `/jtbd-market-discovery:wtp-check` to test a price.
 
@@ -63,7 +63,7 @@ To mark a phase complete, read `{session_dir}/state.json`, set `phases.<phase>.s
 | `market_area` | Yes, except on a resume | The product or market to analyze |
 | `survey_data_path` | No | Absolute path of a survey CSV; with no value, Phase 5 uses expert estimates |
 | `run_id` | No | The id of a coach run. The session is the folder `.jtbd-market-discovery/{run_id}/`, and no other session is resumed |
-| `case` | No | The case name; stored in `state.json` and in the promised files |
+| `case` | No | The case name; stored in `state.json` and in the result file |
 | `session_dir` | No | The session folder that step 3 of the skill chose. With no value, run ORIENT |
 | `answers` | No | The answers of the person: `{<input>: {"value": ..., "settled_by": "person" or "recommended"}}` |
 | `checkpoints` | No | `true` for a person's run. Stop at each checkpoint (see CHECKPOINTS). With no value, the run goes to the end |
@@ -164,9 +164,9 @@ Find the first phase that is not complete, and run its branch.
      "answers_path": "<answers_path, or null>", "mode": "<automated when a plugin-run block is present, else interactive>",
      "partial": false, "composite_path": "<session_dir>/composite-scores.json", "composite_gap": "<the message, or null>" }
    ```
-   It writes `final-output.json`, the four promised files and `{session_dir}/result-draft.json`.
-3. Run `git rev-parse --show-toplevel` on its own, and call the result `base`. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py place-result --draft '<session_dir>/result-draft.json' --base '<base>'`. It sets `run.finished_at`, names the file and prints its path. Call that path `result_file`. Exit 3 means the name is taken by another run with the same `run_id`: write that to `execution-log.md`, and stop.
-4. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root '<base>' write-run --session-dir '<session_dir>' --result-file '<result_file>'`. When it exits 1 or 2, keep the line `GRAPH: FAILED <exit code> <first error line>`, and do not say that the graph holds the results, because the next session trusts that report. The result file and the four promised files exist already.
+   It writes `final-output.json` and `{session_dir}/result-draft.json`.
+3. Run `git rev-parse --show-toplevel` on its own, and call the result `base`. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py place-result --draft '<session_dir>/result-draft.json' --base '<base>' --session-dir '<session_dir>'`. It sets `run.finished_at`, writes `result.json` in the session folder (`result-2.json` when the folder holds `result.json`: a resumed run) and prints its path. Call that path `result_file`.
+4. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py --root '<base>' write-run --session-dir '<session_dir>' --result-file '<result_file>'`. When it exits 1 or 2, keep the line `GRAPH: FAILED <exit code> <first error line>`, and do not say that the graph holds the results, because the next session trusts that report. The result file exists already, in the session folder.
 5. Mark Phase 10 complete. The run is done.
 
 ### Halt draft
@@ -178,7 +178,7 @@ A halt has no session. Write `<base>/.jtbd-market-discovery/result-draft.json` w
   "run": { "started_at": "<time from jtbd_state.py now>", "mode": "<automated or interactive>", "subject": "<market_area, or no market area given>" },
   "results": [], "gaps": [{ "kind": "job", "label": "Job", "why": "<the halt reason>" }] }
 ```
-In a plugin run, add `case`, `run_id` and `answers` (the `answers_path`) to `run`. Then run `place-result` as Phase 10 step 3 does, and `jtbd_graph.py --root '<base>' write-run --result-file '<result_file>'` with no `--session-dir`.
+In a plugin run, add `case`, `run_id` and `answers` (the `answers_path`) to `run`. Then run `place-result` as Phase 10 step 3 does, but with no `--session-dir`: it writes the halt file in `.jtbd-market-discovery/`, removes the draft, and prints the path as `result_file`. Exit 3 means the name is taken by another run with the same `run_id`: write that to `execution-log.md` in `.jtbd-market-discovery/`, and stop. Then run `jtbd_graph.py --root '<base>' write-run --result-file '<result_file>'` with no `--session-dir`. After a clean write, the halt file is not in `.jtbd-market-discovery/`, and the output has a `removed` line, because the Run page holds its values.
 
 ### 3. CHECKPOINTS
 
@@ -249,16 +249,10 @@ Phase 10 → requires Phase 9
 ├── wtp-results.json      # run_phase_9.py output
 ├── composite-scores.json # composite_scorer.py output
 ├── final-output.json     # Phase 10 assembled final output
-└── result-draft.json     # The result file before place-result names and places it
+├── result-draft.json     # The result file before place-result sets finished_at and places it
+└── result.json           # The result file (result-2.json, result-3.json for a resumed run); the save code reads it
 ```
 
 ## Deliverables
 
-- `.jtbd-market-discovery/customer-needs.json`
-- `.jtbd-market-discovery/opportunity-scores.json`
-- `.jtbd-market-discovery/evc-analysis.json`
-- `.jtbd-market-discovery/wtp-validation.json`
-
-The result file in `.jtbd-market-discovery/results/` and the pages of the run in `docs/jtbd/` (the `jtbd` graph) are also output. The job, the steps, the segments and the integrated output are pages of the graph. The files of a session stay in `.jtbd-market-discovery/{session}/`.
-
-Each file carries `subject`, `session_id`, `case` and `run_id` at the top level, so a reader can tell which run wrote it.
+The output of a run is its pages in `docs/jtbd/` (the `jtbd` graph): the job, the steps, the needs, the scores, the segments, the willingness-to-pay check and one `Result` page for each result. The files of a session stay in `.jtbd-market-discovery/{session}/`, `result.json` included, as state files of the run.

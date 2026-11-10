@@ -490,21 +490,35 @@ def session_state(session_dir):
     return load_json(Path(session_dir) / "state.json") or {}
 
 
+RESULT_NAME = "result.json"
+
+
+def result_files(session_dir):
+    """The result files of a session in number order: result.json, result-2.json, result-3.json and so on."""
+    numbered = []
+    for path in Path(session_dir).glob("result*.json"):
+        tail = path.stem[len("result"):]
+        if tail == "" or (tail.startswith("-") and tail[1:].isdigit()):
+            numbered.append((int(tail[1:] or 1), path))
+    return [path for _, path in sorted(numbered)]
+
+
 def find_result_file(session_dir, state):
-    """The result file of the discover run of a session, in `results/` beside the session folder."""
-    folder = session_dir.parent / "results"
+    """The result file of the discover run of a session: the last of result.json, result-2.json, ... that matches
+    (STORY-113). A resumed run writes the next number, so the last match is the newest run of the session."""
     run_id = state.get("run_id")
-    for path in sorted(folder.glob("*.json")) if folder.is_dir() else []:
+    chosen = None
+    for path in result_files(session_dir):
         try:
             data = json.loads(path.read_text("utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
-        info = (data or {}).get("run") or {}
-        if not str(data.get("command", "")).endswith(":discover"):
+        if not isinstance(data, dict) or not str(data.get("command", "")).endswith(":discover"):
             continue
+        info = data.get("run") or {}
         if (run_id and info.get("run_id") == run_id) or (not run_id and info.get("started_at") == state.get("started_at")):
-            return data
-    return None
+            chosen = data
+    return chosen
 
 
 def input_folder(session_dir, state, result):
@@ -543,8 +557,9 @@ def ensure_input(root, session_dir, state, result, actor, lines):
     if not page or not has_entry(root) or not (bundle_dir(root) / str(page).lstrip("/")).is_file():
         earlier = find_result_file(folder, input_state)
         if earlier is None:
-            raise DataError(f"no result file of the discover run {input_state.get('run_id') or folder.name} is in "
-                            f"{folder.parent.name}/results/. No page was written, because the Run page would have no Result page.")
+            raise DataError(f"no result file of the discover run {input_state.get('run_id') or folder.name} is in its "
+                            f"session folder ({folder.name}/{RESULT_NAME}). No page was written, because the Run page would "
+                            "have no Result page.")
         write_one(root, folder, earlier, actor, lines, "jtbd-market-discovery:discover")
         page = session_state(folder)["run_page"]
     return page, load_json(folder / "p7.json")
@@ -616,4 +631,9 @@ def run(root, session_dir, result_file, actor=None):
     mapping = write_one(root, session_dir, result, actor, lines)
     lines.append(json.dumps(mapping, indent=2, ensure_ascii=False))
     errors = [i.text() for i in check.run(root) if i.level == ERROR]
+    halt = Path(result_file).resolve()
+    if session_dir is None and not errors and halt.parent == root / ".jtbd-market-discovery":
+        # A halt before a session: the Run page holds the values of the file (STORY-113, D-083).
+        halt.unlink()
+        lines.append(f"removed {halt.relative_to(root).as_posix()}")
     return lines, errors

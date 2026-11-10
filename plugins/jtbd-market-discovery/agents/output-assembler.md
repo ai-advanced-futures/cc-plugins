@@ -1,6 +1,6 @@
 ---
 name: output-assembler
-description: Phase 10 — reads all JTBD phase output files, assembles final-output.json, writes the promised files and the result file, and emits the plugin completion signal
+description: Phase 10 — reads all JTBD phase output files, assembles final-output.json, writes the draft of the result file, and emits the plugin completion signal
 model: opus
 tools: Read, Write, Glob
 ---
@@ -26,31 +26,11 @@ The skill starts this agent with a JSON context object:
 
 Extract `session_dir` from the dispatch context at the start of execution. All phase file reads use this absolute path.
 
-One dispatch writes only the result draft (see `## Result file`), and skips steps 2 to 4b of the process: `"partial": true`, the run stopped before Phase 10. Read the phase files that exist. A halt has no session, so the skill writes the draft of a halt itself.
+One dispatch writes only the result draft (see `## Result file`), and skips steps 2 to 4a of the process: `"partial": true`, the run stopped before Phase 10. Read the phase files that exist. A halt has no session, so the skill writes the draft of a halt itself.
 
-## Promised files
+## No file beside the graph
 
-`${CLAUDE_PLUGIN_ROOT}/skills/discover/SKILL.md`, section Deliverables, promises four files. Write them to the `.jtbd-market-discovery/` folder two levels above `session_dir` (`session_dir/../../.jtbd-market-discovery/`). Write nothing into `.jtbd/`, because a new run reads that folder only as a fallback.
-
-Other plugins read these four files today. The graph in `docs/jtbd/` holds the same values (see `## Graph write`). Write no other file of the run into `.jtbd-market-discovery/`, because the graph holds the job, the steps and the segments.
-
-Each file holds the content of its source file. It also holds four top-level keys that identify the run. A key from the source file with the same name is replaced.
-
-- `subject`: the `market_area` of the dispatch context; when absent, the `job_statement` of `p1.json`.
-- `session_id`: `session_id` from `state.json` of `session_dir`.
-- `case`: `case` from `state.json`; `null` when absent.
-- `run_id`: `run_id` from `state.json`; `null` when absent.
-
-When a source file holds a list and not an object, the file holds the list under the key `items`.
-
-| File | Source |
-|---|---|
-| `customer-needs.json` | `p3.json` |
-| `opportunity-scores.json` | `p6.json` |
-| `evc-analysis.json` | `p7.json` |
-| `wtp-validation.json` | `p9.json` |
-
-A later run overwrites these files.
+The graph in `docs/jtbd/` is the output of the run (see `## Graph write`). Write no other output file: the files of the session are state files. Outside a session folder, `.jtbd-market-discovery/` holds only the result file of a halt (see `## Result file`) and the `execution-log.md` of a halt. Write nothing into `.jtbd/`.
 
 ## Graph write
 
@@ -59,7 +39,6 @@ The skill writes the pages of the run after `place-result` has written the resul
 ## Output Artifacts
 
 - `{session_dir}/final-output.json` — complete structured analysis (a state file of the session)
-- the four promised files in `.jtbd-market-discovery/` (see `## Promised files`)
 - `{session_dir}/result-draft.json` — the result file without `run.finished_at` (see `## Result file`)
 
 ## Result file
@@ -68,7 +47,7 @@ Follow this section in every run of `jtbd-market-discovery:discover`: a person's
 
 Write the draft of the result file at the end of every run of `jtbd-market-discovery:discover`: a finished run and a partial one, interactive or automated.
 
-**Where.** Write the draft to `{session_dir}/result-draft.json` with the Write tool. The skill runs `jtbd_state.py place-result` on the draft. That script sets `run.finished_at`, names the file, and writes it to `.jtbd-market-discovery/results/` under the git root. It never overwrites an earlier file, because the file is the record of that run. Do not write `run.finished_at`, a file name, or a time, because the script reads the clock and this agent has none.
+**Where.** Write the draft to `{session_dir}/result-draft.json` with the Write tool. The skill runs `jtbd_state.py place-result` on the draft. That script sets `run.finished_at` and writes the result file. The result file is `result.json` in the session folder of the run, `{session_dir}/result.json`. It is a state file of the session: the save code reads it, and it stays. A run that halts before it has a session folder writes its result file in `.jtbd-market-discovery/` under the git root, with the name that the script gives. After a clean `write-run`, that file is not in the folder, because the Run page holds its values. The script never overwrites an earlier file, because the file is the record of that run: when the session folder holds `result.json`, it writes `result-2.json`, then `result-3.json`, and so on. Do not write `run.finished_at`, a file name, or a time, because the script reads the clock and this agent has none.
 
 A failed read does not end the run before the draft exists, because a coach reads the result file: write the draft with what you could read, and record each phase file you could not read as a gap whose `why` is `"phase N file not read: <the tool's message>"`.
 
@@ -93,7 +72,7 @@ A `willingness_to_pay` result needs at least one of `point`, `low` and `high`: f
 | `customer_segment` | segment | `p8.json` | `{"name"}` | none |
 | `willingness_to_pay` | segment | `p9.json` | `{"point", "low", "high", "segment"}` | `"USD"`, `"month"` |
 
-`detail` is the phase file in the run's own session, relative to the git root: `.jtbd-market-discovery/<session_id>/pN.json`. It never names the eight promised files at the folder root. A resumed old session keeps its place: the result file still goes to `.jtbd-market-discovery/results/`, and its `detail` names that old session, `.jtbd/<session_id>/pN.json`.
+`detail` is the phase file in the run's own session, relative to the git root: `.jtbd-market-discovery/<session_id>/pN.json`. It never names a file outside a session folder. A resumed old session keeps its place: the result file goes to its session folder, and its `detail` names that old session in place of `.jtbd-market-discovery/<session_id>/`, as `.jtbd/<session_id>/pN.json`.
 
 **Sources and defaults.** Every result has a `model` source for what the agents inferred, and a `customer_data` source with the survey file as `ref` when `p5.json` names one.
 When the answers file gave `market_area`, the `job` result also has the source `{"type": "person", "ref": "answers:market_area", "date": null}`, or the `default` source of that ref when `settled_by` is `recommended`. The phase files record how each input was settled under `assumption_sources`, one plain string per input:
@@ -130,7 +109,7 @@ A finished run that rests on every default:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.10.5",
+  "plugin_version": "1.11.0",
   "command": "jtbd-market-discovery:discover",
   "run": {
     "started_at": "2026-10-31T09:00:00Z",
@@ -197,7 +176,7 @@ A run whose answers file gave the labor rate (`settled_by: person`), so `labor_r
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.10.5",
+  "plugin_version": "1.11.0",
   "command": "jtbd-market-discovery:discover",
   "run": {
     "started_at": "2026-10-31T09:00:00Z",
@@ -264,7 +243,7 @@ A run whose answers file gave the labor rate (`settled_by: person`), so `labor_r
        "date": "YYYY-MM-DD",
        "job_statement": "...",
        "respondents": 87,
-       "analyst": "jtbd-market-discovery v1.10.5",
+       "analyst": "jtbd-market-discovery v1.11.0",
        "session_dir": "..."
      },
      "job_steps": [...],
@@ -305,8 +284,6 @@ A run whose answers file gave the labor rate (`settled_by: person`), so `labor_r
    - Verify `final-output.json` file exists on disk (read it back to confirm)
    - If any check fails: log error to `execution-log.md` in `session_dir`, report
      with message: "Output assembly incomplete — see execution-log.md", then go to step 5. Write the result file as a partial run.
-
-4b. **Write the promised files** to `.jtbd-market-discovery/`, as the `## Promised files` section above says.
 
 5. **Write the result draft**, as `## Result file` above says. Do this on every dispatch, a partial one too.
 

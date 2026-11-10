@@ -2,11 +2,18 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.10.5
+**Version:** 1.11.0
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.10.5
+## What's New in v1.11.0
+
+- The graph in `docs/jtbd/` is the only output of a run. The plugin does not write the 4 files `customer-needs.json`, `opportunity-scores.json`, `evc-analysis.json` and `wtp-validation.json` any more, and it does not write the `results/` folder.
+- The result file is `result.json` in the session folder, a state file of the run. A resumed run writes `result-2.json`, then `result-3.json`. `jtbd_state.py place-result` has the new option `--session-dir`.
+- A halt before a session folder writes its result file in `.jtbd-market-discovery/`. After a clean `write-run`, the command removes that file, because the Run page holds its values.
+- The plugin does not read the files of an earlier version. A person can delete them.
+
+## What Was New in v1.10.5
 
 - `learn`, Step 6, shows the full text of the GitHub issue after the first yes and asks a second question. The repository `ai-advanced-futures/cc-plugins` is public. The issue opens only after a yes to the second question (STORY-264).
 
@@ -187,7 +194,7 @@ Each run writes these files to its session folder:
 - `state.json` (the state of the run)
 - an executive summary
 
-Each run also writes one result file, in the shared plugin result shape, to `.jtbd-market-discovery/results/`. A halted run writes it too, with its gaps. [ADR-003](docs/adr/ADR-003-plugin-result-file.md) records the rules.
+Each run also writes one result file, in the shared plugin result shape, as `result.json` in its session folder. The save code writes the `Result` pages from it. A halted run writes it too, with its gaps. [ADR-003](docs/adr/ADR-003-plugin-result-file.md) records the rules.
 
 Example of an opportunity in `final-output.json`:
 
