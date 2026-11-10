@@ -2,9 +2,12 @@
 
 The output folder holds the files of the phases. `pages.json` there names the Run page of the run, so each
 later phase joins the same run while that run is a draft. A run that a person confirmed, or a save with
-`new_run`, starts a new Run page. The pages that the earlier runs made stay known, so a page is not made twice. The pages are made in a temporary copy of the bundle. The code runs `regen` and the brain check in
-that copy, and moves the copy in only when the check has no error. Only then does it remove the files that it
-read. A failed step removes no file and changes no page.
+`new_run`, starts a new Run page. A new run finds the Persona, Screen, Concept and InteractionRule pages of earlier
+runs by key, so such a page is not made twice. It makes its own page of each other type. The pages are made in a
+temporary copy of the bundle. The code runs `regen` and the brain check in that copy, and moves the copy in only
+when the check has no error. Only then does it remove the files that it read. A failed step removes no file and
+changes no page. Before all of this, a text that the general check reads as a link to a page stops the save
+(STORY-333), because that check runs only after the save.
 
 A JSON file is put together again by `view`: `Run.file_meta[file]` is the file with each document replaced by
 `@@<page ID>`, and the page holds the document as `record["<RUN ID>/<file>"]`. A page that has child pages
@@ -14,6 +17,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -77,6 +81,48 @@ def walk_marks(value, name) -> None:
     elif isinstance(value, list):
         for item in value:
             walk_marks(item, name)
+
+
+# The 3 forms of a link to a page that the general check of the knowledge plugin finds: `is_link`,
+# `BODY_LINK_RE` and `BODY_GRAPH_RE` of `plugins/knowledge/scripts/knowledgelib/okf.py`. A copy, because the save
+# code imports no other plugin. `tests/unit/test_ingest_link_text.py` proves the copy against that check.
+GRAPH_LINK = re.compile(r"^([a-z][a-z0-9-]*):(/[^/\s]\S*)$")
+TEXT_LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+TEXT_GRAPH_LINK = re.compile(r"(?<![\w/:.-])([a-z][a-z0-9-]*):(/[A-Za-z0-9._-][A-Za-z0-9._/-]*\.md)")
+EXTERNAL = re.compile(r"^(?:[a-z][a-z0-9+.-]*:|//|#)")
+
+
+def reads_as_link(text, whole=True) -> bool:
+    """True when the general check reads the text, or a part of it, as a link to a page.
+
+    `whole` is the frontmatter form (the full text is the link). A page body gives only the 2 forms in a text."""
+    value = text.strip()
+    if whole and ((value.startswith("/") and not value.startswith("//") and ".md" in value) or GRAPH_LINK.match(value)):
+        return True
+    if TEXT_GRAPH_LINK.search(text):
+        return True
+    return any(m.group(1).split("#", 1)[0].endswith(".md") and not EXTERNAL.match(m.group(1))
+               for m in TEXT_LINK.finditer(text))
+
+
+def link_texts(value, at=""):
+    """(field, text) for each text of a JSON document that reads as a link to a page."""
+    if isinstance(value, str):
+        if reads_as_link(value):
+            yield at or "(the file)", value
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            yield from link_texts(item, f"{at}.{key}" if at else str(key))
+    elif isinstance(value, list):
+        for number, item in enumerate(value):
+            yield from link_texts(item, f"{at}[{number}]")
+
+
+def refuse_link_texts(found) -> None:
+    if found:
+        raise DataError("\n".join(
+            f"UX-link: {name}: {field}: the brain reads this text as a link to a page: {text[:80]!r}. "
+            "Write it in words, or remove it, and run the save again." for name, field, text in found))
 
 
 def read_json(path):
@@ -641,16 +687,23 @@ def run(root, output, phase, actor=None, new_run=False) -> list[str]:
     if not present:
         raise DataError(f"{folder.name} has no file of the phase {phase}: {', '.join(PHASES[phase])}")
     # Read and check each file before the lock, so a file that is not valid stops here with nothing changed.
-    data = {}
+    data, found = {}, []
     for name in present:
         if name in DIAGRAMS:
             try:
                 data[name] = (folder / name).read_bytes().decode("utf-8")
             except UnicodeDecodeError as error:
                 raise DataError(f"{name}: the file is not UTF-8 text: {error}") from error
+            # A diagram is the body of its page, so only the 2 forms of a link in a text apply.
+            found += [(name, f"line {number}", line) for number, line in enumerate(data[name].splitlines(), 1)
+                      if reads_as_link(line, whole=False)]
         else:
             data[name] = read_json(folder / name)
             walk_marks(data[name], name)
+            found += [(name, field, text) for field, text in link_texts(data[name])]
+    # The Run page holds the context of the run as `project_context`.
+    found += [(".ux-config.json", field, text) for field, text in link_texts(read_context(folder) or {})]
+    refuse_link_texts(found)
     lines = []
     with lock(root):
         run_ref, known = read_pages_file(folder)

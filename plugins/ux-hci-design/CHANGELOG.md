@@ -2,6 +2,17 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.6.1 - 2026-11-10
+
+STORY-333, STORY-336 and STORY-338 (the follow-ups of STORY-257).
+
+- `ux_graph.py ingest` refuses a text that the general check reads as a link to a page: a text that starts with `/` and holds `.md`, a text in the form `<graph>:/<path>`, a Markdown link to a `.md` target, and a `<graph>:/<path>.md` in a longer text. It writes 1 `UX-link` line for each such text, with the file and the field, and exits 1 before the lock. It removes no file and changes no page. Before this change, the save removed the files and left a `K-link` error in the brain (STORY-333).
+- Before each dispatch, the skill `ux-design` gets each input file from the brain with `view latest`, also when `pages.json` of this run does not list the file. Such a file is input only. The skill says that it can come from a draft run, and starts the agent without it when the brain does not hold it (STORY-336).
+- The skill `ux-design` starts each agent in the foreground with `run_in_background: false`, and says what to do when Claude Code still starts one in the background (STORY-338).
+- The skill `ux-design` lets a phase agent write its files in `.ux-artifacts/` and read its method and schema files (`Edit(/.ux-artifacts/**)`, `Read(//**/ux-hci-design/**/skills/**)`, `Read(//**/ux-hci-design/**/schemas/**)`). Before this change, a run in the default permission mode with no person refused each of these calls, so the phase saved nothing.
+- The agents `ux-researcher`, `ux-artifact-generator`, `ux-concept-designer` and `ux-prototype-builder` write no such text, and the agent `ux-evaluator` gives the true reason of its rule: the save refuses a file with such a text.
+- `uxlib/ingest.py` has a correct docstring for a new run, and a test of `test_ingest.py` that could not fail now checks the places of the first run.
+
 ## 1.6.0 - 2026-11-10
 
 Part B of STORY-257: the skills and the write flow of the brain.

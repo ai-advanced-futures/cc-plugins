@@ -1,7 +1,7 @@
 ---
 name: ux-design
 description: Use for a UX design task, such as personas, journey maps, wireframes, a heuristic evaluation, or an accessibility or AI-HCI audit. Guides the person through the 5 Design Thinking phases, asks the questions of each phase, and starts the agent of the phase.
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/check_output.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ux_graph.py *), Bash(git rev-parse *), Skill
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/check_output.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ux_graph.py *), Bash(git rev-parse *), Skill, Edit(/.ux-artifacts/**), Read(//**/ux-hci-design/**/skills/**), Read(//**/ux-hci-design/**/schemas/**)
 ---
 
 # UX Design Orchestrator
@@ -107,7 +107,7 @@ When invoked, follow this sequence:
 
 When the argument names the phase and the input paths, and .ux-config.json exists, ask nothing and dispatch the agent at once.
 
-Only this skill asks the person. The phase agents ask nothing: AskUserQuestion is not available to a subagent. When an agent needs an answer, it writes the open questions to `<output_dir>/open-questions.md` and returns. Ask these questions with AskUserQuestion. After you ask its questions, delete `<output_dir>/open-questions.md`. Then dispatch the same agent again with the answers.
+Only this skill asks the person. The phase agents ask nothing: AskUserQuestion is not available to a subagent. When an agent needs an answer, it writes the open questions to `<output_dir>/open-questions.md` and returns. Ask these questions with AskUserQuestion. After you ask its questions, delete `<output_dir>/open-questions.md`. Then dispatch the same agent again with the answers. Run that dispatch in the foreground too, with `run_in_background: false`.
 
 To delete the file, run 1 Bash command with 1 path: `rm -f -- '<absolute path of the file>'`. Write each `'` in the path as `'\''`. Run this command on its own, with no other command, because a command with a list or a loop is refused. The person approves it, because no rule approves an `rm`. When the command fails or the person refuses it, tell the person the path of the file and to delete it, and stop. Do not dispatch the agent again, because an old file starts the same questions again.
 
@@ -140,7 +140,7 @@ When `init` exits 1 or 2, stop and show its output. Run no `ingest`, because the
 
 **After each phase.** Run `$G ingest <output_dir> --phase <phase>` (`<phase>` is `empathize`, `define`, `ideate`, `prototype` or `test`). Add `--new-run` to each `ingest` of this run of the skill until one exits 0, and to no `ingest` after that, because a failed `ingest` changes no file, and a retry with no `--new-run` would join the draft run of an earlier session, and because each run of the skill is one Run page, and a run that an earlier session left in `<output_dir>/pages.json` is not this run. The command maps the files of the phase to pages, checks them, and removes each file that it read. When it exits 1 or 2, show its output, say "The save failed. The files of the phase stay in <output_dir>. Run /ux-hci-design:setup, or fix the cause and run the save again.", and stay in this phase, because the next phase reads the saved files. The test phase runs `ingest` only after the check of its Step 3 exits 0.
 
-**Before each dispatch.** Read `<output_dir>/pages.json` with the Read tool when it exists. For each input file of the phase that its `files` object lists, run `$G view latest <file name> --out <output_dir>/inputs/<file name>`, and give the agent that path in `inputs`. A file that `pages.json` does not list goes to the agent as given: a file that the person names, or a file that no earlier phase of this run saved. `view` writes only under `<output_dir>/inputs/`, and the next `ingest` removes that folder. A run with "No brain now" gives the plain paths. When a `view` exits 1 or 2, show its output, say "The file <file name> could not be read from the brain. The phase stopped.", and stop, because the agent would work without its input. Do not give the agent an older file in its place, because the agent would work on results that the brain no longer holds.
+**Before each dispatch.** Read `<output_dir>/pages.json` with the Read tool when it exists. For each input file of the phase, run `$G view latest <file name> --out <output_dir>/inputs/<file name>`, and give the agent that path in `inputs`. Do this also when the `files` object of `pages.json` does not list the file, or when there is no `pages.json`, because `pages.json` lists only the files of this run, and an earlier session can have saved the file. Only a file that the person names as a path goes to the agent as that path. `view latest` takes the latest run that holds the file, by its start time. It does not check if a person confirmed that run with `/ux-hci-design:learn`, so the file can come from a draft run. When `pages.json` does not list the file and `view` exits 0, say this line before the dispatch, and again in your last message of the run, because a run with no person shows only the last message: "The input <file name> comes from the latest saved run that holds it. That run can be a draft that no person confirmed." The file is input only: this step changes no place in `pages.json` and no page of the brain. `view` writes only under `<output_dir>/inputs/`, and the next `ingest` removes that folder. A run with "No brain now" gives the plain paths. When a `view` exits 1 or 2 for a file that `pages.json` lists, show its output, say "The input <file name> could not be read from the brain. The phase stopped.", and stop, because the agent would work without its input. When a `view` exits 1 or 2 for a file that `pages.json` does not list, show its output, say "The input <file name> could not be read from the brain, so the agent starts without it.", and start the agent with the other inputs, because only an input that this run saved is required. Do not give the agent an older file in its place, because the agent would work on results that the brain no longer holds.
 
 **End of the run.** When the run saved the brain, ask "Learn these results?" with AskUserQuestion (options: yes, no). On yes, run the skill `ux-hci-design:learn` with the RUN ID of `<output_dir>/pages.json`. When the question gets no answer (an error, or AskUserQuestion is not in your tool set), ask nothing more. Then read `<git root>/.claude/knowledge.json`:
 - No `prd` graph and no `system-design` graph: say "The behavior results are in the UX brain. To add them to the PRD, run /product:setup and /system-design:setup first."
@@ -346,15 +346,19 @@ Apply these frameworks explicitly at each phase:
 
 When entering each phase, ask the questions of the phase with AskUserQuestion. Then dispatch the appropriate specialist agent with the `Agent` tool. A plugin agent registers as `ux-hci-design:<agent>`, so use that full name (a bare name finds no agent).
 
+Run every agent you dispatch in the foreground and wait for it to finish; never run one in the background, because an agent that runs in the background returns in a new turn that does not have the `allowed-tools` of this skill, and the next step is then refused. So set `run_in_background: false` in each `Agent` call. When Claude Code still starts an agent in the background (its result says "Async agent launched"), wait for its completion notice, and run no other step of the phase before it. When the `ingest` after it is then refused, say "The save did not run, because Claude Code refused the save command. The files of the phase stay in <output_dir>. To save them, run: <the ingest command>", and stop. When the agent could not write its files, because Claude Code refused its calls, say "The agent of the phase could not write its files, because Claude Code refused its calls. Run the phase again.", and stop, because no file is there to save.
+
 Each dispatch gives the agent these fields:
 - `project_context`: the values of `.ux-config.json`
 - `inputs`: a list of absolute paths of the phase inputs. A file that the brain holds goes through `view --out` first (section "Save the brain")
-- `output_dir`: an absolute path (default `<project>/.ux-artifacts`)
+- `output_dir`: an absolute path (default `<project>/.ux-artifacts`). The `allowed-tools` of this skill let an agent write only in `<project>/.ux-artifacts/`. For another folder, Claude Code asks the person, and a run with no person refuses the write.
 - `method_file`: the absolute path of the skill that holds the method of the phase, `${CLAUDE_PLUGIN_ROOT}/skills/<phase>/SKILL.md` (the test phase uses `${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md`)
 
-After a dispatch, when `<output_dir>/open-questions.md` exists, ask its questions with AskUserQuestion. After you ask its questions, delete `<output_dir>/open-questions.md`. Then dispatch the same agent again with the answers. Then show the paths of the phase outputs and ask the next-phase question with AskUserQuestion (options: yes, no, learn more).
+After a dispatch, when `<output_dir>/open-questions.md` exists, ask its questions with AskUserQuestion. After you ask its questions, delete `<output_dir>/open-questions.md`. Then dispatch the same agent again with the answers. Run that dispatch in the foreground too, with `run_in_background: false`. Then show the paths of the phase outputs and ask the next-phase question with AskUserQuestion (options: yes, no, learn more).
 
 ### Empathize Phase → `ux-hci-design:ux-researcher` Agent
+
+Start `ux-hci-design:ux-researcher` with the `Agent` tool in the foreground: set `run_in_background: false`, and wait for it to finish, because the `ingest` of this phase runs after it in this turn.
 
 **Dispatch Command:**
 ```
@@ -378,6 +382,8 @@ Ask the start point of this phase with AskUserQuestion (options: research from E
 
 Before the dispatch, run `view` for `research_findings.json` (section "Save the brain", "Before each dispatch").
 
+Start `ux-hci-design:ux-artifact-generator` with the `Agent` tool in the foreground: set `run_in_background: false`, and wait for it to finish, because the `ingest` of this phase runs after it in this turn.
+
 **Dispatch Command:**
 ```
 Dispatch agent: ux-hci-design:ux-artifact-generator
@@ -399,6 +405,8 @@ Output: personas.json, journey_maps.json, mental_models.mmd
 
 Before the dispatch, run `view` for `personas.json` and for `journey_maps.json`.
 
+Start `ux-hci-design:ux-concept-designer` with the `Agent` tool in the foreground: set `run_in_background: false`, and wait for it to finish, because the `ingest` of this phase runs after it in this turn.
+
 **Dispatch Command:**
 ```
 Dispatch agent: ux-hci-design:ux-concept-designer
@@ -418,6 +426,8 @@ Output: design_concepts.json
 ### Prototype Phase → `ux-hci-design:ux-prototype-builder` Agent
 
 Before the dispatch, run `view` for `design_concepts.json`.
+
+Start `ux-hci-design:ux-prototype-builder` with the `Agent` tool in the foreground: set `run_in_background: false`, and wait for it to finish, because the `ingest` of this phase runs after it in this turn.
 
 **Dispatch Command:**
 ```
@@ -440,7 +450,7 @@ Output: wireframes.json, interaction_patterns.json, user_flows.mmd
 
 A subagent cannot limit the agent types that it starts: Claude Code ignores a type list inside `Agent(...)` in an agent file. So you start the reviewers in the main conversation, and `ux-evaluator` has no `Agent` tool.
 
-**Step 1.** Start the reviewers with the `Agent` tool, all in one message, so they run in parallel. Run them in the foreground and wait for each of them. Do not run a reviewer in the background, because the evaluator needs the findings file of each reviewer. If Claude Code runs a reviewer in the background, wait for its completion notice. Before the dispatch, run `view` for `wireframes.json` and for `interaction_patterns.json`, and give each reviewer those paths in `inputs`, because the save removed the plain files. Give each one the 4 dispatch fields. Its `output_dir` is `<output_dir>/reviews/<reviewer>`, and it writes its findings to `<output_dir>/reviews/<reviewer>/findings.json`:
+**Step 1.** Start the reviewers with the `Agent` tool, all in one message, so they run in parallel. Run them in the foreground and wait for each of them. Set `run_in_background: false` in each `Agent` call. Do not run a reviewer in the background, because the evaluator needs the findings file of each reviewer. If Claude Code runs a reviewer in the background, wait for its completion notice. Before the dispatch, run `view` for `wireframes.json` and for `interaction_patterns.json`, and give each reviewer those paths in `inputs`, because the save removed the plain files. Give each one the 4 dispatch fields. Its `output_dir` is `<output_dir>/reviews/<reviewer>`, and it writes its findings to `<output_dir>/reviews/<reviewer>/findings.json`:
 - `ux-hci-design:accessibility-reviewer` (always): `method_file` `${CLAUDE_PLUGIN_ROOT}/skills/accessibility-audit/SKILL.md`
 - `ux-hci-design:usability-reviewer` (always): `method_file` `${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md`
 - `ux-hci-design:ai-hci-reviewer` (only when `project_context.has_ai_features` in `.ux-config.json` is true, or `context.has_ai_features` in a config in the shape of the examples): `method_file` `${CLAUDE_PLUGIN_ROOT}/skills/ai-hci-audit/SKILL.md`
@@ -461,7 +471,7 @@ method_file: ${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md
 schema_file: ${CLAUDE_PLUGIN_ROOT}/schemas/outputs/evaluation-report-schema.json
 ```
 
-Run the evaluator in the foreground and wait for it, because the check of Step 3 needs the permission of this turn. The evaluator normalizes the severity, calculates the UX health score with contextual weighting, and writes the prioritized recommendations. When a reviewer wrote `<output_dir>/reviews/<reviewer>/open-questions.md`, handle it as in the dispatch protocol above, and delete that file in the same way after you ask its questions.
+Run the evaluator in the foreground and wait for it, because the check of Step 3 needs the permission of this turn. Set `run_in_background: false` in its `Agent` call. The evaluator normalizes the severity, calculates the UX health score with contextual weighting, and writes the prioritized recommendations. When a reviewer wrote `<output_dir>/reviews/<reviewer>/open-questions.md`, handle it as in the dispatch protocol above, and delete that file in the same way after you ask its questions.
 
 **After Step 2.** If the evaluator returns a line that starts with `MISSING_REVIEW:`, show the line to the person and stop. Do not write the report in the main conversation, because a report with a missing domain gives a wrong UX health score.
 
