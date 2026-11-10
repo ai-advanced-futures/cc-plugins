@@ -2,7 +2,11 @@
 
 This plugin maps the competitors of a market, gathers public facts about them, and analyzes a competitor through six lenses. It writes a SWOT, recommendations, and the pages of a graph that other plugins read.
 
-## What's New in v1.11.3
+## What's New in v1.11.4
+
+- The ingest makes a Gap page for each item of `gaps.json`, in the list `gaps` and in a list for each level (`critical`, `important`, `nice_to_have`). A gap links the competitor that it names by `competitor_id`, or by `competitor` (an id or a name). A gap of more than 1 competitor links none. `intelligence-gatherer` names the shape of `gaps.json` (STORY-220).
+
+## What Was New in v1.11.3
 
 - `set` and `new --set` keep a date or a time as the text that you give, at each depth of a list or a map. Before, a value such as `2026-11-06T22:21:48Z` became a date object, and the save refused the page (STORY-275).
 

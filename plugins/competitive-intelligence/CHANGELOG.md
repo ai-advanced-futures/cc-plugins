@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.11.4
+
+- The ingest makes a Gap page for each item of `gaps.json` in the 1 list `gaps` and in a list for each level (`critical`, `important`, `nice_to_have`); an item of a level list with no `type` takes the level. A gap links the competitor that it names by `competitor_id`, or by `competitor` (an id or a name); a gap of more than 1 competitor links none and makes no Competitor page. Before, a run with level lists made no Gap page, and a gap with only a `competitor` name linked no competitor (STORY-220).
+- `intelligence-gatherer` names the shape of `gaps.json`.
+
 ## 1.11.3
 
 - `set` and `new --set` keep a date or a time as the text that you give, at each depth of a list or a map. Before, a value such as `2026-11-06T22:21:48Z` became a date object, and the save refused the page (STORY-275).

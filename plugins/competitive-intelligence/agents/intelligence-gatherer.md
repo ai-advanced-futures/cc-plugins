@@ -147,6 +147,19 @@ Gather competitive data from all available sources, cross-reference for validati
    - Detailed financials
    - Historical context
 
+   Write each gap of this step to gaps.json, in 1 list `gaps`:
+
+   {
+     "session_id": "...",
+     "gathered_at": "...",
+     "gaps": [
+       {"id": "g-001", "competitor_id": "comp-001", "type": "critical", "description": "Pricing not publicly available"}
+     ]
+   }
+
+   `type` is `critical`, `important` or `nice_to_have`. `competitor_id` is the `id` of the competitor in
+   competitive-ecosystem.json, or null when the gap is about more than 1 competitor.
+
 6. GENERATE INTELLIGENCE OUTPUT:
 
    Create intelligence-data.json:

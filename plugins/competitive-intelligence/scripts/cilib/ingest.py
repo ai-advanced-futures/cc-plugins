@@ -38,6 +38,9 @@ QUADRANTS = (("strengths", "strength"), ("weaknesses", "weakness"), ("opportunit
 REC_LISTS = (("strategic_recommendations", "strategic", "recommendation"),
              ("tactical_actions", "tactical", "action"),
              ("monitoring_recommendations", "monitoring", "what_to_monitor"))
+# The lists of gaps.json: the one list `gaps` of the gatherer, and a list for each level, which a live run wrote
+# (STORY-220). An item of a level list with no `type` takes the level as its gap_type.
+GAP_LISTS = (("gaps", None), ("critical", "critical"), ("important", "important"), ("nice_to_have", "nice_to_have"))
 FINDING_ID = re.compile(r"\bf-\d+\b")
 PLACEHOLDER_MARKET = "Unnamed market"
 # A shared page (MERGED_KEYS) keeps the value of the newest run for each field (STORY-185).
@@ -509,11 +512,11 @@ class Ingest:
                            links={"competitor": self.ref(comp), "source_pages": list(dict.fromkeys(sources))})
         return self.mark(page)
 
-    def gap(self, name, comp, g, ident=None):
+    def gap(self, name, comp, g, ident=None, kind=None):
         if not isinstance(g, dict) or not isinstance(g.get("description"), str):
             return g
         page = self.upsert("Gap", g["description"], g["description"], file=name, item=g, ident=g.get("id") or ident,
-                           fields={"gap_type": g.get("type"), "item_id": g.get("id")},
+                           fields={"gap_type": g.get("type") or kind, "item_id": g.get("id")},
                            links={"competitor": self.ref(comp) if comp else None})
         return self.mark(page)
 
@@ -534,10 +537,21 @@ class Ingest:
             skel["summary"] = COMPUTED
         return skel
 
+    def gap_competitor(self, g):
+        """The competitor that a gap names by `competitor_id`, or by `competitor` (an id or a name). A gap of more than
+        1 competitor ("both") or of an unknown name links no competitor, and a gap makes no Competitor page."""
+        for key in ("competitor_id", "competitor"):
+            value = g.get(key) if isinstance(g, dict) else None
+            if isinstance(value, str) and value in self.cids:
+                return self.pages[self.cids[value]]
+            if isinstance(value, str) and fold(value) in self.names:
+                return self.pages[self.names[fold(value)]]
+        return None
+
     def h_gaps(self, name, data):
         skel = dict(data)
-        self.each(skel, "gaps", lambda g, i: self.gap(
-            name, self.pages.get(self.cids.get(g.get("competitor_id"))) if isinstance(g, dict) else None, g))
+        for key, kind in GAP_LISTS:
+            self.each(skel, key, lambda g, i, kind=kind: self.gap(name, self.gap_competitor(g), g, kind=kind))
         return skel
 
     def lens_page(self, lens, comp, name, item, ident):
