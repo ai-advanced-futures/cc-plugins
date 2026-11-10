@@ -2,11 +2,15 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.11.2
+**Version:** 1.11.3
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.11.2
+## What's New in v1.11.3
+
+- `write-run` gives a score to each scored need of `p6.json`, and not only to the needs of the top list. The agent `opportunity-scorer` and the phase 6 skill give the full list as `scored`.
+
+## What Was New in v1.11.2
 
 - `setup` writes the router block in `CLAUDE.md` with no refused command.
 

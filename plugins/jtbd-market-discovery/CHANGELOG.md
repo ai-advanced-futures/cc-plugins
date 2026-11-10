@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.3
+
+- `write-run` gives a score to each scored need of `p6.json`. It reads each list of `p6.json` whose items have a need and a score field. Before, it read 6 fixed keys, and an agent run that gave its full list as `scored`, `all_scored_needs` or `additional_high_opportunity_needs` got a score on the Outcome pages of its top list only. When 2 lists give a field of the same need, the value of the later list is kept. The shapes of `opportunity-scorer` and `phase-6-opportunity-scoring` give the full list as `scored` (STORY-288).
+
 ## 1.11.2
 
 - `setup` gives the template of the router block to `sed` on standard input. Before, the `sed` command named the template file, and Claude Code refused it as an edit of a sensitive file, because the file is in a loaded plugin. So setup made the graph and wrote no router block (STORY-261).

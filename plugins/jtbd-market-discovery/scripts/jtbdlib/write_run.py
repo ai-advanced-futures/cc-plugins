@@ -19,7 +19,10 @@ from jtbdlib.rules import RESULT_ABOUT, moved_fields
 # A step text that starts with its number: "7. Check ...", "7) Check ...", "7: Check ...", "Step 7: Check ..." (STORY-278).
 LEADING_STEP = re.compile(r"\s*(?:step\s*)?(\d+)\s*[.):]\s+(\S.*)", re.IGNORECASE | re.DOTALL)
 
-SCORE_LISTS = ("top_opportunities", "scored_needs", "all_needs", "needs", "opportunities", "scores")
+# The top list of p6.json. Its items come first, and an item with no rank takes its place in it as its rank.
+TOP_LIST = "top_opportunities"
+# A list of p6.json holds scores when an item has one of these fields and a need_id or a need.
+SCORE_FIELDS = ("opportunity_score", "odi_score", "importance", "satisfaction")
 
 
 def clean(text, limit=None) -> str:
@@ -163,17 +166,31 @@ def steps_of(p2):
     return [row for row in out if row[2]]
 
 
+def scored_need(item):
+    return isinstance(item, dict) and (item.get("need_id") is not None or bool(item.get("need"))) \
+        and any(item.get(field) is not None for field in SCORE_FIELDS)
+
+
+def score_lists(p6):
+    """The names of the lists of p6 that hold scored needs: the top list first, then the others in the order of the file.
+    The writers give the full list as `scored` (STORY-288). An agent run can use another key (`all_scored_needs`,
+    `additional_high_opportunity_needs`), so each list of scored needs counts, and no key is fixed here."""
+    names = [name for name, value in p6.items() if isinstance(value, list) and any(scored_need(i) for i in value)]
+    return sorted(names, key=lambda name: name != TOP_LIST)
+
+
 def score_items(p6):
-    """Every scored need of p6, by need_id: the lists of p6 are merged."""
+    """Every scored need of p6, by need_id: the lists of p6 that hold scored needs are merged.
+    When 2 lists give a field of the same need, the value of the later list is kept."""
     merged = {}
-    for name in SCORE_LISTS:
-        for index, item in enumerate(p6.get(name) or [], 1):
-            if not isinstance(item, dict):
+    for name in score_lists(p6):
+        for index, item in enumerate(p6[name], 1):
+            if not scored_need(item):
                 continue
             key = str(item.get("need_id") or fold(item.get("need")))
             entry = merged.setdefault(key, {})
             entry.update({k: v for k, v in item.items() if v is not None})
-            if name == "top_opportunities" and "rank" not in item:
+            if name == TOP_LIST and "rank" not in item:
                 entry["rank"] = index
     return merged
 

@@ -158,7 +158,7 @@ Next Steps:
 
 **Required — the skill reads this for Phases 7 and 8.**
 
-Write phase output to `{session_dir}/p6.json` before signaling completion. Write it with the `Write` tool. When your dispatch context has no `session_dir`, stop and say so. Its shape:
+Write phase output to `{session_dir}/p6.json` before signaling completion. Write it with the `Write` tool. When your dispatch context has no `session_dir`, stop and say so. Its shape. `top_opportunities` holds the top needs. `scored` holds each scored need, the top needs too:
 ```
 {
     "job_statement": "...",
@@ -166,6 +166,16 @@ Write phase output to `{session_dir}/p6.json` before signaling completion. Write
     "top_opportunities": [
         {
             "opportunity_id": "O001",
+            "need_id": "N023",
+            "need": "Minimize time to identify traffic delays",
+            "importance": 9.2,
+            "satisfaction": 3.1,
+            "opportunity_score": 15.3,
+            "level": "Severely Underserved"
+        }
+    ],
+    "scored": [
+        {
             "need_id": "N023",
             "need": "Minimize time to identify traffic delays",
             "importance": 9.2,

@@ -32,7 +32,7 @@ Need: "Minimize time to identify traffic delays"
 
 ```json
 {
-  "opportunities": [
+  "top_opportunities": [
     {
       "need_id": "N001",
       "need": "Minimize time to identify traffic delays",
@@ -41,6 +41,16 @@ Need: "Minimize time to identify traffic delays"
       "opportunity_score": 15.3,
       "status": "extremely_underserved",
       "rank": 1
+    }
+  ],
+  "scored": [
+    {
+      "need_id": "N001",
+      "need": "Minimize time to identify traffic delays",
+      "importance": 9.2,
+      "satisfaction": 3.1,
+      "opportunity_score": 15.3,
+      "status": "extremely_underserved"
     }
   ],
   "top_10": ["N001", "N017", "N023"]
