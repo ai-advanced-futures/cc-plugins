@@ -61,6 +61,8 @@ Ask one question per AskUserQuestion call [q: none]:
 Map the outcome to a JTBD job statement:
 > "When [context], I want to [motivation], so I can [expected outcome]."
 
+`<git root>` is the output of `git rev-parse --show-toplevel`, which you run first, on its own; when it fails, `<git root>` is the working directory. Write each script call as 1 command with each path written out: no `$(...)`, no shell variable, no pipe, no redirect, and no second command in the same call, because only that form runs with no question to the person. Write `${CLAUDE_PLUGIN_ROOT}` as the plugin root path that the skill text gives, because the shell of the call does not have that variable.
+
 When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing. In a standalone run, run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" outcomes --root <git root>` on its own. When `found` is `true`, surface the top-scored outcome. When `found` is `false`, show its `why` and go on.
 
 ### Step 3 — Apply Campbell's Gut-Check Test

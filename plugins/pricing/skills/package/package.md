@@ -52,6 +52,8 @@ Check dispatch context for `automated: true` before proceeding.
 
 **Goal:** Build a complete feature inventory before classification begins.
 
+`<git root>` is the output of `git rev-parse --show-toplevel`, which you run first, on its own; when it fails, `<git root>` is the working directory. Write each script call as 1 command with each path written out: no `$(...)`, no shell variable, no pipe, no redirect, and no second command in the same call, because only that form runs with no question to the person. Write `${CLAUDE_PLUGIN_ROOT}` as the plugin root path that the skill text gives, because the shell of the call does not have that variable.
+
 Check for upstream data first:
 - If `.pricing/audit-data.json` exists -> import feature list and any prior classifications
 - When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing. In a standalone run, run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" outcomes --root <git root>` on its own. When `found` is `true`, import the opportunity scores as classification signal. When `found` is `false`, show its `why` and go on.

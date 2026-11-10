@@ -60,6 +60,8 @@ Ask (AskUserQuestion) [q: feature_list]:
 2. **What is your current competitive landscape?** How many direct competitors?
    Which AI capabilities are table stakes vs. differentiators?
 
+`<git root>` is the output of `git rev-parse --show-toplevel`, which you run first, on its own; when it fails, `<git root>` is the working directory. Write each script call as 1 command with each path written out: no `$(...)`, no shell variable, no pipe, no redirect, and no second command in the same call, because only that form runs with no question to the person. Write `${CLAUDE_PLUGIN_ROOT}` as the plugin root path that the skill text gives, because the shell of the call does not have that variable.
+
 Check for existing data:
 - Run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" wtp --root <git root>` on its own. When `found` is `true`, import `result` as the WTP per segment for comparison. When `found` is `false`, show its `why` and go on.
 - Run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" moats --root <git root>` on its own. When `found` is `true`, import the competitor moats. When `found` is `false`, show its `why` and go on.

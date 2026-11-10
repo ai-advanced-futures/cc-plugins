@@ -4,6 +4,10 @@ All notable changes to the pricing plugin will be documented in this file.
 
 The first heading is the version in `.claude-plugin/plugin.json`. A test checks that they agree.
 
+## 1.13.7
+
+- **fix:** The skills `audit`, `package` and `value-metric` have 2 `Bash` rules for `brain_read.py` (the path in double quotes, and with no quotes), and their procedure files say how to write the call: `<git root>` from `git rev-parse --show-toplevel` run on its own, and 1 command with no `$(...)`, shell variable, pipe or second command. Each of the 3 skills names the plugin root in a line of its `SKILL.md`. Before, each standalone run had 2 refused `brain_read.py` calls and went on with no jtbd or competitor data. `value-metric/SKILL.md` names `brain_read.py outcomes`, the call that its procedure file runs (STORY-290).
+
 ## 1.13.6
 
 - **fix:** The skills `audit`, `package`, `price` and `value-metric` name their procedure file as `${CLAUDE_SKILL_DIR}/<file>` and have a `Read` grant for that one file. Before, a run with `claude -p` in the default mode refused the `Read` of the procedure file, and the skill went on with no procedure file (STORY-280).
