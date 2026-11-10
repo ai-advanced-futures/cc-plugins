@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.8
+
+- **fix:** `write-run` finds the step of a need whose `step` text is a number, a space and text, with no mark after the number (for example `7 Reconcile invoice details with order and receipt records`). The text must agree with the title of that step: one is the start of the other, and the shorter one ends at the end of a word. A text with a number and other text (for example `9 hours to check each invoice`) names no step. Before, a run with this form ended with `GRAPH: FAILED 1 ERROR: the need 'N001' names no step of p2.json` and wrote no page (STORY-320).
+
 ## 1.11.7
 
 - **fix:** Phase 7 uses the default of an assumption when nobody gave a value, and takes no rate from `p4.json`. `run_phase_7.py` refuses an assumption that is marked `default` and does not have the default value, and `write-run` stops on a `p7.json` or a `customer_value` result with that fault. Before, a run could use an estimate of Phase 4 (for example a labor rate of 35.5) and name it a default rate in the result file (STORY-287).

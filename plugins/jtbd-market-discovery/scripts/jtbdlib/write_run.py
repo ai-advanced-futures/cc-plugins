@@ -19,6 +19,10 @@ from jtbdlib.rules import RESULT_ABOUT, moved_fields
 
 # A step text that starts with its number: "7. Check ...", "7) Check ...", "7: Check ...", "Step 7: Check ..." (STORY-278).
 LEADING_STEP = re.compile(r"\s*(?:step\s*)?(\d+)\s*[.):]\s+(\S.*)", re.IGNORECASE | re.DOTALL)
+# A step text that starts with its number and has no mark after it: "7 Check ...", "Step 7 Check ..." (STORY-320).
+# A number with no mark can also be a quantity ("9 hours to check each invoice"), so the text after it must agree
+# with the title of that step.
+BARE_STEP = re.compile(r"\s*(?:step\s+)?(\d+)\s+(\S.*)", re.IGNORECASE | re.DOTALL)
 
 # The top list of p6.json. Its items come first, and an item with no rank takes its place in it as its rank.
 TOP_LIST = "top_opportunities"
@@ -29,6 +33,11 @@ SCORE_FIELDS = ("opportunity_score", "odi_score", "importance", "satisfaction")
 def clean(text, limit=None) -> str:
     text = " ".join(str(text if text is not None else "").split())
     return text[:limit] if limit else text
+
+
+def starts(text, lead) -> bool:
+    """True when `text` starts with `lead` and `lead` ends at the end of a word of `text`."""
+    return text.startswith(lead) and not text[len(lead):len(lead) + 1].isalnum()
 
 
 def number(value):
@@ -326,13 +335,19 @@ class Build:
             return self.steps[order]
         step = need.get("step") if isinstance(need.get("step"), str) else ""
         lead = LEADING_STEP.match(step)
-        texts = [fold(step)] + ([fold(lead.group(2))] if lead else [])
+        bare = None if lead else BARE_STEP.match(step)
+        texts = [fold(step)] + [fold(match.group(2)) for match in (lead, bare) if match]
         for text in filter(None, texts):
             for page in self.steps.values():
                 if fold(page.title) == text:
                     return page
         if lead and int(lead.group(1)) in self.steps:
             return self.steps[int(lead.group(1))]
+        if bare and int(bare.group(1)) in self.steps:
+            page = self.steps[int(bare.group(1))]
+            title, rest = fold(page.title), fold(bare.group(2)).rstrip(" .\u2026")
+            if starts(title, rest) or starts(rest, title):
+                return page
         raise DataError(f"the need {need.get('need_id') or clean(need.get('need'), 40)!r} names no step of p2.json")
 
     def make_outcomes(self):
