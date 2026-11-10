@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.13.6
+
+- **fix:** `unit_economics.py` and `rule_of_40.py` need only the standard library, and `scripts/input_check.py` checks their input.
+- **feat:** `unit_economics.py` and `rule_of_40.py` take `--input <file>`.
+- **fix:** a refused input to these 2 scripts exits with code 3 and prints 1 plain line for each problem. An input that the script cannot read exits with code 1.
+- **fix:** each script that uses `input_check.py` refuses `NaN`, `Infinity` and `-Infinity` with `not a finite number`.
+- **change:** these 2 scripts refuse a number written as text, and `true` or `false`. A Magic Number value of `rule_of_40.py` needs its pair. No check remains on the sum of sales and marketing costs, but each cost keeps its own limit.
+- **change:** interactive unit economics asks for quarterly net new ARR. Interactive Rule of 40 asks the 2 Magic Number questions, and refuses an unknown stage.
+- **fix:** `ai-economics` rewrites only a plain number on exit code 3. It does not make a number from `n/a`.
+- **docs:** `README.md` names the 2 scripts that need `pydantic`. ADR-006, ADR-007 and ADR-008 change.
+
 ## 0.13.5
 
 - **fix:** `ai_roi_calculator.py` needs only the standard library, so `uv run` gets no package for it. `scripts/input_check.py` checks its input.

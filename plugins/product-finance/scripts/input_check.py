@@ -7,14 +7,15 @@ typing.Union, typing.List and typing.Dict, never `X | Y`.
 problem. A problem has a kind (`missing` or `invalid`), a location (field names
 and list indexes), the value as given, and one reason:
 
-    missing, not a number, not a whole number, not above N, above N, below N,
-    not one of <values>, not text, not an object, not a list, needed with <field>
+    missing, not a number, not a finite number, not a whole number, not above N, above N,
+    below N, not one of <values>, not text, not an object, not a list, needed with <field>
 
 Field types the checker reads: float, int, str, a str-valued Enum, Dict[str, X],
 List[X], a dataclass, and Optional[X] of any of these. Limits are declared with
 `limits(gt=..., ge=..., le=..., one_of=..., each=...)` and run after the type check, on the
 stored value. `each=` puts limits on every value of a Dict field. Keys the class does not
-declare are ignored.
+declare are ignored. A NaN, Infinity or -Infinity in any number field gets "not a finite
+number" before any limit is read.
 
 A class may declare `TOGETHER: ClassVar[Tuple[Tuple[str, str], ...]]`, pairs of fields that go
 together. When exactly one of a pair is given (present and not null), the other gets the
@@ -24,6 +25,7 @@ problem `needed with <field>`. A pair whose field already has a problem adds not
 import dataclasses
 import enum
 import json
+import math
 import typing
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
@@ -129,8 +131,8 @@ def _whole_in_64_bits(value: float) -> bool:
 def _limit_reason(value: Any, meta: Any) -> Optional[str]:
     """The reason a stored number breaks its limits, or None.
 
-    `le` is read first, then `ge`, then `gt`, as pydantic reads them: a NaN in a
-    field with `le` is `above N`. Each comparison is written so NaN fails it.
+    `le` is read first, then `ge`, then `gt`, as pydantic reads them. A NaN or an infinity
+    never gets here: `_convert` refuses it first.
     """
     if "le" in meta and not (value <= meta["le"]):
         return f"above {meta['le']}"
@@ -182,6 +184,8 @@ def _convert(t: Any, value: Any, loc: Loc, meta: Any, problems: List[Problem]) -
 
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return bad("not a number")
+    if isinstance(value, float) and not math.isfinite(value):
+        return bad("not a finite number")
     if t is int:
         if isinstance(value, float) and not _whole_in_64_bits(value):
             return bad("not a whole number")

@@ -169,7 +169,7 @@ CAC Payback (months) = CAC / (ARPU × Gross Margin %)
 ## Reference Implementation
 
 See `scripts/unit_economics.py` for the complete Python implementation with:
-- Pydantic validation models
+- Input checks with `scripts/input_check.py`, standard library only
 - Detailed calculation functions
 - JSON and Markdown output formatters
 - CLI interface

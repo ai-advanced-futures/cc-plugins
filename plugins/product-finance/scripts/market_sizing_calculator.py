@@ -24,6 +24,7 @@ License: MIT
 import argparse
 import dataclasses
 import json
+import math
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -262,8 +263,13 @@ def _is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
+def _is_finite(value: Any) -> bool:
+    return not (isinstance(value, float) and not math.isfinite(value))
+
+
 def _positive(value: Any) -> bool:
-    return _is_number(value) and value > 0
+    """True only for a finite number above 0."""
+    return _is_number(value) and _is_finite(value) and value > 0
 
 
 # The setup values each mapped input is computed from, in market (spec §2 decision 2).
@@ -289,7 +295,13 @@ def _why_missing(name: str, market: Dict[str, Any], tam_named: bool, shares: boo
     bad = [k for k in keys if k in market and not _positive(market[k])]
     shown = [k for k in bad if not (k == "tam" and tam_named)]
     if shown:
-        reason = "not above 0" if _is_number(market[shown[0]]) else "not a number"
+        value = market[shown[0]]
+        if not _is_number(value):
+            reason = "not a number"
+        elif not _is_finite(value):
+            reason = "not a finite number"
+        else:
+            reason = "not above 0"
         return [f"{name} = {show(market[shown[0]])} (market.{shown[0]}): {reason}"]
     absent = any(k not in market for k in keys)
     return [f"{name}: missing"] if absent or not bad else []
@@ -466,13 +478,15 @@ def load_assumptions(data: Dict[str, Any]) -> AssumptionsInput:
     sam_filters = merged.get("sam_filters")
     if isinstance(sam_filters, dict):
         for key, value in sam_filters.items():
-            if _is_number(value) and 0 < value <= 100:
+            if _is_number(value) and _is_finite(value) and 0 < value <= 100:
                 continue
             source = sources.get(("sam_filters", key))
             where = f" ({source})" if source else ""
             if not _is_number(value):
                 reason = "not a number"
                 explained.add(f"sam_filters.{key}")
+            elif not _is_finite(value):
+                reason = "not a finite number"
             else:
                 reason = "above 100" if value > 100 else "not above 0"
             problems.append(f"sam_filters.{key} = {show(value)}{where}: {reason}")

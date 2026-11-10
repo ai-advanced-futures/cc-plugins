@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Rule of 40 Calculator for SaaS Financial Health Analysis.
 
 This module provides comprehensive Rule of 40 calculations including:
@@ -26,18 +30,18 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, ClassVar, Dict, Optional, Tuple
 
 if __package__ in (None, ""):  # run by path: uv run "<plugin root>/scripts/<file>.py"
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # its own package, never the cwd
 
-from pydantic import BaseModel, Field, field_validator, model_validator  # noqa: E402
-
+from scripts.input_check import check, format_problem, limits  # noqa: E402
 from scripts.utils.enums import GrowthStage, MetricHealth  # noqa: E402
 from scripts.utils.magic_number import calculate_magic_number  # noqa: E402
 
 
-class RuleOf40Input(BaseModel):
+@dataclass
+class RuleOf40Input:
     """Input data for Rule of 40 calculation.
 
     Attributes:
@@ -51,69 +55,23 @@ class RuleOf40Input(BaseModel):
         prior_quarter_sm_spend: S&M spend in prior quarter, for Magic Number (optional)
     """
 
-    revenue_growth_rate: float = Field(
-        description="Revenue growth rate as percentage (e.g., 50 for 50% growth)"
-    )
-    ebitda_margin: float = Field(
-        description="EBITDA margin as percentage (e.g., -10 for -10% margin)"
-    )
-    company_stage: Optional[GrowthStage] = Field(
-        default=None, description="Company growth stage for contextualized analysis"
-    )
-    previous_period_growth: Optional[float] = Field(
-        default=None, description="Previous period revenue growth rate (%)"
-    )
-    previous_period_margin: Optional[float] = Field(
-        default=None, description="Previous period EBITDA margin (%)"
-    )
-    arr: Optional[float] = Field(default=None, gt=0, description="Annual Recurring Revenue")
-    quarterly_net_new_arr: Optional[float] = Field(
-        default=None, description="Net new ARR added in the most recent quarter (can be negative)"
-    )
-    prior_quarter_sm_spend: Optional[float] = Field(
-        default=None, ge=0, description="Sales & Marketing spend in the prior quarter"
+    TOGETHER: ClassVar[Tuple[Tuple[str, str], ...]] = (
+        ("previous_period_growth", "previous_period_margin"),
+        ("quarterly_net_new_arr", "prior_quarter_sm_spend"),
     )
 
-    @field_validator("revenue_growth_rate")
-    @classmethod
-    def validate_growth(cls, v: float) -> float:
-        """Ensure growth rate is reasonable."""
-        if v > 1000:  # 1000% growth sanity check
-            raise ValueError("Growth rate seems unreasonably high (>1000%)")
-        if v < -100:  # Complete revenue loss
-            raise ValueError("Growth rate cannot be less than -100%")
-        return v
+    revenue_growth_rate: float = limits(ge=-100, le=1000)
+    ebitda_margin: float = limits(ge=-500, le=100)
+    company_stage: Optional[GrowthStage] = None
+    previous_period_growth: Optional[float] = None
+    previous_period_margin: Optional[float] = None
+    arr: Optional[float] = limits(gt=0, le=100_000_000_000, default=None)
+    quarterly_net_new_arr: Optional[float] = None
+    prior_quarter_sm_spend: Optional[float] = limits(ge=0, default=None)
 
-    @field_validator("ebitda_margin")
-    @classmethod
-    def validate_margin(cls, v: float) -> float:
-        """Ensure EBITDA margin is reasonable."""
-        if v > 100:  # Cannot have >100% margin
-            raise ValueError("EBITDA margin cannot exceed 100%")
-        if v < -500:  # Extreme loss sanity check
-            raise ValueError("EBITDA margin seems unreasonably low (<-500%)")
-        return v
 
-    @field_validator("arr")
-    @classmethod
-    def validate_arr(cls, v: Optional[float]) -> Optional[float]:
-        """Ensure ARR is reasonable if provided."""
-        if v is not None and v > 100_000_000_000:  # $100B sanity check
-            raise ValueError("ARR seems unreasonably high (>$100B)")
-        return v
-
-    @model_validator(mode="after")
-    def validate_trend_data(self) -> "RuleOf40Input":
-        """Ensure trend data is complete if provided."""
-        has_growth_trend = self.previous_period_growth is not None
-        has_margin_trend = self.previous_period_margin is not None
-
-        if has_growth_trend != has_margin_trend:
-            raise ValueError(
-                "Both previous_period_growth and previous_period_margin must be provided together for trend analysis"  # noqa: E501
-            )
-
-        return self
+# The classes input_check reads, in the order fields.json recorded them.
+INPUT_CLASSES = (RuleOf40Input,)
 
 
 @dataclass
@@ -170,7 +128,9 @@ def calculate_rule_of_40(data: RuleOf40Input) -> RuleOf40Result:
         RuleOf40Result with calculated scores and comprehensive analysis
 
     Example:
-        >>> input_data = RuleOf40Input(
+        >>> from scripts.input_check import build
+        >>> input_data = build(
+        ...     RuleOf40Input,
         ...     revenue_growth_rate=50.0,
         ...     ebitda_margin=-5.0,
         ...     company_stage=GrowthStage.GROWTH
@@ -705,11 +665,25 @@ def format_result_as_markdown(result: RuleOf40Result) -> str:
     return "\n".join(lines)
 
 
+EXIT_INPUTS = 3  # the input was read but refused
+
+
+def checked_input(data: Any) -> RuleOf40Input:
+    """The checked input, or one plain line per problem on stderr and exit 3."""
+    obj, problems = check(RuleOf40Input, data)
+    if problems:
+        print("Error: Invalid input data:", file=sys.stderr)
+        for p in problems:
+            print(f"- {format_problem(p)}", file=sys.stderr)
+        raise SystemExit(EXIT_INPUTS)
+    return obj
+
+
 def main() -> None:
     """Command-line interface for Rule of 40 calculator.
 
-    Reads input from stdin (JSON) or prompts interactively,
-    calculates Rule of 40, and outputs results.
+    Reads JSON input from `--input <file>`, else from stdin, else asks
+    for each value with interactive prompts. Prints the report.
     """
     import argparse
 
@@ -726,6 +700,7 @@ Examples:
 
   # JSON file input
   python rule_of_40.py < input.json
+  python rule_of_40.py --input input.json
 
   # Output formats
   python rule_of_40.py --format json
@@ -740,20 +715,31 @@ Examples:
         help="Output format (default: markdown)",
     )
 
+    parser.add_argument(
+        "--input",
+        type=Path,
+        help="Read the JSON input from this file instead of stdin",
+    )
+
     args = parser.parse_args()
 
-    # Check if input is from stdin
-    if not sys.stdin.isatty():
-        # Read JSON from stdin
+    # Check if input is from a file or stdin
+    if args.input is not None or not sys.stdin.isatty():
+        # Read JSON from the file, else from stdin
         try:
-            input_data = json.load(sys.stdin)
-            data = RuleOf40Input(**input_data)
-        except json.JSONDecodeError as e:
+            if args.input is not None:
+                input_data = json.loads(args.input.read_text(encoding="utf-8"))
+            else:
+                input_data = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+        except (OSError, UnicodeDecodeError) as e:
+            source = "standard input" if args.input is None else args.input
+            why = getattr(e, "strerror", None) or e
+            print(f"Error: cannot read {source}: {why}", file=sys.stderr)
+            sys.exit(1)
+        except (ValueError, RecursionError) as e:
             print(f"Error: Invalid JSON input: {e}", file=sys.stderr)
             sys.exit(1)
-        except Exception as e:
-            print(f"Error: Invalid input data: {e}", file=sys.stderr)
-            sys.exit(1)
+        data = checked_input(input_data)
     else:
         # Interactive mode
         print("Rule of 40 Calculator")
@@ -761,18 +747,20 @@ Examples:
         print()
 
         try:
-            revenue_growth_rate = float(input("Revenue growth rate (%): "))
-            ebitda_margin = float(input("EBITDA margin (%): "))
+            answers: Dict[str, Any] = {
+                "revenue_growth_rate": float(input("Revenue growth rate (%): ")),
+                "ebitda_margin": float(input("EBITDA margin (%): ")),
+            }
 
             stage_input = input(
                 "Company stage (early/growth/scale/mature, or press Enter to skip): "
             ).strip().lower()
-            company_stage = None
-            if stage_input in ("early", "growth", "scale", "mature"):
-                company_stage = GrowthStage(stage_input)
+            if stage_input:
+                answers["company_stage"] = stage_input
 
             arr_input = input("Annual Recurring Revenue ($ or press Enter to skip): ").strip()
-            arr = float(arr_input) if arr_input else None
+            if arr_input:
+                answers["arr"] = float(arr_input)
 
             # Optional trend data
             print()
@@ -783,24 +771,30 @@ Examples:
             prev_margin_input = input(
                 "Previous period EBITDA margin (% or press Enter to skip): "
             ).strip()
+            if prev_growth_input:
+                answers["previous_period_growth"] = float(prev_growth_input)
+            if prev_margin_input:
+                answers["previous_period_margin"] = float(prev_margin_input)
 
-            previous_period_growth = float(prev_growth_input) if prev_growth_input else None
-            previous_period_margin = float(prev_margin_input) if prev_margin_input else None
-
-            data = RuleOf40Input(
-                revenue_growth_rate=revenue_growth_rate,
-                ebitda_margin=ebitda_margin,
-                company_stage=company_stage,
-                arr=arr,
-                previous_period_growth=previous_period_growth,
-                previous_period_margin=previous_period_margin,
-            )
+            # Optional Magic Number data: the spend is asked only after a net new ARR answer
+            print()
+            print("Optional: Magic Number inputs")
+            net_new_arr_input = input(
+                "Quarterly net new ARR, most recent quarter ($ or press Enter to skip): "
+            ).strip()
+            if net_new_arr_input:
+                answers["quarterly_net_new_arr"] = float(net_new_arr_input)
+                spend_input = input("Sales & Marketing spend in the prior quarter ($): ").strip()
+                if spend_input:
+                    answers["prior_quarter_sm_spend"] = float(spend_input)
         except KeyboardInterrupt:
             print("\n\nCancelled by user.")
             sys.exit(0)
         except Exception as e:
             print(f"\nError: {e}", file=sys.stderr)
             sys.exit(1)
+
+        data = checked_input(answers)
 
     # Calculate Rule of 40
     try:

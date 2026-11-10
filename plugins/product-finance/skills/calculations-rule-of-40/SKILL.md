@@ -154,7 +154,7 @@ The weighted formula reflects that growth is valued ~2x more than profitability 
 ## Reference Implementation
 
 See `scripts/rule_of_40.py` for the complete Python implementation with:
-- Pydantic validation models
+- Input checks with `scripts/input_check.py`, standard library only
 - Stage-appropriate health assessment
 - Trend analysis functions
 - JSON and Markdown output formatters

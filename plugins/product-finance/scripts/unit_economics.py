@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Unit Economics Calculator for SaaS Financial Analysis.
 
 This module provides comprehensive unit economics calculations including:
@@ -20,13 +24,12 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 if __package__ in (None, ""):  # run by path: uv run "<plugin root>/scripts/<file>.py"
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # its own package, never the cwd
 
-from pydantic import BaseModel, Field, field_validator  # noqa: E402
-
+from scripts.input_check import check, format_problem, limits  # noqa: E402
 from scripts.utils.enums import MetricHealth  # noqa: E402
 from scripts.utils.magic_number import (
     calculate_magic_number as _canonical_magic_number,  # noqa: E402
@@ -66,7 +69,8 @@ def calculate_cac_payback_safe(cac: float, arpu: float, gross_margin: float) -> 
     return safe_divide(cac, monthly_gp)
 
 
-class CACInput(BaseModel):
+@dataclass
+class CACInput:
     """Input data for Customer Acquisition Cost calculation.
 
     Attributes:
@@ -76,21 +80,14 @@ class CACInput(BaseModel):
         period_months: Number of months over which costs were incurred (default: 12)
     """
 
-    sales_costs: float = Field(gt=0, description="Total sales costs in dollars")
-    marketing_costs: float = Field(ge=0, description="Total marketing costs in dollars")
-    new_customers: int = Field(gt=0, description="Number of new customers acquired")
-    period_months: int = Field(default=12, gt=0, le=60, description="Period in months")
-
-    @field_validator("sales_costs", "marketing_costs")
-    @classmethod
-    def validate_costs(cls, v: float) -> float:
-        """Ensure costs are reasonable."""
-        if v > 1_000_000_000:  # $1B sanity check
-            raise ValueError("Cost value seems unreasonably high (>$1B)")
-        return v
+    sales_costs: float = limits(gt=0, le=1_000_000_000)
+    marketing_costs: float = limits(ge=0, le=1_000_000_000)
+    new_customers: int = limits(gt=0)
+    period_months: int = limits(gt=0, le=60, default=12)
 
 
-class LTVInput(BaseModel):
+@dataclass
+class LTVInput:
     """Input data for Lifetime Value calculation.
 
     Attributes:
@@ -99,20 +96,13 @@ class LTVInput(BaseModel):
         churn_rate_percent: Monthly churn rate as a percentage (0-100)
     """
 
-    arpu: float = Field(gt=0, description="Average Revenue Per User per month")
-    gross_margin_percent: float = Field(gt=0, le=100, description="Gross margin percentage")
-    churn_rate_percent: float = Field(gt=0, le=100, description="Monthly churn rate percentage")
-
-    @field_validator("arpu")
-    @classmethod
-    def validate_arpu(cls, v: float) -> float:
-        """Ensure ARPU is reasonable."""
-        if v > 1_000_000:  # $1M per month sanity check
-            raise ValueError("ARPU seems unreasonably high (>$1M/month)")
-        return v
+    arpu: float = limits(gt=0, le=1_000_000)
+    gross_margin_percent: float = limits(gt=0, le=100)
+    churn_rate_percent: float = limits(gt=0, le=100)
 
 
-class CACPaybackInput(BaseModel):
+@dataclass
+class CACPaybackInput:
     """Input data for CAC Payback Period calculation.
 
     Attributes:
@@ -121,12 +111,13 @@ class CACPaybackInput(BaseModel):
         gross_margin_percent: Gross margin as a percentage (0-100)
     """
 
-    cac: float = Field(gt=0, description="Customer Acquisition Cost")
-    arpu: float = Field(gt=0, description="Average Revenue Per User per month")
-    gross_margin_percent: float = Field(gt=0, le=100, description="Gross margin percentage")
+    cac: float = limits(gt=0)
+    arpu: float = limits(gt=0)
+    gross_margin_percent: float = limits(gt=0, le=100)
 
 
-class MagicNumberInput(BaseModel):
+@dataclass
+class MagicNumberInput:
     """Input data for Magic Number calculation.
 
     Attributes:
@@ -134,19 +125,12 @@ class MagicNumberInput(BaseModel):
         prior_quarter_sm_spend: Sales & Marketing spend in the prior quarter (must be > 0)
     """
 
-    quarterly_net_new_arr: float = Field(description="Quarterly net new ARR (can be negative)")
-    prior_quarter_sm_spend: float = Field(gt=0, description="Prior quarter sales & marketing spend")
-
-    @field_validator("prior_quarter_sm_spend")
-    @classmethod
-    def validate_spend(cls, v: float) -> float:
-        """Ensure spend is reasonable."""
-        if v > 1_000_000_000:  # $1B sanity check
-            raise ValueError("Spend seems unreasonably high (>$1B)")
-        return v
+    quarterly_net_new_arr: float
+    prior_quarter_sm_spend: float = limits(gt=0, le=1_000_000_000)
 
 
-class UnitEconomicsInput(BaseModel):
+@dataclass
+class UnitEconomicsInput:
     """Comprehensive input for full unit economics analysis.
 
     Attributes:
@@ -161,20 +145,18 @@ class UnitEconomicsInput(BaseModel):
         period_months: Number of months over which metrics were measured (default: 12)
     """
 
-    sales_costs: float = Field(gt=0, description="Total sales costs")
-    marketing_costs: float = Field(ge=0, description="Total marketing costs")
-    new_customers: int = Field(gt=0, description="Number of new customers")
-    arpu: float = Field(gt=0, description="Average Revenue Per User per month")
-    gross_margin_percent: float = Field(gt=0, le=100, description="Gross margin percentage")
-    churn_rate_percent: float = Field(gt=0, le=100, description="Monthly churn rate percentage")
-    net_new_arr: Optional[float] = Field(
-        default=None,
-        description=(
-            "Quarterly net new ARR for Magic Number "
-            "(the ×4 annualization is applied internally; pass a quarterly figure, not annual)"
-        ),
-    )
-    period_months: int = Field(default=12, gt=0, le=60, description="Period in months")
+    sales_costs: float = limits(gt=0, le=1_000_000_000)
+    marketing_costs: float = limits(ge=0, le=1_000_000_000)
+    new_customers: int = limits(gt=0)
+    arpu: float = limits(gt=0, le=1_000_000)
+    gross_margin_percent: float = limits(gt=0, le=100)
+    churn_rate_percent: float = limits(gt=0, le=100)
+    net_new_arr: Optional[float] = None
+    period_months: int = limits(gt=0, le=60, default=12)
+
+
+# The classes input_check reads, in the order fields.json recorded them.
+INPUT_CLASSES = (CACInput, LTVInput, CACPaybackInput, MagicNumberInput, UnitEconomicsInput)
 
 
 @dataclass
@@ -318,7 +300,9 @@ def calculate_cac(data: CACInput) -> CACResult:
         CACResult with calculated CAC and health assessment
 
     Example:
-        >>> input_data = CACInput(
+        >>> from scripts.input_check import build
+        >>> input_data = build(
+        ...     CACInput,
         ...     sales_costs=500000,
         ...     marketing_costs=300000,
         ...     new_customers=100
@@ -374,7 +358,9 @@ def calculate_ltv(data: LTVInput) -> LTVResult:
         LTVResult with calculated LTV and health assessment
 
     Example:
-        >>> input_data = LTVInput(
+        >>> from scripts.input_check import build
+        >>> input_data = build(
+        ...     LTVInput,
         ...     arpu=100,
         ...     gross_margin_percent=80,
         ...     churn_rate_percent=2
@@ -491,7 +477,9 @@ def calculate_cac_payback(data: CACPaybackInput) -> CACPaybackResult:
         CACPaybackResult with payback period and health assessment
 
     Example:
-        >>> input_data = CACPaybackInput(
+        >>> from scripts.input_check import build
+        >>> input_data = build(
+        ...     CACPaybackInput,
         ...     cac=1000,
         ...     arpu=100,
         ...     gross_margin_percent=80
@@ -543,7 +531,9 @@ def calculate_magic_number(data: MagicNumberInput) -> MagicNumberResult:
         MagicNumberResult with Magic Number and efficiency assessment
 
     Example:
-        >>> input_data = MagicNumberInput(
+        >>> from scripts.input_check import build
+        >>> input_data = build(
+        ...     MagicNumberInput,
         ...     quarterly_net_new_arr=1000000,
         ...     prior_quarter_sm_spend=800000,
         ... )
@@ -585,7 +575,9 @@ def calculate_unit_economics(data: UnitEconomicsInput) -> UnitEconomicsResult:
         UnitEconomicsResult with all metrics and recommendations
 
     Example:
-        >>> input_data = UnitEconomicsInput(
+        >>> from scripts.input_check import build
+        >>> input_data = build(
+        ...     UnitEconomicsInput,
         ...     sales_costs=500000,
         ...     marketing_costs=300000,
         ...     new_customers=100,
@@ -892,11 +884,25 @@ def format_result_as_markdown(result: UnitEconomicsResult) -> str:
     return "\n".join(lines)
 
 
+EXIT_INPUTS = 3  # the input was read but refused
+
+
+def checked_input(data: Any) -> UnitEconomicsInput:
+    """The checked input, or one plain line per problem on stderr and exit 3."""
+    obj, problems = check(UnitEconomicsInput, data)
+    if problems:
+        print("Error: Invalid input data:", file=sys.stderr)
+        for p in problems:
+            print(f"- {format_problem(p)}", file=sys.stderr)
+        raise SystemExit(EXIT_INPUTS)
+    return obj
+
+
 def main() -> None:
     """CLI entry point for unit economics calculator.
 
-    Reads input from stdin (JSON) or prompts interactively,
-    calculates unit economics, and outputs results.
+    Reads JSON input from `--input <file>`, else from stdin, else asks
+    for each value with interactive prompts. Prints the report.
     """
     import argparse
 
@@ -913,6 +919,7 @@ Examples:
 
   # JSON file input
   python unit_economics.py < input.json
+  python unit_economics.py --input input.json
 
   # Output formats
   python unit_economics.py --format json
@@ -927,20 +934,31 @@ Examples:
         help="Output format (default: markdown)",
     )
 
+    parser.add_argument(
+        "--input",
+        type=Path,
+        help="Read the JSON input from this file instead of stdin",
+    )
+
     args = parser.parse_args()
 
-    # Check if input is from stdin
-    if not sys.stdin.isatty():
-        # Read JSON from stdin
+    # Check if input is from a file or stdin
+    if args.input is not None or not sys.stdin.isatty():
+        # Read JSON from the file, else from stdin
         try:
-            input_data = json.load(sys.stdin)
-            data = UnitEconomicsInput(**input_data)
-        except json.JSONDecodeError as e:
+            if args.input is not None:
+                input_data = json.loads(args.input.read_text(encoding="utf-8"))
+            else:
+                input_data = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+        except (OSError, UnicodeDecodeError) as e:
+            source = "standard input" if args.input is None else args.input
+            why = getattr(e, "strerror", None) or e
+            print(f"Error: cannot read {source}: {why}", file=sys.stderr)
+            sys.exit(1)
+        except (ValueError, RecursionError) as e:
             print(f"Error: Invalid JSON input: {e}", file=sys.stderr)
             sys.exit(1)
-        except Exception as e:
-            print(f"Error: Invalid input data: {e}", file=sys.stderr)
-            sys.exit(1)
+        data = checked_input(input_data)
     else:
         # Interactive mode
         print("Unit Economics Calculator")
@@ -948,35 +966,31 @@ Examples:
         print()
 
         try:
-            sales_costs = float(input("Sales costs ($): "))
-            marketing_costs = float(input("Marketing costs ($): "))
-            new_customers = int(input("Number of new customers: "))
-            arpu = float(input("Average Revenue Per User per month ($): "))
-            gross_margin_percent = float(input("Gross margin (%): "))
-            churn_rate_percent = float(input("Monthly churn rate (%): "))
+            answers: Dict[str, Any] = {
+                "sales_costs": float(input("Sales costs ($): ")),
+                "marketing_costs": float(input("Marketing costs ($): ")),
+                "new_customers": int(input("Number of new customers: ")),
+                "arpu": float(input("Average Revenue Per User per month ($): ")),
+                "gross_margin_percent": float(input("Gross margin (%): ")),
+                "churn_rate_percent": float(input("Monthly churn rate (%): ")),
+            }
 
-            net_new_arr_input = input("Net new ARR ($ or press Enter to skip): ").strip()
-            net_new_arr = float(net_new_arr_input) if net_new_arr_input else None
+            net_new_arr_input = input("Quarterly net new ARR ($ or press Enter to skip): ").strip()
+            if net_new_arr_input:
+                answers["net_new_arr"] = float(net_new_arr_input)
 
             period_months_input = input("Period in months (default 12): ").strip()
-            period_months = int(period_months_input) if period_months_input else 12
+            if period_months_input:
+                answers["period_months"] = int(period_months_input)
 
-            data = UnitEconomicsInput(
-                sales_costs=sales_costs,
-                marketing_costs=marketing_costs,
-                new_customers=new_customers,
-                arpu=arpu,
-                gross_margin_percent=gross_margin_percent,
-                churn_rate_percent=churn_rate_percent,
-                net_new_arr=net_new_arr,
-                period_months=period_months,
-            )
         except KeyboardInterrupt:
             print("\n\nCancelled by user.")
             sys.exit(0)
         except Exception as e:
             print(f"\nError: {e}", file=sys.stderr)
             sys.exit(1)
+
+        data = checked_input(answers)
 
     # Calculate unit economics
     try:

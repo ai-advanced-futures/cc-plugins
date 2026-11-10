@@ -210,7 +210,7 @@ The plugin keeps its state in `.product-finance/`:
 
 - **uv.** The plugin runs each script with `uv run`. `uv` reads the block at the top of the script and installs its packages.
 - **Python:** 3.11 or later.
-- **Packages:** `unit_economics.py`, `rule_of_40.py`, `instrumentation_analyzer.py` and `cost_coverage_readout.py` need `pydantic`. The other scripts need only the standard library.
+- **Packages:** `instrumentation_analyzer.py` needs `pydantic`. `cost_coverage_readout.py` needs `pydantic` and `jsonschema`. The other scripts need only the standard library.
 
 ## Development
 
