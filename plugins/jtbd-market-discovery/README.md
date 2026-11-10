@@ -2,11 +2,15 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.11.1
+**Version:** 1.11.2
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.11.1
+## What's New in v1.11.2
+
+- `setup` writes the router block in `CLAUDE.md` with no refused command.
+
+## What Was New in v1.11.1
 
 - The ODI part (40%) of the composite score is no longer 0 in a real run. The agent `opportunity-scorer` wrote the old key in `p6.json`, and `composite_scorer.py` read `opportunity_score`. Each writer text now gives `opportunity_score`. `composite_scorer.py` and `write-run` read the old key when `opportunity_score` is absent, so a session from before the fix keeps its score.
 

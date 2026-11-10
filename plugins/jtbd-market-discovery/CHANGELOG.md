@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.2
+
+- `setup` gives the template of the router block to `sed` on standard input. Before, the `sed` command named the template file, and Claude Code refused it as an edit of a sensitive file, because the file is in a loaded plugin. So setup made the graph and wrote no router block (STORY-261).
+
 ## 1.11.1
 
 - `composite_scorer.py` reads `opportunity_score` from each opportunity of `p6.json`, and `odi_score` when `opportunity_score` is absent. Before, the agent `opportunity-scorer` wrote `odi_score`, so the ODI part (40%) of the composite score was 0 in each real run, and no error showed. `write-run` reads the same two keys for the score of an Outcome page (STORY-279).

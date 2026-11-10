@@ -27,10 +27,12 @@ success, because the command refused or failed, and the graph is not set up.
 Read the bundle folder in `.claude/knowledge.json`. The same rule holds,
 because a registry entry of a cloned repository can hold any text: a folder
 that does not match is not a folder name; do not put it in a command; stop and
-show it. Then run:
+show it. Then run the command below. Give the template to `sed` on standard
+input (`<`), and not as a file name, because Claude Code refuses a command
+that names a file of a loaded plugin as a file that the command can change:
 
 ```bash
-sed -e "s|{{DIR}}|<folder>|g" "${CLAUDE_PLUGIN_ROOT}/templates/claude-md-block.md" \
+sed -e "s|{{DIR}}|<folder>|g" < "${CLAUDE_PLUGIN_ROOT}/templates/claude-md-block.md" \
 | uv run --no-project "${CLAUDE_PLUGIN_ROOT}/scripts/claude_md_router.py" --plugin jtbd-market-discovery --repo-root '<git root>'
 ```
 
