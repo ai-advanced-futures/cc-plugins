@@ -194,6 +194,11 @@ class _Graph:
         except (KeyError, TypeError, AttributeError, ValueError):
             problems = plugin_result.check_result(doc) or ["the run has no finished_at, command or subject"]
             raise self.miss(f"the document of {key} fails the checker: " + "; ".join(problems)) from None
+        if Path(name).name != name or name in (".", ".."):
+            # command and run_id go into the name unchanged (STORY-264): a `/` or a `..` names a file outside
+            # team/upstream/, so the read stops before it opens a file.
+            raise self.miss(f"the snapshot name {name!r} of {key} is not 1 file name: its command or run_id "
+                            "holds a / or ..")
         path = upstream_dir(self.case) / name
         rel = team_files.inside_root(self.root, path)
         if rel is None:

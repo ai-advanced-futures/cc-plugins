@@ -2,11 +2,15 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.10.4
+**Version:** 1.10.5
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.10.4
+## What's New in v1.10.5
+
+- `learn`, Step 6, shows the full text of the GitHub issue after the first yes and asks a second question. The repository `ai-advanced-futures/cc-plugins` is public. The issue opens only after a yes to the second question (STORY-264).
+
+## What Was New in v1.10.4
 
 - `write-run` reads a step that starts with its number ("7. Check ...", "7) ...", "7: ...", "Step 7: ..."). Before, a need with such a step text stopped the run with "names no step of p2.json". The text after the number is matched to a step title first, then the number is matched to a step number. A need that still names no step stops the run, as before.
 - `write-run` writes a `wtp-check` that has no upstream run. The WtpValidation page then has no `segment` link, and `write-run` prints a warning. A `wtp-check` that reads a run with Segment pages still stops when a segment name has no page. The `segment` link of WtpValidation is not required any more.

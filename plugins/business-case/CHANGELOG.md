@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.3
+
+- `brain_read.snapshot` refuses a snapshot name that is not 1 file name. The run ends as a gap with "is not 1 file name", because `command` and `run_id` go into the name unchanged and a `/` or `..` in them named a file outside `team/upstream/` (STORY-264).
+- `learn`, Step 6, shows the full issue body in a fenced block after the first yes. It then asks a second question that says the repository `ai-advanced-futures/cc-plugins` is public. It opens the issue only after a yes to the second question (STORY-264).
+
 ## 0.9.1
 
 - The 5 runner plugins each name the grants that their caller must give, in a file `caller-grants.json` (STORY-168). The README says that this file is the source of each runner list. `test_runner_grants.py` compares the scripts of each file with `RUNNER_CALLS`, and the `Edit` grant of each file with `allowed-tools` of `build.md`. The same test holds that the hook, `hooks.json` and `build.md` name no web tool and no MCP tool, so a web call stays the approval of the person. ADR-016 says this.

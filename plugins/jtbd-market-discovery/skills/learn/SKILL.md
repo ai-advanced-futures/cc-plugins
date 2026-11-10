@@ -80,7 +80,13 @@ checks reject. Correct the cause and call it again.
 
 Report each page that changed, each Report entry, and each ERROR, WARN, and
 SKIP line of the checks. When Step 4 wrote a Report entry, offer to open a
-GitHub issue in `ai-advanced-futures/cc-plugins`. Open it only after a yes:
+GitHub issue in `ai-advanced-futures/cc-plugins`.
+After a yes, show the person the full issue body, in a fenced block, as the
+command will send it. Then ask a second question: "Open the issue with this
+body? `ai-advanced-futures/cc-plugins` is public, so remove each path and
+each value of the case that must stay private." When the person changes the
+body, show it again and ask again. Open it only after a yes to the second
+question, because the first yes is to the offer and not to the text:
 `gh issue create --repo ai-advanced-futures/cc-plugins --title "jtbd-market-discovery:learn report" --body-file <file>`.
 Make the file with the `Write` tool. Its name holds only the characters
 `A-Za-z0-9._/-`; with any other name, stop and show the Report entry.

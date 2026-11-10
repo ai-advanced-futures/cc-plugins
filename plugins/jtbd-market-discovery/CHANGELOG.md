@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.5
+
+- `learn`, Step 6, shows the full issue body in a fenced block after the first yes. It then asks a second question that says the repository `ai-advanced-futures/cc-plugins` is public. It opens the issue only after a yes to the second question, because the first yes is to the offer and not to the text (STORY-264).
+
 ## 1.10.4
 
 - `write-run` reads a step text that starts with its number, in the forms "7. Check ...", "7) Check ...", "7: Check ..." and "Step 7: Check ...". The text after the number is matched to a step title first. The number is the last choice, so a text that equals a title wins over a different number. A need that names no step still stops the run. Before, each saved live session with such a need (`v1111-disc-0001`, `close-assistant-0001`, `s168-jtbd-0001`) stopped with "names no step of p2.json" (STORY-278).
