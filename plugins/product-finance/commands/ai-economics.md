@@ -1,6 +1,6 @@
 ---
 description: Launch AI Economics Calculator to analyze AI costs, value attribution, and ROI with CFO-ready reporting
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ai_roi_calculator.py *), Edit(/.product-finance/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ai_roi_calculator.py *), Edit(/.product-finance/**), Read(/${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json), Read(/${CLAUDE_PLUGIN_ROOT}/agents/ai-economist.md), Read(/${CLAUDE_PLUGIN_ROOT}/templates/ai-economics.json), Read(/${CLAUDE_PLUGIN_ROOT}/skills/ai-economics-cost-tracking/SKILL.md), Read(/${CLAUDE_PLUGIN_ROOT}/skills/ai-economics-value-attribution/SKILL.md), Read(/${CLAUDE_PLUGIN_ROOT}/skills/ai-economics-roi-calculation/SKILL.md)
 ---
 
 # AI Economics Calculator Command
@@ -339,7 +339,7 @@ The more dimensions we capture, the stronger your ROI case.
 
 ### File 1: `.product-finance/ai-economics.json`
 
-Structured data following `templates/ai-economics.json` schema:
+Structured data following `${CLAUDE_PLUGIN_ROOT}/templates/ai-economics.json` schema:
 
 ```json
 {
@@ -846,7 +846,7 @@ TTV acceleration: Yes (45 days)
 ## References
 
 - **Calculation Script:** `scripts/ai_roi_calculator.py` - Core ROI logic
-- **Output Schema:** `templates/ai-economics.json` - Structured data format
+- **Output Schema:** `${CLAUDE_PLUGIN_ROOT}/templates/ai-economics.json` - Structured data format
 - **Framework:** `BRAINSTORMING.md` - AI Economics Calculator methodology
 - **Methodology:** Industry-standard AI cost tracking and value attribution
 

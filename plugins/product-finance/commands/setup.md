@@ -1,6 +1,6 @@
 ---
 description: Guided onboarding to collect baseline financial assumptions for product finance analysis
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_read.py *), Edit(/.product-finance/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_read.py *), Edit(/.product-finance/**), Read(/${CLAUDE_PLUGIN_ROOT}/templates/auto-config.template.json), Read(/${CLAUDE_PLUGIN_ROOT}/commands/discover.md), Read(/${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json), Read(/${CLAUDE_PLUGIN_ROOT}/docs/KPI_DEFINITIONS.md)
 ---
 
 Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py ...`, one command per Bash call. The grant of this command covers only those scripts, so run no inline code in any language, and write every file with the Write tool.
@@ -9,7 +9,7 @@ Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<fi
 
 Before you ask the person any question, check whether `.product-finance/auto-config.json` exists and has `"enabled": true`. When it does, take each answer from its `question_keys` and ask nothing.
 
-**To use auto-config:** Copy `templates/auto-config.template.json` to
+**To use auto-config:** Copy `${CLAUDE_PLUGIN_ROOT}/templates/auto-config.template.json` to
 `.product-finance/auto-config.json`, set `"enabled": true`, and change `question_keys` to your values.
 
 ---
@@ -194,14 +194,14 @@ Collect **fully-loaded costs** (salary + benefits + overhead = typically 1.5-2x 
 - `skip` - Skip for now (can add later)
 
 #### If `jtbd`:
-- Read the jtbd graph as **Person run** in `commands/discover.md` says.
+- Read the jtbd graph as **Person run** in `${CLAUDE_PLUGIN_ROOT}/commands/discover.md` says.
 - On a `NO-JTBD:` line, show that line, and then ask this question again with only the options `manual` and `skip`:
 
   **Question:** "Do you have market sizing data?"
 
   Follow the option the person picks.
 - Show each jtbd segment with its monthly willingness to pay, and ask the person to confirm each one.
-- A confirmed segment becomes one of the person's own segments in `segments` of `.product-finance/assumptions.json`, and then the merge in **Person run** of `commands/discover.md` applies.
+- A confirmed segment becomes one of the person's own segments in `segments` of `.product-finance/assumptions.json`, and then the merge in **Person run** of `${CLAUDE_PLUGIN_ROOT}/commands/discover.md` applies.
 - Store only the segment's `segment_name`: the merge sets its `willingness_to_pay` to 12 times the monthly value, and its `wtp_source` to the accepted file's path.
 - Import no market size: jtbd gives none. TAM, SAM and SOM stay null, as with `skip`.
 
@@ -282,11 +282,11 @@ Collect **fully-loaded costs** (salary + benefits + overhead = typically 1.5-2x 
 
 ### File: `.product-finance/assumptions.json`
 
-Creates/updates the assumptions file following the schema defined in `templates/assumptions.json`.
+Creates/updates the assumptions file following the schema defined in `${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json`.
 
 **Location:** `.product-finance/assumptions.json` (relative to project root)
 
-**Schema compliance:** Follows JSON schema from `templates/assumptions.json`
+**Schema compliance:** Follows JSON schema from `${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json`
 
 **Structure:**
 ```json
@@ -376,7 +376,7 @@ Next steps:
 **Error Handling:**
 - If `.product-finance/` directory doesn't exist, create it
 - If `assumptions.json` exists, ask: "Assumptions file exists. Update (merge) or overwrite?"
-- Validate against JSON schema from `templates/assumptions.json`
+- Validate against JSON schema from `${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json`
 - Provide helpful error messages if validation fails
 
 **Smart Defaults:**
@@ -587,9 +587,9 @@ Targets: defaults
 
 ## References
 
-- **Schema:** `templates/assumptions.json` - Full JSON schema definition
+- **Schema:** `${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json` - Full JSON schema definition
 - **Methodology:** `BRAINSTORMING.md` - Design philosophy and financial frameworks
-- **KPI Definitions:** `docs/KPI_DEFINITIONS.md` - Detailed metric explanations (coming soon)
+- **KPI Definitions:** `${CLAUDE_PLUGIN_ROOT}/docs/KPI_DEFINITIONS.md` - Detailed metric explanations (coming soon)
 - **Benchmarks:** Industry standard ranges for validation
 
 ---

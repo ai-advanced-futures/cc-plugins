@@ -1,6 +1,6 @@
 ---
 description: Discovery stage financial analysis with market sizing (TAM/SAM/SOM), revenue opportunity, and CAC estimates by channel
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_read.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/market_sizing_calculator.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/plugin_result/plugin_result_check.py *), Edit(/.product-finance/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_read.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/market_sizing_calculator.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/plugin_result/plugin_result_check.py *), Edit(/.product-finance/**), Read(/${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json), Read(/${CLAUDE_PLUGIN_ROOT}/agents/market-analyzer.md), Read(/${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json), Read(/${CLAUDE_PLUGIN_ROOT}/skills/analysis-market-sizing/SKILL.md), Read(/${CLAUDE_PLUGIN_ROOT}/skills/calculations-unit-economics/SKILL.md)
 ---
 
 # Product Finance Discover Command
@@ -1560,7 +1560,7 @@ else:
 
 ## References
 
-- **Schema:** `templates/assumptions.json` - Market and segment data structure
+- **Schema:** `${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json` - Market and segment data structure
 - **JTBD Integration:** the jtbd graph, read with `scripts/jtbd_read.py` - segment and willingness-to-pay results
 - **Methodology:** `BRAINSTORMING.md` - TAM/SAM/SOM framework and CAC estimation
 - **Benchmarks:** Industry-standard CAC by channel and LTV:CAC ratios

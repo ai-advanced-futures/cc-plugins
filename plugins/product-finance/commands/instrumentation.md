@@ -1,6 +1,6 @@
 ---
 description: Generate comprehensive instrumentation plan for financial tracking with codebase analysis, event schemas, and implementation guidance
-allowed-tools: Edit(/.product-finance/**)
+allowed-tools: Edit(/.product-finance/**), Read(/${CLAUDE_PLUGIN_ROOT}/templates/event-schemas/ai_usage_events.json), Read(/${CLAUDE_PLUGIN_ROOT}/templates/event-schemas/subscription_events.json), Read(/${CLAUDE_PLUGIN_ROOT}/templates/instrumentation-plan.json)
 ---
 
 # Product Finance Instrumentation Command
@@ -1153,9 +1153,9 @@ Dispatch the `product-finance:instrumentation-planner` agent (Sonnet) with the `
 
 ## References
 
-- **Event schemas:** See `templates/event-schemas/` for complete schemas
+- **Event schemas:** See `${CLAUDE_PLUGIN_ROOT}/templates/event-schemas/ai_usage_events.json` and `${CLAUDE_PLUGIN_ROOT}/templates/event-schemas/subscription_events.json` for complete schemas
 - **Python analyzer:** See `scripts/instrumentation_analyzer.py` for analysis implementation
-- **Template plan:** See `templates/instrumentation-plan.json` for output structure
+- **Template plan:** See `${CLAUDE_PLUGIN_ROOT}/templates/instrumentation-plan.json` for output structure
 
 ---
 

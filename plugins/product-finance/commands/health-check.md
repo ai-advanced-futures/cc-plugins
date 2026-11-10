@@ -1,6 +1,6 @@
 ---
 description: Comprehensive financial health assessment with board-level KPIs, Rule of 40 analysis, unit economics evaluation, retention metrics, efficiency ratios, benchmark comparison, and strategic recommendations
-allowed-tools: Edit(/.product-finance/**)
+allowed-tools: Edit(/.product-finance/**), Read(/${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json)
 ---
 
 # Health Check Command
@@ -1740,7 +1740,7 @@ Dispatch the `product-finance:financial-analyst` agent (Sonnet) with the `Agent`
 ## References
 
 - **Framework:** `BRAINSTORMING.md` - Core financial metrics and Rule of 40 methodology
-- **Assumptions Schema:** `templates/assumptions.json` - Financial assumptions structure
+- **Assumptions Schema:** `${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json` - Financial assumptions structure
 - **Integration:** Other product-finance commands for deeper analysis
 - **Benchmarks:** Industry-standard SaaS metrics from SaaS Capital, Tomasz Tunguz, David Skok
 

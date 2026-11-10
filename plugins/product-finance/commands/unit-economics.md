@@ -1,6 +1,6 @@
 ---
 description: Comprehensive unit economics analysis including CAC, LTV, LTV:CAC ratio, CAC payback period, Magic Number, and cohort analysis for customer profitability assessment
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Edit(/.product-finance/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Edit(/.product-finance/**), Read(/${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json), Read(/${CLAUDE_PLUGIN_ROOT}/agents/financial-analyst.md), Read(/${CLAUDE_PLUGIN_ROOT}/references/unit-economics-examples.md), Read(/${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json), Read(/${CLAUDE_PLUGIN_ROOT}/skills/calculations-unit-economics/SKILL.md), Read(/${CLAUDE_PLUGIN_ROOT}/skills/calculations-rule-of-40/SKILL.md), Read(/${CLAUDE_PLUGIN_ROOT}/skills/analysis-benchmark-comparison/SKILL.md)
 ---
 
 # Unit Economics Command
@@ -1539,7 +1539,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/agents/financial-analyst.md` and follow it in this s
 ## References
 
 - **Framework:** `BRAINSTORMING.md` - Unit economics methodology and benchmarks
-- **Assumptions Schema:** `templates/assumptions.json` - Baseline data structure
+- **Assumptions Schema:** `${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json` - Baseline data structure
 - **Thought Leadership:**
   - David Skok (Matrix Partners) - SaaS Playbook: CAC, LTV, churn
   - Tomasz Tunguz (Theory Ventures) - LTV:CAC and growth benchmarks

@@ -1,6 +1,6 @@
 ---
 description: Calculate ROI for specific features or initiatives with build cost estimation, revenue impact, payback period, NPV analysis, and Build/Don't Build/Defer recommendation
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Edit(/.product-finance/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Edit(/.product-finance/**), Read(/${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json), Read(/${CLAUDE_PLUGIN_ROOT}/agents/roi-calculator.md), Read(/${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json), Read(/${CLAUDE_PLUGIN_ROOT}/skills/calculations-ltv-cac/SKILL.md), Read(/${CLAUDE_PLUGIN_ROOT}/skills/analysis-benchmark-comparison/SKILL.md)
 ---
 
 # Feature ROI Command
@@ -1156,7 +1156,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/agents/roi-calculator.md` and follow it in this sess
 ## References
 
 - **Framework:** `BRAINSTORMING.md` - ROI methodology and decision framework
-- **Assumptions Schema:** `templates/assumptions.json` - Baseline data structure
+- **Assumptions Schema:** `${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json` - Baseline data structure
 - **Integration:** Other product-finance commands for holistic analysis
 - **Benchmarks:** Industry-standard ROI thresholds and payback targets
 

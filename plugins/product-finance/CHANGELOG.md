@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.1
+
+- **fix:** in a headless run in the default mode, each command can read the plugin files that it needs. The `allowed-tools` line of 8 commands has 1 `Read(/${CLAUDE_PLUGIN_ROOT}/<file>)` rule for each such file, and no other `Read` rule. Before, Claude Code refused the read of `plugin.json` and of the agent file, and the run wrote no result file.
+- **docs:** each command names a plugin file with `${CLAUDE_PLUGIN_ROOT}/` before it.
+- **test:** `tests/unit/test_plugin_file_read.py` fails when a command reads a plugin file with no rule for it, or has a `Read` rule for no read.
+
 ## 0.14.0
 
 - **feat:** the Magic Number divides by the S&M spend of 1 quarter, from the new optional input `prior_quarter_sm_spend`. Without it, the script estimates the spend as (sales costs + marketing costs) × 3 / period months. It labels the figure as an estimate (`is_estimate`, `estimate_note`, `(estimate)`), and leaves the figure out of `overall_health` and its recommendations. One line tells the person to calculate the figure again.

@@ -1,7 +1,7 @@
 ---
 description: "Produce cost-coverage-readout Charter artifact (audience: internal) from pricing outputs + company financials"
 argument-hint: "diagnosis_path=<path> amplifier_path=<path> gm_pct=<n> nrr_delta_pct=<n> forecast_variance_pct=<n> cost_per_interaction_baseline=<n> headline_price=<n> engagement_id=<uuid>"
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/cost_coverage_core.py *), Edit(/.product-finance/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/cost_coverage_core.py *), Edit(/.product-finance/**), Read(/${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json), Read(/${CLAUDE_PLUGIN_ROOT}/agents/cost-coverage-agent.md)
 ---
 
 # /product-finance:cost-coverage

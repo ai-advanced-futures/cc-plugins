@@ -731,7 +731,7 @@ A defaults run of `product-finance:feature-roi` with no revenue answer, then a r
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.14.0",
+  "plugin_version": "0.14.1",
   "command": "product-finance:feature-roi",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -849,7 +849,7 @@ A defaults run of `product-finance:feature-roi` with no revenue answer, then a r
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.14.0",
+  "plugin_version": "0.14.1",
   "command": "product-finance:feature-roi",
   "run": {
     "started_at": "2026-11-01T10:10:00Z",
@@ -921,7 +921,7 @@ A defaults run of `product-finance:feature-roi` with no revenue answer, then a r
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.14.0",
+  "plugin_version": "0.14.1",
   "command": "product-finance:feature-roi",
   "run": {
     "started_at": "2026-11-01T14:00:00Z",
