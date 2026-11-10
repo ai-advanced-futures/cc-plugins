@@ -43,7 +43,7 @@ Only a skill asks you questions. The agents ask nothing. The questions are in `d
 
 ## Output
 
-The plugin writes to the folder `.data-strategy-tmp/<session_id>/` of the current project. It writes nowhere else.
+The plugin writes to the folder `.data-strategy-tmp/<session_id>/` of the current project. It writes nowhere else. `/data-strategy:roadmap` with a `synthesis.md` path writes the 3 deliverables in a new session folder, `.data-strategy-tmp/<new id>/`, and shows the 3 paths. `/data-strategy:roadmap --session <id>` writes them again in `.data-strategy-tmp/<id>/`, and first renames each old deliverable to `<name>.prev.md`.
 
 | File | Content |
 |------|---------|
@@ -69,7 +69,7 @@ Scripts do the scoring, so the agents do not calculate the numbers. The skills r
 | `data_mesh_evaluator.py` | Scores the 4 Data Mesh principles |
 | `product_portfolio_scorer.py` | Scores each data product and the portfolio |
 | `roadmap_builder.py` | Sorts items into 4 groups by effort and impact |
-| `session_manager.py` | Makes the session (`new` prints the session id), and writes and checks the `.done` flags and the output files |
+| `session_manager.py` | Makes the session (`new` prints the session id), and writes and checks the `.done` flags and the output files, and keeps the old deliverables as `.prev.md` files (`keep-prev`) |
 
 ## Data and privacy
 

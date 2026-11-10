@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.3
+
+- The 5 skills grant the read of `docs/intake.md` and `docs/frameworks.md` of the plugin, and the write of `.data-strategy-tmp/**`. Before, the skills ran only in a permission mode that asks for no approval: in the default mode, the read of a plugin file and the write of a session file were refused, and a skill such as `strategy` started no agent (STORY-330).
+- `session_manager.py` has the command `keep-prev <output_dir> <file...>`. It renames each file that exists to `<name>.prev.md`, and replaces an old `.prev.md` file. It works only in a folder of `.data-strategy-tmp`. The skill `roadmap` uses it, so that the skill needs no `mv`.
+- `/data-strategy:roadmap` with a `synthesis.md` path now writes the 3 deliverables in a new folder, `.data-strategy-tmp/<new id>/`. Before, it wrote them in the folder of the `synthesis.md` file.
+
 ## 0.3.2
 
 - The skills `strategy`, `platform`, `products`, `roadmap` and `data-strategy` start each agent in the foreground with `run_in_background: false`, and say so in a line at the top. Before, an agent could start in the background and return in a new turn that did not have the `allowed-tools` of the skill, and the next script was refused (STORY-312).

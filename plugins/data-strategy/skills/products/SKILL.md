@@ -1,7 +1,7 @@
 ---
 name: products
 description: Assesses the data product portfolio of a software company, by how complete each data product is and how mature its data contracts are. Use when the person asks only for a data product or data contract review. Writes products.md.
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/product_portfolio_scorer.py *)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/product_portfolio_scorer.py *), Read(/${CLAUDE_PLUGIN_ROOT}/docs/intake.md), Read(/${CLAUDE_PLUGIN_ROOT}/docs/frameworks.md), Edit(/.data-strategy-tmp/**)
 ---
 
 # Data strategy: data product portfolio only

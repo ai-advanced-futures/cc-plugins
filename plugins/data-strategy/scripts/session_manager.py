@@ -13,12 +13,17 @@ Command line:
   session_manager.py done <output_dir> <slug>
   session_manager.py all-done <output_dir> <slug...>
   session_manager.py has-files <output_dir> <file...>
+  session_manager.py keep-prev <output_dir> <file...>
 The command new makes a session id, makes the session in <parent_dir>/<id>, and
 prints only the id. It exits 1 when it cannot make the folder.
 The command all-done exits 0 when every slug has a flag. Else it prints the
 missing slugs and exits 1. The command has-files does the same for output
 files. A skill decides that a run is done with these 2 commands, and not with
 the DONE line of an agent, which is a second sign.
+The command keep-prev renames each file that exists in <output_dir> to
+<stem>.prev<suffix>, and replaces an old .prev file. It exits 1 when a name is
+not a plain file name, or when <output_dir> is not a folder in .data-strategy-tmp
+of the current folder.
 """
 from __future__ import annotations
 
@@ -74,12 +79,24 @@ def missing_files(session_dir: Path, names: list[str]) -> list[str]:
     return [name for name in names if not (Path(session_dir) / name).is_file()]
 
 
+def keep_prev(session_dir: Path, names: list[str]) -> list[str]:
+    """Rename each file that exists to <stem>.prev<suffix>. Return the names that were renamed."""
+    renamed = []
+    for name in names:
+        path = Path(session_dir) / name
+        if path.is_file():
+            path.replace(path.with_name(f"{path.stem}.prev{path.suffix}"))
+            renamed.append(name)
+    return renamed
+
+
 USAGE = (
     "Usage: session_manager.py new <parent_dir> <domain...>\n"
     "       session_manager.py create <session_id> <output_dir> <domain...>\n"
     "       session_manager.py done <output_dir> <slug>\n"
     "       session_manager.py all-done <output_dir> <slug...>\n"
-    "       session_manager.py has-files <output_dir> <file...>"
+    "       session_manager.py has-files <output_dir> <file...>\n"
+    "       session_manager.py keep-prev <output_dir> <file...>"
 )
 
 
@@ -123,6 +140,22 @@ def main(argv: list[str]) -> int:
             print("Missing files: " + ", ".join(missing))
             return 1
         print("All files present")
+        return 0
+    if command == "keep-prev" and len(args) >= 2:
+        out, *names = args
+        bad = [n for n in names if n in (".", "..") or n != Path(n).name]
+        if bad:
+            print("Not a plain file name: " + ", ".join(bad), file=sys.stderr)
+            return 1
+        if Path(out).resolve().parent != Path.cwd().resolve() / ".data-strategy-tmp":
+            print(f"Not a session folder in .data-strategy-tmp: {out}", file=sys.stderr)
+            return 1
+        try:
+            renamed = keep_prev(Path(out), names)
+        except OSError as exc:
+            print(f"session_manager.py: {exc}", file=sys.stderr)
+            return 1
+        print("Renamed: " + (", ".join(renamed) or "none"))
         return 0
     print(USAGE, file=sys.stderr)
     return 1

@@ -1,7 +1,7 @@
 {
   "name": "data-strategy",
   "displayName": "data-strategy",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Assess the data strategy of a software company: business alignment, the data platform, and the data product portfolio. Write a strategy report, a platform ADR, and a data roadmap.",
   "author": {
     "name": "ai-advanced-futures"

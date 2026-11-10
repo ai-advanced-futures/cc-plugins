@@ -1,7 +1,7 @@
 ---
 name: platform
 description: Audits the data platform of a software company against the 4 Data Mesh principles and the 5 stages of the data engineering lifecycle. Use when the person asks only for a data platform or Data Mesh review. Can scan the current project for pipeline files. Writes platform.md.
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/data_mesh_evaluator.py *)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/data_mesh_evaluator.py *), Read(/${CLAUDE_PLUGIN_ROOT}/docs/intake.md), Read(/${CLAUDE_PLUGIN_ROOT}/docs/frameworks.md), Edit(/.data-strategy-tmp/**)
 ---
 
 # Data strategy: data platform audit only

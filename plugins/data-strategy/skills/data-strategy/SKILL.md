@@ -1,7 +1,7 @@
 ---
 name: data-strategy
 description: Runs the full data strategy assessment of a software company (strategy alignment, data platform, and data product portfolio). Use when the person asks for a data strategy assessment, a data maturity review, or a data roadmap. Writes a strategy report, a data platform ADR, and a data roadmap.
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/dama_scorer.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/maturity_calculator.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/data_mesh_evaluator.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/product_portfolio_scorer.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/roadmap_builder.py *)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/dama_scorer.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/maturity_calculator.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/data_mesh_evaluator.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/product_portfolio_scorer.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/roadmap_builder.py *), Read(/${CLAUDE_PLUGIN_ROOT}/docs/intake.md), Read(/${CLAUDE_PLUGIN_ROOT}/docs/frameworks.md), Edit(/.data-strategy-tmp/**)
 ---
 
 # Data strategy: full assessment
