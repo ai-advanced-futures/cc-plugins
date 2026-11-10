@@ -1087,7 +1087,10 @@
                 },
                 "segment": {
                     "pattern": "^/segments/SEGMENT-\\d{2,}\\.md$",
-                    "type": "string"
+                    "type": [
+                        "string",
+                        "null"
+                    ]
                 },
                 "status": {
                     "$ref": "#/$defs/OkfStatus",
@@ -1154,7 +1157,6 @@
             },
             "required": [
                 "type",
-                "segment",
                 "run"
             ],
             "title": "WtpValidation",

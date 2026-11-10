@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.4
+
+- `write-run` reads a step text that starts with its number, in the forms "7. Check ...", "7) Check ...", "7: Check ..." and "Step 7: Check ...". The text after the number is matched to a step title first. The number is the last choice, so a text that equals a title wins over a different number. A need that names no step still stops the run. Before, each saved live session with such a need (`v1111-disc-0001`, `close-assistant-0001`, `s168-jtbd-0001`) stopped with "names no step of p2.json" (STORY-278).
+- `write-run` writes the graph of a `wtp-check` with no upstream run. When the run has no Segment page and reads no input run, the WtpValidation page has no `segment` link, and `write-run` prints 1 warning for each segment. An input run that has Segment pages and no page of the segment name still stops the run (STORY-278).
+- The `segment` link of a WtpValidation page is not required: `schema/jtbd.yaml`, `schema/jtbd.schema.json` and `REQUIRED_LINKS` change. `write-run` runs `upgrade` first, so the manifest of a graph that an older version made takes the new list (STORY-278).
+
 ## 1.10.2
 
 - `jtbd_graph.py set` and `new --set` keep a value that YAML reads as a date or a time as the text that the person gave. Before, `set RUN-01 finished_at=2026-11-06T22:21:48Z` exited 1, because the schema wants a string, so the Run page got no `finished_at` and `verify-run` refused it (STORY-186).

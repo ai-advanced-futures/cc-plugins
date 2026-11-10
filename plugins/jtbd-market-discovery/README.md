@@ -2,11 +2,17 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.10.2
+**Version:** 1.10.4
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.10.2
+## What's New in v1.10.4
+
+- `write-run` reads a step that starts with its number ("7. Check ...", "7) ...", "7: ...", "Step 7: ..."). Before, a need with such a step text stopped the run with "names no step of p2.json". The text after the number is matched to a step title first, then the number is matched to a step number. A need that still names no step stops the run, as before.
+- `write-run` writes a `wtp-check` that has no upstream run. The WtpValidation page then has no `segment` link, and `write-run` prints a warning. A `wtp-check` that reads a run with Segment pages still stops when a segment name has no page. The `segment` link of WtpValidation is not required any more.
+- `write-run` upgrades the manifest of an existing graph before it writes, so a graph from an older version takes the new link rule.
+
+## What Was New in v1.10.2
 
 - `jtbd_graph.py set` and `new --set` keep a value that YAML reads as a date or a time as the text that the person gave. Before, `set RUN-01 finished_at=2026-11-06T22:21:48Z` exited 1, because the schema wants a string, so the Run page got no `finished_at` and `verify-run` refused it.
 - `learn`, Step 3, sets `finished_at` of a quick validation from `date` and confirms the run. It names the form of the `run` field and the schema file that lists the fields of each type.

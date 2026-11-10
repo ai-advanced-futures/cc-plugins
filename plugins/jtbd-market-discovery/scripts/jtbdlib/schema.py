@@ -12,7 +12,7 @@ SLOTS_PATH = PLUGIN_ROOT / "schema" / "jtbd.slots.json"
 # The page types that a link field of each page type must have (manifest `required_links`, table "Page types").
 REQUIRED_LINKS = {
     "Job": ["run"], "JobStep": ["job", "run"], "Outcome": ["step", "run"], "Segment": ["job", "run"],
-    "WtpValidation": ["segment", "run"], "Result": ["run"],
+    "WtpValidation": ["run"], "Result": ["run"],
 }
 
 # The fields of a WtpValidation page that only a survey gives (STORY-193): with a survey, 1 page of the run holds 1.

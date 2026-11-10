@@ -102,7 +102,6 @@ classes:
     slots: [type, title, description, status, tags, confidence_level, sample_size, cleaned_median, cleaned_mean, optimal_price_point, acceptable_range, validated_wtp, wtp_range, annual_wtp, annual_evc, wtp_to_evc_ratio, competitor_avg, verdict, segment, run, aliases, generated, verified, protected]
     slot_usage:
       type: {equals_string: WtpValidation}
-      segment: {required: true}
       run: {required: true}
   Result:
     description: "One entry of the result file of a run."

@@ -6,6 +6,7 @@ A value that a Result page holds is not written on the page of its item (spec "D
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from jtbdlib import DataError, UsageError, check, logbook, regen, schema, writer
@@ -14,6 +15,9 @@ from jtbdlib.ids import fold, next_id
 from jtbdlib.issues import ERROR
 from jtbdlib.page import dump, ordered, write_text
 from jtbdlib.rules import RESULT_ABOUT, moved_fields
+
+# A step text that starts with its number: "7. Check ...", "7) Check ...", "7: Check ...", "Step 7: Check ..." (STORY-278).
+LEADING_STEP = re.compile(r"\s*(?:step\s*)?(\d+)\s*[.):]\s+(\S.*)", re.IGNORECASE | re.DOTALL)
 
 SCORE_LISTS = ("top_opportunities", "scored_needs", "all_needs", "needs", "opportunities", "scores")
 
@@ -276,10 +280,15 @@ class Build:
         order = number(pick(need, "step_id", "step"))
         if order in self.steps:
             return self.steps[order]
-        text = fold(need.get("step")) if isinstance(need.get("step"), str) else None
-        for page in self.steps.values():
-            if text and fold(page.title) == text:
-                return page
+        step = need.get("step") if isinstance(need.get("step"), str) else ""
+        lead = LEADING_STEP.match(step)
+        texts = [fold(step)] + ([fold(lead.group(2))] if lead else [])
+        for text in filter(None, texts):
+            for page in self.steps.values():
+                if fold(page.title) == text:
+                    return page
+        if lead and int(lead.group(1)) in self.steps:
+            return self.steps[int(lead.group(1))]
         raise DataError(f"the need {need.get('need_id') or clean(need.get('need'), 40)!r} names no step of p2.json")
 
     def make_outcomes(self):
@@ -360,8 +369,11 @@ class Build:
             if not name:
                 continue
             target = pool.get(fold(name))
-            if target is None:
+            if target is None and pool:
                 raise DataError(f"p9.json segment {name!r} has no Segment page in the run that it reads")
+            if target is None:
+                self.w.warnings.append(f"p9.json segment {name!r}: the run that it reads has no Segment page, "
+                                       "so the WtpValidation page has no segment link")
             analysis, west = section(item.get("wtp_analysis")), section(item.get("van_westendorp"))
             econ, bench = section(item.get("value_economics")), section(item.get("competitive_benchmark"))
             conf = item.get("confidence_score") if isinstance(item.get("confidence_score"), dict) else {}
@@ -373,7 +385,7 @@ class Build:
                       "annual_evc": number(econ.get("annual_evc")), "wtp_to_evc_ratio": number(econ.get("wtp_to_evc_ratio")),
                       "competitor_avg": number(bench.get("competitor_avg")), "verdict": pick(item, "verdict") or verdict}
             page = self.w.make("WtpValidation", f"Willingness to pay of {name}", f"Willingness to pay of the segment {name}, after the validation layers",
-                               fields, {"segment": target, "run": self.run_ref})
+                               fields, {"segment": target, "run": self.run_ref} if target else {"run": self.run_ref})
             self.wtp[fold(name)] = page
         answers = survey_answers(self.session)
         if answers and not any(holds_survey_value(page.fields) for page in self.wtp.values()):
@@ -550,6 +562,8 @@ def write_one(root, session_dir, result, actor, lines, command=None):
     result = dict(result or {})
     if command and not result.get("command"):
         result["command"] = command
+    if has_entry(root):
+        writer.upgrade(root)
     w = Writer(root, actor)
     bundle = read(root) if has_entry(root) else Bundle(Path(root), w.dir, {})
     build = Build(w, session_dir, result, state, bundle)
