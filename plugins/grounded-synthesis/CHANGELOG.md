@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.7
+
+- `lib/session_paths.py --resolve` with no session id makes a new uuid4 and the session folder, and prints the lines `session_id: <uuid4>` and `session_dir: <path>`. Step 1 of the orchestrator calls this form, so the agent runs no shell command to make a uuid. Before, the permission check refused the first command of the agent in 3 of 3 audit runs with only `Bash(uv run:*)` (STORY-191). `--resolve <session_id>` does not change.
+- The orchestrator text says to run each shell command on its own, with no `$(...)`, variable, pipe, `&&` or `;`, and to write each value in full. A test reads each command block of the agent.
+- The README names the grants of a headless run: `Bash(uv run:*)`, `Write` and `Read`.
+
 ## 0.4.6
 
 - Step 2 of the skill `grounded-synthesis-audit` starts the orchestrator in the foreground, with `run_in_background: false`, and waits for its reply. Before, the `Agent` call often had no `run_in_background` key, and the harness then started the orchestrator in the background (4 of 10 live runs). A background agent cannot ask for a permission, so a Bash call outside the grant of the skill was refused and the audit stopped (STORY-239).

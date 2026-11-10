@@ -43,6 +43,7 @@ import uuid
 from pathlib import Path
 
 DEFAULT_SUBPATH = ".cache/grounded-synthesis-sessions"
+NEW_SESSION = object()
 
 
 def _get_base() -> Path:
@@ -116,17 +117,21 @@ def sweep_old_sessions(days: int = 30) -> int:
 
 
 if __name__ == "__main__":
-    # CLI mode: uv run ${CLAUDE_PLUGIN_ROOT}/lib/session_paths.py --resolve <session_id> [--sweep-days N]
+    # CLI mode: uv run ${CLAUDE_PLUGIN_ROOT}/lib/session_paths.py --resolve [<session_id>] [--sweep-days N]
     # With --sweep-days, first delete session folders older than N days.
-    # Then make the session folder and print its absolute path to stdout.
+    # Then make the session folder. With a session id, print its absolute path to stdout.
+    # With no session id, make a new uuid4, and print the lines `session_id: <uuid4>` and
+    # `session_dir: <absolute path>`, so the caller needs no shell command to make a uuid.
     parser = argparse.ArgumentParser(
         description="Resolve the absolute session directory path for a given session_id."
     )
     parser.add_argument(
         "--resolve",
         metavar="SESSION_ID",
+        nargs="?",
+        const=NEW_SESSION,
         required=True,
-        help="Session ID to resolve to an absolute directory path.",
+        help="Session ID to resolve to an absolute directory path. With no value, make a new uuid4.",
     )
     parser.add_argument(
         "--sweep-days",
@@ -139,10 +144,16 @@ if __name__ == "__main__":
     try:
         if args.sweep_days is not None:
             sweep_old_sessions(days=args.sweep_days)
-        session_dir = resolve_session_dir(args.resolve)
+        is_new = args.resolve is NEW_SESSION
+        session_id = str(uuid.uuid4()) if is_new else args.resolve
+        session_dir = resolve_session_dir(session_id)
     except ValueError as exc:
         print(f"session_paths: {exc}", file=sys.stderr)
         sys.exit(2)
     session_dir.mkdir(parents=True, exist_ok=True)
-    print(str(session_dir))
+    if is_new:
+        print(f"session_id: {session_id}")
+        print(f"session_dir: {session_dir}")
+    else:
+        print(str(session_dir))
     sys.exit(0)

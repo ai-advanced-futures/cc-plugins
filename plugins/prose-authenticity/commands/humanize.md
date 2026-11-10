@@ -22,9 +22,6 @@ Rules for the whole run:
   backtick, and the shell runs it if it is not quoted.
 - Run each command on its own. Use no variable, no `$(...)`, no pipe and no `&&` or `;` chain, and
   write each path in full. The shell cannot check such a command before it runs, and refuses it.
-  Add this sentence at the end of the prompt of the `grounded-synthesis` agent: "Run each shell
-  command on its own, with no `$(...)`, variable, pipe, `&&` or `;`, and write the session id
-  as a literal uuid."
 - Start sub-agents with the `Agent` tool and the full type name, such as
   `prose-authenticity:humanizer`. Only you start sub-agents.
 - A failed dispatch is one that returns an error or returns without its output file. A script that

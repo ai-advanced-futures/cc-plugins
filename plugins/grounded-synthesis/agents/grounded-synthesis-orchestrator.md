@@ -29,12 +29,14 @@ A path that holds a quote, `$(`, or a backtick breaks the single quotes of the c
 
 ## Workflow
 
+Run each shell command on its own, with no `$(...)`, variable, pipe, `&&` or `;`. Write each value (the session id, each path) in full. The permission check cannot read such a command, and it refuses the command.
+
 ### Step 1 — Resolve the session folder
 
-Make a `session_id` (uuid4). Run this command. It deletes session folders older than 30 days, makes the session folder, and prints its absolute path:
+Run this command. It deletes session folders older than 30 days, makes a new `session_id` (uuid4) and the session folder, and prints the 2 lines `session_id: <uuid4>` and `session_dir: <absolute path>`. Do not make a uuid yourself:
 
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/lib/session_paths.py --resolve '{session_id}' --sweep-days 30
+uv run ${CLAUDE_PLUGIN_ROOT}/lib/session_paths.py --resolve --sweep-days 30
 ```
 
 Clamp `key_facts_per_source` to `FACTS_PER_SOURCE_BOUNDS` of `lib/constants.py` (`[8, 20]`). If you clamp it, print a one-line notice. Then write `session.json` in that folder with `{session_id, draft_path, source_paths, session_dir, started_at, key_facts_per_source}`. `key_facts_per_source` is the clamped value.

@@ -13,10 +13,10 @@ The session folder is `${GROUNDED_SYNTHESIS_HOME:-$HOME/.cache/grounded-synthesi
 The orchestrator runs this command in Step 1:
 
 ```
-uv run ${CLAUDE_PLUGIN_ROOT}/lib/session_paths.py --resolve {session_id} --sweep-days 30
+uv run ${CLAUDE_PLUGIN_ROOT}/lib/session_paths.py --resolve --sweep-days 30
 ```
 
-With `--sweep-days N`, the script first deletes the session folders that are older than N days. Then it makes the new session folder and prints its absolute path. Without `--sweep-days`, it deletes nothing.
+With `--sweep-days N`, the script first deletes the session folders that are older than N days. With no session id, the script makes the uuid4, makes the new session folder, and prints the session id and the absolute path of the folder, so the agent runs no shell command to make a uuid. With a session id, it prints only the path. Without `--sweep-days`, it deletes nothing.
 
 The session folder holds facts from the source files of the user. It is data of the user, not a path in a repository. The sweep keeps this data for 30 days only.
 

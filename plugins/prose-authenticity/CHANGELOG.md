@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1
+
+- `/prose-authenticity:humanize` no longer adds a sentence about shell commands to the prompt of the `grounded-synthesis` agent, because that agent now holds the rule, from `grounded-synthesis` 0.4.7 (STORY-191). Use `grounded-synthesis` 0.4.7 or later.
+
 ## 0.7.0
 
 This version gives each agent a narrow tool grant (STORY-123).
