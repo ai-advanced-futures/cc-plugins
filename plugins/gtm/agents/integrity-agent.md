@@ -45,6 +45,7 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
 
 - Draft artifact files from `.gtm/working/{target_agent}/` — see manifest above
 - `gtm-context.json` — reads `product.capabilities[]`, `learned_knowledge`, and `plugin_inputs.value_ip.survived_claims` when it exists (value-ip is an optional plugin from outside this marketplace; without it, the evidence of each claim is in `product.capabilities[]` and `learned_knowledge`)
+- `brief.md` at the project root, when it exists: the facts that the person states about the product
 - The list of claims asserted in each artifact
 
 ## Truth Tier System
@@ -72,6 +73,7 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
    - Read exact draft file paths from ${CLAUDE_PLUGIN_ROOT}/scripts/integrity_manifest.py::get_draft_paths(target_agent)
    - Load gtm-context.json.product.capabilities[] as the evidence base
    - Load gtm-context.json.learned_knowledge as the field evidence base
+   - Read brief.md at the project root when it exists, as the evidence that the person states
    - Load plugin_inputs.value_ip.survived_claims as Tier 3 (COMMITTED) anchors (only if the key exists; if not, use the two evidence bases above)
 
 2. EXTRACT ALL CLAIMS:
@@ -82,6 +84,11 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
      - Asserts a market position ("We are the [adjective] [category]")
      - Asserts a future state ("We will launch Y in Q3")
      - Uses a comparative ("better than", "faster than", "more X than competitors")
+   - Text under the key `assumptions` of a JSON artifact, or under the heading `Assumptions` of a Markdown artifact,
+     is not a claim: the content agent wrote it as an assumption, not as a fact
+   - A sentence that only tells the problem of the customer, shows empathy, gives a step for the customer to do, or
+     asks the customer to act is not a claim, because it states nothing about the product. It is a claim when it
+     holds a number, a superlative, or a comparative that no source states, or a product capability
    - Log every extracted claim with: artifact source, claim text, line reference
 
 3. TRUTH TIER ASSIGNMENT:
@@ -91,6 +98,7 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
    - Check if claim maps to product.capabilities[]
    - Check if claim maps to value_ip.survived_claims (Tier 3 (COMMITTED) signal; skip this check when the key does not exist)
    - Check if claim maps to learned_knowledge (customer testimony, win data)
+   - Check if brief.md, an answer of the person, or learned_knowledge states the claim as live now
    - Check if claim is a roadmap item with assigned dev + budget
    - Check if claim is directional intent only
    - If no evidence found: Tier 5
@@ -98,6 +106,10 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
    Step B — Assign tier:
    - Evidence in product.capabilities[] + live in production → Tier 1
    - Evidence in product.capabilities[] + under active development → Tier 2
+   - Stated as live now by brief.md, an answer of the person, or learned_knowledge, and not in
+     product.capabilities[] → Tier 1, evidence type `stated` (this rule is the same for each target_agent)
+   - An outcome that tells what a Tier 1 capability does for the customer, and adds no number, no superlative, no
+     comparative and no other capability → the tier and the evidence of that capability
    - Evidence in roadmap doc with budget and owner → Tier 3
    - Stated direction without committed plan → Tier 4
    - No evidence or inference only → Tier 5
@@ -158,6 +170,7 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
    - Put each claim of step 2 in the list `claims` of the audit of step 9, also each claim that you removed.
      Give each claim the evidence value of its tier (step 3):
        Tier 1: {"type": "released", "source": "<where the evidence is>"}
+       Tier 1, stated: {"type": "stated", "source": "brief.md:<line>" or "person:<question>" or "learned_knowledge.<key>"}
        Tier 2: {"type": "in_progress", "source": "<where the evidence is>"}
        Tier 3: {"type": "roadmap", "budget": "<the budget>", "exec_sponsor": "<the sponsor>", "source": "<where the evidence is>"}
        Tier 4: {"type": "vision", "source": "<where the evidence is>"}
@@ -250,7 +263,7 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
    - READ the Tier-5-cleaned drafts from .gtm/working/{target_agent}/ (already cleaned from first run)
    - WRITE cleaned drafts to gtm-output/ using get_output_path() from integrity_manifest.py
    - Add caution banner to each promoted artifact:
-       "⚠️ integrity_score: {score} — below target 0.85; see truth-tier-audit.json"
+       "⚠️ integrity_score: {score} — below target 0.85; see .gtm/audit/{target_agent}-integrity.json"
    - Write score → gtm-context.json.integrity_scores.{target_agent}
    - Set gtm-context.json.completion_flags.{target_agent}_integrity: true
    - Overwrite .gtm/audit/{target_agent}-integrity-BREACH.json with the Write tool with {"status": "resolved"} (state is now pass-with-caveat). No tool of yours deletes a file.

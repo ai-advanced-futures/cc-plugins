@@ -5,7 +5,7 @@
 | Path | Purpose | Creator | Owner |
 |------|---------|---------|-------|
 | `.gtm/working/{agent}/` | Draft artifacts before integrity review | `gtm_init.create_directories()` | Content agents write here |
-| `.gtm/audit/` | Per-agent integrity audit files (`{agent}-truth-tier-audit.json`) | `gtm_init.create_directories()` | integrity-agent |
+| `.gtm/audit/` | Per-agent integrity audit files (`{agent}-integrity.json`) | `gtm_init.create_directories()` | integrity-agent |
 | `gtm-output/` | Final integrity-cleaned artifacts | `gtm_init.create_directories()` | integrity-agent (sole writer) |
 
 ## Run Files

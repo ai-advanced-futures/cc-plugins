@@ -5,6 +5,11 @@
   "type": "object",
   "properties": {
     "brand_name": {"type": "string"},
+    "assumptions": {
+      "type": "array",
+      "description": "Statements with no source. The integrity audit does not count them as claims (STORY-204).",
+      "items": {"type": "string"}
+    },
     "category": {"type": "string"},
     "owned_word": {"type": "string"},
     "promise": {"type": "string"},

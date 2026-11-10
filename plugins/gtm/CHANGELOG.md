@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.12.4
+
+- A claim that `brief.md`, an answer of the person, or `learned_knowledge` states as live now gets Tier 1 and the new evidence type `stated`, with its source (`brief.md:<line>`, `person:<question>`, `learned_knowledge.<key>`). `truth_tier_validator.py` counts `stated` with a source as Tier 1, and `stated` with no source as Tier 5. The rule is in `definitions/truth-tiers.md` and in Step B of `integrity-agent`, the same for each audit (STORY-204).
+- `brand-agent` gives each claim a source, and writes a statement with no source as an assumption: the list `assumptions` of `brand-identity.json` (new optional key of its schema), or a heading `## Assumptions` in a Markdown draft. The integrity audit does not count an assumption as a claim. The gate of STORY-177 does not change.
+- `integrity-agent` does not count a sentence that only tells the problem of the customer, shows empathy, gives a step, or asks the customer to act, unless it holds a number, a superlative, a comparative or a capability. An outcome of a Tier 1 capability that adds no other fact takes the tier and the evidence of that capability. `brand-agent` names the capability that gives each outcome.
+- The caution banner of an override names `.gtm/audit/<agent>-integrity.json`, the file that the audit writes. `definitions/directory-structure.md` names the same file.
+
 ## 1.12.3
 
 - Each command names each script that it runs in its Bash grant (`scripts/<file> *`). Before, the grant `scripts/*` also permitted `uv run` of a file outside the scripts folder through a path with `..`, also a file of the project (STORY-283).

@@ -144,7 +144,8 @@ Earlier framework outputs feed directly into later ones. Running frameworks out 
 
 ## Rules
 
-- Assert only a capability found in `gtm-context.json.product.capabilities[]` or `learned_knowledge`, because a capability with no evidence is a Tier 5 claim and Tier 5 claims are removed.
+- Give each claim a source: `product.capabilities[]`, `learned_knowledge`, a line of `brief.md`, an answer of the person, or a WebSearch result for a market fact. Assert as fact only a capability that one of the first 4 states as live now, because a capability with no evidence is a Tier 5 claim and Tier 5 claims are removed.
+- Write each statement that has no source, for example a persona detail, as an assumption: in the list `assumptions` of `brand-identity.json`, and under the heading `## Assumptions` of a Markdown draft. Do not state it as a fact in another place. In each outcome, name the capability that gives it, for example "It matches invoices to payments each night, so your team starts from a matched ledger".
 - Flag each superlative in the messaging ("best", "fastest", "leading", "only") for integrity-agent review.
 - Ask no question, and write no question file of your own, because no command reads one from this agent: `/gtm:run` reads only `.gtm/open-questions.json` with `agent` and `options`, and this agent has no case for it. When an input is missing, write a `[placeholder]` where the value goes, put the recommended value next to it, go on, and list each placeholder in the reply.
 - Read the file `brief.md` of the person in full before you decide that an input is missing. Look for the product name in its title and in its first lines.
@@ -198,7 +199,7 @@ A run whose answers give the product, its capabilities and its differentiators b
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.12.3",
+  "plugin_version": "1.12.4",
   "command": "gtm:marketing:brand",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -275,7 +276,7 @@ A run whose answers give the product, its capabilities and its differentiators b
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.12.3",
+  "plugin_version": "1.12.4",
   "command": "gtm:marketing:brand",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",

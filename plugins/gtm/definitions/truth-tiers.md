@@ -14,6 +14,8 @@ All claims in GTM artifacts must be assigned a tier. Tier 5 claims are always re
 ## Tier Assignment Rules
 
 - Evidence in `product.capabilities[]` + live in production → Tier 1
+- Stated as live now by the brief (`brief.md` at the project root), by an answer of the person in the run, or by `learned_knowledge`, and not in `product.capabilities[]` → Tier 1, evidence type `stated`, with the source `brief.md:<line>`, `person:<question>` or `learned_knowledge.<key>`. The company states it about its own product, so the output asserts it as fact. A plan in the brief is Tier 3 or Tier 4 by its words, with the brief as the source. Superlatives and quantified claims follow their own rules below, also when the brief states them.
+- An outcome that tells what a Tier 1 capability does for the customer, and adds no number, no superlative, no comparative and no other capability → the tier and the evidence of that capability
 - Evidence in `product.capabilities[]` + under active development → Tier 2
 - Evidence in roadmap doc with budget and exec sponsor → Tier 3
 - Stated direction without committed plan → Tier 4

@@ -96,6 +96,10 @@ class AuditReport:
     blocked_count: int
 
 
+# The 3 source forms of a stated claim (STORY-204): a line of brief.md, a question to the person, a learned_knowledge key.
+STATED_SOURCE = re.compile(r"^(brief\.md:\d+(-\d+)?|person:\S.*|learned_knowledge\.\S+)$")
+
+
 class TruthTierValidator:
     def classify(self, claim: dict[str, Any]) -> TierResult:
         evidence = claim.get("evidence")
@@ -104,6 +108,11 @@ class TruthTierValidator:
             return TierResult(tier=TruthTier.SPECULATION, blocked=True, reason="No evidence provided")
 
         etype = evidence.get("type", "")
+
+        if etype == "stated":  # the brief, an answer of the person, or learned_knowledge states it (STORY-204)
+            if not STATED_SOURCE.match(str(evidence.get("source") or "").strip()):
+                return TierResult(tier=TruthTier.SPECULATION, blocked=True, reason="Stated with no source")
+            return TierResult(tier=TruthTier.SHIPPED, reason="stated")
 
         if etype in ("code", "released", "ga", "tested"):
             return TierResult(tier=TruthTier.SHIPPED)
