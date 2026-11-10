@@ -20,13 +20,22 @@ number" before any limit is read.
 A class may declare `TOGETHER: ClassVar[Tuple[Tuple[str, str], ...]]`, pairs of fields that go
 together. When exactly one of a pair is given (present and not null), the other gets the
 problem `needed with <field>`. A pair whose field already has a problem adds nothing.
+
+A `null` counts as not given: a field with a default takes its default, and a required field
+gets `missing`.
+
+`read_json_input(path)` reads the JSON from the file at `path`, else from stdin, and exits
+with code 1 on a read or JSON error; `checked_input(cls, data)` checks it and exits with code
+3, `EXIT_INPUTS`, on a refused input.
 """
 
 import dataclasses
 import enum
 import json
 import math
+import sys
 import typing
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 T = TypeVar("T")
@@ -124,15 +133,15 @@ def _require_supported(t: Any, owner: str) -> None:
 
 
 def _whole_in_64_bits(value: float) -> bool:
-    """A float pydantic takes for an int: whole, and strictly inside +-2**63."""
+    """True when the float is whole and strictly inside the signed 64-bit range, +-2**63."""
     return value.is_integer() and -(2**63) < value < 2**63
 
 
 def _limit_reason(value: Any, meta: Any) -> Optional[str]:
     """The reason a stored number breaks its limits, or None.
 
-    `le` is read first, then `ge`, then `gt`, as pydantic reads them. A NaN or an infinity
-    never gets here: `_convert` refuses it first.
+    `le` is read first, then `ge`, then `gt`. A NaN or an infinity never gets here:
+    `_convert` refuses it first.
     """
     if "le" in meta and not (value <= meta["le"]):
         return f"above {meta['le']}"
@@ -226,7 +235,8 @@ def check(cls: Type[T], data: Any, loc: Loc = ()) -> Tuple[Optional[T], List[Pro
             continue
         value = data[f.name]
         if value is None and _optional_inner(t) is None:
-            problems.append(Problem("missing", where, None, "missing"))
+            if not has_default:
+                problems.append(Problem("missing", where, None, "missing"))
             continue
         stored = _convert(t, value, where, f.metadata, problems)
         if stored is not BAD:
@@ -252,3 +262,33 @@ def build(cls: Type[T], **values: Any) -> T:
         named = "; ".join(f"{'.'.join(map(str, p.loc))}: {p.reason}" for p in problems)
         raise ValueError(f"{cls.__name__}: {named}")
     return typing.cast(T, obj)
+
+
+EXIT_INPUTS = 3  # the input was read but refused
+
+
+def checked_input(cls: Type[T], data: Any) -> T:
+    """The checked input, or one plain line per problem on stderr and exit 3."""
+    obj, problems = check(cls, data)
+    if problems:
+        print("Error: Invalid input data:", file=sys.stderr)
+        for p in problems:
+            print(f"- {format_problem(p)}", file=sys.stderr)
+        raise SystemExit(EXIT_INPUTS)
+    return typing.cast(T, obj)
+
+
+def read_json_input(path: Optional[Path]) -> Any:
+    """The JSON read from `path`, else from stdin, or one line on stderr and exit 1."""
+    try:
+        if path is not None:
+            return json.loads(path.read_text(encoding="utf-8"))
+        return json.loads(sys.stdin.buffer.read().decode("utf-8"))
+    except (OSError, UnicodeDecodeError) as e:
+        source = "standard input" if path is None else path
+        why = getattr(e, "strerror", None) or e
+        print(f"Error: cannot read {source}: {why}", file=sys.stderr)
+        sys.exit(1)
+    except (ValueError, RecursionError) as e:
+        print(f"Error: Invalid JSON input: {e}", file=sys.stderr)
+        sys.exit(1)

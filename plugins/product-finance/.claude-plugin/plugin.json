@@ -1,7 +1,7 @@
 {
   "name": "product-finance",
   "displayName": "product-finance",
-  "version": "0.13.6",
+  "version": "0.13.7",
   "description": "Financial analysis for a product, from discovery to operations. Size a market, work out the unit economics, check the financial health, calculate the return of a feature, and find the cost of an AI feature. Each command writes a report and a result file.",
   "author": {
     "name": "ai-advanced-futures"

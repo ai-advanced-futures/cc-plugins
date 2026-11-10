@@ -13,7 +13,7 @@ The numbers 003 and 004 are not used. The plugin does not have those decisions.
 | [ADR-005](adr/ADR-005-magic-number-canonicalization.md) | Magic Number: one source of truth in `scripts/utils/magic_number.py` |
 | [ADR-006](adr/ADR-006-plugin-result-file.md) | The result file: five runners, stated defaults, the standard-library cost-coverage command, discover checks its result file (amendment v0.13.0), every jtbd read is a read of the jtbd graph (amendment v0.12.0) |
 | [ADR-007](adr/ADR-007-assumptions-input-contract.md) | The assumptions input contract: one loader, a mapping table, no invented values, and exit code 3 |
-| [ADR-008](adr/ADR-008-shared-input-checker.md) | The shared standard-library input checker: its limits, the go-together rule, plain reasons, exit code 3 for a refused input, and `not a finite number` for NaN and Infinity |
+| [ADR-008](adr/ADR-008-shared-input-checker.md) | The shared standard-library input checker: its limits, the go-together rule, plain reasons, exit code 3 for a refused input, the shared input read, and `not a finite number` for NaN and Infinity |
 
 ## Methodology and Reference
 

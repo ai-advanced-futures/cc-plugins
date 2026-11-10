@@ -35,7 +35,7 @@ from typing import Any, Dict, List, Optional
 if __package__ in (None, ""):  # run by path: uv run "<plugin root>/scripts/<file>.py"
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # its own package, never the cwd
 
-from scripts.input_check import build, check, limits, show  # noqa: E402
+from scripts.input_check import EXIT_INPUTS, build, check, limits, show  # noqa: E402
 from scripts.utils.calculators import calculate_channel_economics  # noqa: E402
 from scripts.utils.enums import MetricHealth  # noqa: E402
 
@@ -216,8 +216,6 @@ INPUT_CLASSES = (
 # ============================================================================
 # Loading the assumptions file
 # ============================================================================
-
-EXIT_INPUTS = 3
 
 # The inputs each TAM method needs; calculate_tam keeps its own checks too.
 TAM_METHOD_INPUTS: Dict[str, tuple[str, ...]] = {

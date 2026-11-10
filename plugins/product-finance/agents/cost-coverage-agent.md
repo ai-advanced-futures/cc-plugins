@@ -99,7 +99,7 @@ A plugin run of `product-finance:cost-coverage`:
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.6",
+  "plugin_version": "0.13.7",
   "command": "product-finance:cost-coverage",
   "run": {
     "started_at": "2026-11-01T13:00:00Z",

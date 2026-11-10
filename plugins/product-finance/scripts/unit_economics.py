@@ -29,7 +29,7 @@ from typing import Any, Dict, Optional
 if __package__ in (None, ""):  # run by path: uv run "<plugin root>/scripts/<file>.py"
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # its own package, never the cwd
 
-from scripts.input_check import check, format_problem, limits  # noqa: E402
+from scripts.input_check import checked_input, limits, read_json_input  # noqa: E402
 from scripts.utils.enums import MetricHealth  # noqa: E402
 from scripts.utils.magic_number import (
     calculate_magic_number as _canonical_magic_number,  # noqa: E402
@@ -884,20 +884,6 @@ def format_result_as_markdown(result: UnitEconomicsResult) -> str:
     return "\n".join(lines)
 
 
-EXIT_INPUTS = 3  # the input was read but refused
-
-
-def checked_input(data: Any) -> UnitEconomicsInput:
-    """The checked input, or one plain line per problem on stderr and exit 3."""
-    obj, problems = check(UnitEconomicsInput, data)
-    if problems:
-        print("Error: Invalid input data:", file=sys.stderr)
-        for p in problems:
-            print(f"- {format_problem(p)}", file=sys.stderr)
-        raise SystemExit(EXIT_INPUTS)
-    return obj
-
-
 def main() -> None:
     """CLI entry point for unit economics calculator.
 
@@ -945,20 +931,7 @@ Examples:
     # Check if input is from a file or stdin
     if args.input is not None or not sys.stdin.isatty():
         # Read JSON from the file, else from stdin
-        try:
-            if args.input is not None:
-                input_data = json.loads(args.input.read_text(encoding="utf-8"))
-            else:
-                input_data = json.loads(sys.stdin.buffer.read().decode("utf-8"))
-        except (OSError, UnicodeDecodeError) as e:
-            source = "standard input" if args.input is None else args.input
-            why = getattr(e, "strerror", None) or e
-            print(f"Error: cannot read {source}: {why}", file=sys.stderr)
-            sys.exit(1)
-        except (ValueError, RecursionError) as e:
-            print(f"Error: Invalid JSON input: {e}", file=sys.stderr)
-            sys.exit(1)
-        data = checked_input(input_data)
+        data = checked_input(UnitEconomicsInput, read_json_input(args.input))
     else:
         # Interactive mode
         print("Unit Economics Calculator")
@@ -990,7 +963,7 @@ Examples:
             print(f"\nError: {e}", file=sys.stderr)
             sys.exit(1)
 
-        data = checked_input(answers)
+        data = checked_input(UnitEconomicsInput, answers)
 
     # Calculate unit economics
     try:

@@ -34,7 +34,7 @@ from typing import Any, ClassVar, Dict, Optional, Tuple
 if __package__ in (None, ""):  # run by path: uv run "<plugin root>/scripts/<file>.py"
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # its own package, never the cwd
 
-from scripts.input_check import check, format_problem, limits  # noqa: E402
+from scripts.input_check import checked_input, limits, read_json_input  # noqa: E402
 
 # AIProvider re-exported (not used internally) for tests/consumers importing it here.
 from scripts.utils.enums import AIProvider, MetricHealth  # noqa: E402, F401
@@ -894,20 +894,6 @@ def format_result_as_markdown(result: AIROIResult) -> str:
     return "\n".join(lines)
 
 
-EXIT_INPUTS = 3  # the input was read but refused
-
-
-def checked_input(data: Any) -> AIROIInput:
-    """The checked input, or one plain line per problem on stderr and exit 3."""
-    obj, problems = check(AIROIInput, data)
-    if problems:
-        print("Error: Invalid input data:", file=sys.stderr)
-        for p in problems:
-            print(f"- {format_problem(p)}", file=sys.stderr)
-        raise SystemExit(EXIT_INPUTS)
-    return obj
-
-
 def main() -> None:
     """CLI entry point for AI ROI calculator.
 
@@ -954,20 +940,7 @@ Examples:
     # Check if input is from a file or stdin
     if args.input is not None or not sys.stdin.isatty():
         # Read JSON from the file, else from stdin
-        try:
-            if args.input is not None:
-                input_data = json.loads(args.input.read_text(encoding="utf-8"))
-            else:
-                input_data = json.loads(sys.stdin.buffer.read().decode("utf-8"))
-        except (OSError, UnicodeDecodeError) as e:
-            source = "standard input" if args.input is None else args.input
-            why = getattr(e, "strerror", None) or e
-            print(f"Error: cannot read {source}: {why}", file=sys.stderr)
-            sys.exit(1)
-        except (ValueError, RecursionError) as e:
-            print(f"Error: Invalid JSON input: {e}", file=sys.stderr)
-            sys.exit(1)
-        data = checked_input(input_data)
+        data = checked_input(AIROIInput, read_json_input(args.input))
     else:
         # Interactive mode
         print("AI ROI Calculator")
@@ -1034,7 +1007,7 @@ Examples:
             print(f"\nError: {e}", file=sys.stderr)
             sys.exit(1)
 
-        data = checked_input({"cost_data": cost_data, "value_data": value_data})
+        data = checked_input(AIROIInput, {"cost_data": cost_data, "value_data": value_data})
 
     # Calculate AI ROI
     try:

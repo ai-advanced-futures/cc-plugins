@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.7
+
+- **fix:** a `null` in a field with a default, such as `period_months`, now runs with the default and exits 0. Before, the script refused it as `missing` with exit code 3.
+- **fix:** in `ai-economics` and its runner, when the first run of the AI ROI script exits with code 2, or with code 1 and `Error: cannot read` or `Error: Invalid JSON input:`, the model corrects the command, the path or the file and runs it 1 more time.
+- **change:** when the run after a correction or a rewrite fails, `ai-economics` stops with no figure, 1 gap and a `BLOCKED` line. Before, the model worked out the figures by hand.
+- **refactor:** the AI ROI, unit economics and Rule of 40 scripts share 1 input read and 1 refusal in `scripts/input_check.py`. Each other error text and exit code stays the same, and new tests pin them as bytes. Code that imported `checked_input` or `EXIT_INPUTS` from 1 of the 3 scripts now imports them from `scripts/input_check.py`, and `checked_input` takes the input class first.
+- **docs:** ADR-006 and ADR-008 change. The docstrings of the checker do not name `pydantic`. The 3 test files of the scripts share 1 helper module.
+
 ## 0.13.6
 
 - **fix:** `unit_economics.py` and `rule_of_40.py` need only the standard library, and `scripts/input_check.py` checks their input.

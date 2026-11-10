@@ -633,7 +633,7 @@ The run never overwrites an earlier file: when the name is taken and there is no
 - `run` holds only `started_at`, `finished_at`, `mode` and `subject` and, under a plugin-run block, `case`, `run_id` and `answers`; put no other key in it.
   In a halt, `run.subject` is `ai-economics run halted before its subject was known`.
 - Copy each number and sentence from the run's files as written. Never estimate, round or invent one.
-- When one of this plugin's scripts computed a result's figures, its `method` names that script. Otherwise work the figures out from the formula stated in the command, with no code at all, and end its `method` with this sentence: `Computed by the model from the formula stated in the command; no script ran.` That is each result of a run where `ai_roi_calculator.py` did not run or failed.
+- When one of this plugin's scripts computed a result's figures, its `method` names that script. Otherwise work the figures out from the formula stated in the command, with no code at all, and end its `method` with this sentence: `Computed by the model from the formula stated in the command; no script ran.` That is each result of a run where `ai_roi_calculator.py` did not run or failed, except a run that step 2 of the `Python Script Integration` list of the command stops: that run has no result.
 - `id` is `<kind>-<n>`, numbered through the file from 1, whatever the kind.
 - Sources. An answer is the source `{"type": "person", "ref": "answers:<input>", "date": null}` for `settled_by: person`, or the same with type `default` for `settled_by: recommended`.
   An input the answers file does not give, which the run fills from a default the command file states, is a `default` source, never `model`, because the command file states it and no model produced it: its `ref` is `"<the file>: <input>"`, and its marker `<input> = <value>` goes in `defaults`. A figure the run could not work out from an answer or a stated default is not a result: it goes into `gaps`, with the inputs it lacked in `why`.
@@ -643,7 +643,7 @@ The run never overwrites an earlier file: when the name is taken and there is no
 - In a person's run, an answer the person picked from an option labelled as the default or as recommended is a `default` source with `ref` `asked in this run: <input>`, and that default's marker goes in `defaults`.
 - `rests_on_default` is true when a source has type `default`. It is also true when the `defaults` list of marker strings is not empty; otherwise it is false.
 - `detail` is the copy in the run's own folder, `.product-finance/<run_id>/<file>`. A person's run has no run folder and leaves out `detail`. Leave out the key; do not write `"detail": null`, because the checker refuses a null.
-- `gaps` lists each figure the run did not produce, with its `kind`, `label` and `why`. A gap's `kind` is one of the result kinds named below: the one the missing figure belongs with, for example `unit_economics` for a Magic Number the run could not work out. A halt writes `results: []` and the gap `{"kind": "ai_run_cost", "label": "AI run cost", "why": "AI product required for a plugin run"}`.
+- `gaps` lists each figure the run did not produce, with its `kind`, `label` and `why`. A gap's `kind` is one of the result kinds named below: the one the missing figure belongs with, for example `unit_economics` for a Magic Number the run could not work out. A halt writes `results: []` and the gap `{"kind": "ai_run_cost", "label": "AI run cost", "why": "AI product required for a plugin run"}`. A run that step 2 of the `Python Script Integration` list of the command stops writes `results: []` and the gap of that step, and `run.subject` stays the answer to `ai_product`.
 
 Results, from the `ai-economics.json` this run wrote, each with `unit` `"USD"` and `period` `"month"`:
 
@@ -657,7 +657,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.6",
+  "plugin_version": "0.13.7",
   "command": "product-finance:ai-economics",
   "run": {
     "started_at": "2026-11-01T12:00:00Z",
@@ -735,7 +735,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.6",
+  "plugin_version": "0.13.7",
   "command": "product-finance:ai-economics",
   "run": {
     "started_at": "2026-11-01T12:00:00Z",
