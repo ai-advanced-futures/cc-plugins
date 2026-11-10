@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.7
+
+- A new test, `tests/unit/test_plugin_map_routes.py`, checks that each route of the plugin map names a real agent or skill of the target plugin in this repository (`agents/<name>.md` with that name, or `skills/<name>/SKILL.md`), and that the plugin is at the floor of the map or later. Before, no test read the target plugin, so a route to a deleted agent failed only in a live build. The plugin `value-ip` is not in this repository, so the test skips its routes by name (STORY-200).
+
 ## 0.9.6
 
 - `set` and `new --set` keep a date or a time as the text that you give, at each depth of a list or a map. Before, a value such as `2026-11-06T22:21:48Z` became a date object, and the save refused the page (STORY-275).
