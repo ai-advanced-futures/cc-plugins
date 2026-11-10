@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude.ai/schemas/ux-hci-design/research-findings-schema.json",
+  "title": "UX Research Findings Schema",
+  "description": "Schema for research_findings.json, the output of the Empathize phase. The schema is loose on purpose: it names the lists that a later phase and the brain read, and it asks for the keys that the agent ux-researcher says each entry must have. A key that is not named here is allowed.",
+  "type": "object",
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version of this file format",
+      "minLength": 1
+    },
+    "research_summary": {
+      "type": "object",
+      "description": "How the research was done",
+      "properties": {
+        "methodology": {"type": "string"},
+        "participants": {"type": ["object", "integer", "string"]},
+        "duration": {"type": "string"},
+        "confidence_level": {"type": "string"}
+      }
+    },
+    "key_findings": {
+      "type": "array",
+      "description": "The main findings, each with its evidence and quotes",
+      "items": {
+        "type": "object",
+        "properties": {
+          "finding_id": {"type": "string", "minLength": 1},
+          "category": {"type": "string"},
+          "description": {"type": "string"},
+          "evidence": {"type": "array", "items": {"type": "string"}},
+          "participant_count": {"type": "integer", "minimum": 0},
+          "severity": {"type": "string"},
+          "quotes": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "mental_models": {
+      "type": "array",
+      "description": "The mental models that users hold",
+      "items": {
+        "type": "object",
+        "properties": {
+          "model_id": {"type": "string", "minLength": 1},
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "concepts": {"type": "array"},
+          "relationships": {"type": "array"},
+          "gaps": {"type": "array"}
+        }
+      }
+    },
+    "user_segments": {
+      "type": "array",
+      "description": "The groups of users",
+      "items": {
+        "type": "object",
+        "properties": {
+          "segment_id": {"type": "string", "minLength": 1},
+          "name": {"type": "string"},
+          "characteristics": {"type": "array"},
+          "size_estimate": {"type": "string"},
+          "priority": {"type": "string"}
+        }
+      }
+    },
+    "pain_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pain_point_id": {"type": "string", "minLength": 1},
+          "description": {"type": "string"},
+          "frequency": {"type": "string"},
+          "severity": {"type": "string"},
+          "current_workaround": {"type": "string"},
+          "root_cause": {"type": "string"},
+          "affected_segments": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "opportunities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "opportunity_id": {"type": "string", "minLength": 1},
+          "description": {"type": "string"},
+          "potential_impact": {"type": "string"},
+          "confidence": {"type": "string"}
+        }
+      }
+    },
+    "accessibility_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {"type": "string"},
+          "description": {"type": "string"},
+          "affected_users": {"type": "string"},
+          "current_barriers": {"type": "array"}
+        }
+      }
+    },
+    "ai_interaction_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {"type": "string"},
+          "description": {"type": "string"},
+          "user_preferences": {"type": "array"},
+          "concerns": {"type": "array"}
+        }
+      }
+    },
+    "implementation_handoff": {
+      "type": "array",
+      "description": "Track 3: the decisions that a developer agent needs to prototype without a follow-up question",
+      "items": {
+        "type": "object",
+        "required": ["decision_id", "decision", "explicit_value", "rationale", "if_then_branches", "ruled_out"],
+        "properties": {
+          "decision_id": {"type": "string", "minLength": 1},
+          "decision": {"type": "string", "minLength": 1},
+          "explicit_value": {"type": "string", "minLength": 1},
+          "rationale": {"type": "string"},
+          "if_then_branches": {"type": "array"},
+          "ruled_out": {"type": "array"}
+        }
+      }
+    }
+  }
+}

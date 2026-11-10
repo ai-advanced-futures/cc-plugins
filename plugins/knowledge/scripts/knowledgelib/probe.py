@@ -27,6 +27,7 @@ BRAINS = {
     "knowledge": "scripts/knowledge_graph.py",
     "product": "scripts/prd.py",
     "system-design": "scripts/system_design.py",
+    "ux-hci-design": "scripts/ux_graph.py",
 }
 
 

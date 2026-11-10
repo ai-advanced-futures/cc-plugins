@@ -15,7 +15,7 @@ RULES = {
     "K-registry": "ERROR", "K-manifest": "WARN, ERROR", "K-root-index": "ERROR",
     "K-dir-index": "ERROR", "K-log": "ERROR", "K-links-tsv": "ERROR", "K-okf": "ERROR",
     "K-fields": "ERROR", "K-provenance": "ERROR", "K-id": "ERROR", "K-links-block": "ERROR",
-    "K-fresh": "ERROR, SKIP", "K-link": "ERROR", "K-remote-link": "WARN, SKIP",
+    "K-fresh": "ERROR, SKIP", "K-link": "ERROR, SKIP", "K-remote-link": "WARN, SKIP",
     "K-unknown-graph": "WARN", "K-size": "WARN",
 }
 ACTOR_RE = re.compile(r"^(human:[A-Za-z0-9._-]+|process:[A-Za-z0-9._-]+|[A-Za-z0-9._-]+/[A-Za-z0-9._-]+)$")
@@ -159,6 +159,11 @@ def body_line(text, value) -> int:
     return 1
 
 
+def not_in_clone(root, graph) -> bool:
+    """True for a local graph that git does not keep and whose folder is absent in this clone."""
+    return graph is not None and not graph.remote and not graph.git and not (Path(root) / graph.path).is_dir()
+
+
 def check_links(root, graphs, name, bundle, cache_only) -> list[Issue]:
     issues = []
     for file in okf.bundle_pages(bundle):
@@ -175,7 +180,9 @@ def check_links(root, graphs, name, bundle, cache_only) -> list[Issue]:
             except UsageError:
                 continue
             number = body_line(text, value) if field == "body" else line_of(text, field)
-            if target.state == links.MISSING:
+            if target.state == links.MISSING and not_in_clone(root, graphs.get(target.graph)):
+                issues.append(Issue(SKIP, "K-link", f"{where}: {value} is in the graph {target.graph}, which is not in this clone: git does not keep it"))
+            elif target.state == links.MISSING:
                 issues.append(Issue(ERROR, "K-link", f"{field}: {value} does not resolve", where, number))
             elif target.state == links.UNKNOWN:
                 issues.append(Issue(WARN, "K-unknown-graph", f"{field}: {value} names the graph {target.graph}, which is not in .claude/knowledge.json", where, number))
@@ -227,6 +234,12 @@ def check_graph(root, graphs, name, cache_only=False, probe_find=None) -> list[I
         return [] if data else [Issue(WARN, "K-manifest", f"not on the standard yet: the remote graph {name} has no manifest.md", f"{name}:/manifest.md")]
     bundle = Path(root) / graph.path
     if not bundle.is_dir():
+        if not graph.git:
+            return [Issue(WARN, "K-registry", f"{name} is not in this clone: git does not keep {graph.path}. "
+                          f"To fix it: 1. Run the setup skill of the brain {name} in this clone. When it asks if git "
+                          f"keeps the brain, choose the choice of this project, out of git. It makes an empty brain "
+                          f"in {graph.path}. 2. Or, if the folder is in another place, change the path of {name} in "
+                          f"{registry.REGISTRY}. Then run this check again.", str(registry.REGISTRY))]
         return [Issue(ERROR, "K-registry", f"the path of {name} is not a folder: {graph.path}", str(registry.REGISTRY))]
     issues = check_bundle(root, bundle)
     if any(issue.rule == "K-manifest" for issue in issues):

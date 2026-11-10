@@ -2,6 +2,18 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.5.0 - 2026-11-10
+
+Part A of STORY-257: the save code and the schema of the brain. No skill calls the code yet (part B).
+
+- `plugin.json` lists the plugin `knowledge` as a dependency. The plugin needs Claude Code 2.1.110 or later.
+- New script `scripts/ux_graph.py` with the modules in `scripts/uxlib/`: `init` (with `--git yes|no`), `ingest`, `view`, `pages`, `behavior`, `check`, and the other save commands of a brain. It makes no network call.
+- `init --git no` writes `"git": false` to the registry entry and adds the folder to `info/exclude` of the clone, so git does not keep it.
+- `ingest` saves the output files of one phase as pages in `docs/ux-hci-design/`. After the checks pass, it removes the plain files that it read. A failed check changes no page and removes no file. A `.mmd` file is kept as the text of a Diagram page; its line ends become new lines.
+- New LinkML schema `schema/ux-hci-design.yaml` for the 14 page types, with the generated `ux-hci-design.schema.json` and `ux-hci-design.slots.json`. `scripts/gen-schema.sh` makes them again.
+- New schema `schemas/outputs/research-findings-schema.json` for `research_findings.json`.
+- `requirements-dev.txt` needs `linkml`, `linkml-runtime` and `pyyaml` (pinned).
+
 ## 1.4.0 - 2026-11-06
 
 - `ux-evaluator` and the skill `ux-evaluate` name the schema `schemas/outputs/evaluation-report-schema.json` and tell the agent to read it before it writes the report. The dispatch of the evaluator has the field `schema_file`.

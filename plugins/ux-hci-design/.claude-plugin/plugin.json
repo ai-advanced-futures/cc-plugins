@@ -1,7 +1,8 @@
 {
   "name": "ux-hci-design",
   "displayName": "ux-hci-design",
-  "version": "1.4.0",
+  "version": "1.5.0",
+  "dependencies": ["knowledge"],
   "description": "Runs a UX design workflow in the 5 Design Thinking phases (empathize, define, ideate, prototype, test). Writes personas, journey maps, design concepts, wireframe specifications and an evaluation report. Checks a design against WCAG 2.2, the Nielsen heuristics and the Microsoft guidelines for human-AI interaction.",
   "author": {
     "name": "ai-advanced-futures"

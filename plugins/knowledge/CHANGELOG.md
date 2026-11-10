@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0
+
+### Added
+- A local registry entry can have `"git": false`: git does not keep its folder, so a new clone has no folder until the person runs the setup skill of that brain. `knowledge.py check` gives a `WARN` `K-registry` for such an entry with an absent folder (before, an `ERROR`), and the text gives the steps to fix it. A link into such a graph that does not resolve in that clone gives a `SKIP` `K-link` (before, an `ERROR`). An entry with no `git` key acts as before. A `git` value that is not `true` or `false` is a usage error (exit 2). Sections 5 and 9 of the brain standard say this (STORY-257).
+- `ux-hci-design` is a known brain: `knowledgelib/probe.py` has the pair `("ux-hci-design", "scripts/ux_graph.py")`.
+
 ## 1.5.4
 
 ### Changed

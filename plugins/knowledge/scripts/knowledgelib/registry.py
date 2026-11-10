@@ -17,6 +17,7 @@ class Graph:
     name: str
     path: str
     repo: str | None = None
+    git: bool = True  # False: git does not keep the folder, so a new clone has no folder until the setup of its brain
 
     @property
     def remote(self) -> bool:
@@ -75,7 +76,10 @@ def read(root) -> Graphs:
         repo = entry.get("repo")
         if repo is not None and (not isinstance(repo, str) or not repo.strip()):
             raise UsageError(f"the repo of {name!r} in {REGISTRY} is not a string")
-        graphs[name] = Graph(name, check_path(entry.get("path"), name), repo.strip() if repo else None)
+        git = entry.get("git", True)
+        if not isinstance(git, bool):
+            raise UsageError(f"the git key of {name!r} in {REGISTRY} is not true or false")
+        graphs[name] = Graph(name, check_path(entry.get("path"), name), repo.strip() if repo else None, git)
     return Graphs(graphs, root, registry_file(root).is_file())
 
 

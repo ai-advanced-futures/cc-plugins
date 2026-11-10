@@ -97,6 +97,10 @@ never loads a full graph.
   A brain with its own config file (`.claude/ddd.json`, `.claude/adr.json`)
   keeps it. When the two differ, the brain config is correct, and the next
   `setup` writes the registry entry again.
+- A local entry can have `"git": false`: git does not keep its folder, so a
+  new clone has no folder until the person runs the setup skill of that brain
+  in it. A missing folder of such an entry is a warning, and the warning gives
+  the steps to fix it (section 9). An entry with no `git` key is kept by git.
 - For a remote graph, the code makes a shallow clone of the default branch
   into a cache outside the project. A private repository needs `gh`
   authentication (`gh auth setup-git`). A remote link that does not resolve
@@ -170,7 +174,7 @@ it reports the problem and the reason (section 10).
 
 | Rule | Level | What it checks |
 |---|---|---|
-| `K-registry` | ERROR | The project has `.claude/knowledge.json`, and each local path is a folder. |
+| `K-registry` | ERROR | The project has `.claude/knowledge.json`, and each local path is a folder. A missing folder of an entry with `"git": false` is a WARN. Its text gives the steps to fix it: run the setup skill of that brain in this clone and choose out of git, or change the path of the entry in the registry, then run the check again. |
 | `K-manifest` | WARN, ERROR | WARN when the bundle has no `manifest.md` ("not on the standard yet"). Then no other rule runs on it. ERROR when a manifest field is missing or wrong. |
 | `K-root-index` | ERROR | The root `index.md` exists and its frontmatter holds `okf_version` only. |
 | `K-dir-index` | ERROR | A directory `index.md` has no frontmatter. |
@@ -182,7 +186,7 @@ it reports the problem and the reason (section 10).
 | `K-id` | ERROR | Each page in `id_folders` matches `id_pattern`, or `fixed_pages` names it. |
 | `K-links-block` | ERROR | A page with frontmatter links has a `LINKS` block. |
 | `K-fresh` | ERROR, SKIP | The `regen --check` of the brain finds no stale file. SKIP when the plugin is not found. |
-| `K-link` | ERROR | A `/` link or a link into a local graph resolves. |
+| `K-link` | ERROR, SKIP | A `/` link or a link into a local graph resolves. SKIP when the graph of the link is a local entry with `"git": false` and its folder is absent in this clone. |
 | `K-remote-link` | WARN, SKIP | A link into a remote graph resolves. SKIP when the hook finds no cache. |
 | `K-unknown-graph` | WARN | A `<graph>:/<path>` link names a graph that is in the registry. |
 | `K-size` | WARN | A page has fewer than 100 lines and fewer than 600 words. |

@@ -1,6 +1,6 @@
 # ux-hci-design
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 **Author:** Luis F. Amadeo (the original plugin). ai-advanced-futures ported it to this marketplace.
 **License:** MIT (see `NOTICE`)
 
@@ -104,6 +104,18 @@ The paid plugin `tailwind-plus` is not in this marketplace. When you have it and
 The folder `scripts/` has 8 Python scripts. Seven use only the standard library, and you need `python3` for them. `check_output.py` checks an output file against its schema, and it needs `uv` (it gets `jsonschema`). The skill `ux-design` runs it after the evaluator. Run a script from the plugin folder, for example:
 
 $ python3 scripts/validate_schemas.py --help
+
+## Brain
+
+The plugin is a brain of the brain standard. It needs the plugin `knowledge` (`plugin.json` lists it as a dependency) and Claude Code 2.1.110 or later. The save code is `scripts/ux_graph.py` (it needs the Python packages `jsonschema` and `pyyaml`). It writes the pages of the brain in `docs/ux-hci-design/`:
+
+- `ux_graph.py init --git yes|no` makes the folder and the registry entry. With `--git no`, git does not keep the folder: the entry has `"git": false`, and the folder is in `info/exclude` of the clone.
+- `ux_graph.py ingest <output folder> --phase <phase>` saves the output files of one phase as pages. After the checks pass, it removes the plain files that it read.
+- `ux_graph.py view <run> <file>` puts an output file together again from the pages.
+- `ux_graph.py pages <type>` and `ux_graph.py behavior` list pages for other plugins.
+- `ux_graph.py check` checks the brain.
+
+The code makes no network call. The pages can hold facts about real people, and a fact that git keeps stays in the history of git. The skills of the plugin do not call the save code yet: a later version adds the setup skill and the write flow.
 
 ## Schemas
 

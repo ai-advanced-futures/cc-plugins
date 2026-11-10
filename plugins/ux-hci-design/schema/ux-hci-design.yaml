@@ -1,0 +1,246 @@
+# The page types of the ux-hci-design graph (STORY-257 spec, row 9 and table "Page types").
+#
+# Two generated files come from this one:
+#   schema/ux-hci-design.schema.json   the JSON Schema of rule UX-schema
+#   schema/ux-hci-design.slots.json    the types and the edges
+# Run scripts/gen-schema.sh after a change, and commit both outputs.
+#
+# Annotations, read by scripts/gen_slots.py:
+#   class  id_prefix      the ID prefix of the page type
+#   class  directory      the folder of the page type
+#   slot   targets        the page types that a link can point to
+#   slot   inverse_label  the label of the derived line in the LINKS block
+id: https://ai-advanced-futures.github.io/cc-plugins/ux-hci-design
+name: ux_hci_design
+title: The ux-hci-design graph
+description: >-
+  The frontmatter of each page type of the ux-hci-design graph. A page holds the fields that a
+  reader or a link needs. The field record holds the other fields of the item, so that the view
+  command gives the file of the run back with no lost field.
+default_range: string
+default_prefix: ux
+prefixes:
+  linkml: https://w3id.org/linkml/
+  ux: https://ai-advanced-futures.github.io/cc-plugins/ux-hci-design/
+imports:
+  - linkml:types
+  - ../../knowledge/schema/base
+
+types:
+  RunLink:
+    typeof: string
+    pattern: '^/runs/RUN-\d{2,}\.md$'
+  SegmentLink:
+    typeof: string
+    pattern: '^/segments/SEGMENT-\d{2,}\.md$'
+  PersonaLink:
+    typeof: string
+    pattern: '^/personas/PERSONA-\d{2,}\.md$'
+  JourneyLink:
+    typeof: string
+    pattern: '^/journeys/JOURNEY-\d{2,}\.md$'
+  ConceptLink:
+    typeof: string
+    pattern: '^/concepts/CONCEPT-\d{2,}\.md$'
+  ScreenLink:
+    typeof: string
+    pattern: '^/screens/SCREEN-\d{2,}\.md$'
+  EvaluationLink:
+    typeof: string
+    pattern: '^/evaluations/EVAL-\d{2,}\.md$'
+  ResearchFindingLink:
+    typeof: string
+    pattern: '^/findings/FINDING-\d{2,}\.md$'
+  EvalFindingLink:
+    typeof: string
+    pattern: '^/issues/ISSUE-\d{2,}\.md$'
+  AnyFindingLink:
+    typeof: string
+    pattern: '^/(findings/FINDING|issues/ISSUE)-\d{2,}\.md$'
+
+enums:
+  FindingKind:
+    permissible_values: {key_finding: {}, pain_point: {}, opportunity: {}, accessibility: {}, ai_interaction: {}, implementation_handoff: {}}
+  DiagramKind:
+    permissible_values: {mental-model: {}, user-flow: {}}
+  StateKind:
+    permissible_values: {error: {}, loading: {}, component: {}}
+  PatternKind:
+    permissible_values: {pattern: {}, screen_interaction: {}}
+
+classes:
+  AnyValue:
+    description: Any YAML value. The record fields keep the shape of the file of the run.
+    class_uri: linkml:Any
+  Run:
+    description: "One run of the ux-design skill."
+    annotations: {id_prefix: RUN, directory: runs}
+    slots: [type, title, description, status, tags, phases, project_context, output_dir, started_at, plugin_version, file_meta, record, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Run}
+  ResearchFinding:
+    description: "One fact of the research: a finding, a pain point, an opportunity, or a handoff decision."
+    annotations: {id_prefix: FINDING, directory: findings}
+    slots: [type, title, description, status, tags, finding_kind, item_id, severity, confidence, evidence, segments, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: ResearchFinding}
+      finding_kind: {required: true}
+      run: {required: true}
+  Segment:
+    description: "One group of users."
+    annotations: {id_prefix: SEGMENT, directory: segments}
+    slots: [type, title, description, status, tags, item_id, name, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Segment}
+      run: {required: true}
+  Persona:
+    description: "One persona. The name is the key that later runs reuse."
+    annotations: {id_prefix: PERSONA, directory: personas}
+    slots: [type, title, description, status, tags, name, findings, segments, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Persona}
+      name: {required: true}
+      run: {required: true}
+      findings: {range: ResearchFindingLink}
+  Journey:
+    description: "One journey map. The stages are in the body."
+    annotations: {id_prefix: JOURNEY, directory: journeys}
+    slots: [type, title, description, status, tags, persona_name, item_id, persona, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Journey}
+      run: {required: true}
+  MentalModel:
+    description: "One mental model that users hold."
+    annotations: {id_prefix: MODEL, directory: models}
+    slots: [type, title, description, status, tags, item_id, name, persona, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: MentalModel}
+      run: {required: true}
+  Diagram:
+    description: "One Mermaid diagram. The text is the body."
+    annotations: {id_prefix: DIAGRAM, directory: diagrams}
+    slots: [type, title, description, status, tags, diagram_kind, journey, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Diagram}
+      diagram_kind: {required: true}
+      run: {required: true}
+  Concept:
+    description: "One design concept. The concept_id is the key that later runs reuse."
+    annotations: {id_prefix: CONCEPT, directory: concepts}
+    slots: [type, title, description, status, tags, concept_id, selected, personas, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Concept}
+      concept_id: {required: true}
+      run: {required: true}
+  Screen:
+    description: "One wireframe. The wireframe_id is the key that later runs reuse. The components are in the body."
+    annotations: {id_prefix: SCREEN, directory: screens}
+    slots: [type, title, description, status, tags, wireframe_id, concept, journey, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Screen}
+      wireframe_id: {required: true}
+      run: {required: true}
+  StateRule:
+    description: "One state of a screen: an error state, a loading state, or the state of a component."
+    annotations: {id_prefix: STATE, directory: states}
+    slots: [type, title, description, status, tags, state_kind, screen, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: StateRule}
+      state_kind: {required: true}
+      screen: {required: true}
+      run: {required: true}
+  InteractionRule:
+    description: "One interaction pattern, or one interaction of a screen. The pattern_id is the key that later runs reuse."
+    annotations: {id_prefix: PATTERN, directory: patterns}
+    slots: [type, title, description, status, tags, pattern_kind, pattern_id, screens, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: InteractionRule}
+      pattern_kind: {required: true}
+      run: {required: true}
+  Evaluation:
+    description: "The evaluation report of a run."
+    annotations: {id_prefix: EVAL, directory: evaluations}
+    slots: [type, title, description, status, tags, ux_health_score, screens, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Evaluation}
+      run: {required: true}
+  EvalFinding:
+    description: "One finding of an evaluation."
+    annotations: {id_prefix: ISSUE, directory: issues}
+    slots: [type, title, description, status, tags, item_id, severity, evaluation, screen, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: EvalFinding}
+      evaluation: {required: true}
+      run: {required: true}
+  Recommendation:
+    description: "One recommendation of an evaluation."
+    annotations: {id_prefix: REC, directory: recommendations}
+    slots: [type, title, description, status, tags, item_id, evaluation, findings, record, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Recommendation}
+      evaluation: {required: true}
+      run: {required: true}
+      findings: {range: EvalFindingLink}
+
+slots:
+  concept:
+    range: ConceptLink
+    annotations: {targets: "Concept", inverse_label: used by screen}
+  concept_id: {}
+  confidence: {}
+  diagram_kind: {range: DiagramKind}
+  evaluation:
+    range: EvaluationLink
+    annotations: {targets: "Evaluation", inverse_label: holds}
+  evidence: {multivalued: true}
+  file_meta:
+    range: AnyValue
+  finding_kind: {range: FindingKind}
+  findings:
+    range: AnyFindingLink
+    multivalued: true
+    annotations: {targets: "ResearchFinding EvalFinding", inverse_label: used by}
+  item_id: {}
+  journey:
+    range: JourneyLink
+    annotations: {targets: "Journey", inverse_label: has}
+  name: {}
+  output_dir: {}
+  pattern_id: {}
+  pattern_kind: {range: PatternKind}
+  persona:
+    range: PersonaLink
+    annotations: {targets: "Persona", inverse_label: has}
+  persona_name: {}
+  personas:
+    range: PersonaLink
+    multivalued: true
+    annotations: {targets: "Persona", inverse_label: used by concept}
+  phases: {multivalued: true}
+  plugin_version: {}
+  project_context:
+    range: AnyValue
+  record:
+    range: AnyValue
+  run:
+    range: RunLink
+    multivalued: true
+    annotations: {targets: "Run", inverse_label: wrote}
+  screen:
+    range: ScreenLink
+    annotations: {targets: "Screen", inverse_label: has}
+  screens:
+    range: ScreenLink
+    multivalued: true
+    annotations: {targets: "Screen", inverse_label: used by}
+  segments:
+    range: SegmentLink
+    multivalued: true
+    annotations: {targets: "Segment", inverse_label: used by}
+  selected: {range: boolean}
+  severity: {}
+  started_at: {}
+  state_kind: {range: StateKind}
+  ux_health_score:
+    range: AnyValue
+  wireframe_id: {}

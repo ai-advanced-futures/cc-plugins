@@ -1,0 +1,364 @@
+{
+  "statuses": [
+    "draft",
+    "stable",
+    "deprecated"
+  ],
+  "types": {
+    "Run": {
+      "prefix": "RUN",
+      "directory": "runs",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "phases",
+        "project_context",
+        "output_dir",
+        "started_at",
+        "plugin_version",
+        "file_meta",
+        "record",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "ResearchFinding": {
+      "prefix": "FINDING",
+      "directory": "findings",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "finding_kind",
+        "item_id",
+        "severity",
+        "confidence",
+        "evidence",
+        "segments",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Segment": {
+      "prefix": "SEGMENT",
+      "directory": "segments",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "item_id",
+        "name",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Persona": {
+      "prefix": "PERSONA",
+      "directory": "personas",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "name",
+        "findings",
+        "segments",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Journey": {
+      "prefix": "JOURNEY",
+      "directory": "journeys",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "persona_name",
+        "item_id",
+        "persona",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "MentalModel": {
+      "prefix": "MODEL",
+      "directory": "models",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "item_id",
+        "name",
+        "persona",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Diagram": {
+      "prefix": "DIAGRAM",
+      "directory": "diagrams",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "diagram_kind",
+        "journey",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Concept": {
+      "prefix": "CONCEPT",
+      "directory": "concepts",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "concept_id",
+        "selected",
+        "personas",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Screen": {
+      "prefix": "SCREEN",
+      "directory": "screens",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "wireframe_id",
+        "concept",
+        "journey",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "StateRule": {
+      "prefix": "STATE",
+      "directory": "states",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "state_kind",
+        "screen",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "InteractionRule": {
+      "prefix": "PATTERN",
+      "directory": "patterns",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "pattern_kind",
+        "pattern_id",
+        "screens",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Evaluation": {
+      "prefix": "EVAL",
+      "directory": "evaluations",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "ux_health_score",
+        "screens",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "EvalFinding": {
+      "prefix": "ISSUE",
+      "directory": "issues",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "item_id",
+        "severity",
+        "evaluation",
+        "screen",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Recommendation": {
+      "prefix": "REC",
+      "directory": "recommendations",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "item_id",
+        "evaluation",
+        "findings",
+        "record",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    }
+  },
+  "edges": {
+    "segments": {
+      "targets": [
+        "Segment"
+      ],
+      "multivalued": true,
+      "inverse_label": "used by"
+    },
+    "run": {
+      "targets": [
+        "Run"
+      ],
+      "multivalued": true,
+      "inverse_label": "wrote"
+    },
+    "findings": {
+      "targets": [
+        "ResearchFinding",
+        "EvalFinding"
+      ],
+      "multivalued": true,
+      "inverse_label": "used by"
+    },
+    "persona": {
+      "targets": [
+        "Persona"
+      ],
+      "multivalued": false,
+      "inverse_label": "has"
+    },
+    "journey": {
+      "targets": [
+        "Journey"
+      ],
+      "multivalued": false,
+      "inverse_label": "has"
+    },
+    "personas": {
+      "targets": [
+        "Persona"
+      ],
+      "multivalued": true,
+      "inverse_label": "used by concept"
+    },
+    "concept": {
+      "targets": [
+        "Concept"
+      ],
+      "multivalued": false,
+      "inverse_label": "used by screen"
+    },
+    "screen": {
+      "targets": [
+        "Screen"
+      ],
+      "multivalued": false,
+      "inverse_label": "has"
+    },
+    "screens": {
+      "targets": [
+        "Screen"
+      ],
+      "multivalued": true,
+      "inverse_label": "used by"
+    },
+    "evaluation": {
+      "targets": [
+        "Evaluation"
+      ],
+      "multivalued": false,
+      "inverse_label": "holds"
+    }
+  }
+}
