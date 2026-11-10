@@ -7,19 +7,24 @@
 usage: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py <finished_at> <command> <subject> [run_id]
        uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py now
        uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py run-id <value>
+       uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py version
 
 The name is the one that result_file_name() of the checker
 tests/support/schemas/plugin-result/plugin_result_check.py builds. `now` prints the UTC time to the
 second, for a run whose `date` call was denied. `run-id` prints the value when it is a
-run id of the result-file standard, and exits 2 when it is not. The run_id and the command
+run id of the result-file standard, and exits 2 when it is not. `version` prints the `version`
+of the `.claude-plugin/plugin.json` of this plugin, for the `plugin_version` of the result file:
+a skill run in the default mode cannot read that file (STORY-321). The run_id and the command
 part go into the file name. The run_id must be a run id of the standard: the `_RUN_ID`
 pattern of the checker, 4 to 64 of a-z, 0-9 and '-', with a-z or 0-9 first and last. The
 command part must be a plain name: 1 to 64 of A-Z, a-z, 0-9, '.', '_', '-', and not '.' or
 '..'. Standard library only.
 """
+import json
 import re
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 _NAME_TIME = re.compile(r"^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})")
 _SLUG_LIMIT = 40
@@ -73,6 +78,10 @@ def result_name(finished_at, command, subject, run_id=None):
 def main(argv):
     if argv == ["now"]:
         print(datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+        return 0
+    if argv == ["version"]:
+        manifest = Path(__file__).resolve().parent.parent / ".claude-plugin" / "plugin.json"
+        print(json.loads(manifest.read_text(encoding="utf-8"))["version"])
         return 0
     is_run_id_check = len(argv) == 2 and argv[0] == "run-id"
     if not is_run_id_check and len(argv) not in (3, 4):

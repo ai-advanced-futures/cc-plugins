@@ -24,6 +24,7 @@ import math
 import sys
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Optional
 
 # ---------------------------------------------------------------------------
@@ -712,7 +713,13 @@ def _refuse_constant(name: str) -> float:
 
 
 def main(argv: list[str]) -> int:
-    usage = "usage: pricing_calculator.py <%s> '<JSON object of arguments>'\n" % "|".join(COMMANDS)
+    usage = ("usage: pricing_calculator.py <%s> '<JSON object of arguments>'\n"
+             "       pricing_calculator.py defaults\n" % "|".join(COMMANDS))
+    if argv[1:] == ["defaults"]:
+        # The values of config/defaults.json: a skill run in the default mode cannot read that file (STORY-321).
+        path = Path(__file__).resolve().parent.parent / "config" / "defaults.json"
+        print(json.dumps(json.loads(path.read_text(encoding="utf-8"))["formulas"]))
+        return 0
     if len(argv) != 3 or argv[1] not in COMMANDS:
         sys.stderr.write(usage)
         return 2

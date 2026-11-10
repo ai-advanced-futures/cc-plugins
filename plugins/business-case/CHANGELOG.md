@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.8
+
+- **fix:** The runner guard (ADR-016) allows `result_name.py version` in the pricing route. The `price-runner` agent of pricing 1.13.8 runs this call at its step 0 to get the plugin version, and before, the guard gave no decision for it. In a business-case build the call could be refused, and the runner then stopped with `BLOCKED: result_name.py version` and wrote no price (STORY-321).
+
 ## 0.9.7
 
 - A new test, `tests/unit/test_plugin_map_routes.py`, checks that each route of the plugin map names a real agent or skill of the target plugin in this repository (`agents/<name>.md` with that name, or `skills/<name>/SKILL.md`), and that the plugin is at the floor of the map or later. Before, no test read the target plugin, so a route to a deleted agent failed only in a live build. The plugin `value-ip` is not in this repository, so the test skips its routes by name (STORY-200).

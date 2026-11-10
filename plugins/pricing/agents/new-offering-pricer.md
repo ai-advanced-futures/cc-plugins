@@ -204,7 +204,7 @@ A run never overwrites an earlier file, because each result file is a record. Wh
 Take every time from `date -u +%Y-%m-%dT%H:%M:%SZ`. `started_at` is the time the run read first. Read `finished_at` just before you write the file. Never type a time yourself.
 When a `date` call is denied or fails, run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py" now` on its own and use its output as that time.
 
-**Top level.** `schema` is `"plugin-result/1"`, `plugin` is `"pricing"`, `plugin_version` is the `version` in `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` (read it from that file, since an example holds an older version), and `command` is `"pricing:price"`. `run` holds `started_at`, `finished_at`, `mode`, `subject` (the `offering`, in plain words), `case`, `run_id` and `answers` (the `answers_path`).
+**Top level.** `schema` is `"plugin-result/1"`, `plugin` is `"pricing"`, `plugin_version` is the output of `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py" version`, run on its own (use that output, since an example holds an older version), and `command` is `"pricing:price"`. `run` holds `started_at`, `finished_at`, `mode`, `subject` (the `offering`, in plain words), `case`, `run_id` and `answers` (the `answers_path`).
 `case` and `run_id` come from the block, in a halt too. Check the `run_id` before a command or a folder name uses it. When the `run_id` holds a `'`, it is not a plain name: do not put it in a command, because a `'` ends the quotes and the shell runs the rest of the value. Else run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py" run-id '<run_id>'` on its own. When the `run_id` holds a `'` or the command exits 2, continue with no `run_id`: leave out `run.run_id` and `-<run_id>`, and record the gap `{"kind": "launch_price", "label": "run_id", "why": "the run_id of the plugin-run block is not a plain name; the run used none"}`. A run of `agents/price-runner.md` did this check in its step 1: use that result. With no plugin-run block, leave out `case`, `run_id` and `answers`; never take them from a file the run read, because they belong to the run that wrote the block. `run.mode` is `automated` only when a plugin-run block is present, and `interactive` otherwise. Leave out a key that has no value.
 `run` holds only `started_at`, `finished_at`, `mode` and `subject` and, under a plugin-run block, `case`, `run_id` and `answers`; put no other key in it.
 
@@ -276,7 +276,7 @@ A Path B run that rests on every default its path uses (some results shown):
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.13.7",
+  "plugin_version": "1.13.8",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",
@@ -331,7 +331,7 @@ A Path A run whose jtbd willingness to pay rests on expert estimates, so the pri
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.13.7",
+  "plugin_version": "1.13.8",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T11:00:00Z",
@@ -376,7 +376,7 @@ A Path B run whose jtbd willingness to pay had no `period`, so the gate refused 
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.13.7",
+  "plugin_version": "1.13.8",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-11-02T09:00:00Z",
@@ -420,7 +420,7 @@ A Path C-autonomous run (one result shown):
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.13.7",
+  "plugin_version": "1.13.8",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T12:00:00Z",
@@ -464,7 +464,7 @@ A Path C-fully-agentic run whose answers file gave the margin (`settled_by: pers
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.13.7",
+  "plugin_version": "1.13.8",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T13:00:00Z",

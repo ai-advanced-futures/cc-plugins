@@ -1,7 +1,7 @@
 ---
 name: price
 description: Compute RIGHT_PRICE for a new feature or offering using a three-path formula — Path A (EVC-validated, when the jtbd gate accepts a jtbd result), Path B (multiplicative estimated, data-poor), or Path C (agentic pricing for Autonomous / Fully Agentic AI features). Applies Amadeo AI_MULTIPLIER, Helmer MOAT_MULTIPLIER, and discriminated output types for each pricing path.
-allowed-tools: Bash(uv run "${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py" *), Bash(uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" *), Bash(uv run "${CLAUDE_PLUGIN_ROOT}/scripts/pricing_calculator.py" *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/pricing_calculator.py *), Edit(/.pricing/**), Read(//**/skills/price/price.md)
+allowed-tools: Bash(uv run "${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py" *), Bash(uv run "${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py" *), Bash(uv run "${CLAUDE_PLUGIN_ROOT}/scripts/pricing_calculator.py" *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/brain_read.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/pricing_calculator.py *), Edit(/.pricing/**), Read(//**/skills/price/price.md), Read(//**/agents/new-offering-pricer.md)
 ---
 
 # Price — Compute RIGHT_PRICE
@@ -56,7 +56,7 @@ Returns `PathCFullyAgenticPriced` or `PathCFullyAgenticReclassified` (discrimina
 
 ## Flow
 
-1. **Before Step 0** — run `date -u +%Y-%m-%dT%H:%M:%SZ` on its own and keep it as `started_at`, and keep the `version` of `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`. When a `date` call is denied or fails, run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py" now` on its own and use its output as that time. The result file needs both.
+1. **Before Step 0** — run `date -u +%Y-%m-%dT%H:%M:%SZ` on its own and keep it as `started_at`. Then run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py" version` on its own and keep its output as the plugin version. When this call is refused or fails, stop: write no price file and no result file, because the result file must name the version of the plugin, and end the reply with the line `BLOCKED: result_name.py version: <reason>`, where `<reason>` is `refused`, or the exit code and the first line of the message. When a `date` call is denied or fails, run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py" now` on its own and use its output as that time. The result file needs both.
 2. **Step 0** — Classify agentic tier (Q1–Q4): route to Path A/B or Path C
 3. **Step 1** — Collect inputs for the determined path
 4. **Step 2** — Path A gate: the jtbd graph run named by `inputs_from` (or, in a person's run, the newest run with a willingness to pay, confirmed). With no block, run `brain_read.py wtp` first, also with `automated: true`; that mode skips only the confirmation question

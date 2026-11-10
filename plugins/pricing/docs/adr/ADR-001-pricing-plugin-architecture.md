@@ -110,7 +110,7 @@ pricing_unit     = "per agent per year"
 
 ### Config Governance Architecture
 
-All threshold values live in one place: `config/defaults.json`. The calculator never reads this file directly — it is a pure function library. The LLM agent reads config at Step 0 and passes thresholds as **required parameters** (no defaults).
+All threshold values live in one place: `config/defaults.json`. The formula functions of the calculator never read this file — they are a pure function library. The LLM agent gets the config at Step 0 and passes thresholds as **required parameters** (no defaults). It gets the config from the `defaults` command of the calculator's command line, which prints the `formulas` object of the file (STORY-321): a skill run in the default mode cannot read a file of the plugin folder.
 
 ```
 config/defaults.json
@@ -177,7 +177,7 @@ Dedicated formula agents for each path.
 
 ## Key Architectural Decisions
 
-**Why `pricing_calculator.py` does not read `defaults.json`:** The calculator is a pure function library. Making it read config at import time would couple the formula layer to the config layer and prevent the session fixture pattern from working correctly in tests. Config reading is the agent's responsibility (Step 0 of the skill prompt).
+**Why `pricing_calculator.py` does not read `defaults.json`:** The calculator is a pure function library. Making it read config at import time would couple the formula layer to the config layer and prevent the session fixture pattern from working correctly in tests. Config reading is the agent's responsibility (Step 0 of the skill prompt). The `defaults` command reads the file only in the command-line entry, when the agent asks for it, so no formula function and no import reads it.
 
 **Why the discriminated union (not `Optional[float]`):** A flat struct with `right_price: Optional[float] = None` has an implicit invariant (`reclassify_to_autonomous = True` implies `right_price is None`) discoverable only from the docstring. With the discriminated union, the invariant is encoded in the type — arithmetic on `result.right_price` in the reclassified case raises `AttributeError`, not a silent `None` propagation. The type system enforces the routing decision.
 

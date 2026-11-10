@@ -130,7 +130,7 @@ Check dispatch context for `automated: true` before proceeding.
 
 ### Step 0 — Load Config + Classify Agentic Tier
 
-Read `config/defaults.json` (relative to plugin root). Store all values for use in this session.
+Run `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/pricing_calculator.py" defaults` on its own. It prints the `formulas` object of `config/defaults.json`. Store all values for use in this session. This is a calculator call: when it cannot run, do as Step 6 says, with `defaults` as the function.
 
 Then ask (AskUserQuestion) [q: agentic_tier]:
 

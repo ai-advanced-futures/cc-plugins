@@ -4,6 +4,10 @@ All notable changes to the pricing plugin will be documented in this file.
 
 The first heading is the version in `.claude-plugin/plugin.json`. A test checks that they agree.
 
+## 1.13.8
+
+- **fix:** A headless `pricing:price` run in the default mode reads no plugin file outside its skill folder. The skill gets the plugin version from the new command `result_name.py version`, and the values of `config/defaults.json` from the new command `pricing_calculator.py defaults`. `allowed-tools` of `price` has `Read(//**/agents/new-offering-pricer.md)` for the rules of the result file. A refused `version` call stops the run with `BLOCKED: result_name.py version: <reason>`. Before, the 3 reads were refused, and the run wrote no result file and used rates from the skill text. ADR-001 of the plugin says that only the command-line entry of the calculator reads the config file. The new test `test_plugin_file_read.py` lists each plugin file that a skill names outside its folder, and the 4 agentic skills hold an entry with a reason until STORY-325 (STORY-321).
+
 ## 1.13.7
 
 - **fix:** The skills `audit`, `package` and `value-metric` have 2 `Bash` rules for `brain_read.py` (the path in double quotes, and with no quotes), and their procedure files say how to write the call: `<git root>` from `git rev-parse --show-toplevel` run on its own, and 1 command with no `$(...)`, shell variable, pipe or second command. Each of the 3 skills names the plugin root in a line of its `SKILL.md`. Before, each standalone run had 2 refused `brain_read.py` calls and went on with no jtbd or competitor data. `value-metric/SKILL.md` names `brain_read.py outcomes`, the call that its procedure file runs (STORY-290).

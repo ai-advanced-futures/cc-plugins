@@ -54,7 +54,7 @@ RUNNER_CALLS = {
     "pricing": {
         "brain_read.py": {"before": ["--root"], "first": ["moats", "outcomes", "wtp"]},
         "pricing_calculator.py": {},
-        "result_name.py": {"first": ["now", "run-id", "name"]},
+        "result_name.py": {"first": ["now", "run-id", "name", "version"]},
     },
     "product-finance": {
         "ai_roi_calculator.py": {},
