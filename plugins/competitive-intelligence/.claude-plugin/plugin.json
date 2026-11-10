@@ -1,7 +1,7 @@
 {
   "name": "competitive-intelligence",
   "displayName": "competitive-intelligence",
-  "version": "1.11.7",
+  "version": "1.11.8",
   "description": "Map the competitors of a market. Gather public facts about them. Analyze one competitor with six lenses. Write a SWOT and recommendations.",
   "author": {
     "name": "ai-advanced-futures"

@@ -134,6 +134,7 @@ class Ingest:
         self.cids: dict[str, Path] = {}
         self.names: dict[str, Path] = {}
         self.notes: dict[str, str] = {}
+        self.files: list[Path] = []  # the files of the session, which process() sets (STORY-284)
         self.market_page = None
         self.run_p = None
         self.run_ref = None
@@ -596,8 +597,30 @@ class Ingest:
         if comp is None and self.cids:
             comp = self.pages[next(iter(self.cids.values()))]
         if comp is None:
-            raise DataError(f"{name}: the run has no competitor to attach the lens to")
+            comp = self.analysis_competitor(name)
         return self.mark(self.lens_page("technology-disruption", comp, name, data, "technology"))
+
+    def analysis_competitor(self, name):
+        """The competitor of the analysis-<competitor>.json of the session, as h_analysis finds it (STORY-284).
+        An analyze session has no competitive-ecosystem.json, and h_analysis comes after this file in HANDLERS."""
+        found = {}
+        for path in self.files:
+            if not fnmatch.fnmatch(path.name, "analysis-*.json"):
+                continue
+            data = read_json(path)
+            if not isinstance(data, dict):
+                continue
+            cid = data.get("competitor_id") if isinstance(data.get("competitor_id"), str) else None
+            named = data.get("competitor") if isinstance(data.get("competitor"), str) and data["competitor"].strip() else None
+            if cid or named:
+                found.setdefault(fold(named) if named else cid, (cid, named, path.name))
+        if len(found) > 1:
+            raise DataError(f"{name}: the run has no competitor to attach the lens to, and the analysis files name "
+                            f"{len(found)} competitors ({', '.join(f[2] for f in found.values())})")
+        if not found:
+            raise DataError(f"{name}: the run has no competitor to attach the lens to")
+        cid, named, _ = next(iter(found.values()))
+        return self.comp_by_id(cid, named)
 
     def h_analysis(self, name, data):
         comp = self.comp_by_id(data.get("competitor_id"), data.get("competitor"))
@@ -929,6 +952,7 @@ def process(ing, files, result):
     """Map each file to pages. Return the names of the files that were ingested."""
     done, notes = [], []
     claimed = set()
+    ing.files = list(files)
     for pattern, spec in HANDLERS:
         for path in files:
             if path.name in claimed or not fnmatch.fnmatch(path.name, pattern):

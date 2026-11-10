@@ -2,7 +2,11 @@
 
 This plugin maps the competitors of a market, gathers public facts about them, and analyzes a competitor through six lenses. It writes a SWOT, recommendations, and the pages of a graph that other plugins read.
 
-## What's New in v1.11.7
+## What's New in v1.11.8
+
+- The ingest of an `analyze` run attaches the `technology-disruption` lens to the competitor of `analysis-<competitor>.json` (by `competitor_id` or `competitor`, as `h_analysis` finds it) when the run has no other competitor. 2 competitors in the analysis files stop the ingest with 1 line that names the files, and no page is written. Before, the first ingest of an `analyze` run that wrote `technology-disruption.json` stopped with "the run has no competitor to attach the lens to" (STORY-284).
+
+## What Was New in v1.11.7
 
 - The skill `vendor-archetype-classify` starts its agent in the foreground with `run_in_background: false`, and says so in a line at the top. Before, the agent could start in the background and return in a new turn that did not have the `allowed-tools` of the skill, and the emitter was refused (STORY-312).
 
