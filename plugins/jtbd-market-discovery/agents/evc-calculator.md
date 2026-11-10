@@ -57,7 +57,7 @@ Read the sources, decide the assumptions and the quantities, and write `{session
 
 1. **ORIENT:**
    - Read `{session_dir}/p6.json` to get the top opportunities
-   - Read `{session_dir}/p4.json` for time/task data
+   - Read `{session_dir}/p4.json` for the time and task data of step 4. Take none of the five assumptions of step 2 from it.
    - Read `${CLAUDE_PLUGIN_ROOT}/skills/phase-7-evc-calculation/evc-framework.md` with the Read tool
 
 2. **GATHER COST ASSUMPTIONS:**
@@ -74,6 +74,8 @@ Read the sources, decide the assumptions and the quantities, and write `{session
    - When nobody gives a deal size, use `average_revenue = 5000` (USD per sale).
    - When nobody gives a margin, use `revenue_margin = 0.20` (share of revenue).
    - When nobody gives a risk tolerance, use `risk_tolerance = moderate`.
+   - A default is the value of this list. It is not a value that you estimate, and not a value of `p4.json` (its `hourly_rate` and `cost_per_error` are estimates for the steps of the job) or of another phase file. Use a value that is not in this list only when the dispatch gives it as an answer, because `run_phase_7.py` refuses a value that is marked `default` and is not the default.
+   - When the dispatch has `input_error`, the script refused your last `evc-input.json`. Correct what the message names, and write the file again.
    - Record how each of the five was settled under `assumption_sources`, one plain string per input such as `"default"`: `person` or `recommended` (from the answers, by their `settled_by`), `asked` (the person answered in this run) or `default`.
 
 3. **SELECT TOP NEEDS FOR EVC:**
@@ -131,10 +133,10 @@ Read `{session_dir}/evc-results.json`, check it, and write `{session_dir}/p7.jso
 
 3. **VALIDATE EVC ESTIMATES:**
    - Are the values reasonable for the market? Do the top EVCs align with customer pain? Is any value too high or too low?
-   - When one input is wrong, change it in `{session_dir}/evc-input.json` with the Write tool, and end your reply with the line `RERUN: evc-input.json`. The skill runs the script again once. Write no `p7.json` in that reply.
-   - When the inputs are right, write `p7.json`.
+   - When one quantity of a need is wrong, change it in `{session_dir}/evc-input.json` with the Write tool, and end your reply with the line `RERUN: evc-input.json`. The skill runs the script again once. Write no `p7.json` in that reply. Do not change `assumptions` or `assumption_sources`, because only an answer changes an assumption.
+   - When the quantities are right, write `p7.json`.
 
-4. **FINALIZE EVC ANALYSIS:** write `{session_dir}/p7.json` with the shape under "Output Artifacts".
+4. **FINALIZE EVC ANALYSIS:** write `{session_dir}/p7.json` with the shape under "Output Artifacts". Copy `assumptions` and `assumption_sources` from `evc-results.json` as they are.
 
 5. **NEXT PHASE TRANSITION:**
    - Show the top 10 opportunities by EVC
@@ -200,7 +202,7 @@ Next Steps:
 - **Fix:** Mark as "qualitative value" and list it with no dollar number
 
 **Issue:** EVC seems too high or too low
-- **Fix:** Review assumptions, compare to competitor pricing, change `evc-input.json`, and end the reply with `RERUN: evc-input.json`
+- **Fix:** Review the quantities of the needs, compare to competitor pricing, change the quantities in `evc-input.json`, and end the reply with `RERUN: evc-input.json`
 
 **Issue:** `evc-results.json` is missing in step `report`
 - **Fix:** Stop and say so. Never make up the dollar values, because a made-up number reaches the result file as a real one.

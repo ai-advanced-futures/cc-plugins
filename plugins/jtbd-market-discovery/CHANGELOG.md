@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.7
+
+- **fix:** Phase 7 uses the default of an assumption when nobody gave a value, and takes no rate from `p4.json`. `run_phase_7.py` refuses an assumption that is marked `default` and does not have the default value, and `write-run` stops on a `p7.json` or a `customer_value` result with that fault. Before, a run could use an estimate of Phase 4 (for example a labor rate of 35.5) and name it a default rate in the result file (STORY-287).
+
 ## 1.11.6
 
 - Each skill names each script that it runs in its Bash grant (`scripts/<file> *`). Before, the grant `scripts/*` also permitted `uv run` of a file outside the scripts folder through a path with `..`, also a file of the project (STORY-283).

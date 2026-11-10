@@ -9,6 +9,7 @@ import json
 import re
 from pathlib import Path
 
+import evc_inputs
 from jtbdlib import DataError, UsageError, check, logbook, regen, schema, writer
 from jtbdlib.bundle import DEFAULT_DIR, Bundle, bundle_dir, has_entry, read, ref
 from jtbdlib.ids import fold, next_id
@@ -221,6 +222,32 @@ class Build:
         self.job = self.run = None
         self.input_run = None
         self.input_p7 = None
+
+    # ---- the assumptions of Phase 7 ---------------------------------------------------------------
+
+    def check_evc_inputs(self):
+        """Stop when p7.json, or a customer_value result, names a value as a default that is not the default (STORY-287).
+
+        It reads the p7.json of this session only, not the one of an input run.
+        """
+        p7 = self.p[7] or {}
+        assumptions, sources = p7.get("assumptions"), p7.get("assumption_sources")
+        if not isinstance(assumptions, dict):
+            return
+        wrong = ["p7.json " + line for line in evc_inputs.problems(assumptions, sources)]
+        markers = evc_inputs.markers()
+        for entry in self.result.get("results") or []:
+            if not isinstance(entry, dict) or entry.get("kind") != "customer_value":
+                continue
+            listed = [str(item) for item in entry.get("defaults") or []]
+            for name, marker in markers.items():
+                for item in listed:  # "<input> = <value> (<file>)" is the marker of a value from another file
+                    if item.split("=")[0].strip() == name and item != marker and "(" not in item:
+                        wrong.append(f"the result {entry.get('id')!r} has the marker {item!r}, but the default marker is {marker!r}")
+                if evc_inputs.source_of(sources, name) == evc_inputs.DEFAULT and marker not in listed:
+                    wrong.append(f"the result {entry.get('id')!r} has no marker {marker!r}, but p7.json has {name} as a default")
+        if wrong:
+            raise DataError("; ".join(wrong) + ". No page was written.")
 
     # ---- the run ---------------------------------------------------------------------------------
 
@@ -599,6 +626,7 @@ def write_one(root, session_dir, result, actor, lines, command=None):
     w = Writer(root, actor)
     bundle = read(root) if has_entry(root) else Bundle(Path(root), w.dir, {})
     build = Build(w, session_dir, result, state, bundle)
+    build.check_evc_inputs()
     if session_dir and str(result.get("command", "")).endswith(":wtp-check"):
         build.input_run, build.input_p7 = ensure_input(root, session_dir, state, result, actor, lines)
         if build.input_run:

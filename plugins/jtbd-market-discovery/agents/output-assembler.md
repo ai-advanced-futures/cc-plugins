@@ -97,6 +97,8 @@ The markers, and the results that carry them:
 | `risk_tolerance` | `p7.json` | `risk_tolerance = moderate` | `customer_value` |
 | `segment_count` | `p8.json` | `segment_count = 4` | `customer_segment` |
 
+Write each marker as this table gives it, with the value of the table. When `p7.json` marks an input `default`, its value is the default, and `write-run` stops on a marker with another value.
+
 In a person's run, a value the run takes from another plugin's file, or from an earlier run's file, is a `default` source with `ref` `<file>: <key>`, and its marker is `<input> = <value> (<file>)`.
 In a person's run, an answer the person picked from an option labelled as the default or as recommended is a `default` source with `ref` `asked in this run: <input>`, and that default's marker goes in `defaults`.
 The expert-estimates marker applies only when `p5.json` has `"method": "expert"`. An input in the markers table that its phase file does not record under `assumption_sources` counts as `default`. `rests_on_default` is true when a source has type `default`. It is also true when the `defaults` list of marker strings is not empty; otherwise it is false.
@@ -109,7 +111,7 @@ A finished run that rests on every default:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.11.6",
+  "plugin_version": "1.11.7",
   "command": "jtbd-market-discovery:discover",
   "run": {
     "started_at": "2026-10-31T09:00:00Z",
@@ -176,7 +178,7 @@ A run whose answers file gave the labor rate (`settled_by: person`), so `labor_r
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.11.6",
+  "plugin_version": "1.11.7",
   "command": "jtbd-market-discovery:discover",
   "run": {
     "started_at": "2026-10-31T09:00:00Z",
@@ -243,7 +245,7 @@ A run whose answers file gave the labor rate (`settled_by: person`), so `labor_r
        "date": "YYYY-MM-DD",
        "job_statement": "...",
        "respondents": 87,
-       "analyst": "jtbd-market-discovery v1.11.6",
+       "analyst": "jtbd-market-discovery v1.11.7",
        "session_dir": "..."
      },
      "job_steps": [...],

@@ -137,8 +137,8 @@ Find the first phase that is not complete, and run its branch.
 - On confirm: mark Phase 6 complete.
 
 **Phase 7 — EVC calculation (2 dispatches and 1 script).**
-1. Start `evc-calculator` with `session_dir`, `checkpoints`, the EVC answers and `step: inputs`. It writes `{session_dir}/evc-input.json` and returns 1 line.
-2. `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/run_phase_7.py --input '<session_dir>/evc-input.json' --out '<session_dir>/evc-results.json'`. When it exits 1, write its message to `execution-log.md` and go to ERROR HANDLING.
+1. Start `evc-calculator` with `session_dir`, `checkpoints`, the EVC answers and `step: inputs`. For an input with no answer, give no value and no instruction, because the agent has the default of each input. It writes `{session_dir}/evc-input.json` and returns 1 line.
+2. `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/run_phase_7.py --input '<session_dir>/evc-input.json' --out '<session_dir>/evc-results.json'`. When it exits 1, write its message to `execution-log.md`, do step 1 one more time with the message as `input_error`, and run the script again. When it exits 1 again, that is the second failure of ERROR HANDLING.
 3. Start `evc-calculator` with `session_dir`, `checkpoints` and `step: report`. It reads `evc-results.json` and writes `p7.json`.
 4. When the reply of step 3 ends with `RERUN: evc-input.json`, the agent changed an input and wrote a new `evc-input.json`. Run step 2 and step 3 one more time. Do not run them a third time, because a loop that is not bounded does not end.
 - Mark Phase 7 complete.

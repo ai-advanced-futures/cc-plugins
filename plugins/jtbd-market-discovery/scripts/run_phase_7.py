@@ -16,6 +16,9 @@ The input is the file `evc-input.json` that the agent evc-calculator wrote (step
 For each need the script makes a new `EVCCalculator` and calls `add_time_savings`, `add_error_reduction`,
 `add_revenue_increase` (the revenue times `revenue_margin`), `add_risk_reduction` (the probability times
 `prevention_rate`) and `calculate_total_evc`. It writes the input fields and one result for each need to --out.
+An assumption with the source `default`, or with no source, must have the default value of
+`questions/discover.json`, and each source must be `person`, `recommended`, `asked` or `default`: if not, it
+is an input error (STORY-287).
 Exit 0: the file is written, and one line `needs=<n>` is on stdout. Exit 1: an input error (1 line on
 stderr, no file). Exit 2: usage.
 """
@@ -27,9 +30,10 @@ from pathlib import Path
 if __package__ in (None, ""):  # run by path: uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # its own package, never the cwd
 
+from scripts import evc_inputs  # noqa: E402
 from scripts.evc_calculator import EVCCalculator  # noqa: E402
 
-ASSUMPTIONS = ("labor_rate", "average_error_cost", "average_revenue", "revenue_margin", "risk_tolerance")
+ASSUMPTIONS = evc_inputs.INPUTS
 NEED_NUMBERS = (
     "hours_saved_per_year",
     "errors_avoided_per_year",
@@ -58,6 +62,9 @@ def evaluate(data):
     for key in ASSUMPTIONS:
         if key not in assumptions:
             raise ValueError("assumptions: %s is missing" % key)
+    wrong = evc_inputs.problems(assumptions, data.get("assumption_sources"), strict=True)
+    if wrong:
+        raise ValueError("; ".join(wrong))
     needs = data.get("needs")
     if not isinstance(needs, list) or not needs:
         raise ValueError("needs must be a list with one item or more")
