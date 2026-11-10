@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.14.0
+
+- **feat:** the Magic Number divides by the S&M spend of 1 quarter, from the new optional input `prior_quarter_sm_spend`. Without it, the script estimates the spend as (sales costs + marketing costs) × 3 / period months. It labels the figure as an estimate (`is_estimate`, `estimate_note`, `(estimate)`), and leaves the figure out of `overall_health` and its recommendations. One line tells the person to calculate the figure again.
+- **change:** Magic Number figures become 4 times larger at a 12-month period, because the old spend was the spend of the full period. The sample case `poor` moves from warning to excellent.
+- **feat:** the interactive run and `/product-finance:unit-economics` ask for the S&M spend of the prior quarter. A person who does not have it hears that the Magic Number cannot be calculated reliably. Automated mode asks nothing and uses the estimate.
+- **change:** the question `net_new_arr` asks for the most recent quarter, because the formula multiplies this value by 4.
+- **fix:** each printed figure of the unit economics, Rule of 40 and AI ROI scripts comes from exact math on the inputs as written, and rounds half away from zero only at output, to the same places as before. These printed figures change: CAC `4,170.81` becomes `4,170.82`, the weighted Rule of 40 `63.1` becomes `63.2` in 11 sample cases, LTV:CAC `0.62` becomes `0.63`, and a Magic Number of exactly 0.125 prints `0.13`. A `-0.0` input reads as 0. `market_sizing_calculator.py` keeps its figures.
+- **fix:** a value exactly on a band edge gets the band of that edge. Growth 64.1 with margin -24.1 scores exactly 40 and gets `excellent`, where it got `good`. At a break-even of exactly 6 months, the `Fast payback` line does not print.
+- **fix:** the Magic Number band text reads `1.0 or more`, `0.75 up to 1.0`, `0.5 up to 0.75` and `under 0.5` in the output and the docs.
+- **fix:** the Rule of 40 gap prints to 1 place, or `less than 0.1`. A score of exactly 40 does not print `Improve score by 0 points`.
+- **fix:** a figure above the float range prints `Infinity` or `-Infinity` in the JSON, where a ratio printed `NaN`.
+- **fix:** a required field given as `null` prints `- <field>: null, a value is required`. An absent field still prints `missing`.
+- **fix:** `discover` and its runner correct a mistyped command, path or JSON syntax of the assumptions file 1 time, from the error message of the script, and change no value. The unit economics and feature ROI runners say that their command runs no calculator script.
+- **docs:** `ai_roi_calculator.py --help` shows the `--input` example. ADR-009 records exact figures. ADR-005 records the spend of 1 quarter and the estimate.
+
 ## 0.13.7
 
 - **fix:** a `null` in a field with a default, such as `period_months`, now runs with the default and exits 0. Before, the script refused it as `missing` with exit code 3.

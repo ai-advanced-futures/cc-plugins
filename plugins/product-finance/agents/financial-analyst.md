@@ -528,7 +528,8 @@ The run never overwrites an earlier file: when the name is taken and there is no
 - `run` holds only `started_at`, `finished_at`, `mode` and `subject` and, under a plugin-run block, `case`, `run_id` and `answers`; put no other key in it.
   In a halt, `run.subject` is `unit-economics run halted before its subject was known`.
 - Copy each number and sentence from the run's files as written. Never estimate, round or invent one.
-- When one of this plugin's scripts computed a result's figures, its `method` names that script. Otherwise work the figures out from the formula stated in the command, with no code at all, and end its `method` with this sentence: `Computed by the model from the formula stated in the command; no script ran.` The command names no script, so every result ends with it.
+- When one of this plugin's scripts computed a result's figures, its `method` names that script. Otherwise work the figures out from the formula stated in the command, with no code at all, and end its `method` with this sentence: `Computed by the model from the formula stated in the command; no script ran.`
+  The command names no script, so a result without a script ends with it, unless the Magic Number estimate rule after the `Results` line adds its note.
 - `id` is `<kind>-<n>`, numbered through the file from 1, whatever the kind.
 - Sources. An answer is the source `{"type": "person", "ref": "answers:<input>", "date": null}` for `settled_by: person`, or the same with type `default` for `settled_by: recommended`.
   An input the answers file does not give, which the run fills from a default the command file states, is a `default` source, never `model`, because the command file states it and no model produced it: its `ref` is `"<the file>: <input>"`, and its marker `<input> = <value>` goes in `defaults`. A figure the run could not work out from an answer or a stated default is not a result: it goes into `gaps`, with the inputs it lacked in `why`.
@@ -541,6 +542,8 @@ The run never overwrites an earlier file: when the name is taken and there is no
 - `gaps` lists each figure the run did not produce, with its `kind`, `label` and `why`. A gap's `kind` is one of the result kinds named below: the one the missing figure belongs with, for example `unit_economics` for a Magic Number the run could not work out. A halt writes `results: []` and the gap `{"kind": "unit_economics", "label": "Unit economics", "why": "product required for a plugin run"}`.
 
 Results, from the `unit-economics.json` this run wrote: one `unit_economics` result whose `value` holds each of `cac`, `ltv`, `ltv_cac`, `payback_months`, `churn` (monthly, in percent) and `arpa` (monthly revenue per customer) that the file holds, `unit` `"USD"`, `period` `"month"`.
+When the `magic_number` block of `unit-economics.json` has `"is_estimate": true`, append that block's `estimate_note` as the last sentence of the result's `method`, whether `method` names a script or ends with the sentence for figures worked out with no code at all, `Computed by the model from the formula stated in the command; no script ran.`
+This is the one exception to the default-source rule: the estimate adds no `default` source and no marker to `defaults`. Set `rests_on_default` from the other sources and markers only; the estimate alone leaves it `false`.
 
 A defaults run of `product-finance:unit-economics`, then the same run with `data_type` answered by the person:
 
@@ -548,7 +551,7 @@ A defaults run of `product-finance:unit-economics`, then the same run with `data
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.7",
+  "plugin_version": "0.14.0",
   "command": "product-finance:unit-economics",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",
@@ -600,7 +603,7 @@ A defaults run of `product-finance:unit-economics`, then the same run with `data
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.7",
+  "plugin_version": "0.14.0",
   "command": "product-finance:unit-economics",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",

@@ -28,6 +28,7 @@ License: MIT
 import json
 import sys
 from dataclasses import dataclass
+from fractions import Fraction
 from pathlib import Path
 from typing import Any, ClassVar, Dict, Optional, Tuple
 
@@ -38,6 +39,7 @@ from scripts.input_check import checked_input, limits, read_json_input  # noqa: 
 
 # AIProvider re-exported (not used internally) for tests/consumers importing it here.
 from scripts.utils.enums import AIProvider, MetricHealth  # noqa: E402, F401
+from scripts.utils.exact import Number, as_float, as_written, shown  # noqa: E402
 
 
 def calculate_roi_percentage_safe(value: float, cost: float) -> Optional[float]:
@@ -145,13 +147,13 @@ class AICostResult:
         optimization_opportunities: List of cost optimization opportunities
     """
 
-    cost_per_interaction: float
-    cost_per_user_per_month: float
-    ai_cost_percentage_of_revenue: float
-    total_ai_cost: float
-    annualized_ai_cost: float
+    cost_per_interaction: Number
+    cost_per_user_per_month: Number
+    ai_cost_percentage_of_revenue: Number
+    total_ai_cost: Number
+    annualized_ai_cost: Number
     cost_trend_analysis: str
-    provider_breakdown_analysis: Optional[dict[str, float]]
+    provider_breakdown_analysis: Optional[dict[str, dict[str, Number]]]
     health_status: MetricHealth
     optimization_opportunities: list[str]
 
@@ -174,17 +176,17 @@ class AIValueResult:
         total_revenue: AI-enabled plus other revenue; 0 means the share is undefined
     """
 
-    ai_enabled_revenue: float
-    ai_revenue_percentage: float
-    premium_pricing_value: Optional[float]
-    productivity_value: Optional[float]
-    retention_value: Optional[float]
-    expansion_value: Optional[float]
-    time_to_value_acceleration: Optional[float]
-    total_ai_value: float
-    value_breakdown: dict[str, float]
+    ai_enabled_revenue: Number
+    ai_revenue_percentage: Number
+    premium_pricing_value: Optional[Number]
+    productivity_value: Optional[Number]
+    retention_value: Optional[Number]
+    expansion_value: Optional[Number]
+    time_to_value_acceleration: Optional[Number]
+    total_ai_value: Number
+    value_breakdown: dict[str, Number]
     health_status: MetricHealth
-    total_revenue: float = 0.0
+    total_revenue: Number = Fraction(0)
 
 
 @dataclass
@@ -204,16 +206,16 @@ class AIROIResult:
         roi_by_feature: Optional ROI breakdown by feature
     """
 
-    ai_roi: float
-    ai_roi_ratio: float
-    net_ai_value: float
-    break_even_months: Optional[float]
-    payback_period: Optional[float]
+    ai_roi: Number
+    ai_roi_ratio: Number
+    net_ai_value: Number
+    break_even_months: Optional[Number]
+    payback_period: Optional[Number]
     cost_result: AICostResult
     value_result: AIValueResult
     overall_health: MetricHealth
     recommendations: list[str]
-    roi_by_feature: Optional[dict[str, float]]
+    roi_by_feature: Optional[dict[str, Number]]
 
 
 def calculate_ai_costs(data: AICostInput) -> AICostResult:
@@ -243,26 +245,32 @@ def calculate_ai_costs(data: AICostInput) -> AICostResult:
         ...     period_months=1
         ... )
         >>> result = calculate_ai_costs(input_data)
-        >>> print(f"Cost per interaction: ${result.cost_per_interaction:.4f}")
+        >>> print(f"Cost per interaction: ${shown(result.cost_per_interaction, 4):.4f}")
         Cost per interaction: $0.0500
     """
+    # Every input as written, so every figure is exact
+    total_ai_cost = as_written(data.total_ai_cost)
+    ai_interactions = as_written(data.ai_interactions)
+    period_months = as_written(data.period_months)
+
     # Calculate cost per interaction
-    cost_per_interaction = data.total_ai_cost / data.ai_interactions
+    cost_per_interaction = total_ai_cost / ai_interactions
 
     # Calculate cost per user per month
-    cost_per_user_per_month = data.total_ai_cost / data.active_users / data.period_months
+    cost_per_user_per_month = total_ai_cost / as_written(data.active_users) / period_months
 
     # Calculate AI cost as percentage of revenue
-    ai_cost_percentage = (data.total_ai_cost / data.total_revenue) * 100
+    ai_cost_percentage = (total_ai_cost / as_written(data.total_revenue)) * 100
 
     # Annualize costs
-    annualized_ai_cost = data.total_ai_cost * (12 / data.period_months)
+    annualized_ai_cost = total_ai_cost * Fraction(12, period_months)
 
     # Include infrastructure costs if provided
-    total_cost = data.total_ai_cost
+    total_cost = total_ai_cost
     if data.infrastructure_cost:
-        total_cost += data.infrastructure_cost
-        annualized_ai_cost += data.infrastructure_cost * (12 / data.period_months)
+        infrastructure_cost = as_written(data.infrastructure_cost)
+        total_cost += infrastructure_cost
+        annualized_ai_cost += infrastructure_cost * Fraction(12, period_months)
 
     # Assess health based on AI cost as % of revenue
     if ai_cost_percentage < 5:
@@ -281,25 +289,26 @@ def calculate_ai_costs(data: AICostInput) -> AICostResult:
     # Cost trend analysis
     cost_trend = []
     cost_trend.append(cost_assessment)
-    cost_trend.append(f"Cost per interaction: ${cost_per_interaction:.4f}")
-    cost_trend.append(f"Cost per user per month: ${cost_per_user_per_month:.2f}")
-    cost_trend.append(f"Annualized AI cost: ${annualized_ai_cost:,.2f}")
+    cost_trend.append(f"Cost per interaction: ${shown(cost_per_interaction, 4):.4f}")
+    cost_trend.append(f"Cost per user per month: ${shown(cost_per_user_per_month, 2):.2f}")
+    cost_trend.append(f"Annualized AI cost: ${shown(annualized_ai_cost, 2):,.2f}")
 
     # Provider breakdown analysis
     provider_breakdown_analysis = None
     if data.provider_breakdown:
         provider_breakdown_analysis = {}
-        for provider, cost in data.provider_breakdown.items():
-            percentage = (cost / data.total_ai_cost) * 100
+        for provider, raw_cost in data.provider_breakdown.items():
+            cost = as_written(raw_cost)
             provider_breakdown_analysis[provider] = {
                 "cost": cost,
-                "percentage": percentage,
-                "cost_per_interaction": cost / data.ai_interactions,
+                "percentage": (cost / total_ai_cost) * 100,
+                "cost_per_interaction": cost / ai_interactions,
             }
         cost_trend.append("\nProvider Breakdown:")
         for provider, metrics in provider_breakdown_analysis.items():
             cost_trend.append(
-                f"  - {provider}: ${metrics['cost']:,.2f} ({metrics['percentage']:.1f}% of total)"
+                f"  - {provider}: ${shown(metrics['cost'], 2):,.2f} "
+                f"({shown(metrics['percentage'], 1):.1f}% of total)"
             )
 
     # Generate optimization opportunities
@@ -348,28 +357,34 @@ def calculate_ai_value(data: AIValueInput) -> AIValueResult:
         ...     employee_fully_loaded_cost=100
         ... )
         >>> result = calculate_ai_value(input_data)
-        >>> print(f"Total AI value: ${result.total_ai_value:,.2f}")
+        >>> print(f"Total AI value: ${shown(result.total_ai_value, 2):,.2f}")
         Total AI value: $450,000.00
     """
-    total_revenue = data.ai_enabled_revenue + data.non_ai_revenue
-    ai_revenue_percentage = (data.ai_enabled_revenue / total_revenue) * 100 if total_revenue > 0 else 0  # noqa: E501
+    # Every input as written: the whole value chain is exact
+    ai_enabled_revenue = as_written(data.ai_enabled_revenue)
+    total_revenue = ai_enabled_revenue + as_written(data.non_ai_revenue)
+    ai_revenue_percentage = (
+        (ai_enabled_revenue / total_revenue) * 100 if total_revenue > 0 else Fraction(0)
+    )
 
-    value_breakdown = {"ai_enabled_revenue": data.ai_enabled_revenue}
-    total_value = data.ai_enabled_revenue
+    value_breakdown: dict[str, Number] = {"ai_enabled_revenue": ai_enabled_revenue}
+    total_value = ai_enabled_revenue
 
     # Calculate premium pricing value
     premium_pricing_value = None
     if data.premium_pricing_uplift is not None:
         # Premium pricing value = AI revenue without the premium
-        baseline_revenue = data.ai_enabled_revenue / (1 + data.premium_pricing_uplift / 100)
-        premium_pricing_value = data.ai_enabled_revenue - baseline_revenue
+        baseline_revenue = ai_enabled_revenue / (1 + as_written(data.premium_pricing_uplift) / 100)
+        premium_pricing_value = ai_enabled_revenue - baseline_revenue
         value_breakdown["premium_pricing_value"] = premium_pricing_value
         total_value += premium_pricing_value
 
     # Calculate productivity value
     productivity_value = None
     if data.time_saved_hours is not None and data.employee_fully_loaded_cost is not None:
-        productivity_value = data.time_saved_hours * data.employee_fully_loaded_cost
+        productivity_value = (
+            as_written(data.time_saved_hours) * as_written(data.employee_fully_loaded_cost)
+        )
         value_breakdown["productivity_value"] = productivity_value
         total_value += productivity_value
 
@@ -377,17 +392,17 @@ def calculate_ai_value(data: AIValueInput) -> AIValueResult:
     retention_value = None
     if data.ai_feature_churn_rate is not None and data.non_ai_churn_rate is not None:
         # Retention value = revenue saved from churn reduction
-        churn_reduction = data.non_ai_churn_rate - data.ai_feature_churn_rate
+        churn_reduction = as_written(data.non_ai_churn_rate) - as_written(data.ai_feature_churn_rate)  # noqa: E501
         if churn_reduction > 0:
             # Estimate annual retention value
-            retention_value = data.ai_enabled_revenue * (churn_reduction / 100)
+            retention_value = ai_enabled_revenue * (churn_reduction / 100)
             value_breakdown["retention_value"] = retention_value
             total_value += retention_value
 
     # Calculate expansion value
     expansion_value = None
     if data.ai_expansion_revenue is not None:
-        expansion_value = data.ai_expansion_revenue
+        expansion_value = as_written(data.ai_expansion_revenue)
         value_breakdown["expansion_value"] = expansion_value
         total_value += expansion_value
 
@@ -396,8 +411,8 @@ def calculate_ai_value(data: AIValueInput) -> AIValueResult:
     if data.time_to_value_reduction_days is not None:
         # Estimate value based on faster revenue recognition
         # Assume 30 days = 1 month of revenue acceleration
-        months_accelerated = data.time_to_value_reduction_days / 30
-        time_to_value_acceleration = (data.ai_enabled_revenue / 12) * months_accelerated
+        months_accelerated = as_written(data.time_to_value_reduction_days) / 30
+        time_to_value_acceleration = (ai_enabled_revenue / 12) * months_accelerated
         value_breakdown["time_to_value_acceleration"] = time_to_value_acceleration
         total_value += time_to_value_acceleration
 
@@ -413,7 +428,7 @@ def calculate_ai_value(data: AIValueInput) -> AIValueResult:
         health = MetricHealth.CRITICAL
 
     return AIValueResult(
-        ai_enabled_revenue=data.ai_enabled_revenue,
+        ai_enabled_revenue=ai_enabled_revenue,
         ai_revenue_percentage=ai_revenue_percentage,
         premium_pricing_value=premium_pricing_value,
         productivity_value=productivity_value,
@@ -463,7 +478,7 @@ def calculate_ai_roi(data: AIROIInput) -> AIROIResult:
         ... )
         >>> roi_input = AIROIInput(cost_data=cost_input, value_data=value_input)
         >>> result = calculate_ai_roi(roi_input)
-        >>> print(f"AI ROI: {result.ai_roi:.1f}%")
+        >>> print(f"AI ROI: {shown(result.ai_roi, 1):.1f}%")
         AI ROI: 500.0%
     """
     # Calculate costs and value
@@ -472,7 +487,9 @@ def calculate_ai_roi(data: AIROIInput) -> AIROIResult:
 
     # Calculate ROI
     # Note: For recurring revenue, we annualize value for fair comparison
-    annualized_value = value_result.total_ai_value * (12 / data.cost_data.period_months)
+    annualized_value = value_result.total_ai_value * Fraction(
+        12, as_written(data.cost_data.period_months)
+    )
     annualized_cost = cost_result.annualized_ai_cost
 
     net_ai_value = annualized_value - annualized_cost
@@ -524,8 +541,8 @@ def calculate_ai_roi(data: AIROIInput) -> AIROIResult:
 
 
 def _generate_cost_optimizations(
-    cost_per_interaction: float,
-    ai_cost_percentage: float,
+    cost_per_interaction: Number,
+    ai_cost_percentage: Number,
     provider_breakdown: Optional[dict],
 ) -> list[str]:
     """Generate cost optimization opportunities.
@@ -541,7 +558,7 @@ def _generate_cost_optimizations(
     optimizations = []
 
     # Cost per interaction optimizations
-    if cost_per_interaction > 0.10:
+    if cost_per_interaction > Fraction("0.10"):
         optimizations.append(
             "High cost per interaction (>$0.10): Implement aggressive caching strategy for repeated queries."  # noqa: E501
         )
@@ -549,7 +566,7 @@ def _generate_cost_optimizations(
             "Optimize prompts to reduce token usage - remove unnecessary context, use more concise instructions."  # noqa: E501
         )
 
-    if cost_per_interaction > 0.05:
+    if cost_per_interaction > Fraction("0.05"):
         optimizations.append(
             "Consider prompt compression techniques and semantic caching to reduce API calls."
         )
@@ -597,10 +614,10 @@ def _generate_cost_optimizations(
 
 
 def _generate_roi_recommendations(
-    ai_roi: float,
+    ai_roi: Number,
     cost_result: AICostResult,
     value_result: AIValueResult,
-    break_even_months: Optional[float],
+    break_even_months: Optional[Number],
 ) -> list[str]:
     """Generate actionable recommendations based on AI ROI analysis.
 
@@ -628,7 +645,7 @@ def _generate_roi_recommendations(
             "Positive AI ROI (>100%): Good return on investment. Continue current strategy with optimizations."  # noqa: E501
         )
         recommendations.append(
-            f"Break-even in {break_even_months:.1f} months - healthy payback period." if break_even_months else ""  # noqa: E501
+            f"Break-even in {shown(break_even_months, 1):.1f} months - healthy payback period." if break_even_months else ""  # noqa: E501
         )
     elif ai_roi > 0:
         recommendations.append(
@@ -654,7 +671,7 @@ def _generate_roi_recommendations(
 
     if value_result.ai_revenue_percentage < 20:
         recommendations.append(
-            f"Low AI revenue contribution ({value_result.ai_revenue_percentage:.1f}%): Increase AI feature adoption or develop new AI capabilities."  # noqa: E501
+            f"Low AI revenue contribution ({shown(value_result.ai_revenue_percentage, 1):.1f}%): Increase AI feature adoption or develop new AI capabilities."  # noqa: E501
         )
 
     # Cost-specific recommendations
@@ -666,7 +683,7 @@ def _generate_roi_recommendations(
     # Break-even recommendations
     if break_even_months and break_even_months > 12:
         recommendations.append(
-            f"Long payback period ({break_even_months:.1f} months): Accelerate value capture through pricing optimization or feature expansion."  # noqa: E501
+            f"Long payback period ({shown(break_even_months, 1):.1f} months): Accelerate value capture through pricing optimization or feature expansion."  # noqa: E501
         )
     elif break_even_months and break_even_months < 6:
         recommendations.append(
@@ -696,53 +713,65 @@ def format_result_as_json(result: AIROIResult) -> str:
     Returns:
         JSON string representation
     """
+    cost = result.cost_result
+    value = result.value_result
+    providers = cost.provider_breakdown_analysis
     output = {
         "ai_roi_summary": {
-            "ai_roi_percentage": round(result.ai_roi, 2),
-            "ai_roi_ratio": round(result.ai_roi_ratio, 2),
-            "net_ai_value_annual": round(result.net_ai_value, 2),
-            "break_even_months": round(result.break_even_months, 1) if result.break_even_months else None,  # noqa: E501
-            "payback_period_months": round(result.payback_period, 1) if result.payback_period else None,  # noqa: E501
+            "ai_roi_percentage": float(shown(result.ai_roi, 2)),
+            "ai_roi_ratio": float(shown(result.ai_roi_ratio, 2)),
+            "net_ai_value_annual": float(shown(result.net_ai_value, 2)),
+            "break_even_months": float(shown(result.break_even_months, 1)) if result.break_even_months else None,  # noqa: E501
+            "payback_period_months": float(shown(result.payback_period, 1)) if result.payback_period else None,  # noqa: E501
             "overall_health": result.overall_health.value,
         },
         "ai_costs": {
-            "cost_per_interaction": round(result.cost_result.cost_per_interaction, 4),
-            "cost_per_user_per_month": round(result.cost_result.cost_per_user_per_month, 2),
-            "ai_cost_percentage_of_revenue": round(result.cost_result.ai_cost_percentage_of_revenue, 2),  # noqa: E501
-            "total_ai_cost": round(result.cost_result.total_ai_cost, 2),
-            "annualized_ai_cost": round(result.cost_result.annualized_ai_cost, 2),
-            "health_status": result.cost_result.health_status.value,
-            "provider_breakdown": result.cost_result.provider_breakdown_analysis,
-            "optimization_opportunities": result.cost_result.optimization_opportunities,
+            "cost_per_interaction": float(shown(cost.cost_per_interaction, 4)),
+            "cost_per_user_per_month": float(shown(cost.cost_per_user_per_month, 2)),
+            "ai_cost_percentage_of_revenue": float(shown(cost.ai_cost_percentage_of_revenue, 2)),
+            "total_ai_cost": float(shown(cost.total_ai_cost, 2)),
+            "annualized_ai_cost": float(shown(cost.annualized_ai_cost, 2)),
+            "health_status": cost.health_status.value,
+            # Written raw, as today; a figure above the float range prints Infinity.
+            "provider_breakdown": (
+                {name: {k: as_float(v) for k, v in metrics.items()}
+                 for name, metrics in providers.items()}
+                if providers is not None
+                else None
+            ),
+            "optimization_opportunities": cost.optimization_opportunities,
         },
         "ai_value": {
-            "ai_enabled_revenue": round(result.value_result.ai_enabled_revenue, 2),
-            "ai_revenue_percentage": round(result.value_result.ai_revenue_percentage, 2),
-            "total_ai_value": round(result.value_result.total_ai_value, 2),
+            "ai_enabled_revenue": float(shown(value.ai_enabled_revenue, 2)),
+            # With no revenue at all the share is undefined, and today prints the int 0.
+            "ai_revenue_percentage": (
+                float(shown(value.ai_revenue_percentage, 2)) if value.total_revenue else 0
+            ),
+            "total_ai_value": float(shown(value.total_ai_value, 2)),
             "value_breakdown": {
-                k: round(v, 2) for k, v in result.value_result.value_breakdown.items()
+                k: float(shown(v, 2)) for k, v in value.value_breakdown.items()
             },
             "premium_pricing_value": (
-                round(result.value_result.premium_pricing_value, 2)
-                if result.value_result.premium_pricing_value
+                float(shown(value.premium_pricing_value, 2))
+                if value.premium_pricing_value
                 else None
             ),
             "productivity_value": (
-                round(result.value_result.productivity_value, 2)
-                if result.value_result.productivity_value
+                float(shown(value.productivity_value, 2))
+                if value.productivity_value
                 else None
             ),
             "retention_value": (
-                round(result.value_result.retention_value, 2)
-                if result.value_result.retention_value
+                float(shown(value.retention_value, 2))
+                if value.retention_value
                 else None
             ),
             "expansion_value": (
-                round(result.value_result.expansion_value, 2)
-                if result.value_result.expansion_value
+                float(shown(value.expansion_value, 2))
+                if value.expansion_value
                 else None
             ),
-            "health_status": result.value_result.health_status.value,
+            "health_status": value.health_status.value,
         },
         "recommendations": result.recommendations,
     }
@@ -761,7 +790,7 @@ def format_result_as_markdown(result: AIROIResult) -> str:
     """
     lines = []
     revenue = result.value_result
-    revenue_share = "n/a" if revenue.total_revenue == 0 else f"{revenue.ai_revenue_percentage:.1f}%"
+    revenue_share = "n/a" if revenue.total_revenue == 0 else f"{shown(revenue.ai_revenue_percentage, 1):.1f}%"  # noqa: E501
 
     lines.append("# AI Economics Analysis")
     lines.append("")
@@ -771,15 +800,15 @@ def format_result_as_markdown(result: AIROIResult) -> str:
     # Executive Summary
     lines.append("## Executive Summary")
     lines.append("")
-    lines.append(f"- **AI ROI:** {result.ai_roi:.1f}% ({result.ai_roi_ratio:.2f}x return)")
-    lines.append(f"- **Net Annual Value:** ${result.net_ai_value:,.2f}")
+    lines.append(f"- **AI ROI:** {shown(result.ai_roi, 1):.1f}% ({shown(result.ai_roi_ratio, 2):.2f}x return)")  # noqa: E501
+    lines.append(f"- **Net Annual Value:** ${shown(result.net_ai_value, 2):,.2f}")
     if result.break_even_months:
-        lines.append(f"- **Break-Even Period:** {result.break_even_months:.1f} months")
+        lines.append(f"- **Break-Even Period:** {shown(result.break_even_months, 1):.1f} months")
     lines.append(
-        f"- **AI Cost as % of Revenue:** {result.cost_result.ai_cost_percentage_of_revenue:.1f}%"
+        f"- **AI Cost as % of Revenue:** {shown(result.cost_result.ai_cost_percentage_of_revenue, 1):.1f}%"  # noqa: E501
     )
     lines.append(
-        f"- **AI-Enabled Revenue:** ${result.value_result.ai_enabled_revenue:,.2f} ({revenue_share} of total)"  # noqa: E501
+        f"- **AI-Enabled Revenue:** ${shown(result.value_result.ai_enabled_revenue, 2):,.2f} ({revenue_share} of total)"  # noqa: E501
     )
     lines.append("")
 
@@ -788,13 +817,13 @@ def format_result_as_markdown(result: AIROIResult) -> str:
     lines.append("")
     lines.append(f"**Health Status:** {result.cost_result.health_status.value.upper()}")
     lines.append("")
-    lines.append(f"- **Total Annual AI Cost:** ${result.cost_result.annualized_ai_cost:,.2f}")
-    lines.append(f"- **Cost per Interaction:** ${result.cost_result.cost_per_interaction:.4f}")
+    lines.append(f"- **Total Annual AI Cost:** ${shown(result.cost_result.annualized_ai_cost, 2):,.2f}")  # noqa: E501
+    lines.append(f"- **Cost per Interaction:** ${shown(result.cost_result.cost_per_interaction, 4):.4f}")  # noqa: E501
     lines.append(
-        f"- **Cost per User per Month:** ${result.cost_result.cost_per_user_per_month:.2f}"
+        f"- **Cost per User per Month:** ${shown(result.cost_result.cost_per_user_per_month, 2):.2f}"  # noqa: E501
     )
     lines.append(
-        f"- **AI Cost % of Revenue:** {result.cost_result.ai_cost_percentage_of_revenue:.2f}%"
+        f"- **AI Cost % of Revenue:** {shown(result.cost_result.ai_cost_percentage_of_revenue, 2):.2f}%"  # noqa: E501
     )
     lines.append("")
 
@@ -804,8 +833,8 @@ def format_result_as_markdown(result: AIROIResult) -> str:
         lines.append("")
         for provider, metrics in result.cost_result.provider_breakdown_analysis.items():
             lines.append(f"- **{provider}:**")
-            lines.append(f"  - Cost: ${metrics['cost']:,.2f} ({metrics['percentage']:.1f}% of total)")  # noqa: E501
-            lines.append(f"  - Cost per interaction: ${metrics['cost_per_interaction']:.4f}")
+            lines.append(f"  - Cost: ${shown(metrics['cost'], 2):,.2f} ({shown(metrics['percentage'], 1):.1f}% of total)")  # noqa: E501
+            lines.append(f"  - Cost per interaction: ${shown(metrics['cost_per_interaction'], 4):.4f}")  # noqa: E501
         lines.append("")
 
     # Cost Optimization Opportunities
@@ -820,9 +849,9 @@ def format_result_as_markdown(result: AIROIResult) -> str:
     lines.append("")
     lines.append(f"**Health Status:** {result.value_result.health_status.value.upper()}")
     lines.append("")
-    lines.append(f"- **Total AI Value (Annual):** ${result.value_result.total_ai_value:,.2f}")
+    lines.append(f"- **Total AI Value (Annual):** ${shown(result.value_result.total_ai_value, 2):,.2f}")  # noqa: E501
     lines.append(
-        f"- **AI-Enabled Revenue:** ${result.value_result.ai_enabled_revenue:,.2f}"
+        f"- **AI-Enabled Revenue:** ${shown(result.value_result.ai_enabled_revenue, 2):,.2f}"
     )
     lines.append(
         f"- **AI Revenue %:** {revenue_share} of total revenue"
@@ -834,20 +863,20 @@ def format_result_as_markdown(result: AIROIResult) -> str:
     lines.append("")
     for source, value in result.value_result.value_breakdown.items():
         total = result.value_result.total_ai_value
-        share = "n/a" if total == 0 else f"{value / total * 100:.1f}%"
+        share = "n/a" if total == 0 else f"{shown(value / total * 100, 1):.1f}%"
         source_name = source.replace("_", " ").title()
-        lines.append(f"- **{source_name}:** ${value:,.2f} ({share} of total)")
+        lines.append(f"- **{source_name}:** ${shown(value, 2):,.2f} ({share} of total)")
     lines.append("")
 
     if result.value_result.productivity_value:
         lines.append(
-            f"**Productivity Multiplier:** ${result.value_result.productivity_value:,.2f} in time savings value"  # noqa: E501
+            f"**Productivity Multiplier:** ${shown(result.value_result.productivity_value, 2):,.2f} in time savings value"  # noqa: E501
         )
         lines.append("")
 
     if result.value_result.retention_value:
         lines.append(
-            f"**Retention Impact:** ${result.value_result.retention_value:,.2f} in churn reduction value"  # noqa: E501
+            f"**Retention Impact:** ${shown(result.value_result.retention_value, 2):,.2f} in churn reduction value"  # noqa: E501
         )
         lines.append("")
 
@@ -855,14 +884,14 @@ def format_result_as_markdown(result: AIROIResult) -> str:
     lines.append("## ROI Framework")
     lines.append("")
     lines.append("```")
-    lines.append(f"AI Value (Annual):     ${result.value_result.total_ai_value:>15,.2f}")
-    lines.append(f"AI Costs (Annual):   - ${result.cost_result.annualized_ai_cost:>15,.2f}")
+    lines.append(f"AI Value (Annual):     ${shown(result.value_result.total_ai_value, 2):>15,.2f}")
+    lines.append(f"AI Costs (Annual):   - ${shown(result.cost_result.annualized_ai_cost, 2):>15,.2f}")  # noqa: E501
     lines.append(f"                       {'=' * 30}")
-    lines.append(f"Net AI Value:          ${result.net_ai_value:>15,.2f}")
+    lines.append(f"Net AI Value:          ${shown(result.net_ai_value, 2):>15,.2f}")
     lines.append("")
     lines.append("AI ROI = (Value - Cost) / Cost × 100")
-    lines.append(f"AI ROI = {result.ai_roi:.1f}%")
-    lines.append(f"Return Ratio = {result.ai_roi_ratio:.2f}x")
+    lines.append(f"AI ROI = {shown(result.ai_roi, 1):.1f}%")
+    lines.append(f"Return Ratio = {shown(result.ai_roi_ratio, 2):.2f}x")
     lines.append("```")
     lines.append("")
 
@@ -870,9 +899,9 @@ def format_result_as_markdown(result: AIROIResult) -> str:
     if result.break_even_months:
         lines.append("## Break-Even Analysis")
         lines.append("")
-        lines.append(f"- **Break-Even Period:** {result.break_even_months:.1f} months")
+        lines.append(f"- **Break-Even Period:** {shown(result.break_even_months, 1):.1f} months")
         lines.append(
-            f"- **Monthly Net Value:** ${result.net_ai_value / 12:,.2f}"
+            f"- **Monthly Net Value:** ${shown(result.net_ai_value / 12, 2):,.2f}"
         )
         lines.append("")
 
@@ -897,8 +926,8 @@ def format_result_as_markdown(result: AIROIResult) -> str:
 def main() -> None:
     """CLI entry point for AI ROI calculator.
 
-    Reads input from stdin (JSON) or prompts interactively,
-    calculates AI ROI, and outputs CFO-ready results.
+    Reads JSON input from `--input <file>`, else from stdin, else asks
+    for each value with interactive prompts. Prints the report.
     """
     import argparse
 
@@ -915,6 +944,7 @@ Examples:
 
   # JSON file input
   python ai_roi_calculator.py < ai_economics_input.json
+  python ai_roi_calculator.py --input ai_economics_input.json
 
   # Output formats
   python ai_roi_calculator.py --format json

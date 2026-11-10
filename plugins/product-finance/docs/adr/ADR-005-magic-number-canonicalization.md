@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-03
 **Status:** Accepted
-**Plugin:** product-finance v0.6.0
+**Plugin:** product-finance v0.6.0, amended in v0.14.0
 
 ## Context
 
@@ -62,18 +62,24 @@ behavior change rather than a dedupe — out of F8's "formula divergence" scope.
 negative value), and the interpretation map has no `UNKNOWN` entry, so a naive lift would downgrade
 the old `unit_economics` "negative → CRITICAL, ARR is declining" signal to `unknown` / `""`. The
 canonical helper therefore intercepts `magic_number < 0` BEFORE banding and returns
-`(round(magic_number, 2), CRITICAL, "Negative Magic Number — ARR is declining; fix churn/retention.")`.
+`(magic_number, CRITICAL, "Negative Magic Number — ARR is declining; fix churn/retention.")`.
+Since 0.14.0 the helper returns the exact value, unrounded; each output site rounds it half away from zero (ADR-009).
 This is a strict improvement that now also flows to rule_of_40 (which previously had the same latent
 gap). The interpretation string MUST contain "declining" (asserted by `test_unit_economics` and
 `test_magic_number`).
 
 ### LOCK-POINT B — holistic mapping
 
-`analyze_unit_economics` maps `quarterly_net_new_arr = data.net_new_arr` and
-`prior_quarter_sm_spend = data.sales_costs + data.marketing_costs`. `UnitEconomicsInput` is a
-point-in-time snapshot with no prior-quarter field, so the holistic path **approximates**
-`prior_quarter_sm_spend` from current-period S&M cost components. The ×4 interpretation now applies
-uniformly; the analyze-path magic number shifts by ×4 (covered by updated tests).
+`analyze_unit_economics` maps `quarterly_net_new_arr = data.net_new_arr`.
+
+Amended in 0.14.0. Until then the holistic path took the whole period's S&M costs as
+`prior_quarter_sm_spend`, so at the default 12-month period the Magic Number was a quarter of its true
+value. `UnitEconomicsInput` now has an optional `prior_quarter_sm_spend`, and the script uses it when
+given. When it is absent, the script estimates the quarter's spend as
+(sales_costs + marketing_costs) × 3 / period_months. The figure carries `is_estimate` and an
+`estimate_note`, prints as an estimate in the markdown, and is left out of `overall_health` and of the
+recommendations, except one line that says to recalculate it with the quarter's spend. The estimate is
+built outside the input limits, so it may exceed the limit on a given spend.
 
 ### None-spend banding
 

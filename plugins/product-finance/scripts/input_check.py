@@ -7,8 +7,9 @@ typing.Union, typing.List and typing.Dict, never `X | Y`.
 problem. A problem has a kind (`missing` or `invalid`), a location (field names
 and list indexes), the value as given, and one reason:
 
-    missing, not a number, not a finite number, not a whole number, not above N, above N,
-    below N, not one of <values>, not text, not an object, not a list, needed with <field>
+    missing, "null, a value is required", not a number, not a finite number, not a whole number,
+    not above N, above N, below N, not one of <values>, not text, not an object, not a list,
+    needed with <field>
 
 Field types the checker reads: float, int, str, a str-valued Enum, Dict[str, X],
 List[X], a dataclass, and Optional[X] of any of these. Limits are declared with
@@ -22,7 +23,7 @@ together. When exactly one of a pair is given (present and not null), the other 
 problem `needed with <field>`. A pair whose field already has a problem adds nothing.
 
 A `null` counts as not given: a field with a default takes its default, and a required field
-gets `missing`.
+gets `null, a value is required`.
 
 `read_json_input(path)` reads the JSON from the file at `path`, else from stdin, and exits
 with code 1 on a read or JSON error; `checked_input(cls, data)` checks it and exits with code
@@ -236,7 +237,7 @@ def check(cls: Type[T], data: Any, loc: Loc = ()) -> Tuple[Optional[T], List[Pro
         value = data[f.name]
         if value is None and _optional_inner(t) is None:
             if not has_default:
-                problems.append(Problem("missing", where, None, "missing"))
+                problems.append(Problem("missing", where, None, "null, a value is required"))
             continue
         stored = _convert(t, value, where, f.metadata, problems)
         if stored is not BAD:

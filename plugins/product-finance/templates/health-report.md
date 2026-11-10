@@ -232,10 +232,10 @@ Magic Number = {{MAGIC_NUMBER}}
 
 | Range | Status | Recommendation |
 |-------|--------|----------------|
-| > 1.0 | Excellent | Invest aggressively in S&M |
-| 0.75-1.0 | Good | Scale S&M investment |
-| 0.5-0.75 | Acceptable | Optimize before scaling |
-| < 0.5 | Poor | Pause growth, fix efficiency |
+| 1.0 or more | Excellent | Invest aggressively in S&M |
+| 0.75 up to 1.0 | Good | Scale S&M investment |
+| 0.5 up to 0.75 | Acceptable | Optimize before scaling |
+| under 0.5 | Poor | Pause growth, fix efficiency |
 
 ---
 

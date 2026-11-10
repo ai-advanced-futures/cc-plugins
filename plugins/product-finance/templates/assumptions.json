@@ -448,7 +448,7 @@
         },
         "magic_number_target": {
           "type": "number",
-          "description": "Target Magic Number (typically 0.75-1.0+)"
+          "description": "Target Magic Number (typically 0.75 or more)"
         }
       }
     },

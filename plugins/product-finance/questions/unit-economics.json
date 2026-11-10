@@ -156,15 +156,15 @@
     },
     {
       "input": "net_new_arr",
-      "question": "What was your net new ARR for the period?",
+      "question": "What was your net new ARR in the most recent quarter?",
       "type": "number",
       "unit": "USD"
     },
     {
-      "input": "magic_number_lag",
-      "question": "Should the Magic Number use the previous quarter's sales and marketing spend?",
-      "type": "boolean",
-      "default": true
+      "input": "prior_quarter_sm_spend",
+      "question": "What was your Sales & Marketing spend in the quarter before that one?",
+      "type": "number",
+      "unit": "USD"
     },
     {
       "input": "cohort_analysis",

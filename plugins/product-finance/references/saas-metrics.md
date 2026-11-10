@@ -131,9 +131,9 @@ Magic Number = (Quarterly Net New ARR × 4) / Prior-Quarter Sales & Marketing Sp
 ```
 
 Benchmarks:
-- Excellent: > 1.0
-- Good: 0.75-1.0
-- Concerning: < 0.5
+- Excellent: 1.0 or more
+- Good: 0.75 up to 1.0
+- Concerning: under 0.5
 
 **Burn Multiple**
 Capital efficiency for growth.

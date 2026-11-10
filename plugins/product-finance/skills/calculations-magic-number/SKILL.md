@@ -41,8 +41,8 @@ Magic Number = (Quarterly Net New ARR × 4) / Prior Quarter S&M Spend
 ```
 
 Annualizing the quarterly ARR (×4) before dividing normalizes the metric against
-annual S&M spend, aligning with the standard SaaS benchmark where a score > 0.75
-indicates healthy sales efficiency. Prior-quarter S&M spend is used to reflect the
+annual S&M spend, aligning with the standard SaaS benchmark where a score of
+0.75 or more indicates healthy sales efficiency. Prior-quarter S&M spend is used to reflect the
 1-quarter lag between spend and the ARR it produces.
 
 ## Benchmark Thresholds
@@ -50,15 +50,15 @@ indicates healthy sales efficiency. Prior-quarter S&M spend is used to reflect t
 | Magic Number | Status | Interpretation |
 |--------------|--------|----------------|
 | < 0 | Critical | ARR is declining - churn exceeds new sales |
-| 0 - 0.5 | Critical | Very inefficient - burning cash without results |
-| 0.5 - 0.75 | Warning | Below average efficiency |
-| 0.75 - 1.0 | Good | Average efficiency, sustainable growth |
-| 1.0 - 1.5 | Excellent | High efficiency, strong unit economics |
-| > 1.5 | Excellent | Very high efficiency (may be under-investing) |
+| 0 up to 0.5 | Critical | Very inefficient - burning cash without results |
+| 0.5 up to 0.75 | Warning | Below average efficiency |
+| 0.75 up to 1.0 | Good | Average efficiency, sustainable growth |
+| 1.0 up to 1.5 | Excellent | High efficiency, strong unit economics |
+| 1.5 or more | Excellent | Very high efficiency (may be under-investing) |
 
 ## Strategic Interpretation
 
-### Magic Number < 0.5
+### Magic Number under 0.5
 - **Diagnosis:** Sales/marketing spend is not producing adequate returns
 - **Actions:**
   - Review lead quality and ICP definition
@@ -66,7 +66,7 @@ indicates healthy sales efficiency. Prior-quarter S&M spend is used to reflect t
   - Evaluate sales team productivity
   - Consider reducing spend until efficiency improves
 
-### Magic Number 0.5 - 0.75
+### Magic Number 0.5 up to 0.75
 - **Diagnosis:** Below target but not critical
 - **Actions:**
   - Optimize go-to-market strategy
@@ -74,21 +74,21 @@ indicates healthy sales efficiency. Prior-quarter S&M spend is used to reflect t
   - Focus on higher-quality leads
   - Test channel efficiency
 
-### Magic Number 0.75 - 1.0
+### Magic Number 0.75 up to 1.0
 - **Diagnosis:** Healthy, sustainable growth engine
 - **Actions:**
   - Maintain current strategy
   - Test incremental spend increases
   - Monitor for degradation
 
-### Magic Number > 1.0
-- **Diagnosis:** Highly efficient - each $1 produces >$1 of new ARR
+### Magic Number 1.0 up to 1.5
+- **Diagnosis:** Highly efficient - each $1 produces $1 or more of new ARR
 - **Actions:**
   - Consider increasing investment
   - Test scaling acquisition
   - Expand to new channels/markets
 
-### Magic Number > 1.5
+### Magic Number 1.5 or more
 - **Diagnosis:** May be under-investing in growth
 - **Actions:**
   - Increase sales and marketing budget
@@ -105,7 +105,7 @@ indicates healthy sales efficiency. Prior-quarter S&M spend is used to reflect t
     "prior_quarter_sm_spend": 1000000.00,
     "health_status": "good",
     "efficiency_interpretation": "Magic Number: 0.85",
-    "benchmark_notes": "Healthy sales efficiency (0.75–1.0). On track."
+    "benchmark_notes": "Healthy sales efficiency (0.75 up to 1.0). On track."
   },
   "investment_recommendation": {
     "current_efficiency": "sustainable",
@@ -118,8 +118,8 @@ indicates healthy sales efficiency. Prior-quarter S&M spend is used to reflect t
 ## Process
 
 1. **Collect Input Data:**
-   - Gather net new ARR for period
-   - Sum total sales and marketing spend
+   - Gather the net new ARR of the most recent quarter
+   - Gather the Sales & Marketing spend of the quarter before it
    - Note measurement period
 
 2. **Calculate Magic Number:**
@@ -193,7 +193,7 @@ yield approximately $1.6M in annualized net new ARR.
 
 | Company Stage | Target Magic Number |
 |---------------|---------------------|
-| Early Stage | > 0.5 |
-| Growth Stage | > 0.75 |
-| Scale Stage | > 0.75 |
+| Early Stage | 0.5 or more |
+| Growth Stage | 0.75 or more |
+| Scale Stage | 0.75 or more |
 | Public Companies | 0.6 - 1.2 (median ~0.8) |

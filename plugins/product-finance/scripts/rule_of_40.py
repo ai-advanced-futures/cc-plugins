@@ -29,6 +29,7 @@ License: MIT
 import json
 import sys
 from dataclasses import dataclass
+from fractions import Fraction
 from pathlib import Path
 from typing import Any, ClassVar, Dict, Optional, Tuple
 
@@ -37,6 +38,7 @@ if __package__ in (None, ""):  # run by path: uv run "<plugin root>/scripts/<fil
 
 from scripts.input_check import checked_input, limits, read_json_input  # noqa: E402
 from scripts.utils.enums import GrowthStage, MetricHealth  # noqa: E402
+from scripts.utils.exact import Number, as_written, shown  # noqa: E402
 from scripts.utils.magic_number import calculate_magic_number  # noqa: E402
 
 
@@ -91,10 +93,10 @@ class RuleOf40Result:
         magic_number: Optional Magic Number analysis dict if quarterly inputs provided
     """
 
-    rule_of_40_score: float
-    weighted_rule_of_40: float
-    revenue_growth_rate: float
-    ebitda_margin: float
+    rule_of_40_score: Number
+    weighted_rule_of_40: Number
+    revenue_growth_rate: Number
+    ebitda_margin: Number
     health_status: MetricHealth
     benchmark_notes: str
     balance_analysis: str
@@ -136,39 +138,44 @@ def calculate_rule_of_40(data: RuleOf40Input) -> RuleOf40Result:
         ...     company_stage=GrowthStage.GROWTH
         ... )
         >>> result = calculate_rule_of_40(input_data)
-        >>> print(f"Rule of 40: {result.rule_of_40_score:.1f}%")
+        >>> print(f"Rule of 40: {shown(result.rule_of_40_score, 1):.1f}%")
         Rule of 40: 45.0%
     """
+    # Every input is read as written, so 32.3 + -12.3 is 20, not 19.999...
+    growth = as_written(data.revenue_growth_rate)
+    margin = as_written(data.ebitda_margin)
+    arr = None if data.arr is None else as_written(data.arr)
+
     # Calculate classic Rule of 40
-    rule_of_40_score = data.revenue_growth_rate + data.ebitda_margin
+    rule_of_40_score = growth + margin
 
     # Calculate weighted Rule of 40 (growth weighted 2x profitability)
-    weighted_rule_of_40 = (1.33 * data.revenue_growth_rate) + (0.67 * data.ebitda_margin)
+    weighted_rule_of_40 = (Fraction("1.33") * growth) + (Fraction("0.67") * margin)
 
     # Assess health status
     health_status = _assess_health(rule_of_40_score, data.company_stage)
 
     # Generate benchmark notes
     benchmark_notes = _generate_benchmark_notes(
-        rule_of_40_score, weighted_rule_of_40, data.company_stage, data.arr
+        rule_of_40_score, weighted_rule_of_40, data.company_stage, arr
     )
 
     # Analyze growth vs. profitability balance
-    balance_analysis = _analyze_balance(data.revenue_growth_rate, data.ebitda_margin, data.company_stage)  # noqa: E501
+    balance_analysis = _analyze_balance(growth, margin, data.company_stage)
 
     # Generate recommendations
     recommendations = _generate_recommendations(
-        rule_of_40_score, data.revenue_growth_rate, data.ebitda_margin, data.company_stage
+        rule_of_40_score, growth, margin, data.company_stage
     )
 
     # Generate trend analysis if previous period data provided
     trend_analysis = None
     if data.previous_period_growth is not None and data.previous_period_margin is not None:
         trend_analysis = _analyze_trends(
-            data.revenue_growth_rate,
-            data.ebitda_margin,
-            data.previous_period_growth,
-            data.previous_period_margin,
+            growth,
+            margin,
+            as_written(data.previous_period_growth),
+            as_written(data.previous_period_margin),
             rule_of_40_score,
         )
 
@@ -189,8 +196,8 @@ def calculate_rule_of_40(data: RuleOf40Input) -> RuleOf40Result:
     return RuleOf40Result(
         rule_of_40_score=rule_of_40_score,
         weighted_rule_of_40=weighted_rule_of_40,
-        revenue_growth_rate=data.revenue_growth_rate,
-        ebitda_margin=data.ebitda_margin,
+        revenue_growth_rate=growth,
+        ebitda_margin=margin,
         health_status=health_status,
         benchmark_notes=benchmark_notes,
         balance_analysis=balance_analysis,
@@ -200,7 +207,7 @@ def calculate_rule_of_40(data: RuleOf40Input) -> RuleOf40Result:
     )
 
 
-def _assess_health(score: float, stage: Optional[GrowthStage]) -> MetricHealth:
+def _assess_health(score: Number, stage: Optional[GrowthStage]) -> MetricHealth:
     """Assess health status based on Rule of 40 score and company stage.
 
     Args:
@@ -254,10 +261,10 @@ def _assess_health(score: float, stage: Optional[GrowthStage]) -> MetricHealth:
 
 
 def _generate_benchmark_notes(
-    score: float,
-    weighted_score: float,
+    score: Number,
+    weighted_score: Number,
     stage: Optional[GrowthStage],
-    arr: Optional[float],
+    arr: Optional[Number],
 ) -> str:
     """Generate benchmark comparison notes.
 
@@ -273,8 +280,8 @@ def _generate_benchmark_notes(
     notes = []
 
     # Overall benchmark
-    notes.append(f"Classic Rule of 40: {score:.1f}%")
-    notes.append(f"Weighted Rule of 40: {weighted_score:.1f}%")
+    notes.append(f"Classic Rule of 40: {shown(score, 1):.1f}%")
+    notes.append(f"Weighted Rule of 40: {shown(weighted_score, 1):.1f}%")
 
     # Industry benchmarks
     if score >= 40:
@@ -309,25 +316,25 @@ def _generate_benchmark_notes(
     # ARR-specific context
     if arr is not None:
         if arr < 1_000_000:
-            notes.append(f"ARR: ${arr:,.0f} - Pre-$1M ARR, focus on finding product-market fit.")
+            notes.append(f"ARR: ${shown(arr, 0):,.0f} - Pre-$1M ARR, focus on finding product-market fit.")  # noqa: E501
         elif arr < 10_000_000:
             notes.append(
-                f"ARR: ${arr:,.0f} - $1M-$10M ARR range, focus on scaling go-to-market efficiently."
+                f"ARR: ${shown(arr, 0):,.0f} - $1M-$10M ARR range, focus on scaling go-to-market efficiently."  # noqa: E501
             )
         elif arr < 100_000_000:
             notes.append(
-                f"ARR: ${arr:,.0f} - $10M-$100M ARR range, optimize for efficient growth at scale."
+                f"ARR: ${shown(arr, 0):,.0f} - $10M-$100M ARR range, optimize for efficient growth at scale."  # noqa: E501
             )
         else:
             notes.append(
-                f"ARR: ${arr:,.0f} - $100M+ ARR, public market expectations for balanced performance."  # noqa: E501
+                f"ARR: ${shown(arr, 0):,.0f} - $100M+ ARR, public market expectations for balanced performance."  # noqa: E501
             )
 
     return "\n".join(notes)
 
 
 def _analyze_balance(
-    growth: float, margin: float, stage: Optional[GrowthStage]
+    growth: Number, margin: Number, stage: Optional[GrowthStage]
 ) -> str:
     """Analyze the balance between growth and profitability.
 
@@ -356,8 +363,8 @@ def _analyze_balance(
         balance_type = "Profitability-prioritized"
 
     analysis.append(f"Balance Type: {balance_type}")
-    analysis.append(f"Growth Rate: {growth:.1f}%")
-    analysis.append(f"EBITDA Margin: {margin:.1f}%")
+    analysis.append(f"Growth Rate: {shown(growth, 1):.1f}%")
+    analysis.append(f"EBITDA Margin: {shown(margin, 1):.1f}%")
 
     # Stage appropriateness
     if stage == GrowthStage.EARLY:
@@ -394,8 +401,22 @@ def _analyze_balance(
     return "\n".join(analysis)
 
 
+def _gap_text(gap: Fraction) -> str:
+    """The gap to the target score, for a recommendation.
+
+    It is `gap` at 1 place, rounded half away from zero, with a trailing `.0`
+    dropped. A gap above 0 that prints as 0 reads "less than 0.1".
+    """
+    text = str(shown(gap, 1))
+    if text.endswith(".0"):
+        text = text[:-2]
+    if gap > 0 and text == "0":
+        return "less than 0.1"
+    return text
+
+
 def _generate_recommendations(
-    score: float, growth: float, margin: float, stage: Optional[GrowthStage]
+    score: Number, growth: Number, margin: Number, stage: Optional[GrowthStage]
 ) -> list[str]:
     """Generate actionable recommendations based on Rule of 40 analysis.
 
@@ -419,11 +440,11 @@ def _generate_recommendations(
             )
     elif score >= 30:
         recommendations.append(
-            f"Improve score by {40 - score:.0f} points to reach Rule of 40 excellence (40+)."
+            f"Improve score by {_gap_text(40 - score)} points to reach the target score of 40."
         )
     else:
         recommendations.append(
-            f"URGENT: Improve score by {40 - score:.0f} points to reach healthy levels. Consider both growth acceleration and cost optimization."  # noqa: E501
+            f"URGENT: Improve score by {_gap_text(40 - score)} points to reach healthy levels. Consider both growth acceleration and cost optimization."  # noqa: E501
         )
 
     # Growth-specific recommendations
@@ -501,11 +522,11 @@ def _generate_recommendations(
 
 
 def _analyze_trends(
-    current_growth: float,
-    current_margin: float,
-    previous_growth: float,
-    previous_margin: float,
-    current_score: float,
+    current_growth: Number,
+    current_margin: Number,
+    previous_growth: Number,
+    previous_margin: Number,
+    current_score: Number,
 ) -> str:
     """Analyze trends from previous period to current period.
 
@@ -531,21 +552,21 @@ def _analyze_trends(
     analysis.append("=" * 50)
 
     if score_change > 0:
-        analysis.append(f"Rule of 40 improved by {score_change:.1f} points ({previous_score:.1f}% → {current_score:.1f}%) - Positive trend!")  # noqa: E501
+        analysis.append(f"Rule of 40 improved by {shown(score_change, 1):.1f} points ({shown(previous_score, 1):.1f}% → {shown(current_score, 1):.1f}%) - Positive trend!")  # noqa: E501
     elif score_change < 0:
-        analysis.append(f"Rule of 40 declined by {abs(score_change):.1f} points ({previous_score:.1f}% → {current_score:.1f}%) - Negative trend.")  # noqa: E501
+        analysis.append(f"Rule of 40 declined by {shown(abs(score_change), 1):.1f} points ({shown(previous_score, 1):.1f}% → {shown(current_score, 1):.1f}%) - Negative trend.")  # noqa: E501
     else:
-        analysis.append(f"Rule of 40 unchanged at {current_score:.1f}%.")
+        analysis.append(f"Rule of 40 unchanged at {shown(current_score, 1):.1f}%.")
 
     # Growth trend
-    if abs(growth_change) > 0.1:
+    if abs(growth_change) > Fraction("0.1"):
         direction = "increased" if growth_change > 0 else "decreased"
-        analysis.append(f"Growth {direction} by {abs(growth_change):.1f} points ({previous_growth:.1f}% → {current_growth:.1f}%)")  # noqa: E501
+        analysis.append(f"Growth {direction} by {shown(abs(growth_change), 1):.1f} points ({shown(previous_growth, 1):.1f}% → {shown(current_growth, 1):.1f}%)")  # noqa: E501
 
     # Margin trend
-    if abs(margin_change) > 0.1:
+    if abs(margin_change) > Fraction("0.1"):
         direction = "improved" if margin_change > 0 else "declined"
-        analysis.append(f"EBITDA margin {direction} by {abs(margin_change):.1f} points ({previous_margin:.1f}% → {current_margin:.1f}%)")  # noqa: E501
+        analysis.append(f"EBITDA margin {direction} by {shown(abs(margin_change), 1):.1f} points ({shown(previous_margin, 1):.1f}% → {shown(current_margin, 1):.1f}%)")  # noqa: E501
 
     # Interpretation
     if score_change > 5:
@@ -580,10 +601,10 @@ def format_result_as_json(result: RuleOf40Result) -> str:
         JSON string representation
     """
     output = {
-        "rule_of_40_score": round(result.rule_of_40_score, 2),
-        "weighted_rule_of_40": round(result.weighted_rule_of_40, 2),
-        "revenue_growth_rate": round(result.revenue_growth_rate, 2),
-        "ebitda_margin": round(result.ebitda_margin, 2),
+        "rule_of_40_score": float(shown(result.rule_of_40_score, 2)),
+        "weighted_rule_of_40": float(shown(result.weighted_rule_of_40, 2)),
+        "revenue_growth_rate": float(shown(result.revenue_growth_rate, 2)),
+        "ebitda_margin": float(shown(result.ebitda_margin, 2)),
         "health_status": result.health_status.value,
         "benchmark_notes": result.benchmark_notes,
         "balance_analysis": result.balance_analysis,
@@ -594,7 +615,10 @@ def format_result_as_json(result: RuleOf40Result) -> str:
         output["trend_analysis"] = result.trend_analysis
 
     if result.magic_number:
-        output["magic_number"] = result.magic_number
+        mn = dict(result.magic_number)
+        if mn["magic_number"] is not None:
+            mn["magic_number"] = float(shown(mn["magic_number"], 2))
+        output["magic_number"] = mn
 
     return json.dumps(output, indent=2)
 
@@ -614,10 +638,10 @@ def format_result_as_markdown(result: RuleOf40Result) -> str:
     lines.append("")
     lines.append("## Key Metrics")
     lines.append("")
-    lines.append(f"- **Rule of 40 Score**: {result.rule_of_40_score:.1f}%")
-    lines.append(f"- **Weighted Rule of 40**: {result.weighted_rule_of_40:.1f}%")
-    lines.append(f"- **Revenue Growth Rate**: {result.revenue_growth_rate:.1f}%")
-    lines.append(f"- **EBITDA Margin**: {result.ebitda_margin:.1f}%")
+    lines.append(f"- **Rule of 40 Score**: {shown(result.rule_of_40_score, 1):.1f}%")
+    lines.append(f"- **Weighted Rule of 40**: {shown(result.weighted_rule_of_40, 1):.1f}%")
+    lines.append(f"- **Revenue Growth Rate**: {shown(result.revenue_growth_rate, 1):.1f}%")
+    lines.append(f"- **EBITDA Margin**: {shown(result.ebitda_margin, 1):.1f}%")
     lines.append(f"- **Health Status**: {result.health_status.value.upper()}")
     lines.append("")
 
@@ -645,7 +669,7 @@ def format_result_as_markdown(result: RuleOf40Result) -> str:
         lines.append("")
         mn = result.magic_number
         if mn.get("magic_number") is not None:
-            lines.append(f"- **Magic Number**: {mn['magic_number']:.2f}")
+            lines.append(f"- **Magic Number**: {shown(mn['magic_number'], 2):.2f}")
         else:
             lines.append("- **Magic Number**: N/A")
         lines.append(f"- **Health**: {mn['health'].upper()}")

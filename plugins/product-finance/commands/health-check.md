@@ -332,10 +332,10 @@ Example: ($500K × 4) / $600K = 3.33
 Magic Number = 3.33 (EXCELLENT - highly efficient sales & marketing)
 
 Interpretation:
-< 0.5 = Poor efficiency, need to optimize
-0.5 - 0.75 = Acceptable, room for improvement
-0.75 - 1.0 = Good efficiency
-> 1.0 = Excellent efficiency
+under 0.5 = Poor efficiency, need to optimize
+0.5 up to 0.75 = Acceptable, room for improvement
+0.75 up to 1.0 = Good efficiency
+1.0 or more = Excellent efficiency
 ```
 
 ### Phase 5: Retention & Expansion Metrics
@@ -1003,17 +1003,17 @@ Magic Number = (Quarterly Net New ARR × 4) / Prior Quarter S&M Spend
 Magic Number = ($500,000 × 4) / $600,000 = 3.33
 
 Interpretation:
-< 0.5 = Poor
-0.5 - 0.75 = Acceptable
-0.75 - 1.0 = Good
-> 1.0 = Excellent
+under 0.5 = Poor
+0.5 up to 0.75 = Acceptable
+0.75 up to 1.0 = Good
+1.0 or more = Excellent
 
 Status: ✓ EXCELLENT (top decile)
 ```
 
 **Assessment:** Outstanding sales and marketing efficiency. Generating $3.33 in ARR per $1 spent on S&M. This is top decile performance and indicates highly efficient go-to-market motion.
 
-**Strategic Insight:** With Magic Number > 1.0, the company should **invest aggressively** in sales & marketing to maximize growth while efficiency remains high.
+**Strategic Insight:** With a Magic Number of 1.0 or more, the company should **invest aggressively** in sales & marketing to maximize growth while efficiency remains high.
 
 ---
 

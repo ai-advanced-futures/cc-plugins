@@ -616,6 +616,7 @@ def calculate_rule_of_40(data: RuleOf40Input) -> RuleOf40Result:
         # ... additional analysis
     )
 ```
+Illustrative; the code is in `scripts/`.
 
 #### Reporting Cadence
 
@@ -782,6 +783,7 @@ def calculate_cac(data: CACInput) -> CACResult:
         health_status=health
     )
 ```
+Illustrative; the code is in `scripts/`.
 
 **Tracking Implementation:**
 ```python
@@ -880,6 +882,7 @@ def calculate_ltv(data: LTVInput) -> LTVResult:
         health_status=health
     )
 ```
+Illustrative; the code is in `scripts/`.
 
 **Cohort-Based LTV Tracking:**
 ```python
@@ -1122,6 +1125,9 @@ def calculate_magic_number(data: MagicNumberInput) -> MagicNumberResult:
         benchmark_notes=outcome.interpretation,
     )
 ```
+Illustrative; the code is in `scripts/`.
+
+Without the prior quarter's spend, `scripts/unit_economics.py` estimates it as (sales costs + marketing costs) × 3 / period months and labels the figure an estimate.
 
 #### Reporting Cadence
 
@@ -1135,10 +1141,10 @@ def calculate_magic_number(data: MagicNumberInput) -> MagicNumberResult:
 | Magic Number | Health Status | Interpretation |
 |--------------|---------------|----------------|
 | < 0 | **Critical** | ARR declining, urgent intervention needed |
-| 0-0.5 | **Critical** | Very inefficient, losing money on growth |
-| 0.5-0.75 | **Warning** | Below average efficiency |
-| 0.75-1.0 | **Good** | Average efficiency, sustainable growth |
-| > 1.0 | **Excellent** | Highly efficient, strong growth engine |
+| 0 up to 0.5 | **Critical** | Very inefficient, losing money on growth |
+| 0.5 up to 0.75 | **Warning** | Below average efficiency |
+| 0.75 up to 1.0 | **Good** | Average efficiency, sustainable growth |
+| 1.0 or more | **Excellent** | Highly efficient, strong growth engine |
 
 ---
 
@@ -1805,6 +1811,7 @@ def calculate_ai_roi(data: AIROIInput) -> AIROIResult:
         value_result=value_result
     )
 ```
+Illustrative; the code is in `scripts/`.
 
 #### Reporting Cadence
 

@@ -318,7 +318,7 @@ In production, continuously monitor financial health. This stage answers:
 | Net Revenue Retention | Revenue including expansion/contraction | >100% |
 | LTV:CAC Ratio | Lifetime Value / Acquisition Cost | >3:1 |
 | CAC Payback Period | Months to recover acquisition cost | <12 months |
-| Magic Number | Net New ARR / S&M Spend | >0.75 |
+| Magic Number | Net New ARR / S&M Spend | 0.75 or more |
 | Gross Margin | (Revenue - COGS) / Revenue | >70% (SaaS) |
 
 ### Command: `/product-finance:health-check`

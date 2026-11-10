@@ -64,10 +64,10 @@ This command enables product teams and executives to make data-driven decisions 
 5. **Calculates Magic Number (Sales Efficiency):**
    - Magic Number = (Quarterly Net New ARR × 4) / Prior Quarter S&M Spend
    - Note: Prior quarter S&M spend is used (not current quarter) to capture the lag between spending and revenue generation.
-   - Excellent: >1.0 (highly efficient growth)
-   - Good: 0.75-1.0 (efficient growth)
-   - Acceptable: 0.5-0.75 (moderate efficiency)
-   - Poor: <0.5 (inefficient, need to optimize or pause growth)
+   - Excellent: 1.0 or more (highly efficient growth)
+   - Good: 0.75 up to 1.0 (efficient growth)
+   - Acceptable: 0.5 up to 0.75 (moderate efficiency)
+   - Poor: under 0.5 (inefficient, need to optimize or pause growth)
 
 6. **Performs Cohort Analysis:**
    - Revenue retention by customer cohort over time
@@ -374,11 +374,22 @@ A Magic Number of 1.0 means you generated $1 of new ARR
 for every $1 spent on sales and marketing.
 ```
 
-**Question** (AskUserQuestion [q: net_new_arr]): "What was your Net New ARR for the period?"
+**Question** (AskUserQuestion [q: net_new_arr]): "What was your net new ARR in the most recent quarter?"
 - **Type:** number
 - **Guidance:** "New ARR from new customers + expansion ARR from existing customers"
 - **Example:** "$600,000 net new ARR in Q4"
 - **Help:** "Include both new logo ARR and expansion ARR, exclude churn"
+
+**Question** (AskUserQuestion [q: prior_quarter_sm_spend]): "What was your Sales & Marketing spend in the quarter before that one?"
+- **Type:** number
+- **Guidance:** "S&M spend in the quarter before the net new ARR"
+- **Example:** "$500,000 S&M spend in Q3"
+- **Default:** an estimate, `(sales costs + marketing costs) × 3 / period months`, used only when no answer is given. In a person's run, ask first. If the person has no value for it or skips it, tell them plainly that the Magic Number cannot be calculated reliably without it, then use the estimate. In automated mode, ask nothing and use the estimate.
+- **Terms:** `sales costs + marketing costs` is the `sm_spend` answer. `period months` is the number of months `analysis_period` covers: 3, 6 or 12 for `last_3_months`, `last_6_months` and `last_12_months`, and the months of the range for `current_quarter` or `custom`. When the period is not known, use 12, as the script does.
+
+When the spend is an estimate, write `"is_estimate": true` in the `magic_number` block of `unit-economics.json` and set `"estimate_note"` to the text below. Copy the text exactly. In the dashboard, show the value as `<value> (estimate)` and put the note directly under the Magic Number line. With a given spend, write `"is_estimate": false` and `"estimate_note": null`.
+
+> The prior quarter's S&M spend was not given, so the Magic Number cannot be calculated reliably. This figure estimates that spend as (sales costs + marketing costs) × 3 / period months. Recalculate it with the prior quarter's S&M spend before anyone uses it as fact.
 
 **Auto-calculate:** Magic Number = (Quarterly Net New ARR × 4) / Prior Quarter S&M Spend
 
@@ -386,43 +397,31 @@ for every $1 spent on sales and marketing.
 
 **Benchmark Assessment:**
 
-**Excellent (>1.0):**
+**Excellent (1.0 or more):**
 - Highly efficient growth engine
 - Generating more than $1 ARR per $1 S&M spend
 - Can aggressively scale S&M investment
 - Strong indicator of product-market fit
 
-**Good (0.75-1.0):**
+**Good (0.75 up to 1.0):**
 - Efficient, sustainable growth
 - Solid ROI on S&M investment
 - Room to increase S&M spend
 - Healthy growth trajectory
 
-**Acceptable (0.5-0.75):**
+**Acceptable (0.5 up to 0.75):**
 - Moderate efficiency, needs optimization
 - ROI on S&M is positive but low
 - Be cautious about scaling S&M too fast
 - Focus on improving conversion, pricing, or reducing CAC
 
-**Poor (<0.5):**
+**Poor (under 0.5):**
 - Inefficient growth, losing money on S&M
 - Need to pause growth and fix economics
 - Options: Improve product-market fit, reduce CAC, increase prices
 - Not ready to scale aggressively
 
-**Time Period Note:**
-The Magic Number is typically calculated on a quarterly basis, with a one-quarter lag:
-- Q4 Net New ARR / Q3 S&M Spend
-- This accounts for the time lag between S&M investment and revenue generation
-
-**Question** (AskUserQuestion [q: magic_number_lag]): "Should we apply a one-quarter lag to the Magic Number calculation?" (yes/no)
-- **Default:** yes (recommended)
-- **If yes:** Use previous quarter's S&M spend with current quarter's net new ARR
-- **If no:** Use same period S&M spend and net new ARR
-
-**Auto-calculate with lag:**
-- If quarterly analysis: Q(n) ARR / Q(n-1) S&M Spend
-- If monthly: Use rolling quarterly average
+The Magic Number pairs the most recent quarter's net new ARR with the prior quarter's S&M spend.
 
 ### Phase 7: Cohort Analysis
 
@@ -634,7 +633,9 @@ Structured data following schema:
     "prior_quarter_sm_spend": 500000,
     "efficiency_interpretation": "Magic Number: 4.80",
     "health_status": "excellent",
-    "benchmark_notes": "Strong sales efficiency (>1.0). Consider increasing S&M investment."
+    "benchmark_notes": "Strong sales efficiency (1.0 or more). Consider increasing S&M investment.",
+    "is_estimate": false,
+    "estimate_note": null
   },
   "cohort_analysis": {
     "cohorts_analyzed": 12,
@@ -839,7 +840,7 @@ Your unit economics are **excellent** with strong profitability margins and effi
 
 - **LTV:CAC Ratio:** 6.25:1 (Target: 3-5:1) ✓ **Excellent**
 - **CAC Payback Period:** 5.3 months (Target: <12 months) ✓ **Excellent**
-- **Magic Number:** 4.8 (Target: >0.75) ✓ **Excellent**
+- **Magic Number:** 4.8 (Target: 0.75 or more) ✓ **Excellent**
 - **Customer Lifetime:** 33 months (Churn: 3%/month)
 
 **Key Insight:** Your strong unit economics support aggressive growth investment. Consider scaling S&M spend by 30-50% to accelerate customer acquisition while maintaining healthy profitability.
@@ -967,7 +968,7 @@ Payback Period = CAC / (ARPC × Gross Margin %)
 **Magic Number:** 4.8
 **Status:** ⭐ **Excellent**
 
-Your annualized Magic Number is 4.8 — strong sales efficiency (>1.0).
+Your annualized Magic Number is 4.8 — strong sales efficiency (1.0 or more).
 
 **Calculation:**
 ```
@@ -980,10 +981,10 @@ Magic Number = (Quarterly Net New ARR × 4) / Prior Quarter S&M Spend
 
 | Range | Status | Description |
 |-------|--------|-------------|
-| >1.0 | **Excellent** ← You are here | Highly efficient growth engine |
-| 0.75-1.0 | Good | Efficient, sustainable growth |
-| 0.5-0.75 | Acceptable | Moderate efficiency, needs optimization |
-| <0.5 | Poor | Inefficient growth, pause and fix |
+| 1.0 or more | **Excellent** ← You are here | Highly efficient growth engine |
+| 0.75 up to 1.0 | Good | Efficient, sustainable growth |
+| 0.5 up to 0.75 | Acceptable | Moderate efficiency, needs optimization |
+| under 0.5 | Poor | Inefficient growth, pause and fix |
 
 **Recommendations:**
 - ✓ Sales efficiency supports aggressive S&M scaling
@@ -1065,7 +1066,7 @@ Target: >80% at M6, >70% at M12 ✓
 - Increase marketing budget by $75K-$125K per quarter
 - Hire 2-3 additional sales reps
 - Expand into new acquisition channels
-- Maintain Magic Number above 0.75
+- Maintain Magic Number at 0.75 or more
 
 ### Priority 2: Optimize Outbound Sales Channel
 
@@ -1172,7 +1173,7 @@ Target: >80% at M6, >70% at M12 ✓
 
 7. **Reduce churn from 3% to 2.5%** through CS initiatives
 8. **Optimize outbound CAC** to match inbound efficiency
-9. **Scale S&M investment** while maintaining Magic Number >0.75
+9. **Scale S&M investment** while maintaining Magic Number at 0.75 or more
 
 ---
 
@@ -1183,7 +1184,7 @@ Target: >80% at M6, >70% at M12 ✓
 **Metrics to Track:**
 - LTV:CAC ratio (maintain above 4:1)
 - CAC payback period (keep below 6 months)
-- Magic Number (maintain above 1.0)
+- Magic Number (maintain at 1.0 or more)
 - Monthly churn rate (target: <2.5%)
 - Cohort retention (M6 >85%, M12 >75%)
 - Channel-specific CAC trends
@@ -1219,7 +1220,7 @@ Key Metrics
 -----------
 LTV:CAC Ratio: 6.25:1 (EXCELLENT - Target: 3-5:1)
 CAC Payback Period: 5.3 months (EXCELLENT - Target: <12 months)
-Magic Number: 4.8 (EXCELLENT - Target: >0.75)
+Magic Number: 4.8 (EXCELLENT - Target: 0.75 or more)
 
 Customer Acquisition Cost (CAC)
 --------------------------------
@@ -1260,7 +1261,7 @@ Magic Number: 4.8 (EXCELLENT)
 Net New ARR: $600,000
 S&M Spend: $500,000
 
-Your annualized Magic Number is 4.8 — strong sales efficiency (>1.0).
+Your annualized Magic Number is 4.8 — strong sales efficiency (1.0 or more).
 
 Cohort Analysis
 ---------------
@@ -1354,7 +1355,7 @@ Related Commands
 - LTV must be greater than CAC (warn if LTV:CAC <1:1)
 - Churn rate must be 0-100% (warn if >10% monthly)
 - Gross margin must be 0-100% (warn if <60% for SaaS)
-- Magic Number calculations must use one-quarter lag by default
+- The Magic Number pairs the most recent quarter's net new ARR with the prior quarter's S&M spend.
 
 **Calculation Logic:**
 
@@ -1388,6 +1389,8 @@ Where: Net New ARR = New Logo ARR + Expansion ARR - Churned ARR
 Note: Prior quarter S&M spend is used (not current quarter) to capture the lag between spending and revenue generation.
 ```
 
+When the prior quarter's S&M spend is not given: Prior Quarter S&M Spend = (sales costs + marketing costs) × 3 / period months (an estimate). Sales costs + marketing costs is the `sm_spend` answer; period months is the number of months `analysis_period` covers, and 12 when it is not known.
+
 **Benchmarks and Status Logic:**
 
 **LTV:CAC Ratio:**
@@ -1408,10 +1411,10 @@ Note: Prior quarter S&M spend is used (not current quarter) to capture the lag b
 - Poor: >18 months
 
 **Magic Number:**
-- Excellent: >1.0
-- Good: 0.75-1.0
-- Acceptable: 0.5-0.75
-- Poor: <0.5
+- Excellent: 1.0 or more
+- Good: 0.75 up to 1.0
+- Acceptable: 0.5 up to 0.75
+- Poor: under 0.5
 
 **Cohort Health:**
 - Excellent: Retention improving month-over-month
@@ -1465,7 +1468,7 @@ For each scenario:
 Overall Health Score (0-100):
 - LTV:CAC ratio: 30 points (>5:1 = 30, 3-5:1 = 25, 1-3:1 = 15, <1:1 = 0)
 - CAC Payback: 25 points (<6mo = 25, 6-12mo = 20, 12-18mo = 15, >18mo = 0)
-- Magic Number: 25 points (>1.0 = 25, 0.75-1.0 = 20, 0.5-0.75 = 15, <0.5 = 0)
+- Magic Number: 25 points (1.0 or more = 25, 0.75 up to 1.0 = 20, 0.5 up to 0.75 = 15, under 0.5 = 0)
 - Cohort Retention: 20 points (>80% M6 = 20, 70-80% = 15, 60-70% = 10, <60% = 0)
 
 Health Status:
@@ -1473,6 +1476,10 @@ Health Status:
 - 75-89: Good
 - 60-74: Acceptable
 - <60: Needs Improvement
+
+When the Magic Number is an estimate, score only the other components. Overall Health Score = (points scored × 100) / (the maximum points of the components scored), rounded to a whole number. Show the Magic Number's own band, not its points.
+
+When the Magic Number is an estimate, no recommendation and no risk line acts on its band, including "Magic Number falls below 0.75". The only Magic Number recommendation is this sentence, with `<value>` replaced by the Magic Number to two decimal places: `Recalculate the Magic Number with the prior quarter's S&M spend: <value> is an estimate.`
 
 ### Text Charts
 
@@ -1516,7 +1523,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/agents/financial-analyst.md` and follow it in this s
 - `ltv-calculation` - Calculate LTV using traditional and cohort-based methods
 - `ltv-cac-analysis` - Evaluate LTV:CAC ratio with stage-appropriate benchmarks
 - `payback-calculation` - Determine CAC payback period and cash flow impact
-- `magic-number` - Calculate sales efficiency with one-quarter lag
+- `magic-number` - Calculate sales efficiency against the prior quarter's S&M spend
 - `cohort-analysis` - Analyze retention curves and cohort-specific LTV
 - `scenario-modeling` - Model improvements to CAC, churn, ARPC with impact projections
 

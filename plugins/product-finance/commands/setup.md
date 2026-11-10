@@ -273,7 +273,7 @@ Collect **fully-loaded costs** (salary + benefits + overhead = typically 1.5-2x 
 - "Target gross margin %?" (number, default: 70)
   - *Guidance: 70%+ is typical for SaaS*
 - "Target Magic Number?" (number, default: 0.75)
-  - *Explanation: Sales efficiency metric, 0.75-1.0+ is healthy*
+  - *Explanation: Sales efficiency metric, 0.75 or more is healthy*
 
 **If no:**
 - Use standard SaaS benchmarks as defaults

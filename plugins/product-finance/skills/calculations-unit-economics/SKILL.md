@@ -38,6 +38,7 @@ Comprehensive unit economics analysis including:
 | gross_margin_percent | float | Yes | Gross margin percentage (0-100) |
 | churn_rate_percent | float | Yes | Monthly churn rate percentage (0-100) |
 | net_new_arr | float | No | Net new ARR (for Magic Number calculation) |
+| prior_quarter_sm_spend | float | No | S&M spend of the quarter before the quarterly net_new_arr (estimated when absent) |
 | period_months | int | No | Period in months (default: 12) |
 
 ## Formulas
