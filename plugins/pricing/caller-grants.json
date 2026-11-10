@@ -11,5 +11,21 @@
     "Edit(/.pricing/**)",
     "Read(/<plugin root>/**)",
     "Read(/<answers path>)"
+  ],
+  "skill_routes": [
+    "Skill(pricing:cost-amplifier-diagnostic)",
+    "Skill(pricing:cost-amplifier-diagnostic *)",
+    "Skill(pricing:value-metric-tree-walk)",
+    "Skill(pricing:value-metric-tree-walk *)",
+    "Skill(pricing:pattern-selection-agentic)",
+    "Skill(pricing:pattern-selection-agentic *)",
+    "Skill(pricing:sensitivity-stress)",
+    "Skill(pricing:sensitivity-stress *)",
+    "Bash(uv run <plugin root>/scripts/bounded_safety_check.py*)",
+    "Bash(uv run \"<plugin root>/scripts/bounded_safety_check.py*)",
+    "Bash(uv run <plugin root>/scripts/telemetry_effective_cost.py*)",
+    "Bash(uv run \"<plugin root>/scripts/telemetry_effective_cost.py*)",
+    "Edit(/.pricing/open-questions.json)",
+    "Edit(/.pricing/agentic-pricing-strategy.md)"
   ]
 }

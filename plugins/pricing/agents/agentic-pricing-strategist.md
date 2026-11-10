@@ -29,9 +29,9 @@ You run as a subagent and cannot ask the person. Take each answer from the dispa
 
     End your reply with `DONE: pricing OPEN: .pricing/open-questions.json`.
 
-2. **Cost amplifier diagnostic** — invoke the Skill tool with `pricing:cost-amplifier-diagnostic` and `automated: true`. Capture output to `.pricing/cost-amplifier-readout.json`.
+2. **Cost amplifier diagnostic** — invoke the Skill tool with `pricing:cost-amplifier-diagnostic` and `automated: true`. The skill writes `.pricing/cost-amplifier-readout.json`. Do not write this file yourself, because the script of the skill checked it.
 
-3. **Value-metric tree walk** — invoke the Skill tool with `pricing:value-metric-tree-walk` and `automated: true`. Capture output to `.pricing/agentic-pricing-diagnosis.json`.
+3. **Value-metric tree walk** — invoke the Skill tool with `pricing:value-metric-tree-walk` and `automated: true`. The skill writes `.pricing/agentic-pricing-diagnosis.json`. Do not write this file yourself, because the script of the skill checked it.
 
 3b. **Bounded-Product Safety Check** — ADR-004's safeguard against the multiplicative-formula failure mode. It decides whether the portco is bounded or unbounded BEFORE you recommend a pattern. A 5-row override matrix makes the decision, so a self-reported answer cannot game it (see ADR-006 and the specification, section 4.3).
 
@@ -62,7 +62,7 @@ You run as a subagent and cannot ask the person. Take each answer from the dispa
 
     - **N.4 Ambiguous result.** When `apply_matrix` returns `ambiguous` (a class match and `5.0 < cost_ratio_observed < 20.0`, matrix row 2), resolve it to `unbounded` (safe by default, ADR-006 #8). Set `value_metric_rationale` to a note such as `"Ambiguous safety-check auto-resolved to unbounded — matrix row 2 flagged product creep; <reason>"`. When no class is given, or the ratio is missing, the matrix rows 3 and 4 already give `unbounded`.
 
-    - **N.5 Set the diagnosis fields.** `bounded_vs_unbounded` is the determination, or `unbounded` after N.4; the schema takes only `bounded` and `unbounded`. `value_metric_rationale` is the note of N.4 or the reason from the script. Overwrite the field, because an append can pass its 500-character limit.
+    - **N.5 Set the diagnosis fields.** `bounded_vs_unbounded` is the determination, or `unbounded` after N.4; the schema takes only `bounded` and `unbounded`. `value_metric_rationale` is the note of N.4 or the reason from the script, as the full value, because an append can pass its 500-character limit. Invoke the Skill tool with `pricing:value-metric-tree-walk` and `automated: true` again, with the answers of step 3 and these 2 values. The skill writes the diagnosis file again, and its script sets the confidence for the new `bounded_vs_unbounded`. Do not write or edit the diagnosis file yourself, because only the script of the skill checks it against the schema.
 
 3c. **Telemetry-enriched archetype baseline (sub-spec 4c)** — if the dispatch fields hold an `archetype_baseline_telemetry_path`, or a `.aiml/archetype-baseline-telemetry.json` file exists at the engagement root, load it. It overrides the inferred baseline of the 3 inferred-cost archetypes. This is how the `inferred_v1_4_0 → telemetry_v1_4_1` provenance changes at run time. Run the script by its path with one JSON object of arguments:
 
@@ -78,11 +78,11 @@ You run as a subagent and cannot ask the person. Take each answer from the dispa
 
     Record `r.data_source` (`telemetry_v1_4_1` when telemetry overrode the baseline for `sales_marketing_agent`, `knowledge_horizontal_copilot` or `autonomous_workflow_agent`; else `inferred_v1_4_0` or `framework_table`) and the effective cost. The `effective_cost(...)` call gives the `data_source` provenance and the effective cost for the narrative. It does not give the value for the sensitivity stress matrix.
 
-    Pass the **RAW** baseline (`tb[archetype].baseline_cost_per_interaction` when `data_source == 'telemetry_v1_4_1'`, else the raw `_BASELINE_COST[archetype][0]`) forward as `PricingModelInput.cost_per_interaction_baseline` into the sensitivity-stress input of step 5. `sensitivity_matrix.compute_sensitivity` applies the composite amplifier itself (× composite p75 for S1, and so on). If you forward the amplified `effective_cost` output, the amplifier counts twice and the margins look too high. When the dispatch fields hold no `archetype_baseline_telemetry_path`, pass `None`: the run falls back to `inferred_v1_4_0` with no error.
+    Pass the **RAW** baseline (`tb[archetype].baseline_cost_per_interaction` when `data_source == 'telemetry_v1_4_1'`, else no baseline: the script of the sensitivity-stress skill then takes the raw `_BASELINE_COST[archetype][0]`) forward as `PricingModelInput.cost_per_interaction_baseline` into the sensitivity-stress input of step 5. `sensitivity_matrix.compute_sensitivity` applies the composite amplifier itself (× composite p75 for S1, and so on). If you forward the amplified `effective_cost` output, the amplifier counts twice and the margins look too high. When the dispatch fields hold no `archetype_baseline_telemetry_path`, pass `None`: the run falls back to `inferred_v1_4_0` with no error.
 
-4. **Pattern selection** — invoke the Skill tool with `pricing:pattern-selection-agentic` and `automated: true`, with the diagnosis. Capture output to `.pricing/pattern-selection.json`.
+4. **Pattern selection** — invoke the Skill tool with `pricing:pattern-selection-agentic` and `automated: true`, with the diagnosis. The skill writes `.pricing/pattern-selection.json`. Do not write this file yourself, because the script of the skill checked it.
 
-5. **Sensitivity stress** — invoke the Skill tool with `pricing:sensitivity-stress` and `automated: true` (feeder for product-finance sub-spec 3). Capture structured output to `.pricing/sensitivity-stress.json` matching the S1S5Result shape (per-scenario margin% + narrative_md_per_scenario dict).
+5. **Sensitivity stress** — invoke the Skill tool with `pricing:sensitivity-stress` and `automated: true` (feeder for product-finance sub-spec 3). The skill writes `.pricing/sensitivity-stress.json` with the S1S5Result shape (per-scenario margin% + narrative_md_per_scenario dict). Do not write this file yourself, because the script of the skill checked it.
 
 6. **Compose final report** — write `.pricing/agentic-pricing-strategy.md` summarizing all 4 artifacts. Customer-facing summary uses predictable AI cost, spending caps, value floors, and renewal-rate protection vocabulary.
 

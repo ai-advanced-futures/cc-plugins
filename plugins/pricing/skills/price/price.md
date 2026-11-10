@@ -60,7 +60,7 @@ Guide through an outcome-based pricing process for a new feature or offering usi
 | EVC (Path A) | the `customer_value` result of the accepted jtbd file, converted to the price's period | WTP_max when the file has no `customer_value` |
 | REFERENCE_PRICE (Path A) | Step 2b: the `alternative_price` answer, asked only when Path A uses no customer value | WTP_max |
 | WTP_max (Path A) | the jtbd `willingness_to_pay` result for the offering's segment, in its own period, which is the price's period | its `high`, else its `point`, else its `low` |
-| PRICING_UNIT (Paths A and B) | Step 7: the value metric the `value-metric` skill chose | per seat per the price's period in Path A; per seat per month in Path B |
+| PRICING_UNIT (Paths A and B) | Step 7: the value metric that the Campbell check chose | per seat per the price's period in Path A; per seat per month in Path B |
 
 ---
 
@@ -280,7 +280,7 @@ Compute with `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/pricing_calculator.py" <func
 
 ### Step 7 — Campbell Value Metric Check
 
-Run `value-metric` skill to validate the pricing model aligns with how customers experience value.
+Validate that the pricing model aligns with how customers experience value. Do this check here, in this run: score the pricing unit against Campbell's 3 criteria (alignment with the value that the customer gets, a unit that the customer understands, growth with the use of the customer), and name the unit that passes. Do not call the `value-metric` skill with the Skill tool, because this skill has no grant for it and a run in the default mode refuses the call. For the full value metric analysis, a person runs `/pricing:value-metric` on its own.
 
 ### Step 8 — Present Recommendation
 

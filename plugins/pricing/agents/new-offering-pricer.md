@@ -79,9 +79,9 @@ Then announce the path. Path A: "JTBD data found. Activating Path A (pricing fro
 
 Run `price` skill for abbreviated WTP elicitation and outcome description.
 
-### 4. Run `value-metric` Skill
+### 4. Value Metric Check
 
-Determine the right pricing axis before setting the price.
+Determine the right pricing axis before setting the price: do the Campbell check of `price.md` Step 7 here, in this run. Do not call the `value-metric` skill with the Skill tool, because the `price` skill has no grant for it and a run in the default mode refuses the call.
 
 ### 5. Run `price` Skill
 
@@ -276,7 +276,7 @@ A Path B run that rests on every default its path uses (some results shown):
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.13.8",
+  "plugin_version": "1.13.9",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",
@@ -331,7 +331,7 @@ A Path A run whose jtbd willingness to pay rests on expert estimates, so the pri
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.13.8",
+  "plugin_version": "1.13.9",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T11:00:00Z",
@@ -376,7 +376,7 @@ A Path B run whose jtbd willingness to pay had no `period`, so the gate refused 
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.13.8",
+  "plugin_version": "1.13.9",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-11-02T09:00:00Z",
@@ -420,7 +420,7 @@ A Path C-autonomous run (one result shown):
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.13.8",
+  "plugin_version": "1.13.9",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T12:00:00Z",
@@ -464,7 +464,7 @@ A Path C-fully-agentic run whose answers file gave the margin (`settled_by: pers
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.13.8",
+  "plugin_version": "1.13.9",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T13:00:00Z",

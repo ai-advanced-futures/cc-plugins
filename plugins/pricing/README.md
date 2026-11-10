@@ -210,6 +210,31 @@ Read(/<answers path>)
 ```
 <!-- caller-grants:end -->
 
+### Grants for a Skill call of a Phase 1 skill
+
+The `agentic-pricing-strategist` agent starts each of the 4 Phase 1 skills with the Skill tool, and so does a prompt that names 1 of these skills with no slash. Each of the 4 skills has an `allowed-tools` line, so in the default mode Claude Code refuses the Skill call when no rule of the session allows it. The session that starts the agent or the skill must give these rules. The slash command, for example `/pricing:value-metric-tree-walk`, needs none. The skill gives the grant of its own script, so the list has no rule for the 4 skill scripts. The 2 `Bash` rules are for the 2 scripts that the agent runs itself. The 2 `Edit` rules are for the 2 files that the agent writes itself, `.pricing/open-questions.json` and `.pricing/agentic-pricing-strategy.md`, and for no other file of `.pricing/`, because the script of each skill writes and checks the other files. `caller-grants.json` holds the same list as `skill_routes`.
+
+<!-- skill-routes:start -->
+```
+Skill(pricing:cost-amplifier-diagnostic)
+Skill(pricing:cost-amplifier-diagnostic *)
+Skill(pricing:value-metric-tree-walk)
+Skill(pricing:value-metric-tree-walk *)
+Skill(pricing:pattern-selection-agentic)
+Skill(pricing:pattern-selection-agentic *)
+Skill(pricing:sensitivity-stress)
+Skill(pricing:sensitivity-stress *)
+Bash(uv run <plugin root>/scripts/bounded_safety_check.py*)
+Bash(uv run "<plugin root>/scripts/bounded_safety_check.py*)
+Bash(uv run <plugin root>/scripts/telemetry_effective_cost.py*)
+Bash(uv run "<plugin root>/scripts/telemetry_effective_cost.py*)
+Edit(/.pricing/open-questions.json)
+Edit(/.pricing/agentic-pricing-strategy.md)
+```
+<!-- skill-routes:end -->
+
+In a `claude -p` run, give these rules with `--allowedTools`. Claude Code applies the `permissions.allow` rules of the `.claude/settings.json` file of a project only after a person accepts the trust dialog for that folder, and a `-p` run shows no trust dialog. Dispatch the agent in the foreground (`run_in_background: false`), because the rules of this list were measured only in that form.
+
 ## Development
 
 Run the tests from the plugin folder:

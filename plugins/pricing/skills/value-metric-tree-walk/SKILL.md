@@ -2,13 +2,15 @@
 name: value-metric-tree-walk
 description: Walk the 6-archetype → 8-terminal value-metric decision tree from the Agentic Pricing Framework — produces value-metric-tree-walk JSON with terminal_node, archetype, layer classification, and recommended pattern_ids.
 model: sonnet
-tools: Read, Write, Bash, Skill, AskUserQuestion
+allowed-tools: Bash(uv run "${CLAUDE_PLUGIN_ROOT}/scripts/tree_walk.py" *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/tree_walk.py *), Edit(/.pricing/**)
 audience: mixed
 ---
 
 # Value-Metric Tree Walk — Phase 1 Insight
 
 > Based on JustKeenAI Agentic Pricing Framework v2.1 (2026-05-13). See ${CLAUDE_PLUGIN_ROOT}/ATTRIBUTION.md.
+
+Run only the script of this skill, as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/tree_walk.py" ...`, one command per Bash call. Never run inline code in any language (`python3 -c`, `python3 -`, a heredoc), never write a script of your own and run it, and write every file with the Write tool, never with a shell command, because the Bash grant covers only that script. Do not read a file of the plugin, because this page holds each rule and the script holds the library and the schema.
 
 ## Mode Detection
 
@@ -28,9 +30,27 @@ Walk the 6-archetype → 8-terminal value-metric decision tree to identify the r
    - `bounded_vs_unbounded` — is the agentic surface bounded or unbounded?
    - `portco_arr_band` — what ARR band? (<50M / 50-100M / 100-200M / 200-500M / >500M)
 
-2. **Walk the tree** — invoke `pricing.lib.value_metric_tree.walk_tree(TreeAnswers(...))`.
+2. **Write the input file** — write `.pricing/tree-walk-input.json` with the Write tool. `branch_diagnostic` is `true` for YES and `false` for NO. `value_metric_rationale` is optional: 1 or 2 sentences that say why the answers give this value metric.
 
-3. **Emit JSON** — write `agentic-pricing-diagnosis.json` per Charter schema at `${CLAUDE_PLUGIN_ROOT}/schemas/agentic-pricing/agentic-pricing-diagnosis.schema.json`. (Filename matches the canonical Charter schema name; this is the same artifact consumed by the agentic-pricing-strategist agent at step 3.)
+   ```json
+   {
+     "success_mode": "volume",
+     "branch_diagnostic": true,
+     "bounded_vs_unbounded": "unbounded",
+     "portco_arr_band": "50-100M",
+     "value_metric_rationale": "Success is the number of resolved tickets, and each resolution has a clear count."
+   }
+   ```
+
+3. **Walk the tree and emit JSON** — run this command one time:
+
+   ```bash
+   uv run "${CLAUDE_PLUGIN_ROOT}/scripts/tree_walk.py" --input .pricing/tree-walk-input.json --out .pricing/agentic-pricing-diagnosis.json
+   ```
+
+   The script calls `pricing.lib.value_metric_tree.walk_tree(TreeAnswers(...))`. It checks the result against the Charter schema `agentic-pricing-diagnosis.schema.json` and writes `.pricing/agentic-pricing-diagnosis.json`. (Filename matches the canonical Charter schema name; this is the same artifact consumed by the agentic-pricing-strategist agent at step 3.) It prints `terminal_node=<t> archetype=<a> layer=<l> confidence=<c> patterns=<ids>`, then the `engagement_id`, then `wrote <file>`. On exit code 1, it prints one line that names the field with the error and writes no file: correct the input file and run the command again. Do not write the diagnosis file yourself, because only the script checks it against the schema.
+
+4. **Return** — the terminal node, the archetype, the confidence and the recommended pattern ids from the line that the script printed.
 
 ## Customer-facing pattern recommendation
 
@@ -53,7 +73,8 @@ For deep-dive context: the framework Chapter 2 decision tree separates archetype
 
 ## Cross-References
 
+- **Script:** `scripts/tree_walk.py`
 - **Python library:** `pricing.lib.value_metric_tree` (T5)
 - **ADR:** `plugins/pricing/docs/adr/ADR-004-terminal-node-to-pattern-bundle.md`
-- **Schema:** `${CLAUDE_PLUGIN_ROOT}/schemas/agentic-pricing/agentic-pricing-diagnosis.schema.json`
+- **Schema:** `schemas/agentic-pricing/agentic-pricing-diagnosis.schema.json`
 - **Downstream:** pattern-selection-agentic skill (T13), agentic-pricing-strategist agent (T15)
