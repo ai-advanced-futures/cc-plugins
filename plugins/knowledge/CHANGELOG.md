@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1
+
+### Fixed
+- `knowledge.py brain-check` ended with a traceback (`TypeError: unhashable type`) and no `SKIP` line when the `plugin` or the `save_code` of a manifest was a list or a map, and the check of each later graph did not run. Now it tests that each of the 2 values is text before it puts the pair in the set. A value that is not text (a list, a map, `null`, a number) gives the line `SKIP: brain-check (<graph>: the <field> of manifest.md is not text: <value>)` and exit 1, and the run goes on with the next graph. The general check keeps its `K-manifest` error for the same manifest (STORY-318).
+
 ## 1.6.0
 
 ### Added

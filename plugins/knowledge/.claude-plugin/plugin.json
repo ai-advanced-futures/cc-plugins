@@ -1,7 +1,7 @@
 {
   "name": "knowledge",
   "displayName": "knowledge",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "The base of every brain: the brain standard, the generic OKF knowledge graph, the registry of graphs, the general check, and the generic skills knowledge:setup, knowledge:learn, knowledge:ask, and knowledge:forget. It was the wiki plugin.",
   "author": {
     "name": "Yassel Piloto",

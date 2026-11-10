@@ -306,6 +306,10 @@ def cmd_brain_check(args) -> int:
             if data is None:
                 raise DataError(f"{name} has no manifest.md")
             pair = (data.get("plugin"), data.get("save_code"))
+            for field, value in zip(("plugin", "save_code"), pair):
+                # A list or a map is not hashable, so the set below would stop the run (STORY-318).
+                if not isinstance(value, str):
+                    raise DataError(f"{name}: the {field} of manifest.md is not text: {value!r}")
             if pair in seen:
                 continue
             seen.add(pair)
