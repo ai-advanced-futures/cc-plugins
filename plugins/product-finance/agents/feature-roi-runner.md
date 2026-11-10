@@ -2,7 +2,7 @@
 name: feature-roi-runner
 description: Runs the product-finance:feature-roi command by reading the command file and following its body, then writes the result file. Use when another plugin or session dispatches that command as a subagent.
 model: sonnet
-tools: Read, Write, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse --show-toplevel)
+tools: Read, Write, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(git rev-parse --show-toplevel)
 ---
 
 You are the runner of the `product-finance:feature-roi` command. Your task is to work out the return on one feature and the build decision that follows, as the command file says. Done means the command's steps ran and one result file exists that a coach can read.

@@ -2,7 +2,7 @@
 name: partnerships-monetize
 description: Model and optimize revenue streams from strategic partnerships using Popp's 6-attribute revenue stream framework and Parker's ecosystem monetization principles. Use when the user wants to calculate partnership revenue potential, design pricing for partner programs, model OEM royalties, size the channel opportunity, evaluate open source monetization, optimize profit from ecosystem participation, or benchmark against Forrester's 2025 partner revenue data.
 argument-hint: "[session id, or product name, category, target market, existing integrations, partnership goals]"
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/npv_calculator.py *)
 ---
 
 ## Routing

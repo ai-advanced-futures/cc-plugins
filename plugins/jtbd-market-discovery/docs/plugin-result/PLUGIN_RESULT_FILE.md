@@ -70,7 +70,7 @@ A complete example:
 {
   "schema": "plugin-result/1",
   "plugin": "pricing",
-  "plugin_version": "1.11.5",
+  "plugin_version": "1.11.6",
   "command": "pricing:price",
   "run": {
     "started_at": "2026-10-31T10:00:00Z",
@@ -216,7 +216,7 @@ Every file a person's run follows carries this sentence, word for word: the adop
 - Every adopting command body also says: Run every agent you dispatch in the foreground and wait for it to finish; never run one in the background (`run_in_background: true`) before the result file is written.
 - A figure that no script computed is worked out from the formula the command states, with no code at all, and its `method` says so.
 - Every writer runs `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py` for the result file name and uses its output as printed. Every producer ships the same `scripts/result_name.py`.
-- Every adopting command's `allowed-tools`, and every reader body's that runs a script, holds the grant line `Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)`. The grant covers a call written without quotes, as the prompt text writes it. It does not cover `python3 -c` or any other inline code, which still needs approval.
+- Every adopting command's `allowed-tools`, and every reader body's that runs a script, holds one grant line for each script that it runs, in the form `Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file> *)`. A rule with `scripts/*` is not allowed: it also permits `uv run` of a path through `scripts/..` (STORY-283). The grant covers a call written without quotes, as the prompt text writes it. It does not cover `python3 -c` or any other inline code, which still needs approval.
 - What a permission does (measured on Claude Code 2.1.316): A command's or skill's `allowed-tools` grants a matching call with no prompt. It restricts nothing: a call it does not name falls to the person's session rules. The grant also reaches a subagent that the command's run dispatches. The grant holds only in the turn that ran the command: when a background agent's notice starts a new turn, the same call needs approval. A subagent's own `tools:` Bash pattern neither grants nor restricts. The person's own session rules govern.
 - An agent's `tools:` line names the shell it may run, such as `Bash(uv run *)`, never `Bash(*)` or a bare `Bash`. It states intent; it is not a control.
 

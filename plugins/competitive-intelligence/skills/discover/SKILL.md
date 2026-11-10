@@ -1,7 +1,7 @@
 ---
 name: discover
 description: Maps the competitive landscape of a market in 3 phases (context, ecosystem, intelligence) and writes one result file. Use when the person starts a competitive analysis, enters a new market, refreshes old competitive intelligence, or says "map competitors", "competitive landscape" or "who are our competitors".
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Skill, Edit(/.competitive-intelligence/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py *), Skill, Edit(/.competitive-intelligence/**)
 ---
 
 # /competitive-intelligence:discover

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.3
+
+- Each command names each script that it runs in its Bash grant (`scripts/<file> *`). Before, the grant `scripts/*` also permitted `uv run` of a file outside the scripts folder through a path with `..`, also a file of the project (STORY-283).
+
 ## 1.12.2
 
 - Each optional web or MCP grant in `caller-grants.json` and in the README now has a warning: give the grant only in a session whose input you trust, because it lets the run send data of the case out of the session (STORY-277).

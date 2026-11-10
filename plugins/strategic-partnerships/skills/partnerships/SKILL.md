@@ -2,7 +2,7 @@
 name: partnerships
 description: Run the full strategic partnership analysis for a software product, from readiness to a go or no-go recommendation. Use when the user wants to evaluate partnership readiness, find partners, structure a deal, design an integration, model partnership revenue, or get one go or no-go recommendation. It covers partner programs, OEM, reseller, open source, SaaS, and consulting models.
 argument-hint: "[product name, category, target market, existing integrations, partnership goals]"
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/evaluate_phase.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/partner_scorer.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ecosystem_health_scorer.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/power_dynamics_scorer.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/apollo_extractor.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/npv_calculator.py *)
 ---
 
 # Strategic Partnerships

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.5
+
+- Each skill names each script that it runs in its Bash grant (`scripts/<file> *`). Before, the grant `scripts/*` also permitted `uv run` of a file outside the scripts folder through a path with `..`, also a file of the project (STORY-283).
+
 ## 1.11.4
 
 - The ingest makes a Gap page for each item of `gaps.json` in the 1 list `gaps` and in a list for each level (`critical`, `important`, `nice_to_have`); an item of a level list with no `type` takes the level. A gap links the competitor that it names by `competitor_id`, or by `competitor` (an id or a name); a gap of more than 1 competitor links none and makes no Competitor page. Before, a run with level lists made no Gap page, and a gap with only a `competitor` name linked no competitor (STORY-220).

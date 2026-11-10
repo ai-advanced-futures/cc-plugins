@@ -1,7 +1,7 @@
 ---
 name: competitive-intelligence
 description: Runs the full competitive analysis in 6 phases, from the first questions to the final deliverables. Use when the person asks for a competitive analysis, a competitor or market assessment, a feature check against competitors, a technology disruption review, win and loss patterns, or a response to a competitive threat.
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *), Bash(date *), Skill, Edit(/.competitive-intelligence/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py *), Bash(git rev-parse *), Bash(date *), Skill, Edit(/.competitive-intelligence/**)
 ---
 
 # Competitive intelligence: the full run

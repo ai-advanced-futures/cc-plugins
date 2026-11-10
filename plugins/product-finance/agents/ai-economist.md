@@ -2,7 +2,7 @@
 name: ai-economist
 description: Tracks AI costs, attributes AI value, and calculates AI ROI
 model: sonnet
-tools: Read, Write, Grep, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse --show-toplevel)
+tools: Read, Write, Grep, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ai_roi_calculator.py *), Bash(git rev-parse --show-toplevel)
 ---
 
 # AI Economist Agent
@@ -657,7 +657,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.3",
+  "plugin_version": "0.13.4",
   "command": "product-finance:ai-economics",
   "run": {
     "started_at": "2026-11-01T12:00:00Z",
@@ -735,7 +735,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.3",
+  "plugin_version": "0.13.4",
   "command": "product-finance:ai-economics",
   "run": {
     "started_at": "2026-11-01T12:00:00Z",

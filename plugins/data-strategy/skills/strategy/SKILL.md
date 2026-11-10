@@ -1,7 +1,7 @@
 ---
 name: strategy
 description: Assesses the data strategy of a software company against the 11 DAMA-DMBOK knowledge areas and the 5 Gartner D&A maturity levels. Use when the person asks only for a data strategy or data governance check. Writes strategy.md.
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/dama_scorer.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/maturity_calculator.py *)
 ---
 
 # Data strategy: strategy alignment only

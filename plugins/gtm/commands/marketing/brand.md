@@ -1,6 +1,6 @@
 ---
 description: Build brand identity, voice, positioning, and StoryBrand narrative from real product capabilities
-allowed-tools: ["Read(*)", "Write(*)", "Glob(*)", "Grep(*)", "WebSearch(*)", "AskUserQuestion(*)", "Bash(date *)", "Bash(git rev-parse *)", "Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)", "mcp__canva__search_designs", "mcp__canva__generate_design"]
+allowed-tools: ["Read(*)", "Write(*)", "Glob(*)", "Grep(*)", "WebSearch(*)", "AskUserQuestion(*)", "Bash(date *)", "Bash(git rev-parse *)", "Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *)", "mcp__canva__search_designs", "mcp__canva__generate_design"]
 ---
 
 # /gtm:marketing:brand

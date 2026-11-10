@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.1
+
+- Each skill names each script that it runs in its Bash grant (`scripts/<file> *`). Before, the grant `scripts/*` also permitted `uv run` of a file outside the scripts folder through a path with `..`, also a file of the project (STORY-283).
+
 ## 2.2.0
 
 This version gives each agent a narrow tool grant.

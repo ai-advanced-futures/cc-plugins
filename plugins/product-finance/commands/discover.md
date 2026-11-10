@@ -1,6 +1,6 @@
 ---
 description: Discovery stage financial analysis with market sizing (TAM/SAM/SOM), revenue opportunity, and CAC estimates by channel
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Edit(/.product-finance/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_read.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/market_sizing_calculator.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/plugin_result/plugin_result_check.py *), Edit(/.product-finance/**)
 ---
 
 # Product Finance Discover Command

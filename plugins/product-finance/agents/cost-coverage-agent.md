@@ -2,7 +2,7 @@
 name: cost-coverage-agent
 description: Produces cost-coverage-readout Charter artifact (audience:internal) from pricing diagnosis + cost-amplifier-readout + company financials
 model: haiku
-tools: Read, Write, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse --show-toplevel)
+tools: Read, Write, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/cost_coverage_core.py *), Bash(git rev-parse --show-toplevel)
 ---
 
 # Cost Coverage Agent
@@ -99,7 +99,7 @@ A plugin run of `product-finance:cost-coverage`:
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.3",
+  "plugin_version": "0.13.4",
   "command": "product-finance:cost-coverage",
   "run": {
     "started_at": "2026-11-01T13:00:00Z",

@@ -1,6 +1,6 @@
 ---
 description: Comprehensive unit economics analysis including CAC, LTV, LTV:CAC ratio, CAC payback period, Magic Number, and cohort analysis for customer profitability assessment
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Edit(/.product-finance/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Edit(/.product-finance/**)
 ---
 
 # Unit Economics Command

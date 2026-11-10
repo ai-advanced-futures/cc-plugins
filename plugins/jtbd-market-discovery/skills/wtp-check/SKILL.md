@@ -1,7 +1,7 @@
 ---
 name: wtp-check
 description: Check a price against what customers will pay, with the 6-layer willingness-to-pay framework. Use when the person wants to test a price after a discover run, or when another plugin runs jtbd-market-discovery:wtp-check.
-allowed-tools: Read, Write, Glob, Skill, AskUserQuestion, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *)
+allowed-tools: Read, Write, Glob, Skill, AskUserQuestion, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/run_phase_9.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py *), Bash(git rev-parse *)
 ---
 
 # /jtbd-market-discovery:wtp-check

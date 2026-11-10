@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+- Each skill names each script that it runs in its Bash grant (`scripts/<file> *`). Before, the grant `scripts/*` also permitted `uv run` of a file outside the scripts folder through a path with `..`, also a file of the project (STORY-283).
+
 ## 0.3.0
 
 - No agent has `Bash`, `Agent`, `WebSearch`, or `Glob`. The agents have `Read`, `Write`, and `Grep`, and `deliverable-generator` has `Read` and `Write`.

@@ -1,7 +1,7 @@
 ---
 name: monitor
 description: Tracks the changes in a competitive landscape since the last analysis and updates the intelligence. Use when the person asks "what's changed", wants a competitive update or a check of the competitors, or has a regular review (weekly, monthly or quarterly) or a planning session ahead.
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *), Bash(date *), Skill, Edit(/.competitive-intelligence/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py *), Bash(git rev-parse *), Bash(date *), Skill, Edit(/.competitive-intelligence/**)
 ---
 
 # /competitive-intelligence:monitor

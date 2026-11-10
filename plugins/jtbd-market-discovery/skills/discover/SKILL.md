@@ -1,7 +1,7 @@
 ---
 description: Run the full 10-phase JTBD market opportunity discovery. Use when the person wants to find, score and price the market opportunities of a product or market area, or when another plugin runs jtbd-market-discovery:discover.
 argument-hint: "[--defaults] [market area]"
-allowed-tools: Agent, Read, Write, Glob, Skill, AskUserQuestion, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse *)
+allowed-tools: Agent, Read, Write, Glob, Skill, AskUserQuestion, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_state.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/survey_adapter.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/run_phase_6.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/run_phase_7.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/run_phase_8.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/run_phase_9.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/composite_scorer.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/report_exporter.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_graph.py *), Bash(git rev-parse *)
 ---
 
 # /jtbd-market-discovery:discover

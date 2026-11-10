@@ -2,7 +2,7 @@
 name: partnerships-discover
 description: Map the software ecosystem to identify, classify, and rank strategic partnership candidates using Popp's canonical partnership taxonomy and Jansen's power dynamics framework. Use when the user wants to find potential partners, map the competitive ecosystem, discover partner programs to join, identify OEM or reseller candidates, find integration opportunities, or understand where they sit in the ecosystem's power structure.
 argument-hint: "[session id, or product name, category, target market, existing integrations, partnership goals]"
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/session_manager.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/simulate_phase.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/partner_scorer.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ecosystem_health_scorer.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/power_dynamics_scorer.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/apollo_extractor.py *)
 ---
 
 ## Routing

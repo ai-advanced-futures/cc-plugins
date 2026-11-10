@@ -2,7 +2,7 @@
 name: ai-economics-runner
 description: Runs the product-finance:ai-economics command by reading the command file and following its body, then writes the result file. Use when another plugin or session dispatches that command as a subagent.
 model: sonnet
-tools: Read, Write, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse --show-toplevel)
+tools: Read, Write, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ai_roi_calculator.py *), Bash(git rev-parse --show-toplevel)
 ---
 
 You are the runner of the `product-finance:ai-economics` command. Your task is to work out what one product's AI costs and returns, as the command file says. Done means the command's steps ran and one result file exists that a coach can read.

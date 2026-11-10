@@ -2,7 +2,7 @@
 name: roi-calculator
 description: Calculates ROI for features and initiatives with NPV analysis
 model: sonnet
-tools: Read, Write, Grep, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git rev-parse --show-toplevel)
+tools: Read, Write, Grep, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(git rev-parse --show-toplevel)
 ---
 
 # ROI Calculator Agent
@@ -731,7 +731,7 @@ A defaults run of `product-finance:feature-roi` with no revenue answer, then a r
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.3",
+  "plugin_version": "0.13.4",
   "command": "product-finance:feature-roi",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -849,7 +849,7 @@ A defaults run of `product-finance:feature-roi` with no revenue answer, then a r
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.3",
+  "plugin_version": "0.13.4",
   "command": "product-finance:feature-roi",
   "run": {
     "started_at": "2026-11-01T10:10:00Z",
@@ -921,7 +921,7 @@ A defaults run of `product-finance:feature-roi` with no revenue answer, then a r
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.13.3",
+  "plugin_version": "0.13.4",
   "command": "product-finance:feature-roi",
   "run": {
     "started_at": "2026-11-01T14:00:00Z",

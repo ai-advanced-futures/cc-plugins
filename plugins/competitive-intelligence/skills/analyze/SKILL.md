@@ -1,7 +1,7 @@
 ---
 name: analyze
 description: Analyzes one competitor through the 6 lenses, writes a SWOT and recommendations, and writes one result file. Use when the person wants a deep dive on a named competitor, prepares for a competitive deal or pitch, responds to a competitor move, or says "analyze [competitor]" or "deep dive on [competitor]".
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Skill, Edit(/.competitive-intelligence/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py *), Skill, Edit(/.competitive-intelligence/**)
 ---
 
 # /competitive-intelligence:analyze

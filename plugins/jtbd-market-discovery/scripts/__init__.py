@@ -3,7 +3,7 @@ JTBD Market Discovery - Analysis Scripts
 
 Author: Luis F. Amadeo (Chief Agentic Officer)
 Framework: Outcome-Driven Innovation (ODI) - Tony Ulwick
-Version: 1.11.5
+Version: 1.11.6
 Last Updated: 2026-01-21
 
 This package provides Python scripts for quantitative analysis in the
@@ -38,7 +38,7 @@ Dependencies:
 For detailed documentation, see scripts/README.md
 """
 
-__version__ = "1.11.5"
+__version__ = "1.11.6"
 __author__ = "Luis F. Amadeo (Chief Agentic Officer)"
 __license__ = "MIT"
 

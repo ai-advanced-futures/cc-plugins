@@ -1,6 +1,6 @@
 ---
 description: Guided onboarding to collect baseline financial assumptions for product finance analysis
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*), Edit(/.product-finance/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/jtbd_read.py *), Edit(/.product-finance/**)
 ---
 
 Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py ...`, one command per Bash call. The grant of this command covers only those scripts, so run no inline code in any language, and write every file with the Write tool.

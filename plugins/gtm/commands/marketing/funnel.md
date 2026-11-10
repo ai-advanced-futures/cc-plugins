@@ -1,6 +1,6 @@
 ---
 description: Analyze and optimize TOFU demand generation — acquisition channels, content performance, and funnel entry health
-allowed-tools: ["Read(*)", "Write(*)", "Agent", "Glob(*)", "Grep(*)", "WebSearch(*)", "AskUserQuestion(*)", "Bash(date *)", "Bash(git rev-parse *)", "Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)", "mcp__google-analytics__run_report", "mcp__google-analytics__get_realtime_data", "mcp__hubspot__hubspot_get_marketing_emails"]
+allowed-tools: ["Read(*)", "Write(*)", "Agent", "Glob(*)", "Grep(*)", "WebSearch(*)", "AskUserQuestion(*)", "Bash(date *)", "Bash(git rev-parse *)", "Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *)", "mcp__google-analytics__run_report", "mcp__google-analytics__get_realtime_data", "mcp__hubspot__hubspot_get_marketing_emails"]
 ---
 
 # /gtm:marketing:funnel

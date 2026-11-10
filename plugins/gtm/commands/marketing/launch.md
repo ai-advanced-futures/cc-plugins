@@ -1,6 +1,6 @@
 ---
 description: Build launch plan and go-to-market campaign with channel strategy, content calendar, and MQL criteria
-allowed-tools: ["Read(*)", "Write(*)", "Agent", "Glob(*)", "Grep(*)", "WebSearch(*)", "AskUserQuestion(*)", "Bash(date *)", "Bash(git rev-parse *)", "Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/*)", "mcp__ahrefs__get_keyword_ideas", "mcp__ahrefs__get_search_volume", "mcp__canva__generate_design", "mcp__canva__autofill_template", "mcp__notion__notion-create-page", "mcp__slack__slack_post_message"]
+allowed-tools: ["Read(*)", "Write(*)", "Agent", "Glob(*)", "Grep(*)", "WebSearch(*)", "AskUserQuestion(*)", "Bash(date *)", "Bash(git rev-parse *)", "Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *)", "mcp__ahrefs__get_keyword_ideas", "mcp__ahrefs__get_search_volume", "mcp__canva__generate_design", "mcp__canva__autofill_template", "mcp__notion__notion-create-page", "mcp__slack__slack_post_message"]
 ---
 
 # /gtm:marketing:launch
