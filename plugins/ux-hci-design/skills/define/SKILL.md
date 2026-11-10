@@ -23,7 +23,7 @@ These foundational approaches inform how we synthesize research into personas an
 ### 1. Data Aggregation
 
 Collect all inputs:
-- research_findings.json from EMPATHIZE phase
+- the research findings of the `inputs` list, from the EMPATHIZE phase
 - JTBD opportunity data (if available)
 - PRD requirements (if available)
 - Existing analytics/metrics
@@ -402,7 +402,7 @@ DEFINE phase outputs enable:
 
 ---
 
-**Previous Phase**: EMPATHIZE (research_findings.json)
+**Previous Phase**: EMPATHIZE (the research findings of the `inputs` list)
 **Next Phase**: IDEATE (design concepts)
 **Agent**: ux-artifact-generator
 **Outputs**: personas.json, journey_maps.json, mental_models.mmd

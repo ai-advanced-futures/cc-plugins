@@ -58,12 +58,8 @@ def registry_add(root, name, path, git=None) -> bool:
     return True
 
 
-def exclude_folder(root, directory) -> bool:
-    """Add `/<directory>/` to the exclude file of this clone, once. Return True when a line was added.
-
-    The file is the one that `git rev-parse --git-path info/exclude` names, so `.gitignore` does not change and a
-    linked worktree writes the file that git reads for it.
-    """
+def exclude_file(root) -> Path:
+    """Return the exclude file of this clone: the file that `git rev-parse --git-path info/exclude` names."""
     try:
         done = subprocess.run(["git", "rev-parse", "--git-path", "info/exclude"], cwd=root,
                               capture_output=True, text=True)
@@ -71,13 +67,22 @@ def exclude_folder(root, directory) -> bool:
         raise UsageError(f"cannot run git: {error}") from error
     if done.returncode != 0 or not done.stdout.strip():
         raise UsageError(f"{root} is not a git clone, so git cannot keep the brain out of it: {done.stderr.strip()}")
-    file = Path(root) / done.stdout.strip()
+    return Path(root) / done.stdout.strip()
+
+
+def exclude_folder(root, directory, keep=True) -> bool:
+    """Add (`keep` True) or remove (`keep` False) `/<directory>/` in the exclude file of this clone. Return True on a change.
+
+    `.gitignore` does not change, and a linked worktree writes the file that git reads for it.
+    """
+    file = exclude_file(root)
     line = f"/{directory.strip('/')}/"
     lines = file.read_text("utf-8").splitlines() if file.is_file() else []
-    if line in lines:
+    if (line in lines) == keep:
         return False
+    lines = [*lines, line] if keep else [item for item in lines if item != line]
     file.parent.mkdir(parents=True, exist_ok=True)
-    file.write_text("".join(f"{item}\n" for item in [*lines, line]), encoding="utf-8")
+    file.write_text("".join(f"{item}\n" for item in lines), encoding="utf-8")
     return True
 
 

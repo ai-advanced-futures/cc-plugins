@@ -52,8 +52,11 @@ def init(root, directory=DEFAULT_DIR, actor=None, git=True) -> Path:
     return folder
 
 
-def upgrade(root, directory=None) -> list[str]:
-    """Bring a bundle to the standard: folders, registry entry, manifest fields. Return the changes."""
+def upgrade(root, directory=None, git=None) -> list[str]:
+    """Bring a bundle to the standard: folders, registry entry, manifest fields. Return the changes.
+
+    `git` None keeps the answer of the registry entry. True or False sets it, and the exclude file of this clone follows.
+    """
     if directory is not None:  # an empty --dir is a wrong value, not "no value"
         directory = check_dir(directory)
         folder = Path(root) / directory
@@ -61,7 +64,16 @@ def upgrade(root, directory=None) -> list[str]:
         folder = bundle_dir(root)
         directory = folder.relative_to(root).as_posix()
     changes = []
-    if registry_add(root, GRAPH, directory):
+    if git is not None:
+        # The registry path can come from a cloned repository. Only the folder of this brain gets its exclude line
+        # changed, so a path that names another folder stops here with nothing changed (issue 1370).
+        held = manifest.read(folder)
+        if not held or held.get("brain") != GRAPH:
+            raise UsageError(f"{directory} has no {manifest.NAME} of the brain {GRAPH}, so --git changes nothing. "
+                             "Run init to make the bundle, or correct the folder in .claude/knowledge.json.")
+    if git is not None and exclude_folder(root, directory, keep=not git):
+        changes.append("git keeps the folder out of this clone" if not git else "git no longer keeps the folder out of this clone")
+    if registry_add(root, GRAPH, directory, git):
         changes.append("wrote the registry entry")
     for spec in schema.types().values():
         target = folder / spec["directory"]

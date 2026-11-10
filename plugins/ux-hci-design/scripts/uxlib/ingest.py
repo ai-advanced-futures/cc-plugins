@@ -1,9 +1,10 @@
 """ingest: write the pages of one phase of a ux-design run from its output files (STORY-257, rows 7 and 9).
 
 The output folder holds the files of the phases. `pages.json` there names the Run page of the run, so each
-later phase joins the same run. The pages are made in a temporary copy of the bundle. The code runs `regen`
-and the brain check in that copy, and moves the copy in only when the check has no error. Only then does it
-remove the files that it read. A failed step removes no file and changes no page.
+later phase joins the same run while that run is a draft. A run that a person confirmed, or a save with
+`new_run`, starts a new Run page. The pages that the earlier runs made stay known, so a page is not made twice. The pages are made in a temporary copy of the bundle. The code runs `regen` and the brain check in
+that copy, and moves the copy in only when the check has no error. Only then does it remove the files that it
+read. A failed step removes no file and changes no page.
 
 A JSON file is put together again by `view`: `Run.file_meta[file]` is the file with each document replaced by
 `@@<page ID>`, and the page holds the document as `record["<RUN ID>/<file>"]`. A page that has child pages
@@ -110,6 +111,7 @@ class Ingest:
         self.dir = bundle_dir(root)
         self.actor = actor
         self.known = known  # pages.json "files": file -> ident -> page ref, from the earlier phases of this run
+        self.joined = False  # True when this save joins the run that pages.json names
         self.pages: dict[Path, P] = {}
         self.index: dict[tuple, Path] = {}
         self.numbers: dict[str, int] = {}
@@ -179,6 +181,8 @@ class Ingest:
         key = self.key_of(type_, fm)
         if key and key in self.index:
             page = self.pages[self.index[key]]
+        # `known` holds only the places that an earlier phase of this run saved: a new run starts with none, so it makes
+        # its own Evaluation, finding and other pages. The types of MERGED are found by key above (spec row 9).
         elif file and ident is not None and ident in (self.known.get(file) or {}):
             page = self.at(self.known[file][ident])
         if page is None:
@@ -225,18 +229,21 @@ class Ingest:
 
     # ---- the run ----------------------------------------------------------------------------------
 
-    def start_run(self, phase, out_rel, run_ref, context) -> None:
+    def start_run(self, phase, out_rel, run_ref, context, new_run=False) -> None:
         if run_ref:
             page = self.at(run_ref)
             if page is None or page.type != "Run":
                 raise DataError(f"{PAGES_FILE} names {run_ref}, which is not a Run page of the bundle. "
                                 f"Remove {PAGES_FILE} to start a new run.")
-            self.run_p, self.run_ref = page, run_ref
             phases = list(page.fm.get("phases") or [])
-            page.fm["phases"] = phases + ([phase] if phase not in phases else [])
-            page.fm["status"] = "draft"
-            page.dirty = True
-            return
+            # A later phase joins the run only while the run is a draft, and only when the caller does not ask for a new
+            # run. A run that a person confirmed is over, and its status stays: this save starts a new run (PR 1357).
+            if page.fm.get("status") == "draft" and not new_run:
+                self.run_p, self.run_ref = page, run_ref
+                self.joined = True
+                page.fm["phases"] = phases + ([phase] if phase not in phases else [])
+                page.dirty = True
+                return
         path = self.allocate("Run")
         now = logbook.stamp()
         fm = {"type": "Run", "title": f"UX design run of {now[:10]}",
@@ -624,7 +631,7 @@ def read_context(folder):
     return data if isinstance(data, dict) else None
 
 
-def run(root, output, phase, actor=None) -> list[str]:
+def run(root, output, phase, actor=None, new_run=False) -> list[str]:
     root = Path(root).resolve()
     actor = actor or schema.plugin_actor()
     if phase not in PHASES:
@@ -650,7 +657,10 @@ def run(root, output, phase, actor=None) -> list[str]:
         tmp = temp_root(root)
         try:
             ing = Ingest(tmp, actor, known)
-            ing.start_run(phase, folder.relative_to(root).as_posix(), run_ref, read_context(folder))
+            ing.start_run(phase, folder.relative_to(root).as_posix(), run_ref, read_context(folder), new_run)
+            if not ing.joined:
+                # A new Run page: the places of the earlier run are not its places, and pages.json gets only its own.
+                known = ing.known = {}
             for name in present:
                 if name in DIAGRAMS:
                     ing.h_diagram(name, data[name])

@@ -324,7 +324,7 @@ Note: Outputs are flagged as "hypothesis" confidence level
 When both JTBD and research are available:
 
 ```markdown
-Input: JTBD opportunity analysis + research_findings.json
+Input: JTBD opportunity analysis + the research findings of the `inputs` list
 Output: Enriched personas, validated journey maps
 
 Process:
@@ -340,7 +340,7 @@ Process:
 When research was conducted first:
 
 ```markdown
-Input: research_findings.json + JTBD data
+Input: the research findings of the `inputs` list + JTBD data
 Output: Research-based personas with JTBD validation
 
 Process:

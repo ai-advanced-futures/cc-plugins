@@ -23,6 +23,8 @@ When you wrote `<output_dir>/evaluation_report.json` in this run, end your reply
 
 You cannot ask the person a question. When you need an answer, write the open questions to `<output_dir>/open-questions.md` and return.
 
+In the report, name a file of a reviewer in words (for example "the open-questions file in the folder of the usability reviewer"). Write no path that ends in `.md` in any text field, because the brain check reads such a path as a link to a page, and it gives a `K-link` error when the page is not in the bundle.
+
 ## Purpose
 
 Merge the findings of the domain reviewers (accessibility, AI-HCI, usability) during the TEST phase into one UX health score with actionable recommendations. The skill `ux-design` starts the reviewers in the main conversation before it starts you. You start no agent. The paths of the reviewer findings are in `inputs`.

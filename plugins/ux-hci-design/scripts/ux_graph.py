@@ -48,6 +48,8 @@ def add_check(parser) -> None:
 
 def cmd_init(args) -> int:
     print(f"made {shown(args.root, writer.init(args.root, args.dir, args.by, args.git == 'yes'))}")
+    if args.git == "no":
+        print(f"The UX brain is in {args.dir}/, and git does not keep it. Run /ux-hci-design:setup to change this.")
     return 0
 
 
@@ -59,13 +61,15 @@ def add_init(parser) -> None:
 
 
 def cmd_upgrade(args) -> int:
-    changes = writer.upgrade(args.root, args.dir)
+    changes = writer.upgrade(args.root, args.dir, None if args.git is None else args.git == "yes")
     print("\n".join(changes) if changes else "the bundle is on the standard: nothing to change")
     return 0
 
 
 def add_upgrade(parser) -> None:
     parser.add_argument("--dir", help="the bundle folder (default: the registry entry)")
+    parser.add_argument("--git", choices=("yes", "no"), default=None,
+                        help="the git answer; without it the answer of the registry entry stays")
 
 
 def cmd_log(args) -> int:
@@ -176,7 +180,7 @@ def add_key(parser) -> None:
 def cmd_ingest(args) -> int:
     from uxlib import ingest
 
-    for line in ingest.run(args.root, args.output_dir, args.phase, args.by):
+    for line in ingest.run(args.root, args.output_dir, args.phase, args.by, args.new_run):
         print(line)
     return 0
 
@@ -185,6 +189,8 @@ def add_ingest(parser) -> None:
     parser.add_argument("output_dir", help="the output folder of the run, for example .ux-artifacts")
     parser.add_argument("--phase", required=True, choices=("empathize", "define", "ideate", "prototype", "test"))
     parser.add_argument("--by", help="the actor")
+    parser.add_argument("--new-run", action="store_true",
+                        help="start a new Run page, also when pages.json names a run that is a draft")
 
 
 def cmd_view(args) -> int:

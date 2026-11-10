@@ -38,7 +38,7 @@ The agent `ux-researcher` has a third output track. The first two tracks are the
 
 4. **Component names and token names.** Examples: `PrimaryButton`, `SearchInput`, `spacing.lg`, `color.brand.primary`. The team agrees the names before the handoff.
 
-The agent writes the Track 3 output to the file `research-handoff.md` in the folder `.ux-artifacts/`, next to the other research artifacts.
+The agent writes the Track 3 output to `implementation_handoff` of `research_findings.json`, and the brain keeps each item as a `ResearchFinding` page with `finding_kind: implementation_handoff`.
 
 ### The 8th quality criterion: Handoff-Complete in `ux-concept-designer`
 
@@ -85,4 +85,4 @@ An agent `ux-handoff-compiler` would process the design artifacts after the fact
 
 ### Integration points
 
-- A developer agent reads the Track 3 output. When you change how it reads `research-handoff.md`, or which component names and token names it expects, tell the owner of that agent.
+- A developer agent reads the Track 3 output. When you change how it reads `implementation_handoff` of `research_findings.json` (or the `ResearchFinding` pages that hold it), or which component names and token names it expects, tell the owner of that agent.

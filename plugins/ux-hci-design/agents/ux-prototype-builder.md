@@ -249,7 +249,7 @@ Generate `interaction_patterns.json`:
 
 ### Mermaid Flow Diagram
 
-Generate `user_flow.mmd`:
+Generate `user_flows.mmd`:
 
 ```mermaid
 flowchart TB

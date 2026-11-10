@@ -1,7 +1,7 @@
 """The save code and the brain check of the ux-hci-design graph (standard section 8).
 
-These modules are adapted copies of the general modules of plugins/system-design/scripts/sdlib.
-No file can read a path outside its plugin, so each brain keeps its own copy.
+These modules are adapted copies of the modules of the competitive-intelligence brain (`cilib`), with no remote
+client. No file can read a path outside its plugin, so each brain keeps its own copy.
 
 The code reads no file of another plugin when it runs. Only the tests read other plugins, and `READS` of
 `scripts/ci-changes.py` names each edge: `knowledge` (the tests start `knowledge.py`, found with

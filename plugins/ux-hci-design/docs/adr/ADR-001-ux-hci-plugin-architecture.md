@@ -553,7 +553,7 @@ Clean visual hierarchy with appropriate whitespace
 
 The original decision of 2026 stands. The port to the cc-plugins marketplace changed names and tool grants only.
 
-- **Skills.** The plugin has 10 skills. A user runs each one as `/ux-hci-design:<skill>`. The skills are `accessibility-audit`, `ai-hci-audit`, `define`, `empathize`, `ideate`, `jtbd-bridge`, `prd-bridge`, `prototype`, `ux-design`, and `ux-evaluate`.
+- **Skills.** The plugin has 13 skills. A user runs each one as `/ux-hci-design:<skill>`. The skills are `accessibility-audit`, `ai-hci-audit`, `ask`, `define`, `empathize`, `ideate`, `jtbd-bridge`, `learn`, `prd-bridge`, `prototype`, `setup`, `ux-design`, and `ux-evaluate`.
 - **Command names.** The command blocks above show the names of 2026. The skill `ux-design` replaces `/ux:design` (command: `/ux-hci-design:ux-design`). The skill `ux-evaluate` replaces the old skill `evaluate` and the commands `/ux:test` and `/ux:evaluate-heuristics`. The skills `jtbd-bridge` and `prd-bridge` replace `/ux:integrate`. The phase commands and `accessibility-audit` keep their names. The skill `ai-hci-audit` runs the AI-HCI audit alone.
 - **Skill names.** The `name:` line in the frontmatter of a skill is the folder name (for example `name: ux-design`). The plugin adds the prefix `ux-hci-design:`.
 - **Agents.** The plugin has 8 agents: `accessibility-reviewer`, `ai-hci-reviewer`, `usability-reviewer`, `ux-artifact-generator`, `ux-concept-designer`, `ux-evaluator`, `ux-prototype-builder`, and `ux-researcher`. A skill calls an agent with the name `ux-hci-design:<agent>`. The skill `ux-design` coordinates the phases and starts every agent. The original design had a separate agent that managed the phases; it is not in the plugin.
@@ -634,6 +634,8 @@ The original decision of 2026 stands. The port to the cc-plugins marketplace cha
 - Claude Code plugin marketplace standards
 
 ---
+
+**Update (STORY-257, version 1.6.0):** the output of the plugin is a brain of the brain standard. The agents still write plain files to `<output_dir>`. After each phase the skill `ux-design` saves them as pages in `docs/ux-hci-design/` with `scripts/ux_graph.py`, and removes the files that it read. The skills `setup`, `learn` and `ask` work on the brain. The first save asks if git keeps the brain, because the pages can hold facts about real people.
 
 **Status:** Ready for implementation
 **Next steps:** Start Phase 1 (Foundation)

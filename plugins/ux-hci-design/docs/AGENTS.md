@@ -35,6 +35,7 @@ UX Design Orchestrator (/ux-hci-design:ux-design skill)
 - No agent has the `Agent` tool. Claude Code ignores a type list inside `Agent(...)` in an agent file, so the plugin cannot limit the agents that an agent starts. The skill `ux-design` starts all agents, in the main conversation.
 - Only `ux-prototype-builder` has the `Skill` tool.
 - All other agents have the tools `Read` and `Write` only.
+- An agent writes its files to `<output_dir>` and nothing else. It does not write the brain `docs/ux-hci-design/`. After each phase, the skill `ux-design` saves the files as pages (`ux_graph.py ingest`) and removes the files that it read. Before it starts an agent, the skill puts a copy of each saved input file in `<output_dir>/inputs/` (`ux_graph.py view --out`), and gives the agent that path. The agents have no Bash, so they cannot run the save code.
 
 ---
 
@@ -263,7 +264,7 @@ All agents follow these quality criteria:
 
 ## Usage
 
-A person starts the agents through the skill `/ux-hci-design:ux-design`. The plugin has 10 skills. Each one is `/ux-hci-design:<skill>`.
+A person starts the agents through the skill `/ux-hci-design:ux-design`. The plugin has 13 skills. Each one is `/ux-hci-design:<skill>`.
 
 ```bash
 # Run full workflow

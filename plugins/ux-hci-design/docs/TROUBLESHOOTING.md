@@ -315,7 +315,7 @@ pip install -r requirements-dev.txt
    claude plugin install ux-hci-design@cc-plugins
    ```
 
-4. Write the full name. A command without the plugin name does not work. The plugin has 10 skills. Each one is `/ux-hci-design:<skill>`.
+4. Write the full name. A command without the plugin name does not work. The plugin has 13 skills. Each one is `/ux-hci-design:<skill>`.
 
 ---
 

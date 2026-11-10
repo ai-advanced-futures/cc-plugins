@@ -2,6 +2,22 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.6.0 - 2026-11-10
+
+Part B of STORY-257: the skills and the write flow of the brain.
+
+- Behavior change: after a save, `.ux-artifacts/` holds no output file. The save removes each file that it read, and `ux_graph.py view` prints the file again. If a save does not run ("No brain now"), the plain files stay.
+- New skills `setup`, `learn` and `ask`. `setup` asks if git keeps the brain, makes the bundle, writes the router block in `CLAUDE.md`, and offers to save an earlier `.ux-artifacts/`. It needs the plugin `knowledge` 1.6.0 or later.
+- The skill `ux-design` asks the git question before the first save (3 answers; a run with no person keeps the brain out of git and says so), runs `ingest` after each phase, runs `view --out` before each dispatch, asks "Learn these results?" at the end, and names `/product:setup` when the project has no PRD graph.
+- New hook `hooks/brain-hook.sh` runs `ux_graph.py regen`, `ux_graph.py check` and `knowledge.py check` after a write. New router template `templates/claude-md-block.md`, and the copies `scripts/claude_md_router.py` and `scripts/probe-plugin.sh`.
+- Text fixes: `user_flow.mmd` is `user_flows.mmd` in the agent `ux-prototype-builder`; ADR-002 names the real place of the Track 3 output, `implementation_handoff` of `research_findings.json`.
+- The readers of `research_findings.json` (the skills `define` and `jtbd-bridge`, the agent `ux-artifact-generator`) name the research findings of the `inputs` list.
+- `ux_graph.py upgrade` takes `--git yes|no`. Without it the first git answer stays. The skill `setup` passes the new answer, so "Run /ux-hci-design:setup to change this" works, and the exclude file of the clone follows the answer. The option works only for a folder that holds the `manifest.md` of this brain, because a cloned repository can set the folder in the registry (issue 1370). When the answer changes to "out of git", `setup` counts the files that git still tracks and names `git rm -r --cached`. A `setup` run with no person keeps the answer of an existing entry.
+- A new run (`ingest --new-run`) makes its own Evaluation, EvalFinding, Journey and other pages, in each phase of the run, not only in the first. The later phases of the new run use only the places that an earlier phase of the same run saved, and `pages.json` holds only the places of the new run. Only the Persona, Screen, Concept and InteractionRule pages are reused across runs, found by key. `init --git no` prints the line "The UX brain is in docs/ux-hci-design/, and git does not keep it."
+- `ux_graph.py ingest` joins the run of `pages.json` only while that run is a draft, and a run that a person confirmed keeps its status. The option `--new-run` starts a new Run page. The skill `ux-design` passes it on the first `ingest` of each run of the skill, so a second run is not joined to the first.
+- The agent `ux-evaluator` writes no path that ends in `.md` in the report, because the brain check read such a path as a link and gave `K-link` errors in a live run.
+- The live test `test_live_port.py` reads the report through `ux_graph.py view latest evaluation_report.json`.
+
 ## 1.5.0 - 2026-11-10
 
 Part A of STORY-257: the save code and the schema of the brain. No skill calls the code yet (part B).

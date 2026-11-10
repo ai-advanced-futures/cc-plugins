@@ -278,6 +278,6 @@ Generated artifacts should inform:
 ---
 
 **Invocation**: Called by UX Design Orchestrator during DEFINE phase
-**Inputs**: research_findings.json, jtbd_data (optional), project_context
+**Inputs**: the research findings (the path in `inputs`), jtbd_data (optional), project_context
 **Outputs**: personas.json, journey_maps.json, mental_models.mmd
 **Next Phase**: IDEATE (ux-concept-designer)
