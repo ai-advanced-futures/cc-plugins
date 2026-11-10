@@ -1,7 +1,7 @@
 ---
 name: competitive-intelligence
 description: Runs the full competitive analysis in 6 phases, from the first questions to the final deliverables. Use when the person asks for a competitive analysis, a competitor or market assessment, a feature check against competitors, a technology disruption review, win and loss patterns, or a response to a competitive threat.
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py *), Bash(git rev-parse *), Bash(date *), Skill, Edit(/.competitive-intelligence/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py *), Bash(git rev-parse *), Bash(date *), Skill, Edit(/.competitive-intelligence/**), Read(//**/skills/competitive-intelligence/reference/run-rules.md)
 ---
 
 # Competitive intelligence: the full run
@@ -29,7 +29,7 @@ A phase cannot be skipped, because each later phase depends on it; the person ca
 ## How a phase runs
 
 Ask the person the open questions with `AskUserQuestion` [q: none], dispatch the agent as `competitive-intelligence:<agent>` with `session_id`, `data_dir` and the answers, wait for its `DONE:` line, and show the summary at the checkpoint (Proceed, Adjust or Cancel).
-Read `${CLAUDE_PLUGIN_ROOT}/skills/competitive-intelligence/reference/run-rules.md` for the details: the questions, the dispatch fields, no answer, a change request, the checkpoint options, and a failure.
+Read `${CLAUDE_SKILL_DIR}/reference/run-rules.md` for the details: the questions, the dispatch fields, no answer, a change request, the checkpoint options, and a failure.
 
 When an agent writes `open-questions.json` in `data_dir` and returns `QUESTIONS: <path>` as its last line, it has no `DONE:` line yet. The file has the shape of `questions/discover.json`:
 

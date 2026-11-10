@@ -1,7 +1,7 @@
 ---
 name: vendor-archetype-classify
 description: Classifies the current pricing of a vendor into one of the 5 canonical agentic-pricing archetypes. Use when the person wants to know which archetype the pricing page of a vendor maps to, or wants to refresh the Wave 1 vendor registry.
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/vendor_archetype_emitter.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py *), Skill, Edit(/.competitive-intelligence/**)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/vendor_archetype_emitter.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py *), Skill, Edit(/.competitive-intelligence/**), Read(//**/skills/vendor-archetype-classify/reference/archetype-reference-card.md)
 ---
 
 # Vendor Archetype Classification
@@ -31,4 +31,4 @@ If the agent reports a gap (no pricing page), show the gap to the person and sto
 
 Take the archetype from the classifier output, because the classifier is a deterministic script.
 
-See `reference/archetype-reference-card.md` for the signal rubric and the 5-archetype definitions with framework citations.
+When the person asks what a signal or an archetype means, or asks for the anchor vendors of an archetype, read `${CLAUDE_SKILL_DIR}/reference/archetype-reference-card.md`. It holds the signal rubric and the 5-archetype definitions with framework citations.
