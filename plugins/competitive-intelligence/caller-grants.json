@@ -14,8 +14,8 @@
     "mcp__<research server>"
   ],
   "optional": {
-    "WebSearch": "With no web grant, the run goes on and writes its result file. The result file records the web research as a gap, and the sources of its results have the type `model` or `default`.",
-    "WebFetch": "With no web grant, the run goes on and writes its result file. The result file records the web research as a gap, and the sources of its results have the type `model` or `default`.",
-    "mcp__<research server>": "With no research server, or no grant for it, the gatherer uses `WebSearch` and `WebFetch`."
+    "WebSearch": "With no web grant, the run goes on and writes its result file. The result file records the web research as a gap, and the sources of its results have the type `model` or `default`. Give this grant only in a session whose input you trust, because it lets the run send words of the case to the search provider in a query.",
+    "WebFetch": "With no web grant, the run goes on and writes its result file. The result file records the web research as a gap, and the sources of its results have the type `model` or `default`. Give this grant only in a session whose input you trust, because it lets the run send data of the case to any address.",
+    "mcp__<research server>": "With no research server, or no grant for it, the gatherer uses `WebSearch` and `WebFetch`. Give this grant only in a session whose input you trust, because it lets the run send data of the case to the research server."
   }
 }

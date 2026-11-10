@@ -223,9 +223,9 @@ mcp__hubspot__hubspot_get_marketing_emails
 ```
 <!-- caller-grants:end -->
 
-- `WebSearch`: With no `WebSearch` grant, the run uses only the answers, and records a gap for each input that it lacks.
-- `mcp__ahrefs__get_keyword_ideas` and `mcp__ahrefs__get_search_volume`: With no `ahrefs` server, or no grant for it, the run uses `WebSearch`, and marks the data as approximate.
-- `mcp__google-analytics__run_report`, `mcp__google-analytics__get_realtime_data` and `mcp__hubspot__hubspot_get_marketing_emails`: With no `google-analytics` or `hubspot` server, or no grant for it, the run uses the numbers of the answers, and records a gap for each number that it lacks.
+- `WebSearch`: With no `WebSearch` grant, the run uses only the answers, and records a gap for each input that it lacks. Give this grant only in a session whose input you trust, because it lets the run send words of the case to the search provider in a query.
+- `mcp__ahrefs__get_keyword_ideas` and `mcp__ahrefs__get_search_volume`: With no `ahrefs` server, or no grant for it, the run uses `WebSearch`, and marks the data as approximate. Give this grant only in a session whose input you trust, because it lets the run send data of the case to the `ahrefs` server.
+- `mcp__google-analytics__run_report`, `mcp__google-analytics__get_realtime_data` and `mcp__hubspot__hubspot_get_marketing_emails`: With no `google-analytics` or `hubspot` server, or no grant for it, the run uses the numbers of the answers, and records a gap for each number that it lacks. Give this grant only in a session whose input you trust, because it lets the run send data of the case to the `google-analytics` or `hubspot` server.
 
 `business-case` does not give these grants. Each runner skill holds `WebSearch` and its MCP read tools in its own `allowed-tools`, so in the turn of the skill these calls do not ask.
 

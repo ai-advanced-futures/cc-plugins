@@ -2,7 +2,11 @@
 
 This plugin maps the competitors of a market, gathers public facts about them, and analyzes a competitor through six lenses. It writes a SWOT, recommendations, and the pages of a graph that other plugins read.
 
-## What's New in v1.11.1
+## What's New in v1.11.2
+
+- Each optional web or MCP grant in `caller-grants.json` and in the README now has a warning: give the grant only in a session whose input you trust, because it lets the run send data of the case out of the session (STORY-277).
+
+## What Was New in v1.11.1
 
 - `probe-plugin.sh` finds another plugin in the Claude config folder: `$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`. Before, a session with the variable set found no install of another plugin, and the step that needed it gave no result and no error (STORY-281).
 
@@ -177,8 +181,9 @@ mcp__<research server>
 ```
 <!-- caller-grants:end -->
 
-- `WebSearch` and `WebFetch`: With no web grant, the run goes on and writes its result file. The result file records the web research as a gap, and the sources of its results have the type `model` or `default`.
-- `mcp__<research server>`: With no research server, or no grant for it, the gatherer uses `WebSearch` and `WebFetch`.
+- `WebSearch`: With no web grant, the run goes on and writes its result file. The result file records the web research as a gap, and the sources of its results have the type `model` or `default`. Give this grant only in a session whose input you trust, because it lets the run send words of the case to the search provider in a query.
+- `WebFetch`: With no web grant, the run goes on and writes its result file. The result file records the web research as a gap, and the sources of its results have the type `model` or `default`. Give this grant only in a session whose input you trust, because it lets the run send data of the case to any address.
+- `mcp__<research server>`: With no research server, or no grant for it, the gatherer uses `WebSearch` and `WebFetch`. Give this grant only in a session whose input you trust, because it lets the run send data of the case to the research server.
 
 `business-case` does not give these grants. In a session with a person, Claude Code asks for each call.
 

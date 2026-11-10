@@ -15,12 +15,12 @@
     "mcp__hubspot__hubspot_get_marketing_emails"
   ],
   "optional": {
-    "WebSearch": "With no `WebSearch` grant, the run uses only the answers, and records a gap for each input that it lacks.",
-    "mcp__ahrefs__get_keyword_ideas": "With no `ahrefs` server, or no grant for it, the run uses `WebSearch`, and marks the data as approximate.",
-    "mcp__ahrefs__get_search_volume": "With no `ahrefs` server, or no grant for it, the run uses `WebSearch`, and marks the data as approximate.",
-    "mcp__google-analytics__run_report": "With no `google-analytics` or `hubspot` server, or no grant for it, the run uses the numbers of the answers, and records a gap for each number that it lacks.",
-    "mcp__google-analytics__get_realtime_data": "With no `google-analytics` or `hubspot` server, or no grant for it, the run uses the numbers of the answers, and records a gap for each number that it lacks.",
-    "mcp__hubspot__hubspot_get_marketing_emails": "With no `google-analytics` or `hubspot` server, or no grant for it, the run uses the numbers of the answers, and records a gap for each number that it lacks."
+    "WebSearch": "With no `WebSearch` grant, the run uses only the answers, and records a gap for each input that it lacks. Give this grant only in a session whose input you trust, because it lets the run send words of the case to the search provider in a query.",
+    "mcp__ahrefs__get_keyword_ideas": "With no `ahrefs` server, or no grant for it, the run uses `WebSearch`, and marks the data as approximate. Give this grant only in a session whose input you trust, because it lets the run send data of the case to the `ahrefs` server.",
+    "mcp__ahrefs__get_search_volume": "With no `ahrefs` server, or no grant for it, the run uses `WebSearch`, and marks the data as approximate. Give this grant only in a session whose input you trust, because it lets the run send data of the case to the `ahrefs` server.",
+    "mcp__google-analytics__run_report": "With no `google-analytics` or `hubspot` server, or no grant for it, the run uses the numbers of the answers, and records a gap for each number that it lacks. Give this grant only in a session whose input you trust, because it lets the run send data of the case to the `google-analytics` or `hubspot` server.",
+    "mcp__google-analytics__get_realtime_data": "With no `google-analytics` or `hubspot` server, or no grant for it, the run uses the numbers of the answers, and records a gap for each number that it lacks. Give this grant only in a session whose input you trust, because it lets the run send data of the case to the `google-analytics` or `hubspot` server.",
+    "mcp__hubspot__hubspot_get_marketing_emails": "With no `google-analytics` or `hubspot` server, or no grant for it, the run uses the numbers of the answers, and records a gap for each number that it lacks. Give this grant only in a session whose input you trust, because it lets the run send data of the case to the `google-analytics` or `hubspot` server."
   },
   "not_routes": [
     "research-agent"

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.2
+
+- Each optional web or MCP grant in `caller-grants.json` and in the README now has a warning: give the grant only in a session whose input you trust, because it lets the run send data of the case out of the session (STORY-277).
+
 ## 1.11.1
 
 - `probe-plugin.sh` finds another plugin in the Claude config folder: `$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`. Before, a session with the variable set found no install of another plugin, and the step that needed it gave no result and no error (STORY-281).
