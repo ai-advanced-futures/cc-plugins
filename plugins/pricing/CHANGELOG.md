@@ -4,6 +4,10 @@ All notable changes to the pricing plugin will be documented in this file.
 
 The first heading is the version in `.claude-plugin/plugin.json`. A test checks that they agree.
 
+## 1.13.6
+
+- **fix:** The skills `audit`, `package`, `price` and `value-metric` name their procedure file as `${CLAUDE_SKILL_DIR}/<file>` and have a `Read` grant for that one file. Before, a run with `claude -p` in the default mode refused the `Read` of the procedure file, and the skill went on with no procedure file (STORY-280).
+
 ## 1.13.5
 
 - Each skill names each script that it runs in its Bash grant (`scripts/<file> *`). Before, the grant `scripts/*` also permitted `uv run` of a file outside the scripts folder through a path with `..`, also a file of the project (STORY-283).

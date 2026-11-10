@@ -1,7 +1,7 @@
 ---
 name: value-metric
 description: Select the right pricing axis (value metric) for a feature or product using Campbell's 3 criteria plus Amadeo's AI-era 4th criterion. Detects per-user pricing antipattern and recommends the metric that scales with Speed × Accuracy of Outcome.
-allowed-tools: Edit(/.pricing/**)
+allowed-tools: Edit(/.pricing/**), Read(//**/skills/value-metric/value-metric.md)
 ---
 
 # Value Metric — Select the Right Pricing Axis
@@ -55,4 +55,4 @@ Flags `per_user_antipattern: true` when:
 - **Reads from:** the jtbd graph, through `brain_read.py wtp` (if it holds data — informs metric selection). When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing.
 - **Next step:** `/pricing:price` — use selected metric when computing RIGHT_PRICE
 - **Orchestrated by:** `pricing-auditor` and `new-offering-pricer` agents
-- **Full prompt:** See `value-metric.md` in this directory
+- **Full prompt:** Read `${CLAUDE_SKILL_DIR}/value-metric.md` before you start.

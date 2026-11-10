@@ -1,7 +1,7 @@
 ---
 name: package
 description: Interactive agent-driven workflow for Good/Better/Best tier packaging. Walks users through feature collection, Killer/Leader/Filler classification, freemium gate decision tree, tier assignment, and 9-benefit complexity validation using Ramanujam's framework.
-allowed-tools: Edit(/.pricing/**)
+allowed-tools: Edit(/.pricing/**), Read(//**/skills/package/package.md)
 ---
 
 # Package — Interactive Good/Better/Best Tier Design
@@ -57,4 +57,4 @@ Agent-driven workflow that walks you through building a tier architecture step b
 - **Reads from:** `.pricing/pricing-recommendation.json` (RIGHT_PRICE as anchor)
 - **Reads from:** the jtbd graph, through `brain_read.py outcomes` (if it holds data — for tier placement signal). When `pricing:price` runs this skill, take jtbd data only from what its price gate accepted, and none when the gate accepted nothing.
 - **Orchestrated by:** `new-offering-pricer` agent
-- **Full prompt:** See `package.md` in this directory
+- **Full prompt:** Read `${CLAUDE_SKILL_DIR}/package.md` before you start.

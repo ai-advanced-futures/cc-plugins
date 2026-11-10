@@ -1,7 +1,7 @@
 ---
 name: audit
 description: Audit existing features for AI-era classification and pricing antipatterns using the two-layer Amadeo rubric (Layer 1 fast triage, Layer 2 high-multiplier gate). Classifies each feature as AI_ERA, HYBRID, or LEGACY and outputs a time-bound review schedule.
-allowed-tools: Edit(/.pricing/**)
+allowed-tools: Edit(/.pricing/**), Read(//**/skills/audit/audit.md)
 ---
 
 # Audit — AI-Era Classification
@@ -64,4 +64,4 @@ If any fails → AI_MULTIPLIER capped at 5×.
 
 - **Next step:** `/pricing:price` — compute RIGHT_PRICE for each AI_ERA or HYBRID feature
 - **Orchestrated by:** `pricing-auditor` agent for full end-to-end audit workflow
-- **Full prompt:** See `audit.md` in this directory
+- **Full prompt:** Read `${CLAUDE_SKILL_DIR}/audit.md` before you start.
