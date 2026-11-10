@@ -21,5 +21,5 @@ A source must be `.md`, `.markdown`, `.txt` or `.pdf`. Reject any other type wit
 ## Workflow
 
 1. Check the Runtime Gate. Make each path absolute.
-2. Use the Agent tool with `subagent_type: grounded-synthesis:grounded-synthesis-orchestrator`. Send `draft_path`, `source_paths`, and the optional `key_facts_per_source` and `output_path`.
+2. Start the orchestrator in the foreground: use the Agent tool with `subagent_type: grounded-synthesis:grounded-synthesis-orchestrator` and `run_in_background: false`, and wait for its reply. A background agent cannot ask for a permission, so a Bash call outside the grant of this skill is refused and the audit stops. Send `draft_path`, `source_paths`, and the optional `key_facts_per_source` and `output_path`.
 3. Show the user the path of the gap report and the one-line coverage summary from the orchestrator.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.6
+
+- Step 2 of the skill `grounded-synthesis-audit` starts the orchestrator in the foreground, with `run_in_background: false`, and waits for its reply. Before, the `Agent` call often had no `run_in_background` key, and the harness then started the orchestrator in the background (4 of 10 live runs). A background agent cannot ask for a permission, so a Bash call outside the grant of the skill was refused and the audit stopped (STORY-239).
+
 ## 0.4.5
 
 - The fact count is a ceiling. The fact extractor writes at most the target count (12 by default, bounded [8, 20]), and fewer when the source holds fewer. A fact file can have 0 facts when `extraction_notes` gives the reason. The audit skips such a source with the warning `the source holds no fact`, so the status is `partial`; when no source holds a fact, the audit fails with `no source holds a fact`. A statement about the source itself (its length, its form, what it does not contain) is not a fact. Before, the extractor wrote such statements to get to 8 or 12 facts, and no draft could keep them (STORY-218).
