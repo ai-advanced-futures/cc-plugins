@@ -6,17 +6,18 @@ TIER ?=
 
 # A tier is the first part of a test name: runner (a caller starts unit-economics-runner with a plugin-run block),
 # discover (/product-finance:discover with a jtbd graph), setup (/product-finance:setup with the jtbd option),
-# person (3 person runs of /product-finance:discover) and partial (discover-runner with no SAM and no market share).
+# person (3 person runs of /product-finance:discover), partial (discover-runner with no SAM and no market share)
+# and aieconomics (/product-finance:ai-economics: a person run and a runner run whose figures come from the script).
 # -p no:cacheprovider: the text scans of tests/unit read each file of the plugin, and a .pytest_cache makes them fail.
 PYTEST := PRODUCT_FINANCE_ITEST=1 uv run --quiet --no-project --with-requirements requirements-dev.txt python -m pytest tests/integration -m integration -rs -p no:cacheprovider
 
 .PHONY: itest
 itest:
-	@test -n "$(TIER)" || { echo "TIER is required: make itest TIER=runner|discover|setup|person|partial|all"; exit 2; }
+	@test -n "$(TIER)" || { echo "TIER is required: make itest TIER=runner|discover|setup|person|partial|aieconomics|all"; exit 2; }
 ifeq ($(TIER),all)
 	$(PYTEST)
-else ifneq ($(filter $(TIER),runner discover setup person partial),)
+else ifneq ($(filter $(TIER),runner discover setup person partial aieconomics),)
 	$(PYTEST) -k "test_$(TIER)_"
 else
-	@echo "unknown TIER '$(TIER)': use runner|discover|setup|person|partial|all"; exit 2
+	@echo "unknown TIER '$(TIER)': use runner|discover|setup|person|partial|aieconomics|all"; exit 2
 endif
