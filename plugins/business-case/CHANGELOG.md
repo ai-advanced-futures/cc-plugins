@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.6
+
+- `set` and `new --set` keep a date or a time as the text that you give, at each depth of a list or a map. Before, a value such as `2026-11-06T22:21:48Z` became a date object, and the save refused the page (STORY-275).
+
 ## 0.9.5
 
 - `probe-plugin.sh` finds another plugin in the Claude config folder: `$CLAUDE_CONFIG_DIR` when it is set, else `~/.claude`. Before, a session with the variable set found no install of another plugin, and the step that needed it gave no result and no error (STORY-281).

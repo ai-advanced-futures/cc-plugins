@@ -94,11 +94,26 @@ def log(root, operation, text, actor=None) -> None:
     logbook.append(bundle_dir(root) / "log.md", operation, text, actor or schema.plugin_actor())
 
 
+class _TextTimeLoader(yaml.SafeLoader):
+    """A SafeLoader that reads a date or a time as the text that the person gave (STORY-275, as STORY-186).
+
+    No business-case field takes a YAML date: the time fields are strings in the schema, and the
+    page read turns each date into text. So a value such as 2026-11-06T22:21:48Z stays
+    that text, at each depth of a list or a map.
+    """
+
+
+_TextTimeLoader.yaml_implicit_resolvers = {
+    first: [(tag, regexp) for tag, regexp in resolvers if tag != "tag:yaml.org,2002:timestamp"]
+    for first, resolvers in yaml.SafeLoader.yaml_implicit_resolvers.items()
+}
+
+
 def parse_set(item) -> tuple[str, object]:
     if "=" not in item:
         raise UsageError(f"{item!r} is not KEY=VALUE")
     key, value = item.split("=", 1)
-    return key.strip(), (yaml.safe_load(value) if value.strip() else "")
+    return key.strip(), (yaml.load(value, Loader=_TextTimeLoader) if value.strip() else "")
 
 
 def _apply(frontmatter, pairs, verb) -> None:

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.3
+
+- `set` and `new --set` keep a date or a time as the text that you give, at each depth of a list or a map. Before, a value such as `2026-11-06T22:21:48Z` became a date object, and the save refused the page (STORY-275).
+
 ## 1.11.2
 
 - Each optional web or MCP grant in `caller-grants.json` and in the README now has a warning: give the grant only in a session whose input you trust, because it lets the run send data of the case out of the session (STORY-277).
