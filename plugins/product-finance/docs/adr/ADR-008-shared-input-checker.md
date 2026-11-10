@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-11-09
 **Builds on:** ADR-007, `ADR-007-assumptions-input-contract.md`
-**Plugin:** product-finance v0.13.5, amended in v0.13.6, v0.13.7 and v0.14.0
+**Plugin:** product-finance v0.13.5, amended in v0.13.6, v0.13.7, v0.14.0 and v0.15.0
 
 ---
 
@@ -11,7 +11,7 @@
 
 `ai_roi_calculator.py` checked its input with `pydantic`, so `uv run` had to get that package before the script could start. A machine that could not get it stopped the script, and the model worked out the figures by hand. A bad value also printed the multi-line text of `pydantic`, which a person could not act on.
 
-ADR-007 moved `market_sizing_calculator.py` to `scripts/input_check.py`, a checker that needs only the standard library of Python. This ADR records the checker as the one tool that both scripts share, so the next script uses it again. The amendment in v0.13.6 moved `unit_economics.py` and `rule_of_40.py` to it, and made it refuse a number that is not finite. The amendment in v0.13.7 moved the input read and the refusal that the 3 calculator scripts shared into the checker, and made a `null` in a field with a default take the default. The amendment in v0.14.0 gave the `null` of a required field its own reason, and rewrote the known limit for a figure above the float range.
+ADR-007 moved `market_sizing_calculator.py` to `scripts/input_check.py`, a checker that needs only the standard library of Python. This ADR records the checker as the one tool that both scripts share, so the next script uses it again. The amendment in v0.13.6 moved `unit_economics.py` and `rule_of_40.py` to it, and made it refuse a number that is not finite. The amendment in v0.13.7 moved the input read and the refusal that the 3 calculator scripts shared into the checker, and made a `null` in a field with a default take the default. The amendment in v0.14.0 gave the `null` of a required field its own reason, and rewrote the known limit for a figure above the float range. The amendment in v0.15.0 extended `one_of` to an int field: a stored int that is not listed gets `not one of` and the listed values joined by ", ".
 
 ## Decision
 

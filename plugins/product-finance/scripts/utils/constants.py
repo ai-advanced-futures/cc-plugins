@@ -49,6 +49,8 @@ CAC_PAYBACK_THRESHOLDS = [
 # Format: [(lower_bound_inclusive, MetricHealth), ...] ascending order
 # Use assess_ratio_health() for this threshold.
 # ---------------------------------------------------------------------------
+# These bands have no published source. They are kept only so that health_status does
+# not change.
 RULE_OF_40_THRESHOLDS = [
     (0,            MetricHealth.CRITICAL),   # score < 20 (lower-bound format)
     (20,           MetricHealth.WARNING),    # 20–30

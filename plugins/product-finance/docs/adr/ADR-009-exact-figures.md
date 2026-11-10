@@ -33,3 +33,7 @@ Decision D-544 chose exact math until output for each printed figure of these 3 
 - A value on a band edge gets the band that the edge belongs to, and a printed figure is its exact value rounded half away from zero. In 0.14.0 this changed CAC, the weighted Rule of 40 in 11 sample cases, LTV:CAC in 1 case, and a Magic Number tie at 0.125, which now prints `0.13`.
 - Each changed sample file was set by hand, from the formula, before the script ran on it.
 - A new figure must go through `as_written` and `shown`, or the source guard fails. A new JSON figure must also have a row in the places table.
+
+## Amendment in v0.15.0
+
+The new JSON keys of 0.15.0 take 2 places by decision, and no new key prints `-0.0`.

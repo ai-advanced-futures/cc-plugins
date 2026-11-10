@@ -387,7 +387,7 @@ for every $1 spent on sales and marketing.
 - **Default:** an estimate, `(sales costs + marketing costs) × 3 / period months`, used only when no answer is given. In a person's run, ask first. If the person has no value for it or skips it, tell them plainly that the Magic Number cannot be calculated reliably without it, then use the estimate. In automated mode, ask nothing and use the estimate.
 - **Terms:** `sales costs + marketing costs` is the `sm_spend` answer. `period months` is the number of months `analysis_period` covers: 3, 6 or 12 for `last_3_months`, `last_6_months` and `last_12_months`, and the months of the range for `current_quarter` or `custom`. When the period is not known, use 12, as the script does.
 
-When the spend is an estimate, write `"is_estimate": true` in the `magic_number` block of `unit-economics.json` and set `"estimate_note"` to the text below. Copy the text exactly. In the dashboard, show the value as `<value> (estimate)` and put the note directly under the Magic Number line. With a given spend, write `"is_estimate": false` and `"estimate_note": null`.
+When the spend is an estimate, write `"is_estimate": true` in the `magic_number` block of `unit-economics.json` and set `"estimate_note"` to the text below. Copy the text exactly. Write `"benchmark_notes": null` for an estimate. In the dashboard, show the value as `<value> (estimate)` and put the note directly under the Magic Number line. With a given spend, write `"is_estimate": false` and `"estimate_note": null`.
 
 > The prior quarter's S&M spend was not given, so the Magic Number cannot be calculated reliably. This figure estimates that spend as (sales costs + marketing costs) × 3 / period months. Recalculate it with the prior quarter's S&M spend before anyone uses it as fact.
 
@@ -1477,7 +1477,7 @@ Health Status:
 - 60-74: Acceptable
 - <60: Needs Improvement
 
-When the Magic Number is an estimate, score only the other components. Overall Health Score = (points scored × 100) / (the maximum points of the components scored), rounded to a whole number. Show the Magic Number's own band, not its points.
+When the Magic Number is an estimate, score only the other components. Overall Health Score = (points scored × 100) / (the maximum points of the components scored), rounded to a whole number. Show the Magic Number's own band, not its points. For an estimate, show the band but not the band's sentence: leave out the whole `benchmark_notes` text (for example, not "Consider increasing S&M investment.").
 
 When the Magic Number is an estimate, no recommendation and no risk line acts on its band, including "Magic Number falls below 0.75". The only Magic Number recommendation is this sentence, with `<value>` replaced by the Magic Number to two decimal places: `Recalculate the Magic Number with the prior quarter's S&M spend: <value> is an estimate.`
 

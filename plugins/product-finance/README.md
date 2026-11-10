@@ -101,7 +101,7 @@ Financial health with board-level KPIs.
 
 **Use when:** you prepare a board review, a quarterly review, or an investor update.
 
-**Assesses:** Rule of 40 (revenue growth % + EBITDA margin % of 40 or more), the unit economics, retention and expansion, efficiency ratios, and benchmarks.
+**Assesses:** Rule of 40 (revenue growth % + EBITDA margin %), the unit economics, retention and expansion, efficiency ratios, and benchmarks.
 
 ### Implementation and instrumentation
 
@@ -185,7 +185,7 @@ The plugin works with no other plugin. A person can give the input to each comma
 ## Board-Level KPIs
 
 - **Growth:** ARR, MRR, revenue growth rate, new, expansion and churned ARR
-- **Profitability:** EBITDA margin, gross margin, contribution margin, Rule of 40
+- **Profitability:** EBITDA margin, gross margin, contribution margin, Rule of 40 (revenue growth % + EBITDA margin %), graded against a target of 40, 50 or 60 (default 40) by the rule-of-40 skill
 - **Unit economics:** CAC, LTV, LTV:CAC, CAC payback, Magic Number
 - **Retention:** NRR, GRR, logo retention, churn, expansion revenue
 - **AI:** cost for each interaction, cost as a share of revenue, AI-enabled revenue, AI ROI

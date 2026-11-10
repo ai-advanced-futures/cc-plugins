@@ -263,7 +263,7 @@ class MagicNumberResult:
         prior_quarter_sm_spend: Prior quarter sales & marketing spend
         efficiency_interpretation: Interpretation of efficiency
         health_status: Health assessment
-        benchmark_notes: Benchmark comparison notes
+        benchmark_notes: Benchmark comparison notes, or None for an estimate
         is_estimate: True when the prior quarter's spend was estimated, not given
         estimate_note: ESTIMATE_NOTE for an estimate, else None
     """
@@ -273,7 +273,7 @@ class MagicNumberResult:
     prior_quarter_sm_spend: Number
     efficiency_interpretation: str
     health_status: MetricHealth
-    benchmark_notes: str
+    benchmark_notes: Optional[str]
     is_estimate: bool = False
     estimate_note: Optional[str] = None
 
@@ -660,9 +660,10 @@ def calculate_unit_economics(data: UnitEconomicsInput) -> UnitEconomicsResult:
         else:
             spend = data.prior_quarter_sm_spend
         magic_number_result = _magic_number_result(data.net_new_arr, spend)
-        if is_estimate:
+        if is_estimate:  # an estimate prints no Notes sentence (ADR-005)
             magic_number_result.is_estimate = True
             magic_number_result.estimate_note = ESTIMATE_NOTE
+            magic_number_result.benchmark_notes = None
 
     # Determine overall health (most conservative assessment)
     health_values = [
@@ -916,8 +917,9 @@ def format_result_as_markdown(result: UnitEconomicsResult) -> str:
             f"- **Prior Quarter S&M Spend:** ${shown(mn.prior_quarter_sm_spend, 2):,.2f}{spend_label}",  # noqa: E501
             f"- **Interpretation:** {mn.efficiency_interpretation}",
             f"- **Health:** {mn.health_status.value}",
-            f"- **Notes:** {mn.benchmark_notes}",
         ])
+        if mn.benchmark_notes is not None:
+            lines.append(f"- **Notes:** {mn.benchmark_notes}")
         if mn.is_estimate:
             lines.append(f"- **Estimate:** {mn.estimate_note}")
         lines.append("")

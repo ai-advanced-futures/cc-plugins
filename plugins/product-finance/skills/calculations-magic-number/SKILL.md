@@ -115,6 +115,8 @@ annual S&M spend, aligning with the standard SaaS benchmark where a score of
 }
 ```
 
+When the Magic Number is an estimate, `benchmark_notes` is null.
+
 ## Process
 
 1. **Collect Input Data:**

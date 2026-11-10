@@ -4,23 +4,18 @@
 # ///
 """Rule of 40 Calculator for SaaS Financial Health Analysis.
 
-This module provides comprehensive Rule of 40 calculations including:
-- Classic Rule of 40 (Revenue Growth % + EBITDA Margin % ≥ 40%)
-- Weighted Rule of 40 (1.33 × Growth + 0.67 × EBITDA Margin)
-- Growth vs. profitability analysis
-- Benchmark comparison and recommendations
+This module provides Rule of 40 calculations:
+- Classic Rule of 40 (Revenue Growth % + EBITDA Margin %)
+- Weighted Rule of 40 (1.33 × Growth + 0.67 × EBITDA Margin), a plugin convention, not graded
+- A target of 40, 50 or 60, graded on each margin given
+- The ladder of the score against each bar, and reference lines
 
-Based on Brad Feld's Rule of 40 framework and industry best practices from:
-- Brad Feld (Foundry Group) - Rule of 40 framework
-- Ben Murray (The SaaS CFO) - SaaS financial benchmarks
-- McKinsey & Company - Software company performance analysis
-- Tomasz Tunguz (Theory Ventures) - Growth and profitability balance
+Sources: the verified source ids FELD, VISTA, ICONIQ, BVP-AI, BVP-X and MERITECH. The
+constants table below holds each source's title and date (SOURCES) and every quote.
 
-The Rule of 40 is a key metric for SaaS company health:
-- Score ≥ 40: Excellent (healthy balance of growth and profitability)
-- Score 30-40: Good (solid performance)
-- Score 20-30: Warning (needs attention)
-- Score < 20: Critical (significant issues)
+The target rule: each margin given is scored as growth + margin against the target
+(40 by default, or 50 or 60 as chosen). A score equal to the target meets it. A product
+with 12 or fewer months of revenue is not graded.
 
 Author: Luis F. Amadeo (Chief Agentic Officer)
 License: MIT
@@ -31,7 +26,7 @@ import sys
 from dataclasses import dataclass
 from fractions import Fraction
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Optional, Tuple
+from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
 if __package__ in (None, ""):  # run by path: uv run "<plugin root>/scripts/<file>.py"
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # its own package, never the cwd
@@ -49,12 +44,17 @@ class RuleOf40Input:
     Attributes:
         revenue_growth_rate: Revenue growth rate as a percentage (can be negative)
         ebitda_margin: EBITDA margin as a percentage (can be negative)
-        company_stage: Growth stage for contextualized analysis (optional)
+        company_stage: Growth stage, used only for health_status (optional)
         previous_period_growth: Previous period's growth rate for trend analysis (optional)
         previous_period_margin: Previous period's EBITDA margin for trend analysis (optional)
         arr: Annual Recurring Revenue for context (optional)
         quarterly_net_new_arr: Net new ARR added in most recent quarter, for Magic Number (optional)
         prior_quarter_sm_spend: S&M spend in prior quarter, for Magic Number (optional)
+        target: Rule of 40 target to grade against: 40, 50 or 60 (optional)
+        fcf_margin: Free cash flow margin as a percentage (optional)
+        months_of_revenue: Months the product has earned revenue, 1 to 1200 (optional)
+        nrr: Net revenue retention as a percentage (optional)
+        gross_margin: Gross margin as a percentage (optional)
     """
 
     TOGETHER: ClassVar[Tuple[Tuple[str, str], ...]] = (
@@ -70,10 +70,197 @@ class RuleOf40Input:
     arr: Optional[float] = limits(gt=0, le=100_000_000_000, default=None)
     quarterly_net_new_arr: Optional[float] = None
     prior_quarter_sm_spend: Optional[float] = limits(ge=0, default=None)
+    target: Optional[int] = limits(one_of=(40, 50, 60), default=None)
+    fcf_margin: Optional[float] = limits(ge=-500, le=100, default=None)
+    months_of_revenue: Optional[int] = limits(gt=0, le=1200, default=None)
+    nrr: Optional[float] = limits(ge=0, le=1000, default=None)
+    gross_margin: Optional[float] = limits(ge=-500, le=100, default=None)
 
 
 # The classes input_check reads, in the order fields.json recorded them.
 INPUT_CLASSES = (RuleOf40Input,)
+
+# The constants table (spec 0.15.0, "Verified sources"). Every quoted source string
+# lives here, and nowhere else in the plugin's code: the report and `--help` are built
+# from it, and test_rule_of_40_docs.py holds each quote in the docs to a QUOTES fragment
+# and each ladder Source cell to LADDER_SOURCES. Each quoted fragment is a substring of
+# its verified passage, character for character (test_rule_of_40_targets.py,
+# TestSources).
+# Source id -> (title, date as the source prints it; None when the page shows no date).
+SOURCES: Dict[str, Tuple[str, Optional[str]]] = {
+    "FELD": ("The Rule of 40% For a Healthy SaaS Company", "3 Feb 2015"),
+    "VISTA": ("Rethinking Software Benchmarks in an AI-Driven Market", "8 Jan 2026"),
+    "ICONIQ": ("The ICONIQ Enterprise Five", None),
+    "BVP-AI": ("The State of AI 2025", "13 Aug 2025"),
+    "BVP-X": ("The Rule of X", "2 Jan 2024"),
+    "MERITECH": ("Software Pulse", "14-August-2026"),
+}
+FELD_QUOTE = "The 40% rule is that your growth rate + your profit should add up to 40%."
+VISTA_QUOTE = "an emerging aspiration, not a universal baseline"
+VISTA_SHORT = "an emerging aspiration"
+ICONIQ_WEIGHT = (
+    "we typically only begin to place real weight against Rule of 40 for companies "
+    "with at least $25M ARR"
+)
+ICONIQ_REASON = (
+    "exceptional year-over-year growth inflates Rule of 40 performance for early-stage companies"
+)
+ICONIQ_CITATION = f"ICONIQ, {SOURCES['ICONIQ'][0]} (2025 KPIs)"
+
+# (source id, quoted fragment), one row per quote.
+QUOTES: Tuple[Tuple[str, str], ...] = (
+    ("FELD", FELD_QUOTE),
+    ("VISTA", VISTA_QUOTE),
+    ("VISTA", VISTA_SHORT),
+    ("ICONIQ", ICONIQ_WEIGHT),
+    ("ICONIQ", ICONIQ_REASON),
+)
+
+# The Source cell of each ladder row (spec section 4).
+LADDER_SOURCES: Dict[int, str] = {
+    40: f'Feld (2015): "{FELD_QUOTE}"',
+    50: "No published benchmark found. A bar you set.",
+    60: f'Vista Equity Partners ({SOURCES["VISTA"][1]}): "{VISTA_QUOTE}".',
+}
+ICONIQ_CAUTION = (
+    f'Caution (ICONIQ): "{ICONIQ_WEIGHT}", because "{ICONIQ_REASON}" ({ICONIQ_CITATION}).'
+)
+# A paraphrase of Bessemer's figures, not a quote.
+GROSS_MARGIN_SOURCE = (
+    f"Bessemer, {SOURCES['BVP-AI'][0]} ({SOURCES['BVP-AI'][1]}): AI Supernovas average 25% "
+    "gross margins; Shooting Stars about 60%."
+)
+SPLIT_LINE = (
+    "The EBITDA and FCF lines disagree at {target}. The two margins differ by capital "
+    "spending, stock-based pay, working capital, interest and tax. Use the margin your "
+    "board or investors use."
+)
+WEIGHTED_LABEL = "plugin convention, not graded"
+
+TARGETS = (40, 50, 60)
+DEFAULT_TARGET = 40
+
+
+@dataclass
+class TargetLine:
+    """One margin against the target (spec section 2).
+
+    Attributes:
+        basis: "ebitda" or "fcf"
+        margin: the margin, as a percentage
+        score: growth + margin
+        status: "met", "short" or "not_graded"
+        short_by: target - score when the status is "short", else None
+    """
+
+    basis: str
+    margin: Fraction
+    score: Fraction
+    status: str
+    short_by: Optional[Fraction]
+
+
+def target_status_for(
+    growth: Fraction,
+    ebitda_margin: Fraction,
+    fcf_margin: Optional[Fraction],
+    target: int,
+    months_of_revenue: Optional[int],
+) -> Tuple[str, List[TargetLine]]:
+    """The target status and one line per given margin, EBITDA first (spec section 2).
+
+    A line is met when its score is at least the target. The product is not graded
+    when `months_of_revenue` is given and is 12 or less. Otherwise the status is
+    "met" when every line is met, "short" when every line is short, else "split".
+    """
+    growth = as_written(growth)
+    margins = [("ebitda", as_written(ebitda_margin))]
+    if fcf_margin is not None:
+        margins.append(("fcf", as_written(fcf_margin)))
+    graded = months_of_revenue is None or months_of_revenue > 12
+    lines = []
+    for basis, margin in margins:
+        score = growth + margin
+        if not graded:
+            status, short_by = "not_graded", None
+        elif score >= target:
+            status, short_by = "met", None
+        else:
+            status, short_by = "short", target - score
+        lines.append(TargetLine(basis, margin, score, status, short_by))
+    if not graded:
+        return "not_graded", lines
+    statuses = {line.status for line in lines}
+    if statuses == {"met"}:
+        return "met", lines
+    if statuses == {"short"}:
+        return "short", lines
+    return "split", lines
+
+
+def _json2(x: Fraction) -> float:
+    """A new JSON figure: `x` at 2 places, with a negative zero written 0.0 (spec section 5)."""
+    value = float(shown(x, 2))
+    return 0.0 if value == 0 else value
+
+
+def _ladder_cell(x: Fraction) -> str:
+    """A ladder cell: score minus bar at 1 place, with a sign (spec section 4).
+
+    An exact zero prints 0.0 (`shown` gives it no sign). A value that is not zero
+    but prints as zero keeps its sign: -0.0 below the bar, +0.0 above it.
+    """
+    text = str(shown(x, 1))
+    return "+" + text if x > 0 else text
+
+
+@dataclass
+class LadderRow:
+    """One bar of the ladder (spec section 4).
+
+    Attributes:
+        bar: 40, 50 or 60
+        target: True on the target's row
+        ebitda: the EBITDA score minus the bar (never the score)
+        fcf: the FCF score minus the bar, or None when fcf_margin is not given
+        source: the row's Source cell
+    """
+
+    bar: int
+    target: bool
+    ebitda: Fraction
+    fcf: Optional[Fraction]
+    source: str
+
+
+def _ladder(lines: List[TargetLine], target: int) -> List[LadderRow]:
+    """Each line's score minus each bar, 40, 50 and 60. Arithmetic, not a verdict, so it
+    is the same whether or not the product is graded."""
+    scores = {line.basis: line.score for line in lines}
+    fcf = scores.get("fcf")
+    return [LadderRow(bar, bar == target, scores["ebitda"] - bar,
+                      None if fcf is None else fcf - bar, LADDER_SOURCES[bar])
+            for bar in TARGETS]
+
+
+def _reference_lines(
+    nrr: Optional[Fraction], gross_margin: Optional[Fraction], months_of_revenue: Optional[int]
+) -> List[str]:
+    """The Reference Lines as a list of "<label>: <rest>" (spec section 4).
+
+    The list is joined by newlines in the JSON.
+
+    Under the age gate (12 months or less) the NRR line says it is not available,
+    whether `nrr` is given or not. No reference line enters the score or the status.
+    """
+    lines = []
+    if months_of_revenue is not None and months_of_revenue <= 12:
+        lines.append("NRR: not available before the thirteenth month of revenue.")
+    elif nrr is not None:
+        lines.append(f"NRR: {shown(nrr, 1):.1f}%")
+    if gross_margin is not None:
+        lines.append(f"Gross Margin: {shown(gross_margin, 1):.1f}%. {GROSS_MARGIN_SOURCE}")
+    return lines
 
 
 @dataclass
@@ -85,7 +272,18 @@ class RuleOf40Result:
         weighted_rule_of_40: Weighted Rule of 40 (1.33 × Growth + 0.67 × EBITDA)
         revenue_growth_rate: Revenue growth rate percentage
         ebitda_margin: EBITDA margin percentage
+        fcf_margin: Free cash flow margin percentage, or None when not given. The
+            markdown prints it; the JSON does not (spec section 5)
         health_status: Overall health assessment
+        target: The target graded against: 40, 50 or 60
+        target_source: "default" when no target was given, else "chosen"
+        target_status: "met", "short", "split" or "not_graded"
+        target_lines: One line per given margin, EBITDA first
+        target_notes: The Target section's split, age and size lines, without "- ",
+            joined by newlines, or "" (spec section 5)
+        ladder: One row per bar, 40, 50 and 60: each score minus the bar
+        reference_lines: The Reference Lines, "<label>: <rest>", or [] (spec section 4);
+            joined by newlines in the JSON
         benchmark_notes: Benchmark comparison and context
         balance_analysis: Analysis of growth vs. profitability balance
         recommendations: List of actionable recommendations
@@ -97,7 +295,15 @@ class RuleOf40Result:
     weighted_rule_of_40: Number
     revenue_growth_rate: Number
     ebitda_margin: Number
+    fcf_margin: Optional[Number]
     health_status: MetricHealth
+    target: int
+    target_source: str
+    target_status: str
+    target_lines: List[TargetLine]
+    target_notes: str
+    ladder: List[LadderRow]
+    reference_lines: List[str]
     benchmark_notes: str
     balance_analysis: str
     recommendations: list[str]
@@ -114,14 +320,14 @@ def calculate_rule_of_40(data: RuleOf40Input) -> RuleOf40Result:
     Weighted Rule of 40 Formula:
         Weighted Rule of 40 = 1.33 × Revenue Growth Rate (%) + 0.67 × EBITDA Margin (%)
 
-    The weighted formula reflects that growth is typically valued ~2x more than profitability
-    in the public markets, especially for high-growth SaaS companies.
+    In valuation studies, growth outweighs FCF margin: 2–3 times for late-stage cloud
+    companies (Bessemer, The Rule of X, 2024) and 3.8 times on ARR multiples (Meritech
+    Software Pulse, 14-August-2026). This score uses EBITDA margin; the weights are a
+    plugin convention.
 
-    Health Thresholds:
-    - ≥ 40: Excellent (healthy balance, IPO-ready)
-    - 30-40: Good (solid performance, improving toward excellence)
-    - 20-30: Warning (needs improvement, below market expectations)
-    - < 20: Critical (significant issues, requires urgent action)
+    The target rule: each margin given is scored as growth + margin against the target
+    (40 by default, or 50 or 60 as chosen), and a score equal to the target meets it. A
+    product with 12 or fewer months of revenue is not graded (`target_status_for`).
 
     Args:
         data: Input data for Rule of 40 calculation
@@ -149,24 +355,35 @@ def calculate_rule_of_40(data: RuleOf40Input) -> RuleOf40Result:
     # Calculate classic Rule of 40
     rule_of_40_score = growth + margin
 
-    # Calculate weighted Rule of 40 (growth weighted 2x profitability)
+    # Calculate weighted Rule of 40. In valuation studies, growth outweighs FCF margin:
+    # 2–3 times for late-stage cloud companies (Bessemer, The Rule of X, 2024) and 3.8
+    # times on ARR multiples (Meritech Software Pulse, 14-August-2026). This score uses
+    # EBITDA margin; the weights are a plugin convention.
     weighted_rule_of_40 = (Fraction("1.33") * growth) + (Fraction("0.67") * margin)
 
     # Assess health status
     health_status = _assess_health(rule_of_40_score, data.company_stage)
 
-    # Generate benchmark notes
-    benchmark_notes = _generate_benchmark_notes(
-        rule_of_40_score, weighted_rule_of_40, data.company_stage, arr
-    )
+    # Grade against the target, on each given margin (spec section 2)
+    target = DEFAULT_TARGET if data.target is None else data.target
+    fcf_margin = None if data.fcf_margin is None else as_written(data.fcf_margin)
+    target_status, target_lines = target_status_for(
+        growth, margin, fcf_margin, target, data.months_of_revenue)
+    target_notes = _target_notes(target, target_status, data.months_of_revenue, arr)
+    ladder = _ladder(target_lines, target)
+    reference_lines = _reference_lines(
+        None if data.nrr is None else as_written(data.nrr),
+        None if data.gross_margin is None else as_written(data.gross_margin),
+        data.months_of_revenue)
 
-    # Analyze growth vs. profitability balance
-    balance_analysis = _analyze_balance(growth, margin, data.company_stage)
+    # Generate benchmark notes
+    benchmark_notes = _generate_benchmark_notes(rule_of_40_score, weighted_rule_of_40, arr)
+
+    # State growth and profitability side by side
+    balance_analysis = _analyze_balance(growth, margin)
 
     # Generate recommendations
-    recommendations = _generate_recommendations(
-        rule_of_40_score, growth, margin, data.company_stage
-    )
+    recommendations = _generate_recommendations(target_status, target, target_lines)
 
     # Generate trend analysis if previous period data provided
     trend_analysis = None
@@ -198,7 +415,15 @@ def calculate_rule_of_40(data: RuleOf40Input) -> RuleOf40Result:
         weighted_rule_of_40=weighted_rule_of_40,
         revenue_growth_rate=growth,
         ebitda_margin=margin,
+        fcf_margin=fcf_margin,
         health_status=health_status,
+        target=target,
+        target_source="default" if data.target is None else "chosen",
+        target_status=target_status,
+        target_lines=target_lines,
+        target_notes=target_notes,
+        ladder=ladder,
+        reference_lines=reference_lines,
         benchmark_notes=benchmark_notes,
         balance_analysis=balance_analysis,
         recommendations=recommendations,
@@ -207,8 +432,33 @@ def calculate_rule_of_40(data: RuleOf40Input) -> RuleOf40Result:
     )
 
 
+def _target_notes(
+    target: int, status: str, months_of_revenue: Optional[int], arr: Optional[Fraction]
+) -> str:
+    """The Target section's lines 4 to 6 (spec section 4), without "- ", joined by newlines."""
+    notes = []
+    if status == "split":
+        # str.replace, not .format: the source guard refuses every .format( call
+        notes.append(SPLIT_LINE.replace("{target}", str(target)))
+    if months_of_revenue is None:
+        notes.append("Age not checked: months_of_revenue was not given.")
+    elif months_of_revenue <= 12:
+        notes.append(
+            f"Not graded: months of revenue: {months_of_revenue}. "
+            "Growth is not a year-on-year rate before the thirteenth month."
+        )
+    if arr is None:
+        notes.append("Size not checked: arr was not given.")
+    elif arr < 25_000_000:
+        notes.append(ICONIQ_CAUTION)
+    return "\n".join(notes)
+
+
 def _assess_health(score: Number, stage: Optional[GrowthStage]) -> MetricHealth:
     """Assess health status based on Rule of 40 score and company stage.
+
+    These stage bands have no published source. They are kept only so that
+    health_status does not change.
 
     Args:
         score: Rule of 40 score
@@ -261,144 +511,41 @@ def _assess_health(score: Number, stage: Optional[GrowthStage]) -> MetricHealth:
 
 
 def _generate_benchmark_notes(
-    score: Number,
-    weighted_score: Number,
-    stage: Optional[GrowthStage],
-    arr: Optional[Number],
+    score: Fraction, weighted_score: Fraction, arr: Optional[Fraction]
 ) -> str:
-    """Generate benchmark comparison notes.
+    """The Benchmark Comparison lines (spec section 4): the person's own figures only.
 
     Args:
         score: Rule of 40 score
         weighted_score: Weighted Rule of 40 score
-        stage: Company growth stage
         arr: Annual Recurring Revenue (optional)
 
     Returns:
-        Formatted benchmark notes string
+        The classic and weighted scores, and the ARR when given, one per line
     """
-    notes = []
-
-    # Overall benchmark
-    notes.append(f"Classic Rule of 40: {shown(score, 1):.1f}%")
-    notes.append(f"Weighted Rule of 40: {shown(weighted_score, 1):.1f}%")
-
-    # Industry benchmarks
-    if score >= 40:
-        notes.append(
-            "Exceeds the Rule of 40 threshold - indicates excellent balance of growth and profitability."  # noqa: E501
-        )
-        notes.append("Top quartile performance for public SaaS companies.")
-    elif score >= 30:
-        notes.append("Good performance, approaching Rule of 40 excellence.")
-        notes.append("Second quartile performance - above median for public SaaS companies.")
-    elif score >= 20:
-        notes.append("Below expectations for healthy SaaS companies.")
-        notes.append("Third quartile performance - improvement needed.")
-    else:
-        notes.append("Critical - significantly below Rule of 40 threshold.")
-        notes.append("Bottom quartile performance - urgent action required.")
-
-    # Stage-specific context
-    if stage == GrowthStage.EARLY:
-        notes.append(
-            "Early stage: Prioritize growth and product-market fit. Profitability can come later."
-        )
-    elif stage == GrowthStage.GROWTH:
-        notes.append("Growth stage: Balance rapid expansion with improving unit economics.")
-    elif stage == GrowthStage.SCALE:
-        notes.append(
-            "Scale stage: Optimize for efficient growth - every dollar should drive measurable growth or profit improvement."  # noqa: E501
-        )
-    elif stage == GrowthStage.MATURE:
-        notes.append("Mature stage: Emphasize profitability while maintaining sustainable growth.")
-
-    # ARR-specific context
+    notes = [
+        f"Classic Rule of 40: {shown(score, 1):.1f}%",
+        f"Weighted Rule of 40: {shown(weighted_score, 1):.1f}% ({WEIGHTED_LABEL})",
+    ]
     if arr is not None:
-        if arr < 1_000_000:
-            notes.append(f"ARR: ${shown(arr, 0):,.0f} - Pre-$1M ARR, focus on finding product-market fit.")  # noqa: E501
-        elif arr < 10_000_000:
-            notes.append(
-                f"ARR: ${shown(arr, 0):,.0f} - $1M-$10M ARR range, focus on scaling go-to-market efficiently."  # noqa: E501
-            )
-        elif arr < 100_000_000:
-            notes.append(
-                f"ARR: ${shown(arr, 0):,.0f} - $10M-$100M ARR range, optimize for efficient growth at scale."  # noqa: E501
-            )
-        else:
-            notes.append(
-                f"ARR: ${shown(arr, 0):,.0f} - $100M+ ARR, public market expectations for balanced performance."  # noqa: E501
-            )
-
+        notes.append(f"ARR: ${shown(arr, 0):,.0f}")
     return "\n".join(notes)
 
 
-def _analyze_balance(
-    growth: Number, margin: Number, stage: Optional[GrowthStage]
-) -> str:
-    """Analyze the balance between growth and profitability.
+def _analyze_balance(growth: Fraction, margin: Fraction) -> str:
+    """The Growth vs. Profitability Balance lines (spec section 4): the two figures.
 
     Args:
         growth: Revenue growth rate
         margin: EBITDA margin
-        stage: Company growth stage
 
     Returns:
-        Analysis of growth vs. profitability balance
+        The growth rate and the EBITDA margin, one per line
     """
-    analysis = []
-
-    # Determine balance type
-    if growth > 40 and margin < 0:
-        balance_type = "Hypergrowth with investment (growth-first strategy)"
-    elif growth > 30 and margin < 10:
-        balance_type = "Growth-focused with moderate burn"
-    elif growth < 20 and margin > 20:
-        balance_type = "Profitability-focused (mature/efficient growth)"
-    elif abs(growth - margin) < 10:
-        balance_type = "Balanced growth and profitability"
-    elif growth > margin:
-        balance_type = "Growth-prioritized"
-    else:
-        balance_type = "Profitability-prioritized"
-
-    analysis.append(f"Balance Type: {balance_type}")
-    analysis.append(f"Growth Rate: {shown(growth, 1):.1f}%")
-    analysis.append(f"EBITDA Margin: {shown(margin, 1):.1f}%")
-
-    # Stage appropriateness
-    if stage == GrowthStage.EARLY:
-        if growth > 50:
-            analysis.append("Appropriate for early stage - strong growth focus.")
-        else:
-            analysis.append("Consider: Early stage companies should prioritize high growth.")
-    elif stage == GrowthStage.GROWTH:
-        if growth > 30 and margin > -20:
-            analysis.append("Good balance for growth stage - scaling efficiently.")
-        elif margin < -30:
-            analysis.append("Warning: Burn rate may be unsustainable for growth stage.")
-        elif growth < 30:
-            analysis.append("Consider: Growth stage companies should aim for >30% growth.")
-    elif stage == GrowthStage.SCALE:
-        if 20 <= growth <= 50 and margin > 0:
-            analysis.append("Excellent balance for scale stage - efficient growth with profitability.")  # noqa: E501
-        elif margin < 0:
-            analysis.append("Consider: Scale stage companies should aim for profitability.")
-    elif stage == GrowthStage.MATURE:
-        if margin > 20:
-            analysis.append("Strong profitability appropriate for mature companies.")
-        if growth < 10:
-            analysis.append("Note: Low growth typical for mature businesses, but ensure it's sustainable.")  # noqa: E501
-
-    # Growth vs. margin trade-off analysis
-    if growth < 10 and margin < 10:
-        analysis.append("CRITICAL: Neither growth nor profitability are strong - requires urgent review.")  # noqa: E501
-    elif growth > 100 and margin < -50:
-        analysis.append(
-            "Warning: Hypergrowth with very high burn - ensure unit economics will improve at scale."  # noqa: E501
-        )
-
-    return "\n".join(analysis)
+    return "\n".join([
+        f"Growth Rate: {shown(growth, 1):.1f}%",
+        f"EBITDA Margin: {shown(margin, 1):.1f}%",
+    ])
 
 
 def _gap_text(gap: Fraction) -> str:
@@ -415,109 +562,25 @@ def _gap_text(gap: Fraction) -> str:
     return text
 
 
-def _generate_recommendations(
-    score: Number, growth: Number, margin: Number, stage: Optional[GrowthStage]
-) -> list[str]:
-    """Generate actionable recommendations based on Rule of 40 analysis.
+def _generate_recommendations(status: str, target: int, lines: List[TargetLine]) -> List[str]:
+    """The Recommendations of spec section 4. The plugin names no lever.
 
-    Args:
-        score: Rule of 40 score
-        growth: Revenue growth rate
-        margin: EBITDA margin
-        stage: Company growth stage
-
-    Returns:
-        List of actionable recommendations
+    Short or split: one item per short line, EBITDA first, with its gap. Met: one item.
+    Not graded: one item, whatever the line scores say.
     """
+    if status == "not_graded":
+        return ["No verdict before the thirteenth month of revenue. Run it again then."]
+    if status == "met":
+        return [f"Meets the target of {target} on every margin given."]
     recommendations = []
-
-    # Primary recommendations based on score
-    if score >= 40:
-        recommendations.append("Maintain excellent performance - you're in the top quartile of SaaS companies.")  # noqa: E501
-        if growth > 50 and margin < 10:
-            recommendations.append(
-                "As growth naturally slows, begin gradually improving profitability to maintain Rule of 40 compliance."  # noqa: E501
-            )
-    elif score >= 30:
+    for line in lines:
+        if line.status != "short":
+            continue
+        name, gap = line.basis.upper(), _gap_text(line.short_by)
         recommendations.append(
-            f"Improve score by {_gap_text(40 - score)} points to reach the target score of 40."
+            f"The {name} basis is short of {target} by {gap}: closes with {gap} points of "
+            f"growth or {gap} points of {name} margin."
         )
-    else:
-        recommendations.append(
-            f"URGENT: Improve score by {_gap_text(40 - score)} points to reach healthy levels. Consider both growth acceleration and cost optimization."  # noqa: E501
-        )
-
-    # Growth-specific recommendations
-    if growth < 20:
-        recommendations.append(
-            "Low growth (<20%): Consider growth investments - increase sales/marketing, expand into new segments, or accelerate product innovation."  # noqa: E501
-        )
-        if stage in (GrowthStage.EARLY, GrowthStage.GROWTH):
-            recommendations.append(
-                "For your growth stage, aim for at least 50%+ growth. Evaluate product-market fit and go-to-market effectiveness."  # noqa: E501
-            )
-    elif growth > 100 and margin < -30:
-        recommendations.append(
-            "Hypergrowth with high burn: Validate unit economics improve at scale. Ensure CAC payback < 12 months."  # noqa: E501
-        )
-
-    # Margin-specific recommendations
-    if margin < -20:
-        recommendations.append(
-            "Negative margin (<-20%): Implement cost optimization initiatives. Review headcount efficiency, infrastructure costs, and gross margins."  # noqa: E501
-        )
-        recommendations.append(
-            "Create path to positive EBITDA margin. Target: reduce burn by 30-50% while maintaining growth."  # noqa: E501
-        )
-    elif margin < 0:
-        recommendations.append(
-            "Negative margin: Continue path to profitability. Focus on improving gross margins and sales efficiency."  # noqa: E501
-        )
-    elif margin > 30 and growth < 20:
-        recommendations.append(
-            "High profitability but low growth: Consider reinvesting profits into growth initiatives (product, sales, marketing)."  # noqa: E501
-        )
-
-    # Balance recommendations
-    if growth < 10 and margin < 10:
-        recommendations.append(
-            "CRITICAL: Both metrics weak. Conduct comprehensive business review - evaluate product-market fit, unit economics, and organizational efficiency."  # noqa: E501
-        )
-        recommendations.append("Consider: product pivot, market repositioning, or strategic alternatives.")  # noqa: E501
-    elif abs(growth) < abs(margin) and stage in (GrowthStage.EARLY, GrowthStage.GROWTH):
-        recommendations.append(
-            "For your stage, consider shifting from profitability focus to growth investments."
-        )
-    elif margin < 0 and growth < margin * -1:
-        recommendations.append(
-            "Burn exceeds growth rate - unsustainable. Reduce costs or accelerate revenue growth urgently."  # noqa: E501
-        )
-
-    # Stage-specific recommendations
-    if stage == GrowthStage.EARLY:
-        recommendations.append(
-            "Early stage: Prioritize product-market fit and growth. Profitability can wait."
-        )
-        recommendations.append("Target: >50% growth rate, even with negative margins.")
-    elif stage == GrowthStage.GROWTH:
-        recommendations.append("Growth stage: Balance rapid expansion with improving unit economics.")  # noqa: E501
-        recommendations.append("Target: 30-50% growth with path to profitability clear.")
-    elif stage == GrowthStage.SCALE:
-        recommendations.append("Scale stage: Optimize for efficient growth.")
-        recommendations.append("Target: 20-40% growth with positive EBITDA margins.")
-    elif stage == GrowthStage.MATURE:
-        recommendations.append("Mature stage: Focus on profitability and sustainable growth.")
-        recommendations.append("Target: 10-30% growth with 20%+ EBITDA margins.")
-
-    # Tactical recommendations
-    if score < 40:
-        recommendations.append(
-            "Track Rule of 40 monthly. Set quarterly OKRs to improve score through growth acceleration, margin improvement, or both."  # noqa: E501
-        )
-        recommendations.append(
-            "Consider: Implement zero-based budgeting, optimize CAC payback, improve gross margins, or accelerate product-led growth."  # noqa: E501
-        )
-
     return recommendations
 
 
@@ -568,26 +631,6 @@ def _analyze_trends(
         direction = "improved" if margin_change > 0 else "declined"
         analysis.append(f"EBITDA margin {direction} by {shown(abs(margin_change), 1):.1f} points ({shown(previous_margin, 1):.1f}% → {shown(current_margin, 1):.1f}%)")  # noqa: E501
 
-    # Interpretation
-    if score_change > 5:
-        analysis.append("Strong improvement - maintaining this momentum is critical.")
-    elif score_change > 0:
-        analysis.append("Modest improvement - continue executing on current strategy.")
-    elif score_change > -5:
-        analysis.append("Slight decline - monitor closely and identify root causes.")
-    else:
-        analysis.append("Significant decline - requires immediate attention and corrective action.")
-
-    # Specific trend patterns
-    if growth_change < 0 and margin_change < 0:
-        analysis.append("WARNING: Both growth and profitability declining - urgent intervention needed.")  # noqa: E501
-    elif growth_change > 0 and margin_change > 0:
-        analysis.append("Excellent: Improving both growth and profitability simultaneously.")
-    elif growth_change > 0 and margin_change < 0:
-        analysis.append("Trading profitability for growth - ensure this is intentional and sustainable.")  # noqa: E501
-    elif growth_change < 0 and margin_change > 0:
-        analysis.append("Trading growth for profitability - ensure this is intentional and appropriate for stage.")  # noqa: E501
-
     return "\n".join(analysis)
 
 
@@ -606,6 +649,31 @@ def format_result_as_json(result: RuleOf40Result) -> str:
         "revenue_growth_rate": float(shown(result.revenue_growth_rate, 2)),
         "ebitda_margin": float(shown(result.ebitda_margin, 2)),
         "health_status": result.health_status.value,
+        "target": result.target,
+        "target_source": result.target_source,
+        "target_status": result.target_status,
+        "target_lines": [
+            {
+                "basis": line.basis,
+                "margin": _json2(line.margin),
+                "score": _json2(line.score),
+                "status": line.status,
+                "short_by": None if line.short_by is None else _json2(line.short_by),
+            }
+            for line in result.target_lines
+        ],
+        "target_notes": result.target_notes,
+        "ladder": [
+            {
+                "bar": row.bar,
+                "target": row.target,
+                "ebitda": _json2(row.ebitda),
+                "fcf": None if row.fcf is None else _json2(row.fcf),
+                "source": row.source,
+            }
+            for row in result.ladder
+        ],
+        "reference_lines": "\n".join(result.reference_lines),
         "benchmark_notes": result.benchmark_notes,
         "balance_analysis": result.balance_analysis,
         "recommendations": result.recommendations,
@@ -639,11 +707,59 @@ def format_result_as_markdown(result: RuleOf40Result) -> str:
     lines.append("## Key Metrics")
     lines.append("")
     lines.append(f"- **Rule of 40 Score**: {shown(result.rule_of_40_score, 1):.1f}%")
-    lines.append(f"- **Weighted Rule of 40**: {shown(result.weighted_rule_of_40, 1):.1f}%")
+    lines.append(f"- **Weighted Rule of 40**: {shown(result.weighted_rule_of_40, 1):.1f}% "
+                 f"({WEIGHTED_LABEL})")
     lines.append(f"- **Revenue Growth Rate**: {shown(result.revenue_growth_rate, 1):.1f}%")
     lines.append(f"- **EBITDA Margin**: {shown(result.ebitda_margin, 1):.1f}%")
-    lines.append(f"- **Health Status**: {result.health_status.value.upper()}")
+    if result.fcf_margin is not None:
+        lines.append(f"- **FCF Margin**: {shown(result.fcf_margin, 1):.1f}%")
     lines.append("")
+
+    lines.append("## Target")
+    lines.append("")
+    source = "default" if result.target_source == "default" else "your choice"
+    lines.append(f"- **Target**: {result.target} ({source})")
+    for line in result.target_lines:
+        if line.status == "met":
+            verdict = "met"
+        elif line.status == "short":
+            verdict = f"short by {_gap_text(line.short_by)}"
+        else:
+            verdict = "not graded"
+        lines.append(f"- **{line.basis.upper()} basis**: {shown(line.score, 1):.1f} "
+                     f"against {result.target}: {verdict}")
+    lines.append(f"- **Status**: {result.target_status.replace('_', ' ').upper()}")
+    if result.target_notes:
+        for note in result.target_notes.split("\n"):
+            lines.append(f"- {note}")
+    lines.append("")
+
+    # The ladder (spec section 4): an FCF column only when fcf_margin is given
+    with_fcf = result.fcf_margin is not None
+    lines.append("## Ladder")
+    lines.append("")
+    if with_fcf:
+        lines.append("| Bar | EBITDA basis | FCF basis | Source |")
+        lines.append("|---|---|---|---|")
+    else:
+        lines.append("| Bar | EBITDA basis | Source |")
+        lines.append("|---|---|---|")
+    for row in result.ladder:
+        cells = [f"{row.bar} (target)" if row.target else str(row.bar),
+                 _ladder_cell(row.ebitda)]
+        if with_fcf:
+            cells.append(_ladder_cell(row.fcf))
+        cells.append(row.source)
+        lines.append("| " + " | ".join(cells) + " |")
+    lines.append("")
+
+    if result.reference_lines:
+        lines.append("## Reference Lines")
+        lines.append("")
+        for line in result.reference_lines:
+            label, rest = line.split(": ", 1)
+            lines.append(f"- **{label}**: {rest}")
+        lines.append("")
 
     lines.append("## Benchmark Comparison")
     lines.append("")
@@ -700,13 +816,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Rule of 40 Calculator for SaaS Financial Health",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+        epilog=f"""
 Examples:
   # Interactive mode
   python rule_of_40.py
 
   # JSON input from stdin
-  echo '{"revenue_growth_rate": 50, "ebitda_margin": -5}' | python rule_of_40.py
+  echo '{{"revenue_growth_rate": 50, "ebitda_margin": -5}}' | python rule_of_40.py
 
   # JSON file input
   python rule_of_40.py < input.json
@@ -715,6 +831,17 @@ Examples:
   # Output formats
   python rule_of_40.py --format json
   python rule_of_40.py --format markdown
+
+Inputs beyond growth and EBITDA margin (all optional; percentages as 12.5, not 0.125):
+  target             40, 50 or 60 (default 40). 40 is Feld's 2015 rule; 50 has no
+                     published benchmark; Vista (2026) calls 60 "{VISTA_SHORT}".
+  fcf_margin         Free cash flow margin, %: (operating cash flow - capital spending)
+                     / revenue x 100. Stock-based pay is not cash, so it is not subtracted.
+  months_of_revenue  Months since first revenue. 12 or less: no verdict.
+  nrr, gross_margin  Percentages, printed as reference lines, never scored.
+
+ebitda_margin is EBITDA / revenue x 100. Plain EBITDA counts stock-based pay as a
+cost; adjusted EBITDA adds it back.
         """,
     )
 
@@ -758,6 +885,24 @@ Examples:
             arr_input = input("Annual Recurring Revenue ($ or press Enter to skip): ").strip()
             if arr_input:
                 answers["arr"] = float(arr_input)
+
+            target_input = input(
+                "Target Rule of 40 score (40, 50 or 60, or press Enter for 40): "
+            ).strip()
+            if target_input:
+                answers["target"] = float(target_input)
+            fcf_input = input("FCF margin (% or press Enter to skip): ").strip()
+            if fcf_input:
+                answers["fcf_margin"] = float(fcf_input)
+            months_input = input("Months of revenue (or press Enter to skip): ").strip()
+            if months_input:
+                answers["months_of_revenue"] = float(months_input)
+            nrr_input = input("NRR (% or press Enter to skip): ").strip()
+            if nrr_input:
+                answers["nrr"] = float(nrr_input)
+            gross_margin_input = input("Gross margin (% or press Enter to skip): ").strip()
+            if gross_margin_input:
+                answers["gross_margin"] = float(gross_margin_input)
 
             # Optional trend data
             print()

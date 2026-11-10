@@ -773,7 +773,7 @@ A defaults run of `product-finance:discover`, then the same run with `sdr_annual
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.14.2",
+  "plugin_version": "0.15.0",
   "command": "product-finance:discover",
   "run": {
     "started_at": "2026-11-01T09:00:00Z",
@@ -869,7 +869,7 @@ A defaults run of `product-finance:discover`, then the same run with `sdr_annual
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.14.2",
+  "plugin_version": "0.15.0",
   "command": "product-finance:discover",
   "run": {
     "started_at": "2026-11-01T09:00:00Z",
@@ -915,7 +915,7 @@ A person's run of `product-finance:discover` (`mode` `interactive`). The values 
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.14.2",
+  "plugin_version": "0.15.0",
   "command": "product-finance:discover",
   "run": {
     "started_at": "2026-11-02T10:00:00Z",
@@ -959,7 +959,7 @@ A plugin run whose answers give no `sam_percent`, none of the three shares of Ph
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.14.2",
+  "plugin_version": "0.15.0",
   "command": "product-finance:discover",
   "run": {
     "started_at": "2026-11-03T09:00:00Z",

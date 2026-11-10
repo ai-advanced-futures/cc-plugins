@@ -78,8 +78,9 @@ value. `UnitEconomicsInput` now has an optional `prior_quarter_sm_spend`, and th
 given. When it is absent, the script estimates the quarter's spend as
 (sales_costs + marketing_costs) × 3 / period_months. The figure carries `is_estimate` and an
 `estimate_note`, prints as an estimate in the markdown, and is left out of `overall_health` and of the
-recommendations, except one line that says to recalculate it with the quarter's spend. The estimate is
-built outside the input limits, so it may exceed the limit on a given spend.
+recommendations, except one line that says to recalculate it with the quarter's spend. An estimate prints no
+Notes sentence: `benchmark_notes` is null. The estimate is built outside the input limits, so it may exceed
+the limit on a given spend.
 
 ### None-spend banding
 

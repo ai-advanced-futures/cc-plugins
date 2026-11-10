@@ -120,7 +120,7 @@ This agent leverages the following skills:
 - Profitability margin calculation
 - Combined score computation
 - Trend analysis over time
-- Peer comparison
+- Target status and ladder against 40, 50 or 60
 
 ### product-finance:analysis-benchmark-comparison
 - Industry benchmark lookup
@@ -551,7 +551,7 @@ A defaults run of `product-finance:unit-economics`, then the same run with `data
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.14.2",
+  "plugin_version": "0.15.0",
   "command": "product-finance:unit-economics",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",
@@ -603,7 +603,7 @@ A defaults run of `product-finance:unit-economics`, then the same run with `data
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.14.2",
+  "plugin_version": "0.15.0",
   "command": "product-finance:unit-economics",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",

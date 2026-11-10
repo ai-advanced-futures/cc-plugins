@@ -266,6 +266,7 @@ Collect **fully-loaded costs** (salary + benefits + overhead = typically 1.5-2x 
 
 - "Target Rule of 40 score?" (number, default: 40)
   - *Explanation: Growth % + EBITDA Margin % ≥ 40% indicates healthy SaaS business*
+  - Tell the person: `rule_of_40.py` does not read this target. Its input takes `target` as 40, 50 or 60 only.
 - "Target LTV:CAC ratio?" (number, default: 3.0)
   - *Guidance: 3:1 is minimum healthy, 5:1+ is excellent*
 - "Target CAC payback period (months)?" (number, default: 12)

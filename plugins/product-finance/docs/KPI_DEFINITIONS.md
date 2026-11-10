@@ -566,19 +566,26 @@ def track_cogs_allocation():
 ### Rule of 40
 
 #### Definition
-The Rule of 40 is a benchmark that combines growth rate and profitability margin. A company is considered healthy if the sum of its revenue growth rate and profit margin equals or exceeds 40%.
+The Rule of 40 adds the revenue growth rate and a profit margin. Feld (2015): "The 40% rule is that your growth rate + your profit should add up to 40%." The plugin grades each margin given against a target of 40, 50 or 60 (default 40). A score equal to the target meets it.
 
 #### Calculation Formula
 
 **Classic Rule of 40:**
 ```
 Rule of 40 Score = Revenue Growth Rate (%) + EBITDA Margin (%)
+FCF basis score  = Revenue Growth Rate (%) + FCF Margin (%)   (only when fcf_margin is given)
 ```
 
-**Weighted Rule of 40 (growth weighted 2x):**
+**Weighted Rule of 40 (plugin convention):**
 ```
 Weighted Rule of 40 = (1.33 × Revenue Growth Rate) + (0.67 × EBITDA Margin)
 ```
+
+In valuation studies, growth outweighs FCF margin: 2–3 times for late-stage cloud companies (Bessemer, The Rule of X, 2024) and 3.8 times on ARR multiples (Meritech Software Pulse, 14-August-2026). This score uses EBITDA margin; the weights are a plugin convention.
+
+**The two margins:**
+- EBITDA margin: ebitda_margin is EBITDA / revenue x 100. Plain EBITDA counts stock-based pay as a cost; adjusted EBITDA adds it back.
+- FCF margin (`fcf_margin`): Free cash flow margin, %: (operating cash flow - capital spending) / revenue x 100. Stock-based pay is not cash, so it is not subtracted.
 
 #### Data Requirements
 
@@ -587,6 +594,13 @@ Weighted Rule of 40 = (1.33 × Revenue Growth Rate) + (0.67 × EBITDA Margin)
 | `revenue_growth_rate` | number | Calculated | YoY revenue growth % |
 | `ebitda_margin` | number | Financial system | EBITDA margin % |
 | `company_stage` | string | Configuration | early, growth, scale, mature |
+| `target` | number | User input | 40, 50 or 60 (default 40) |
+| `fcf_margin` | number | Financial system | Free cash flow margin, as a percentage (12.5, not 0.125) |
+| `months_of_revenue` | number | Financial system | Months since the product's first revenue |
+| `nrr` | number | Financial system | Net revenue retention, as a percentage (115, not 1.15) |
+| `gross_margin` | number | Financial system | Gross margin, as a percentage (75, not 0.75) |
+
+`company_stage` feeds only JSON `health_status`. `nrr` and `gross_margin` print as reference lines and never enter the score.
 
 #### Instrumentation Guide
 
@@ -623,25 +637,27 @@ Illustrative; the code is in `scripts/`.
 | Cadence | Report Type | Key Elements |
 |---------|-------------|--------------|
 | Monthly | Rule of 40 tracking | Score, trend |
-| Quarterly | Board Rule of 40 | Score, peer comparison |
+| Quarterly | Board Rule of 40 | Score, target status, ladder |
 | Annual | Strategic Rule of 40 | Historical trend, outlook |
 
-#### Benchmark Ranges
+#### Target and Ladder
 
-| Score Range | Health Status | Interpretation |
-|-------------|---------------|----------------|
-| >= 40 | **Excellent** | IPO-ready, top quartile |
-| 30-40 | **Good** | Solid performance |
-| 20-30 | **Warning** | Needs improvement |
-| < 20 | **Critical** | Urgent action required |
+The target is 40, 50 or 60 (default 40). No input picks the target: not the product type, the stage or an AI label. A target the person gives always applies; otherwise the target is 40.
 
-**Stage-Adjusted Benchmarks:**
-| Stage | Excellent | Good | Warning | Critical |
-|-------|-----------|------|---------|----------|
-| Early | >= 30 | 20-30 | 10-20 | < 10 |
-| Growth | >= 40 | 30-40 | 20-30 | < 20 |
-| Scale | >= 50 | 40-50 | 30-40 | < 30 |
-| Mature | >= 50 | 40-50 | 30-40 | < 30 |
+The ladder shows the score minus each bar, with these Source cells:
+
+| Bar | Source |
+|-----|--------|
+| 40 | Feld (2015): "The 40% rule is that your growth rate + your profit should add up to 40%." |
+| 50 | No published benchmark found. A bar you set. |
+| 60 | Vista Equity Partners (8 Jan 2026): "an emerging aspiration, not a universal baseline". |
+
+- Each margin line is `met` when its score is equal to or above the target, and otherwise `short by N`. The target status is `met`, `short`, `split` (the lines differ) or `not_graded`.
+- A split prints one note: "The EBITDA and FCF lines disagree at <target>. The two margins differ by capital spending, stock-based pay, working capital, interest and tax. Use the margin your board or investors use." A split is neither met nor short. Report both lines. If the person names the margin their board or investors use, give that line's verdict and still show the other. Do not average the two margins.
+- With 12 or fewer months of revenue, the product is not graded. Growth is not a year-on-year rate before the thirteenth month.
+- Under $25M ARR, the report adds a caution. ICONIQ writes: "we typically only begin to place real weight against Rule of 40 for companies with at least $25M ARR", because "exceptional year-over-year growth inflates Rule of 40 performance for early-stage companies" (ICONIQ, The ICONIQ Enterprise Five (2025 KPIs)).
+- JSON `health_status` is the 0.14.0 stage band, kept unchanged, with no published source. Do not report `health_status` to the person as a verdict or a grade. The verdict is `target_status`.
+- This plugin has no peer data for the score. Do not compare it with other companies; show the ladder.
 
 ---
 

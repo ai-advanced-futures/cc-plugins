@@ -14,7 +14,8 @@ and list indexes), the value as given, and one reason:
 Field types the checker reads: float, int, str, a str-valued Enum, Dict[str, X],
 List[X], a dataclass, and Optional[X] of any of these. Limits are declared with
 `limits(gt=..., ge=..., le=..., one_of=..., each=...)` and run after the type check, on the
-stored value. `each=` puts limits on every value of a Dict field. Keys the class does not
+stored value. `one_of` works on a text field and also on an int field. `each=` puts limits on
+every value of a Dict field. Keys the class does not
 declare are ignored. A NaN, Infinity or -Infinity in any number field gets "not a finite
 number" before any limit is read.
 
@@ -53,7 +54,7 @@ def limits(
     gt: Optional[float] = None,
     ge: Optional[float] = None,
     le: Optional[float] = None,
-    one_of: Optional[Tuple[str, ...]] = None,
+    one_of: Optional[Tuple[Union[str, int], ...]] = None,
     each: Optional[Dict[str, float]] = None,
     default: Any = MISSING,
 ) -> Any:
@@ -200,6 +201,8 @@ def _convert(t: Any, value: Any, loc: Loc, meta: Any, problems: List[Problem]) -
         if isinstance(value, float) and not _whole_in_64_bits(value):
             return bad("not a whole number")
         stored: Union[int, float] = int(value)
+        if "one_of" in meta and stored not in meta["one_of"]:
+            return bad("not one of " + ", ".join(str(v) for v in meta["one_of"]))
     else:
         try:
             stored = float(value)
@@ -221,6 +224,10 @@ def check(cls: Type[T], data: Any, loc: Loc = ()) -> Tuple[Optional[T], List[Pro
             if "ge" in held and "gt" in held:
                 raise TypeError(f"both ge and gt on {cls.__name__}.{f.name}")
         held_type = _optional_inner(hints[f.name]) or hints[f.name]
+        if "one_of" in f.metadata and not (held_type in (str, int) or _is_text_enum(held_type)):
+            raise TypeError(
+                f"one_of on a field that is not text or a whole number: {cls.__name__}.{f.name}"
+            )
         if "each" in f.metadata and typing.get_origin(held_type) is not dict:
             raise TypeError(f"each on a field that is not a mapping: {cls.__name__}.{f.name}")
 
