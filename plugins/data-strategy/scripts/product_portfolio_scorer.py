@@ -7,7 +7,8 @@
 Scores data products against data-as-product rubric and contract maturity.
 
 Command line: product_portfolio_scorer.py <input.json> [--out <output.json>]
-The input file holds the list of data products. Without --out, the script prints one JSON object.
+The input file holds the list of data products, or an object with a "products" list.
+Without --out, the script prints one JSON object.
 With --out, the script writes the JSON object to the output file and prints one line.
 After an error, the script writes no output file.
 """
@@ -16,6 +17,8 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+
+SHAPE = 'expected a list of product objects, or an object with a "products" list'
 
 
 def classify_contract_maturity(product: dict) -> str:
@@ -47,6 +50,21 @@ def score_product(product: dict) -> dict:
     }
 
 
+def products_from(data, source: str) -> list[dict]:
+    """Return the products of a products.json value: a list, or the "products" list of an object.
+
+    An agent can put its list in an object with other keys, because a model cannot be forced to give 1 shape.
+    """
+    if isinstance(data, dict) and isinstance(data.get("products"), list):
+        data = data["products"]
+    if not isinstance(data, list):
+        raise ValueError(f"{source}: {SHAPE}")
+    for number, item in enumerate(data, start=1):
+        if not isinstance(item, dict):
+            raise ValueError(f"{source}: item {number} is not a product object: {json.dumps(item)[:60]}")
+    return data
+
+
 def score_portfolio(products: list[dict]) -> dict:
     if not products:
         return {"products": [], "portfolio_maturity": "nascent"}
@@ -73,7 +91,7 @@ def main(argv: list[str]) -> int:
         print("Usage: product_portfolio_scorer.py <input.json> [--out <output.json>]", file=sys.stderr)
         return 1
     try:
-        result = score_portfolio(json.loads(Path(argv[1]).read_text()))
+        result = score_portfolio(products_from(json.loads(Path(argv[1]).read_text()), argv[1]))
         if out is not None:
             out.write_text(json.dumps(result))
     except (OSError, ValueError, TypeError, AttributeError) as exc:

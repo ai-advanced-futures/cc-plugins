@@ -33,7 +33,15 @@ From the context and the company stage, name the data products that the company 
 
 For each product, collect or infer: `name`, `owner` (a named team), `consumers` (downstream users), `quality_sla` (bool), `versioned` (bool), `documented` (bool), `schema_defined` (bool), `sla_documented` (bool), and `deprecation_policy` (bool).
 
-Use the Write tool to write the list of products to `<output_dir>/products.json`. Then end your output with this line, and write nothing after it:
+Use the Write tool to write `<output_dir>/products.json`. The file holds only a JSON list, with 1 object for each product and the 9 fields above. Write no other key and no text around the list. An example with 1 product:
+
+```json
+[
+  {"name": "customer usage dashboard", "owner": "Product Analytics team", "consumers": ["Customer Success"], "quality_sla": false, "versioned": false, "documented": true, "schema_defined": true, "sla_documented": false, "deprecation_policy": false}
+]
+```
+
+Then end your output with this line, and write nothing after it:
 
 ```
 INPUTS: products

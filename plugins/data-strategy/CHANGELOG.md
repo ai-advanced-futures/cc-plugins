@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.4
+
+- `product_portfolio_scorer.py` reads an object with a `products` list, as well as a list. Before, an agent that wrote `{"session_id": ..., "note": ..., "products": [...]}` made the scorer stop with the line `'str' object has no attribute 'get'`, and the run stopped (STORY-337).
+- Each other shape, and each item that is not an object, gives exit 1 and 1 line that names the file, for example `product_portfolio_scorer.py: <path>: item 2 is not a product object: "x"`. The script writes no output file. `{}` and `null` now stop with this line. Before, they gave exit 0 and `nascent`, a portfolio of 0 products from a file with no list.
+- The text of `product-analyst` gives the shape of `products.json`: a JSON list of objects with the 9 fields, and an example with 1 product.
+- New test row: the test of `session_manager.py new` also covers the skill `roadmap`.
+
 ## 0.3.3
 
 - The 5 skills grant the read of `docs/intake.md` and `docs/frameworks.md` of the plugin, and the write of `.data-strategy-tmp/**`. Before, the skills ran only in a permission mode that asks for no approval: in the default mode, the read of a plugin file and the write of a session file were refused, and a skill such as `strategy` started no agent (STORY-330).
