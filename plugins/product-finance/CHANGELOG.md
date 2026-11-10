@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13.5
+
+- **fix:** `ai_roi_calculator.py` needs only the standard library, so `uv run` gets no package for it. `scripts/input_check.py` checks its input.
+- **fix:** a refused input exits with code 3 and prints 1 plain line for each problem. An input that the script cannot read exits with code 1 and names the file.
+- **change:** the script refuses a number written as text, and `true` or `false`. Each `provider_breakdown` value must be at least 0. Before this change, only a negative total was refused.
+- **fix:** the markdown report shows `n/a` for a share of a zero total, and does not stop with a divide-by-zero error.
+- **fix:** in interactive mode, an answer of 0 hours saved still asks for the employee cost, and each answer goes through the same check as an input file.
+- **feat:** `scripts/input_check.py` has a lower limit (`ge`), limits on each value of a map (`each`), and a rule for 2 fields that go together.
+- **docs:** `ai-economics` and its runner say what to do on exit code 3. ADR-006 changes, and ADR-008 records the shared input checker.
+
 ## 0.13.4
 
 - Each command and agent names each script that it runs in its Bash grant (`scripts/<file> *`). Before, the grant `scripts/*` also permitted `uv run` of a file outside the scripts folder through a path with `..`, also a file of the project (STORY-283).

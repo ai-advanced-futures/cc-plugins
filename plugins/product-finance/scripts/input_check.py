@@ -7,23 +7,29 @@ typing.Union, typing.List and typing.Dict, never `X | Y`.
 problem. A problem has a kind (`missing` or `invalid`), a location (field names
 and list indexes), the value as given, and one reason:
 
-    missing, not a number, not a whole number, not above N, above N,
-    not one of <values>, not text, not an object, not a list
+    missing, not a number, not a whole number, not above N, above N, below N,
+    not one of <values>, not text, not an object, not a list, needed with <field>
 
 Field types the checker reads: float, int, str, a str-valued Enum, Dict[str, X],
 List[X], a dataclass, and Optional[X] of any of these. Limits are declared with
-`limits(gt=..., le=..., one_of=...)` and run after the type check, on the stored
-value. Keys the class does not declare are ignored.
+`limits(gt=..., ge=..., le=..., one_of=..., each=...)` and run after the type check, on the
+stored value. `each=` puts limits on every value of a Dict field. Keys the class does not
+declare are ignored.
+
+A class may declare `TOGETHER: ClassVar[Tuple[Tuple[str, str], ...]]`, pairs of fields that go
+together. When exactly one of a pair is given (present and not null), the other gets the
+problem `needed with <field>`. A pair whose field already has a problem adds nothing.
 """
 
 import dataclasses
 import enum
+import json
 import typing
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 T = TypeVar("T")
 
-CHECKS: Tuple[str, ...] = ("gt", "le", "one_of")
+CHECKS: Tuple[str, ...] = ("gt", "ge", "le", "one_of", "each")
 
 MISSING: Any = dataclasses.MISSING
 
@@ -33,12 +39,14 @@ Loc = Tuple[Union[str, int], ...]
 def limits(
     *,
     gt: Optional[float] = None,
+    ge: Optional[float] = None,
     le: Optional[float] = None,
     one_of: Optional[Tuple[str, ...]] = None,
+    each: Optional[Dict[str, float]] = None,
     default: Any = MISSING,
 ) -> Any:
     """A dataclass field carrying only the limits given."""
-    given = {"gt": gt, "le": le, "one_of": one_of}
+    given = {"gt": gt, "ge": ge, "le": le, "one_of": one_of, "each": each}
     return dataclasses.field(
         default=default, metadata={k: v for k, v in given.items() if v is not None}
     )
@@ -50,6 +58,29 @@ class Problem:
     loc: Loc
     value: Any
     reason: str
+
+
+def show(value: Any) -> str:
+    """The value as JSON text: 120, -1234567, 100.00004, true, "500M".
+
+    A JSON NaN or Infinity prints as nan or inf.
+    """
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    if isinstance(value, float):
+        return repr(value)
+    if isinstance(value, int) and not isinstance(value, bool):
+        return str(value)
+    return json.dumps(value)
+
+
+def format_problem(p: Problem) -> str:
+    """One line for a problem: `<location>[ = <value>]: <reason>`."""
+    where = ""
+    for part in p.loc:
+        where += f"[{part}]" if isinstance(part, int) else (f".{part}" if where else part)
+    shown = "" if p.value is None else f" = {show(p.value)}"
+    return f"{where or 'input'}{shown}: {p.reason}"
 
 
 class _Bad:
@@ -98,11 +129,13 @@ def _whole_in_64_bits(value: float) -> bool:
 def _limit_reason(value: Any, meta: Any) -> Optional[str]:
     """The reason a stored number breaks its limits, or None.
 
-    `le` is read before `gt`, as pydantic reads them: a NaN in a field with both
-    limits is `above N`. Both comparisons are written so NaN fails them.
+    `le` is read first, then `ge`, then `gt`, as pydantic reads them: a NaN in a
+    field with `le` is `above N`. Each comparison is written so NaN fails it.
     """
     if "le" in meta and not (value <= meta["le"]):
         return f"above {meta['le']}"
+    if "ge" in meta and not (value >= meta["ge"]):
+        return f"below {meta['ge']}"
     if "gt" in meta and not (value > meta["gt"]):
         return f"not above {meta['gt']}"
     return None
@@ -128,7 +161,8 @@ def _convert(t: Any, value: Any, loc: Loc, meta: Any, problems: List[Problem]) -
     if origin is dict:
         if not isinstance(value, dict):
             return bad("not an object")
-        pairs = {k: _convert(args[1], v, loc + (k,), {}, problems) for k, v in value.items()}
+        each = meta.get("each", {})
+        pairs = {k: _convert(args[1], v, loc + (k,), each, problems) for k, v in value.items()}
         return BAD if any(v is BAD for v in pairs.values()) else pairs
     if dataclasses.is_dataclass(t):
         obj, found = check(t, value, loc)
@@ -169,6 +203,12 @@ def check(cls: Type[T], data: Any, loc: Loc = ()) -> Tuple[Optional[T], List[Pro
     fields = dataclasses.fields(cls)
     for f in fields:
         _require_supported(hints[f.name], f"{cls.__name__}.{f.name}")
+        for held in (f.metadata, f.metadata.get("each", {})):
+            if "ge" in held and "gt" in held:
+                raise TypeError(f"both ge and gt on {cls.__name__}.{f.name}")
+        held_type = _optional_inner(hints[f.name]) or hints[f.name]
+        if "each" in f.metadata and typing.get_origin(held_type) is not dict:
+            raise TypeError(f"each on a field that is not a mapping: {cls.__name__}.{f.name}")
 
     problems: List[Problem] = []
     values: Dict[str, Any] = {}
@@ -187,6 +227,14 @@ def check(cls: Type[T], data: Any, loc: Loc = ()) -> Tuple[Optional[T], List[Pro
         stored = _convert(t, value, where, f.metadata, problems)
         if stored is not BAD:
             values[f.name] = stored
+
+    for first, second in getattr(cls, "TOGETHER", ()):
+        if any(p.loc[: len(loc) + 1] in ((*loc, first), (*loc, second)) for p in problems):
+            continue
+        given = [data.get(n) is not None for n in (first, second)]
+        if given[0] != given[1]:
+            gave, lacks = (first, second) if given[0] else (second, first)
+            problems.append(Problem("invalid", loc + (lacks,), None, f"needed with {gave}"))
 
     if problems:
         return None, problems

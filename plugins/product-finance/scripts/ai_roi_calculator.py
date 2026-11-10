@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["pydantic>=2.5,<2.14"]
+# dependencies = []
 # ///
 """AI ROI Calculator for AI Economics Analysis.
 
@@ -29,12 +29,12 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, ClassVar, Dict, Optional, Tuple
 
 if __package__ in (None, ""):  # run by path: uv run "<plugin root>/scripts/<file>.py"
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # its own package, never the cwd
 
-from pydantic import BaseModel, Field, field_validator, model_validator  # noqa: E402
+from scripts.input_check import check, format_problem, limits  # noqa: E402
 
 # AIProvider re-exported (not used internally) for tests/consumers importing it here.
 from scripts.utils.enums import AIProvider, MetricHealth  # noqa: E402, F401
@@ -55,7 +55,8 @@ def calculate_roi_percentage_safe(value: float, cost: float) -> Optional[float]:
     return ratio * 100
 
 
-class AICostInput(BaseModel):
+@dataclass
+class AICostInput:
     """Input data for AI cost tracking.
 
     Attributes:
@@ -68,38 +69,17 @@ class AICostInput(BaseModel):
         infrastructure_cost: Optional AI infrastructure costs (hosting, storage)
     """
 
-    total_ai_cost: float = Field(gt=0, description="Total AI costs for the period")
-    ai_interactions: int = Field(gt=0, description="Total AI interactions/API calls")
-    active_users: int = Field(gt=0, description="Number of active users")
-    total_revenue: float = Field(gt=0, description="Total revenue for the period")
-    period_months: int = Field(default=1, gt=0, le=60, description="Period in months")
-    provider_breakdown: Optional[dict[str, float]] = Field(
-        default=None, description="Breakdown of costs by provider"
-    )
-    infrastructure_cost: Optional[float] = Field(
-        default=None, ge=0, description="AI infrastructure costs"
-    )
-
-    @field_validator("total_ai_cost", "total_revenue")
-    @classmethod
-    def validate_amounts(cls, v: float) -> float:
-        """Ensure amounts are reasonable."""
-        if v > 1_000_000_000:  # $1B sanity check
-            raise ValueError("Amount seems unreasonably high (>$1B)")
-        return v
-
-    @field_validator("provider_breakdown")
-    @classmethod
-    def validate_provider_breakdown(cls, v: Optional[dict]) -> Optional[dict]:
-        """Validate provider breakdown if provided."""
-        if v is not None:
-            total = sum(v.values())
-            if total < 0:
-                raise ValueError("Provider breakdown costs cannot be negative")
-        return v
+    total_ai_cost: float = limits(gt=0, le=1_000_000_000)
+    ai_interactions: int = limits(gt=0)
+    active_users: int = limits(gt=0)
+    total_revenue: float = limits(gt=0, le=1_000_000_000)
+    period_months: int = limits(gt=0, le=60, default=1)
+    provider_breakdown: Optional[Dict[str, float]] = limits(each=dict(ge=0), default=None)
+    infrastructure_cost: Optional[float] = limits(ge=0, default=None)
 
 
-class AIValueInput(BaseModel):
+@dataclass
+class AIValueInput:
     """Input data for AI value attribution.
 
     Attributes:
@@ -114,58 +94,24 @@ class AIValueInput(BaseModel):
         time_to_value_reduction_days: Days reduced in time-to-value due to AI
     """
 
-    ai_enabled_revenue: float = Field(ge=0, description="Revenue from AI-powered features")
-    non_ai_revenue: float = Field(ge=0, description="Revenue from non-AI features")
-    premium_pricing_uplift: Optional[float] = Field(
-        default=None, ge=0, le=1000, description="Premium pricing percentage for AI"
-    )
-    time_saved_hours: Optional[float] = Field(
-        default=None, ge=0, description="Hours saved through AI automation"
-    )
-    employee_fully_loaded_cost: Optional[float] = Field(
-        default=None, gt=0, description="Fully-loaded cost per employee hour"
-    )
-    ai_feature_churn_rate: Optional[float] = Field(
-        default=None, ge=0, le=100, description="Churn rate with AI features (%)"
-    )
-    non_ai_churn_rate: Optional[float] = Field(
-        default=None, ge=0, le=100, description="Churn rate without AI features (%)"
-    )
-    ai_expansion_revenue: Optional[float] = Field(
-        default=None, ge=0, description="Expansion revenue from AI adoption"
-    )
-    time_to_value_reduction_days: Optional[float] = Field(
-        default=None, ge=0, description="Time-to-value reduction in days"
+    TOGETHER: ClassVar[Tuple[Tuple[str, str], ...]] = (
+        ("time_saved_hours", "employee_fully_loaded_cost"),
+        ("ai_feature_churn_rate", "non_ai_churn_rate"),
     )
 
-    @model_validator(mode="after")
-    def validate_productivity_data(self) -> "AIValueInput":
-        """Ensure productivity calculation has complete data."""
-        has_time_saved = self.time_saved_hours is not None
-        has_employee_cost = self.employee_fully_loaded_cost is not None
-
-        if has_time_saved != has_employee_cost:
-            raise ValueError(
-                "Both time_saved_hours and employee_fully_loaded_cost must be provided for productivity value calculation"  # noqa: E501
-            )
-
-        return self
-
-    @model_validator(mode="after")
-    def validate_retention_data(self) -> "AIValueInput":
-        """Ensure retention calculation has complete data."""
-        has_ai_churn = self.ai_feature_churn_rate is not None
-        has_non_ai_churn = self.non_ai_churn_rate is not None
-
-        if has_ai_churn != has_non_ai_churn:
-            raise ValueError(
-                "Both ai_feature_churn_rate and non_ai_churn_rate must be provided for retention impact calculation"  # noqa: E501
-            )
-
-        return self
+    ai_enabled_revenue: float = limits(ge=0)
+    non_ai_revenue: float = limits(ge=0)
+    premium_pricing_uplift: Optional[float] = limits(ge=0, le=1000, default=None)
+    time_saved_hours: Optional[float] = limits(ge=0, default=None)
+    employee_fully_loaded_cost: Optional[float] = limits(gt=0, default=None)
+    ai_feature_churn_rate: Optional[float] = limits(ge=0, le=100, default=None)
+    non_ai_churn_rate: Optional[float] = limits(ge=0, le=100, default=None)
+    ai_expansion_revenue: Optional[float] = limits(ge=0, default=None)
+    time_to_value_reduction_days: Optional[float] = limits(ge=0, default=None)
 
 
-class AIROIInput(BaseModel):
+@dataclass
+class AIROIInput:
     """Comprehensive input for AI ROI calculation.
 
     Combines cost tracking and value attribution data.
@@ -177,6 +123,10 @@ class AIROIInput(BaseModel):
 
     cost_data: AICostInput
     value_data: AIValueInput
+
+
+# The classes input_check reads, in the order fields.json recorded them.
+INPUT_CLASSES = (AICostInput, AIValueInput, AIROIInput)
 
 
 @dataclass
@@ -221,6 +171,7 @@ class AIValueResult:
         total_ai_value: Total attributed AI value
         value_breakdown: Breakdown of value sources
         health_status: Health assessment of AI value
+        total_revenue: AI-enabled plus other revenue; 0 means the share is undefined
     """
 
     ai_enabled_revenue: float
@@ -233,6 +184,7 @@ class AIValueResult:
     total_ai_value: float
     value_breakdown: dict[str, float]
     health_status: MetricHealth
+    total_revenue: float = 0.0
 
 
 @dataclass
@@ -281,7 +233,9 @@ def calculate_ai_costs(data: AICostInput) -> AICostResult:
         AICostResult with detailed cost analysis
 
     Example:
-        >>> input_data = AICostInput(
+        >>> from scripts.input_check import build
+        >>> input_data = build(
+        ...     AICostInput,
         ...     total_ai_cost=50000,
         ...     ai_interactions=1000000,
         ...     active_users=5000,
@@ -384,7 +338,9 @@ def calculate_ai_value(data: AIValueInput) -> AIValueResult:
         AIValueResult with detailed value attribution
 
     Example:
-        >>> input_data = AIValueInput(
+        >>> from scripts.input_check import build
+        >>> input_data = build(
+        ...     AIValueInput,
         ...     ai_enabled_revenue=300000,
         ...     non_ai_revenue=200000,
         ...     premium_pricing_uplift=20,
@@ -393,7 +349,7 @@ def calculate_ai_value(data: AIValueInput) -> AIValueResult:
         ... )
         >>> result = calculate_ai_value(input_data)
         >>> print(f"Total AI value: ${result.total_ai_value:,.2f}")
-        Total AI value: $400,000.00
+        Total AI value: $450,000.00
     """
     total_revenue = data.ai_enabled_revenue + data.non_ai_revenue
     ai_revenue_percentage = (data.ai_enabled_revenue / total_revenue) * 100 if total_revenue > 0 else 0  # noqa: E501
@@ -467,6 +423,7 @@ def calculate_ai_value(data: AIValueInput) -> AIValueResult:
         total_ai_value=total_value,
         value_breakdown=value_breakdown,
         health_status=health,
+        total_revenue=total_revenue,
     )
 
 
@@ -490,14 +447,17 @@ def calculate_ai_roi(data: AIROIInput) -> AIROIResult:
         AIROIResult with complete AI economics analysis
 
     Example:
-        >>> cost_input = AICostInput(
+        >>> from scripts.input_check import build
+        >>> cost_input = build(
+        ...     AICostInput,
         ...     total_ai_cost=50000,
         ...     ai_interactions=1000000,
         ...     active_users=5000,
         ...     total_revenue=500000,
         ...     period_months=1
         ... )
-        >>> value_input = AIValueInput(
+        >>> value_input = build(
+        ...     AIValueInput,
         ...     ai_enabled_revenue=300000,
         ...     non_ai_revenue=200000
         ... )
@@ -800,6 +760,8 @@ def format_result_as_markdown(result: AIROIResult) -> str:
         Markdown string representation
     """
     lines = []
+    revenue = result.value_result
+    revenue_share = "n/a" if revenue.total_revenue == 0 else f"{revenue.ai_revenue_percentage:.1f}%"
 
     lines.append("# AI Economics Analysis")
     lines.append("")
@@ -817,7 +779,7 @@ def format_result_as_markdown(result: AIROIResult) -> str:
         f"- **AI Cost as % of Revenue:** {result.cost_result.ai_cost_percentage_of_revenue:.1f}%"
     )
     lines.append(
-        f"- **AI-Enabled Revenue:** ${result.value_result.ai_enabled_revenue:,.2f} ({result.value_result.ai_revenue_percentage:.1f}% of total)"  # noqa: E501
+        f"- **AI-Enabled Revenue:** ${result.value_result.ai_enabled_revenue:,.2f} ({revenue_share} of total)"  # noqa: E501
     )
     lines.append("")
 
@@ -863,7 +825,7 @@ def format_result_as_markdown(result: AIROIResult) -> str:
         f"- **AI-Enabled Revenue:** ${result.value_result.ai_enabled_revenue:,.2f}"
     )
     lines.append(
-        f"- **AI Revenue %:** {result.value_result.ai_revenue_percentage:.1f}% of total revenue"
+        f"- **AI Revenue %:** {revenue_share} of total revenue"
     )
     lines.append("")
 
@@ -871,9 +833,10 @@ def format_result_as_markdown(result: AIROIResult) -> str:
     lines.append("### Value Sources")
     lines.append("")
     for source, value in result.value_result.value_breakdown.items():
-        percentage = (value / result.value_result.total_ai_value) * 100
+        total = result.value_result.total_ai_value
+        share = "n/a" if total == 0 else f"{value / total * 100:.1f}%"
         source_name = source.replace("_", " ").title()
-        lines.append(f"- **{source_name}:** ${value:,.2f} ({percentage:.1f}% of total)")
+        lines.append(f"- **{source_name}:** ${value:,.2f} ({share} of total)")
     lines.append("")
 
     if result.value_result.productivity_value:
@@ -931,6 +894,20 @@ def format_result_as_markdown(result: AIROIResult) -> str:
     return "\n".join(lines)
 
 
+EXIT_INPUTS = 3  # the input was read but refused
+
+
+def checked_input(data: Any) -> AIROIInput:
+    """The checked input, or one plain line per problem on stderr and exit 3."""
+    obj, problems = check(AIROIInput, data)
+    if problems:
+        print("Error: Invalid input data:", file=sys.stderr)
+        for p in problems:
+            print(f"- {format_problem(p)}", file=sys.stderr)
+        raise SystemExit(EXIT_INPUTS)
+    return obj
+
+
 def main() -> None:
     """CLI entry point for AI ROI calculator.
 
@@ -981,14 +958,16 @@ Examples:
             if args.input is not None:
                 input_data = json.loads(args.input.read_text(encoding="utf-8"))
             else:
-                input_data = json.load(sys.stdin)
-            data = AIROIInput(**input_data)
-        except json.JSONDecodeError as e:
+                input_data = json.loads(sys.stdin.buffer.read().decode("utf-8"))
+        except (OSError, UnicodeDecodeError) as e:
+            source = "standard input" if args.input is None else args.input
+            why = getattr(e, "strerror", None) or e
+            print(f"Error: cannot read {source}: {why}", file=sys.stderr)
+            sys.exit(1)
+        except (ValueError, RecursionError) as e:
             print(f"Error: Invalid JSON input: {e}", file=sys.stderr)
             sys.exit(1)
-        except Exception as e:
-            print(f"Error: Invalid input data: {e}", file=sys.stderr)
-            sys.exit(1)
+        data = checked_input(input_data)
     else:
         # Interactive mode
         print("AI ROI Calculator")
@@ -997,74 +976,56 @@ Examples:
         print("AI COST DATA")
         print("-" * 50)
 
-        try:
-            total_ai_cost = float(input("Total AI costs ($): "))
-            ai_interactions = int(input("Total AI interactions/API calls: "))
-            active_users = int(input("Number of active users: "))
-            total_revenue = float(input("Total revenue ($): "))
-            period_months_input = input("Period in months (default 1): ").strip()
-            period_months = int(period_months_input) if period_months_input else 1
+        cost_data: Dict[str, Any] = {}
+        value_data: Dict[str, Any] = {}
 
-            cost_data = AICostInput(
-                total_ai_cost=total_ai_cost,
-                ai_interactions=ai_interactions,
-                active_users=active_users,
-                total_revenue=total_revenue,
-                period_months=period_months,
-            )
+        def optional(section: Dict[str, Any], key: str, prompt: str) -> Optional[float]:
+            text = input(prompt).strip()
+            if text:
+                section[key] = float(text)
+                return section[key]
+            return None
+
+        try:
+            cost_data["total_ai_cost"] = float(input("Total AI costs ($): "))
+            cost_data["ai_interactions"] = int(input("Total AI interactions/API calls: "))
+            cost_data["active_users"] = int(input("Number of active users: "))
+            cost_data["total_revenue"] = float(input("Total revenue ($): "))
+            period_months_input = input("Period in months (default 1): ").strip()
+            if period_months_input:
+                cost_data["period_months"] = int(period_months_input)
 
             print()
             print("AI VALUE DATA")
             print("-" * 50)
 
-            ai_enabled_revenue = float(input("AI-enabled revenue ($): "))
-            non_ai_revenue = float(input("Non-AI revenue ($): "))
+            value_data["ai_enabled_revenue"] = float(input("AI-enabled revenue ($): "))
+            value_data["non_ai_revenue"] = float(input("Non-AI revenue ($): "))
 
             # Optional value attribution
             print()
             print("Optional: Additional value attribution (press Enter to skip)")
             print()
 
-            premium_uplift_input = input("Premium pricing uplift for AI (%): ").strip()
-            premium_pricing_uplift = float(premium_uplift_input) if premium_uplift_input else None
-
-            time_saved_input = input("Time saved through AI (hours): ").strip()
-            time_saved_hours = float(time_saved_input) if time_saved_input else None
-
-            employee_cost_input = None
-            if time_saved_hours:
-                employee_cost_input = input("Fully-loaded employee cost per hour ($): ").strip()
-            employee_fully_loaded_cost = (
-                float(employee_cost_input) if employee_cost_input else None
+            optional(value_data, "premium_pricing_uplift", "Premium pricing uplift for AI (%): ")
+            time_saved_hours = optional(
+                value_data, "time_saved_hours", "Time saved through AI (hours): "
             )
-
-            ai_churn_input = input("Churn rate with AI features (%): ").strip()
-            ai_feature_churn_rate = float(ai_churn_input) if ai_churn_input else None
-
-            non_ai_churn_input = None
+            if time_saved_hours is not None:
+                optional(
+                    value_data,
+                    "employee_fully_loaded_cost",
+                    "Fully-loaded employee cost per hour ($): ",
+                )
+            ai_feature_churn_rate = optional(
+                value_data, "ai_feature_churn_rate", "Churn rate with AI features (%): "
+            )
             if ai_feature_churn_rate is not None:
-                non_ai_churn_input = input("Churn rate without AI features (%): ").strip()
-            non_ai_churn_rate = float(non_ai_churn_input) if non_ai_churn_input else None
-
-            expansion_input = input("Expansion revenue from AI ($): ").strip()
-            ai_expansion_revenue = float(expansion_input) if expansion_input else None
-
-            ttv_input = input("Time-to-value reduction (days): ").strip()
-            time_to_value_reduction_days = float(ttv_input) if ttv_input else None
-
-            value_data = AIValueInput(
-                ai_enabled_revenue=ai_enabled_revenue,
-                non_ai_revenue=non_ai_revenue,
-                premium_pricing_uplift=premium_pricing_uplift,
-                time_saved_hours=time_saved_hours,
-                employee_fully_loaded_cost=employee_fully_loaded_cost,
-                ai_feature_churn_rate=ai_feature_churn_rate,
-                non_ai_churn_rate=non_ai_churn_rate,
-                ai_expansion_revenue=ai_expansion_revenue,
-                time_to_value_reduction_days=time_to_value_reduction_days,
+                optional(value_data, "non_ai_churn_rate", "Churn rate without AI features (%): ")
+            optional(value_data, "ai_expansion_revenue", "Expansion revenue from AI ($): ")
+            optional(
+                value_data, "time_to_value_reduction_days", "Time-to-value reduction (days): "
             )
-
-            data = AIROIInput(cost_data=cost_data, value_data=value_data)
 
         except KeyboardInterrupt:
             print("\n\nCancelled by user.")
@@ -1072,6 +1033,8 @@ Examples:
         except Exception as e:
             print(f"\nError: {e}", file=sys.stderr)
             sys.exit(1)
+
+        data = checked_input({"cost_data": cost_data, "value_data": value_data})
 
     # Calculate AI ROI
     try:

@@ -34,7 +34,7 @@ from typing import Any, Dict, List, Optional
 if __package__ in (None, ""):  # run by path: uv run "<plugin root>/scripts/<file>.py"
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # its own package, never the cwd
 
-from scripts.input_check import build, check, limits  # noqa: E402
+from scripts.input_check import build, check, limits, show  # noqa: E402
 from scripts.utils.calculators import calculate_channel_economics  # noqa: E402
 from scripts.utils.enums import MetricHealth  # noqa: E402
 
@@ -266,17 +266,6 @@ def _positive(value: Any) -> bool:
     return _is_number(value) and value > 0
 
 
-def _show(value: Any) -> str:
-    """The value as the person wrote it in JSON: 120, -1234567, 100.00004, true, "500M"."""
-    if isinstance(value, float) and value.is_integer():
-        return str(int(value))
-    if isinstance(value, float):
-        return repr(value)
-    if isinstance(value, int) and not isinstance(value, bool):
-        return str(value)
-    return json.dumps(value)
-
-
 # The setup values each mapped input is computed from, in market (spec §2 decision 2).
 _RATIO_INPUTS = {
     "sam_filters": ("sam", "tam"),
@@ -293,7 +282,7 @@ def _why_missing(name: str, market: Dict[str, Any], tam_named: bool, shares: boo
     when setup's shares are not used (`shares` is False).
     """
     if name == "segments" and "target_segments" in market:
-        return [f"segments = {_show(market['target_segments'])} (market.target_segments): not a list"]  # noqa: E501
+        return [f"segments = {show(market['target_segments'])} (market.target_segments): not a list"]  # noqa: E501
     if name not in _RATIO_INPUTS or not shares:
         return [f"{name}: missing"]
     keys = _RATIO_INPUTS[name]
@@ -301,7 +290,7 @@ def _why_missing(name: str, market: Dict[str, Any], tam_named: bool, shares: boo
     shown = [k for k in bad if not (k == "tam" and tam_named)]
     if shown:
         reason = "not above 0" if _is_number(market[shown[0]]) else "not a number"
-        return [f"{name} = {_show(market[shown[0]])} (market.{shown[0]}): {reason}"]
+        return [f"{name} = {show(market[shown[0]])} (market.{shown[0]}): {reason}"]
     absent = any(k not in market for k in keys)
     return [f"{name}: missing"] if absent or not bad else []
 
@@ -457,7 +446,7 @@ def load_assumptions(data: Dict[str, Any]) -> AssumptionsInput:
     explained = set()
     for loc, (value, source) in rejected.items():
         name = _problem_name(loc, merged)
-        problems.append(f"{name} = {_show(value)} ({source}): not a number")
+        problems.append(f"{name} = {show(value)} ({source}): not a number")
         explained.add(name)
         if loc == ("tam", "total_market_size"):
             explained.update(("tam", *_RATIO_FEEDS["tam"]))
@@ -466,7 +455,7 @@ def load_assumptions(data: Dict[str, Any]) -> AssumptionsInput:
         if key not in market or _is_number(market[key]) or not open_feeds:
             continue
         if not (key == "tam" and ("tam", "total_market_size") in rejected):
-            problems.append(f"{open_feeds[0]} = {_show(market[key])} (market.{key}): not a number")  # noqa: E501
+            problems.append(f"{open_feeds[0]} = {show(market[key])} (market.{key}): not a number")  # noqa: E501
         explained.update(open_feeds)
     tam = merged.get("tam")
     method = tam.get("method") if isinstance(tam, dict) else None
@@ -486,7 +475,7 @@ def load_assumptions(data: Dict[str, Any]) -> AssumptionsInput:
                 explained.add(f"sam_filters.{key}")
             else:
                 reason = "above 100" if value > 100 else "not above 0"
-            problems.append(f"sam_filters.{key} = {_show(value)}{where}: {reason}")
+            problems.append(f"sam_filters.{key} = {show(value)}{where}: {reason}")
 
     missing: List[str] = []
     assumptions, found = check(AssumptionsInput, merged)
@@ -499,7 +488,7 @@ def load_assumptions(data: Dict[str, Any]) -> AssumptionsInput:
             continue
         source = sources.get(p.loc)
         where = f" ({source})" if source else ""
-        problems.append(f"{name} = {_show(p.value)}{where}: {p.reason}")
+        problems.append(f"{name} = {show(p.value)}{where}: {p.reason}")
     # Only after every invalid line is known: a mapped input missing because of a bad
     # setup value names that value, unless its line is already there.
     tam_named = any(p.startswith("tam.total_market_size = ") and " (market.tam): " in p for p in problems)  # noqa: E501
