@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.9
+
+- **fix:** a very long whole number (about 310 digits or more) in an EVC input gives 1 line that names the field, with exit 1 and no file. This holds for `run_phase_7.py` and for `write-run`. Before, `float()` of the number raised `OverflowError`, and the run ended with a traceback. `is_default` compares the number with `==` and calls no `float()`, and `_number` of `run_phase_7.py` says `<field> is too large for a number`.
+
 ## 1.11.8
 
 - **fix:** `write-run` finds the step of a need whose `step` text is a number, a space and text, with no mark after the number (for example `7 Reconcile invoice details with order and receipt records`). The text must agree with the title of that step: one is the start of the other, and the shorter one ends at the end of a word. A text with a number and other text (for example `9 hours to check each invoice`) names no step. Before, a run with this form ended with `GRAPH: FAILED 1 ERROR: the need 'N001' names no step of p2.json` and wrote no page (STORY-320).

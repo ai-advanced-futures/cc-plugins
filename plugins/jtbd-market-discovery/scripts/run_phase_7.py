@@ -49,7 +49,10 @@ def _number(source, key, where):
     value = source.get(key)
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError("%s: %s must be a number" % (where, key))
-    return float(value)
+    try:
+        return float(value)
+    except OverflowError:  # a whole number of about 310 digits or more (STORY-319)
+        raise ValueError("%s: %s is too large for a number" % (where, key)) from None
 
 
 def evaluate(data):

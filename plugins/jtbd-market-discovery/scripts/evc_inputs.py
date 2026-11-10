@@ -40,10 +40,14 @@ def source_of(sources, name) -> str:
 
 
 def is_default(value, default) -> bool:
-    """75 and 75.0 are the same number, and 0.2 and 0.20 too. A string must be the same string."""
+    """75 and 75.0 are the same number, and 0.2 and 0.20 too. A string must be the same string.
+
+    Python compares an int and a float exactly. So a very long whole number gives False, and no
+    OverflowError as float() does (STORY-319).
+    """
     if isinstance(default, str):
         return value == default
-    return not isinstance(value, bool) and isinstance(value, (int, float)) and float(value) == float(default)
+    return not isinstance(value, bool) and isinstance(value, (int, float)) and value == default
 
 
 def problems(assumptions, sources, strict=False) -> list:
