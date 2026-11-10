@@ -2,11 +2,15 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.11.0
+**Version:** 1.11.1
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.11.0
+## What's New in v1.11.1
+
+- The ODI part (40%) of the composite score is no longer 0 in a real run. The agent `opportunity-scorer` wrote the old key in `p6.json`, and `composite_scorer.py` read `opportunity_score`. Each writer text now gives `opportunity_score`. `composite_scorer.py` and `write-run` read the old key when `opportunity_score` is absent, so a session from before the fix keeps its score.
+
+## What Was New in v1.11.0
 
 - The graph in `docs/jtbd/` is the only output of a run. The plugin does not write the 4 files `customer-needs.json`, `opportunity-scores.json`, `evc-analysis.json` and `wtp-validation.json` any more, and it does not write the `results/` folder.
 - The result file is `result.json` in the session folder, a state file of the run. A resumed run writes `result-2.json`, then `result-3.json`. `jtbd_state.py place-result` has the new option `--session-dir`.
@@ -202,7 +206,7 @@ Example of an opportunity in `final-output.json`:
 {
   "opportunity_id": "O001",
   "title": "Minimize coverage gaps during critical periods",
-  "scores": { "composite": 87, "odi_score": 82, "financial_score": 91 },
+  "scores": { "composite": 87, "odi_score_normalized": 82, "financial_score": 91 },
   "segment_id": "S001",
   "evc_monthly": 11513,
   "wtp_validated": 75

@@ -14,7 +14,7 @@ description: Phase 10 of JTBD discovery — assemble final output from all phase
 `Composite = (ODI Score × 0.4) + (Financial Score × 0.35) + (Segment Score × 0.25)`
 
 Where:
-- **ODI Score** — from p6.json `odi_score` (normalize: `odi_score / 20 × 100`)
+- **ODI Score** — from p6.json `opportunity_score` (normalize: `opportunity_score / 20 × 100`)
 - **Financial Score** — from p7.json: `this_need_total_evc / max(all_needs_total_evc) × 100`
 - **Segment Score** — from p8.json `percentage` × confidence weight: `high`=1.0, `medium`=0.5, `low`=0.25 → `percentage × weight × 100`
 
@@ -27,7 +27,7 @@ Where:
     {
       "rank": 1,
       "need": "Prevent coverage gaps from forming during critical periods",
-      "odi_score": 16.2,
+      "opportunity_score": 16.2,
       "evc_monthly": 1530,
       "wtp_validated": 75,
       "segment": "Crisis Avoiders (43%)",

@@ -6,7 +6,7 @@
 Composite Opportunity Scorer — Phase 10
 
 Computes weighted composite scores for JTBD opportunities by combining:
-  - ODI Score       (40%) — from p6.json opportunity_score (0-20 scale)
+  - ODI Score       (40%) — from p6.json opportunity_score (0-20 scale); odi_score in a session before the fix
   - Financial Score (35%) — from p7.json total_annual_evc (relative to max)
   - Segment Score   (25%) — from p8.json size_percent × p9.json confidence weight
 
@@ -39,6 +39,19 @@ CONFIDENCE_WEIGHTS: dict[str, float] = {
 WEIGHT_ODI: float = 0.40
 WEIGHT_FINANCIAL: float = 0.35
 WEIGHT_SEGMENT: float = 0.25
+
+# The key of the ODI score (0-20) in each opportunity of p6.json. Each p6.json writer writes it
+# (STORY-279). OLD_ODI_KEY is the key that the writers used before; read it when ODI_KEY is absent.
+ODI_KEY: str = "opportunity_score"
+OLD_ODI_KEY: str = "odi_score"
+
+
+def odi_value(opp: dict[str, Any]) -> float:
+    """The ODI score (0-20) of 1 opportunity: ODI_KEY, else OLD_ODI_KEY, else 0."""
+    value = opp.get(ODI_KEY)
+    if value is None:
+        value = opp.get(OLD_ODI_KEY)
+    return float(value or 0)
 
 
 def _load(session_dir: Path, filename: str) -> dict[str, Any]:
@@ -90,7 +103,7 @@ def compute_composite_scores(session_dir: Path) -> list[dict[str, Any]]:
 
     for opp in opportunities:
         need_id = str(opp.get("need_id", ""))
-        opportunity_score = float(opp.get("opportunity_score", 0))
+        opportunity_score = odi_value(opp)
 
         # ODI Score: normalize 0-20 scale to 0-100
         odi_score = (opportunity_score / 20.0) * 100.0

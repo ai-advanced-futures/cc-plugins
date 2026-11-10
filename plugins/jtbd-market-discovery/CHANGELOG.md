@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.11.1
+
+- `composite_scorer.py` reads `opportunity_score` from each opportunity of `p6.json`, and `odi_score` when `opportunity_score` is absent. Before, the agent `opportunity-scorer` wrote `odi_score`, so the ODI part (40%) of the composite score was 0 in each real run, and no error showed. `write-run` reads the same two keys for the score of an Outcome page (STORY-279).
+- The `p6.json` examples of `opportunity-scorer`, `phase-6-opportunity-scoring`, `quick-validate`, `phase-10-output-integration` and `output-assembler` give `opportunity_score`. The `final-output.json` example of the README gives `odi_score_normalized` (STORY-279).
+
 ## 1.11.0
 
 The plugin writes no old output file. The graph in `docs/jtbd/` is the only output of a run (STORY-113, D-056).

@@ -312,7 +312,7 @@ class Build:
                       "rank": number(score.get("rank")), "importance": number(score.get("importance")),
                       "satisfaction": number(score.get("satisfaction")),
                       "gap": number(pick(score, "importance_satisfaction_gap", "gap")),
-                      "opportunity_score": number(score.get("opportunity_score")),
+                      "opportunity_score": number(pick(score, "opportunity_score", "odi_score")),
                       "opportunity_category": pick(score, "category", "opportunity_category"),
                       "annual_evc": number(value.get("total_annual_evc")),
                       "evc_breakdown": breakdown if isinstance(breakdown, dict) else None}

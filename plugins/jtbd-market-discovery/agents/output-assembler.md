@@ -109,7 +109,7 @@ A finished run that rests on every default:
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.11.0",
+  "plugin_version": "1.11.1",
   "command": "jtbd-market-discovery:discover",
   "run": {
     "started_at": "2026-10-31T09:00:00Z",
@@ -176,7 +176,7 @@ A run whose answers file gave the labor rate (`settled_by: person`), so `labor_r
 {
   "schema": "plugin-result/1",
   "plugin": "jtbd-market-discovery",
-  "plugin_version": "1.11.0",
+  "plugin_version": "1.11.1",
   "command": "jtbd-market-discovery:discover",
   "run": {
     "started_at": "2026-10-31T09:00:00Z",
@@ -243,7 +243,7 @@ A run whose answers file gave the labor rate (`settled_by: person`), so `labor_r
        "date": "YYYY-MM-DD",
        "job_statement": "...",
        "respondents": 87,
-       "analyst": "jtbd-market-discovery v1.11.0",
+       "analyst": "jtbd-market-discovery v1.11.1",
        "session_dir": "..."
      },
      "job_steps": [...],
@@ -254,7 +254,7 @@ A run whose answers file gave the labor rate (`settled_by: person`), so `labor_r
          "need": "...",
          "importance": 9.0,
          "satisfaction": 2.0,
-         "odi_score": 16.0,
+         "opportunity_score": 16.0,
          "composite_score": 87,
          "evc_monthly": 1530,
          "wtp_validated": 75,

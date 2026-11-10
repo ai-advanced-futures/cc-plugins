@@ -170,7 +170,7 @@ Write phase output to `{session_dir}/p6.json` before signaling completion. Write
             "need": "Minimize time to identify traffic delays",
             "importance": 9.2,
             "satisfaction": 3.1,
-            "odi_score": 15.3,
+            "opportunity_score": 15.3,
             "level": "Severely Underserved"
         }
     ],

@@ -38,7 +38,7 @@ Need: "Minimize time to identify traffic delays"
       "need": "Minimize time to identify traffic delays",
       "importance": 9.2,
       "satisfaction": 3.1,
-      "odi_score": 15.3,
+      "opportunity_score": 15.3,
       "status": "extremely_underserved",
       "rank": 1
     }

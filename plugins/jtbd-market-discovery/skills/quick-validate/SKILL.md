@@ -238,7 +238,7 @@ Create condensed JSON output:
       "need": "Minimize time to estimate departure time",
       "importance": 9.2,
       "satisfaction": 3.1,
-      "odi_score": 15.3,
+      "opportunity_score": 15.3,
       "recommended_segment": "High-Value"
     }
   ],
