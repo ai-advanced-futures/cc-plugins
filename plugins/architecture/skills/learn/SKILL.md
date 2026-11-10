@@ -97,4 +97,10 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/learn/distillation.md` and apply it.
    Report entry: `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/adr.py log Report "<operation> failed: <error>. I edited <file>: <edit>. Reason: <reason>."`
 3. In the report, list each ERROR, WARN, and SKIP line of the checks. When a
    Report entry exists, offer to open a GitHub issue in
-   `ai-advanced-futures/cc-plugins`, and open it only after a yes.
+   `ai-advanced-futures/cc-plugins`. After a yes, show the person the full
+   issue body, in a fenced block, as the issue will hold it. Then ask a second
+   question: "Open the issue with this body? `ai-advanced-futures/cc-plugins`
+   is public, so remove each path and each value of the project that must stay
+   private." When the person changes the body, show it again and ask again.
+   Open it only after a yes to the second question, because the first yes is
+   to the offer and not to the text.

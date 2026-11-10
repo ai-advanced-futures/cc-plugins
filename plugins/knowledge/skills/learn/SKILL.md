@@ -90,10 +90,18 @@ Tell the person:
   did not run.
 
 When Step 4 wrote a Report entry, ask: "Open a GitHub issue with this report
-in the plugins repository?" Open an issue only after a yes:
+in the plugins repository?" After a yes, show the person the full issue body,
+in a fenced block, as the command will send it. Then ask a second question:
+"Open the issue with this body? `ai-advanced-futures/cc-plugins` is public, so
+remove each path and each value of the project that must stay private." When
+the person changes the body, show it again and ask again. Open it only after a
+yes to the second question, because the first yes is to the offer and not to
+the text:
 
 ```bash
 gh issue create --repo ai-advanced-futures/cc-plugins --title "knowledge:learn report" --body-file <report file>
 ```
+
+The report file holds only the body that the person accepted.
 
 Leave the diff uncommitted, so that the person reviews it before the commit.

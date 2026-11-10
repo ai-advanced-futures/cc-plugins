@@ -1,6 +1,6 @@
 {
   "name": "business-domain",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "The domain model of a repository as one OKF graph on the brain standard: bounded contexts, terms, aggregates, events, and relationships, with business-domain:setup, business-domain:learn, and business-domain:ask, and a hook that runs regen and both checks",
   "dependencies": ["knowledge"],
   "author": {

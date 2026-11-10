@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.4.7
+
+### Changed
+- The issue offer of `product:learn` shows the full issue body, asks a second question that says that `ai-advanced-futures/cc-plugins` is public, and opens the issue only after a yes to the second question (STORY-286). Before, it opened the issue after the first yes, which was to the offer and not to the text.
+
 ## 6.4.6
 
 ### Fixed

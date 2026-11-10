@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4
+
+### Changed
+- The issue offer of `knowledge:learn` and `knowledge:forget` shows the full issue body, asks a second question that says that `ai-advanced-futures/cc-plugins` is public, and opens the issue only after a yes to the second question (STORY-286). Before, it opened the issue after the first yes, which was to the offer and not to the text. Section 10 of the brain standard says the two steps, and `knowledge:learn` says that the report file holds only the body that the person accepted.
+
 ## 1.5.3
 
 ### Changed

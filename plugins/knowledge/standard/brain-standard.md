@@ -224,8 +224,9 @@ direct edit: the failed operation, the edit, and the reason. They also write
 an entry for each recommendation to improve the skill or the save code. They
 show the report at the end of the run, with each SKIP line of the checks.
 They offer to open a GitHub issue with the report in
-`ai-advanced-futures/cc-plugins`, and they open it only after a
-yes.
+`ai-advanced-futures/cc-plugins`. After a yes, they show the full issue body
+and ask a second question, which says that the repository is public. They open
+the issue only after a yes to the second question.
 
 ## 11. Forget
 

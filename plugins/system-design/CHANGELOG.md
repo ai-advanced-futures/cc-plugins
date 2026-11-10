@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.12
+
+### Changed
+- The issue offer of `system-design:learn` shows the full issue body, asks a second question that says that `ai-advanced-futures/cc-plugins` is public, and opens the issue only after a yes to the second question (STORY-286). Before, it opened the issue after the first yes, which was to the offer and not to the text. The text says that the file holds only the body that the person accepted.
+
 ## 0.2.11
 
 ### Fixed

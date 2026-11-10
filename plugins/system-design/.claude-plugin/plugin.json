@@ -1,7 +1,7 @@
 {
   "name": "system-design",
   "displayName": "system-design",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "description": "The architecture of a repository as one OKF graph on the brain standard: components, interfaces, data entities, quality scenarios, conventions, risks, deferred decisions, assumptions, deployment nodes, and a glossary, with system-design:setup, system-design:learn, and system-design:ask. It replaces /product:system-design.",
   "author": {
     "name": "Yassel Piloto",
