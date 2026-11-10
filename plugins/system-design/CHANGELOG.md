@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.11
+
+### Fixed
+- `set` and `new --set` keep a date or a time as the text that you give, at each depth of a list or a map. Before, a value such as `2026-11-09T19:00:00Z` became a date object, and the save refused the page. The same for `link --with` (STORY-276).
+
 ## 0.2.10
 
 ### Changed

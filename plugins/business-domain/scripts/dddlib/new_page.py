@@ -7,7 +7,7 @@ from . import DataError, UsageError
 from . import logbook, regen
 from .bundle import read
 from .ids import next_id, require_type
-from .page import dump, normalise, write_text
+from .page import dump, load_set_value, normalise, write_text
 from .schema import plugin_actor, validate_frontmatter
 
 
@@ -19,7 +19,7 @@ def _sets(pairs) -> dict:
         if not sep or not key.strip():
             raise UsageError(f"--set needs KEY=VALUE, got {pair!r}")
         try:
-            out[key.strip()] = yaml.safe_load(value)
+            out[key.strip()] = load_set_value(value)
         except yaml.YAMLError as error:
             raise UsageError(f"--set {key}: the value does not parse: {error}")
     return out

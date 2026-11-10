@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.4.6
+
+### Fixed
+- `set` and `new --set` keep a date or a time as the text that you give. Before, `set` refused each date, also in a date field such as `target_date`, and `new --set` wrote a time such as `2026-11-09T19:00:00Z` as `2026-11-09T19:00:00+00:00` (STORY-276).
+
 ## 6.4.5
 
 ### Changed

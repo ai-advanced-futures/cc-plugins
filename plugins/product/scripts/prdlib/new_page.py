@@ -10,7 +10,7 @@ from .hashing import body_hash
 from .ids import new_run_id, next_id
 from .lock import write_lock
 from .logbook import timestamp
-from .page import Page, load_page, normalise, safe_load, write_page
+from .page import Page, load_page, load_set_value, normalise, write_page
 from .registry import TYPES, WORK_ITEMS
 from .schema import is_single_valued, plugin_actor, validate_frontmatter
 from .tree import bundle_dir
@@ -82,7 +82,7 @@ def create(root: Path, type_name: str, title: str, description: str,
                 f"--set cannot write {field}. A new item starts in backlog. "
                 f"Only prd.py state, prd.py regen, and prd.py drift write it.")
         try:
-            frontmatter[field] = normalise(safe_load(raw))
+            frontmatter[field] = normalise(load_set_value(raw))
         except yaml.YAMLError as error:
             raise UsageError(f"--set {item} does not parse: {error}")
     if traces:

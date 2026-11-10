@@ -10,7 +10,7 @@ import yaml
 from . import DataError, UsageError, ids, logbook, regen
 from .lock import write_lock
 from .new_page import REFUSED_SET_FIELDS
-from .page import load_page, split_frontmatter, write_page
+from .page import load_page, load_set_value, split_frontmatter, write_page
 from .schema import is_single_valued, plugin_actor, validate_frontmatter
 from .tree import BUNDLES, bundle_dir
 
@@ -21,7 +21,7 @@ def parse_pair(item):
     if "=" not in item:
         raise UsageError(f"{item!r} is not KEY=VALUE")
     key, value = item.split("=", 1)
-    return key.strip(), (yaml.safe_load(value) if value.strip() else "")
+    return key.strip(), (load_set_value(value) if value.strip() else "")
 
 
 def _now() -> str:

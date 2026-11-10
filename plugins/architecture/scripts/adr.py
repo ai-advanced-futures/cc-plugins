@@ -191,11 +191,29 @@ def save(root, path, meta, body, who) -> None:
     regen_write(root)
 
 
+class _TextTimeLoader(yaml.SafeLoader):
+    """A SafeLoader that reads a date or a time as the text that the person gave (STORY-276, as STORY-186).
+
+    The ADR writer makes text of each value, so a value such as 2026-11-09T19:00:00Z
+    stays that text, at each depth of a list or a map."""
+
+
+_TextTimeLoader.yaml_implicit_resolvers = {
+    first: [(tag, regexp) for tag, regexp in resolvers if tag != "tag:yaml.org,2002:timestamp"]
+    for first, resolvers in yaml.SafeLoader.yaml_implicit_resolvers.items()
+}
+
+
+def load_set_value(text):
+    """The value of one `set` item, read as YAML with a date or a time kept as text."""
+    return yaml.load(text, Loader=_TextTimeLoader)
+
+
 def parse_pair(item):
     if "=" not in item:
         raise UsageError(f"{item!r} is not KEY=VALUE")
     key, value = item.split("=", 1)
-    return key.strip(), yaml.safe_load(value) if value.strip() else ""
+    return key.strip(), load_set_value(value) if value.strip() else ""
 
 
 def cmd_init(args) -> int:

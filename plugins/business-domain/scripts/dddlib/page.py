@@ -62,6 +62,24 @@ def write_text(path: Path, text: str) -> None:
         handle.write(text)
 
 
+class _TextTimeLoader(yaml.SafeLoader):
+    """A SafeLoader that reads a date or a time as the text that the person gave (STORY-276, as STORY-186).
+
+    Each field of the ddd schema is a string, so a value such as 2026-11-09T19:00:00Z
+    stays that text, at each depth of a list or a map."""
+
+
+_TextTimeLoader.yaml_implicit_resolvers = {
+    first: [(tag, regexp) for tag, regexp in resolvers if tag != "tag:yaml.org,2002:timestamp"]
+    for first, resolvers in yaml.SafeLoader.yaml_implicit_resolvers.items()
+}
+
+
+def load_set_value(text):
+    """The value of one `set` or `new --set` item, read as YAML with a date or a time kept as text."""
+    return yaml.load(text, Loader=_TextTimeLoader)
+
+
 def normalise(value):
     """YAML reads `2026-10-20` as a date and an unquoted time as a datetime.
     Each field of the schema is a string, so give the ISO form back."""

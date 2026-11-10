@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.12
+
+### Fixed
+- `adr.py set` keeps a time as the text that you give. Before, it wrote `2026-11-09T19:00:00Z` as `2026-11-09 19:00:00+00:00` (STORY-276).
+
 ## 1.0.11
 
 ### Changed

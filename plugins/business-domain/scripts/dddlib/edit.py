@@ -9,7 +9,7 @@ from dddlib import DataError, UsageError, logbook, regen, schema, standard
 from dddlib.bundle import read, ref_of
 from dddlib.config import bundle_dir
 from dddlib.ids import resolve
-from dddlib.page import dump, order_keys, parse, write_text
+from dddlib.page import dump, load_set_value, order_keys, parse, write_text
 
 PROTECTED = ("type", "generated", "protected")
 
@@ -18,7 +18,7 @@ def parse_pair(item):
     if "=" not in item:
         raise UsageError(f"{item!r} is not KEY=VALUE")
     key, value = item.split("=", 1)
-    return key.strip(), (yaml.safe_load(value) if value.strip() else "")
+    return key.strip(), (load_set_value(value) if value.strip() else "")
 
 
 def _load(root, key):
