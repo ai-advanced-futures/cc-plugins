@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.15.2
+
+- **fix:** 4 agents name no file that Claude Code refuses from a subagent. The report of `instrumentation-planner` is `instrumentation-<date>.md`, of `ai-economist` `ai-economics-<date>.md`, of `roi-calculator` `roi-<date>.md`, and of `market-analyzer` `market-<date>.md`. Before, a subagent `Write` of `report-<date>.md` or `analysis-<date>.md` failed with "Subagents should return findings as text, not write report files", and the run lost the report.
+
 ## 0.15.1
 
 - **fix:** the skills `calculations-rule-of-40`, `calculations-unit-economics` and `ai-economics-roi-calculation` run their script by its plugin path, `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<script> --input .product-finance/<name>-input.json --format markdown`, and grant only that call and the write of their input file. Before, a direct run in the default mode could not run the script or write the file. A command or an agent that reads one of these pages keeps its own steps.

@@ -540,7 +540,7 @@ This agent leverages the following skills:
 
 2. GENERATE SUPPORTING ARTIFACTS:
    ```
-   .product-finance/markets/{market}/analysis-{date}.md
+   .product-finance/markets/{market}/market-{date}.md
    .product-finance/markets/{market}/data-{date}.json
    .product-finance/markets/{market}/financial-model-{date}.json
    ```
@@ -569,7 +569,7 @@ This agent leverages the following skills:
 
 ### Primary Output: Market Analysis Report
 ```
-.product-finance/markets/{market}/analysis-{date}.md
+.product-finance/markets/{market}/market-{date}.md
 ```
 
 ### Supporting Artifacts:
@@ -704,7 +704,7 @@ Recommendation: Pursue with staged investment
 - Phase 1: MVP with $800K, validate PMF
 - Phase 2: Scale with remaining $1.7M
 
-Full report: .product-finance/markets/ai-writing-assistant/analysis-2024-01.md
+Full report: .product-finance/markets/ai-writing-assistant/market-2024-01.md
 ```
 
 ## Important Notes
@@ -773,7 +773,7 @@ A defaults run of `product-finance:discover`, then the same run with `sdr_annual
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.15.1",
+  "plugin_version": "0.15.2",
   "command": "product-finance:discover",
   "run": {
     "started_at": "2026-11-01T09:00:00Z",
@@ -869,7 +869,7 @@ A defaults run of `product-finance:discover`, then the same run with `sdr_annual
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.15.1",
+  "plugin_version": "0.15.2",
   "command": "product-finance:discover",
   "run": {
     "started_at": "2026-11-01T09:00:00Z",
@@ -915,7 +915,7 @@ A person's run of `product-finance:discover` (`mode` `interactive`). The values 
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.15.1",
+  "plugin_version": "0.15.2",
   "command": "product-finance:discover",
   "run": {
     "started_at": "2026-11-02T10:00:00Z",
@@ -959,7 +959,7 @@ A plugin run whose answers give no `sam_percent`, none of the three shares of Ph
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.15.1",
+  "plugin_version": "0.15.2",
   "command": "product-finance:discover",
   "run": {
     "started_at": "2026-11-03T09:00:00Z",

@@ -613,7 +613,7 @@ This agent leverages the following skills:
 
 ### Primary Output: Instrumentation Report
 ```
-.product-finance/instrumentation/report-{date}.md
+.product-finance/instrumentation/instrumentation-{date}.md
 ```
 
 ### Supporting Artifacts:
@@ -732,7 +732,7 @@ Total estimated effort: 20 hours
 ⊙ assessment: Revenue and AI tracking are critical gaps
 
 Generated artifacts:
-- .product-finance/instrumentation/report-2024-01.md
+- .product-finance/instrumentation/instrumentation-2024-01.md
 - .product-finance/instrumentation/event-schemas-2024-01.json
 - .product-finance/instrumentation/implementation-plan-2024-01.md
 ```

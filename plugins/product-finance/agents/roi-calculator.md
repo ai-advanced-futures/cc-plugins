@@ -512,7 +512,7 @@ This agent leverages the following skills:
 
 2. GENERATE SUPPORTING ARTIFACTS:
    ```
-   .product-finance/roi/{feature}/analysis-{date}.md
+   .product-finance/roi/{feature}/roi-{date}.md
    .product-finance/roi/{feature}/model-{date}.json
    .product-finance/roi/{feature}/sensitivity-{date}.json
    ```
@@ -541,7 +541,7 @@ This agent leverages the following skills:
 
 ### Primary Output: ROI Analysis Report
 ```
-.product-finance/roi/{feature}/analysis-{date}.md
+.product-finance/roi/{feature}/roi-{date}.md
 ```
 
 ### Supporting Artifacts:
@@ -671,7 +671,7 @@ Recommendation: INVEST
 - Low execution risk
 - Supports retention strategic priority
 
-Full report: .product-finance/roi/slack-integration/analysis-2024-01.md
+Full report: .product-finance/roi/slack-integration/roi-2024-01.md
 ```
 
 ## Important Notes
@@ -731,7 +731,7 @@ A defaults run of `product-finance:feature-roi` with no revenue answer, then a r
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.15.1",
+  "plugin_version": "0.15.2",
   "command": "product-finance:feature-roi",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -849,7 +849,7 @@ A defaults run of `product-finance:feature-roi` with no revenue answer, then a r
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.15.1",
+  "plugin_version": "0.15.2",
   "command": "product-finance:feature-roi",
   "run": {
     "started_at": "2026-11-01T10:10:00Z",
@@ -921,7 +921,7 @@ A defaults run of `product-finance:feature-roi` with no revenue answer, then a r
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.15.1",
+  "plugin_version": "0.15.2",
   "command": "product-finance:feature-roi",
   "run": {
     "started_at": "2026-11-01T14:00:00Z",

@@ -446,7 +446,7 @@ This agent leverages the following skills:
 
 1. WRITE ARTIFACTS:
    ```
-   .product-finance/ai-economics/report-{date}.md
+   .product-finance/ai-economics/ai-economics-{date}.md
    .product-finance/ai-economics/data-{date}.json
    .product-finance/ai-economics/recommendations-{date}.md
    ```
@@ -468,7 +468,7 @@ This agent leverages the following skills:
 
 ### Primary Output: AI Economics Report
 ```
-.product-finance/ai-economics/report-{date}.md
+.product-finance/ai-economics/ai-economics-{date}.md
 ```
 
 ### Supporting Artifacts:
@@ -599,7 +599,7 @@ Optimization Opportunities:
 1. Smart Search: Consider fine-tuned smaller model (-30% cost)
 2. Content Assistant: Add response caching (+15% efficiency)
 
-Full report: .product-finance/ai-economics/report-2024.md
+Full report: .product-finance/ai-economics/ai-economics-2024.md
 ```
 
 ## Important Notes
@@ -658,7 +658,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.15.1",
+  "plugin_version": "0.15.2",
   "command": "product-finance:ai-economics",
   "run": {
     "started_at": "2026-11-01T12:00:00Z",
@@ -736,7 +736,7 @@ A defaults run of `product-finance:ai-economics`, then the same run with `ai_eng
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.15.1",
+  "plugin_version": "0.15.2",
   "command": "product-finance:ai-economics",
   "run": {
     "started_at": "2026-11-01T12:00:00Z",
