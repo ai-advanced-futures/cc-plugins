@@ -282,11 +282,15 @@ else. It reads and writes only the bundles.
 
 Turn one Feature and its Stories into one spec file or more in
 `docs/superpowers/specs/` that `/relay:implement --spec` accepts. The skill
-infers each technical decision from an accepted ADR, a PRD Decision page, or a
-built spec, and asks the person only the rows that no source answers. It
-records each cross-cutting decision as an ADR with `lifecycle: accepted`, writes
-the path of the spec in the `spec` field of each covered Story, and sets each
-of those Stories to `ready`. The work goes on a `spec/<FEATURE-ID>` branch and
+infers each technical decision from an accepted ADR, a PRD Decision page, an
+Experience page of a Story, or a built spec, and asks the person only the rows
+that no source answers. An Experience page counts when it describes a
+Capability or a Journey that the Feature or a Story traces, or when a page
+traces it directly. A product with no Experience page gets the same spec as
+before. It records each cross-cutting decision as an ADR with
+`lifecycle: accepted`, writes the path of the spec in the `spec` field of each
+covered Story, and sets each of those Stories to `ready`. The work goes on a
+`spec/<FEATURE-ID>` branch and
 in one draft pull request, apart from the build. The skill needs the
 superpowers plugin, and it uses the relay plugin for the code summary when
 relay is present.

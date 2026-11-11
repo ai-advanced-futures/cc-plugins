@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.7.0
+
+### Changed
+- `/product:specifying-stories` reads the Experience pages of a Feature and its Stories (Step 1 item 2b): the pages that describe a Capability or a Journey that they trace, and the pages that they trace directly, with no deprecated page. Each kept page is a Decisions row with the source `EXPERIENCE-<NN>` and the treatment "Inherit", the "UI surface" area of the Design section names it with its `kind` and its title, and a spec choice against it is a conflict row. A product with no Experience page gets the same spec as before (STORY-243).
+
 ## 6.6.0
 
 ### Added

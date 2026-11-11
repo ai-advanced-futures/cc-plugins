@@ -96,9 +96,9 @@ Read these, in this order. Do not read every file of a directory, because a
 large bundle fills the context.
 
 1. The Feature page. Its `traces` name the PRD pages. Read those pages and
-   nothing else of the PRD bundle, with one exception: read the index of
-   `docs/product/prd/decisions/`, then each Decision page whose `about` names
-   a traced page.
+   nothing else of the PRD bundle, with two exceptions. The first: read the
+   index of `docs/product/prd/decisions/`, then each Decision page whose
+   `about` names a traced page. The second is item 2b.
 2. Each Story page whose `parent` is the Feature, and each
    AcceptanceCriterion whose `item` is one of those Stories:
 
@@ -110,6 +110,21 @@ large bundle fills the context.
    The second command reads the criteria directory one time. Group its lines by
    `item` yourself, and keep the ones whose `item` is a Story of the first
    command. One call for each Story re-reads every criterion page each time.
+
+2b. The Experience pages of the Feature and its Stories. Read the `traces` of
+   the Feature page (item 1 reads it) and the `traces` of each Story page of
+   item 2 (the first 30 lines of the page). Then run this command 1 time:
+
+   ```bash
+   uv run ${CLAUDE_PLUGIN_ROOT}/scripts/prd.py list Experience --fields title,kind,describes,status
+   ```
+
+   Keep each line whose `describes` names a Capability or a Journey that the
+   Feature or one of its Stories traces, and each Experience page that they
+   trace directly. A `traces` target `prd:/capabilities/CAPABILITY-01.md`
+   matches the `describes` value `/capabilities/CAPABILITY-01.md`. Leave out a
+   line with `status: deprecated`. With no kept page, item 2b adds nothing, so
+   the spec is the same as without it.
 
 3. The ADR register, through the `architecture:ask` skill in
    `subagent` mode. Ask one question for each decision area of the fixed list
@@ -184,6 +199,7 @@ table below.
 |---|---|
 | ADR with status `accepted` | **Inherit.** Cite the ADR filename. |
 | PRD Decision page in `prd/decisions/` | **Inherit.** Cite the page ID. |
+| PRD Experience page of a Story | **Inherit.** Cite the page ID. |
 | Past spec that counts as built, same choice in the same area, and no later ADR or spec contradicts it | **Inherit.** Cite the spec path. |
 | Code convention from Step 1 item 5, with no document behind it | **Infer.** Cite the file. Put the row in the Assumptions list. |
 | ADR with status `proposed` | **Ask.** Use it as the recommended option. |
@@ -298,6 +314,13 @@ The body holds these sections, in this order:
    happened.
 7. **Out of scope** — what this spec does not build, with the Story or the
    spec that does.
+
+Each Experience page that item 2b kept is a row of the Decisions table with
+the source `EXPERIENCE-<NN>` and the treatment "Inherit", and the Design
+section of the area "UI surface" names each kept page with its `kind` and its
+title. The build follows the page. A spec choice that contradicts a kept
+Experience page is a conflict row: show both and ask, as for an `inherits`
+entry.
 
 A `kind: spike` spec replaces sections 3 and 4 with **Question**, **Probe**,
 and **Stop rule**, and names the decision that the probe must produce.
