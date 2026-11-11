@@ -5,7 +5,8 @@ SHELL := /bin/bash
 TIER ?=
 
 # A tier is the first part of a test name: bundle (read-only GitHub reads and dry runs),
-# skill (live sessions of /product:roadmap-sync, /product:learn and /product:explore, paid), scratch (a real apply on a scratch
+# skill (live sessions of /product:roadmap-sync, /product:learn, /product:explore and
+# /product:specifying-stories, paid), scratch (a real apply on a scratch
 # GitHub Project; needs PRODUCT_ITEST_SCRATCH_DIR and PRODUCT_ITEST_SCRATCH_PROJECT),
 # experience (STORY-241: the Experience page run as a user runs it, on the ui_product.py fixture;
 # no GitHub, no paid session; the live /product:learn session is in the skill tier).
