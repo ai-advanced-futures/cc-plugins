@@ -7,6 +7,7 @@ allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Edit
 
 Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py ...`, one command per Bash call. Never run inline code in any language (`python3 -c`, `python3 -`, `uv run python`, `ruby -e`, `node -e`, a heredoc), never write a script of your own and run it, and write every file with the Write tool, never with a shell command, because only the plugin's own scripts are tested.
 Run every agent you dispatch in the foreground and wait for it to finish; never run one in the background (`run_in_background: true`) before the result file is written.
+A skill page that you read in this run can have a section "Run the Script". Do not do the steps of that section and do not run the script of that page, because this command has its own steps for the figures and grants no call of that script. Do not list the plugin `scripts` folder, because this file and `financial-analyst.md` name each script that you need.
 This plugin's root is `${CLAUDE_PLUGIN_ROOT}`; wherever a file you read writes `${CLAUDE_PLUGIN_ROOT}`, use that path.
 Ask a number or a free-text input in one chat message, or offer options that are real values; never offer an option that only says to type, such as "Type amount", "Type it", "Enter figures" or "List them".
 

@@ -189,15 +189,9 @@ SOM = SAM × Market Share %
 4. **Single Method:** Use multiple methods for triangulation
 5. **Aspirational vs. Realistic:** SOM should be achievable, not hopeful
 
-## Reference Implementation
+## No Script
 
-See `scripts/market_sizing_calculator.py` for the complete Python implementation with:
-- Multiple TAM calculation methods
-- SAM filtering functions
-- SOM projection with validation
-- Customer segment analysis
-- Channel CAC integration
-- Health assessment logic
+Work out each figure with the formulas of this page. Do not look for a script, because no script of this plugin computes this result from the inputs above.
 
 ## Example Calculations
 

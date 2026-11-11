@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.15.1
+
+- **fix:** the skills `calculations-rule-of-40`, `calculations-unit-economics` and `ai-economics-roi-calculation` run their script by its plugin path, `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<script> --input .product-finance/<name>-input.json --format markdown`, and grant only that call and the write of their input file. Before, a direct run in the default mode could not run the script or write the file. A command or an agent that reads one of these pages keeps its own steps.
+- **fix:** 7 skills name no script, because no script computes their result from their own inputs: `ai-economics-cost-tracking`, `ai-economics-value-attribution`, `analysis-market-sizing`, `calculations-ltv-cac`, `calculations-magic-number`, `instrumentation-gap-analysis` and `instrumentation-migration-planning`. No skill names a helper module of `scripts/`.
+- **fix:** `/product-finance:unit-economics` does not do the "Run the Script" steps of a skill page that it reads, and does not list the plugin `scripts` folder. Before, a run could follow those steps and call `rule_of_40.py`, and the call was refused, because the command grants no such call.
+- **change:** in a headless run in the default mode, start the 3 skills with their slash command. A call through the Skill tool needs a `Skill(...)` rule from the caller, for example `Skill(product-finance:calculations-rule-of-40)`, because each of the 3 has an `allowed-tools` line.
+
 ## 0.15.0
 
 - **feat:** `rule_of_40.py` takes an optional `target` of exactly 40, 50 or 60. The default is 40 for each product, and no other input selects the target. The script grades each margin that you give against the target, on its own line: `ebitda_margin` always, and the new optional `fcf_margin` when you give it. Each line reads `met` or `short by N`. The status is `met`, `short`, `split` or `not_graded`. A short margin gets the line "closes with N points of growth or N points of margin". The script names no lever.

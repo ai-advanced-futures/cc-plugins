@@ -213,7 +213,7 @@ Not all metrics are equally important. Weighted scoring:
 ### Critical Gaps (Fix First)
 - Rule of 40 < 20
 - NRR < 100%
-- LTV:CAC < 1:1 (Critical per constants.py::LTV_CAC_THRESHOLDS; 1:1–3:1 is Warning)
+- LTV:CAC < 1:1 (Critical by the thresholds of the plugin scripts; 1:1–3:1 is Warning)
 - CAC Payback > 24 months
 
 ### Improvement Opportunities

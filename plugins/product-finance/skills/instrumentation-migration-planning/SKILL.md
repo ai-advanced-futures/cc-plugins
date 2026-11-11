@@ -386,13 +386,9 @@ def downgrade():
     op.drop_table('financial_events')
 ```
 
-## Reference Implementation
+## No Script
 
-See `scripts/instrumentation_analyzer.py` for:
-- `_generate_postgresql_migration()` - PostgreSQL script generation
-- `_generate_mysql_migration()` - MySQL script generation
-- `_create_implementation_phases()` - Phase planning logic
-- `_estimate_effort()` - Effort calculation
+Do the steps of the Process section. Do not look for a script, because no script of this plugin makes this analysis from the inputs above.
 
 ## Rollback Procedures
 

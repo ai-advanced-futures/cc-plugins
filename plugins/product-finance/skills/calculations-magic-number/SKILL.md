@@ -159,13 +159,9 @@ S&M spend, capturing the standard one-quarter spend→ARR lag.
 
 4. **Not segmenting:** Calculate by channel/segment for optimization insights
 
-## Reference Implementation
+## No Script
 
-See `scripts/utils/magic_number.py` function:
-- `calculate_magic_number()` - the canonical implementation
-
-`scripts/unit_economics.py::calculate_magic_number()` is a thin delegating wrapper
-that adapts the canonical `MagicNumberOutcome` into `MagicNumberResult`.
+Work out each figure with the formulas of this page. Do not look for a script, because no script of this plugin computes this result from the inputs above.
 
 ## Example Calculation
 

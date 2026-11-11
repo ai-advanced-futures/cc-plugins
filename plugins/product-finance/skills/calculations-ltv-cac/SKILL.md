@@ -66,7 +66,7 @@ Maximum CAC = LTV / 3
 
 ### LTV:CAC Ratio Health
 
-LTV:CAC Health Thresholds (source: constants.py::LTV_CAC_THRESHOLDS):
+LTV:CAC Health Thresholds (the thresholds of the plugin scripts):
 - Excellent: > 5:1
 - Good:      3:1 – 5:1 (inclusive at 3:1)
 - Warning:   1:1 – 3:1
@@ -187,11 +187,9 @@ Different channels have different acceptable thresholds:
 | Enterprise Sales | > 2:1 | 12-18 months |
 | Partnerships | > 4:1 | 6-12 months |
 
-## Reference Implementation
+## No Script
 
-See `scripts/unit_economics.py` functions:
-- `calculate_ltv_cac_ratio()` - Core ratio calculation
-- `calculate_cac_payback()` - Payback period calculation
+Work out each figure with the formulas of this page. Do not look for a script, because no script of this plugin computes this result from the inputs above.
 
 ## Example Calculations
 

@@ -252,13 +252,9 @@ Retention Impact: 3% churn reduction = $150,000/year saved
 Total Attributable Value: $250,000/year
 ```
 
-## Reference Implementation
+## No Script
 
-See `scripts/ai_roi_calculator.py` for the complete Python implementation with:
-- `AIValueInput` model for input validation
-- `calculate_ai_value()` function
-- Value breakdown calculation
-- Health assessment logic
+Work out each figure with the formulas of this page. Do not look for a script, because no script of this plugin computes this result from the inputs above.
 
 ## Investor-Ready Value Attribution
 

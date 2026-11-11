@@ -237,14 +237,9 @@ Quality Multiplier:
 - custom tracking modules
 ```
 
-## Reference Implementation
+## No Script
 
-See `scripts/instrumentation_analyzer.py` for the complete Python implementation with:
-- `InstrumentationAnalyzer` class
-- Framework detection logic
-- Pattern matching for tracking calls
-- Gap identification algorithm
-- Coverage score calculation
+Do the steps of the Process section. Do not look for a script, because no script of this plugin makes this analysis from the inputs above.
 
 ## Common Gap Patterns
 

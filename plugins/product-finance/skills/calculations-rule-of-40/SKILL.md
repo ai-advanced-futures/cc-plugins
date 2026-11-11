@@ -1,6 +1,7 @@
 ---
 name: calculations-rule-of-40
 description: Calculate the Rule of 40 against a target of 40, 50 or 60, with the weighted score, a sourced ladder and reference lines
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/rule_of_40.py *), Edit(/.product-finance/rule-of-40-input.json)
 ---
 
 # Rule of 40 Calculation Skill
@@ -204,13 +205,18 @@ The target fields:
    - Calculate the score change
    - State the change in growth and in margin
 
-## Reference Implementation
+## Run the Script
 
-See `scripts/rule_of_40.py` for the complete Python implementation with:
-- Input checks with `scripts/input_check.py`, standard library only
-- Target lines, the ladder and reference lines
-- Trend analysis functions
-- JSON and Markdown output formatters
+Do these steps only when this skill runs as `/product-finance:calculations-rule-of-40`. When a command or an agent tells you to read this page, do not do these steps: follow the steps of that command or agent, because it has its own steps for the figures.
+
+1. Write the inputs that the person gave to `.product-finance/rule-of-40-input.json` with the Write tool: 1 JSON object, with the field names of the Input Requirements table. Write each number as a JSON number. Leave out each input that the person did not give.
+2. Run this command 1 time, as the only command of the Bash call:
+
+   ```bash
+   uv run ${CLAUDE_PLUGIN_ROOT}/scripts/rule_of_40.py --input .product-finance/rule-of-40-input.json --format markdown
+   ```
+
+3. Show the output of the script to the person. An exit with code 3 lists each input that the script refused, one on each line. When a listed value is a number that you wrote as text, or an input that you wrote under another name, write it again as a JSON number under the name of the line, and run the command again 1 time. When a listed value is the value that the person gave, show the lines to the person and ask for a value that the script accepts, because only the person can change an input. When a run exits with a code other than 0 and 3, work out the figures with the formulas of this page, and tell the person that no script ran. Do not read a file of the plugin, because this page gives each input name.
 
 ## Example Calculation
 
