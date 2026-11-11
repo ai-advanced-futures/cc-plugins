@@ -2,6 +2,11 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.7.1 - 2026-11-11
+
+- The README section "Grants for a `-p` caller" says that a `-p` run can need the 4 rules, in a build that refuses a `Skill` call. It said that a `-p` run needs them. Claude Code 2.1.322 refused 0 calls with the 4 rules and without them (the verifier of PR 1665).
+- The first sentence of "The behavior save" in the skill `learn` says that the save runs when the first `--check-prd` run exits 1 and 1 line or more is `missing` or `different`. Before, it said only "exits 1", and Step 2b item 2 starts the save only for a missing or different line.
+
 ## 1.7.0 - 2026-11-11
 
 STORY-244 (FEATURE-31): the skill `learn` saves the behavior results of a run into the PRD and the design tokens into the system design.

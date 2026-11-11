@@ -47,7 +47,7 @@ Do this step only when the argument is a RUN ID and Step 2 exited 0. A person st
 
 ### The behavior save
 
-Run this save when the first `--check-prd` run exits 1. A line that is `present` or `rejected` is not in the save, because a person rejected a `rejected` result, and the PRD already holds a `present` result. `ux-hci-design` writes no PRD page itself. The skill `product:learn` writes each page.
+Run this save when the first `--check-prd` run exits 1 and 1 line or more is `missing` or `different`. A line that is `present` or `rejected` is not in the save, because a person rejected a `rejected` result, and the PRD already holds a `present` result. `ux-hci-design` writes no PRD page itself. The skill `product:learn` writes each page.
 
 - Run `$U behavior --run <RUN ID>`. It prints the behavior results of the run as a list. Each item has `prd_type`, `kind`, `path`, `title`, `description`, `brain_type`, `pattern_kind` and `hash`.
 - The check prints the `today` line, then 1 line for each item, in the order of `$U behavior --run <RUN ID>`. A `present` line holds only the PRD ID, so match it to its item by its place in that order. A `missing`, `different` or `rejected` line also holds the brain path. An `extra` line and an `error <path>: <reason>` line come after the items. They are not items. Show them to the person, because the save does not change the PRD page that they name.

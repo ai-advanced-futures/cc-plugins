@@ -1,6 +1,6 @@
 # ux-hci-design
 
-**Version:** 1.7.0
+**Version:** 1.7.1
 **Author:** Luis F. Amadeo (the original plugin). ai-advanced-futures ported it to this marketplace.
 **License:** MIT (see `NOTICE`)
 
@@ -159,12 +159,12 @@ The skill `ux-design` says the same line only when the skill `learn` did not run
 
 ### Grants for a `-p` caller
 
-In the default permission mode, a `Skill` call of a skill with an `allowed-tools` line fails when no rule of the session allows it. Step 2b calls `product:learn`, and `product:learn` calls `knowledge:checking`. A person in an interactive session can allow each call. A `-p` run needs these rules in `--allowedTools`:
+In the default permission mode, a `Skill` call of a skill with an `allowed-tools` line fails when no rule of the session allows it. Step 2b calls `product:learn`, and `product:learn` calls `knowledge:checking`. A person in an interactive session can allow each call. A `-p` run can need these rules in `--allowedTools`, in a build that refuses a `Skill` call:
 
 - `Skill(product:learn)` and `Skill(product:learn *)`
 - `Skill(knowledge:checking)` and `Skill(knowledge:checking *)`
 
-Each skill grants its own scripts in its turn, so the list has no `Bash` rule. Live run 3 of the verifier tests this list. When a run refuses another call, add the rule for that call to the list.
+Each skill grants its own scripts in its turn, so the list has no `Bash` rule. Claude Code 2.1.322 refused 0 calls with these 4 rules and without them. Live run 3 of the verifier tests this list. When a run refuses another call, add the rule for that call to the list.
 
 ## Schemas
 
