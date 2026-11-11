@@ -68,11 +68,23 @@ def main(argv=None):
         def error(self, message):
             fail(message)
 
-    def json_arg(text):
+    def read_input(path, keys):
+        """Read the input file. Each key of `keys` maps to a check that returns True for a good value."""
         try:
-            return json.loads(text)
-        except json.JSONDecodeError as exc:
-            raise argparse.ArgumentTypeError(f"not valid JSON: {exc.msg}")
+            with open(path, encoding="utf-8") as handle:
+                data = json.load(handle)
+        except OSError as exc:
+            fail(f"{path}: cannot read the file: {exc.strerror}")
+        except ValueError as exc:
+            fail(f"{path}: not valid JSON: {exc}")
+        if not isinstance(data, dict):
+            fail(f"{path}: must be a JSON object")
+        for key, (is_good, kind) in keys.items():
+            if key not in data:
+                fail(f'{path}: no key "{key}"')
+            if not is_good(data[key]):
+                fail(f'{path}: key "{key}" must be {kind}')
+        return data
 
     parser = Parser(description="Evaluation metrics. Prints one JSON object.")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -84,21 +96,21 @@ def main(argv=None):
     p.add_argument("--fn", type=float, required=True)
 
     p = sub.add_parser("roc-auc", help="AUC from (TPR, FPR) pairs by the trapezoidal rule")
-    p.add_argument("--pairs", type=json_arg, required=True,
-                   help="JSON list of [tpr, fpr] pairs, for example '[[0,0],[0.8,0.2],[1,1]]'")
+    p.add_argument("--input", required=True,
+                   help='JSON file, for example {"pairs": [[0, 0], [0.8, 0.2], [1, 1]]}')
 
     args = parser.parse_args(argv)
 
     if args.command == "confusion":
         result = confusion_matrix_stats(args.tp, args.tn, args.fp, args.fn)
     else:
-        pairs = args.pairs
-        if not isinstance(pairs, list) or not all(
-            isinstance(x, list) and len(x) == 2 and all(isinstance(v, (int, float)) for v in x)
-            for x in pairs
-        ):
-            fail("--pairs must be a JSON list of [tpr, fpr] pairs")
-        result = {"auc": roc_auc_estimate(pairs)}
+        data = read_input(args.input, {"pairs": (
+            lambda v: isinstance(v, list) and all(
+                isinstance(x, list) and len(x) == 2 and all(isinstance(n, (int, float)) for n in x)
+                for x in v
+            ),
+            "a list of [tpr, fpr] pairs")})
+        result = {"auc": roc_auc_estimate(data["pairs"])}
     print(json.dumps(result))
 
 

@@ -87,11 +87,23 @@ def main(argv=None):
         def error(self, message):
             fail(message)
 
-    def json_arg(text):
+    def read_input(path, keys):
+        """Read the input file. Each key of `keys` maps to a check that returns True for a good value."""
         try:
-            return json.loads(text)
-        except json.JSONDecodeError as exc:
-            raise argparse.ArgumentTypeError(f"not valid JSON: {exc.msg}")
+            with open(path, encoding="utf-8") as handle:
+                data = json.load(handle)
+        except OSError as exc:
+            fail(f"{path}: cannot read the file: {exc.strerror}")
+        except ValueError as exc:
+            fail(f"{path}: not valid JSON: {exc}")
+        if not isinstance(data, dict):
+            fail(f"{path}: must be a JSON object")
+        for key, (is_good, kind) in keys.items():
+            if key not in data:
+                fail(f'{path}: no key "{key}"')
+            if not is_good(data[key]):
+                fail(f'{path}: key "{key}" must be {kind}')
+        return data
 
     parser = Parser(description="Dataset quality checks. Prints one JSON object.")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -103,8 +115,8 @@ def main(argv=None):
     p.add_argument("--tolerance", type=float, default=0.01)
 
     p = sub.add_parser("balance", help="Check the class balance")
-    p.add_argument("--class-counts", type=json_arg, required=True,
-                   help='JSON object, for example \'{"a": 900, "b": 100}\'')
+    p.add_argument("--input", required=True,
+                   help='JSON file, for example {"class_counts": {"a": 900, "b": 100}}')
 
     p = sub.add_parser("min-samples", help="Estimate the minimum number of samples")
     p.add_argument("--task", required=True, help="classification, regression or llm_finetune")
@@ -112,26 +124,26 @@ def main(argv=None):
     p.add_argument("--target-accuracy", type=float, default=0.90)
 
     p = sub.add_parser("leakage", help="Flag features that can leak the target")
-    p.add_argument("--features", type=json_arg, required=True,
-                   help='JSON list, for example \'["age", "outcome_flag"]\'')
-    p.add_argument("--target", required=True)
+    p.add_argument("--input", required=True,
+                   help='JSON file, for example {"features": ["age", "outcome_flag"], "target": "churn"}')
 
     args = parser.parse_args(argv)
 
     if args.command == "split":
         result = validate_split_ratios(args.train, args.val, args.test, args.tolerance)
     elif args.command == "balance":
-        if not isinstance(args.class_counts, dict) or not all(
-            isinstance(v, (int, float)) for v in args.class_counts.values()
-        ):
-            fail("--class-counts must be a JSON object of numbers")
-        result = check_class_balance(args.class_counts)
+        data = read_input(args.input, {"class_counts": (
+            lambda v: isinstance(v, dict) and all(isinstance(n, (int, float)) for n in v.values()),
+            "an object of numbers")})
+        result = check_class_balance(data["class_counts"])
     elif args.command == "min-samples":
         result = estimate_minimum_samples(args.task, args.num_classes, args.target_accuracy)
     else:
-        if not isinstance(args.features, list) or not all(isinstance(f, str) for f in args.features):
-            fail("--features must be a JSON list of strings")
-        result = detect_leakage_risk(args.features, args.target)
+        data = read_input(args.input, {
+            "features": (lambda v: isinstance(v, list) and all(isinstance(f, str) for f in v), "a list of strings"),
+            "target": (lambda v: isinstance(v, str), "a string"),
+        })
+        result = detect_leakage_risk(data["features"], data["target"])
     print(json.dumps(result))
 
 

@@ -34,27 +34,33 @@ You ask the person nothing: the skill `evaluate` asks, and sends you the mode.
 
 Run the following checks with the plugin's Python scripts via `Bash`. Each command prints one JSON object. A bad argument prints one line to standard error and exits 1.
 
+- Put no text from the dataset (a class name, a column name, a cell value) in a `Bash` command, because a name can hold a `'`, a `;`, a `$(...)` or a new line, and the shell runs it. Write such values in the input file of the check with the `Write` tool.
+- Before you write an input file, read it if it exists, because the `Write` tool refuses to replace a file that you did not read. If the `Write` call fails, do not run the command of that check, because it would read an old file or no file. Write in the report that the check did not run.
+- Quote each placeholder in a command line with single quotes, and write each `'` inside a value as `'\''`. This holds for numbers too (`--train '0.8'`).
+
 ### Split Validation
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/data_validator.py split --train <train_ratio> --val <val_ratio> --test <test_ratio>
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/data_validator.py split --train '<train_ratio>' --val '<val_ratio>' --test '<test_ratio>'
 ```
 Checks that ratios sum to 1.0 within tolerance. Reports PASS | FAIL with delta.
 
 ### Class Balance
+First write `.aiml/evaluation/balance-input.json` with the `Write` tool: `{"class_counts": {"<class name>": <count>, ...}}`. Then:
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/data_validator.py balance --class-counts '<json_object_of_class_counts>'
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/data_validator.py balance --input '.aiml/evaluation/balance-input.json'
 ```
 Reports imbalance ratio, minority class percentage, and BALANCED | IMBALANCED verdict.
 
 ### Minimum Samples
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/data_validator.py min-samples --task <classification|regression|llm_finetune> --num-classes <n> --target-accuracy <float>
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/data_validator.py min-samples --task '<classification|regression|llm_finetune>' --num-classes '<n>' --target-accuracy '<float>'
 ```
 Estimates minimum training samples needed. Compares against actual dataset size.
 
 ### Leakage Detection
+First write `.aiml/evaluation/leakage-input.json` with the `Write` tool: `{"features": ["<feature name>", ...], "target": "<target name>"}`. Then:
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/data_validator.py leakage --features '<json_list_of_feature_names>' --target <target_name>
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/data_validator.py leakage --input '.aiml/evaluation/leakage-input.json'
 ```
 Flags features with names semantically related to the target that may cause data leakage.
 
@@ -70,13 +76,14 @@ Run the following computations with the plugin's Python scripts via `Bash`. Each
 
 ### Confusion Matrix Stats
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/metric_calculator.py confusion --tp <int> --tn <int> --fp <int> --fn <int>
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/metric_calculator.py confusion --tp '<int>' --tn '<int>' --fp '<int>' --fn '<int>'
 ```
 Returns precision, recall, F1, and accuracy.
 
 ### ROC-AUC Estimate
+First write `.aiml/evaluation/roc-auc-input.json` with the `Write` tool: `{"pairs": [[<tpr>, <fpr>], ...]}`. Then:
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/metric_calculator.py roc-auc --pairs '<json_list_of_[tpr,fpr]_pairs>'
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/metric_calculator.py roc-auc --input '.aiml/evaluation/roc-auc-input.json'
 ```
 Computes trapezoidal AUC from (TPR, FPR) pairs (`{"auc": <value>}`).
 
@@ -183,6 +190,9 @@ SHIP | RETRAIN | REDESIGN
 | Reads | `.aiml/handoff.json` |
 | Writes | `docs/aiml/evaluation/iteration-N.md` |
 | Writes | `.aiml/handoff.json` |
+| Writes | `.aiml/evaluation/balance-input.json` |
+| Writes | `.aiml/evaluation/leakage-input.json` |
+| Writes | `.aiml/evaluation/roc-auc-input.json` |
 
 ## Done Signal
 

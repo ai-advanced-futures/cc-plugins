@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0
+
+### Changed
+
+- `data_validator.py balance` and `leakage`, and `metric_calculator.py roc-auc`, read their values from a JSON file with the option `--input`: `{"class_counts": {...}}`, `{"features": [...], "target": "..."}` and `{"pairs": [[tpr, fpr], ...]}`. The options `--class-counts`, `--features`, `--target` and `--pairs` are removed and exit 1 with one line. A file that is missing, is not JSON, is not an object, has no key or has a value of the wrong type gives one line `error: <path>: ...` and exit 1. A class name or a column name that holds a `'`, a `;` or a `$(...)` can no longer reach the shell.
+- `evaluate-agent` writes `.aiml/evaluation/balance-input.json`, `leakage-input.json` and `roc-auc-input.json` with the `Write` tool and runs the 3 checks with `--input`. It does not run a check when the `Write` call fails. Each other placeholder in the commands of `evaluate-agent` and `tune-agent` is in single quotes.
+
+### Added
+
+- Tests: the `--input` files, the error lines, the old options, a leakage run with names that hold `'`, `;`, `$(...)` and a new line, and 3 text rules for the agents and skills (no value option in a command, each placeholder of a value script in single quotes, the sentences of `evaluate-agent`).
+
 ## 0.6.1
 
 ### Fixed

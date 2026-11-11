@@ -45,17 +45,17 @@ References:
 
 ## Hyperparameter Recommendations
 
-Before recommending any hyperparameter change, validate it with `hyperparameter_validator.py`. Each call prints one JSON object per check:
+Before recommending any hyperparameter change, validate it with `hyperparameter_validator.py`. Each call prints one JSON object per check. Quote each placeholder in a command line with single quotes, and write each `'` inside a value as `'\''`.
 
 ```bash
 # Validate a learning rate change
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/hyperparameter_validator.py --lr <new_lr>
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/hyperparameter_validator.py --lr '<new_lr>'
 
 # Validate a batch size change
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/hyperparameter_validator.py --batch-size <new_batch>
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/hyperparameter_validator.py --batch-size '<new_batch>'
 
 # Validate LoRA config (LLM fine-tuning only)
-uv run ${CLAUDE_PLUGIN_ROOT}/scripts/hyperparameter_validator.py --lora-rank <rank> --lora-alpha <alpha> --lora-dropout <dropout>
+uv run ${CLAUDE_PLUGIN_ROOT}/scripts/hyperparameter_validator.py --lora-rank '<rank>' --lora-alpha '<alpha>' --lora-dropout '<dropout>'
 ```
 
 Only recommend changes that pass validation. If a proposed change fails validation, note the failure and propose an alternative within the valid range.
