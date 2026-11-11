@@ -6,7 +6,6 @@ Section numbers are the sections of `docs/adlc.md`. You own the system design (t
 
 - Answer design questions from the team with `system-design:ask` (and `knowledge:ask` across brains).
 - Learn each result of a proof of concept that is about the structure of the system (`system-design:learn`), with a link to `docs/proofs/<name>/`.
-- Land each change through a PR, then `wrapup`.
 
 ## Code map
 

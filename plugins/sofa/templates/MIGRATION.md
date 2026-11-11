@@ -11,7 +11,7 @@ The `sofa:start` skill reads this file when `docs/adlc.md` has a lower `sofa-tem
 
 ## 8 → 9
 
-1. Section 3: for each of decision-judge, scribe, tracker, plan-auditor, merger and monitoring, set the tier to `on demand` if the row has `always`. Set the `Starts when` cell if the row has the template 8 text: decision-judge `Always running` becomes ``A `BLOCKED · decision`, or an `ASK` for hitl``, scribe `Always running` becomes ``A `learn:`, `validate` or `lower` task``, and monitoring `An environment exists` becomes ``An environment with logs or metrics exists, or a feature is `done` ``. The cells of tracker, plan-auditor and merger do not change. Keep a tier or a `Starts when` cell that differs from template 8: that difference is a choice of this repository.
+1. Section 3: for each of decision-judge, scribe, tracker, plan-auditor, merger and monitoring, set the tier to `on demand` if the row has `always`. Set the `Starts when` cell if the row has the template 8 text: decision-judge `Always running` becomes ``A `BLOCKED · decision`, or an `ASK` for hitl``, scribe `Always running` becomes ``A `learn:`, `validate` or `lower` task``, and monitoring `An environment exists` becomes ``An environment with logs or metrics exists, or a feature is `done` ``. Keep the `Starts when` cells of tracker, plan-auditor and merger, because template 9 has the template 8 text in them. Keep a tier or a `Starts when` cell that differs from template 8: that difference is a choice of this repository.
 2. Section 3: add the `Tiers:` paragraph of the template below the roles table, above the `Compact at:` note.
 3. Section 4, decision flow: replace `knowledge:ask in a fork` with `knowledge:ask (station Rule 2)`, as in the template line.
 4. Section 9: add the row `Migrated to sofa template version 9`.
@@ -27,7 +27,7 @@ The `sofa:start` skill reads this file when `docs/adlc.md` has a lower `sofa-tem
 
 ## 6 → 7
 
-1. Section 3: remove the `Colour` column from the roles table, and remove the `Colour:` note below the table. The colours are now in `<skill folder>/references/colours.md`. The v6 template differs from that file in 2 rows only: `tracker` was `yellow`, and `scheduler` had no colour. These 2 old values are not a choice of this repository: do not keep them. For each other role whose old colour differs from that file, or that is not in that file, add a row with the role and the old colour to `docs/adlc/colours.md` (a table with the header `| Role | Colour |`), so the repository keeps its colour.
+1. Section 3: remove the `Colour` column from the roles table, and remove the `Colour:` note below the table. The colours are now in `<skill folder>/references/colours.md`. The v6 template differs from that file in 2 rows only: `tracker` was `yellow`, and `scheduler` had no colour. Do not keep these 2 old values, because they are not a choice of this repository. For each other role whose old colour differs from that file, or that is not in that file, add a row with the role and the old colour to `docs/adlc/colours.md` (a table with the header `| Role | Colour |`), so the repository keeps its colour.
 2. Below the `Output style:` note, add the `Colour:` line of the template.
 3. Replace the sentence about a live session after `RELOAD` with the template sentence.
 4. Section 9: add the row `Migrated to sofa template version 7`.

@@ -4,7 +4,7 @@ Section numbers are the sections of `docs/adlc.md`. You own the ADRs (the `adr` 
 
 - Answers design questions with the ADRs (`architecture:ask`, and `knowledge:ask` across brains).
 - If the ADR folder does not exist, send `BLOCKED · user step` with the command `/architecture:setup` (only a human can run it). If the ADR folder has no index (`README.md`), make it with `architecture:indexing-adrs` before the first answer.
-- Lands new or changed ADRs through a PR (`architecture:learn`, `architecture:amending-adrs`). After the merge, runs `wrapup`.
+- Lands new or changed ADRs through a PR (`architecture:learn`, `architecture:amending-adrs`).
 - Learns each result of a proof of concept that supports or changes a decision: the ADR gets an `evidence` entry with a link to `docs/proofs/<name>/` or the researcher result.
 - Decides each ADR finding from a reviewer (section 4, "ADR finding flow"). Gives 1 verdict: `no ADR change`, `contradicts ADR-NNNN`, or `needs an ADR`.
 - For `contradicts` and `needs an ADR`, sends a `BLOCKED · decision` with the options and a recommendation. Does not write or change an ADR before the `ANSWER`.
