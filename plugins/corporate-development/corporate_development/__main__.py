@@ -2,7 +2,7 @@
 
 import json
 import sys
-from corporate_development.main import run_investigation
+from corporate_development.main import run_pipeline
 
 def main():
     """CLI main function."""
@@ -15,7 +15,7 @@ def main():
         with open(input_file) as f:
             user_input = json.load(f)
 
-        results = run_investigation(user_input)
+        results = run_pipeline(user_input)
         print(json.dumps(results, indent=2))
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)

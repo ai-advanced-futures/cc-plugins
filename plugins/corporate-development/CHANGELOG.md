@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.20.2
+
+- Fix: `python -m corporate_development <input_json>` works again. `corporate_development/__main__.py` imported `run_investigation` from `main.py`, but `main.py` defines only `run_pipeline`, so the command stopped with `ImportError`. The module now imports and calls `run_pipeline`. Add `tests/unit/test_main_module.py`.
+
 ## 0.20.1
 
 - Fix: the command `pipeline` sets `run_in_background: false` in each `Agent` call. A background agent returned in a new turn, and a `claude -p` run could end while Phase 3 or Phase 4 still ran.
