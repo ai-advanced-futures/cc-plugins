@@ -372,6 +372,13 @@ def cmd_settings(args):
         "GIT_COMMITTER_NAME": who,
         "GIT_COMMITTER_EMAIL": email,
     }
+    # Fail closed (RCA 2026-11-11): when the shell snapshot of Claude Code fails under load, each Bash command
+    # runs as a login shell that puts the real gh before the shim, and a plain gh acts as the person. An empty
+    # config folder gives the real gh no login, so a plain gh stops ("gh auth login"). `sofa-github gh` sets
+    # GH_TOKEN, so it still works. A login shell does not change GH_CONFIG_DIR.
+    empty_config = os.path.join(sofa_dir(store.db), "gh-config-empty")
+    os.makedirs(empty_config, mode=0o700, exist_ok=True)
+    env["GH_CONFIG_DIR"] = empty_config
     # The store path goes in the env, so the helper and the shim find the store from any folder.
     env["SOFA_STATE_DB"] = args.db and os.path.abspath(args.db) or os.environ.get("SOFA_STATE_DB") or os.path.join(sofa_dir(None), "state.db")
     settings = {"outputStyle": args.output_style} if args.output_style else {}
