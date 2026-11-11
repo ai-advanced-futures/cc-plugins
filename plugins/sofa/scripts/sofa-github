@@ -402,6 +402,29 @@ VALUE_OPTIONS = {"-X", "--method", "-H", "--header", "-f", "--raw-field", "-F", 
 FIELD_OPTIONS = ("-f", "--raw-field", "-F", "--field", "--input")
 
 
+DEPTH_VAR = "SOFA_GITHUB_DEPTH"
+MAX_DEPTH = 3
+
+
+def nesting_depth():
+    """How many sofa-github gh calls started this one. A value that is not a number counts as the limit (fail closed)."""
+    raw = os.environ.get(DEPTH_VAR, "")
+    if not raw:
+        return 0
+    try:
+        return max(int(raw), 0)
+    except ValueError:
+        return MAX_DEPTH
+
+
+def wrapper_hint():
+    """The gh that the 1st call found, for the message of the guard: the first gh on PATH outside a shim folder."""
+    try:
+        return find_real_gh()
+    except Fail:
+        return "not found"
+
+
 def find_real_gh():
     """The real gh: SOFA_GITHUB_GH, else the first gh on PATH that is not the shim."""
     override = os.environ.get("SOFA_GITHUB_GH")
@@ -465,12 +488,21 @@ def api_user_index(args):
 
 
 def cmd_gh(argv, db):
+    # A gh wrapper that is not in a github-shim folder (as <main folder>/.sofa/bin/gh) and that runs sofa-github again
+    # is not skipped by find_real_gh, so the calls would never end. Each call passes DEPTH_VAR + 1 to the gh that it
+    # starts, and a call at the limit fails closed. The limit is 3, so a gh that a gh-started hook calls still works.
+    depth = nesting_depth()
+    if depth >= MAX_DEPTH:
+        raise Fail(f"sofa-github gh was started {depth} times inside itself: the gh that it found ({wrapper_hint()}) "
+                   "starts sofa-github again, so the calls would never end. Put the real gh on PATH before that "
+                   "wrapper, or name the real gh in SOFA_GITHUB_GH.", 2)
     reason = refused(argv)
     if reason:
         raise Fail(reason, 2)
     real = find_real_gh()
     env = dict(os.environ)
     env.pop("GH_DEBUG", None)
+    env[DEPTH_VAR] = str(depth + 1)
     if argv[:2] == ["auth", "status"]:
         env.pop("GH_TOKEN", None)
         env.pop("GITHUB_TOKEN", None)
