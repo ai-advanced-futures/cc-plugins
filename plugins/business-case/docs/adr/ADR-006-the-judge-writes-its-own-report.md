@@ -1,6 +1,6 @@
 # ADR-006 — The judge writes its own report; a coach copy cannot end the loop
 
-**Status:** Accepted · **Date:** 2026-10-27 · **Amended:** 2026-11-03 (v0.5.0, the analyst write allow)
+**Status:** Accepted · **Date:** 2026-10-27 · **Amended:** 2026-11-11 (v0.11.2, the plan pre-check of the analyst write allow); 2026-11-03 (v0.5.0, the analyst write allow)
 
 Operator decision, 2026-10-27 (plan 1, resolution 6). Amended the same day by
 the operator's decision that no file tool writes anywhere in a case folder
@@ -109,7 +109,11 @@ returns `allow` for one call only when all of these hold:
   cancelled or expired, and no other brief of that type is open;
 - neither the reply nor its receipt exists yet;
 - the reply's `brief_sha256` equals the `sha256:` line of that brief, the
-  digest of the brief's other lines, not of the file.
+  digest of the brief's other lines, not of the file;
+- for a plan brief, the reply's own text passes the plan rules of
+  `team-reply --check`: the schema and the rules on the cards, the card ids,
+  `follow_up` and `runs`. An error in that check allows the Write, and
+  `team-reply --check` then decides (STORY-387).
 
 The guard refuses an analyst every other write, anywhere. The dispatch guard
 refuses an analyst dispatch whose prompt is not, byte for byte, the text of

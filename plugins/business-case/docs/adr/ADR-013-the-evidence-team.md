@@ -119,7 +119,8 @@ exception for the judge. The second is the analyst write allow. An analyst
 may `Write` once to its own `team/reply-NNN.json`, under the rules ADR-006
 lists. Its brief must be open, and the reply must carry that brief's digest. A
 `PostToolUse` receipt records the reply's bytes, and the check refuses a
-reply that has no receipt.
+reply that has no receipt. The guard also runs the plan check, so the analyst
+fixes a refused plan in the same run (STORY-387).
 
 ### The grade ceiling
 

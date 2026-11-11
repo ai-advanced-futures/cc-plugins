@@ -3,6 +3,7 @@ name: case-market-analyst
 description: The market analyst of the business-case evidence team. Only the business-case coach dispatches it, with one team brief's text as the whole prompt. It plans which plugin runs and question cards the market items need, or turns their results into a results reply, and writes that one reply.
 tools: Read, Glob, Grep, WebSearch, WebFetch, Write
 model: sonnet
+maxTurns: 30
 ---
 
 ## Goal
@@ -442,7 +443,7 @@ brief.
   "brief_sha256": "<the value of your prompt's sha256: line>",
   "schema": "plugin-result/1",
   "plugin": "business-case",
-  "plugin_version": "0.11.1",
+  "plugin_version": "0.11.2",
   "command": "business-case:case-market-analyst",
   "run": {
     "started_at": "2026-10-27T12:00:00Z",

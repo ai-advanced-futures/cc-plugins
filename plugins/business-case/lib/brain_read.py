@@ -35,14 +35,13 @@ import tempfile
 from pathlib import Path
 
 from lib import paths, plugin_map, plugin_result, team_files
-from lib.team_files import TeamRefused
 
 UPSTREAM = "team/upstream"
 _PROBE = paths.PLUGIN_ROOT / "scripts" / "probe-plugin.sh"
 _REGISTRY = Path(".claude") / "knowledge.json"
 
 
-class NoGraphRun(TeamRefused):
+class NoGraphRun(team_files.TeamRefused):
     """The graph gives no run that the case can use. The text is the reason of the gap. It is a `TeamRefused`,
     so a caller that does not record a gap prints it as a refusal and not as an unexpected error."""
 
@@ -270,7 +269,7 @@ def find(case_dir, run: dict, m=None):
     pages = [p for p in graph.runs()
              if p["frontmatter"].get("run_id") == run_id and p["frontmatter"].get("case") == want_case]
     if len(pages) > 1:  # before `results`, which can refuse 2 pages with an error that reads as "no run"
-        raise TeamRefused(f"more than one Run page of the {graph.name} graph holds run_id {run_id}: "
+        raise team_files.TeamRefused(f"more than one Run page of the {graph.name} graph holds run_id {run_id}: "
                           f"{', '.join(graph.ref(p['path']) for p in pages)}; ask the person which page the run "
                           "wrote and to remove the other with the forget skill of the knowledge plugin, then run "
                           f"bc.py team-run --status; or record the run as a gap with bc.py team-run --fail "

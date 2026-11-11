@@ -34,7 +34,7 @@ import os
 import re
 from pathlib import Path
 
-from lib import case_files, digest, judge_receipt, paths, team_files
+from lib import case_files, digest, judge_receipt, paths, team_files, team_reply
 
 PLUGIN_PREFIX = "business-case:"
 AGENTS_DIR = paths.PLUGIN_ROOT / "agents"
@@ -283,6 +283,16 @@ def decide_analyst_write(hook_input: dict):
     if found != brief.sha256:
         # Generic on purpose: naming the slot's brief or its digest would tell a stale run what to copy.
         return _deny(DIGEST_REFUSAL)
+    # STORY-387: a plan reply passes the plan rules of `team-reply --check` before it lands, so the analyst
+    # fixes a refused plan in the same run. The check stays the authority: an error here allows the Write,
+    # and the reason names only the class of the error.
+    try:
+        problems = team_reply.plan_write_problems(case, tool_input["content"], brief)
+    except Exception as exc:
+        return judge_receipt.GuardDecision(
+            "allow", f"the plan pre-check failed ({type(exc).__name__}); team-reply --check checks the reply")
+    if problems:
+        return _deny(team_reply.PLAN_REFUSAL.format(problems=team_reply.problem_list(problems)))
     return judge_receipt.GuardDecision("allow", ALLOW_REASON)
 
 

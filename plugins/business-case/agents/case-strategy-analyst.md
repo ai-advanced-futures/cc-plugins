@@ -3,6 +3,7 @@ name: case-strategy-analyst
 description: The strategy analyst of the business-case evidence team. Only the business-case coach dispatches it, with one team brief's text as the whole prompt. It plans the run and question cards the right to win needs, or turns its results into a results reply, and writes that one reply.
 tools: Read, Glob, Grep, WebSearch, WebFetch, Write
 model: sonnet
+maxTurns: 30
 ---
 
 ## Goal
@@ -270,7 +271,7 @@ brief.
   "brief_sha256": "<the value of your brief's sha256: line>",
   "schema": "plugin-result/1",
   "plugin": "business-case",
-  "plugin_version": "0.11.1",
+  "plugin_version": "0.11.2",
   "command": "business-case:case-strategy-analyst",
   "run": {
     "started_at": "2026-10-27T12:00:00Z",

@@ -38,7 +38,6 @@ from lib import (
     team_files,
     team_guard,
 )
-from lib.team_files import TeamRefused
 
 BODY_QUESTIONS_PATHS = "questions_paths"
 BODY_RUN = "run"
@@ -62,7 +61,7 @@ def _slot(case: Path, reply_path) -> int:
     target = Path(reply_path).resolve()
     match = _REPLY_NAME.match(target.name)
     if match is None or target.parent != case / paths.TEAM_DIR:
-        raise TeamRefused(f"{reply_path} is not this case's team/reply-NNN.json")
+        raise team_files.TeamRefused(f"{reply_path} is not this case's team/reply-NNN.json")
     return int(match.group(1))
 
 
@@ -70,7 +69,7 @@ def _json_bytes(data: bytes, what: str):
     try:
         return json.loads(data.decode("utf-8"))
     except (UnicodeDecodeError, ValueError):
-        raise TeamRefused(f"{what} is not JSON") from None
+        raise team_files.TeamRefused(f"{what} is not JSON") from None
 
 
 def check_reply(case_dir, reply_path, m) -> Path:
@@ -82,26 +81,26 @@ def check_reply(case_dir, reply_path, m) -> Path:
     try:
         receipt = team_guard.verify_analyst_receipt(case, nnn)
     except judge_receipt.ReceiptRefused as exc:
-        raise TeamRefused(f"{rel} is refused: {exc}") from None
+        raise team_files.TeamRefused(f"{rel} is refused: {exc}") from None
     brief = team_files.read_brief(case / team_files.brief_relpath(nnn))
     if brief.case_dir != str(case) or brief.reply_path != str(case / rel):
-        raise TeamRefused(f"{team_files.brief_relpath(nnn)} names another case folder or reply path than where it sits")
+        raise team_files.TeamRefused(f"{team_files.brief_relpath(nnn)} names another case folder or reply path than where it sits")
     data = (case / rel).read_bytes()
     if digest.sha256_hex(data) != receipt.get("sha256"):
-        raise TeamRefused(f"{rel} changed after its receipt was checked")
+        raise team_files.TeamRefused(f"{rel} changed after its receipt was checked")
     reply = _json_bytes(data, rel)
     if not isinstance(reply, dict):
-        raise TeamRefused(f"{rel} is not a JSON object")
+        raise team_files.TeamRefused(f"{rel} is not a JSON object")
     kind = "results" if "schema" in reply else "plan"
     if kind != brief.reply_kind:
-        raise TeamRefused(f"{rel} is a {kind} reply; its brief {team_files.brief_relpath(nnn)} asks for a "
+        raise team_files.TeamRefused(f"{rel} is a {kind} reply; its brief {team_files.brief_relpath(nnn)} asks for a "
                           f"{brief.reply_kind} reply")
     if kind == "plan":
         problems, cited = _plan_problems(case, reply, brief, m)
     else:
         problems, cited = _results_problems(case, reply, brief)
     if problems:
-        raise TeamRefused(f"{rel} is refused: " + "; ".join(problems))
+        raise team_files.TeamRefused(f"{rel} is refused: " + "; ".join(problems))
     out = case / team_files.check_relpath(nnn)
     case_files._write_json(out, {"reply": rel, "reply_sha256": digest.sha256_hex(data), "kind": kind,
                                  "cited": cited})
@@ -112,10 +111,10 @@ def read_check(case_dir, nnn: int) -> dict:
     """The check record of reply NNN; TeamRefused when the reply has none."""
     path = Path(case_dir).resolve() / team_files.check_relpath(nnn)
     if not path.is_file():
-        raise TeamRefused(f"no {team_files.check_relpath(nnn)}: reply {nnn:03d} has not passed team-reply --check")
+        raise team_files.TeamRefused(f"no {team_files.check_relpath(nnn)}: reply {nnn:03d} has not passed team-reply --check")
     record = _json_bytes(path.read_bytes(), team_files.check_relpath(nnn))
     if not isinstance(record, dict):
-        raise TeamRefused(f"{team_files.check_relpath(nnn)} is not a JSON object")
+        raise team_files.TeamRefused(f"{team_files.check_relpath(nnn)} is not a JSON object")
     return record
 
 
@@ -157,16 +156,35 @@ def _plan_results_problems(case: Path, results: list, brief):
     return _result_list_problems(case, results)
 
 
-def _plan_problems(case: Path, reply: dict, brief, m):
-    """(problems, cited) for a plan reply."""
-    errors = plugin_result.validate(reply, _load_schema(PLAN_SCHEMA))
-    if errors:
-        return [f"it fails the plan schema: {e}" for e in errors], {}
-    problems, cited = _plan_results_problems(case, reply.get("results", []), brief)
+_CARD_PATH = re.compile(r"^/cards/([0-9]+)(?=[/:]|$)")
+
+
+def _plan_schema_problems(reply: dict, by_name: bool = False) -> list:
+    """The plan schema problems of a reply. With `by_name`, a path that starts `/cards/<i>` starts
+    `card <id>` instead, the id the analyst wrote, because a 0-based index is not the card's name."""
+    cards = reply.get("cards")
+    out = []
+    for error in plugin_result.validate(reply, _load_schema(PLAN_SCHEMA)):
+        match = _CARD_PATH.match(error) if by_name else None
+        if match is not None and isinstance(cards, list) and int(match.group(1)) < len(cards):
+            card = cards[int(match.group(1))]
+            cid = card.get("id") if isinstance(card, dict) else None
+            if isinstance(cid, str):
+                error = f"card {cid}" + error[match.end():]
+        out.append(f"it fails the plan schema: {error}")
+    return out
+
+
+def _plan_rule_problems(reply: dict, brief, m):
+    """(problems, brief_faults) of the rules the plan schema cannot state: the card ids, each card
+    (`_card_problems`), `follow_up` and `runs`. The reply has passed the schema. `brief_faults` are the
+    problems of a questions list: a fault of the brief or of the case, not of the reply. They are also
+    in `problems`."""
     commands = plugin_map.commands(m)
     questions_paths = brief.body.get(BODY_QUESTIONS_PATHS)
     questions_paths = questions_paths if isinstance(questions_paths, dict) else {}
     lists = {}
+    problems = []
     ids = [card["id"] for card in reply["cards"]]
     problems += [f"card id {i} is used twice" for i in sorted({i for i in ids if ids.count(i) > 1})]
     for card in reply["cards"]:
@@ -179,7 +197,58 @@ def _plan_problems(case: Path, reply: dict, brief, m):
         if command in commands:
             problems += [f"runs names {command} with {dep}; {command} reads {dep}'s result, so they run in "
                          "different rounds" for dep in plugin_map.reads_from(m, command) if dep in runs]
-    return list(dict.fromkeys(problems)), cited
+    faults = [problem for _, problem in lists.values() if problem is not None]
+    return problems, faults
+
+
+def _plan_text_problems(reply: dict, brief, m, by_name: bool = False):
+    """(problems, brief_faults) of a plan reply's own text: the schema alone when the schema refuses the
+    reply, else the rules of `_plan_rule_problems`. It reads no result file."""
+    errors = _plan_schema_problems(reply, by_name)
+    if errors:
+        return errors, []
+    return _plan_rule_problems(reply, brief, m)
+
+
+def _plan_problems(case: Path, reply: dict, brief, m):
+    """(problems, cited) for a plan reply."""
+    errors = _plan_schema_problems(reply)
+    if errors:
+        return errors, {}
+    problems, cited = _plan_results_problems(case, reply.get("results", []), brief)
+    more, _ = _plan_rule_problems(reply, brief, m)
+    return list(dict.fromkeys(problems + more)), cited
+
+
+# -- the plan pre-check of the analyst write guard (STORY-387) ----------------------------------
+
+PLAN_REFUSAL = ("the reply is not written, because team-reply --check refuses it: {problems}. Fix each problem "
+                "and write the whole reply again with one Write")
+
+
+def plan_write_problems(case: Path, text: str, brief) -> list:
+    """The problems of a plan reply's own text, as `team-reply --check` gives them, before the Write
+    lands. [] for a results brief. No problem of the plan's own `results` (they can depend on the case,
+    and the check reads each file they cite), and no problem of a questions list (a fault of the brief or
+    of the case). A card in a schema problem is named by its id. An error here is the caller's to handle:
+    the guard allows the Write and the coach check decides."""
+    if brief.reply_kind != "plan":
+        return []
+    reply = json.loads(text)
+    if "schema" in reply:
+        return ["it is a results reply; its brief asks for a plan reply"]
+    problems, faults = _plan_text_problems(reply, brief, plugin_map.load(), by_name=True)
+    return [p for p in dict.fromkeys(problems) if p not in faults]
+
+
+def problem_list(problems, limit: int = 10, width: int = 200) -> str:
+    """At most `limit` problems, each cut to `width` characters, joined with "; ", then "and N more
+    problems". A problem can copy text of the reply, so the deny has a size limit."""
+    cut = [p if len(p) <= width else p[:width] for p in problems[:limit]]
+    rest = len(problems) - len(cut)
+    if rest > 0:
+        cut.append(f"and {rest} more problem" + ("" if rest == 1 else "s"))
+    return "; ".join(cut)
 
 
 def _card_problems(card: dict, commands: dict, m, questions_paths: dict, lists: dict) -> list:
@@ -409,7 +478,7 @@ def _case_answer(case: Path, rel: str):
     `unreadable` names a cards file that cannot be read."""
     try:
         label = newest_case_answer(case, rel)
-    except TeamRefused as exc:
+    except team_files.TeamRefused as exc:
         return False, str(exc)
     return label == team_files.CASE_ANSWER_LABEL, None
 
@@ -433,7 +502,7 @@ def newest_case_answer(case_dir, rel: str):
         record = json.loads(newest_file.read_text(encoding="utf-8"))
         cards = list(record["cards"].items())
     except (OSError, UnicodeDecodeError, ValueError, KeyError, TypeError, AttributeError):
-        raise TeamRefused(f"the card record {relpath} cannot be read") from None
+        raise team_files.TeamRefused(f"the card record {relpath} cannot be read") from None
     newest = None
     for key, card in cards:
         if not isinstance(card, dict) or card.get("made_by") != "case":
