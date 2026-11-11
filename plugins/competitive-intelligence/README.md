@@ -2,7 +2,11 @@
 
 This plugin maps the competitors of a market, gathers public facts about them, and analyzes a competitor through six lenses. It writes a SWOT, recommendations, and the pages of a graph that other plugins read.
 
-## What's New in v1.11.8
+## What's New in v1.11.9
+
+- After an `ingest` that exits 1, the 7 skills that ingest (`competitive-intelligence`, `discover`, `analyze`, `monitor`, `respond`, `validate` and `vendor-archetype-classify`) tell the model not to write or change a file in `.competitive-intelligence/` or in the graph, and not to run the `ingest` again in that turn, so that the graph holds only data that a step of the skill made. The full run `competitive-intelligence` still shows its completion summary (step 7). Before, a model could change the files between the calls and run the ingest again, and a live run left a file in the graph that no step of the skill made (STORY-344).
+
+## What Was New in v1.11.8
 
 - The ingest of an `analyze` run attaches the `technology-disruption` lens to the competitor of `analysis-<competitor>.json` (by `competitor_id` or `competitor`, as `h_analysis` finds it) when the run has no other competitor. 2 competitors in the analysis files stop the ingest with 1 line that names the files, and no page is written. Before, the first ingest of an `analyze` run that wrote `technology-disruption.json` stopped with "the run has no competitor to attach the lens to" (STORY-284).
 

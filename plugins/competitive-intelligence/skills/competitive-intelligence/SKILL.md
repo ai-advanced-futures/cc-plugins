@@ -110,7 +110,7 @@ CHECKPOINT - Synthesis: show the top recommendations and the SWOT headline, and 
 
 1. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ci_graph.py --root <git root> ingest .competitive-intelligence/{session}` on its own. `<git root>` is the output of step 0.3.
 2. When the output holds an `INIT:` line, show that line.
-3. When the command exits 1, show its errors, say that the results stay in the session folder, and report the run as not saved, because the graph has none of its pages.
+3. When the command exits 1, show its errors, say that the results stay in the session folder, and report the run as not saved, because the graph has none of its pages. Then do only step 7, and do not write or change a file in `.competitive-intelligence/` or in the graph, and do not run `ingest` again in this turn, because the graph would then hold data that no step of this skill made.
 4. Else show the `ingested` line. Ask one question: "Learn these results?" Ask it with `AskUserQuestion` [q: none], with the options `Yes` and `No`, in this turn. On yes, run the skill `competitive-intelligence:learn` with `{session}`. When you have no `AskUserQuestion` tool, for example in `claude -p`, do not write the question as text, because the answer then comes in a new turn, and the new turn does not have the tools of this skill. Write this line in your reply, on its own line: `Next: /competitive-intelligence:learn {session}`.
 
 ### 7. Show the completion summary
