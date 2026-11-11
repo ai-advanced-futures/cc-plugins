@@ -2,6 +2,13 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.6.3 - 2026-11-11
+
+STORY-358.
+
+- `ux-prototype-builder` writes only in `output_dir`, and only its output files: `wireframes.json`, `interaction_patterns.json`, `user_flows.mmd`, and the open-questions file when it needs an answer. It makes each file with the `Write` tool, because it has no tool that runs a script, so a helper script or a probe file does nothing. A write outside `.ux-artifacts/` makes no file, because the grants of the skill `ux-design` approve no write outside `.ux-artifacts/`. Before this change, the agent wrote a helper script outside the project in 2 of 55 dispatches, and each of those writes was refused.
+- New test `tests/unit/test_builder_writes.py` (5 tests): the 3 sentences, the place of the paragraph, the 3 files that the save reads, the tools of the agent, and the 1 write rule of the skill.
+
 ## 1.6.2 - 2026-11-10
 
 STORY-343.
