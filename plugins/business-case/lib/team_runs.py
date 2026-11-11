@@ -351,7 +351,7 @@ def blocks_for_call(case_dir, m, call) -> list:
         got = {entry["plugin"] for entry in block["inputs_from"]}
         lines = [MISSING_ENTRY_LINE.format(dep=dep) for dep in plugin_map.reads_from(m, command)
                  if dep.split(":")[0] not in got]
-        runs.append(_run(command, run_id, briefs))
+        runs.append(dict(_run(command, run_id, briefs), block_sha256=team_files.block_sha256(team_files.block_line(block))))
         _save_runs(case, runs)
         printed.append(Printed(command=command, subagent_type=plugin_map.route(m, command), block=block,
                                lines=lines))
@@ -365,7 +365,7 @@ def render(printed: list) -> list:
     for p in printed:
         if p.subagent_type and p.block is not None:
             out += [f"subagent_type: {p.subagent_type}", "```plugin-run",
-                    json.dumps(p.block, ensure_ascii=False), "```"]
+                    team_files.block_line(p.block), "```"]
         out += list(p.lines)
     return out
 

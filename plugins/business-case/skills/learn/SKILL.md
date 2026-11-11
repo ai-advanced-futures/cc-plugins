@@ -1,7 +1,7 @@
 ---
 description: Confirms the pages of a case in the business-case graph after the person accepts them, or saves a note of the person on the page of a case, through bc_graph.py, then runs both checks and reports. Use for "/business-case:learn" and the "Learn these results?" offer of /business-case:build.
 argument-hint: "[case page or correction]"
-allowed-tools: Read, Glob, Skill, Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/bc_graph.py *), Bash(git rev-parse *), Bash(gh api user --jq .login), Bash(gh issue create --repo ai-advanced-futures/cc-plugins *)
+allowed-tools: Read, Glob, Skill(knowledge:checking), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/bc_graph.py *), Bash(git rev-parse *), Bash(gh api user --jq .login), Bash(gh issue create --repo ai-advanced-futures/cc-plugins *)
 ---
 
 # Learn into the business-case graph

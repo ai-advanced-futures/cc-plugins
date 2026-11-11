@@ -4,11 +4,15 @@
 A grant of `allowed-tools` ends with the turn, and its `*` matches any text. This hook gives an `allow` that
 does not end with the turn, for 1 call at a time:
 
-- post-bash: a `bc.py session --id <this session>` call that worked marks the session as a build session.
+- post-bash: a `bc.py session --id <this session>` call that worked marks the session as a build session, and adds
+  its `--case` folder to the mark.
 - pre-bash: in a marked session, allow a command that is exactly 1 call of a script in RUNNER_CALLS, of bc.py, or
   of `bc_graph.py publish`.
 - pre-write: in a marked session, allow a write under `.<plugin>/` of the project, or in a temporary folder of bc.py.
 - pre-read: in a marked session, allow a read of a file of an available runner plugin, or of an answers file of a case.
+- pre-skill: in a marked session, allow a `Skill` call of the main conversation for a route whose args are the
+  plugin-run block that team-answers printed for an open run of that route in a case of the mark (the SHA-256 of the
+  block is in the run) (STORY-251, D-1049, #1597). The learn skill gets no allow (D-1065).
 
 Each other case gives no decision, so Claude Code applies its own rules: a deny or ask rule still wins. An error
 gives no decision too. This hook runs on each Bash call of each session, so it must never stop a call.
@@ -23,6 +27,7 @@ import re
 import sys
 import tempfile
 import time
+import unicodedata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -67,6 +72,18 @@ RUNNER_CALLS = {
 # The save code of the case graph (STORY-89): build.md runs `publish` after each `handoff`, and a judge that runs in
 # the background ends the turn before that call. Each other first word (remove, set, ...) gets no decision.
 BC_GRAPH_CALL = {"before": ["--root"], "first": ["publish"]}
+# The 7 skill routes that build.md starts with the Skill tool, with the plugin-run block as args (STORY-251). Each has
+# a `Skill(<name>)` grant in build.md, and that grant ends with the turn of the command, so a route that starts after a
+# dispatch in the background asks the person. pre-skill allows a route only for a planned run: its args must hold the
+# block of an open run of that route (D-1049). The 8th grant, `Skill(business-case:learn)`, gets no allow: Claude Code
+# asks the person in a later turn (D-1065). test_runner_guard.py compares SKILL_ROUTES and that 1 exception with the
+# `Skill` grants of build.md, so a new grant fails the test until it is here.
+SKILL_ROUTES = frozenset({
+    "competitive-intelligence:discover", "competitive-intelligence:analyze",
+    "jtbd-market-discovery:discover", "jtbd-market-discovery:wtp-check",
+    "gtm:marketing-launch-runner", "gtm:marketing-brand-runner", "gtm:marketing-funnel-runner",
+})
+PLUGIN_RUN_FENCE = "```plugin-run"
 SESSION_NAME = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 TEMP_FOLDER = re.compile(r"^bc-[a-z0-9-]*-[0-9a-f]{8}$")
 TIME_STAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$")
@@ -219,14 +236,33 @@ def marked(session: str) -> bool:
     return bool(SESSION_NAME.match(session or "")) and (marks_folder() / session).is_file()
 
 
-def mark(session: str) -> None:
+def mark(session: str, case) -> None:
+    """Mark the session, and add the case folder of its session call as 1 line of the mark (STORY-251, #1597)."""
     folder = marks_folder()
     folder.mkdir(parents=True, exist_ok=True)
     limit = time.time() - KEEP_DAYS * 86400
     for old in folder.iterdir():
         if old.stat().st_mtime < limit:
             old.unlink()
-    (folder / session).write_text("", encoding="utf-8")
+    path = folder / session
+    cases = session_cases(session)
+    if case is not None and str(case) not in cases:
+        cases.append(str(case))
+    # Write a new file and replace the mark with it, so that a reader never sees half a line.
+    scratch = folder / f".{session}.{os.getpid()}"
+    scratch.write_bytes("".join(f"{line}\n" for line in cases).encode("utf-8"))
+    os.replace(scratch, path)
+
+
+def session_cases(session: str) -> list:
+    """The case folders of the session calls of a marked session; [] for a mark of an older version (no line). A
+    line ends at the new line only: `splitlines` also splits at a carriage return and other control characters, and
+    `read_text` turns a carriage return into a new line, so the file is read as bytes and split at `\\n` (#1621)."""
+    try:
+        text = (marks_folder() / session).read_bytes().decode("utf-8")
+        return [line for line in text.split("\n") if line]
+    except (OSError, UnicodeDecodeError):
+        return []
 
 
 def post_bash(data: dict) -> None:
@@ -234,7 +270,67 @@ def post_bash(data: dict) -> None:
     words = words_of(data.get("tool_input", {}).get("command", "")) or []
     if (SESSION_NAME.match(session) and words[:2] == ["uv", "run"] and words[3:4] == ["session"] and _is_bc(words[2])
             and "--id" in words and words[words.index("--id") + 1:][:1] == [session]):
-        mark(session)
+        given = words[words.index("--case") + 1:][:1] if "--case" in words else []
+        # bc.py takes the last of 2 `--case` words, and argparse takes an abbreviation: only 1 exact `--case` word and
+        # no other word that starts with `--ca` names the case of this call, else the call adds no line.
+        if [w for w in words if w.startswith("--ca")] != ["--case"]:
+            given = []
+        case = (Path(data.get("cwd") or os.getcwd()) / given[0]).resolve() if given and given[0] else None
+        # A control character in the case folder, typed or from a link or the `cwd`, would split 1 mark line: 1 call
+        # writes 1 line, so such a call gives no mark (#1621).
+        if any(unicodedata.category(c) == "Cc" for c in (given[0] if given else "") + str(case or "")):
+            return
+        mark(session, case)
+
+
+def block_text(args):
+    """The JSON line of the plugin-run block that `args` holds: the fenced block as team-answers prints it, or its JSON
+    line alone, with no other text. None for each other value."""
+    if not isinstance(args, str):
+        return None
+    text = args.strip()
+    if text.startswith(PLUGIN_RUN_FENCE + "\n") and text.endswith("\n```"):
+        text = text[len(PLUGIN_RUN_FENCE) + 1:-4].strip()
+    return text
+
+
+def block_of(args):
+    """The plugin-run block that `args` holds, as a dict with the 3 keys that the guard reads. None for each other
+    value."""
+    text = block_text(args)
+    try:
+        block = json.loads(text) if text is not None else None
+    except ValueError:
+        return None
+    if not isinstance(block, dict) or not all(isinstance(block.get(key), str) and block[key]
+                                              for key in ("command", "run_id", "case")):
+        return None
+    return block
+
+
+def planned_run(skill: str, args, session: str, cwd: str) -> bool:
+    """True when `args` is the text of a block that team-answers printed for an open run of a case of this session:
+    the SHA-256 of the JSON line is the `block_sha256` of the run, and the route of its command in the plugin map is
+    `skill` (D-1049, #1597)."""
+    block = block_of(args)
+    if block is None:
+        return False
+    from lib import plugin_map, team_files  # imported late: most Skill calls never reach this
+    root = (team_files.git_root(cwd) or Path(cwd)).resolve()
+    case = root / block["case"]
+    if team_files.inside_root(root, case) is None or case.resolve().parent.name != "business-cases" \
+            or team_files.repo_root(case) != root or str(case.resolve()) not in session_cases(session):
+        return False
+    # The runs file is the proof of the run: refuse a link in its path (a link could point outside the case).
+    if team_files.inside_root(case.resolve(), case / team_files.runs_relpath()) is None:
+        return False
+    digest = team_files.block_sha256(block_text(args))
+    runs = team_files.load_runs(case)
+    if not any(r.get("run_id") == block["run_id"] and r.get("command") == block["command"] and r.get("state") == "open"
+               and r.get("block_sha256") == digest for r in runs):
+        return False
+    spec = plugin_map.commands(plugin_map.load()).get(block["command"])
+    return isinstance(spec, dict) and spec.get("route") == skill
 
 
 def allow(reason: str) -> None:
@@ -259,6 +355,13 @@ def main(mode: str) -> None:
     elif mode == "pre-read":
         if marked(data.get("session_id")) and read_allowed(given.get("file_path", ""), data.get("cwd") or os.getcwd()):
             allow("business-case: a read of a runner plugin file or an answers file in a build session")
+    elif mode == "pre-skill":
+        # A subagent has the session_id of its session, and its hook input also has agent_id: the coach starts each
+        # route in its own conversation, so a call of a subagent gets no decision.
+        name = given.get("skill")
+        if name in SKILL_ROUTES and "agent_id" not in data and marked(data.get("session_id")) \
+                and planned_run(name, given.get("args"), data["session_id"], data.get("cwd") or os.getcwd()):
+            allow("business-case: a skill route of an open run of a build session")
 
 
 if __name__ == "__main__":

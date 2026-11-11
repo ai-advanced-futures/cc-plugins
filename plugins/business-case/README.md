@@ -62,7 +62,7 @@ under "Grants that a caller must give". A test of this plugin compares the scrip
 the `Edit` grant of each file with the line above. The web tools and the MCP tools of a runner are not in the command or in the hook:
 in a session with a person, Claude Code asks for each web call, and in a headless run the call is refused and the run goes on with a gap in its result file.
 
-Claude Code applies a grant only during the turn of the command, so each grant ends when the command ends. A grant ends with the turn, and a run in the background ends the turn. So the hook `hooks-handlers/runner_guard.py` approves, in a session that started a build, only 1 exact call of `bc.py`, of `bc_graph.py publish` or of a listed runner script, a write in a runner folder or in the temporary folder of a case, and a read of a file of a runner plugin or of an answers file.
+Claude Code applies a grant only during the turn of the command, so each grant ends when the command ends. A grant ends with the turn, and a run in the background ends the turn. So the hook `hooks-handlers/runner_guard.py` approves, in a session that started a build, only 1 exact call of `bc.py`, of `bc_graph.py publish` or of a listed runner script, a write in a runner folder or in the temporary folder of a case, a read of a file of a runner plugin or of an answers file, and, in the conversation of the coach, the `Skill` call of a route whose `args` are the `plugin-run` block that `team-answers` printed for an open run of that route in a case of the session.
 
 Two limits of these grants:
 
@@ -192,7 +192,7 @@ Only `scripts/bc_graph.py` writes the graph. Do not edit a page by hand. The coa
 
 ## How it runs, and its limits
 
-Three plugin hooks guard the independent review and the analysts' replies (ADR-006). Four more hooks, `hooks-handlers/runner_guard.py`, approve the exact runner calls (ADR-016), and the brain hook (`hooks/brain-hook.sh`) is the eighth. All of them run in every session with the plugin enabled, not only during a business-case run.
+Three plugin hooks guard the independent review and the analysts' replies (ADR-006). Five more hooks, `hooks-handlers/runner_guard.py`, approve the exact runner calls (ADR-016), and the brain hook (`hooks/brain-hook.sh`) is the ninth. All of them run in every session with the plugin enabled, not only during a business-case run.
 
 - **Claude Code 2.1.295 or later.** The write guard and the dispatch guard declare `"onFailure": "block"`, which needs 2.1.295. Below that version, the guard makes no promise to fail closed.
 - **A working `python3`, version 3.9 or later.** The hooks run under the `python3` on your `PATH`. The handler and the `lib` modules it imports keep to Python 3.9 syntax, so macOS's `/usr/bin/python3` works.

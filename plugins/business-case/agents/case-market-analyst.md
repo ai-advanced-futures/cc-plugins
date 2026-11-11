@@ -442,7 +442,7 @@ brief.
   "brief_sha256": "<the value of your prompt's sha256: line>",
   "schema": "plugin-result/1",
   "plugin": "business-case",
-  "plugin_version": "0.11.0",
+  "plugin_version": "0.11.1",
   "command": "business-case:case-market-analyst",
   "run": {
     "started_at": "2026-10-27T12:00:00Z",

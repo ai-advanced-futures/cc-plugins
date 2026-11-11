@@ -33,6 +33,7 @@ graph TB
         prebash["PreToolUse, pre-bash<br/>Bash"]
         prewriterunner["PreToolUse, pre-write<br/>Write · Edit"]
         prereadrunner["PreToolUse, pre-read<br/>Read"]
+        preskill["PreToolUse, pre-skill<br/>Skill"]
         postbash["PostToolUse, post-bash<br/>Bash"]
         runnerguard["hooks-handlers/runner_guard.py<br/>the runner guard, ADR-016<br/>allows only exact script calls in a marked session"]
         brainhook["hooks/brain-hook.sh<br/>PostToolUse · Write · Edit · Bash<br/>regen and the 2 checks after a write to the bundle; blocks nothing"]
@@ -120,8 +121,8 @@ graph TB
     bundle -.->|"source_results"| upstream
     brainreadpy -->|"pages Run, results, pages Result"| upstream
     prewrite & predispatch & postwrite --> handler
-    hooksjson --> prebash & prewriterunner & prereadrunner & postbash
-    prebash & prewriterunner & prereadrunner & postbash --> runnerguard
+    hooksjson --> prebash & prewriterunner & prereadrunner & preskill & postbash
+    prebash & prewriterunner & prereadrunner & preskill & postbash --> runnerguard
     handler --> receipt
     receipt -->|"an analyst's call first"| teamguardpy
     teamguardpy --> teamfilespy

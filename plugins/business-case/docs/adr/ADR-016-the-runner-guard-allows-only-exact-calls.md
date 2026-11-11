@@ -25,7 +25,7 @@ PR #697 (issue #703):
 
 ### The hook
 
-`hooks-handlers/runner_guard.py` has 4 modes. It is a new handler, not a new
+`hooks-handlers/runner_guard.py` has 5 modes. It is a new handler, not a new
 mode of `judge_guard.py`: `judge_guard.py` blocks on a failure, and this
 handler runs on each `Bash` call of each session, so an error must never stop
 a call. Each error gives no decision and exit code 0.
@@ -62,6 +62,22 @@ a call. Each error gives no decision and exit code 0.
   reads in 1 run of `competitive-intelligence:discover`). Paths are resolved, so
   a link out of the plugin folder gets no `allow`. A plugin file is public text.
   A deny rule or an ask rule of the person still wins.
+- `pre-skill` gives an `allow` in a marked session for a `Skill` call of the
+  main conversation only for a route of `SKILL_ROUTES` (the 7 skill routes of
+  `build.md`), and only for a planned run: its `args` must be the `plugin-run`
+  block that `team-answers` printed (fenced, or the JSON line alone), the case
+  of the block must be a case of a session call of the session (a line of the
+  mark), and `team/runs.json` of that case must hold an open run with the same
+  `run_id` and `command`, whose `block_sha256` is the SHA-256 of the JSON line
+  of `args`, and whose route in the plugin map is the skill.
+  `business-case:learn` gets no `allow`: in a later turn, Claude Code asks the
+  person once before the skill loads (D-1065). Each `Skill(<name>)` grant of
+  `build.md` ends with the turn, so a route that starts after the notice of a
+  background dispatch was refused in a headless run (the STORY-251 probes). A
+  call with `agent_id` in the hook input comes from a subagent, and it gets no
+  decision. A test compares `SKILL_ROUTES` and the 1 exception
+  `business-case:learn` with the 8 `Skill` grants of `build.md` (STORY-251,
+  D-1049, D-1062, D-1065).
 
 Each of the 5 runner plugins names the grants that its caller must give in its
 own `caller-grants.json` (STORY-168). A test of this plugin compares the scripts
@@ -104,6 +120,12 @@ corrects the command and uses the same file. The command text holds no
 
 ## What the hook does not cover
 
+- The `allowed-tools` of a route that `pre-skill` allows, and of each skill that
+  the route loads with a bare `Skill` grant. Claude Code applies them in that
+  turn, as it does for the `Skill(<name>)` grant of `build.md` in the first
+  turn. A route that runs can also add an open run: with its own bare `Write` to
+  `team/runs.json`, or with a `bc.py team-answers` call that `pre-bash` allows
+  (#1598).
 - The value of an argument: `uv run <script> <any text>` is allowed when the
   words match the table.
 - A `pyproject.toml` of the project that `uv run` reads.

@@ -36,7 +36,7 @@ When the Write is refused, its final message is the whole JSON and nothing else.
 
 `hooks/hooks.json` declares three guard hooks of the judge. All run
 `hooks-handlers/judge_guard.py`, in a different mode each. It also declares the
-4 hooks of the runner guard (`runner_guard.py`, ADR-016) and the brain hook of
+5 hooks of the runner guard (`runner_guard.py`, ADR-016) and the brain hook of
 the case graph (ADR-015): they are not part of the judge guard.
 
 **The write guard** (`PreToolUse`, matcher `Write|Edit|MultiEdit|NotebookEdit`,

@@ -30,6 +30,12 @@
         "hooks": [
           {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/runner_guard.py\" pre-read", "timeout": 10}
         ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/runner_guard.py\" pre-skill", "timeout": 10}
+        ]
       }
     ],
     "PostToolUse": [

@@ -80,7 +80,7 @@ whose resolved path is not `<anything>/business-cases/<slug>`.
 
 ### The guard hooks
 
-Three guard hooks share one handler, `hooks-handlers/judge_guard.py`. `hooks/hooks.json` also holds the 4 hooks of the runner guard, `hooks-handlers/runner_guard.py` (ADR-016), and the brain hook of the case graph (ADR-015). The 3 hooks of the judge guard are:
+Three guard hooks share one handler, `hooks-handlers/judge_guard.py`. `hooks/hooks.json` also holds the 5 hooks of the runner guard, `hooks-handlers/runner_guard.py` (ADR-016), and the brain hook of the case graph (ADR-015). The 3 hooks of the judge guard are:
 
 - a `PreToolUse` write guard on every file-writing tool (`Write`, `Edit`,
   `MultiEdit`, `NotebookEdit`). Code writes every file in a case folder, so the

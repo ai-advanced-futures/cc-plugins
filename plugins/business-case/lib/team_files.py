@@ -184,6 +184,17 @@ def runs_relpath() -> str:
     return f"{paths.TEAM_DIR}/{RUNS_FILE}"
 
 
+def block_line(block: dict) -> str:
+    """The JSON line of a plugin-run block, as `team-answers` prints it (STORY-251)."""
+    return json.dumps(block, ensure_ascii=False)
+
+
+def block_sha256(line: str) -> str:
+    """The SHA-256 of a printed block line: `team-answers` records it in the run, and the runner guard compares the
+    `args` of a route with it (STORY-251, #1597)."""
+    return digest.sha256_hex(line.encode("utf-8"))
+
+
 def person_run_key(nnn: int, command: str) -> str:
     """The `runs.json` key of a run with no run_id: `person:<NNN>:<command>`."""
     return f"person:{nnn:03d}:{command}"
