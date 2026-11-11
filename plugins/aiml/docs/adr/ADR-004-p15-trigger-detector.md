@@ -1,7 +1,7 @@
 # ADR-004: P15 Trigger Detector
 
 **Status:** Accepted
-**Date:** 2026-05-30 (rewritten for the port, 2026-11-05)
+**Date:** 2026-05-30 (rewritten for the port, 2026-11-05; amended 2026-11-11)
 **Earlier ADR:** ADR-003 (the cost-amplifier-readout producer)
 
 ## Context
@@ -22,7 +22,7 @@ This ADR adds the detection. The result is the file `p15-trigger-event.json`. It
 
 **D5.** The file has an array of events. The gtm plugin and the pricing plugin read it. The plugin also keeps it for its own audit.
 
-**D6.** There is a new specialist: `p15-trigger-detector-agent` and the skill `/aiml:p15-trigger-detection`. The agent uses `haiku`, has the tools `[Bash, Read, Write]`, and ends with `DONE: aiml`. It has no `AskUserQuestion`.
+**D6.** There is a new specialist: `p15-trigger-detector-agent` and the skill `/aiml:p15-trigger-detection`. The agent uses `haiku`, has the tools `[Read, Write]`, and ends with `DONE: aiml`. It has no `AskUserQuestion` and no `Bash`: the skill runs the emitter before it starts the agent (D-266).
 
 **D7.** The schema is in `schemas/p15-trigger-event.schema.json`, with the other schemas of the plugin.
 

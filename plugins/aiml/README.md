@@ -29,7 +29,7 @@ Run the skills in this order. Each skill works alone, so you can start at any st
 
 `/aiml:tune` runs during training. `/aiml:evaluate` runs before training (it checks the dataset) or after training (it scores the model).
 
-The skills start the agents in the main conversation. No agent starts another agent. The skill `design` runs `feasibility_check.py` between the `design-analyst` runs and `design-agent`. Only 5 agents have `Bash` (`evaluate-agent`, `tune-agent` and the three producer agents), and no agent has `Skill`.
+The skills start the agents in the main conversation. No agent starts another agent. No agent has `Bash`, and no agent has `Skill`. The skills run the scripts, one command in each Bash call: `design` runs `feasibility_check.py`; `evaluate` runs `data_validator.py` and `metric_calculator.py`; `tune` runs `hyperparameter_validator.py`; and the three emitter skills run their emitters before they start the agent. An agent writes the input file of a script and reads its output file.
 
 `/aiml:orchestrate [phase]` reads `.aiml/handoff.json` and runs the next skill. With a phase name, it runs that skill.
 

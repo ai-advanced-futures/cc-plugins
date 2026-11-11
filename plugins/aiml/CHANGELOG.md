@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.8.0
+
+### Changed
+
+- No agent of the plugin has `Bash` (D-266). The 5 skills `evaluate`, `tune`, `archetype-baseline-telemetry`, `cost-amplifier-readout` and `p15-trigger-detection` run the scripts in the main conversation, one command in each Bash call, with no other command and no echo. Each of the 5 skills has an `allowed-tools` line that grants only its scripts and the folder `.aiml`; `evaluate` and `tune` also grant `docs/aiml`. The 5 agents keep only `Read` and `Write`.
+- `/aiml:evaluate` has 3 steps. `evaluate-agent` with `phase: prepare` writes the input file of each check and ends with `READY: evaluate-agent <check> ...`; the skill runs the command of each named check; then `evaluate-agent` with `phase: report` reads the outputs, writes `docs/aiml/evaluation/iteration-N.md`, and ends with `DONE: evaluate-agent`. `evaluate-agent` has a new section `Input files`: the 6 input files and their JSON shapes.
+- `/aiml:tune` has 3 steps. `tune-agent` with `phase: diagnose` writes `.aiml/tune/diagnosis.md` and `.aiml/tune/validator-input.json`; the skill runs `hyperparameter_validator.py`; then `tune-agent` with `phase: recommend` writes `docs/aiml/tune-recommendations.md`.
+- The 3 emitter skills run the emitter first, before they start any agent. On a non-zero exit, the skill shows the lines on standard error, starts no agent and writes no file. The 3 emitter agents read the output file and write the handoff. This closes STORY-302 and STORY-303.
+- Each of the 5 skills runs its agents in the foreground, and says why: an agent that runs in the background returns in a new turn that does not have the `allowed-tools` of the skill.
+- The scripts `data_validator.py` (`split`, `min-samples`), `metric_calculator.py` (`confusion`) and `hyperparameter_validator.py` read their values from a file with `--input`. All the checks of `data_validator.py` and `metric_calculator.py`, and `hyperparameter_validator.py`, write the JSON object to a file with `--out` and print nothing. The old options still work. `--out` must name a file inside the folder `.aiml` of the current directory. A `..`, an absolute path outside it and a link to an outside folder exit 1 and touch no file. After the arguments pass, the script deletes the old file, so a file that exists after exit 0 is from this run. The 3 emitters (`--out`, and `--output` of `p15_trigger_emitter.py`) keep their output file inside `.aiml` in the same way. The options of these scripts are not shortened (`--ou` is an error). `hyperparameter_validator.py` now exits 1, and not 2, for an argument error.
+- `tune-agent` follows the same rules for `.aiml/tune/diagnosis.md` as for `.aiml/tune/validator-input.json`: it reads the file before it writes it, and when a `Write` call fails it ends with `NEEDS-INPUT: tune-agent`, so the phase `recommend` cannot read an old `diagnosis.md`.
+- The docs say that the skills run the scripts: ADR-001, ADR-003, ADR-004, `docs/c4/container.md` and `README.md`.
+
+### Added
+
+- A live tier `nobash` in `tests/integration/test_live_port.py`: a session in the default permission mode, with no `--allowedTools`, runs `evaluate` (3 runs), `tune` and `cost-amplifier-readout`, and runs the 3 emitter skills with an input path that does not exist (9 runs). Each script call is a top-level `Bash` call (it exits 0, except in the 9 missing-input runs), no agent calls `Bash`, and no tool call is refused.
+- Tests: a rule that each `uv run` line has the form `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py` and sits in a skill with the grant; a list of the files that have a `uv run` line; the rules of the section `Input files`; the order of the steps of the 3 emitter skills; the `--input` and `--out` cases of the 3 scripts.
+
 ## 0.7.0
 
 ### Changed

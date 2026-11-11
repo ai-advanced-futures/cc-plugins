@@ -5,7 +5,7 @@
 """Emitter: compose AmplifierTelemetryInput + AmplifierCompositeResult → cost-amplifier-readout dict.
 
 Validates output against Charter §7.3 schema before returning.
-Also the single CLI entry-point invoked by cost-amplifier-readout-agent via Bash.
+Also the single CLI entry-point run by the skill cost-amplifier-readout with uv run.
 """
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ import jsonschema
 # this emitter is invoked as a script directly.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _jsonschema_formats import FORMAT_CHECKER, SCHEMAS_DIR  # noqa: E402
+from _out_path import out_path_error  # noqa: E402
 from amplifier_composer import AmplifierCompositeResult, compose  # noqa: E402
 from amplifier_telemetry_loader import (  # noqa: E402
     AmplifierTelemetryInput,
@@ -100,6 +101,11 @@ def main(argv=None) -> int:
     p.add_argument("--out", default=".aiml/cost-amplifier-readout.json", help="Output path")
     p.add_argument("--verbose", action="store_true")
     args = p.parse_args(argv)
+
+    refusal = out_path_error("--out", args.out)
+    if refusal:
+        print(refusal, file=sys.stderr)
+        return 1
 
     # PHASE 1 — input load + compose. ANY validation failure here is an
     # input-side error → exit 1 per spec §6.2. We DO NOT branch on `e.schema.$id`

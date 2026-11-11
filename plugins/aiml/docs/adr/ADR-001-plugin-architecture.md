@@ -1,7 +1,7 @@
 # ADR-001: AIML Plugin Architecture
 
 **Status:** Accepted
-**Date:** 2026-04-08 (rewritten for the port, 2026-11-05)
+**Date:** 2026-04-08 (rewritten for the port, 2026-11-05; amended 2026-11-11)
 **Authors:** Luis F. Amadeo
 
 ---
@@ -27,7 +27,7 @@ Each skill works alone. The skill `/aiml:orchestrate` is a convenience: it reads
 
 - **opus** (5 agents): `decision-agent`, `design-agent`, `simulator-agent`, and the small agents `design-analyst` and `simulation-checker` that the skills `design` and `simulate` start before them. They reason under doubt, make choices that add up, or look for failures.
 - **sonnet** (5 agents): `plan-agent`, `scaffold-agent`, `tune-agent`, `evaluate-agent`, `ops-agent`. They do structured work.
-- **haiku** (3 agents): the three producer agents. They run one script.
+- **haiku** (3 agents): the three emitter agents. They read the file that their skill made with an emitter script, and write the handoff.
 
 No agent has `Agent`, so no agent starts an agent: a skill starts every agent in the main conversation (ADR-002). The agent `orchestrator` of earlier versions does not exist. The skill `orchestrate` runs in the main conversation, because only the main conversation can ask the person a question (see ADR-002).
 
@@ -44,7 +44,7 @@ Python scripts do the math and the checks, with no model call:
 - `cost_estimator.py`: training and inference cost
 - `hyperparameter_validator.py`: checks of the search space
 
-Agents run these scripts with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py`, in place of their own math. A script that has a command line has a PEP 723 block, so `uv` installs its packages.
+The skills run these scripts with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py`, in place of the own math of an agent. No agent has `Bash` (D-266): an agent writes the input file of a script, and reads its output file. A script that has a command line has a PEP 723 block, so `uv` installs its packages.
 
 ### Fixed artifact paths
 

@@ -1,7 +1,7 @@
 {
   "name": "aiml",
   "displayName": "aiml",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Helps a software engineer build an AI or ML feature, from the choice of approach (LLM, classical ML or hybrid) through design, plan, simulation, code scaffold, training guidance, evaluation and MLOps. The engineer needs no data science background.",
   "author": {
     "name": "ai-advanced-futures"

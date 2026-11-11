@@ -12,7 +12,7 @@
 
 1. **Both modes exist together.** A telemetry-enriched readout and a rule-of-thumb readout stay side by side. Neither has precedence. A reader picks one, based on the data it has.
 2. **A new skill and agent pair.** `/aiml:cost-amplifier-readout` starts `cost-amplifier-readout-agent`.
-3. **Three Python modules.** `amplifier_telemetry_loader.py` → `amplifier_composer.py` → `cost_amplifier_readout_emitter.py`. The emitter is the one command-line entry point. The agent runs it with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/cost_amplifier_readout_emitter.py`.
+3. **Three Python modules.** `amplifier_telemetry_loader.py` → `amplifier_composer.py` → `cost_amplifier_readout_emitter.py`. The emitter is the one command-line entry point. The skill runs it, before it starts the agent, with `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/cost_amplifier_readout_emitter.py`. The agent has no `Bash`: it reads the output file and writes the handoff (D-266).
 4. **The input schema is in `schemas/`.** `amplifier-telemetry-input.schema.json` describes the raw telemetry. A file that a person writes by hand is valid input.
 5. **One `AmplifierReading` dataclass.** It has 6 fields: `amp_id, multiplier_p75, multiplier_p95, sample_size_n, detection_signal, present`. It is in `amplifier_telemetry_loader.py`. The composer uses it as it is, and ignores `sample_size_n` and `detection_signal` in the math. The result type `AmplifierCompositeResult` stays in the composer. The test `test_no_pricing_lib_imports.py` walks `scripts/` and `tests/` and fails on any `import pricing*` or `from pricing*`.
 6. **Conformance test first, sentinel second.** The test of the output schema lands in the same commit as, or before, the file `.charter-conforms` that names the schema.

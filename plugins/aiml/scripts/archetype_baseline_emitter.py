@@ -31,6 +31,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 from _jsonschema_formats import FORMAT_CHECKER, SCHEMAS_DIR  # noqa: E402
+from _out_path import out_path_error  # noqa: E402
 from archetype_baseline_aggregator import aggregate  # noqa: E402
 from archetype_baseline_input_loader import load_and_validate  # noqa: E402
 
@@ -62,6 +63,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args(argv)
+
+    refusal = out_path_error("--out", args.out)
+    if refusal:
+        print(refusal, file=sys.stderr)
+        return 1
 
     # PHASE 1 — load + aggregate. Any failure here is input-side → exit 1.
     try:

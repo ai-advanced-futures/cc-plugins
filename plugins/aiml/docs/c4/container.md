@@ -21,7 +21,7 @@ C4Container
         Container(tune, "tune-agent", "Agent / sonnet", "Loss curve diagnosis. Writes tune-recommendations.md.")
         Container(evaluate, "evaluate-agent", "Agent / sonnet", "Pre-training and post-training evaluation.")
         Container(ops, "ops-agent", "Agent / sonnet", "MLOps pipeline design. Writes pipeline.md and a CI/CD template.")
-        Container(producers, "3 producer agents", "Agent / haiku", "cost-amplifier-readout, p15-trigger-detector, archetype-baseline-telemetry. Each runs one emitter script.")
+        Container(producers, "3 emitter agents", "Agent / haiku", "cost-amplifier-readout, p15-trigger-detector, archetype-baseline-telemetry. Each reads the file that its skill made with an emitter script, and writes the handoff.")
 
         Container(metric_calc, "metric_calculator.py", "Python script", "Precision, recall, F1, accuracy, ROC-AUC")
         Container(data_val, "data_validator.py", "Python script", "Split ratios, class balance, minimum samples, leakage")
@@ -39,6 +39,9 @@ C4Container
     Rel(skills, decision, "Dispatches")
     Rel(skills, design_analyst, "Dispatches 2 runs")
     Rel(skills, feasibility, "Runs between the analysts and the design agent")
+    Rel(skills, metric_calc, "evaluate runs it between its 2 agent runs")
+    Rel(skills, data_val, "evaluate runs it between its 2 agent runs")
+    Rel(skills, hp_val, "tune runs it between its 2 agent runs")
     Rel(skills, design, "Dispatches")
     Rel(skills, plan, "Dispatches")
     Rel(skills, sim_checker, "Dispatches 3 runs")
@@ -51,10 +54,7 @@ C4Container
 
     Rel(feasibility, data_val, "Data sufficiency check")
     Rel(feasibility, cost_est, "Cost estimate")
-    Rel(tune, hp_val, "Validates each change")
-    Rel(evaluate, metric_calc, "Model metrics")
-    Rel(evaluate, data_val, "Dataset checks")
-    Rel(producers, emitters, "Runs with uv run")
+    Rel(skills, emitters, "The 3 emitter skills run them with uv run, before they dispatch the agent")
     Rel(emitters, schemas, "Validate output")
 
     Rel(decision, handoff, "Writes approach and phase")
@@ -83,4 +83,4 @@ C4Container
 | design-agent, design-analyst | opus | Architecture choices add up. A wrong model family means a full redesign. |
 | simulator-agent, simulation-checker | opus | It must find the gaps that the engineer missed. |
 | plan-agent, scaffold-agent, tune-agent, evaluate-agent, ops-agent | sonnet | Structured work: planning, code, scoring, pipeline design. |
-| 3 producer agents | haiku | They run one script and report. The result is deterministic. |
+| 3 emitter agents | haiku | They read one file and write the handoff. The result is deterministic. |

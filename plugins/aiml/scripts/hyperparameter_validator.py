@@ -108,25 +108,124 @@ def suggest_search_space(model_type: str) -> dict:
 def main(argv=None):
     import argparse
     import json
-    import sys as _sys
-    parser = argparse.ArgumentParser(description="Hyperparameter search space validation. Prints one JSON object for each check.")
+    import os
+    import sys
+
+    def fail(message):
+        print(f"error: {message}", file=sys.stderr)
+        sys.exit(1)
+
+    class Parser(argparse.ArgumentParser):
+        def error(self, message):
+            fail(message)
+
+    def discard_old(out):
+        """Check `--out`, then delete its old file, so that a file that exists after exit 0 is from this run.
+
+        `--out` must be a file inside the folder `.aiml` of the current directory. A `..`, an absolute path
+        outside it, and a link to an outside folder are refused. Call this after the arguments pass.
+        """
+        if out is None:
+            return
+        if not os.path.realpath(out).startswith(os.path.join(os.path.realpath("."), ".aiml") + os.sep):
+            fail(f"{out}: --out must be a file inside the folder .aiml of the current directory")
+        try:
+            os.unlink(out)
+        except FileNotFoundError:
+            pass
+        except OSError as exc:
+            fail(f"{out}: cannot remove the old file: {exc.strerror}")
+
+    def emit(result, out):
+        """Print the JSON object, or write it to `out` (the object and a new line) and print nothing."""
+        text = json.dumps(result)
+        if out is None:
+            print(text)
+            return
+        try:
+            os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+            with open(out, "w", encoding="utf-8") as handle:
+                handle.write(text + "\n")
+        except OSError as exc:
+            fail(f"{out}: cannot write the file: {exc.strerror}")
+
+    def is_number(value):
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+    def is_integer(value):
+        return isinstance(value, int) and not isinstance(value, bool)
+
+    def is_lora(value):
+        return (isinstance(value, dict) and set(value) == {"rank", "alpha", "dropout"}
+                and is_integer(value["rank"]) and is_number(value["alpha"]) and is_number(value["dropout"]))
+
+    # Each key of the input file: the check of a value, what the value must be, and the function of today.
+    checks = {
+        "lr": (is_number, "a number", lambda v: validate_learning_rate(v)),
+        "batch_size": (is_integer, "an integer", lambda v: validate_batch_size(v, dataset_size=10000)),
+        "epochs": (is_integer, "an integer", lambda v: validate_epochs(v, dataset_size=10000, batch_size=32)),
+        "lora": (is_lora, 'an object with the keys "rank" (an integer), "alpha" and "dropout" (numbers)',
+                 lambda v: validate_lora_config(v["rank"], v["alpha"], v["dropout"])),
+    }
+
+    def read_input(path):
+        """Read the input file: each key is 1 or 2 values to check, in order. Returns the results in the same order."""
+        try:
+            with open(path, encoding="utf-8") as handle:
+                data = json.load(handle)
+        except OSError as exc:
+            fail(f"{path}: cannot read the file: {exc.strerror}")
+        except ValueError as exc:
+            fail(f"{path}: not valid JSON: {exc}")
+        if not isinstance(data, dict):
+            fail(f"{path}: must be a JSON object")
+        for key, values in data.items():
+            if key not in checks:
+                fail(f'{path}: key "{key}" is not one of {", ".join(checks)}')
+            if not isinstance(values, list) or not 1 <= len(values) <= 2:
+                fail(f'{path}: key "{key}" must be a list of 1 or 2 values')
+            is_good, kind, _ = checks[key]
+            if not all(is_good(v) for v in values):
+                fail(f'{path}: each value of key "{key}" must be {kind}')
+        return {key: [checks[key][2](v) for v in values] for key, values in data.items()}
+
+    arguments = list(sys.argv[1:] if argv is None else argv)
+
+    parser = Parser(description="Hyperparameter search space validation. Prints one JSON object for each check, "
+                                "or, with --input, one JSON object for the whole file.",
+                    allow_abbrev=False)
     parser.add_argument("--validate", action="store_true", help="Smoke test — exits 0 if module loads correctly")
+    parser.add_argument("--input", help='JSON file, for example {"lr": [0.0003, 0.0001], "batch_size": [32]}: '
+                                        'each key (lr, batch_size, epochs, lora) holds 1 or 2 values, in order')
+    parser.add_argument("--out", help="with --input: write the JSON object to this file inside the folder .aiml "
+                                      "(the old file is deleted first), and print nothing")
     parser.add_argument("--lr", type=float, help="Validate learning rate value")
     parser.add_argument("--batch-size", type=int, help="Validate batch size value")
     parser.add_argument("--epochs", type=int, help="Validate epoch count")
     parser.add_argument("--lora-rank", type=int, help="LoRA rank R (use with --lora-alpha and --lora-dropout)")
     parser.add_argument("--lora-alpha", type=float, help="LoRA alpha A")
     parser.add_argument("--lora-dropout", type=float, help="LoRA dropout D")
-    args = parser.parse_args(argv)
+    args = parser.parse_args(arguments)
 
     if args.validate:
         print("hyperparameter_validator.py OK")
-        _sys.exit(0)
+        sys.exit(0)
+
+    old = {"--lr": args.lr, "--batch-size": args.batch_size, "--epochs": args.epochs,
+           "--lora-rank": args.lora_rank, "--lora-alpha": args.lora_alpha, "--lora-dropout": args.lora_dropout}
+    if args.input is not None:
+        given = [name for name, value in old.items() if value is not None]
+        if given:
+            fail(f"--input does not go with {', '.join(given)}")
+        discard_old(args.out)
+        emit(read_input(args.input), args.out)
+        return
+    if args.out is not None:
+        fail("--out goes with --input")
 
     lora = (args.lora_rank, args.lora_alpha, args.lora_dropout)
     if any(v is not None for v in lora) and any(v is None for v in lora):
-        print("error: --lora-rank, --lora-alpha and --lora-dropout go together", file=_sys.stderr)
-        _sys.exit(1)
+        fail("--lora-rank, --lora-alpha and --lora-dropout go together")
 
     if args.lr is not None:
         print(json.dumps(validate_learning_rate(args.lr)))

@@ -29,6 +29,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 from _jsonschema_formats import FORMAT_CHECKER, SCHEMAS_DIR  # noqa: E402
+from _out_path import out_path_error  # noqa: E402
 from p15_trigger_detector import derive_severity, detect  # noqa: E402
 from p15_trigger_input_loader import (  # noqa: E402
     NoThresholdsResolvedError,
@@ -65,6 +66,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--quality-floor-target", action="append", type=_parse_quality_floor_target,
                     default=None, help="Repeatable: metric_id=value")
     args = ap.parse_args(argv)
+
+    refusal = out_path_error("--output", args.output)
+    if refusal:
+        print(refusal, file=sys.stderr)
+        return 1
 
     # Step 1: load + validate input
     try:
