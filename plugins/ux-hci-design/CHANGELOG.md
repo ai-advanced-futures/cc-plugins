@@ -2,6 +2,15 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.6.5 - 2026-11-11
+
+STORY-370.
+
+- `remove-questions` holds the folder open from the check to the delete, and deletes the file relative to the open folder. A swap of the folder for a link after the check does not change which file it deletes (the security review of PR 1562).
+- `remove-questions` refuses each link in the output path below the project root, also a link `.ux-artifacts -> docs` after a save through it wrote `docs/pages.json`. The line names the link and its target, for example `.ux-artifacts is a link to docs: remove the file yourself`. A link to a folder outside the root, or to nothing, keeps exit 2 and its line, and the line now names the link.
+- A path with `..` below the root exits 2.
+- On a system where Python has no `dir_fd` for `open`, `stat` and `unlink` (Windows), the command refuses each link but deletes the file by its path, so a swap between the check and the delete is not stopped there.
+
 ## 1.6.4 - 2026-11-11
 
 STORY-366.
