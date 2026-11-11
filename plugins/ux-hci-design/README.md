@@ -1,6 +1,6 @@
 # ux-hci-design
 
-**Version:** 1.6.3
+**Version:** 1.6.4
 **Author:** Luis F. Amadeo (the original plugin). ai-advanced-futures ported it to this marketplace.
 **License:** MIT (see `NOTICE`)
 

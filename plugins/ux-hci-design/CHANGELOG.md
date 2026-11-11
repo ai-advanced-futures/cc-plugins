@@ -2,6 +2,14 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.6.4 - 2026-11-11
+
+STORY-366.
+
+- `remove-questions` removes the file only in a folder of a run: a folder with the name `.ux-artifacts`, or a folder that holds the `pages.json` of a run. For another folder, such as `docs/`, or a link `.ux-artifacts -> docs`, it removes nothing, exits 1, and names the folder (issue 1478).
+- In a run with no person, the skill `ux-design` reads the open-questions file of an agent, removes it, and goes on with the defaults of the agent. It starts the agent 1 more time only when the agent wrote no output file. Its last message names the agents and gives each question. Before this change, the test phase stopped at the questions of the reviewers, and the files stayed.
+- Before the first dispatch of each phase, the skill `ux-design` reads the open-questions file, and removes it only when it exists, because the file is from an earlier run.
+
 ## 1.6.3 - 2026-11-11
 
 STORY-358.

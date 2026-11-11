@@ -14,12 +14,35 @@ QUESTIONS_FILE = "open-questions.md"
 REVIEWERS = ("accessibility-reviewer", "usability-reviewer", "ai-hci-reviewer")
 
 
-def path_of(root, output, reviewer=None) -> Path:
-    """The open-questions file of the run, or of 1 reviewer, inside the output folder."""
-    from uxlib.ingest import output_folder
+def run_folder(root, output) -> Path:
+    """The output folder, only when it is a folder of a ux-design run (STORY-366).
+
+    A folder of a run has the name `.ux-artifacts` after each link is followed, or holds the `pages.json` of
+    a run. The skill writes in `<project>/.ux-artifacts`, and `<project>` can be a folder below the git root.
+    So a folder of the person, such as `docs/`, or a link `.ux-artifacts -> docs`, is refused.
+    """
+    from uxlib.ingest import ARTIFACTS, PAGES_FILE, output_folder, read_pages_file
 
     root = Path(root).resolve()
     folder = output_folder(root, output)
+    if folder.name == ARTIFACTS:
+        return folder
+    run_ref = None
+    if not (folder / PAGES_FILE).is_symlink():
+        try:
+            run_ref, _ = read_pages_file(folder)
+        except DataError:
+            run_ref = None
+    if run_ref is None:
+        raise DataError(f"{shown(root, folder)} is not a folder of a ux-design run: its name is not {ARTIFACTS}, "
+                        f"and it holds no pages.json of a run. Remove the file yourself")
+    return folder
+
+
+def path_of(root, output, reviewer=None) -> Path:
+    """The open-questions file of the run, or of 1 reviewer, inside the output folder of a run."""
+    root = Path(root).resolve()
+    folder = run_folder(root, output)
     if reviewer is None:
         return folder / QUESTIONS_FILE
     if reviewer not in REVIEWERS:
