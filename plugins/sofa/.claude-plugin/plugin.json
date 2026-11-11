@@ -1,6 +1,6 @@
 {
   "name": "sofa",
-  "version": "7.15.4",
+  "version": "7.15.5",
   "types": "./types/index.d.ts",
   "description": "Software factory: a team of Claude Code background sessions that build a product from the PRD and roadmap of a repository. Skills start, station, readiness, setup, maturity; commands for status, requests, pause, resume, handoff and stop; a mod for role colours, the state store and the dashboard."
 }

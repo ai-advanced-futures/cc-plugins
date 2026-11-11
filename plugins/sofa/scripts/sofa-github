@@ -407,14 +407,14 @@ MAX_DEPTH = 3
 
 
 def nesting_depth():
-    """How many sofa-github gh calls started this one. A value that is not a number counts as the limit (fail closed)."""
+    """How many sofa-github gh calls started this one. None when the value is not a number: the guard fails closed."""
     raw = os.environ.get(DEPTH_VAR, "")
     if not raw:
         return 0
     try:
         return max(int(raw), 0)
     except ValueError:
-        return MAX_DEPTH
+        return None
 
 
 def wrapper_hint():
@@ -492,10 +492,14 @@ def cmd_gh(argv, db):
     # is not skipped by find_real_gh, so the calls would never end. Each call passes DEPTH_VAR + 1 to the gh that it
     # starts, and a call at the limit fails closed. The limit is 3, so a gh that a gh-started hook calls still works.
     depth = nesting_depth()
+    if depth is None:
+        raise Fail(f"{DEPTH_VAR} is not a number. sofa-github gh sets it itself, so something else set it: "
+                   f"unset {DEPTH_VAR}.", 2)
     if depth >= MAX_DEPTH:
         raise Fail(f"sofa-github gh was started {depth} times inside itself: the gh that it found ({wrapper_hint()}) "
                    "starts sofa-github again, so the calls would never end. Put the real gh on PATH before that "
-                   "wrapper, or name the real gh in SOFA_GITHUB_GH.", 2)
+                   f"wrapper, or name the real gh in SOFA_GITHUB_GH, or unset {DEPTH_VAR} when no wrapper starts "
+                   "sofa-github and the value leaked into this environment.", 2)
     reason = refused(argv)
     if reason:
         raise Fail(reason, 2)
