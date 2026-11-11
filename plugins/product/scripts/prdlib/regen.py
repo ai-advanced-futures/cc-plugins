@@ -257,6 +257,13 @@ def differences(root: Path, pages: dict | None = None) -> dict[Path, str]:
             out[path] = GENERATED
     for path in changed:
         out.setdefault(path, COMPUTED_STATE)
+    # The manifest of a bundle that has a page in a folder that its
+    # `id_folders` does not name. `regen --check`, rule E10 and the K-fresh
+    # rule of the general check agree on it. (`standard` imports this module,
+    # so the import is here, the form of init_bundle.py.)
+    from . import standard
+    for manifest in standard.stale_manifests(root):
+        out.setdefault(manifest, GENERATED)
     return out
 
 
@@ -294,4 +301,8 @@ def write(root: Path) -> list[Path]:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(text, encoding="utf-8")
                 written.append(path)
+        from . import standard
+        for bundle in BUNDLES:
+            if standard.refresh_id_folders(root, bundle):
+                written.append(bundle_dir(root, bundle) / "manifest.md")
     return sorted(written)

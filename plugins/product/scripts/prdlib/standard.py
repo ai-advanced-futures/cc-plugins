@@ -52,6 +52,58 @@ def write_manifest(root, bundle) -> bool:
     return True
 
 
+def _manifest_folders(path) -> list | None:
+    """The `id_folders` of a manifest, or None when the manifest has no
+    mapping frontmatter or no list there. A hand edit or a merge conflict can
+    break a manifest, and `check` must still run on that bundle: the general
+    check (K-manifest) owns the finding."""
+    head = split_frontmatter(path.read_text("utf-8"))[0]
+    if head is None:
+        return None
+    try:
+        old = yaml.safe_load(head)
+    except yaml.YAMLError:
+        return None
+    folders = old.get("id_folders") if isinstance(old, dict) else None
+    return folders if isinstance(folders, list) else None
+
+
+def stale_manifests(root) -> list[Path]:
+    """The manifest of each bundle that has a page in a folder that its
+    `id_folders` does not name (rule K-id of the general check says that page
+    is not in a folder of `id_folders`). A bundle with no `manifest.md`, or
+    with a manifest that holds no `id_folders` list, has no entry: the
+    K-manifest WARN of today stays. It reads file names and the manifests,
+    and parses no page."""
+    out = []
+    for bundle in BUNDLES:
+        base = bundle_dir(root, bundle)
+        manifest = base / "manifest.md"
+        if not manifest.is_file():
+            continue
+        named = _manifest_folders(manifest)
+        if named is None:
+            continue
+        for path in iter_pages(base):
+            parts = path.relative_to(base).parts
+            if (len(parts) >= 2 and parts[0] in DIRECTORY_ORDER[bundle]
+                    and parts[-1] != "closed.md" and parts[0] not in named):
+                out.append(manifest)
+                break
+    return out
+
+
+def refresh_id_folders(root, bundle) -> bool:
+    """Write the manifest again when a folder that holds an ID page is not in
+    its `id_folders` (the first Experience page of a bundle that an older
+    release made). `write_manifest` keeps `retired_ids`. With no manifest it
+    writes nothing. Returns True when it wrote."""
+    manifest = bundle_dir(root, bundle) / "manifest.md"
+    if manifest not in stale_manifests(root):
+        return False
+    return write_manifest(root, bundle)
+
+
 def registry_add(root) -> bool:
     file = Path(root) / ".claude" / "knowledge.json"
     data = json.loads(file.read_text("utf-8")) if file.is_file() else {"graphs": {}}

@@ -69,8 +69,8 @@ TYPE_FIELDS = (
     "commit", "results",
 )
 RELATIONSHIP_FIELDS = (
-    "serves", "addresses", "depends_on", "includes", "measures", "guards",
-    "threatens", "constrains", "about", "supersedes",
+    "serves", "addresses", "describes", "depends_on", "includes", "measures",
+    "guards", "threatens", "constrains", "about", "supersedes",
     "parent", "blocked_by", "milestone", "owner", "discovered_from", "item",
     "traces", "drifted",
 )

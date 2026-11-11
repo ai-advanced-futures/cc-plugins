@@ -1,5 +1,16 @@
 # Changelog
 
+## 6.5.0
+
+### Added
+- The page type `Experience` in the PRD bundle (`prd/experiences/`, prefix `EXPERIENCE`). It holds a screen structure, a state rule, or an interaction rule, with a `kind` of `structure`, `state-rule` or `interaction-rule`. The required link `describes` (inverse "described by") points to a Capability or a Journey. A Story can trace an Experience page, and drift covers it (STORY-241).
+- The optional key `hash` of a `sources` entry: 6 hex characters, the form of `Trace.hash`.
+- `tests/fixtures/ui_product.py`: a builder of a made-up product with a user interface, for the tests of later stories.
+
+### Changed
+- `prd.py new`, `set` and `link` refuse a link target that does not exist or that has a type that the field refuses, before they write a file or take an ID. Before, only `prd.py check` found it, after the write. Each type has this rule.
+- The first page of a new folder in a bundle with a `manifest.md` writes the manifest again with the new `id_folders`, and `regen --check` and `check` name a manifest that lacks a folder that holds a page (rule E10). Before, only `prd.py upgrade` did it.
+
 ## 6.4.7
 
 ### Changed

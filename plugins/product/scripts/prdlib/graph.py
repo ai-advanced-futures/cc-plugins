@@ -17,6 +17,7 @@ CROSS_BUNDLE_PREFIX = "prd:"
 FIELD_TARGETS = {
     "serves": ("Persona",),
     "addresses": ("Need", "Journey", "Persona", "Problem"),
+    "describes": ("Capability", "Journey"),
     "depends_on": ("Capability",),
     "includes": ("Capability",),
     "measures": ("Problem", "Need", "Journey", "Capability"),
@@ -66,6 +67,33 @@ def target_path(root: Path, bundle: str, target: str) -> Path:
         rest = target[len(CROSS_BUNDLE_PREFIX):]
         return bundle_dir(root, "prd") / rest.lstrip("/")
     return bundle_dir(root, bundle) / target.lstrip("/")
+
+
+def check_targets(root: Path, bundle: str, frontmatter: dict,
+                  fields) -> None:
+    """The E4 texts of `check`, for the fields that one write names.
+
+    A page that `check` would refuse must not be written at all, so `new`,
+    `set` and `link` call this before the lock. It reads only the fields it
+    is given: a page with a link that broke after a `remove` still takes a
+    `set` of another field, and a `set` of the full correct list repairs the
+    link. It raises DataError on the first target that does not exist or that
+    has a type the field refuses.
+    """
+    from .page import load_page  # local import: page imports DataError only
+    for field in fields:
+        permitted = FIELD_TARGETS.get(field)
+        if permitted is None:
+            continue
+        for target in targets_of(frontmatter, field):
+            resolved = target_path(root, bundle, target)
+            if not resolved.is_file():
+                raise DataError(
+                    f"`{field}` names {target}, which does not exist")
+            target_type = load_page(resolved).type
+            if target_type not in permitted:
+                raise DataError(
+                    f"`{field}` does not accept a {target_type} target")
 
 
 def relative_target(path: Path, bundle_root: Path) -> str:

@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 from . import DataError, UsageError, ids, logbook, regen
+from .graph import check_targets
 from .lock import write_lock
 from .new_page import REFUSED_SET_FIELDS
 from .page import load_page, load_set_value, split_frontmatter, write_page
@@ -38,11 +39,14 @@ def _bundle_of(root, path) -> str:
     raise DataError(f"{path} is not in a bundle")
 
 
-def _save(root, path, page, frontmatter, actor) -> Path:
+def _save(root, path, page, frontmatter, actor, written=()) -> Path:
     frontmatter["generated"] = {"by": actor or plugin_actor(), "at": _now()}
     problems = validate_frontmatter(page.type, frontmatter)
     if problems:
         raise DataError("the page is not valid, so nothing is written: " + "; ".join(problems))
+    # Only the fields that this call writes (row 8 of the spec of FEATURE-31),
+    # after the schema check, so a wrong form gets the text of the schema.
+    check_targets(root, _bundle_of(root, path), frontmatter, written)
     page.frontmatter = frontmatter
     with write_lock(root):
         write_page(page)
@@ -54,12 +58,14 @@ def set_fields(root, key, pairs, actor=None) -> Path:
     path = ids.resolve(root, key)
     page = load_page(path)
     frontmatter = dict(page.frontmatter)
+    written = []
     for item in pairs:
         name, value = parse_pair(item)
         if name in PROTECTED:
             raise UsageError(f"set does not change {name}: use prd.py state, prd.py drift, or ask a person")
         frontmatter[name] = value
-    return _save(root, path, page, frontmatter, actor)
+        written.append(name)
+    return _save(root, path, page, frontmatter, actor, written)
 
 
 def link(root, key, field, target, actor=None, remove=False) -> Path:
@@ -81,7 +87,8 @@ def link(root, key, field, target, actor=None, remove=False) -> Path:
         frontmatter.pop(field)
     else:
         frontmatter[field] = target
-    return _save(root, path, page, frontmatter, actor)
+    return _save(root, path, page, frontmatter, actor,
+                 () if remove else (field,))
 
 
 def remove(root, key, actor=None) -> Path:

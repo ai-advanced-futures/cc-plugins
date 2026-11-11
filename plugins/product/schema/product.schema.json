@@ -1032,6 +1032,142 @@
             "title": "Epic",
             "type": "object"
         },
+        "Experience": {
+            "additionalProperties": false,
+            "description": "A screen structure, a state rule, or an interaction rule of a Capability or a Journey.",
+            "properties": {
+                "aliases": {
+                    "description": "Old titles, merged IDs, and old ID forms.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "describes": {
+                    "items": {
+                        "pattern": "^/[a-z-]+/[A-Z]+-[0-9]{2,}\\.md$",
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "description": {
+                    "description": "One line, in the words of the brain.",
+                    "pattern": "^[^\\n]+$",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "generated": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/OkfStamp"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The last meaningful change."
+                },
+                "kind": {
+                    "$ref": "#/$defs/ExperienceKind"
+                },
+                "protected": {
+                    "description": "True stops forget. Only a person sets it.",
+                    "type": [
+                        "boolean",
+                        "null"
+                    ]
+                },
+                "resource": {
+                    "description": "A URL or a bundle path (OKF section 6.2).",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "sources": {
+                    "items": {
+                        "$ref": "#/$defs/OkfSource"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "stale_after": {
+                    "description": "An ISO 8601 date or time.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "status": {
+                    "$ref": "#/$defs/OkfStatus",
+                    "description": "The OKF lifecycle of the page."
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "title": {
+                    "description": "The page title.",
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "type": {
+                    "description": "The OKF page type.",
+                    "type": "string"
+                },
+                "usage_window": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/UsageWindow"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "verified": {
+                    "description": "Each confirmation by a person.",
+                    "items": {
+                        "$ref": "#/$defs/OkfStamp"
+                    },
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "kind",
+                "describes",
+                "type"
+            ],
+            "title": "Experience",
+            "type": "object"
+        },
+        "ExperienceKind": {
+            "description": "",
+            "enum": [
+                "structure",
+                "state-rule",
+                "interaction-rule"
+            ],
+            "title": "ExperienceKind",
+            "type": "string"
+        },
         "Feature": {
             "additionalProperties": false,
             "description": "",
@@ -2083,6 +2219,14 @@
             "description": "One source of a page (OKF section 5).",
             "properties": {
                 "author": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "hash": {
+                    "description": "The first 6 hex characters of the hash of the behavior of the source page. It has the form and the meaning of `Trace.hash`.",
+                    "pattern": "^[0-9a-f]{6}$",
                     "type": [
                         "string",
                         "null"

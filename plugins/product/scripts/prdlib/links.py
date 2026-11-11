@@ -23,7 +23,7 @@ INVERSE_LABEL = {
     "about": "subject of", "supersedes": "superseded by",
     "parent": "child", "blocked_by": "blocks", "milestone": "item of",
     "discovered_from": "discovered", "item": "criterion or run of",
-    "traces": "traced by",
+    "traces": "traced by", "describes": "described by",
 }
 
 

@@ -16,6 +16,7 @@ This document gives the format of the two OKF bundles. Every product skill obeys
 | `prd/needs/` | Need |
 | `prd/journeys/` | Journey |
 | `prd/capabilities/` | Capability |
+| `prd/experiences/` | Experience |
 | `prd/scope/` | Scope |
 | `prd/metrics/` | Metric |
 | `prd/business/` | Business |
@@ -112,6 +113,7 @@ The customer selects a day and sees each free slot. One tap books the slot.
 |---|---|---|
 | `serves` | Need, Journey, Business, GTM → Persona | 1 or more for Need and Journey |
 | `addresses` | Capability → Need, Journey, Persona, Problem | 1 or more |
+| `describes` | Experience → Capability, Journey | 1 or more |
 | `depends_on` | Capability → Capability | 0 or more. No cycles |
 | `includes` | Scope → Capability, with a `priority` | 0 or more |
 | `measures` | Metric → Problem, Need, Journey, Capability | 0 or more |
@@ -178,6 +180,7 @@ rejects a page that a general OKF consumer would accept.
 | `OkfStatus` | `draft`, `stable`, `deprecated` |
 | `NeedKind` | `job`, `pain`, `outcome` |
 | `ScopeKind` | `release`, `non-goal`, `release-criterion` |
+| `ExperienceKind` | `structure`, `state-rule`, `interaction-rule` |
 | `MetricRole` | `north-star`, `kpi`, `counter` |
 | `KanoClass` | `must-be`, `performance`, `delighter` |
 | `RiskKind` | `risk`, `assumption` |

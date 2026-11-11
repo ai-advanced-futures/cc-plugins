@@ -25,6 +25,7 @@ _SPECS = (
     TypeSpec("Need", "NEED", "needs", "prd"),
     TypeSpec("Journey", "JOURNEY", "journeys", "prd"),
     TypeSpec("Capability", "CAPABILITY", "capabilities", "prd"),
+    TypeSpec("Experience", "EXPERIENCE", "experiences", "prd"),
     TypeSpec("Scope", "SCOPE", "scope", "prd"),
     TypeSpec("Metric", "METRIC", "metrics", "prd"),
     TypeSpec("Business", "BUSINESS", "business", "prd"),

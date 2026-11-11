@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 
 from . import DataError, UsageError
-from .graph import target_path
+from .graph import FIELD_TARGETS, check_targets, target_path
 from .hashing import body_hash
 from .ids import new_run_id, next_id
 from .lock import write_lock
@@ -52,6 +52,7 @@ def create(root: Path, type_name: str, title: str, description: str,
     if type_name in WORK_ITEMS:
         frontmatter["state"] = "backlog"
 
+    written = []
     # Every value is built before the lock and before the first write, so a
     # missing trace target leaves the repository with no change.
     for item in links or []:
@@ -73,6 +74,7 @@ def create(root: Path, type_name: str, title: str, description: str,
             frontmatter[field] = target
         else:
             frontmatter.setdefault(field, []).append(target)
+        written.append(field)
     for item in sets or []:
         if "=" not in item:
             raise UsageError(f"--set {item} has no `=`. Use --set FIELD=YAML.")
@@ -85,6 +87,7 @@ def create(root: Path, type_name: str, title: str, description: str,
             frontmatter[field] = normalise(load_set_value(raw))
         except yaml.YAMLError as error:
             raise UsageError(f"--set {item} does not parse: {error}")
+        written.append(field)
     if traces:
         frontmatter["traces"] = [trace_entry(root, t) for t in traces]
 
@@ -97,6 +100,13 @@ def create(root: Path, type_name: str, title: str, description: str,
     if errors:
         raise DataError(
             "the new page fails the schema:\n" + "\n".join(errors))
+    # The E4 texts of `check` for each link field that this call writes
+    # (row 8 of the spec of FEATURE-31): a target that does not exist, or of
+    # a type that the field refuses, writes no file and takes no ID. It runs
+    # after the schema check, so a target in a wrong form gets the text of
+    # the schema and not "does not exist".
+    check_targets(root, spec.bundle, frontmatter,
+                  [f for f in written if f in FIELD_TARGETS])
 
     with write_lock(root):
         # A Run ID is a time and a token, never a number: two agents with no
@@ -109,4 +119,8 @@ def create(root: Path, type_name: str, title: str, description: str,
         page = Page(path=path, frontmatter=frontmatter,
                     body=f"\n# {page_id}: {title}\n\n{text}\n")
         write_page(page)
+    # A bundle from an older release has no `experiences` in `id_folders`, so
+    # the first page of a new folder would fail K-id (row 9 of the spec).
+    from . import standard  # local import: standard imports regen
+    standard.refresh_id_folders(root, spec.bundle)
     return path

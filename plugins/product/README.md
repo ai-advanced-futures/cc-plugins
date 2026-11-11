@@ -9,7 +9,7 @@ The plugin writes two OKF v0.2 bundles for each repository:
 
 | Bundle | Path | What it holds |
 |------|------|---------------|
-| PRD | `docs/product/prd/` | One page for each requirement: a problem, a persona, a need, a journey, a capability, a scope item, a metric, a risk, a constraint, a decision, or a question |
+| PRD | `docs/product/prd/` | One page for each requirement: a problem, a persona, a need, a journey, a capability, an experience (a screen structure, a state rule, or an interaction rule), a scope item, a metric, a risk, a constraint, a decision, or a question |
 | Roadmap | `docs/product/roadmap/` | One page for each work item: a project, a milestone, an epic, a feature, a story, a task, an acceptance criterion, or a run |
 
 One page holds one thing. Each relationship is a typed field in the

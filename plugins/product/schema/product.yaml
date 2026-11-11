@@ -63,6 +63,11 @@ enums:
       release:
       non-goal:
       release-criterion:
+  ExperienceKind:
+    permissible_values:
+      structure:
+      state-rule:
+      interaction-rule:
   MetricRole:
     permissible_values:
       north-star:
@@ -131,6 +136,9 @@ slots:
     range: PrdPath
     multivalued: true
   addresses:
+    range: PrdPath
+    multivalued: true
+  describes:
     range: PrdPath
     multivalued: true
   depends_on:
@@ -238,6 +246,9 @@ classes:
       usage_count:
         range: integer
       last_modified:
+      hash:
+        description: The first 6 hex characters of the hash of the behavior of the source page. It has the form and the meaning of `Trace.hash`.
+        pattern: '^[0-9a-f]{6}$'
 
   UsageWindow:
     attributes:
@@ -307,6 +318,17 @@ classes:
     slots: [kano, addresses, depends_on]
     slot_usage:
       addresses:
+        required: true
+
+  Experience:
+    is_a: Page
+    description: A screen structure, a state rule, or an interaction rule of a Capability or a Journey.
+    slots: [kind, describes]
+    slot_usage:
+      kind:
+        range: ExperienceKind
+        required: true
+      describes:
         required: true
 
   Scope:
