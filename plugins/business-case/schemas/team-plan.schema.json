@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:business-case-team-plan:1",
   "title": "An analyst's plan reply, version 1",
-  "description": "The plan an analyst writes to team/reply-NNN.json for a plan brief (spec 5.5). Each card is shaped for AskUserQuestion. This schema cannot state the rules below, so lib/team_reply.py checks them: at most four options on a card (the checker has no maxItems); card ids unique; the recommended option first and alone, its label ending (Recommended); no sets on a blocks later card; no never-set input; a no-default input set by the recommended option of a card that names it; follow_up ids are the plan's own hard_to_undo cards; runs names no command beside one its map reads_from lists. results get the full results check: the plugin result checker over them, then the cites, case and results-folder rules.",
+  "description": "The plan an analyst writes to team/reply-NNN.json for a plan brief (spec 5.5). Each card is shaped for AskUserQuestion. This schema cannot state the rules below, so lib/team_reply.py checks them: at most four options on a card (the checker has no maxItems); card ids unique; the recommended option first and alone, its label ending (Recommended); no sets on a blocks later card; no never-set input; a no-default input set by the recommended option of a card that names it; follow_up ids are the plan's own hard_to_undo cards; a because that is not blank; no item id of the plugin map in a card's header, because, question, labels or descriptions; runs names no command beside one its map reads_from lists. results get the full results check: the plugin result checker over them, then the cites, case and results-folder rules.",
   "type": "object",
   "required": ["brief_sha256", "cards", "runs"],
   "additionalProperties": false,
@@ -16,11 +16,12 @@
   "$defs": {
     "card": {
       "type": "object",
-      "required": ["id", "header", "question", "options", "blocks", "hard_to_undo"],
+      "required": ["id", "header", "because", "question", "options", "blocks", "hard_to_undo"],
       "additionalProperties": false,
       "properties": {
         "id": { "type": "string", "minLength": 1 },
         "header": { "type": "string", "minLength": 1, "maxLength": 12 },
+        "because": { "type": "string", "minLength": 1 },
         "question": { "type": "string", "minLength": 1 },
         "options": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/option" } },
         "blocks": { "type": "string", "enum": ["now", "later"] },

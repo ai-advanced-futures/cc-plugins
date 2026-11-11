@@ -45,8 +45,8 @@ One file per coach call NNN, written atomically, cumulative:
 `merged` lists every plan brief whose checked plan a call has merged, so no later call merges it again.
 `capped` lists every second-brief plan the after-cap rule has applied to, so it applies once.
 A key is `<brief NNN>:<id>` or `code:<n>`. `passed` holds each call in which the coach passed an answer
-for the card, counting `[No preference]` and free text; a card with an empty `passed` list is "not yet
-asked". `last_ask` is true while the one extra ask a `hard_to_undo` card gets after the cap is due; the
+for the card, counting `[No preference]` (also the one that code records for a card in `asked` with no
+answer) and free text; a card with an empty `passed` list is "not yet asked". `last_ask` is true while the one extra ask a `hard_to_undo` card gets after the cap is due; the
 next answer passed for it ends it, and `held` turns true when that answer is no option (`[No preference]` or
 free text): code never fills a held card. A card written before `held` existed reads as `held: false`.
 `again_because` is the reason a card that was asked before is asked again, or null; a card written before

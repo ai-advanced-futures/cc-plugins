@@ -182,6 +182,9 @@ runs one: put each command you need in `runs`, and the coach runs it.
   `blocks` (`now` when a run needs the answer first, `later` when only your
   results round needs it) and `hard_to_undo` (true for a choice that is hard
   to take back once the plugin runs).
+- Give each card a `because`: one short sentence that says what the answer
+  changes in the case, in plain words. The coach shows it in front of the
+  question. The check refuses a card with no `because`.
 - Give each card a `header` of 12 characters or fewer, and two to four
   options.
 - Each option has a `label` and a `description` with its pros and cons. For
@@ -194,6 +197,10 @@ runs one: put each command you need in `runs`, and the coach runs it.
   person holds may set only inputs that have a `default`. For a fact a run
   needs that has no `default`, word the card as an estimate the person may
   correct.
+- A card that asks for the best other use of the same money and people offers
+  the option "None: this is the only offering", because a team with one
+  offering has no other product to name. Its `because` says that the funder
+  compares the offering with the best option that was not chosen.
 - When an option picks a method that needs inputs of its own, ask those
   inputs in the same plan, from that command's questions list.
 - `sets` maps a command to the inputs the option sets, with input names from
@@ -209,6 +216,7 @@ runs one: put each command you need in `runs`, and the coach runs it.
   reaches only this brief's results round.
 - Never put an item id in a card, because the person reads the cards, and
   item ids are for code. Write every card in plain words a funder would use.
+  The check refuses a card that names an item id.
 
 **Follow-up.** List in `follow_up` the id of each of your own
 `hard_to_undo` cards whose answer needs a second plan round.
@@ -229,6 +237,7 @@ made up.
     {
       "id": "c0",
       "header": "Market",
+      "because": "The search for timing reasons and risks covers one market, so this answer sets which market the case studies.",
       "question": "Which market should the search for timing reasons and risks cover?",
       "options": [
         {
@@ -256,6 +265,7 @@ made up.
     {
       "id": "c3",
       "header": "Rival",
+      "because": "The case looks closely at one competitor, so this answer sets which one.",
       "question": "Which competitor should be looked at closely?",
       "options": [
         {
@@ -283,6 +293,7 @@ made up.
     {
       "id": "c1",
       "header": "Do nothing",
+      "because": "The funder compares the offering with what happens if it is not built, so the case must say what that is.",
       "question": "What should the case assume happens if the offering is not built?",
       "options": [
         {
@@ -300,6 +311,7 @@ made up.
     {
       "id": "c2",
       "header": "Overlap",
+      "because": "Sales that the offering takes from another product count against its gain, so this answer changes the sales figure in the case.",
       "question": "What sales figures do you hold for a product the offering may take sales from?",
       "options": [
         {
@@ -313,6 +325,28 @@ made up.
         {
           "label": "No product overlaps",
           "description": "Nothing to measure, but the funder will ask why, and the case must say."
+        }
+      ],
+      "blocks": "later",
+      "hard_to_undo": false
+    },
+    {
+      "id": "c4",
+      "header": "Other use",
+      "because": "The funder compares the offering with the best option that was not chosen, so the case must name it.",
+      "question": "What is the best other use of the same money and the same people, and what would it return?",
+      "options": [
+        {
+          "label": "None yet (Recommended)",
+          "description": "The case says that no other use is named yet, and lists that gap. The funder may ask for one."
+        },
+        {
+          "label": "None: this is the only offering",
+          "description": "The team has no other product to put the money and people into, and the case says so."
+        },
+        {
+          "label": "Another product or project",
+          "description": "The case names it and its return, so the funder can compare the two."
         }
       ],
       "blocks": "later",
@@ -391,7 +425,7 @@ brief.
   "brief_sha256": "<the value of your brief's sha256: line>",
   "schema": "plugin-result/1",
   "plugin": "business-case",
-  "plugin_version": "0.10.0",
+  "plugin_version": "0.11.0",
   "command": "business-case:case-baseline-analyst",
   "run": {
     "started_at": "2026-10-27T12:00:00Z",

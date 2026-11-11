@@ -155,6 +155,9 @@ runs one: put each command you need in `runs`, and the coach runs it.
   `blocks` (`now` when a run needs the answer first, `later` when only your
   results round needs it) and `hard_to_undo` (true for a choice that is hard
   to take back once the plugin runs).
+- Give each card a `because`: one short sentence that says what the answer
+  changes in the case, in plain words. The coach shows it in front of the
+  question. The check refuses a card with no `because`.
 - Give each card a `header` of 12 characters or fewer, and two to four
   options.
 - Each option has a `label` and a `description` with its pros and cons. For
@@ -182,6 +185,7 @@ runs one: put each command you need in `runs`, and the coach runs it.
   reaches only this brief's results round.
 - Never put an item id in a card, because the person reads the cards, and
   item ids are for code. Write every card in plain words a funder would use.
+  The check refuses a card that names an item id.
 
 **Follow-up.** List in `follow_up` the id of each of your own
 `hard_to_undo` cards whose answer needs a second plan round.
@@ -200,6 +204,7 @@ Example: a plan for the jobs and the journeys. The values are made up.
     {
       "id": "c1",
       "header": "Job area",
+      "because": "The job research covers one part of the customer's work, so this answer sets which part.",
       "question": "Which part of the customer's work should the job research cover?",
       "options": [
         {
@@ -227,6 +232,7 @@ Example: a plan for the jobs and the journeys. The values are made up.
     {
       "id": "c2",
       "header": "Journey",
+      "because": "The case shows one way of doing the job first, so this answer sets whose way it is.",
       "question": "Whose way of doing the job today should the case show first?",
       "options": [
         {
@@ -312,7 +318,7 @@ brief.
   "brief_sha256": "<the value of your brief's sha256: line>",
   "schema": "plugin-result/1",
   "plugin": "business-case",
-  "plugin_version": "0.10.0",
+  "plugin_version": "0.11.0",
   "command": "business-case:case-job-analyst",
   "run": {
     "started_at": "2026-10-27T12:00:00Z",

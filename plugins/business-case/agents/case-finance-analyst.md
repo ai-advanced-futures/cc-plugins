@@ -169,6 +169,9 @@ runs one: put each command you need in `runs`, and the coach runs it.
   `blocks` (`now` when a run needs the answer first, `later` when only your
   results round needs it) and `hard_to_undo` (true for a choice that is hard
   to take back once the plugin runs).
+- Give each card a `because`: one short sentence that says what the answer
+  changes in the case, in plain words. The coach shows it in front of the
+  question. The check refuses a card with no `because`.
 - Give each card a `header` of 12 characters or fewer, and two to four
   options.
 - Each option has a `label` and a `description` with its pros and cons. For
@@ -196,6 +199,7 @@ runs one: put each command you need in `runs`, and the coach runs it.
   reaches only this brief's results round.
 - Never put an item id in a card, because the person reads the cards, and
   item ids are for code. Write every card in plain words a funder would use.
+  The check refuses a card that names an item id.
 
 **Follow-up.** List in `follow_up` the id of each of your own
 `hard_to_undo` cards whose answer needs a second plan round.
@@ -215,6 +219,7 @@ coverage. The values are made up.
     {
       "id": "c1",
       "header": "Build cost",
+      "because": "The cost to build is a large part of the case, so this answer sets how the case works it out.",
       "question": "How should the cost to build be estimated?",
       "options": [
         {
@@ -246,6 +251,7 @@ coverage. The values are made up.
     {
       "id": "c1q",
       "header": "Quote",
+      "because": "Your own dollar amount replaces an estimate, so this answer sets the build cost in the case.",
       "question": "If the build cost is one dollar amount, what is your estimate?",
       "options": [
         {
@@ -273,6 +279,7 @@ coverage. The values are made up.
     {
       "id": "c2",
       "header": "Figures",
+      "because": "The case treats real data and projections in different ways, so this answer says how far the figures can be trusted.",
       "question": "Are the unit figures real data or projections?",
       "options": [
         {
@@ -372,7 +379,7 @@ brief.
   "brief_sha256": "<the value of your brief's sha256: line>",
   "schema": "plugin-result/1",
   "plugin": "business-case",
-  "plugin_version": "0.10.0",
+  "plugin_version": "0.11.0",
   "command": "business-case:case-finance-analyst",
   "run": {
     "started_at": "2026-10-27T12:00:00Z",

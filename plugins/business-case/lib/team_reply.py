@@ -46,6 +46,7 @@ BODY_PLUGIN_VERSION = "plugin_version"
 PLAN_SCHEMA = paths.PLUGIN_ROOT / "schemas" / "team-plan.schema.json"
 MAX_OPTIONS = 4
 RECOMMENDED = " (Recommended)"  # the suffix, its leading space included
+ITEM_ID = re.compile(r"\bBC-[A-Z0-9]+(?:-[A-Z0-9]+)*\b")  # the shape of a map item id; the check keeps the map's own
 
 _REPLY_NAME = re.compile(r"^reply-([0-9]{3}|[1-9][0-9]{3,})\.json$")
 _CARDS_NAME = re.compile(r"^cards-([0-9]{3}|[1-9][0-9]{3,})\.json$")
@@ -189,8 +190,17 @@ def _card_problems(card: dict, commands: dict, m, questions_paths: dict, lists: 
     labels = [o["label"] for o in options]
     if not labels[0].endswith(RECOMMENDED) or any(label.endswith(RECOMMENDED) for label in labels[1:]):
         problems.append(f"card {cid}: the recommended option comes first and alone, its label ending \"{RECOMMENDED}\"")
-    if card["blocks"] == "later" and any("sets" in o for o in options):
+    if card["blocks"] == "later" and any(o.get("sets") for o in options):  # an empty `sets` sets no input
         problems.append(f"card {cid} blocks later and sets inputs; it is asked after its runs end, so it sets none")
+    if not card["because"].strip():
+        problems.append(f"card {cid} has a blank because; say in 1 sentence what the answer changes in the case")
+    shown = [card["header"], card["because"], card["question"]]
+    shown += [text for o in options for text in (o["label"], o.get("description", ""))]
+    known = m.get("items", {})
+    found = sorted({i for text in shown for i in ITEM_ID.findall(text) if i in known})
+    if found:
+        problems.append(f"card {cid} names the item id {', '.join(found)}; say the item's title, because the "
+                        "person reads the card")
     named = {}
     for o in options:
         for command, inputs in o.get("sets", {}).items():

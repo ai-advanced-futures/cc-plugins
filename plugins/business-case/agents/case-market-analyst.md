@@ -170,6 +170,9 @@ runs one: put each command you need in `runs`, and the coach runs it.
   `blocks` (`now` when a run needs the answer first, `later` when only your
   results round needs it) and `hard_to_undo` (true for a choice that is hard
   to take back once the plugin runs).
+- Give each card a `because`: one short sentence that says what the answer
+  changes in the case, in plain words. The coach shows it in front of the
+  question. The check refuses a card with no `because`.
 - Give each card a `header` of 12 characters or fewer, and two to four
   options.
 - Each option has a `label` and a `description` with its pros and cons. For
@@ -197,6 +200,7 @@ runs one: put each command you need in `runs`, and the coach runs it.
   reaches only this brief's results round.
 - Never put an item id in a card, because the person reads the cards, and
   item ids are for code. Write every card in plain words a funder would use.
+  The check refuses a card that names an item id.
 
 **Follow-up.** List in `follow_up` the id of each of your own
 `hard_to_undo` cards whose answer needs a second plan round.
@@ -216,6 +220,7 @@ made up.
     {
       "id": "c1",
       "header": "Size method",
+      "because": "The size of the market changes with the method, so this answer sets how the case works it out.",
       "question": "How should the total market be worked out?",
       "options": [
         {
@@ -247,6 +252,7 @@ made up.
     {
       "id": "c1v",
       "header": "Value",
+      "because": "The market from value is the worth of the job to each firm, times the share the price can take, so these two figures set its size.",
       "question": "If the market is worked out from value, what is the job worth to each firm a year, and what share can the price take?",
       "options": [
         {
@@ -278,6 +284,7 @@ made up.
     {
       "id": "c2",
       "header": "Customers",
+      "because": "The market size is the number of firms times what each spends, so these two figures set its size.",
       "question": "How many firms have the job, and what does each spend on it a year?",
       "options": [
         {
@@ -307,6 +314,7 @@ made up.
     {
       "id": "c3",
       "header": "Reach",
+      "because": "The share that the offering can reach and win sets how much of the market the case counts as yours.",
       "question": "What share of the market can the offering reach, and what share can it win?",
       "options": [
         {
@@ -336,6 +344,7 @@ made up.
     {
       "id": "c4",
       "header": "Self-serve",
+      "because": "A customer who needs no sales call costs less to win, so this answer changes the cost of sales in the case.",
       "question": "Can a customer sign up and get the first value without talking to sales?",
       "options": [
         {
@@ -433,7 +442,7 @@ brief.
   "brief_sha256": "<the value of your prompt's sha256: line>",
   "schema": "plugin-result/1",
   "plugin": "business-case",
-  "plugin_version": "0.10.0",
+  "plugin_version": "0.11.0",
   "command": "business-case:case-market-analyst",
   "run": {
     "started_at": "2026-10-27T12:00:00Z",

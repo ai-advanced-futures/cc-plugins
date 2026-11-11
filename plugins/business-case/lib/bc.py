@@ -646,9 +646,11 @@ def _write_team_brief(a) -> int:
 
 
 def cmd_team_answers(a) -> int:
-    """`--answers-file FILE` records the card answers in it, then applies the after-cap rule to each item set
+    """`--answers-file FILE` records the card answers in it (answers with no `asked` are refused; each card in
+    `asked` with no answer is recorded as skipped), then applies the after-cap rule to each item set
     whose second-brief plan caps in this call (spec §5.6); prints the card record's path, the answers
-    file's path, `waits <key>: <reading card>`, `again <key>: <reason>` or `open <key>` for each card still open
+    file's path, `say: <text>` while no card of the case has been asked (the note rule for the person),
+    `waits <key>: <reading card>`, `again <key>: <reason>` or `open <key>` for each card still open
     (`open` only for a card not asked yet), `read <key>: <label>` for each card read from typed text or a reading
     card, then each new run: its route's `subagent_type: ...`
     and `plugin-run` block, and any line for the person. `--case-card FILE` and `--gap-card ITEM` make one
@@ -664,22 +666,30 @@ def _team_answers(a) -> int:
     if a.gap_card is not None:
         print(team_record.gap_card(a.case, a.gap_card))
         return 0
-    data = _read_json_object(a.answers_file, "the answers file", (("answers",), ()))
+    data = _read_json_object(a.answers_file, "the answers file", (("answers",), ("asked",)))
+    if "asked" not in data and isinstance(data["answers"], list) and data["answers"]:
+        raise Refused(f"the coach's answers file (--answers-file) {a.answers_file} has answers and no `asked`: put "
+                      "in `asked` the key of each "
+                      "card that you asked in the call, each card that the person skipped included")
     m = plugin_map.load()
-    call = team_record.record_call(a.case, m, data["answers"])
+    call = team_record.record_call(a.case, m, data["answers"], data.get("asked", []))
     team_record.apply_after_cap(a.case, m, call)
     case = Path(a.case).resolve()
     lines = [str(case / team_files.cards_relpath(call.nnn)), str(case / team_files.answers_relpath(call.nnn))]
     cards = team_record.latest_cards(a.case)
+    open_lines = []
     for key in [k for k, c in cards.items() if c.get("answer") is None]:
         waits = team_record.reading_card_of(cards, key)
         why = team_record.again_because(cards[key])
         if waits is not None:
-            lines.append(f"waits {key}: {waits}")
+            open_lines.append(f"waits {key}: {waits}")
         elif why is not None:
-            lines.append(f"again {key}: {why}")
+            open_lines.append(f"again {key}: {why}")
         elif not cards[key].get("passed"):
-            lines.append(f"open {key}")
+            open_lines.append(f"open {key}")
+    if open_lines and not any(c.get("passed") for c in cards.values()):
+        lines.append(f"say: {team_record.NOTE_LINE}")  # no card of the case is asked yet: the person needs the note rule
+    lines += open_lines
     lines += [f"read {key}: {cards[key]['answer']['label']}" for key in call.read]
     lines += team_runs.render(team_runs.blocks_for_call(a.case, m, call))
     print("\n".join(lines))
@@ -917,7 +927,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub("team-answers", cmd_team_answers, "Record the person's card answers; writes the card record and the answers file.")
     mode = p.add_mutually_exclusive_group(required=True)
     mode.add_argument("--answers-file", type=Path, metavar="FILE",
-                      help='the coach\'s temp file: {"answers": [{"key": "<brief NNN>:<id>" | "code:<n>", "answer": "<text>"}]}')
+                      help='the coach\'s temp file: {"asked": ["<key>", ...], "answers": [{"key": "<brief NNN>:<id>" '
+                           '| "code:<n>", "answer": "<text>"}]}; `asked` holds the key of each card asked in the call, '
+                           'and code records each one with no answer as skipped; a call with no answers needs no `asked`')
     mode.add_argument("--case-card", type=Path, metavar="FILE",
                       help="make a case card for a result file with no run.case; prints its key")
     mode.add_argument("--gap-card", metavar="ITEM", help="make a gap card for an item with no result yet; prints its key")

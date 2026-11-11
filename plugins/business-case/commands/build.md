@@ -478,20 +478,24 @@ Tell the person, in plain words, each run that `team-run` prints as `gap`: the a
 
 **The cards.** Ask cards only when `team-brief --status` lists no plan without a reply.
 Then write `{"answers": []}` with the Write tool to `<the temporary directory>/bc-team-answers.json` and run `team-answers`: it merges the checked plans.
-It prints the card record's path, the answers file's path, and a line for each open card: `open <key>` for a card not asked yet, `again <key>: <reason>` for a card that it asks again, and `waits <key>: <key>` for a card that waits for a "Your words" card.
+It prints the card record's path, the answers file's path, a `say` line until code has recorded an answer or a skip for a card of the case, and a line for each open card: `open <key>` for a card not asked yet, `again <key>: <reason>` for a card that it asks again, and `waits <key>: <key>` for a card that waits for a "Your words" card.
 Read each card that an `open` or `again` line names in the card record: its header, question, options and `blocks`.
 Ask at most four cards at a time, `blocks: now` first.
 That is one `AskUserQuestion` call with up to four questions.
 Ask each with `AskUserQuestion`, with the card's header, question, option labels and option descriptions as the card holds them, in the card's order.
+Ask the question with each sentence that the card holds: on an analyst's card, the first sentence says why the case asks it, and the person needs it to answer. Add no reason of your own to a card.
 In a card's question and option descriptions, say an item's title in place of its ID; never change an option label, since code matches the label.
-Before the first card, tell the person once: "To add a note to an option, type the option's label, then a comma, then your note."
+Before you ask the cards, tell the person the text after `say: ` of each `say` line, in its exact words.
 Pass every answer a card returns, `[No preference]` included.
-Write each answer, as the card returned it, to `<the temporary directory>/bc-team-answers.json`, as `{"answers": [{"key": "003:c1", "answer": "<the text the card returned>"}]}`, and run `team-answers` again.
+Write each answer, as the card returned it, to `<the temporary directory>/bc-team-answers.json`, as `{"asked": ["003:c1", "003:c2"], "answers": [{"key": "003:c1", "answer": "<the text the card returned>"}]}`, and run `team-answers` again.
+In `asked`, put the key of each card that you asked in the call, also each card that is not in the result: the result leaves out a card that the person skipped, and code records each card in `asked` with no answer as skipped.
+When the person closes the call with Esc, the result says that the tool use was rejected: write nothing for it.
+A result that says that the person did not answer the questions is a skip of each card of the call.
 Code reads an option label that the person typed at the start of the text, followed by a comma or another mark, as that option, and keeps the whole text as the person's note. It prints `read <key>: <label>`: tell the person which option it recorded.
 For each other text the person typed on a card, add one field to that card's entry: `"reading": "<the option label you read the text as>"`, or `"why": "<why no option fits the text>"`. `team-answers` refuses free text with neither field. Never record your reading as the answer.
 For each reading, `team-answers` makes a card headed "Your words" and prints `open` for it, and `waits <key>: <its key>` for the card it asks about.
 Tell the person, in one line for each card, which option you read their text as. Then ask the "Your words" cards, up to four in one `AskUserQuestion` call. Do not ask the cards they ask about again, because each "Your words" card asks for its card.
-`team-answers` prints `again <key>: <reason>` for each card that it asks again. Ask each such card on its own, in one `AskUserQuestion` call, and first tell the person the reason that line gives.
+`team-answers` prints `again <key>: <reason>` for each card that it asks again. Ask each such card on its own, in one `AskUserQuestion` call, and first tell the person the reason that line gives. Do not tell the person that they can skip the card, because a skipped card comes back with the same `again` line. When the person cannot choose, tell them that they can pick the option nearest to their view and add their note after a comma.
 Ask only the cards that `open` or `again` names: a card that the person skipped and that neither names waits for the after-cap rule.
 A key is the one `open` or `again` printed: `<brief NNN>:<id>` for an analyst's card, `code:<n>` for a card code made.
 A `last ask` card is a hard-to-undo card the person left unanswered when the plan rounds ended, which gets one more ask.

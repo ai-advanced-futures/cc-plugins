@@ -80,7 +80,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from lib import digest, paths, plugin_map, plugin_result, team_files, team_reply
+from lib import digest, paths, plugin_map, plugin_result, rubric, team_files, team_reply
 from lib.team_files import TeamRefused
 
 NO_PREFERENCE = "[No preference]"
@@ -103,9 +103,16 @@ AGAIN_CODE = "code picks no option for this card, so only your pick closes it"
 AGAIN_REJECTED = 'you did not say yes to the reading "{label}" of your words "{text}"'
 AGAIN_UNREAD = 'no option fits your words "{text}": {why}'
 AGAIN_OLD = 'your words "{text}" name no option'
-RERUN_QUESTION = "{command} already has a result from {date}. Run it again?"
-CASE_QUESTION = "{file} names no case. Is it a result for this case, and the run to use?"
+RERUN_QUESTION = ("{command} already gave a result on {date}. A new run takes time, and the case then uses the "
+                  "new result. Run {command} again?")
+CASE_QUESTION = ("A result of the {plugin} plugin from {date} does not say which business case it is for "
+                 "(file {file}). Only a result for this case can be evidence here. Use it for this case?")
 GAP_QUESTION = "Nothing has come in yet for {item}. Go on without it, or wait for it?"
+CONFLICT_QUESTION = ("Your answers on the cards headed {headers} give different values for the same setting "
+                     "({name} of {command}). The run can use only one. Which value should it use?")
+CONFLICT_OPTION = 'On the card "{header}", the answer "{label}" gave this value. This option gives the run that value.'
+NOTE_LINE = "To add a note to an option, type the option's label, then a comma, then your note."
+NOT_GIVEN = object()  # `record_call` got no `asked`: a direct call that holds answers only keeps its form
 
 CARDS_NAME = re.compile(r"^cards-([0-9]{3}|[1-9][0-9]{3,})\.json$")
 ANSWERS_NAME = re.compile(r"^answers-([0-9]{3}|[1-9][0-9]{3,})\.json$")
@@ -324,8 +331,10 @@ def _round(plan_briefs: list, brief) -> int:
 
 
 def _plan_card(brief_nnn: int, rnd: int, card: dict) -> dict:
+    because = card.get("because", "").strip()  # a plan checked before 0.11.0 has none: it keeps its question
+    question = f"{because} {card['question']}" if because else card["question"]
     return {"brief": brief_nnn, "id": card["id"], "made_by": "plan", "round": rnd, "blocks": card["blocks"],
-            "hard_to_undo": card["hard_to_undo"], "header": card["header"], "question": card["question"],
+            "hard_to_undo": card["hard_to_undo"], "header": card["header"], "question": question,
             "options": [dict(o) for o in card["options"]], "answer": None, "free_text": [], "passed": [],
             "last_ask": False, "held": False, "subject": {}}
 
@@ -336,9 +345,14 @@ def _value_text(value) -> str:
     return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
 
 
-def _conflict_option(command: str, name: str, key: str, value, recommended: bool = False) -> dict:
+def _conflict_option(command: str, name: str, key: str, value, source: dict, recommended: bool = False) -> dict:
+    """One option of a conflict card. `source` is the card whose answer gave `value`: the description names its
+    header and the answer on it. One form for each option, because an exact pick of the recommended label and the
+    after-cap rule both record `settled_by: recommended`, so code cannot tell them apart."""
     label = f"{_value_text(value)}, from card {key}" + (RECOMMENDED if recommended else "")
-    return {"label": label, "description": f"Card {key} set {name} of {command} to this.",
+    answer = (source.get("answer") or {}).get("label", "")
+    return {"label": label,
+            "description": CONFLICT_OPTION.format(header=source.get("header", ""), label=_base(answer)),
             "sets": {command: {name: value}}}
 
 
@@ -364,8 +378,15 @@ def _cap_options(card: dict) -> None:
         card["question"] += f" Also given, not shown as an option: {label}."
 
 
-def _conflict_card(m, command: str, name: str, picks: list, plan_items: dict) -> dict:
-    """One conflict card over `picks`: [(card key, value, round)], one per distinct value, in call order."""
+def _headers_text(cards: dict, keys: list) -> str:
+    """The distinct headers of the cards `keys`, in order, each in quotes: "A", "B" and "C"."""
+    headers = list(dict.fromkeys(f'"{cards[k].get("header", "")}"' for k in keys))
+    return headers[0] if len(headers) == 1 else ", ".join(headers[:-1]) + " and " + headers[-1]
+
+
+def _conflict_card(m, command: str, name: str, picks: list, plan_items: dict, cards: dict) -> dict:
+    """One conflict card over `picks`: [(card key, value, round)], one per distinct value, in call order.
+    `cards` holds the cards that gave the picks: the question and each option name them."""
     owner = plugin_map.input_owner(m, command, name)
     owned = [p for p in picks if owner is not None and owner in plan_items.get(p[0], ())]
     first = owned[0] if owned else None
@@ -374,8 +395,9 @@ def _conflict_card(m, command: str, name: str, picks: list, plan_items: dict) ->
         subject["item"] = owner
     card = {"brief": None, "id": None, "made_by": "conflict", "round": max(p[2] for p in picks),
             "blocks": "now", "hard_to_undo": False, "header": CONFLICT_HEADER,
-            "question": f"Two answers set {name} of {command} differently. Which value should it take?",
-            "options": [_conflict_option(command, name, p[0], p[1], p is first) for p in picks],
+            "question": CONFLICT_QUESTION.format(headers=_headers_text(cards, [p[0] for p in picks]),
+                                                 name=name, command=command),
+            "options": [_conflict_option(command, name, p[0], p[1], cards[p[0]], p is first) for p in picks],
             "answer": None, "free_text": [], "passed": [], "last_ask": False, "held": False, "subject": subject}
     _cap_options(card)  # in call order, so the newest values stay
     card["options"].sort(key=lambda o: not o["label"].endswith(RECOMMENDED))  # the owner's value first
@@ -397,13 +419,30 @@ def _check_answers_list(answers) -> list:
     return answers
 
 
-def record_call(case_dir, m, answers: list) -> Call:
+def _with_skips(answers: list, asked) -> list:
+    """`answers` and a `[No preference]` entry for each card in `asked` with no answer: the result of the
+    question tool leaves out a card that the person skipped. `NOT_GIVEN` adds nothing. Refused for an `asked`
+    that is not a list of keys, and for an answer to a card that is not in `asked`."""
+    if asked is NOT_GIVEN:
+        return answers
+    if not (isinstance(asked, list) and all(isinstance(k, str) for k in asked)):
+        raise TeamRefused("`asked` must be a list of card keys")
+    given = [e["key"] for e in answers]
+    not_asked = [k for k in given if k not in asked]
+    if not_asked:
+        raise TeamRefused(f"card {', '.join(not_asked)} has an answer but is not in `asked`; put in `asked` the key "
+                          "of each card that you asked in the call")
+    return answers + [{"key": k, "answer": NO_PREFERENCE} for k in dict.fromkeys(asked) if k not in given]
+
+
+def record_call(case_dir, m, answers: list, asked=NOT_GIVEN) -> Call:
     """Record one coach call: merge the checked plans no earlier call merged (none while a plan brief is
     open), record `answers` ([{"key", "answer"}]), make any conflict card, and write `answers-NNN.json`
-    then `cards-NNN.json`. Refused, with nothing written, for an unknown card key or an answer to a plan
-    card while a plan brief is open."""
+    then `cards-NNN.json`. `asked` lists the key of each card that the coach asked in the call: each one with
+    no answer is recorded as `[No preference]`, a skip. Refused, with nothing written, for an unknown card key
+    (in `answers` or in `asked`) or an answer to a plan card while a plan brief is open."""
     case = Path(case_dir).resolve()
-    answers = _check_answers_list(answers)
+    answers = _with_skips(_check_answers_list(answers), asked)
     record = _latest_record(case)
     cards = {k: dict(v) for k, v in record.get("cards", {}).items()}
     merged_before = list(record.get("merged", []))
@@ -590,14 +629,15 @@ def _fold(m, cards: dict, previous: dict, picks: dict, plan_items: dict, new_car
             card = cards[folded]
             for pick in found:
                 if not any(_same(pick[1], o["sets"][command][name]) for o in card["options"]):
-                    card["options"] = card["options"] + [_conflict_option(command, name, pick[0], pick[1])]
+                    card["options"] = card["options"] + [
+                        _conflict_option(command, name, pick[0], pick[1], cards[pick[0]])]
             _cap_options(card)
             continue
         if len(distinct) > 1:
             n = max(code_numbers, default=0) + 1
             code_numbers.append(n)
             key = f"code:{n}"
-            cards[key] = _conflict_card(m, command, name, distinct, plan_items)
+            cards[key] = _conflict_card(m, command, name, distinct, plan_items, cards)
             new_cards.append(key)
             continue
         settled = "person" if any(p[3] == "person" for p in found) else "recommended"
@@ -662,8 +702,8 @@ def _rerun_cards(case: Path, m, cards: dict, named: list) -> list:
             date = (earlier.get("finished_at") or "")[:10]
             cards[key] = _code_card(
                 "rerun", RERUN_HEADER, RERUN_QUESTION.format(command=command, date=date),
-                [(RUN_AGAIN, f"Run {command} again; the new result is used once it ends."),
-                 (USE_EARLIER, f"Keep the result from {date}; nothing runs.")],
+                [(RUN_AGAIN, f"Run {command} again. It takes time, and the case uses the new result once it ends."),
+                 (USE_EARLIER, f"Do not run {command} again. The case keeps the result from {date}.")],
                 {"command": command, "run": earlier["key"], "briefs": [nnn]}, rnd)
             made.append(key)
     return made
@@ -713,9 +753,10 @@ def case_card(case_dir, result_file) -> str:
     if found is not None:
         return found
     return _add_code_card(case, _code_card(
-        "case", CASE_HEADER, CASE_QUESTION.format(file=rel),
-        [(USE_FOR_CASE, "It is a result for this case, and the run to use."),
-         (NOT_FOR_CASE, "Leave this file out of the case.")],
+        "case", CASE_HEADER,
+        CASE_QUESTION.format(plugin=doc["command"].split(":", 1)[0], date=run["finished_at"][:10], file=rel),
+        [(USE_FOR_CASE, "Use the result as evidence for this case. It is the run to use."),
+         (NOT_FOR_CASE, "Do not use the result for this case. The case leaves this file out.")],
         {"result_file": rel, "command": doc["command"], "finished_at": run["finished_at"]}))
 
 
@@ -727,10 +768,14 @@ def gap_card(case_dir, item) -> str:
     found = _open_code_card(case, "gap", "item", item)
     if found is not None:
         return found
+    try:  # the person reads the title, never the item ID
+        title = rubric.item(rubric.load_rubric(case / paths.RUBRIC_COPY), item)["title"]
+    except rubric.RubricError as exc:
+        raise TeamRefused(f"cannot read the title of {item} from the rubric copy of the case: {exc}") from None
     return _add_code_card(case, _code_card(
-        "gap", GAP_HEADER, GAP_QUESTION.format(item=item),
-        [(GO_ON, f"Go on with the work that needs {item}, without its result."),
-         (WAIT, f"Wait until {item} has a result.")],
+        "gap", GAP_HEADER, GAP_QUESTION.format(item=title),
+        [(GO_ON, f"Go on with the work that needs {title}, without its result."),
+         (WAIT, f"Wait until {title} has a result.")],
         {"item": item}))
 
 

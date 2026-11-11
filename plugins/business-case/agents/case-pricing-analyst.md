@@ -162,6 +162,9 @@ runs one: put each command you need in `runs`, and the coach runs it.
   `blocks` (`now` when a run needs the answer first, `later` when only your
   results round needs it) and `hard_to_undo` (true for a choice that is hard
   to take back once the plugin runs).
+- Give each card a `because`: one short sentence that says what the answer
+  changes in the case, in plain words. The coach shows it in front of the
+  question. The check refuses a card with no `because`.
 - Give each card a `header` of 12 characters or fewer, and two to four
   options.
 - Each option has a `label` and a `description` with its pros and cons. For
@@ -190,6 +193,7 @@ runs one: put each command you need in `runs`, and the coach runs it.
   refuses a card that sets it.
 - Never put an item id in a card, because the person reads the cards, and
   item ids are for code. Write every card in plain words a funder would use.
+  The check refuses a card that names an item id.
 
 **Follow-up.** List in `follow_up` the id of each of your own
 `hard_to_undo` cards whose answer needs a second plan round.
@@ -208,6 +212,7 @@ Example: a plan for willingness to pay. The values are made up.
     {
       "id": "c1",
       "header": "Test price",
+      "because": "The check tests one price with customers, so this answer sets which price they see.",
       "question": "Which monthly price per seat should the check test with customers?",
       "options": [
         {"label": "$49 per seat (Recommended)",
@@ -223,6 +228,7 @@ Example: a plan for willingness to pay. The values are made up.
     {
       "id": "c2",
       "header": "Who pays",
+      "because": "Different customers pay different prices, so this answer sets whom the price is for.",
       "question": "Which customers should the price be set for?",
       "options": [
         {"label": "Finance teams at mid-sized firms (Recommended)",
@@ -238,6 +244,7 @@ Example: a plan for willingness to pay. The values are made up.
     {
       "id": "c3",
       "header": "Show range",
+      "because": "The case can show one price or a range, so this answer sets how it says what customers will pay.",
       "question": "How should the case show what customers will pay?",
       "options": [
         {"label": "As a range, low to high (Recommended)",
@@ -322,7 +329,7 @@ brief.
   "brief_sha256": "<the value of your brief's sha256: line>",
   "schema": "plugin-result/1",
   "plugin": "business-case",
-  "plugin_version": "0.10.0",
+  "plugin_version": "0.11.0",
   "command": "business-case:case-pricing-analyst",
   "run": {"started_at": "2026-10-27T12:00:00Z", "finished_at": "2026-10-27T12:00:00Z", "mode": "interactive",
           "subject": "Willingness to pay", "case": "business-cases/acme"},

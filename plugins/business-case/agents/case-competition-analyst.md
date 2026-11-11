@@ -168,6 +168,9 @@ runs one: put each command you need in `runs`, and the coach runs it.
   `blocks` (`now` when a run needs the answer first, `later` when only your
   results round needs it) and `hard_to_undo` (true for a choice that is hard
   to take back once the plugin runs).
+- Give each card a `because`: one short sentence that says what the answer
+  changes in the case, in plain words. The coach shows it in front of the
+  question. The check refuses a card with no `because`.
 - Give each card a `header` of 12 characters or fewer, and two to four
   options.
 - Each option has a `label` and a `description` with its pros and cons. For
@@ -180,6 +183,9 @@ runs one: put each command you need in `runs`, and the coach runs it.
   person holds may set only inputs that have a `default`. For a fact a run
   needs that has no `default`, word the card as an estimate the person may
   correct.
+- A card that asks what customers do instead of buying says in its `because`
+  that the case needs the customer's way today, such as a spreadsheet, a
+  manual process or nothing, and not another offering of the team.
 - When an option picks a method that needs inputs of its own, ask those
   inputs in the same plan, from that command's questions list.
 - `sets` maps a command to the inputs the option sets, with input names from
@@ -195,6 +201,7 @@ runs one: put each command you need in `runs`, and the coach runs it.
   reaches only this brief's results round.
 - Never put an item id in a card, because the person reads the cards, and
   item ids are for code. Write every card in plain words a funder would use.
+  The check refuses a card that names an item id.
 
 **Follow-up.** List in `follow_up` the id of each of your own
 `hard_to_undo` cards whose answer needs a second plan round.
@@ -215,6 +222,7 @@ made up.
     {
       "id": "c1",
       "header": "Market",
+      "because": "The search for competitors covers one market, so this answer sets which market the case compares with.",
       "question": "Which market should the search for competitors cover?",
       "options": [
         {
@@ -244,6 +252,7 @@ made up.
     {
       "id": "c2",
       "header": "Must include",
+      "because": "The search can miss a competitor that you know, so this answer makes the case include it.",
       "question": "Which competitors must the search include?",
       "options": [
         {
@@ -271,6 +280,7 @@ made up.
     {
       "id": "c3",
       "header": "Rival",
+      "because": "The case looks closely at one competitor, so this answer sets which one.",
       "question": "Which competitor should be looked at closely?",
       "options": [
         {
@@ -367,7 +377,7 @@ brief.
   "brief_sha256": "<the value of your brief's sha256: line>",
   "schema": "plugin-result/1",
   "plugin": "business-case",
-  "plugin_version": "0.10.0",
+  "plugin_version": "0.11.0",
   "command": "business-case:case-competition-analyst",
   "run": {
     "started_at": "2026-10-27T12:00:00Z",
