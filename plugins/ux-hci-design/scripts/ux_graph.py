@@ -193,6 +193,21 @@ def add_ingest(parser) -> None:
                         help="start a new Run page, also when pages.json names a run that is a draft")
 
 
+def cmd_remove_questions(args) -> int:
+    from uxlib import questions
+
+    print(questions.remove(args.root, args.output_dir, args.reviewer))
+    return 0
+
+
+def add_remove_questions(parser) -> None:
+    from uxlib.questions import REVIEWERS
+
+    parser.add_argument("output_dir", help="the output folder of the run, for example .ux-artifacts")
+    parser.add_argument("--reviewer", choices=REVIEWERS,
+                        help="remove the file of this reviewer, in <output_dir>/reviews/<reviewer>/")
+
+
 def cmd_view(args) -> int:
     from uxlib import view
 
@@ -245,6 +260,8 @@ COMMANDS = [
     ("check", add_check, cmd_check, "run the brain check of ux-hci-design"),
     ("log", add_log, cmd_log, "write one log.md entry"),
     ("ingest", add_ingest, cmd_ingest, "write the pages of one phase of a run from its output files"),
+    ("remove-questions", add_remove_questions, cmd_remove_questions,
+     "remove the open-questions.md file of an agent before the skill starts it again"),
     ("view", add_view, cmd_view, "print an output file of a run, built from the pages"),
     ("pages", add_pages, cmd_pages, "print the pages of one type as JSON"),
     ("behavior", add_behavior, cmd_behavior, "print the behavior results as a JSON list for the PRD"),

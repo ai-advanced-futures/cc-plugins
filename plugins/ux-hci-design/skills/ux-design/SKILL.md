@@ -109,7 +109,7 @@ When the argument names the phase and the input paths, and .ux-config.json exist
 
 Only this skill asks the person. The phase agents ask nothing: AskUserQuestion is not available to a subagent. When an agent needs an answer, it writes the open questions to `<output_dir>/open-questions.md` and returns. Ask these questions with AskUserQuestion. After you ask its questions, delete `<output_dir>/open-questions.md`. Then dispatch the same agent again with the answers. Run that dispatch in the foreground too, with `run_in_background: false`.
 
-To delete the file, run 1 Bash command with 1 path: `rm -f -- '<absolute path of the file>'`. Write each `'` in the path as `'\''`. Run this command on its own, with no other command, because a command with a list or a loop is refused. The person approves it, because no rule approves an `rm`. When the command fails or the person refuses it, tell the person the path of the file and to delete it, and stop. Do not dispatch the agent again, because an old file starts the same questions again.
+To delete the file, run `G remove-questions <output_dir>` on its own (section "Save the brain" gives `G` and `<git root>`; when this run has no `<git root>` yet, run `git rev-parse --show-toplevel` first). For the file of a reviewer, add `--reviewer <reviewer>`, and run 1 command for each reviewer. Use this command for the delete, because no rule of this skill approves an `rm`, and a run with no person refuses an `rm` and stops. The command removes only the open-questions file, and exits 0 with `removed <path>` or `no file <path>`. When it exits with a code that is not 0, show its output, tell the person the path of the file and to delete it, and stop. Do not dispatch the agent again, because an old file starts the same questions again.
 
 **Artifact Directory:**
 Create `.ux-artifacts/` in the project root for all phase outputs:
@@ -471,7 +471,7 @@ method_file: ${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md
 schema_file: ${CLAUDE_PLUGIN_ROOT}/schemas/outputs/evaluation-report-schema.json
 ```
 
-Run the evaluator in the foreground and wait for it, because the check of Step 3 needs the permission of this turn. Set `run_in_background: false` in its `Agent` call. The evaluator normalizes the severity, calculates the UX health score with contextual weighting, and writes the prioritized recommendations. When a reviewer wrote `<output_dir>/reviews/<reviewer>/open-questions.md`, handle it as in the dispatch protocol above, and delete that file in the same way after you ask its questions.
+Run the evaluator in the foreground and wait for it, because the check of Step 3 needs the permission of this turn. Set `run_in_background: false` in its `Agent` call. The evaluator normalizes the severity, calculates the UX health score with contextual weighting, and writes the prioritized recommendations. When a reviewer wrote `<output_dir>/reviews/<reviewer>/open-questions.md`, handle it as in the dispatch protocol above, and delete that file in the same way after you ask its questions. The command is `G remove-questions <output_dir> --reviewer <reviewer>`.
 
 **After Step 2.** If the evaluator returns a line that starts with `MISSING_REVIEW:`, show the line to the person and stop. Do not write the report in the main conversation, because a report with a missing domain gives a wrong UX health score.
 

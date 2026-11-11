@@ -2,6 +2,13 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.6.2 - 2026-11-10
+
+STORY-343.
+
+- `ux_graph.py remove-questions <output_dir> [--reviewer <reviewer>]` removes the `open-questions.md` file of the run, or of 1 reviewer, and no other file. The skill `ux-design` runs it after it asks the questions of an agent, and before it starts the agent again. The grant of `ux_graph.py` approves it. Before this change, the skill ran `rm`, which no rule approves, so a run with no person stopped at that step: 2 of 3 test phase runs of the PR 1420 verifier stopped before the evaluator.
+- The command refuses a folder outside the project, a reviewer that is not 1 of the 3 reviewers, a symbolic link, and a folder with the name of the file.
+
 ## 1.6.1 - 2026-11-10
 
 STORY-333, STORY-336 and STORY-338 (the follow-ups of STORY-257).

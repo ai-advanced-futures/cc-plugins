@@ -333,7 +333,7 @@ pip install -r requirements-dev.txt
 
 **Cause:** An agent cannot ask the person a question. When it needs an answer, it writes its open questions to this file and returns.
 
-**Solution:** Let the skill `ux-design` ask these questions. It calls the same agent again with your answers. If you started the agent from another skill, answer the questions and call the agent again.
+**Solution:** Let the skill `ux-design` ask these questions. It removes the file with `ux_graph.py remove-questions`, and calls the same agent again with your answers. If you started the agent from another skill, answer the questions, remove the file, and call the agent again. An old file starts the same questions again.
 
 ---
 
