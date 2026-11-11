@@ -57,8 +57,10 @@ context. Open a page only when a finding of this session changes that page.
 ## Step 3: apply the product-hat filter
 
 Read each finding against the constraint test of `product-hat.md`. A finding
-that fails the test gets one of two actions:
+that fails the test gets one of three actions:
 
+- If a design token or a component name is inside the finding, take it out and
+  keep the rest of the finding.
 - If a product constraint is inside it, take the constraint out and write it
   as a `Constraint` page.
 - If no constraint is inside it, drop the finding. Tell the user what you
@@ -91,7 +93,7 @@ collide. The script also writes the frontmatter keys in the order of the schema.
 
 To edit a page, open the file and change the body or the typed fields. Keep
 the ID. The page type table of `bundle-schema.md` gives the typed field of
-each type: `kind` for a Need, a Scope page, and a Risk, `role` for a Metric,
+each type: `kind` for a Need, a Scope page, a Risk, and an Experience page, `role` for a Metric,
 `kano` for a Capability, and `primary` for a Persona.
 
 Never edit an `index.md`, a `closed.md`, a `LINKS` block, or a `STATUS`
@@ -110,6 +112,11 @@ starts with `/`, as in `/personas/PERSONA-02.md`. For a relationship on an
 existing page, use
 `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/prd.py link <id> <field> <target>`.
 
+An Experience page gets one or more `--link describes=<target>`: the Capability
+or the Journey that the screen, the state, or the rule belongs to. A finding of
+the experience lens with no `describes` target is not written — say so and drop
+it, or ask again.
+
 ## Step 6: write the decisions and the open questions
 
 - Each decision of this session becomes a `Decision` page. Add `--link
@@ -123,7 +130,9 @@ Open `docs/product/prd/product.md` and change three things:
 
 1. The `status` of this lens in the `lenses` map: `in-progress` while a gap
    remains, `complete` when the "done when" of the lens is met. If you are
-   not sure, ask the user.
+   not sure, ask the user. For the experience lens, a Decision page "The
+   product needs no experience lens" (written with no `about` link) meets the
+   "done when" of the lens: set the lens `complete`.
 2. The `updated` date of this lens, and the top-level `updated` date. Both
    dates are today, in UTC.
 3. One short paragraph for this lens in the body, which says what the lens

@@ -124,8 +124,10 @@ on the lenses before it:
 Problem → Personas → Journeys → Capabilities → Scope → Success metrics
 ```
 
-Three **satellite** lenses open when their prerequisites are met: Business
-model, Go-to-market, and Risks and assumptions.
+Four **satellite** lenses open when their prerequisites are met: Business
+model, Go-to-market, Risks and assumptions, and Experience. The `experience`
+lens is for a product with a user interface. It opens when both Journeys and
+Capabilities are met.
 
 - `/product:explore personas` goes straight to one lens.
 - `/product:explore` with no argument asks what your goal is, and offers the lenses

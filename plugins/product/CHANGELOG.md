@@ -1,5 +1,15 @@
 # Changelog
 
+## 6.6.0
+
+### Added
+- The experience lens (`/product:explore experience`), a satellite lens for a product with a user interface. It opens when both Journeys and Capabilities are met. Its first question asks if the product has a user interface whose look and behavior matter to the outcome. On "no", the finding is one Decision page "The product needs no experience lens" and the lens is `complete`. The six spine lenses still make the PRD ready for planning (STORY-242).
+- The lens guide "Experience (satellite)": one question set for each `kind` (`structure`, `state-rule`, `interaction-rule`), and the rule "1 fact, 1 page" that sends a flow to a Journey page, an unusual situation to a Capability page, and an accessibility level to a Constraint page.
+- `/product:learn` writes an Experience page with its `kind` and one or more `describes` targets. A finding of the experience lens with no `describes` target is not written.
+
+### Changed
+- The product hat keeps design tokens and design-system component names out of the PRD. `/product:learn` takes them out of a finding and keeps the rest of the finding. They go to a `Convention` page of the system design.
+
 ## 6.5.0
 
 ### Added

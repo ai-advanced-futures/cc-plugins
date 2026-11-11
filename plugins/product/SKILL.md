@@ -10,7 +10,7 @@ exploration, with full traceability from the PRD to the roadmap and to GitHub.
   one work item. Each relationship is a typed field.
 - **Lens-driven exploration** — an ordered lens spine: Problem → Personas →
   Journeys → Capabilities → Scope → Success metrics, and the satellites
-  Business model, Go-to-market, and Risks.
+  Business model, Go-to-market, Risks, and Experience.
 - **The product hat** — each skill stays at the product level. An
   implementation ask becomes a product constraint.
 - **Traceability** — a roadmap item holds a `traces` entry: the ID of a PRD
@@ -40,7 +40,7 @@ missing.
 ### `/product:explore [lens]`
 Lens-driven Socratic exploration. Give a lens (`problem`, `personas`,
 `journeys`, `capabilities`, `scope`, `success-metrics`, `business-model`,
-`go-to-market`, `risks`), or get a menu that recommends the next lens. It makes
+`go-to-market`, `risks-assumptions`, `experience`), or get a menu that recommends the next lens. It makes
 the two bundles with `prd.py init` on the first run.
 
 **Use when**: You find or deepen the product requirements.

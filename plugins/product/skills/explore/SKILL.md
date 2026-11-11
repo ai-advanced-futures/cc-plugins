@@ -84,11 +84,12 @@ each time the conversation moves to implementation.
 | Business Model | `business-model` | Satellite | `prd/business/` | Problem, Personas |
 | Go-to-Market | `go-to-market` | Satellite | `prd/gtm/` | Personas, Scope |
 | Risks & Assumptions | `risks-assumptions` | Satellite | `prd/risks/` | Problem |
+| Experience | `experience` | Satellite | `prd/experiences/` | Journeys, Capabilities |
 
 The **spine** is the ordered core. Each spine lens builds on the ones before
 it. The **satellites** are optional. A satellite opens when its prerequisites
 are met. A prerequisite is met when its lens status is `in-progress` or
-`complete`.
+`complete`. A lens with 2 prerequisites opens only when both are met.
 
 Any lens can also give a Constraint (`prd/constraints/`), a Decision
 (`prd/decisions/`), or a Question (`prd/questions/`). The page format of each
@@ -110,6 +111,10 @@ Use `AskUserQuestion`:
   logical step. Put it first, marked "(Recommended)".
 - List the other open lenses: spine lenses and satellites whose prerequisites
   are met.
+- Offer the Experience lens only when both Journeys and Capabilities are met.
+  Its description is "optional: only for a product with a user interface whose
+  look and behavior matter to the outcome". Never recommend it before a spine
+  lens that is not `complete`.
 - Mark each covered lens as done in its description, so the user sees the
   progress.
 - State the order logic in the question, as in "Journeys need Personas first".
@@ -274,3 +279,32 @@ page in `/product:learn`, and the `kind` field records which question it answers
   field.
 - **Done when**: the assumptions are ranked and the riskiest ones have a
   validation idea.
+
+### Experience (satellite)
+*Grounding: screen inventory, state design, interaction design*
+- Ask first: does the product have a user interface whose look and behavior
+  matter to the outcome? On "no", the 1 finding is a Decision page "The product
+  needs no experience lens" with no `about` link. `/product:learn` sets the
+  lens status to `complete`, because the "done when" of the lens is met for
+  that product. The menu then marks the lens as done. Stop.
+- `structure`: which screens or views does each Capability or Journey need? For
+  each one: its purpose, its regions and what each region shows, and how the
+  user comes in and goes out.
+- `state-rule`: for each screen, what does the user see and what can the user
+  do when the content is empty, is loading, fails, is partial, or succeeds?
+- `interaction-rule`: for each action, what starts it (a tap, a key, a drag),
+  what feedback the user gets, and how the user confirms or undoes it.
+- 1 fact, 1 page. A path of a persona through steps is a Journey page. What
+  the product does in an unusual situation, on each channel, is part of a
+  Capability page. An accessibility level is a Constraint page. What 1 screen
+  shows, or how 1 screen reacts, is an Experience page.
+- Colors, type, spacing, motion, and the names of design-system components are
+  construction. Give a region by what it shows ("the panel with the
+  suggestions"), not by its component. Tell the person that a design token or a
+  component goes to a `Convention` page of the system design, and that
+  `ux-hci-design` saves it there.
+- Each finding gets a `kind` and 1 or more `describes` targets.
+- **Done when**: each Capability and Journey with a screen has its structure,
+  its state rules, and its interaction rules, and each finding has a `kind` and
+  a `describes` target. For a product with no such user interface: the Decision
+  page "The product needs no experience lens".

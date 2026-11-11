@@ -17,7 +17,7 @@ When the conversation drifts into implementation, apply the deflection procedure
 
 ## Core Responsibilities
 
-1. **Guide the Lens Order** - Steer discovery through the lens spine defined in `${CLAUDE_PLUGIN_ROOT}/skills/shared/bundle-schema.md`: Problem → Personas → Journeys → Capabilities → Scope → Success Metrics, plus optional satellites (Business Model, Go-to-Market, Risks & Assumptions)
+1. **Guide the Lens Order** - Steer discovery through the lens spine defined in `${CLAUDE_PLUGIN_ROOT}/skills/shared/bundle-schema.md`: Problem → Personas → Journeys → Capabilities → Scope → Success Metrics, plus optional satellites (Business Model, Go-to-Market, Risks & Assumptions, Experience)
 2. **Explore Through Questions** - Use Socratic questioning to uncover insights within the active lens
 3. **Maintain the Living PRD** - Give each finding to `/product:learn`, which writes it into the PRD bundle at `docs/product/prd/` per the schema (pages, requirement IDs, frontmatter). At the end of a lens, record each key decision with its reason, and each uncertainty or assumption that stays as an open question.
 

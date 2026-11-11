@@ -12,6 +12,11 @@ Do not ask about, propose, or record any of these in the PRD, because they belon
 - Infrastructure, hosting, or deployment
 - Database or storage design
 - Implementation effort or engineering estimates
+- Design tokens and components: colors, type, spacing, motion, and the names of
+  design-system components (for example Button, Modal or `code_editor`). They
+  go to a `Convention` page of the system design. Give a region of a screen by
+  what it shows, not by its component. Take them out of a finding and keep the
+  rest of the finding.
 
 ## The limit of the hat
 
