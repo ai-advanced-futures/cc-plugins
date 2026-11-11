@@ -278,7 +278,7 @@
             }
           },
           {
-            "finding_id": "A11Y-003",
+            "finding_id": "WCAG-3",
             "criterion": "1.4.3",
             "criterion_name": "Contrast (Minimum)",
             "level": "AA",

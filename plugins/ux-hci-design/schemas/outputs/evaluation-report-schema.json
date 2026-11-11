@@ -460,6 +460,24 @@
           "items": {
             "type": "string"
           }
+        },
+        "framework_details": {
+          "description": "Details for each framework, keyed by framework name (e.g., 'wcag', 'nielsen'). This schema checks only the form of each finding_id in a findings list here.",
+          "additionalProperties": {
+            "properties": {
+              "findings": {
+                "items": {
+                  "properties": {
+                    "finding_id": {
+                      "type": "string",
+                      "description": "Identifier of this finding, in the form of evaluation.findings (e.g., 'WCAG-1')",
+                      "pattern": "^[A-Z]+-\\d+$"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },

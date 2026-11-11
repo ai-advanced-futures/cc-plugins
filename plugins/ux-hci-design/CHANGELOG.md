@@ -2,6 +2,13 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.6.7 - 2026-11-11
+
+STORY-212.
+
+- The schema `evaluation-report-schema.json` checks the form of each `finding_id` in a `findings` list inside `evaluation.framework_details`, with the pattern of `evaluation.findings` (`^[A-Z]+-\d+$`). Each other key and shape there stays valid. Before this change, `check_output.py` gave 0 errors for a report with an id such as `A11Y-003` there.
+- The example `examples/consumer-web-app/evaluation/evaluation-report.json` has `WCAG-3` where it had `A11Y-003`.
+
 ## 1.6.6 - 2026-11-11
 
 STORY-369.
