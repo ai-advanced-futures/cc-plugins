@@ -62,7 +62,7 @@ A file that is missing makes `bc.py` refuse the call, so an old question, answer
 the user saw.
 Write it, unchanged, with the Write tool to `<the temporary directory>/bc-question.txt`, and pass that file with `--question-file`, as the commands show.
 Never reword a question to make the shell call work.
-When the user picks an `AskUserQuestion` option, the answer you record is the option's label, followed by any text the user added.
+When the user picks an `AskUserQuestion` option, the answer you record is the option's label; when the user types an answer, it is the typed text, as the card returned it.
 
 **Plugin runs.** Before the first dispatch in a session, of a plugin run or of a team member, tell the user, in these words:
 
@@ -232,7 +232,7 @@ For the name, offer the name `git config user.name` prints, when it prints one, 
 For the offering, offer the names the proposal gives it and the proposal's title, each name once.
 Invent no name: when a question has fewer than two names to offer, ask it in the chat after the intake card, and tell the user first that a typed reply makes the next `bc.py` call ask once.
 For the market, offer `B2B`, `B2C` and `both`.
-When an answer is blank or unclear, ask that question again on a card.
+When an answer is blank or unclear, tell the user in one line why you ask it again, then ask that question again on a card.
 Then create the case and start the session. If `init` is refused because
 the folder already holds a case, carry on with that case.
 If `init` is refused for any other reason, tell the user the cause in plain words, correct the value it names with the user, and run `init` again.
@@ -478,19 +478,25 @@ Tell the person, in plain words, each run that `team-run` prints as `gap`: the a
 
 **The cards.** Ask cards only when `team-brief --status` lists no plan without a reply.
 Then write `{"answers": []}` with the Write tool to `<the temporary directory>/bc-team-answers.json` and run `team-answers`: it merges the checked plans.
-It prints the card record's path, the answers file's path, and `open <key>` for each open card.
-Read each open card in the card record: its header, question, options and `blocks`.
+It prints the card record's path, the answers file's path, and a line for each open card: `open <key>` for a card not asked yet, `again <key>: <reason>` for a card that it asks again, and `waits <key>: <key>` for a card that waits for a "Your words" card.
+Read each card that an `open` or `again` line names in the card record: its header, question, options and `blocks`.
 Ask at most four cards at a time, `blocks: now` first.
 That is one `AskUserQuestion` call with up to four questions.
 Ask each with `AskUserQuestion`, with the card's header, question, option labels and option descriptions as the card holds them, in the card's order.
 In a card's question and option descriptions, say an item's title in place of its ID; never change an option label, since code matches the label.
+Before the first card, tell the person once: "To add a note to an option, type the option's label, then a comma, then your note."
 Pass every answer a card returns, `[No preference]` included.
-When the person types free text on a card, tell them which option you read it as and ask the card again.
 Write each answer, as the card returned it, to `<the temporary directory>/bc-team-answers.json`, as `{"answers": [{"key": "003:c1", "answer": "<the text the card returned>"}]}`, and run `team-answers` again.
-A key is the one `open` printed: `<brief NNN>:<id>` for an analyst's card, `code:<n>` for a card code made.
+Code reads an option label that the person typed at the start of the text, followed by a comma or another mark, as that option, and keeps the whole text as the person's note. It prints `read <key>: <label>`: tell the person which option it recorded.
+For each other text the person typed on a card, add one field to that card's entry: `"reading": "<the option label you read the text as>"`, or `"why": "<why no option fits the text>"`. `team-answers` refuses free text with neither field. Never record your reading as the answer.
+For each reading, `team-answers` makes a card headed "Your words" and prints `open` for it, and `waits <key>: <its key>` for the card it asks about.
+Tell the person, in one line for each card, which option you read their text as. Then ask the "Your words" cards, up to four in one `AskUserQuestion` call. Do not ask the cards they ask about again, because each "Your words" card asks for its card.
+`team-answers` prints `again <key>: <reason>` for each card that it asks again. Ask each such card on its own, in one `AskUserQuestion` call, and first tell the person the reason that line gives.
+Ask only the cards that `open` or `again` names: a card that the person skipped and that neither names waits for the after-cap rule.
+A key is the one `open` or `again` printed: `<brief NNN>:<id>` for an analyst's card, `code:<n>` for a card code made.
 A `last ask` card is a hard-to-undo card the person left unanswered when the plan rounds ended, which gets one more ask.
-A `held` card is one code never fills: a conflict card, a card answered in free text, or a hard-to-undo card skipped or answered in free text on its last ask, so only the person's pick closes it.
-`team-brief --status` also lists each `held` card and each `last ask` card: ask each of them again.
+A `held` card is one code never fills: a conflict card, a card answered in free text with no reading the person confirmed, or a hard-to-undo card skipped or answered in free text on its last ask, so only the person's pick, or a reading the person confirmed, closes it.
+`team-brief --status` also lists each `held` card and each `last ask` card: run `team-answers` with `{"answers": []}`, and ask each card that it prints as `again`, with its reason.
 A run is held by an open card when a card that names its command or sets one of its command's inputs is still open, so that command gets no block.
 A `blocks: later` card is due once every run its plan named has ended or is held by an open card: ask it then, the same way.
 
@@ -505,6 +511,7 @@ A card headed "Run again?" asks whether to run a command again that already has 
 A card headed "Which case?" asks whether a result file that names no case belongs to this case.
 A card headed "Missing" asks whether to go on without an item that has no result yet, or to wait for it.
 None of them has a recommended option: say what each option does.
+A card headed "Your words" asks whether your reading of the person's text is right: only its option "yes, record it" records that reading.
 A card headed "Conflict" offers the different values two cards set for one input, and may have a recommended option.
 After `team-answers --case-card` or `--gap-card`, write `{"answers": []}` to `<the temporary directory>/bc-team-answers.json` and run `team-answers --answers-file`: it prints the newest card record and the new card's `open` key.
 

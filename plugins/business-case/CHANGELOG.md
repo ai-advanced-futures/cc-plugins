@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0
+
+- **feat:** A typed answer on a team card no longer leaves the card open for the same question again. An option label that the person types at the start of the text, followed by a comma or another mark, records that option, `settled_by: person`, and the whole text goes to the next brief as the note. For other typed text, the coach gives its reading, and code makes a card headed "Your words": only its option "yes, record it" records the reading. Each card that `team-answers` asks again comes with a line that says why (`again <key>: <reason>`), and a card the person skipped waits for the after-cap rule. ADR-013 "The round cap" is amended (STORY-339).
+
 ## 0.9.8
 
 - **fix:** The runner guard (ADR-016) allows `result_name.py version` in the pricing route. The `price-runner` agent of pricing 1.13.8 runs this call at its step 0 to get the plugin version, and before, the guard gave no decision for it. In a business-case build the call could be refused, and the runner then stopped with `BLOCKED: result_name.py version` and wrote no price (STORY-321).

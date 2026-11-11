@@ -648,7 +648,9 @@ def _write_team_brief(a) -> int:
 def cmd_team_answers(a) -> int:
     """`--answers-file FILE` records the card answers in it, then applies the after-cap rule to each item set
     whose second-brief plan caps in this call (spec §5.6); prints the card record's path, the answers
-    file's path, `open <key>` for each card still open, then each new run: its route's `subagent_type: ...`
+    file's path, `waits <key>: <reading card>`, `again <key>: <reason>` or `open <key>` for each card still open
+    (`open` only for a card not asked yet), `read <key>: <label>` for each card read from typed text or a reading
+    card, then each new run: its route's `subagent_type: ...`
     and `plugin-run` block, and any line for the person. `--case-card FILE` and `--gap-card ITEM` make one
     card code asks, and print its key. The whole command holds the team lock."""
     with team_files.team_lock(a.case):
@@ -668,7 +670,17 @@ def _team_answers(a) -> int:
     team_record.apply_after_cap(a.case, m, call)
     case = Path(a.case).resolve()
     lines = [str(case / team_files.cards_relpath(call.nnn)), str(case / team_files.answers_relpath(call.nnn))]
-    lines += [f"open {key}" for key in team_record.open_cards(a.case)]
+    cards = team_record.latest_cards(a.case)
+    for key in [k for k, c in cards.items() if c.get("answer") is None]:
+        waits = team_record.reading_card_of(cards, key)
+        why = team_record.again_because(cards[key])
+        if waits is not None:
+            lines.append(f"waits {key}: {waits}")
+        elif why is not None:
+            lines.append(f"again {key}: {why}")
+        elif not cards[key].get("passed"):
+            lines.append(f"open {key}")
+    lines += [f"read {key}: {cards[key]['answer']['label']}" for key in call.read]
     lines += team_runs.render(team_runs.blocks_for_call(a.case, m, call))
     print("\n".join(lines))
     return 0

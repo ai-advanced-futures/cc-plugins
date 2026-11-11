@@ -1,6 +1,6 @@
 # ADR-013 — The evidence team
 
-**Status:** Accepted · **Date:** 2026-11-03
+**Status:** Accepted · **Date:** 2026-11-03 · **Amended:** 2026-11-11 (v0.10.0, a typed answer and a reading the person confirms)
 
 ## Context
 
@@ -88,7 +88,8 @@ Each item gets at most two plan rounds; that is the round cap. Code counts
 them from the plan briefs on disk, and a cancelled or expired plan brief
 counts. After the cap, a card the person skipped takes its recommended option;
 a card that is hard to undo is asked once more; a conflict card, or a card
-answered in free text, stays open until the person picks an option. Each round
+answered in free text, stays open until the person picks an option or says yes
+to a reading of the text. Each round
 is a new brief and a fresh analyst. The coach never resumes an analyst with
 `SendMessage`.
 
@@ -173,6 +174,20 @@ the analyst's own word. A `primary` grade needs a cited plugin result or the
 person's own page. A cited result whose command is not on the map, or does not
 belong to the file's plugin, caps the page at `estimated`. No version or
 ceiling is known for it.
+
+## Amendment: a typed answer and a reading the person confirms
+
+A team card has no preview, so `AskUserQuestion` gives it no note field: a
+pick returns the exact label, and a typed answer returns only the typed text
+(measured 2026-11-10, Claude Code 2.1.322). Code now reads an option label
+that the person typed at the start of the text, followed by a mark, as that
+option, `settled_by: person`, and keeps the whole text as the note. For each
+other typed text, the coach gives its reading, and code makes a card headed
+"Your words". Only the exact label "yes, record it" of that card records the
+reading, `settled_by: person`. Any other answer leaves the card open, and
+code prints the reason that it is asked again. Code, not the coach, records
+each answer (ADR-001). A value that the person picked or confirmed is still
+never replaced by a recommended one.
 
 ## Alternatives considered
 

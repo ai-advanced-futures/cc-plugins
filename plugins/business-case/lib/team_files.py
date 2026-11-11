@@ -31,15 +31,15 @@ One file per coach call NNN, written atomically, cumulative:
 
     {"call": NNN, "merged": [<brief NNN>], "capped": [<brief NNN>], "cards": {"<key>": {
         "brief": NNN | null, "id": "<card id>" | null,
-        "made_by": "plan" | "conflict" | "case" | "gap" | "rerun",
+        "made_by": "plan" | "conflict" | "case" | "gap" | "rerun" | "reading",
         "round": 1 | 2, "blocks": "now" | "later", "hard_to_undo": bool, "header": str,
         "question": str, "options": [{"label", "description", "sets"?}],
         "answer": {"label": str, "settled_by": "person" | "recommended"} | null,
         "free_text": [str],
         "passed": [<call NNN>],
-        "last_ask": bool, "held": bool,
+        "last_ask": bool, "held": bool, "again_because": str | null,
         "subject": {"result_file"?: str, "item"?: str, "command"?: str, "finished_at"?: str,
-                    "run"?: str, "briefs"?: [NNN]}}}}
+                    "run"?: str, "briefs"?: [NNN], "card"?: str, "label"?: str, "text"?: str}}}}
 
 `header` (at most 12 characters) is the plan card's own, or one code made for a code-made card.
 `merged` lists every plan brief whose checked plan a call has merged, so no later call merges it again.
@@ -49,10 +49,15 @@ for the card, counting `[No preference]` and free text; a card with an empty `pa
 asked". `last_ask` is true while the one extra ask a `hard_to_undo` card gets after the cap is due; the
 next answer passed for it ends it, and `held` turns true when that answer is no option (`[No preference]` or
 free text): code never fills a held card. A card written before `held` existed reads as `held: false`.
+`again_because` is the reason a card that was asked before is asked again, or null; a card written before
+`again_because` existed reads as `again_because: null`.
 `subject.result_file` is relative to the git root. A case card whose `answer.label` equals
 `CASE_ANSWER_LABEL` is the "case answer" for the `subject.result_file` it names; its subject also holds
 the file's `command` and `finished_at`. A gap card's subject is `{"item"}`. A rerun card's subject holds
 its `command`, the key of the earlier run it asks about (`run`), and the plan briefs it covers (`briefs`).
+A reading card (`made_by: reading`, header "Your words") asks whether the coach's reading of the person's
+text is right: its subject holds the key of the card it asks about (`card`), the option label of the reading
+(`label`) and the person's text (`text`).
 
 answers-NNN.json
 ----------------

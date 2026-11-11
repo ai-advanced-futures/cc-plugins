@@ -13,9 +13,15 @@ Then it records the coach's answers, each the text the card returned (`read_answ
 - an option label, matched exactly, " (Recommended)" included: the card is answered, `settled_by:
   recommended` for a label ending " (Recommended)" and `person` for any other; its `sets` go to the answers
   file with the card's round;
+- an option label that the person typed at the start of the text (`_typed_label`), in any case, with or
+  without " (Recommended)", alone or followed by one of NOTE_MARKS: the card is answered, `settled_by:
+  person`, and a text that holds more than the label is kept as the person's note;
 - `[No preference]`: the card stays open;
-- any other text is free text: it is kept with the card, the card stays open, and it sets nothing. Free
-  text is never overridden (R7-4).
+- any other text is free text: it is kept with the card, the card stays open, and it sets nothing. The
+  entry must say how the coach reads it. With `reading` (an option label), code makes a card headed "Your
+  words", and only its exact option READ_YES records that reading, `settled_by: person`; any other answer
+  keeps the card open, with the reason it is asked again. With `why`, the card stays open and keeps the
+  reason. Free text is never overridden (R7-4).
 
 Every answer passed, of any kind, appends the call to the card's `passed`.
 
@@ -87,6 +93,16 @@ RERUN_HEADER, CASE_HEADER, GAP_HEADER = "Run again?", "Which case?", "Missing"
 RUN_AGAIN, USE_EARLIER = "run it again", "use the earlier result"
 USE_FOR_CASE, NOT_FOR_CASE = team_files.CASE_ANSWER_LABEL, "do not use it"
 GO_ON, WAIT = "go on without it", "wait for it"
+READ_HEADER = "Your words"
+READ_YES, READ_NO = "yes, record it", "no, ask the card again"
+READ_QUESTION = 'On the card "{header}" you wrote: "{text}". Record it as the option "{label}"?'
+NOTE_MARKS = ",;:.!?(-\u2013\u2014\n"  # a mark that ends a typed label and starts the note
+AGAIN_LAST_ASK = "this choice is hard to undo, so it gets one more ask before the case goes on"
+AGAIN_HELD = "this choice is hard to undo, and code picks no option for it"
+AGAIN_CODE = "code picks no option for this card, so only your pick closes it"
+AGAIN_REJECTED = 'you did not say yes to the reading "{label}" of your words "{text}"'
+AGAIN_UNREAD = 'no option fits your words "{text}": {why}'
+AGAIN_OLD = 'your words "{text}" name no option'
 RERUN_QUESTION = "{command} already has a result from {date}. Run it again?"
 CASE_QUESTION = "{file} names no case. Is it a result for this case, and the run to use?"
 GAP_QUESTION = "Nothing has come in yet for {item}. Go on without it, or wait for it?"
@@ -102,19 +118,78 @@ class Call:
     merged_plans: list = field(default_factory=list)
     new_cards: list = field(default_factory=list)
     answered: list = field(default_factory=list)  # the cards given an option in this call
+    read: list = field(default_factory=list)  # those of them read from typed text or from a reading card
 
 
 # -- reading an answer ------------------------------------------------------------------------------
 
+def _base(label: str) -> str:
+    return label[:-len(RECOMMENDED)] if label.endswith(RECOMMENDED) else label
+
+
+def _typed_label(card, text):
+    """The option label the person typed at the start of `text`, or None: an option label, with or without its
+    " (Recommended)" suffix, in any case, alone or followed by spaces and one of NOTE_MARKS. The longest name
+    wins, so a label that starts another label never takes its place."""
+    typed = text.strip()
+    names = sorted(((name, opt["label"]) for opt in card.get("options", []) if opt.get("label")
+                    for name in dict.fromkeys((opt["label"], _base(opt["label"])))),
+                   key=lambda x: len(x[0]), reverse=True)
+    for name, label in names:
+        head, rest = typed[:len(name)], typed[len(name):]
+        if head.casefold() != name.casefold():
+            continue
+        if not rest.strip() or rest.lstrip(" \t")[:1] in NOTE_MARKS:
+            return label
+    return None
+
+
 def read_answer(card, text) -> tuple:
-    """`("option", label, "recommended" | "person")`, `("open", None, None)` for `[No preference]`, or
-    `("free", text, None)`. A label matches only exactly, its " (Recommended)" suffix included."""
+    """`("option", label, "recommended" | "person")` for an option label returned as it is, `("typed", label,
+    "person")` for an option label the person typed (`_typed_label`), with or without a note after it,
+    `("open", None, None)` for `[No preference]`, or `("free", text, None)`."""
     if text == NO_PREFERENCE:
         return ("open", None, None)
     for opt in card.get("options", []):
         if opt.get("label") == text:
             return ("option", text, "recommended" if text.endswith(RECOMMENDED) else "person")
+    label = _typed_label(card, text)
+    if label is not None:
+        return ("typed", label, "person")
     return ("free", text, None)
+
+
+def _add_text(card, text) -> None:
+    card["free_text"] = list(card.get("free_text", [])) + [text]
+
+
+def _note_of(card, text, label) -> bool:
+    """Whether the typed `text` holds more than the label: then the whole text is the person's note."""
+    return text.strip().rstrip(NOTE_MARKS + " \t").casefold() not in {label.casefold(), _base(label).casefold()}
+
+
+def reading_card_of(cards: dict, key: str):
+    """The key of the open reading card that asks about card `key`, or None."""
+    return next((k for k, c in cards.items() if c.get("made_by") == "reading" and c.get("answer") is None
+                 and c.get("subject", {}).get("card") == key), None)
+
+
+def again_because(card) -> str | None:
+    """Why an open card that was asked before is asked again, or None when it is not asked again (a plan card
+    the person skipped waits for the cap)."""
+    if card.get("answer") is not None or not card.get("passed"):
+        return None
+    if card.get("again_because"):
+        return card["again_because"]
+    if card.get("last_ask"):
+        return AGAIN_LAST_ASK
+    if card.get("made_by") == "plan" and card.get("held"):
+        return AGAIN_HELD
+    if card.get("made_by") in ("conflict", "rerun", "case", "gap"):
+        return AGAIN_CODE
+    if card.get("free_text"):  # a card record written before again_because existed
+        return AGAIN_OLD.format(text=card["free_text"][-1])
+    return None
 
 
 # -- the files on disk ------------------------------------------------------------------------------
@@ -285,7 +360,7 @@ def _cap_options(card: dict) -> None:
     can still type it."""
     dropped, card["options"] = card["options"][:-MAX_OPTIONS], card["options"][-MAX_OPTIONS:]
     for opt in dropped:
-        label = opt["label"][:-len(RECOMMENDED)] if opt["label"].endswith(RECOMMENDED) else opt["label"]
+        label = _base(opt["label"])
         card["question"] += f" Also given, not shown as an option: {label}."
 
 
@@ -311,9 +386,10 @@ def _check_answers_list(answers) -> list:
     if not isinstance(answers, list):
         raise TeamRefused("the answers must be a list of {key, answer}")
     for i, entry in enumerate(answers, 1):
-        if not (isinstance(entry, dict) and set(entry) == {"key", "answer"}
-                and isinstance(entry["key"], str) and isinstance(entry["answer"], str)):
-            raise TeamRefused(f"answer {i} must be an object with a text key and a text answer, and nothing else")
+        if not (isinstance(entry, dict) and {"key", "answer"} <= set(entry) <= {"key", "answer", "reading", "why"}
+                and all(isinstance(v, str) for v in entry.values()) and not {"reading", "why"} <= set(entry)):
+            raise TeamRefused(f"answer {i} must be an object with a text key and a text answer, and at most one "
+                              "of a text reading and a text why, and nothing else")
     keys = [e["key"] for e in answers]
     repeated = sorted({k for k in keys if keys.count(k) > 1})
     if repeated:
@@ -370,30 +446,92 @@ def record_call(case_dir, m, answers: list) -> Call:
                               f"answers to plan cards ({', '.join(plan_keys)}) wait until it has one, or it is "
                               "cancelled")
 
+    for entry in answers:  # every check before the first change (done item 3: no reading from a claim)
+        key, card = entry["key"], cards[entry["key"]]
+        waits = reading_card_of(cards, key)
+        if waits is not None:
+            raise TeamRefused(f"card {key} waits for the reading card {waits}: pass the answer to {waits}, not "
+                              f"to {key}")
+        kind = read_answer(card, entry["answer"])[0]
+        if card.get("made_by") == "reading" or kind != "free":
+            continue
+        if "reading" not in entry and "why" not in entry:
+            raise TeamRefused(f"card {key} got free text: give `reading`, the option label you read it as, or "
+                              "`why`, the reason no option fits it")
+        if "reading" in entry and entry["reading"] not in [o.get("label") for o in card.get("options", [])]:
+            raise TeamRefused(f"the reading {entry['reading']!r} of card {key} is not one of its option labels")
+
     picks = {}  # (command, input) -> [(key, value, round, settled_by)]
     answered = []
+
+    read = []  # the cards given an option from typed text or from a reading card
+
+    def pick(key, card, label, settled_by, typed=False):
+        if typed:
+            read.append(key)
+        card["answer"] = {"label": label, "settled_by": settled_by}
+        card["again_because"] = None
+        card["held"] = False
+        answered.append(key)
+        chosen = next(o for o in card["options"] if o["label"] == label)
+        for command, inputs in chosen.get("sets", {}).items():
+            for name, value in inputs.items():
+                picks.setdefault((command, name), []).append((key, value, card["round"], settled_by))
+
     for entry in answers:
         key = entry["key"]
         card = cards[key]
         card["passed"] = list(card.get("passed", [])) + ([nnn] if nnn not in card.get("passed", []) else [])
         kind, label, settled_by = read_answer(card, entry["answer"])
+        if card.get("made_by") == "reading":
+            _read_reading(cards, key, card, kind, label, entry["answer"], pick)
+            continue
+        card["again_because"] = None
         if card.get("last_ask"):  # this was the one extra ask after the cap
             card["last_ask"] = False
-            card["held"] = kind != "option"
+            card["held"] = kind not in ("option", "typed")
         if kind == "free":
-            card["free_text"] = list(card.get("free_text", [])) + [label]
-        elif kind == "option":
-            card["answer"] = {"label": label, "settled_by": settled_by}
-            answered.append(key)
-            chosen = next(o for o in card["options"] if o["label"] == label)
-            for command, inputs in chosen.get("sets", {}).items():
-                for name, value in inputs.items():
-                    picks.setdefault((command, name), []).append((key, value, card["round"], settled_by))
+            _add_text(card, label)
+            if "reading" in entry:
+                rkey = _next_code_key(cards)
+                cards[rkey] = _code_card(
+                    "reading", READ_HEADER, READ_QUESTION.format(header=card.get("header", ""), text=label,
+                                                                 label=entry["reading"]),
+                    [(READ_YES, f"Record \"{entry['reading']}\" as your answer, with your words as a note."),
+                     (READ_NO, "Record nothing; the card is asked again on its own.")],
+                    {"card": key, "label": entry["reading"], "text": label}, card.get("round", 1))
+                new_cards.append(rkey)
+            else:
+                card["again_because"] = AGAIN_UNREAD.format(text=label, why=entry["why"])
+        elif kind in ("option", "typed"):
+            if kind == "typed" and _note_of(card, entry["answer"], label):
+                _add_text(card, entry["answer"])
+            pick(key, card, label, settled_by, typed=kind == "typed")
 
     out = _fold(m, cards, previous, picks, plan_items, new_cards)
     (case / paths.TEAM_DIR).mkdir(exist_ok=True)
     _write_call(case, nnn, merged_before + merged, cards, out, list(record.get("capped", [])))
-    return Call(nnn=nnn, merged_plans=merged, new_cards=new_cards, answered=answered)
+    return Call(nnn=nnn, merged_plans=merged, new_cards=new_cards, answered=answered, read=read)
+
+
+def _read_reading(cards: dict, key: str, card: dict, kind: str, label, text: str, pick) -> None:
+    """Close the reading card `key`. Only its exact READ_YES label records the reading on the card it asks
+    about, `settled_by: person`; any other answer leaves that card open with the reason it is asked again,
+    and keeps text typed here with that card."""
+    subject = card["subject"]
+    target_key = subject["card"]
+    target = cards[target_key]
+    yes = kind == "option" and label == READ_YES
+    card["answer"] = {"label": READ_YES if yes else READ_NO, "settled_by": "person"}
+    if kind == "free" or (kind == "typed" and _note_of(card, text, label)):
+        _add_text(card, text)
+        _add_text(target, text)
+    if target.get("answer") is not None:
+        return
+    if yes and subject["label"] in [o.get("label") for o in target.get("options", [])]:
+        pick(target_key, target, subject["label"], "person", typed=True)
+        return
+    target["again_because"] = AGAIN_REJECTED.format(label=subject["label"], text=subject["text"])
 
 
 def _plan_items(briefs: list, cards: dict) -> dict:
