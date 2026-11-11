@@ -229,7 +229,7 @@ mcp__hubspot__hubspot_get_marketing_emails
 
 `business-case` does not give these grants. Each runner skill holds `WebSearch` and its MCP read tools in its own `allowed-tools`, so in the turn of the skill these calls do not ask.
 
-A person's command can write any path in the project, because its grant is `Write`.
+A person's command can write any path in the project, because its grant is `Write`. A runner skill writes only in `.gtm/`: its grant is `Edit(/.gtm/**)`, so each other write asks you.
 
 ## Privacy
 

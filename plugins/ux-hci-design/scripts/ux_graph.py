@@ -236,12 +236,30 @@ def add_pages(parser) -> None:
 def cmd_behavior(args) -> int:
     from uxlib import read
 
+    if args.check_prd:
+        code, lines = read.check_prd(args.root, args.run)
+        print("\n".join(lines))
+        return code
     print(json.dumps(read.behavior(args.root, args.run), indent=2, ensure_ascii=False))
     return 0
 
 
 def add_behavior(parser) -> None:
     parser.add_argument("--run", metavar="KEY", help="only the pages of this run")
+    parser.add_argument("--check-prd", action="store_true",
+                        help="write nothing: print one line for each result, present, missing, different, rejected or extra, and one error line for each PRD page that does not parse")
+
+
+def cmd_tokens(args) -> int:
+    from uxlib import tokens
+
+    return tokens.run(args.root, args.run, args.save)
+
+
+def add_tokens(parser) -> None:
+    parser.add_argument("--run", metavar="KEY", help="the run (default: latest)")
+    parser.add_argument("--save", action="store_true",
+                        help="write the Convention page of the design tokens into the system design, with system_design.py")
 
 
 COMMANDS = [
@@ -265,6 +283,7 @@ COMMANDS = [
     ("view", add_view, cmd_view, "print an output file of a run, built from the pages"),
     ("pages", add_pages, cmd_pages, "print the pages of one type as JSON"),
     ("behavior", add_behavior, cmd_behavior, "print the behavior results as a JSON list for the PRD"),
+    ("tokens", add_tokens, cmd_tokens, "print the design tokens of a run, or save them into the system design"),
 ]
 
 

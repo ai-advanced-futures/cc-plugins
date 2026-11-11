@@ -2,11 +2,15 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.11.9
+**Version:** 1.11.10
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.11.9
+## What's New in v1.11.10
+
+- The skills `discover` and `wtp-check` grant `Edit(/.jtbd-market-discovery/**)` in place of `Write`, so they write files only in `.jtbd-market-discovery/` with the file tools, and each other write asks you. Before, the bare `Write` let a plugin run write any path in the project with no question (issue 1598, STORY-378).
+
+## What Was New in v1.11.9
 
 - A very long whole number (about 310 digits or more) in an EVC input gives 1 line that names the field, with exit 1 and no file. This holds for `run_phase_7.py` and for `write-run`. Before, `float()` of the number raised `OverflowError`, and the run ended with a traceback. `is_default` compares the number with `==` and calls no `float()`, and `_number` of `run_phase_7.py` says `<field> is too large for a number`.
 
@@ -284,7 +288,7 @@ Read(/<answers path>)
 ```
 <!-- caller-grants:end -->
 
-A person's command can write any path in the project, because its grant is `Write`.
+The skills `discover` and `wtp-check` use the file tools to write only in `.jtbd-market-discovery/`: their grant is `Edit(/.jtbd-market-discovery/**)`, so each other file tool write asks you. Their scripts write the pages of a run in `docs/jtbd/`. Some scripts also take a path and write there, and the `Bash` rule of each script does not limit that path: `run_phase_6.py` to `run_phase_9.py` (`--out`), `survey_adapter.py` (`--output` and `--raw-output`), `report_exporter.py` (`--output-dir`), `jtbd_graph.py` (`--root` and `init`) and `jtbd_state.py` (`--base` and `--session-dir`). The skills `learn` and `quick-validate` can write any path in the project, because their grant is `Write`.
 
 ## Troubleshooting
 

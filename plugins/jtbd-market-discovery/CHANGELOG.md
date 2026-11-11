@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.10
+
+- **fix:** the skills `discover` and `wtp-check` grant `Edit(/.jtbd-market-discovery/**)` in place of `Write`, so a plugin run writes files with the file tools only in `.jtbd-market-discovery/`, and each other file tool write asks. Before, the bare `Write` let a route write any path in the project with no question. The skills `learn` and `quick-validate` keep `Write`, and the bare `Skill` of the 2 routes stays (issue 1598, STORY-378).
+
 ## 1.11.9
 
 - **fix:** a very long whole number (about 310 digits or more) in an EVC input gives 1 line that names the field, with exit 1 and no file. This holds for `run_phase_7.py` and for `write-run`. Before, `float()` of the number raised `OverflowError`, and the run ended with a traceback. `is_default` compares the number with `==` and calls no `float()`, and `_number` of `run_phase_7.py` says `<field> is too large for a number`.

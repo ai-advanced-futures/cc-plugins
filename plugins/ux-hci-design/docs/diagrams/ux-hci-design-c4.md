@@ -10,7 +10,8 @@ This level shows how the person and the plugin `ux-hci-design` work with the oth
 [ux-hci-design Plugin] --> [prd plugin] : receives PRD-to-design bridge inputs
 [ux-hci-design Plugin] --> [jtbd-market-discovery plugin] : receives JTBD opportunity data
 [ux-hci-design Plugin] --> [knowledge plugin] : the brain docs/ux-hci-design/ is a graph of the brain standard
-[prd plugin] <-- [ux-hci-design Plugin] : ux_graph.py behavior lists the behavior results (a later story saves them)
+[prd plugin] <-- [ux-hci-design Plugin] : ux_graph.py behavior lists the behavior results (Step 2b of the skill `learn` saves them through `/product:learn`)
+[system-design plugin] <-- [ux-hci-design Plugin] : ux_graph.py tokens --save writes the design tokens as a Convention page (Step 2b of the skill `learn`)
 ```
 
 ## Container Level
@@ -52,7 +53,7 @@ A skill starts an agent with the name `ux-hci-design:<agent>`. An agent cannot a
 
 ### Brain (storage layer)
 
-- `scripts/ux_graph.py` and `scripts/uxlib/`: the save code. `ingest` maps the output files of a phase to pages, `view` prints a file again, `pages` and `behavior` list pages.
+- `scripts/ux_graph.py` and `scripts/uxlib/`: the save code. `ingest` maps the output files of a phase to pages, `view` prints a file again, `pages` and `behavior` list pages (`behavior --check-prd` compares them with the PRD), and `tokens` lists the design tokens (`tokens --save` writes them into the system design).
 - `docs/ux-hci-design/` (in the project): the pages. `hooks/brain-hook.sh` runs `regen` and the checks after a write.
 - The agents write plain files to `<output_dir>`. The skill `ux-design` saves them after each phase and removes them. The next agent reads a copy that `view --out` writes to `<output_dir>/inputs/`.
 

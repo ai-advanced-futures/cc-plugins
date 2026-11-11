@@ -1,6 +1,6 @@
 # ux-hci-design
 
-**Version:** 1.6.7
+**Version:** 1.7.0
 **Author:** Luis F. Amadeo (the original plugin). ai-advanced-futures ported it to this marketplace.
 **License:** MIT (see `NOTICE`)
 
@@ -32,7 +32,7 @@ The plugin has 13 skills. Start the skill `ux-design` for the full workflow. The
 | `jtbd-bridge` | `/ux-hci-design:jtbd-bridge` | Turns Jobs-to-be-Done data into UX artifacts |
 | `prd-bridge` | `/ux-hci-design:prd-bridge` | Turns a PRD into design requirements |
 | `setup` | `/ux-hci-design:setup` | Makes the UX brain, asks if git keeps it, and saves earlier results |
-| `learn` | `/ux-hci-design:learn` | Confirms the pages of a run, or saves a fact that you give |
+| `learn` | `/ux-hci-design:learn` | Confirms the pages of a run and saves the behavior results into the PRD and the design tokens into the system design, or saves a fact that you give |
 | `ask` | `/ux-hci-design:ask` | Answers a question from the UX brain |
 
 ### Arguments of the skill `ux-design`
@@ -116,6 +116,7 @@ The plugin is a brain of the brain standard. It needs the plugin `knowledge` (`p
 - `ux_graph.py ingest <output folder> --phase <phase>` saves the output files of one phase as pages. After the checks pass, it removes the plain files that it read.
 - `ux_graph.py view <run> <file>` puts an output file together again from the pages.
 - `ux_graph.py pages <type>` and `ux_graph.py behavior` list pages for other plugins.
+- `ux_graph.py tokens --run <RUN ID>` lists the design tokens and the components of a run. With `--save`, it writes them into the system design as 1 `Convention` page.
 - `ux_graph.py check` checks the brain.
 
 The code makes no network call.
@@ -135,10 +136,35 @@ A run with no person (for example `claude -p`) keeps the brain out of git and sa
 1. `/ux-hci-design:setup` makes the brain (or `ux-design` does it at the first save, after the question).
 2. After each phase, `ux-design` runs `ux_graph.py ingest`. The pages have `status: draft`. The test phase saves the report only after `check_output.py` exits 0.
 3. Before it starts the agent of the next phase, `ux-design` runs `ux_graph.py view ... --out` for each saved input file, and gives the agent that copy.
-4. At the end of a run, `ux-design` asks "Learn these results?". `/ux-hci-design:learn` confirms the pages of the run.
-5. `ux_graph.py behavior` lists the screens, state rules, interaction rules and user flows for the PRD. To add them to the PRD, set up `/product:setup` first.
+4. At the end of a run, `ux-design` asks "Learn these results?". `/ux-hci-design:learn` confirms the pages of the run. It also saves the behavior results into the PRD (through `product:learn`) and the design tokens into the system design.
+5. `ux_graph.py behavior` lists the screens, state rules, interaction rules and user flows for the PRD. `ux_graph.py behavior --check-prd` compares them with the Experience and Journey pages of the PRD.
+6. After `/ux-hci-design:learn` confirms a run, it saves the run into the PRD and the system design (Step 2b of the skill `learn`). See "The save into the PRD and the system design".
 
 The plugin `knowledge` must be version 1.6.0 or later. Version 1.5.x gives a `K-manifest` error for this brain.
+
+### The save into the PRD and the system design
+
+Step 2b of the skill `learn` runs after the skill confirms a run. A person starts that skill: with a yes to "Learn these results?", or with the command `/ux-hci-design:learn <RUN ID>`. A `ux-design` run with no answer to "Learn these results?" saves only the UX brain.
+
+1. The skill reads `.claude/knowledge.json`.
+2. With a `prd` entry, it runs `ux_graph.py behavior --run <RUN ID> --check-prd`. For each result that is `missing` or `different`, it invokes the skill `product:learn` 1 time with the argument `experience`. Then it runs the check again. `ux-hci-design` writes no PRD page itself.
+3. With a `system-design` entry, it runs `ux_graph.py tokens --run <RUN ID> --save`. This writes 1 `Convention` page with the design tokens and the components of the screens, through `system_design.py`.
+4. Each entry that is missing gives 1 line:
+   - No `prd` entry and no `system-design` entry: "The behavior results are in the UX brain. To add them to the PRD, run /product:setup and /system-design:setup first."
+   - No `prd` entry and a `system-design` entry: "The behavior results are in the UX brain. To add them to the PRD, run /product:setup first."
+   - A `prd` entry and no `system-design` entry: "The design tokens are in the UX brain. To add them to the system design, run /system-design:setup first."
+   - Both entries: no line.
+
+The skill `ux-design` says the same line only when the skill `learn` did not run in the run. When the plugin `product` is not installed, Step 2b says "Install the product plugin to add the behavior results to the PRD: claude plugin install product@cc-plugins". The plugin `ux-hci-design` does not need `product` or `system-design`, so a project with a UX brain and no PRD keeps working.
+
+### Grants for a `-p` caller
+
+In the default permission mode, a `Skill` call of a skill with an `allowed-tools` line fails when no rule of the session allows it. Step 2b calls `product:learn`, and `product:learn` calls `knowledge:checking`. A person in an interactive session can allow each call. A `-p` run needs these rules in `--allowedTools`:
+
+- `Skill(product:learn)` and `Skill(product:learn *)`
+- `Skill(knowledge:checking)` and `Skill(knowledge:checking *)`
+
+Each skill grants its own scripts in its turn, so the list has no `Bash` rule. Live run 3 of the verifier tests this list. When a run refuses another call, add the rule for that call to the list.
 
 ## Schemas
 

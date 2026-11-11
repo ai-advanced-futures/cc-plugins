@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.5
+
+- **fix:** the 3 runner skills (`marketing-brand-runner`, `marketing-funnel-runner` and `marketing-launch-runner`) grant `Edit(/.gtm/**)` in place of `Write`, so a plugin run writes files with the file tools only in `.gtm/`, and each other file tool write asks. Before, the bare `Write` let a route write any path in the project with no question. The 3 commands keep `Write(*)`. Step 9 of each runner says that a write outside `.gtm/` asks in a person's run (issue 1598, STORY-378).
+
 ## 1.12.4
 
 - A claim that `brief.md`, an answer of the person, or `learned_knowledge` states as live now gets Tier 1 and the new evidence type `stated`, with its source (`brief.md:<line>`, `person:<question>`, `learned_knowledge.<key>`). `truth_tier_validator.py` counts `stated` with a source as Tier 1, and `stated` with no source as Tier 5. The rule is in `definitions/truth-tiers.md` and in Step B of `integrity-agent`, the same for each audit (STORY-204).

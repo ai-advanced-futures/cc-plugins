@@ -239,7 +239,7 @@ A run whose answers give the product, the counts and the channel volumes but not
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.12.4",
+  "plugin_version": "1.12.5",
   "command": "gtm:marketing:funnel",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -274,7 +274,7 @@ A run whose answers give the product, the counts and the channel volumes but not
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.12.4",
+  "plugin_version": "1.12.5",
   "command": "gtm:marketing:funnel",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",

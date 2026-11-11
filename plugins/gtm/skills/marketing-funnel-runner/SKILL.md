@@ -1,7 +1,7 @@
 ---
 name: marketing-funnel-runner
 description: Runs the gtm:marketing:funnel command by reading the command file and following its body, then writes the result file. Use it only when a coach plugin gives a `plugin-run` block; a person runs `/gtm:marketing:funnel`.
-allowed-tools: Read, Write, Glob, Grep, WebSearch, Bash(date *), Bash(git rev-parse *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), mcp__google-analytics__run_report, mcp__google-analytics__get_realtime_data, mcp__hubspot__hubspot_get_marketing_emails
+allowed-tools: Read, Edit(/.gtm/**), Glob, Grep, WebSearch, Bash(date *), Bash(git rev-parse *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), mcp__google-analytics__run_report, mcp__google-analytics__get_realtime_data, mcp__hubspot__hubspot_get_marketing_emails
 disallowed-tools: mcp__slack__slack_post_message, mcp__notion__notion-create-page, mcp__canva__generate_design, mcp__canva__autofill_template
 ---
 
@@ -35,7 +35,7 @@ This plugin's root is `${CLAUDE_PLUGIN_ROOT}`; wherever a file you read writes `
 6. In a plugin run, write each file the command names into the run folder instead, except `gtm-context.json`, which a plugin run never writes, so a plugin run never overwrites a person's files. In a person's run, write them where the command says, and a copy of each to the run folder.
 7. The command's last step sends you to the `## Result file` section of `${CLAUDE_PLUGIN_ROOT}/agents/funnel-agent.md`: read that file and follow that section only; run none of its other steps.
 8. Run each shell command on its own. Write every file with the `Write` tool, and write the result file once; never change a file with a shell command.
-9. The `allowed-tools` of this skill cover only `git rev-parse`, `date` and `result_name.py`, so a shell write is outside them and asks. This skill removes the 4 publishing tools (Slack, Notion and Canva) for the run.
+9. The `allowed-tools` of this skill cover only `git rev-parse`, `date` and `result_name.py`, so a shell write is outside them and asks. The write grant of this skill is `Edit(/.gtm/**)`, so a file tool write outside `.gtm/` also asks: in a person's run, each file that step 6 writes where the command says asks the person. This skill removes the 4 publishing tools (Slack, Notion and Canva) for the run.
 10. The work of this skill is done when the result file exists. Every run writes the result file, a person's run too, and it is the last file that this skill writes. In a person's run, stop there. In a plugin run, go on with the next step of the caller, as `## Plugin-run block` says.
 
 ## Output

@@ -2,6 +2,20 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.7.0 - 2026-11-11
+
+STORY-244 (FEATURE-31): the skill `learn` saves the behavior results of a run into the PRD and the design tokens into the system design.
+
+- New Step 2b in the skill `learn`. After it confirms a run, it runs `ux_graph.py behavior --run <RUN ID> --check-prd`. For each result that is `missing` or `different`, it invokes the skill `product:learn` 1 time with the argument `experience` and 8 rules for the message. Then it runs the check again and shows each line that is not `present` or `rejected`. `ux-hci-design` writes no PRD page itself (ADR-0006).
+- Step 2b starts the save only when 1 line or more is `missing` or `different`. When the check exits 1 with only `error` or `extra` lines, it shows them and says "Repair or remove the PRD pages that these lines name." Rule 2 of the message gives the `resource` as `ux-hci-design:<path>`, and the `<path>` starts with `/`, so the saved value is the value that `--check-prd` reads.
+- Step 2b runs `ux_graph.py tokens --run <RUN ID> --save` for a project with a `system-design` entry. Step 4 checks the graph `system-design` after a write.
+- Each missing graph gives 1 line. A project with a `prd` entry and no `system-design` entry gets the new line "The design tokens are in the UX brain. To add them to the system design, run /system-design:setup first." The skill `ux-design` says a line only when the skill `learn` did not run in the run.
+- When the plugin `product` is not installed, Step 2b says how to install it. `ux-hci-design` still lists only `knowledge` in `dependencies`.
+- The README lists the grants of a `-p` caller: `Skill(product:learn)`, `Skill(product:learn *)`, `Skill(knowledge:checking)` and `Skill(knowledge:checking *)`.
+- Each item of the list of `ux_graph.py behavior` has 3 new keys: `brain_type`, `pattern_kind` and `hash`. The skill `learn` uses them to find the brain page of an item and to write the `hash` into the `sources` entry.
+- `ux_graph.py behavior --check-prd` prints the new line `error <path>: <reason>` for a PRD page that it cannot read, and exits 1.
+- The C4 diagram names the save of Step 2b.
+
 ## 1.6.7 - 2026-11-11
 
 STORY-212.
