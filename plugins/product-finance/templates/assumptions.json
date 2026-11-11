@@ -431,8 +431,9 @@
       "description": "Financial targets and goals",
       "properties": {
         "rule_of_40_target": {
-          "type": "number",
-          "description": "Target Rule of 40 score (typically 40 or higher)"
+          "type": "integer",
+          "enum": [40, 50, 60],
+          "description": "Rule of 40 target: 40, 50 or 60 (default 40)"
         },
         "ltv_cac_ratio_target": {
           "type": "number",

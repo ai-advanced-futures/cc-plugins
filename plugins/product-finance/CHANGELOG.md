@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.16.0
+
+- **feat:** `/product-finance:health-check` runs `rule_of_40.py` and takes an optional `--target 40|50|60` (also a bare 40, 50 or 60). Without it, the target that `setup` stored applies; without both, the target is 40. The command runs the script in this session before it dispatches `financial-analyst`, and saves the output to `.product-finance/rule-of-40-run.json` and `.product-finance/rule-of-40-run.md`. The agent copies these files into the report and the health check JSON, and runs no script.
+- **change:** in the health check JSON, `rule_of_40` is the object that `rule_of_40.py` prints, or `null` with `rule_of_40_error` when no run succeeded. The new key `rule_of_40_setup_note` holds the note "Setup's target was not used: ..." when a stored target could not be used. The Rule of 40 section of the health check report is the output of the script, with the ladder, the margin lines and the sources, and no quartile words. The Rule of 40 is 10 of the 20 Profitability points (met 10, split 5, short 0): a plugin convention that no source sets.
+- **change:** the `setup` question "Target Rule of 40 score?" takes only 40, 50 or 60, and stores the answer as `targets.rule_of_40_target` in `.product-finance/assumptions.json`. A second wrong answer stores no target. `rule_of_40.py --assumptions <path>` reads this target when the input gives none, and the report names its source as `setup` (`target_source` has the new value `setup`). A target on the run wins. A stored number that is not 40, 50 or 60 (for example 45 from an earlier setup) stops a run only when it would apply.
+- **change:** the Rule of 40 report has no Magic Number band sentence, and the JSON `magic_number` object has no `interpretation`. The unit economics report keeps the sentence.
+- **docs:** ADR-011 records these decisions; ADR-005, ADR-006, ADR-008 and ADR-010 have amendments. The Rule of 40 lines of the health check, `financial-analyst`, `setup`, the benchmark comparison skill, 2 references, `METHODOLOGY.md`, the report template and the example lose their quartile and band words. This is a port of PR #345 of the source repository, with the port rules of STORY-355.
+
 ## 0.15.2
 
 - **fix:** 4 agents name no file that Claude Code refuses from a subagent. The report of `instrumentation-planner` is `instrumentation-<date>.md`, of `ai-economist` `ai-economics-<date>.md`, of `roi-calculator` `roi-<date>.md`, and of `market-analyzer` `market-<date>.md`. Before, a subagent `Write` of `report-<date>.md` or `analysis-<date>.md` failed with "Subagents should return findings as text, not write report files", and the run lost the report.

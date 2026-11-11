@@ -340,7 +340,6 @@ Annual SaaS survey covering 100+ private companies. Detailed operational benchma
 | Gross Margin | > 82% | 78% | < 73% |
 | NRR | > 125% | 112% | < 100% |
 | CAC Payback | < 18 mo | 24 mo | > 36 mo |
-| Rule of 40 | > 50 | 35 | < 20 |
 
 **Enterprise Stage ($100M+ ARR)**
 | Metric | Top Quartile | Median | Bottom Quartile |
@@ -349,7 +348,6 @@ Annual SaaS survey covering 100+ private companies. Detailed operational benchma
 | Gross Margin | > 80% | 76% | < 70% |
 | NRR | > 120% | 108% | < 98% |
 | FCF Margin | > 20% | 5% | < -10% |
-| Rule of 40 | > 55 | 40 | < 25 |
 
 ### Benchmarks by Business Model
 

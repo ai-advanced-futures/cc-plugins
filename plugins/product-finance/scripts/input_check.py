@@ -14,8 +14,8 @@ and list indexes), the value as given, and one reason:
 Field types the checker reads: float, int, str, a str-valued Enum, Dict[str, X],
 List[X], a dataclass, and Optional[X] of any of these. Limits are declared with
 `limits(gt=..., ge=..., le=..., one_of=..., each=...)` and run after the type check, on the
-stored value. `one_of` works on a text field and also on an int field. `each=` puts limits on
-every value of a Dict field. Keys the class does not
+stored value. `one_of` works on a text field (not on a text Enum) and also on an int field.
+`each=` puts limits on every value of a Dict field. Keys the class does not
 declare are ignored. A NaN, Infinity or -Infinity in any number field gets "not a finite
 number" before any limit is read.
 
@@ -224,7 +224,9 @@ def check(cls: Type[T], data: Any, loc: Loc = ()) -> Tuple[Optional[T], List[Pro
             if "ge" in held and "gt" in held:
                 raise TypeError(f"both ge and gt on {cls.__name__}.{f.name}")
         held_type = _optional_inner(hints[f.name]) or hints[f.name]
-        if "one_of" in f.metadata and not (held_type in (str, int) or _is_text_enum(held_type)):
+        if "one_of" in f.metadata and _is_text_enum(held_type):
+            raise TypeError(f"one_of on a text Enum field: {cls.__name__}.{f.name}")
+        if "one_of" in f.metadata and held_type not in (str, int):
             raise TypeError(
                 f"one_of on a field that is not text or a whole number: {cls.__name__}.{f.name}"
             )

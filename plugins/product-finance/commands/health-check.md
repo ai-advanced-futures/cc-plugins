@@ -1,15 +1,21 @@
 ---
 description: Comprehensive financial health assessment with board-level KPIs, Rule of 40 analysis, unit economics evaluation, retention metrics, efficiency ratios, benchmark comparison, and strategic recommendations
-allowed-tools: Edit(/.product-finance/**), Read(/${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json)
+argument-hint: "[--target 40|50|60]"
+allowed-tools: Edit(/.product-finance/**), Read(/${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json), Read(/${CLAUDE_PLUGIN_ROOT}/commands/health-check.md), Read(/${CLAUDE_PLUGIN_ROOT}/skills/calculations-unit-economics/SKILL.md), Read(/${CLAUDE_PLUGIN_ROOT}/skills/analysis-benchmark-comparison/SKILL.md), Read(/${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/rule_of_40.py *)
 ---
 
 # Health Check Command
+
+Run only this plugin's own scripts, as `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/<file>.py ...`, one command per Bash call. Never run inline code in any language (`python3 -c`, `python3 -`, `uv run python`, `ruby -e`, `node -e`, a heredoc), never write a script of your own and run it, and write every file with the Write tool, never with a shell command, because only the plugin's own scripts are tested.
+Run every agent you dispatch in the foreground and wait for it to finish; never run one in the background (`run_in_background: true`) before the result file is written.
+
+A background agent can leave the result file unwritten when this command reads it, because the command does not wait for that agent.
 
 ## Purpose
 
 The health-check command provides a comprehensive financial health assessment of your business, calculating all board-level KPIs that matter to investors, boards, and executive teams. It evaluates growth, profitability, unit economics, retention, and efficiency metrics to determine overall business health and provide strategic recommendations.
 
-This command delivers a CFO-ready report with Rule of 40 compliance, unit economics assessment, benchmark comparisons, and actionable recommendations to improve financial performance.
+This command delivers a CFO-ready report with the Rule of 40 against a target, unit economics assessment, benchmark comparisons, and actionable recommendations to improve financial performance.
 
 ## When to Use
 
@@ -30,12 +36,9 @@ This command delivers a CFO-ready report with Rule of 40 compliance, unit econom
    - Retention metrics (NRR, GRR, logo retention, churn rate)
    - Efficiency metrics (burn rate, runway, revenue per employee)
 
-2. **Rule of 40 Compliance Check:**
-   - Calculates Rule of 40 score (Growth % + EBITDA Margin %)
-   - Determines compliance status (≥ 40% = healthy)
-   - Weighted Rule of 40 variant (1.33 × Growth + 0.67 × EBITDA Margin)
-   - Trend analysis (improving vs. declining)
-   - Recommendations for improvement
+2. **Rule of 40:**
+   - Runs `scripts/rule_of_40.py`: the score against a target of 40, 50 or 60 (default 40, or setup's), one line per margin, and the 40/50/60 ladder with its sources
+   - Weighted Rule of 40 (1.33 × growth + 0.67 × margin), a plugin convention, not graded
 
 3. **Unit Economics Health Assessment:**
    - CAC trend analysis (rising, stable, declining)
@@ -509,7 +512,7 @@ Interpretation:
 
 **Processing:**
 1. Calculate all board-level KPIs
-2. Determine Rule of 40 compliance and health score
+2. Run the Rule of 40 Run section and work out the health score
 3. Evaluate unit economics (LTV:CAC, payback, Magic Number)
 4. Assess retention metrics (NRR, GRR, churn)
 5. Analyze efficiency ratios (burn multiple, revenue per employee)
@@ -575,14 +578,53 @@ Structured data following schema:
     }
   },
   "rule_of_40": {
-    "score": 76.7,
-    "growth_component": 66.7,
-    "ebitda_margin_component": 10.0,
-    "status": "EXCELLENT",
-    "compliance": true,
-    "weighted_rule_of_40": 95.4,
-    "interpretation": "Strong Rule of 40 score driven by high growth rate. Company is efficiently scaling.",
-    "benchmark_comparison": "top_quartile"
+    "rule_of_40_score": 76.7,
+    "weighted_rule_of_40": 95.41,
+    "revenue_growth_rate": 66.7,
+    "ebitda_margin": 10.0,
+    "health_status": "excellent",
+    "target": 40,
+    "target_source": "default",
+    "target_status": "met",
+    "target_lines": [
+      {
+        "basis": "ebitda",
+        "margin": 10.0,
+        "score": 76.7,
+        "status": "met",
+        "short_by": null
+      }
+    ],
+    "target_notes": "Age not checked: months_of_revenue was not given.\nCaution (ICONIQ): \"we typically only begin to place real weight against Rule of 40 for companies with at least $25M ARR\", because \"exceptional year-over-year growth inflates Rule of 40 performance for early-stage companies\" (ICONIQ, The ICONIQ Enterprise Five (2025 KPIs)).",
+    "ladder": [
+      {
+        "bar": 40,
+        "target": true,
+        "ebitda": 36.7,
+        "fcf": null,
+        "source": "Feld (2015): \"The 40% rule is that your growth rate + your profit should add up to 40%.\""
+      },
+      {
+        "bar": 50,
+        "target": false,
+        "ebitda": 26.7,
+        "fcf": null,
+        "source": "No published benchmark found. A bar you set."
+      },
+      {
+        "bar": 60,
+        "target": false,
+        "ebitda": 16.7,
+        "fcf": null,
+        "source": "Vista Equity Partners (8 Jan 2026): \"an emerging aspiration, not a universal baseline\"."
+      }
+    ],
+    "reference_lines": "",
+    "benchmark_notes": "Classic Rule of 40: 76.7%\nWeighted Rule of 40: 95.4% (plugin convention, not graded)\nARR: $5,000,000",
+    "balance_analysis": "Growth Rate: 66.7%\nEBITDA Margin: 10.0%",
+    "recommendations": [
+      "Meets the target of 40 on every margin given."
+    ]
   },
   "unit_economics": {
     "cac": {
@@ -691,10 +733,9 @@ Structured data following schema:
     }
   },
   "overall_assessment": {
-    "health_score": 82,
+    "health_score": 86,
     "health_status": "STRONG",
     "strengths": [
-      "Excellent Rule of 40 score (76.7) driven by 67% growth",
       "Unit economics at target (LTV:CAC = 3.0x)",
       "Outstanding sales efficiency (Magic Number = 3.33)",
       "Strong retention (NRR = 115%, GRR = 90%)",
@@ -795,7 +836,6 @@ Structured data following schema:
         "category": "growth",
         "issue": "Maintain high growth rate while improving efficiency",
         "recommendation": "Balance growth investments with path to profitability. Target 50%+ growth with improving EBITDA margin.",
-        "impact": "Sustain Rule of 40 excellence as company scales",
         "timeframe": "2026-2027"
       }
     ],
@@ -822,7 +862,7 @@ Structured data following schema:
 
 Executive report:
 
-```markdown
+````markdown
 # Financial Health Check Report
 
 **Company:** Example SaaS Co
@@ -830,16 +870,15 @@ Executive report:
 **Company Stage:** Growth Stage ($1M-$10M ARR)
 **Purpose:** Board Preparation
 
-**Overall Health Score: 82/100 - STRONG**
+**Overall Health Score: 86/100 - STRONG**
 
 ---
 
 ## Executive Summary
 
-Example SaaS Co demonstrates **strong financial health** with excellent growth, healthy unit economics, and capital-efficient scaling. The company is in the top quartile for Rule of 40 performance and demonstrates outstanding sales efficiency.
+Example SaaS Co demonstrates **strong financial health** with excellent growth, healthy unit economics, and capital-efficient scaling.
 
 **Key Highlights:**
-- Rule of 40 score of **76.7** (well above 40 threshold)
 - ARR growth of **67%** year-over-year
 - Unit economics at target (LTV:CAC = **3.0x**)
 - Exceptional sales efficiency (Magic Number = **3.33**)
@@ -886,37 +925,46 @@ Example SaaS Co demonstrates **strong financial health** with excellent growth, 
 
 ## 2. Rule of 40 Assessment
 
-### Rule of 40 Score: 76.7 ✓ EXCELLENT
+### Key Metrics
 
-```
-Rule of 40 = Growth Rate % + EBITDA Margin %
-Rule of 40 = 66.7% + 10.0% = 76.7
+- **Rule of 40 Score**: 76.7%
+- **Weighted Rule of 40**: 95.4% (plugin convention, not graded)
+- **Revenue Growth Rate**: 66.7%
+- **EBITDA Margin**: 10.0%
 
-Status: EXCELLENT (≥ 40 = healthy, ≥ 60 = exceptional)
-Compliance: ✓ COMPLIANT (well above 40 threshold)
-```
+### Target
 
-**Weighted Rule of 40:** 95.4
-Formula: (1.33 × 66.7) + (0.67 × 10.0) = 95.4
+- **Target**: 40 (default)
+- **EBITDA basis**: 76.7 against 40: met
+- **Status**: MET
+- Age not checked: months_of_revenue was not given.
+- Caution (ICONIQ): "we typically only begin to place real weight against Rule of 40 for companies with at least $25M ARR", because "exceptional year-over-year growth inflates Rule of 40 performance for early-stage companies" (ICONIQ, The ICONIQ Enterprise Five (2025 KPIs)).
+
+### Ladder
+
+| Bar | EBITDA basis | Source |
+|---|---|---|
+| 40 (target) | +36.7 | Feld (2015): "The 40% rule is that your growth rate + your profit should add up to 40%." |
+| 50 | +26.7 | No published benchmark found. A bar you set. |
+| 60 | +16.7 | Vista Equity Partners (8 Jan 2026): "an emerging aspiration, not a universal baseline". |
 
 ### Benchmark Comparison
 
-| Percentile | Score | Company Status |
-|------------|-------|----------------|
-| Top Quartile | 70+ | ✓ Top Quartile |
-| Median | 45 | Well Above |
-| Bottom Quartile | 20 | Well Above |
+Classic Rule of 40: 76.7%
+Weighted Rule of 40: 95.4% (plugin convention, not graded)
+ARR: $5,000,000
 
-**Interpretation:** Exceptional Rule of 40 performance driven by high growth rate (67%) with emerging profitability (10% EBITDA margin). Company is efficiently balancing growth and profitability.
+### Growth vs. Profitability Balance
 
-### Rule of 40 Trajectory
+Growth Rate: 66.7%
+EBITDA Margin: 10.0%
 
-The company's strong Rule of 40 score is **growth-led**. As growth naturally moderates with scale, focus should shift to improving EBITDA margin to maintain Rule of 40 compliance.
+### Recommendations
 
-**Target Path:**
-- 2026: Maintain 50%+ growth, improve EBITDA margin to 15%+ (Rule of 40 = 65+)
-- 2027: 40% growth, 20% EBITDA margin (Rule of 40 = 60)
-- 2028: 30% growth, 25% EBITDA margin (Rule of 40 = 55)
+1. Meets the target of 40 on every margin given.
+
+---
+*Analysis based on Brad Feld's Rule of 40 framework*
 
 ---
 
@@ -1149,12 +1197,10 @@ Status: ✓ EFFICIENT (above median)
 | LTV:CAC Ratio | 3.0 | 4.0 | 3.0 | 2.0 | 3.0 | ✓ At Median |
 | CAC Payback (mo) | 12 | 9 | 12 | 18 | 13.3 | ⚠ Acceptable |
 | Magic Number | 0.75 | 1.0+ | 0.75 | 0.5 | 3.33 | ✓ Top Decile |
-| Rule of 40 | 40 | 70+ | 45 | 20 | 76.7 | ✓ Top Quartile |
 
 ### Competitive Position
 
 **Strengths (Above Benchmark):**
-- Rule of 40 score: Top quartile
 - Magic Number: Top decile (exceptional sales efficiency)
 - ARR Growth Rate: Above median
 - NRR: Above median
@@ -1172,34 +1218,31 @@ Status: ✓ EFFICIENT (above median)
 
 ## 8. Overall Assessment
 
-### Health Score: 82/100 - STRONG
+### Health Score: 86/100 - STRONG
 
 **Score Breakdown:**
 - Growth Metrics: 18/20 (Strong growth, excellent composition)
-- Profitability: 16/20 (Emerging profitability, Rule of 40 excellence)
+- Profitability: 20/20 (Rule of 40 met 10, gross margin 10)
 - Unit Economics: 15/20 (At target, room for optimization)
 - Retention: 18/20 (Strong NRR and GRR)
 - Efficiency: 15/20 (Capital efficient, but revenue per employee below target)
 
 ### Financial Health Status: STRONG ✓
 
-The company demonstrates **strong overall financial health** with particular strengths in growth efficiency, retention, and Rule of 40 performance. Key areas for improvement include revenue per employee, CAC payback optimization, and runway extension through fundraising.
+The company demonstrates **strong overall financial health** with particular strengths in growth efficiency and retention. Key areas for improvement include revenue per employee, CAC payback optimization, and runway extension through fundraising.
 
 ### Key Strengths
 
-1. **Exceptional Rule of 40 Performance (76.7)**
-   Top quartile score driven by 67% growth with 10% EBITDA margin. Demonstrates efficient scaling.
-
-2. **Outstanding Sales Efficiency (Magic Number = 3.33)**
+1. **Outstanding Sales Efficiency (Magic Number = 3.33)**
    Top decile performance. Generating $3.33 in ARR per $1 spent on S&M. Should invest aggressively while efficiency remains high.
 
-3. **Healthy Unit Economics (LTV:CAC = 3.0x)**
+2. **Healthy Unit Economics (LTV:CAC = 3.0x)**
    At target threshold. Each customer generates 3x their acquisition cost.
 
-4. **Strong Retention (NRR = 115%, GRR = 90%)**
+3. **Strong Retention (NRR = 115%, GRR = 90%)**
    Above median net retention driven by expansion revenue. Low churn indicates product-market fit.
 
-5. **Capital Efficient Growth (Burn Multiple = 0.75)**
+4. **Capital Efficient Growth (Burn Multiple = 0.75)**
    Burning $0.75 to generate $1 in ARR. Efficient conversion of capital to growth.
 
 ### Key Weaknesses
@@ -1242,7 +1285,7 @@ The company demonstrates **strong overall financial health** with particular str
 **Recommendation:**
 - Initiate Series B/C fundraising process in Q2 2026 (within 6 months)
 - Target: Extend runway to 24+ months post-funding
-- Use strong metrics (Rule of 40 = 76.7, Magic Number = 3.33) to secure favorable terms
+- Use strong metrics (Magic Number = 3.33) to secure favorable terms
 
 **Impact:** Prevents emergency fundraising, maintains negotiating leverage, provides capital for aggressive growth
 
@@ -1335,20 +1378,7 @@ Three parallel initiatives to reduce payback period:
 
 ### Priority 3: MEDIUM (Address within 12-24 months)
 
-#### 3.1 Sustain Rule of 40 Excellence as Company Scales
-**Issue:** Maintain high growth while improving profitability margins
-
-**Recommendation:**
-- Model path to Rule of 40 sustainability as growth moderates
-- Target: 50%+ growth with 15%+ EBITDA margin in 2026 (Rule of 40 = 65+)
-- Target: 40% growth with 20% EBITDA margin in 2027 (Rule of 40 = 60)
-- Balance growth investments with margin expansion
-
-**Impact:** Sustain top-quartile Rule of 40 performance through scale stages
-
-**Timeline:** 2026-2027
-
-#### 3.2 Gross Margin Protection
+#### 3.1 Gross Margin Protection
 **Issue:** Monitor gross margin for compression risk as company scales
 
 **Recommendation:**
@@ -1371,7 +1401,6 @@ Three parallel initiatives to reduce payback period:
 | 2 - High | Revenue per employee to $100K+ | Improve efficiency 50% | Q2-Q4 2026 |
 | 2 - High | Reduce churn from 3% to 2% | Increase LTV 50% to $22.5K | Q2-Q3 2026 |
 | 2 - High | CAC payback to ≤12 months | Improve cash flow | Q2-Q4 2026 |
-| 3 - Medium | Sustain Rule of 40 excellence | Top-quartile performance | 2026-2027 |
 | 3 - Medium | Gross margin protection | Maintain 75%+ margins | Ongoing |
 
 ---
@@ -1382,7 +1411,7 @@ Three parallel initiatives to reduce payback period:
 
 1. **Board Presentation Prep**
    - Use this report as foundation for the board meeting
-   - Highlight Rule of 40 excellence, Magic Number performance
+   - Highlight Magic Number performance
    - Address runway and fundraising timeline proactively
 
 2. **Fundraising Kickoff**
@@ -1413,7 +1442,6 @@ By January 2027, the company should achieve:
 - ✓ Revenue per employee improved to $100K+
 - ✓ Monthly churn reduced to 2% or below
 - ✓ CAC payback reduced to ≤12 months
-- ✓ Rule of 40 score maintained at 60+
 - ✓ LTV:CAC ratio improved to 4.0x+
 
 ---
@@ -1421,17 +1449,8 @@ By January 2027, the company should achieve:
 ## Appendix: Calculation Details
 
 ### Rule of 40 Calculation
-```
-Rule of 40 = ARR Growth Rate % + EBITDA Margin %
 
-Growth Rate = (Current ARR - Prior Year ARR) / Prior Year ARR × 100
-Growth Rate = ($5M - $3M) / $3M × 100 = 66.7%
-
-EBITDA Margin = EBITDA / ARR × 100
-EBITDA Margin = $500K / $5M × 100 = 10.0%
-
-Rule of 40 = 66.7% + 10.0% = 76.7 ✓
-```
+See the Rule of 40 Run section.
 
 ### LTV Calculation
 ```
@@ -1501,9 +1520,11 @@ Burn Multiple = $1.5M / $2M = 0.75
 *Financial Health Check Report - Product Finance Plugin*
 *Assessment Date: January 23, 2026 | Next Review: April 23, 2026*
 *Confidence Level: High | Data Quality: Strong*
-```
+````
 
 ### Console Output
+
+When `rule_of_40` is `null`, print both Rule of 40 lines of the summary below as `Rule of 40 not computed`, with no ✓ or ⚠.
 
 **Summary displayed to user:**
 
@@ -1516,11 +1537,11 @@ Stage: Growth Stage ($1M-$10M ARR)
 Assessment Date: January 23, 2026
 
 OVERALL HEALTH: STRONG ✓
-Health Score: 82/100
+Health Score: 86/100
 
 Key Highlights
 --------------
-✓ Rule of 40: 76.7 (EXCELLENT - top quartile)
+✓ Rule of 40: 76.7 against 40: met
 ✓ ARR Growth: 66.7% year-over-year (above median)
 ✓ Magic Number: 3.33 (EXCELLENT - top decile sales efficiency)
 ✓ NRR: 115% (strong retention and expansion)
@@ -1545,7 +1566,7 @@ Growth:
 Profitability:
   Gross Margin: 75%
   EBITDA Margin: 10%
-  Rule of 40 Score: 76.7 ✓
+  Rule of 40 Score: 76.7 against 40: met
 
 Unit Economics:
   CAC: $5,000
@@ -1598,10 +1619,40 @@ Next Commands
 - Run `/product-finance:discover` for market opportunity assessment
 - After improvements: Re-run health-check to track progress
 
-Benchmark Performance: Top Quartile (Rule of 40, Magic Number)
 Capital Efficiency: Excellent (Burn Multiple 0.75)
 Overall Trajectory: Strong Growth, Path to Profitability
 ```
+
+## Rule of 40 Run
+
+The command runs steps 1 to 5 and 7 below in this session, after the Data Collection Flow and before the dispatch. The dispatched `financial-analyst` agent does steps 6 and 8 with the run files and the lines that the dispatch gives, and runs no script.
+
+Before any question and before dispatch, check `--target`. `--target 50` and `--target=50` are the same. A bare `40`, `50` or `60` (`/product-finance:health-check 50`) is `--target` with that value, so with `--target` too it is `--target` given twice. Any other bare argument is not a target. The value must be written exactly `40`, `50` or `60` (`50.0` is refused). Any other value, a `--target` with no value, or `--target` given twice stops the command with one line: `--target must be 40, 50 or 60.` Nothing is run. A valid `--target` goes to the agent in the dispatch as `Rule of 40 target: <n> (from --target)`. Without it, the run passes `--assumptions .product-finance/assumptions.json` when that file exists, so setup's target applies. Without either, 40 applies. The agent asks nothing.
+
+1. Write the input with the Write tool to `.product-finance/rule-of-40-input.json`. The health check has no plugin run, so the folder is always `.product-finance/`. The keys are the `RuleOf40Input` names: `revenue_growth_rate`, `ebitda_margin`, and when known `company_stage`, `fcf_margin`, `arr`, `months_of_revenue`, `nrr`, `gross_margin`, `previous_period_growth` with `previous_period_margin`, and `target`, only from `--target`. Leave out the Magic Number spend pair: this command reports the Magic Number in its own section. Every number is a JSON number.
+   - The stage answer maps to `company_stage` as: `early_stage` → `early`, `growth_stage` → `growth`, `scale_stage` → `scale`, `mature` → `mature`; `pre_revenue` leaves `company_stage` out.
+   - Write `target` only from `--target`. Never copy `targets.rule_of_40_target` or any other setup value into the input; setup's target reaches the script only through `--assumptions`.
+2. Run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/rule_of_40.py --input .product-finance/rule-of-40-input.json --format json`, adding `--assumptions .product-finance/assumptions.json` when that file exists and the input has no `target`.
+3. A problem in the assumptions file is never repaired by the run. Check this first, on every run. When the run's stderr starts with `Error: the assumptions file` or `Error: Invalid assumptions file`, run the same command once more without `--assumptions`. The report's Rule of 40 section then carries `Setup's target was not used: <location>: <reason>. Run setup again to choose 40, 50 or 60.` The location and the reason come from the script's first problem line, `- <location> = <value>: <reason>`, with the value dropped. A problem line with no ` = ` gives the text after `- ` as `<location>: <reason>`, and a location of `input` is written `the assumptions file`. After `Error: the assumptions file <path> cannot be read`, the note is `Setup's target was not used: the assumptions file cannot be read. Run setup again to choose 40, 50 or 60.`; after `Error: the assumptions file <path> is not valid JSON`, it is `Setup's target was not used: the assumptions file is not valid JSON. Run setup again to choose 40, 50 or 60.` These are fixed words, not the script's text. Do not echo the value. The health check JSON carries the same text as `"rule_of_40_setup_note"`, beside the `rule_of_40` object.
+4. The other exits:
+   - Exit 3 with `Error: Invalid input data:` (the input file): when a listed value is a plain number written as text (digits, an optional sign, one decimal point, no unit or letter), or a listed input is `missing` because it was written under another name, rewrite each such value as a JSON number under the name the line gives and run once more. Otherwise go to step 7.
+   - Exit 2, or exit 1 with `Error: cannot read` or `Error: Invalid JSON input:` (the input file): correct the command, the path or the file and run once more.
+   - Any other exit, or a second failure after a rewrite or a correction: go to step 7. Step 3 wins over this rule: a run after a rewrite that fails on the assumptions file goes to step 3.
+   - Once step 3 has fired, `--assumptions` is never added again in this run, because that file has a problem. The script runs at most three times with `--format json` in one health check; a step 3 rerun counts; when the cap is reached, go to step 7.
+5. When the JSON run exited 0, run the same command as the JSON run that exited 0 (with `--assumptions` only if that run had it), with `--format markdown`. When the markdown run fails, the section body is the single line `Rule of 40 report not printed: rule_of_40.py --format markdown failed (<its reason, as step 7 reads it>).` The JSON object stays the script's.
+6. The health check JSON's `rule_of_40` object is the script's JSON output, unchanged. The report's Rule of 40 section keeps its heading line, `## 2. Rule of 40 Assessment`. Its body is the script's markdown from the `## Key Metrics` line to the footer line, both included, with each `## ` heading made `### `; the `# Rule of 40 Analysis` title is not copied. Copy blank lines as they are. The section's own closing `---` follows the copied body.
+7. **When no JSON run succeeds:** compute no Rule of 40. The report's Rule of 40 section body is the single line `Rule of 40 not computed: rule_of_40.py did not run successfully (<the last run's reason>).` A run's reason is its first stderr line that starts with `- `, without the `- `; when there is none, its last non-empty stderr line, without `Error: `; when stderr is empty, `no error output`. The health check JSON's `rule_of_40` is `null`, and `"rule_of_40_error"` beside it holds the same reason. When step 3 fired, its note follows as well.
+8. The section's end order: the body, then step 3's note when it fired, then the section's closing `---`.
+
+**The run files.** When a JSON run exited 0, write its standard output, unchanged, with the Write tool to `.product-finance/rule-of-40-run.json`. When the markdown run of step 5 exited 0, write its standard output, unchanged, to `.product-finance/rule-of-40-run.md`. The Write tool drops the blank line at the start and at the end of that output; step 6 copies from the `## Key Metrics` line to the footer line, so the loss changes no copy. Write no run file for a run that did not exit 0. Then dispatch the agent. The dispatch has 1 line for each item that applies:
+- `Rule of 40 run: .product-finance/rule-of-40-run.json`
+- `Rule of 40 report: .product-finance/rule-of-40-run.md`
+- `Rule of 40 target: <n> (from --target)`
+- The step 5 line `Rule of 40 report not printed: ...`, when the markdown run failed.
+- The step 7 line `Rule of 40 not computed: ...`, when no JSON run succeeded. The agent then writes `rule_of_40: null` and `rule_of_40_error` with the reason of this line.
+- The step 3 note `Setup's target was not used: ...`, when step 3 fired.
+
+The agent reads only a run file that the dispatch names, because a run file of an earlier health check can stay in `.product-finance/`.
 
 ## Implementation Notes
 
@@ -1615,7 +1666,7 @@ Overall Trajectory: Strong Growth, Path to Profitability
 - Allow "approximate" values with confidence indicators
 
 **Calculation Logic:**
-1. **Rule of 40:** Growth Rate % + EBITDA Margin %
+1. **Rule of 40:** run `scripts/rule_of_40.py` (see Rule of 40 Run)
 2. **LTV:** Annual ARPC × Gross Margin % / Annual Churn Rate
 3. **CAC:** Total S&M Spend / New Customers
 4. **LTV:CAC Ratio:** LTV / CAC (target: ≥ 3.0)
@@ -1633,8 +1684,9 @@ Overall Trajectory: Strong Growth, Path to Profitability
   - ARR growth rate vs. stage benchmark
   - ARR composition quality
 - Profitability: 20 points
-  - Rule of 40 score
-  - Gross margin health
+  - Rule of 40: 10 points (met 10, split 5, short 0)
+  - Gross margin health: 10 points
+  - The Rule of 40 points are a plugin convention. When `target_status` is `not_graded`, or `rule_of_40` is `null`, Profitability is scored out of the gross margin's 10 and doubled.
 - Unit Economics: 20 points
   - LTV:CAC ratio vs. target
   - CAC payback vs. target
@@ -1661,7 +1713,7 @@ Stage-based benchmarks:
 - Early-stage (<$1M ARR): Growth focus, unit economics emerging
 - Growth-stage ($1M-$10M): Balanced growth and efficiency
 - Scale-stage ($10M-$50M): Efficiency optimization, path to profitability
-- Mature ($50M+): Profitability focus, Rule of 40 maintenance
+- Mature ($50M+): Profitability focus
 
 **Recommendation Logic:**
 1. Identify metrics below target or benchmark
@@ -1700,7 +1752,7 @@ Stage-based benchmarks:
 ## Success Criteria
 
 1. **Comprehensive assessment:** All board-level KPIs calculated accurately
-2. **Rule of 40 clarity:** Clear compliance status and improvement path
+2. **Rule of 40 clarity:** the score against the target, one line per margin
 3. **Unit economics transparency:** LTV:CAC, payback, Magic Number all evaluated
 4. **Retention insights:** NRR, GRR, churn analysis with improvement opportunities
 5. **Efficiency metrics:** Burn, runway, productivity assessed
@@ -1711,17 +1763,23 @@ Stage-based benchmarks:
 
 ## Agent Dispatch
 
+Before dispatch, apply the `--target` check at the top of the `## Rule of 40 Run` section (including the bare 40, 50 or 60 rule).
+
 Dispatch the `product-finance:financial-analyst` agent (Sonnet) with the `Agent` tool.
+
+When `--target` was given, the dispatch carries the line `Rule of 40 target: <n> (from --target)`.
+
+The dispatch gives the answers of phases 1 to 6, and the lines of "The run files" in the `## Rule of 40 Run` section.
 
 **Process:**
 1. Agent loads assumptions and historical data from `.product-finance/`
-2. Agent collects current metrics (ARR, EBITDA, churn, CAC, LTV)
-3. Agent uses skills: rule-of-40, unit-economics, retention-analysis, benchmark-comparison
+2. Agent takes the current metrics from the dispatch: the command asked the Data Collection questions, and the agent asks nothing
+3. Agent copies the Rule of 40 from the run files (steps 6 and 8 of the Rule of 40 Run) and uses skills: unit-economics, retention-analysis, benchmark-comparison
 4. Agent calculates health score and identifies strengths/weaknesses
 5. Agent generates prioritized recommendations and board-ready report
 
 **Skills Used:**
-- `rule-of-40` - Calculate Rule of 40 score and compliance status
+- `rule-of-40` - the Rule of 40 terms; the score comes from the Rule of 40 Run
 - `unit-economics` - Evaluate CAC, LTV, LTV:CAC ratio, payback period, Magic Number
 - `retention-analysis` - Assess NRR, GRR, logo retention, churn trends
 - `efficiency-metrics` - Analyze burn rate, runway, revenue per employee, burn multiple

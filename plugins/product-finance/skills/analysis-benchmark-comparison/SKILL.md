@@ -42,6 +42,7 @@ Comprehensive benchmark comparison including:
 | ltv_cac_ratio | float | No | LTV:CAC ratio |
 | magic_number | float | No | Sales efficiency metric |
 | rule_of_40 | float | No | Growth + EBITDA margin |
+| target_status | string | No | met, split, short or not_graded, from the Rule of 40 report |
 
 ## Benchmark Database
 
@@ -62,7 +63,6 @@ Comprehensive benchmark comparison including:
 | Gross Margin | < 65% | 72-78% | > 80% |
 | NRR | < 100% | 105-110% | > 120% |
 | CAC Payback | > 18 months | 10-14 months | < 9 months |
-| Rule of 40 | < 20 | 30-40 | > 50 |
 
 **Scale Stage ($10M-$100M ARR)**
 | Metric | Bottom Quartile | Median | Top Quartile |
@@ -73,7 +73,6 @@ Comprehensive benchmark comparison including:
 | GRR | < 85% | 88-92% | > 95% |
 | CAC Payback | > 15 months | 9-12 months | < 8 months |
 | LTV:CAC | < 3:1 | 3.5:1 – 5:1 | > 5:1 (Excellent) |
-| Rule of 40 | < 30 | 40-50 | > 60 |
 | Magic Number | < 0.6 | 0.8-1.0 | > 1.2 |
 
 **Mature Stage ($100M+ ARR)**
@@ -84,7 +83,6 @@ Comprehensive benchmark comparison including:
 | EBITDA Margin | < 5% | 15-20% | > 25% |
 | NRR | < 110% | 115-125% | > 130% |
 | GRR | < 90% | 92-95% | > 97% |
-| Rule of 40 | < 35 | 45-55 | > 65 |
 
 ## Benchmark Sources
 
@@ -150,7 +148,7 @@ Comprehensive benchmark comparison including:
    - Ensure consistent calculation methodology
 
 3. **Compare to Benchmarks:**
-   - Calculate percentile for each metric
+   - Calculate percentile for each metric in the stage tables above
    - Identify above/below median
    - Calculate gaps to targets
 
@@ -159,7 +157,7 @@ Comprehensive benchmark comparison including:
    - Weight by business impact
    - Consider dependencies
 
-5. **Set Targets:**
+5. **Set Targets (stage-table metrics only):**
    - Near-term: reach median if below
    - Medium-term: reach top quartile
    - Long-term: best-in-class
@@ -178,13 +176,15 @@ Not all metrics are equally important. Weighted scoring:
 
 | Metric | Weight | Rationale |
 |--------|--------|-----------|
-| Rule of 40 | 20% | Overall health indicator |
+| Rule of 40 | 20% | From target_status: met 100, split 50, short 0 |
 | NRR | 18% | Revenue quality |
 | Growth Rate | 15% | Scale potential |
 | CAC Payback | 15% | Efficiency |
 | Gross Margin | 12% | Unit economics |
 | GRR | 10% | Retention foundation |
 | LTV:CAC | 10% | Acquisition efficiency |
+
+When `target_status` is missing or `not_graded`, the Rule of 40 leaves the weighting and the other weights are scaled so they sum to 100%.
 
 ## Stage-Appropriate Targets
 
@@ -199,7 +199,7 @@ Not all metrics are equally important. Weighted scoring:
 3. **Rule of 40** - Balance growth/efficiency
 
 ### Scale Stage Priorities
-1. **Rule of 40** - IPO readiness
+1. **Rule of 40** - Growth and margin together
 2. **GRR** - Revenue durability
 3. **Magic Number** - Sales efficiency
 
@@ -211,12 +211,12 @@ Not all metrics are equally important. Weighted scoring:
 ## Gap Analysis
 
 ### Critical Gaps (Fix First)
-- Rule of 40 < 20
 - NRR < 100%
 - LTV:CAC < 1:1 (Critical by the thresholds of the plugin scripts; 1:1–3:1 is Warning)
 - CAC Payback > 24 months
 
 ### Improvement Opportunities
+- Rule of 40 target_status short
 - Gap > 15 points from median
 - Metric declining quarter-over-quarter
 - Below bottom quartile
@@ -241,11 +241,6 @@ Not all metrics are equally important. Weighted scoring:
 - Company: Atlassian
 - CAC Payback: < 12 months
 - How: Self-serve, minimal sales team
-
-### Rule of 40 Leaders
-- Company: Datadog
-- Rule of 40: 80+
-- How: High growth (60%+) with profitability (20%+)
 
 ## Benchmark Caveats
 

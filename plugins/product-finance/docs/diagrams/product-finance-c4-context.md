@@ -1,12 +1,12 @@
 # product-finance — C4 Context and Container Diagrams
 
-**Plugin:** product-finance v0.15.2
+**Plugin:** product-finance v0.16.0
 
 ## C4 Context
 
 ```mermaid
 C4Context
-    title product-finance Plugin Context (v0.15.2)
+    title product-finance Plugin Context (v0.16.0)
 
     Person(engineer, "Product Engineer", "Asks financial questions during product development")
     Person(cfo, "CFO / Finance Lead", "Reviews unit economics, AI ROI, cost-coverage analysis")
@@ -29,7 +29,7 @@ C4Context
 
 ```mermaid
 C4Container
-    title product-finance Plugin Containers (v0.15.2)
+    title product-finance Plugin Containers (v0.16.0)
 
     Person(engineer, "Engineer / CFO", "")
 

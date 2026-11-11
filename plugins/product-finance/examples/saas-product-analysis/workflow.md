@@ -76,7 +76,6 @@ Key Metrics:
   - Net Revenue Retention: 115% (EXCELLENT)
   - Gross Margin: 78% (GOOD)
   - Monthly Churn: 1.2% (GOOD)
-  - Rule of 40: 82 (EXCELLENT)
 
 Files Generated:
   - .product-finance/health-report.json
@@ -179,7 +178,6 @@ Open `.product-finance/reports/unit-economics-report-2026-01-23.md` and review:
 | NRR | <90% | 90-100% | 100-115% | >115% |
 | Gross Margin | <60% | 60-70% | 70-80% | >80% |
 | LTV:CAC | <2x | 2-3x | 3-5x | >5x |
-| Rule of 40 | <20 | 20-30 | 30-50 | >50 |
 
 ## Troubleshooting
 

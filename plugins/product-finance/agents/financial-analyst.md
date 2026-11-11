@@ -20,7 +20,7 @@ data to make strategic decisions.
 This agent specializes in:
 - Health check assessments across multiple financial dimensions
 - Unit economics calculations with cohort analysis
-- Rule of 40 and other SaaS benchmark evaluations
+- Rule of 40 against a target, and SaaS benchmark evaluations
 - Board-ready report generation with visualizations
 
 ## Used By Commands
@@ -116,11 +116,9 @@ This agent leverages the following skills:
 - Marginal contribution analysis
 
 ### product-finance:calculations-rule-of-40
-- Revenue growth rate calculation
-- Profitability margin calculation
-- Combined score computation
-- Trend analysis over time
-- Target status and ladder against 40, 50 or 60
+- The score against the target, one line per margin
+- The 40/50/60 ladder with its sources
+- The weighted score (plugin convention, not graded)
 
 ### product-finance:analysis-benchmark-comparison
 - Industry benchmark lookup
@@ -174,7 +172,6 @@ This agent leverages the following skills:
 1. LOAD SKILLS:
    ```
    Read `${CLAUDE_PLUGIN_ROOT}/skills/calculations-unit-economics/SKILL.md` and follow it
-   Read `${CLAUDE_PLUGIN_ROOT}/skills/calculations-rule-of-40/SKILL.md` and follow it
    ```
 
 2. CALCULATE UNIT ECONOMICS:
@@ -200,8 +197,8 @@ This agent leverages the following skills:
    ```
    Gross Margin = (Revenue - COGS) / Revenue * 100
    EBITDA Margin = EBITDA / Revenue * 100
-   Rule of 40 Score = Revenue Growth % + EBITDA Margin %
    ```
+   - Rule of 40: in a health check, Read `${CLAUDE_PLUGIN_ROOT}/commands/health-check.md` from the line `## Rule of 40 Run` to the next `## ` heading. Do steps 6 and 8 with the run files and the lines that the dispatch gives. Run no script for the Rule of 40, because the command ran it. In any other command, do not compute the Rule of 40, because only the health check runs it.
 
 5. CALCULATE EFFICIENCY:
    ```
@@ -220,7 +217,8 @@ This agent leverages the following skills:
 
 2. COMPARE AGAINST BENCHMARKS:
    - Load industry benchmarks for company stage/size
-   - Calculate percentile positioning for each metric
+   - Calculate percentile positioning for each metric in the benchmark tables
+   - Score the Rule of 40 from `target_status` only (met, split or short), as Phase 4 says; when `rule_of_40` is `null`, score nothing for it
    - Identify metrics above/below benchmark
    - Flag metrics significantly below benchmark (>20% gap)
 
@@ -245,7 +243,8 @@ This agent leverages the following skills:
    - Gross margin vs benchmark: 30%
 
    Efficiency Health (0-100):
-   - Rule of 40 score: 40%
+   - Rule of 40 target status (met 100, split 50, short 0): 40%
+   - When `target_status` is `not_graded`, when `rule_of_40` is `null`, or when no Rule of 40 Run ran, Magic Number and burn multiple take 50% each. These points are a plugin convention.
    - Magic number vs benchmark: 30%
    - Burn multiple vs benchmark: 30%
 
@@ -281,7 +280,7 @@ This agent leverages the following skills:
    Key Metrics:
    - ARR: ${arr} ({growth_rate}% YoY)
    - LTV:CAC: {ratio}x ({vs_benchmark})
-   - Rule of 40: {score} ({vs_benchmark})
+   - Rule of 40 (health check only): {score} against {target}: {status}, or `Rule of 40 not computed` when `rule_of_40` is `null`
    - Net Revenue Retention: {nrr}%
 
    Top Insight: {one_sentence_key_finding}
@@ -383,12 +382,9 @@ Write to `.product-finance/reports/health-check-{YYYY-MM-DD}.json`:
 ```json
 {
   "generated_at": "ISO-8601 timestamp",
-  "rule_of_40": {
-    "score": 0.00,
-    "health": "excellent|good|warning|critical",
-    "growth_rate": 0.00,
-    "ebitda_margin": 0.00
-  },
+  "rule_of_40": { "...": "..." } /* the JSON object rule_of_40.py writes; null instead when no JSON run succeeded */,
+  "rule_of_40_error": "..." /* only when rule_of_40 is null */,
+  "rule_of_40_setup_note": "..." /* only when step 3 of the Rule of 40 Run fired */,
   "magic_number": {
     "magic_number": 0.00,
     "health": "excellent|good|warning|critical|unknown",
@@ -479,18 +475,16 @@ CALCULATIONS:
 - Unit economics: Completed (CAC, LTV, LTV:CAC, Payback)
 - Growth metrics: Completed
 - Efficiency metrics: Completed
-- Rule of 40: 38 (Revenue Growth: 45%, Margin: -7%)
+- Rule of 40: 38 against 40: short by 2 (growth 45%, EBITDA margin -7%)
 
 BENCHMARK COMPARISON:
 - LTV:CAC 4.2x - Above benchmark (3x)
 - Payback 14mo - Above benchmark (12mo)
-- Rule of 40: 38 - Below benchmark (40)
 
 → decision: health score 72/100 (Grade: C)
-⊙ assessment: strong growth but profitability drag on Rule of 40
 
 Recommendations:
-1. Improve gross margin by 5pp to hit Rule of 40
+1. The EBITDA basis is short of 40 by 2: closes with 2 points of growth or 2 points of EBITDA margin.
 2. Reduce CAC payback by optimizing channel mix
 3. Implement cost tracking for better visibility
 
@@ -551,7 +545,7 @@ A defaults run of `product-finance:unit-economics`, then the same run with `data
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.15.2",
+  "plugin_version": "0.16.0",
   "command": "product-finance:unit-economics",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",
@@ -603,7 +597,7 @@ A defaults run of `product-finance:unit-economics`, then the same run with `data
 {
   "schema": "plugin-result/1",
   "plugin": "product-finance",
-  "plugin_version": "0.15.2",
+  "plugin_version": "0.16.0",
   "command": "product-finance:unit-economics",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",

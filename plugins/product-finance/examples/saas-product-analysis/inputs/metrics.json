@@ -172,12 +172,7 @@
       "customers_per_csm": 12.5,
       "support_tickets_per_customer": 2.3
     },
-    "rule_of_40": {
-      "arr_growth_rate": 104.0,
-      "operating_margin": -22.0,
-      "rule_of_40_score": 82.0,
-      "using_ebitda_margin": 84.0
-    }
+    "rule_of_40": {"arr_growth_rate": 104.0, "ebitda_margin": -20.0, "rule_of_40_score": 84.0}
   },
   "cohort_metrics": {
     "jan_2025_cohort": {

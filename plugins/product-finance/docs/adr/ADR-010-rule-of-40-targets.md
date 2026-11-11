@@ -3,7 +3,7 @@
 **Status:** Accepted (decided 2026-11-08; built in v0.15.0)
 **Date:** 2026-11-08
 **Builds on:** ADR-009, `ADR-009-exact-figures.md` (exact figures, rounded half away from zero at output)
-**Plugin:** product-finance v0.15.0
+**Plugin:** product-finance v0.15.0, amended in v0.16.0
 **Decided here:** D-562, 2026-11-09 (the rule of ADR-010 as merged in source PR #344); the owner, 2026-11-10 (the quotes, and this record)
 
 ---
@@ -100,3 +100,11 @@ Rulings made while building. Each one changes or narrows the text above.
 - **The ICONIQ quote is printed unedited.** Finding 7 shows `begin[s]` because the ADR quotes ICONIQ in running prose. The report quotes the source as written: "we typically only begin to place real weight against Rule of 40 for companies with at least $25M ARR".
 - **Setup keys stay unread.** `setup` stores `rule_of_40_target` and `target_rule_of_40`. `rule_of_40.py` does not read them and `setup` tells the person so.
 - **The health check takes no target.** The health check descriptions take no target clause, because that command takes no target.
+
+## Amendments in v0.16.0
+
+Decided 2026-11-09 and built in v0.16.0 (ADR-011). Each one supersedes text above; the text above stays as history.
+
+- **Setup's target is read (supersedes "Setup keys stay unread").** `rule_of_40.py --assumptions <path>` reads `targets.rule_of_40_target` when the input gives no target. A target stored by setup is the person's own choice, made earlier; a target given on the run wins over it; the report names three sources: `default`, `chosen` and `setup`. This amends decision 2 bullets 2, 3 and 4. Bullet 3's ban on inference stands: setup's target is the person's choice, not an inference from any input.
+- **The health check takes a target (supersedes "The health check takes no target").** `/product-finance:health-check --target 40|50|60`; without it, setup's target; without that, 40.
+- **The Magic Number band sentence leaves the Rule of 40 report (supersedes ruling 4's last sentence).** The Rule of 40 markdown and JSON no longer print `interpretation` (ADR-005, amendment in v0.16.0).

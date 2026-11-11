@@ -594,7 +594,7 @@ In valuation studies, growth outweighs FCF margin: 2–3 times for late-stage cl
 | `revenue_growth_rate` | number | Calculated | YoY revenue growth % |
 | `ebitda_margin` | number | Financial system | EBITDA margin % |
 | `company_stage` | string | Configuration | early, growth, scale, mature |
-| `target` | number | User input | 40, 50 or 60 (default 40) |
+| `target` | number | User input | 40, 50 or 60 (default 40, or setup's with --assumptions) |
 | `fcf_margin` | number | Financial system | Free cash flow margin, as a percentage (12.5, not 0.125) |
 | `months_of_revenue` | number | Financial system | Months since the product's first revenue |
 | `nrr` | number | Financial system | Net revenue retention, as a percentage (115, not 1.15) |
@@ -642,7 +642,9 @@ Illustrative; the code is in `scripts/`.
 
 #### Target and Ladder
 
-The target is 40, 50 or 60 (default 40). No input picks the target: not the product type, the stage or an AI label. A target the person gives always applies; otherwise the target is 40.
+The target is 40, 50 or 60 (default 40). No input picks the target: not the product type, the stage or an AI label. A target the person gives on the run applies; otherwise setup's stored target, when the run passes `--assumptions`; otherwise 40. A stored target that is not 40, 50 or 60 stops the script with exit 3 when it would apply (in interactive mode, when the file is read before the first prompt); a run then goes on without --assumptions and says setup's target was not used.
+
+`target_source` is `default`, `chosen` (the input's target) or `setup` (setup's stored target, read with `--assumptions`).
 
 The ladder shows the score minus each bar, with these Source cells:
 

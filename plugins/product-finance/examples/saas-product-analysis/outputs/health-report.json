@@ -124,15 +124,53 @@
         "context": "Acceptable for growth-stage company"
       },
       "rule_of_40": {
-        "value": 82.0,
-        "calculation": {
-          "arr_growth_rate": 104.0,
-          "operating_margin": -22.0,
-          "formula": "growth_rate + operating_margin"
-        },
-        "status": "EXCELLENT",
-        "benchmark": 40.0,
-        "benchmark_comparison": "above"
+        "rule_of_40_score": 84.0,
+        "weighted_rule_of_40": 124.92,
+        "revenue_growth_rate": 104.0,
+        "ebitda_margin": -20.0,
+        "health_status": "excellent",
+        "target": 40,
+        "target_source": "default",
+        "target_status": "met",
+        "target_lines": [
+          {
+            "basis": "ebitda",
+            "margin": -20.0,
+            "score": 84.0,
+            "status": "met",
+            "short_by": null
+          }
+        ],
+        "target_notes": "Age not checked: months_of_revenue was not given.\nCaution (ICONIQ): \"we typically only begin to place real weight against Rule of 40 for companies with at least $25M ARR\", because \"exceptional year-over-year growth inflates Rule of 40 performance for early-stage companies\" (ICONIQ, The ICONIQ Enterprise Five (2025 KPIs)).",
+        "ladder": [
+          {
+            "bar": 40,
+            "target": true,
+            "ebitda": 44.0,
+            "fcf": null,
+            "source": "Feld (2015): \"The 40% rule is that your growth rate + your profit should add up to 40%.\""
+          },
+          {
+            "bar": 50,
+            "target": false,
+            "ebitda": 34.0,
+            "fcf": null,
+            "source": "No published benchmark found. A bar you set."
+          },
+          {
+            "bar": 60,
+            "target": false,
+            "ebitda": 24.0,
+            "fcf": null,
+            "source": "Vista Equity Partners (8 Jan 2026): \"an emerging aspiration, not a universal baseline\"."
+          }
+        ],
+        "reference_lines": "",
+        "benchmark_notes": "Classic Rule of 40: 84.0%\nWeighted Rule of 40: 124.9% (plugin convention, not graded)\nARR: $3,000,000",
+        "balance_analysis": "Growth Rate: 104.0%\nEBITDA Margin: -20.0%",
+        "recommendations": [
+          "Meets the target of 40 on every margin given."
+        ]
       },
       "burn_multiple": {
         "value": 0.92,
@@ -150,7 +188,6 @@
       }
     },
     "insights": [
-      "Rule of 40 score of 82 is exceptional and investor-ready",
       "Burn multiple under 1.0 indicates highly efficient growth",
       "Gross margin of 78% provides room for continued investment"
     ]
@@ -291,14 +328,6 @@
     "immediate_actions": [
       {
         "priority": 1,
-        "action": "Accelerate growth investment",
-        "rationale": "Rule of 40 score of 82 and LTV:CAC of 8.3x indicate room for aggressive growth",
-        "expected_impact": "Increase ARR growth from 104% to 120%+",
-        "effort": "medium",
-        "timeline": "Q1-Q2 2026"
-      },
-      {
-        "priority": 2,
         "action": "Begin Series B preparation",
         "rationale": "Strong metrics position company well for fundraise",
         "expected_impact": "Secure $25-40M to accelerate growth",
@@ -306,7 +335,7 @@
         "timeline": "Q2-Q3 2026"
       },
       {
-        "priority": 3,
+        "priority": 2,
         "action": "Reduce enterprise segment churn",
         "rationale": "Enterprise churn at 0.8% can be improved to <0.5%",
         "expected_impact": "Increase GRR from 94% to 96%+",
@@ -370,13 +399,6 @@
         "company_value": 8.33,
         "benchmark_median": 3.5,
         "benchmark_top_quartile": 5.0,
-        "percentile": 95
-      },
-      {
-        "metric": "Rule of 40",
-        "company_value": 82,
-        "benchmark_median": 35,
-        "benchmark_top_quartile": 55,
         "percentile": 95
       }
     ]

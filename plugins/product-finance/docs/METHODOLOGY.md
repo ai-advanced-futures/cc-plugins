@@ -313,7 +313,7 @@ In production, continuously monitor financial health. This stage answers:
 | Metric | Definition | Healthy Range |
 |--------|------------|---------------|
 | MRR/ARR | Monthly/Annual Recurring Revenue | Growing >10%/year |
-| Rule of 40 | Growth Rate + Profit Margin | >40 |
+| Rule of 40 | Growth Rate + Profit Margin | target 40, 50 or 60 (default 40); not a healthy range |
 | Churn Rate | Customers lost / starting customers | <3%/month |
 | Net Revenue Retention | Revenue including expansion/contraction | >100% |
 | LTV:CAC Ratio | Lifetime Value / Acquisition Cost | >3:1 |
@@ -339,7 +339,7 @@ In production, continuously monitor financial health. This stage answers:
 - Prioritized recommendations
 - Executive dashboard
 
-**Best Practice:** Run health check monthly and before board meetings. Target health score >75 and Rule of 40 >40.
+**Best Practice:** Run health check monthly and before board meetings. Target health score >75.
 
 ### Command: `/product-finance:unit-economics`
 
@@ -366,23 +366,11 @@ In production, continuously monitor financial health. This stage answers:
 The Rule of 40 balances growth and profitability:
 
 ```
-Rule of 40 Score = Revenue Growth Rate % + Profit Margin %
-
-Assessment:
-- Excellent: >60 (high growth AND profitable)
-- Good: 40-60 (healthy balance)
-- Acceptable: 25-40 (needs improvement)
-- Poor: <25 (unsustainable)
+Rule of 40 Score = Revenue Growth Rate % + EBITDA Margin %
 ```
 
-**Growth-Profitability Trade-off Matrix:**
-
-| Scenario | Growth | Margin | Rule of 40 | Guidance |
-|----------|--------|--------|------------|----------|
-| Hypergrowth | 80% | -20% | 60 | Acceptable if path to profit |
-| Balanced | 40% | 10% | 50 | Ideal state |
-| Profitable | 15% | 35% | 50 | Good, invest in growth |
-| Struggling | 10% | 5% | 15 | Needs intervention |
+The target is 40, 50 or 60 (default 40); each margin meets it or is short by the gap, and there is no verdict at 12 months of revenue or less.
+See `references/rule-of-40.md` for the ladder and its sources.
 
 ---
 

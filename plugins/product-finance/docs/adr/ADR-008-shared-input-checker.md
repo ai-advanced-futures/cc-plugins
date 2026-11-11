@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-11-09
 **Builds on:** ADR-007, `ADR-007-assumptions-input-contract.md`
-**Plugin:** product-finance v0.13.5, amended in v0.13.6, v0.13.7, v0.14.0 and v0.15.0
+**Plugin:** product-finance v0.13.5, amended in v0.13.6, v0.13.7, v0.14.0, v0.15.0 and v0.16.0
 
 ---
 
@@ -28,7 +28,8 @@ ADR-007 moved `market_sizing_calculator.py` to `scripts/input_check.py`, a check
 
 - The next script that needs input checks uses the module and its tests again. It adds no package.
 - `ai-economics` runs its script with `uv run`, with no extra package. A refused input gives a short list of named problems.
-- `unit_economics.py` and `rule_of_40.py` run with `uv run`, with no extra package. No command runs them. A person can run them by hand.
+- `unit_economics.py` and `rule_of_40.py` run with `uv run`, with no extra package. The health check runs `rule_of_40.py`, and no command runs `unit_economics.py`. A person can run them by hand.
+Amended in v0.16.0: the health check runs `rule_of_40.py`; `unit_economics.py` is still run by no command.
 - A person who gave a number as text, or `true`, now gets a refusal where `pydantic` gave a figure. This is intentional.
 - A `null` in a field with a default, such as `period_months`, now runs with the default and exits 0. Before, it exited with code 3. This is intentional.
 - Known limit: an input that is finite can still produce a figure above the float range. AI ROI, unit economics and Rule of 40 compute exactly and print `Infinity` or `-Infinity` in the JSON for such a figure, never `NaN`. Market sizing computes in floats and can still print `NaN`, `Infinity` or `-Infinity`.

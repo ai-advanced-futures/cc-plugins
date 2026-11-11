@@ -45,6 +45,8 @@ The Rule of 40 report includes:
 | nrr | float | No | Net revenue retention, as a percentage (115, not 1.15) |
 | gross_margin | float | No | Gross margin, as a percentage (75, not 0.75) |
 
+Pass `--assumptions <path>` to use setup's `targets.rule_of_40_target` when the input gives no `target`.
+
 <!-- See docs/METHODOLOGY.md — Company Stage Definitions for ARR-to-stage mapping -->
 
 The two margins:
@@ -72,7 +74,7 @@ In valuation studies, growth outweighs FCF margin: 2–3 times for late-stage cl
 
 ## The Target
 
-No input picks the target: not the product type, the stage or an AI label. A target the person gives always applies; otherwise the target is 40.
+No input picks the target: not the product type, the stage or an AI label. A target the person gives on the run applies; otherwise setup's stored target, when the run passes `--assumptions`; otherwise 40. A stored target that is not 40, 50 or 60 stops the script with exit 3 when it would apply (in interactive mode, when the file is read before the first prompt); a run then goes on without --assumptions and says setup's target was not used.
 
 Each margin given is scored as growth + margin, and that score is graded against the target:
 - A score equal to or above the target is `met`. A lower score is `short by N`, where N is the target minus the score.
@@ -104,6 +106,7 @@ The ladder shows the score minus each bar. It is arithmetic, not a verdict, so i
 NRR and gross margin print as reference lines. They never enter the score, the status or a recommendation.
 - When `months_of_revenue` is 12 or less, the NRR line says NRR is not available before the thirteenth month of revenue. This line prints whether or not `nrr` is given.
 - Otherwise, NRR prints when it is given.
+- Gross margin prints when it is given.
 - Gross margin prints beside Bessemer's State of AI 2025 figures: AI Supernovas average 25% gross margins; Shooting Stars about 60%.
 
 ## Output Format
@@ -169,7 +172,7 @@ The target fields:
 | Field | Type | Values |
 |-------|------|--------|
 | `target` | int | 40, 50 or 60 |
-| `target_source` | string | `default` or `chosen` |
+| `target_source` | string | `default`, `chosen` or `setup` |
 | `target_status` | string | `met`, `short`, `split` or `not_graded` |
 | `target_lines[].status` | string | `met`, `short` or `not_graded` |
 | `target_notes` | string | Lines joined by newlines; empty string when none |
@@ -194,7 +197,7 @@ The target fields:
 4. **Print the Ladder and the Reference Lines:**
    - Subtract each bar of 40, 50 and 60 from each score
    - Print the source of each bar
-   - Print the NRR and gross margin lines when given
+   - Print the Reference Lines as the Reference Lines section says
 
 5. **Write the Recommendations:**
    - For each short margin: the gap, closed by N points of growth or N points of that margin

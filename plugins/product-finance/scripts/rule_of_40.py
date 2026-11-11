@@ -31,7 +31,14 @@ from typing import Any, ClassVar, Dict, List, Optional, Tuple
 if __package__ in (None, ""):  # run by path: uv run "<plugin root>/scripts/<file>.py"
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # its own package, never the cwd
 
-from scripts.input_check import checked_input, limits, read_json_input  # noqa: E402
+from scripts.input_check import (  # noqa: E402
+    EXIT_INPUTS,
+    check,
+    checked_input,
+    format_problem,
+    limits,
+    read_json_input,
+)
 from scripts.utils.enums import GrowthStage, MetricHealth  # noqa: E402
 from scripts.utils.exact import Number, as_written, shown  # noqa: E402
 from scripts.utils.magic_number import calculate_magic_number  # noqa: E402
@@ -79,6 +86,47 @@ class RuleOf40Input:
 
 # The classes input_check reads, in the order fields.json recorded them.
 INPUT_CLASSES = (RuleOf40Input,)
+
+
+@dataclass
+class RuleOf40Targets:
+    """The one key of setup's `targets` this script reads (spec 0.16.0 section 1)."""
+
+    rule_of_40_target: Optional[int] = limits(one_of=(40, 50, 60), default=None)
+
+
+@dataclass
+class AssumptionsTargets:
+    """Setup's assumptions file, as `--assumptions` reads it. Every other key is ignored.
+
+    Not an input class: it is checked only by `read_stored_target`.
+    """
+
+    targets: Optional[RuleOf40Targets] = None
+
+
+def read_stored_target(path: Path) -> Optional[int]:
+    """Setup's stored target from the assumptions file at `path`, or None when absent.
+
+    A file that cannot be read or does not parse prints one line and exits 1. A file
+    with problems prints its own header and one line per problem, and exits 3.
+    """
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError) as e:
+        why = getattr(e, "strerror", None) or e
+        print(f"Error: the assumptions file {path} cannot be read: {why}", file=sys.stderr)
+        sys.exit(1)
+    except (ValueError, RecursionError) as e:
+        print(f"Error: the assumptions file {path} is not valid JSON: {e}", file=sys.stderr)
+        sys.exit(1)
+    found, problems = check(AssumptionsTargets, raw)
+    if problems or found is None:
+        print(f"Error: Invalid assumptions file {path}:", file=sys.stderr)
+        for p in problems:
+            print(f"- {format_problem(p)}", file=sys.stderr)
+        raise SystemExit(EXIT_INPUTS)
+    return None if found.targets is None else found.targets.rule_of_40_target
 
 # The constants table (spec 0.15.0, "Verified sources"). Every quoted source string
 # lives here, and nowhere else in the plugin's code: the report and `--help` are built
@@ -276,7 +324,8 @@ class RuleOf40Result:
             markdown prints it; the JSON does not (spec section 5)
         health_status: Overall health assessment
         target: The target graded against: 40, 50 or 60
-        target_source: "default" when no target was given, else "chosen"
+        target_source: "chosen" when the input gave the target, else "setup" when
+            setup's stored target applied, else "default"
         target_status: "met", "short", "split" or "not_graded"
         target_lines: One line per given margin, EBITDA first
         target_notes: The Target section's split, age and size lines, without "- ",
@@ -311,7 +360,9 @@ class RuleOf40Result:
     magic_number: Optional[dict] = None
 
 
-def calculate_rule_of_40(data: RuleOf40Input) -> RuleOf40Result:
+def calculate_rule_of_40(
+    data: RuleOf40Input, stored_target: Optional[int] = None
+) -> RuleOf40Result:
     """Calculate Rule of 40 and weighted Rule of 40.
 
     Classic Rule of 40 Formula:
@@ -331,6 +382,8 @@ def calculate_rule_of_40(data: RuleOf40Input) -> RuleOf40Result:
 
     Args:
         data: Input data for Rule of 40 calculation
+        stored_target: Setup's stored target (40, 50 or 60), used when `data.target`
+            is None. Never read from the input.
 
     Returns:
         RuleOf40Result with calculated scores and comprehensive analysis
@@ -365,7 +418,12 @@ def calculate_rule_of_40(data: RuleOf40Input) -> RuleOf40Result:
     health_status = _assess_health(rule_of_40_score, data.company_stage)
 
     # Grade against the target, on each given margin (spec section 2)
-    target = DEFAULT_TARGET if data.target is None else data.target
+    if data.target is not None:
+        target, target_source = data.target, "chosen"
+    elif stored_target is not None:
+        target, target_source = stored_target, "setup"
+    else:
+        target, target_source = DEFAULT_TARGET, "default"
     fcf_margin = None if data.fcf_margin is None else as_written(data.fcf_margin)
     target_status, target_lines = target_status_for(
         growth, margin, fcf_margin, target, data.months_of_revenue)
@@ -418,7 +476,7 @@ def calculate_rule_of_40(data: RuleOf40Input) -> RuleOf40Result:
         fcf_margin=fcf_margin,
         health_status=health_status,
         target=target,
-        target_source="default" if data.target is None else "chosen",
+        target_source=target_source,
         target_status=target_status,
         target_lines=target_lines,
         target_notes=target_notes,
@@ -686,6 +744,7 @@ def format_result_as_json(result: RuleOf40Result) -> str:
         mn = dict(result.magic_number)
         if mn["magic_number"] is not None:
             mn["magic_number"] = float(shown(mn["magic_number"], 2))
+        del mn["interpretation"]
         output["magic_number"] = mn
 
     return json.dumps(output, indent=2)
@@ -717,7 +776,8 @@ def format_result_as_markdown(result: RuleOf40Result) -> str:
 
     lines.append("## Target")
     lines.append("")
-    source = "default" if result.target_source == "default" else "your choice"
+    source = {"default": "default", "chosen": "your choice",
+              "setup": "set in setup"}[result.target_source]
     lines.append(f"- **Target**: {result.target} ({source})")
     for line in result.target_lines:
         if line.status == "met":
@@ -789,7 +849,6 @@ def format_result_as_markdown(result: RuleOf40Result) -> str:
         else:
             lines.append("- **Magic Number**: N/A")
         lines.append(f"- **Health**: {mn['health'].upper()}")
-        lines.append(f"- **Interpretation**: {mn['interpretation']}")
         lines.append("")
 
     lines.append("## Recommendations")
@@ -827,14 +886,16 @@ Examples:
   # JSON file input
   python rule_of_40.py < input.json
   python rule_of_40.py --input input.json
+  python rule_of_40.py --input input.json --assumptions .product-finance/assumptions.json
 
   # Output formats
   python rule_of_40.py --format json
   python rule_of_40.py --format markdown
 
 Inputs beyond growth and EBITDA margin (all optional; percentages as 12.5, not 0.125):
-  target             40, 50 or 60 (default 40). 40 is Feld's 2015 rule; 50 has no
-                     published benchmark; Vista (2026) calls 60 "{VISTA_SHORT}".
+  target             40, 50 or 60 (default 40, or setup's with --assumptions). 40 is
+                     Feld's 2015 rule; 50 has no published benchmark; Vista (2026)
+                     calls 60 "{VISTA_SHORT}".
   fcf_margin         Free cash flow margin, %: (operating cash flow - capital spending)
                      / revenue x 100. Stock-based pay is not cash, so it is not subtracted.
   months_of_revenue  Months since first revenue. 12 or less: no verdict.
@@ -858,13 +919,28 @@ cost; adjusted EBITDA adds it back.
         help="Read the JSON input from this file instead of stdin",
     )
 
+    parser.add_argument(
+        "--assumptions",
+        type=Path,
+        metavar="PATH",
+        help="setup's assumptions file; its targets.rule_of_40_target (40, 50 or 60) "
+             "is used when the input gives no target",
+    )
+
     args = parser.parse_args()
 
     # Check if input is from a file or stdin
+    stored_target: Optional[int] = None
     if args.input is not None or not sys.stdin.isatty():
-        # Read JSON from the file, else from stdin
+        # Read JSON from the file, else from stdin; the input is checked first
         data = checked_input(RuleOf40Input, read_json_input(args.input))
+        if data.target is None and args.assumptions is not None:
+            stored_target = read_stored_target(args.assumptions)
     else:
+        # The one exception to the order: the file is read before the first prompt,
+        # so the target prompt can show the stored target (ADR-011)
+        if args.assumptions is not None:
+            stored_target = read_stored_target(args.assumptions)
         # Interactive mode
         print("Rule of 40 Calculator")
         print("=" * 50)
@@ -886,9 +962,13 @@ cost; adjusted EBITDA adds it back.
             if arr_input:
                 answers["arr"] = float(arr_input)
 
-            target_input = input(
+            target_prompt = (
                 "Target Rule of 40 score (40, 50 or 60, or press Enter for 40): "
-            ).strip()
+                if stored_target is None else
+                "Target Rule of 40 score (40, 50 or 60, or press Enter for "
+                f"{stored_target} from setup): "
+            )
+            target_input = input(target_prompt).strip()
             if target_input:
                 answers["target"] = float(target_input)
             fcf_input = input("FCF margin (% or press Enter to skip): ").strip()
@@ -940,7 +1020,7 @@ cost; adjusted EBITDA adds it back.
 
     # Calculate Rule of 40
     try:
-        result = calculate_rule_of_40(data)
+        result = calculate_rule_of_40(data, stored_target=stored_target)
     except Exception as e:
         print(f"Error calculating Rule of 40: {e}", file=sys.stderr)
         sys.exit(1)

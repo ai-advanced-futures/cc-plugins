@@ -22,7 +22,7 @@ DataSync Pro demonstrates strong financial health across all key metrics. The co
 | Net Revenue Retention | 115% | EXCELLENT | +5pts above |
 | Gross Margin | 78% | GOOD | +3pts above |
 | Monthly Churn | 1.2% | GOOD | 0.3pts better |
-| Rule of 40 | 82 | EXCELLENT | +42pts above |
+| Rule of 40 | 84.0 | met | +44.0 against 40 (default) |
 | LTV:CAC | 8.33x | EXCELLENT | +178% above |
 
 ### Overall Assessment
@@ -153,26 +153,59 @@ Operating Income:    -$ 55,000
 
 | Metric | Value | Benchmark | Status |
 |--------|-------|-----------|--------|
-| Rule of 40 | 82 | 40 | EXCELLENT |
+| Rule of 40 | 84.0 | 40 (default) | met |
 | Burn Multiple | 0.92 | 2.0 | EXCELLENT |
 | Magic Number | 0.84 | 0.75 | GOOD |
 | ARR per Employee | $120K | $100K | GOOD |
 
 ### Rule of 40 Calculation
 
-```
-ARR Growth Rate:     104%
-Operating Margin:    -22%
-========================
-Rule of 40 Score:     82  (EXCELLENT)
-```
+#### Key Metrics
+
+- **Rule of 40 Score**: 84.0%
+- **Weighted Rule of 40**: 124.9% (plugin convention, not graded)
+- **Revenue Growth Rate**: 104.0%
+- **EBITDA Margin**: -20.0%
+
+#### Target
+
+- **Target**: 40 (default)
+- **EBITDA basis**: 84.0 against 40: met
+- **Status**: MET
+- Age not checked: months_of_revenue was not given.
+- Caution (ICONIQ): "we typically only begin to place real weight against Rule of 40 for companies with at least $25M ARR", because "exceptional year-over-year growth inflates Rule of 40 performance for early-stage companies" (ICONIQ, The ICONIQ Enterprise Five (2025 KPIs)).
+
+#### Ladder
+
+| Bar | EBITDA basis | Source |
+|---|---|---|
+| 40 (target) | +44.0 | Feld (2015): "The 40% rule is that your growth rate + your profit should add up to 40%." |
+| 50 | +34.0 | No published benchmark found. A bar you set. |
+| 60 | +24.0 | Vista Equity Partners (8 Jan 2026): "an emerging aspiration, not a universal baseline". |
+
+#### Benchmark Comparison
+
+Classic Rule of 40: 84.0%
+Weighted Rule of 40: 124.9% (plugin convention, not graded)
+ARR: $3,000,000
+
+#### Growth vs. Profitability Balance
+
+Growth Rate: 104.0%
+EBITDA Margin: -20.0%
+
+#### Recommendations
+
+1. Meets the target of 40 on every margin given.
+
+---
+*Analysis based on Brad Feld's Rule of 40 framework*
 
 ### Key Insights
 
-1. **Rule of 40 score of 82** is exceptional and investor-ready
-2. **Burn multiple under 1.0** indicates highly efficient growth
-3. **Gross margin of 78%** provides room for continued investment
-4. **Operating margin of -22%** acceptable for growth stage but monitor
+1. **Burn multiple under 1.0** indicates highly efficient growth
+2. **Gross margin of 78%** provides room for continued investment
+3. **Operating margin of -22%** acceptable for growth stage but monitor
 
 ---
 
@@ -282,12 +315,7 @@ Burn Multiple:        0.92 (Excellent)
 | Gross Margin | 78% | 72% | 80% | 70th |
 | ARR Growth | 104% | 80% | 120% | 65th |
 | LTV:CAC | 8.33x | 3.5x | 5.0x | 95th |
-| Rule of 40 | 82 | 35 | 55 | 95th |
 | Monthly Churn | 1.2% | 2.0% | 1.0% | 70th |
-
-### Benchmark Summary
-
-DataSync Pro performs in the **top quartile** on most metrics, with particularly strong performance on efficiency metrics (Rule of 40, LTV:CAC). Areas for improvement include ARR growth rate, where the company is above median but below top quartile.
 
 ---
 
@@ -297,9 +325,8 @@ DataSync Pro performs in the **top quartile** on most metrics, with particularly
 
 | Priority | Action | Rationale | Expected Impact |
 |----------|--------|-----------|-----------------|
-| 1 | Accelerate growth investment | Rule of 40 of 82 and LTV:CAC of 8.3x indicate room for aggressive growth | Increase ARR growth from 104% to 120%+ |
-| 2 | Begin Series B preparation | Strong metrics position company well for fundraise | Secure $25-40M to accelerate growth |
-| 3 | Reduce enterprise segment churn | Enterprise churn at 0.8% can be improved to <0.5% | Increase GRR from 94% to 96%+ |
+| 1 | Begin Series B preparation | Strong metrics position company well for fundraise | Secure $25-40M to accelerate growth |
+| 2 | Reduce enterprise segment churn | Enterprise churn at 0.8% can be improved to <0.5% | Increase GRR from 94% to 96%+ |
 
 ### Strategic Initiatives (Next 6 Months)
 

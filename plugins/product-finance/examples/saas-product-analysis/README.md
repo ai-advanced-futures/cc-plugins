@@ -75,7 +75,7 @@ This will generate:
 | Net Revenue Retention | 115% | EXCELLENT |
 | Gross Margin | 78% | GOOD |
 | Churn Rate | 1.2% monthly | GOOD |
-| Rule of 40 | 86.5 | EXCELLENT |
+| Rule of 40 | 84.0 | met against 40 (default) |
 
 ### Unit Economics Summary
 
@@ -89,10 +89,9 @@ This will generate:
 
 ### Key Recommendations
 
-1. **Continue aggressive growth** - Rule of 40 score of 86.5 indicates room to accelerate growth
-2. **Optimize CAC** - While healthy, CAC of $45K leaves room for channel optimization
-3. **Focus on expansion revenue** - 115% NRR is strong; target 120%+ for Series B
-4. **Maintain churn discipline** - 1.2% monthly churn is good but target <1% for enterprise
+1. **Optimize CAC** - While healthy, CAC of $45K leaves room for channel optimization
+2. **Focus on expansion revenue** - 115% NRR is strong; target 120%+ for Series B
+3. **Maintain churn discipline** - 1.2% monthly churn is good but target <1% for enterprise
 
 ## Customizing This Example
 

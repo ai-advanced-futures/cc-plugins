@@ -1,6 +1,6 @@
 ---
 description: Comprehensive unit economics analysis including CAC, LTV, LTV:CAC ratio, CAC payback period, Magic Number, and cohort analysis for customer profitability assessment
-allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Edit(/.product-finance/**), Read(/${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json), Read(/${CLAUDE_PLUGIN_ROOT}/agents/financial-analyst.md), Read(/${CLAUDE_PLUGIN_ROOT}/references/unit-economics-examples.md), Read(/${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json), Read(/${CLAUDE_PLUGIN_ROOT}/skills/calculations-unit-economics/SKILL.md), Read(/${CLAUDE_PLUGIN_ROOT}/skills/calculations-rule-of-40/SKILL.md), Read(/${CLAUDE_PLUGIN_ROOT}/skills/analysis-benchmark-comparison/SKILL.md)
+allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/result_name.py *), Edit(/.product-finance/**), Read(/${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json), Read(/${CLAUDE_PLUGIN_ROOT}/agents/financial-analyst.md), Read(/${CLAUDE_PLUGIN_ROOT}/references/unit-economics-examples.md), Read(/${CLAUDE_PLUGIN_ROOT}/templates/assumptions.json), Read(/${CLAUDE_PLUGIN_ROOT}/skills/calculations-unit-economics/SKILL.md), Read(/${CLAUDE_PLUGIN_ROOT}/commands/health-check.md), Read(/${CLAUDE_PLUGIN_ROOT}/skills/analysis-benchmark-comparison/SKILL.md)
 ---
 
 # Unit Economics Command
@@ -823,7 +823,9 @@ Structured data following schema:
 
 Executive dashboard:
 
-```markdown
+For an estimated Magic Number, leave the band sentence out of the sample below.
+
+````markdown
 # Unit Economics Dashboard
 
 **Analysis Period:** H2 2025 (July - December)
@@ -1201,11 +1203,13 @@ Target: >80% at M6, >70% at M12 ✓
 *Unit Economics Dashboard - Product Finance Plugin*
 *Analysis Confidence: High | Data Source: Actual H2 2025*
 *Next Review: April 2026 (Quarterly)*
-```
+````
 
 ### Console Output
 
 **Summary displayed to user:**
+
+For an estimated Magic Number, leave the band sentence out of the sample below.
 
 ```
 Unit Economics Analysis Complete!
@@ -1478,7 +1482,7 @@ Health Status:
 - 60-74: Acceptable
 - <60: Needs Improvement
 
-When the Magic Number is an estimate, score only the other components. Overall Health Score = (points scored × 100) / (the maximum points of the components scored), rounded to a whole number. Show the Magic Number's own band, not its points. For an estimate, show the band but not the band's sentence: leave out the whole `benchmark_notes` text (for example, not "Consider increasing S&M investment.").
+When the Magic Number is an estimate, score only the other components. Overall Health Score = (points scored × 100) / (the maximum points of the components scored), rounded to a whole number. Show the Magic Number's own band, not its points. For an estimate, name the band from `health_status` and print no band sentence; `benchmark_notes` is null.
 
 When the Magic Number is an estimate, no recommendation and no risk line acts on its band, including "Magic Number falls below 0.75". The only Magic Number recommendation is this sentence, with `<value>` replaced by the Magic Number to two decimal places: `Recalculate the Magic Number with the prior quarter's S&M spend: <value> is an estimate.`
 

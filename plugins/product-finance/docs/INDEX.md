@@ -16,6 +16,7 @@ The numbers 003 and 004 are not used. The plugin does not have those decisions.
 | [ADR-008](adr/ADR-008-shared-input-checker.md) | The shared standard-library input checker: its limits, the go-together rule, plain reasons, exit code 3 for a refused input, the shared input read, and `not a finite number` for NaN and Infinity |
 | [ADR-009](adr/ADR-009-exact-figures.md) | Exact figures: each printed figure of the unit economics, Rule of 40 and AI ROI scripts is computed in `Fraction` from the inputs as written, and is rounded half away from zero only at output |
 | [ADR-010](adr/ADR-010-rule-of-40-targets.md) | Rule of 40 targets (decided 2026-11-08, built in v0.15.0): one score; target 40, 50 or 60 with a default of 40 and no inference from product type; each given margin scored on its own line, `split` when they disagree; 1.33/0.67 weighting kept; a 12-month revenue gate; every bar labelled by its source |
+| [ADR-011](adr/ADR-011-rule-of-40-runs.md) | Rule of 40 runs (decided 2026-11-09, built in v0.16.0): setup's target is read with `--assumptions`; the health check runs `rule_of_40.py`; the Magic Number band sentence leaves the Rule of 40 report |
 
 ## Methodology and Reference
 

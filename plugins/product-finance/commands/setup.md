@@ -264,9 +264,15 @@ Collect **fully-loaded costs** (salary + benefits + overhead = typically 1.5-2x 
 
 **If yes:**
 
-- "Target Rule of 40 score?" (number, default: 40)
-  - *Explanation: Growth % + EBITDA Margin % ≥ 40% indicates healthy SaaS business*
-  - Tell the person: `rule_of_40.py` does not read this target. Its input takes `target` as 40, 50 or 60 only.
+- "Target Rule of 40 score: 40, 50 or 60?" (default: 40)
+  - *Explanation: 40 is Feld's rule (2015). 50 has no published benchmark: a bar you set. Vista (2026) calls 60 "an emerging aspiration, not a universal baseline".*
+  - Store a chosen target as `targets.rule_of_40_target` in `.product-finance/assumptions.json`, written as a JSON integer (40, 50 or 60).
+  - Pressing Enter at this question stores no target and removes any `targets.rule_of_40_target` already in the file, so runs report `(default)`. Typing 40 stores 40.
+  - Tell the person: the health check and `rule_of_40.py --assumptions` use this target when a run gives none. A target given on a run wins.
+  - Any answer other than 40, 50 or 60 is asked again once, with the three values. A second wrong answer stores no Rule of 40 target and removes any `targets.rule_of_40_target` already in the file, and the setup summary says `Rule of 40 target: not stored (<value> is not 40, 50 or 60); runs use 40.`
+  - In automated mode, an auto answer (`target_rule_of_40`) that is not 40, 50 or 60 is not stored and removes any `targets.rule_of_40_target` already in the file, and the setup summary says `Rule of 40 target: not stored (<value> is not 40, 50 or 60); runs use 40.`
+  - An automated run whose auto answers carry no `target_rule_of_40` stores no target and removes any `targets.rule_of_40_target` already in the file, so runs report `(default)`.
+  - The setup summary's `Rule of 40 target:` line reports the target the next run will use: the stored target, or 40 when none is stored.
 - "Target LTV:CAC ratio?" (number, default: 3.0)
   - *Guidance: 3:1 is minimum healthy, 5:1+ is excellent*
 - "Target CAC payback period (months)?" (number, default: 12)
@@ -278,6 +284,7 @@ Collect **fully-loaded costs** (salary + benefits + overhead = typically 1.5-2x 
 
 **If no:**
 - Use standard SaaS benchmarks as defaults
+- Answering no to the targets question removes any `targets.rule_of_40_target` already in the file, so runs report `(default)`.
 
 ## Output
 
@@ -344,7 +351,7 @@ Current Metrics (Existing Product):
   - Monthly Churn: 3%
 
 Targets:
-  - Rule of 40: ≥40
+  - Rule of 40 target: 40
   - LTV:CAC: ≥3.0
   - CAC Payback: ≤12 months
   - Gross Margin: ≥70%
@@ -532,7 +539,7 @@ Growth:
   - Sales cycle: 90 days
 
 Targets: custom
-  - Rule of 40: 50
+  - Rule of 40 target: 50
   - LTV:CAC: 4.0
   - CAC payback: 10 months
   - Gross margin: 75%

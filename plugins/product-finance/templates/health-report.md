@@ -34,55 +34,8 @@ No critical alerts at this time.
 
 ## 1. Rule of 40 Assessment
 
-### Score: {{RULE_OF_40_SCORE}} {{RULE_OF_40_INDICATOR}}
-
-| Component | Value | Contribution |
-|-----------|-------|--------------|
-| Growth Rate | {{GROWTH_RATE}}% | {{GROWTH_CONTRIBUTION}} |
-| EBITDA Margin | {{EBITDA_MARGIN}}% | {{EBITDA_CONTRIBUTION}} |
-| **Rule of 40** | **{{RULE_OF_40_SCORE}}** | **{{RULE_OF_40_STATUS}}** |
-
-**Compliance Status:** {{RULE_OF_40_COMPLIANCE}}
-
-```
-Rule of 40 Calculation:
-=======================
-Growth Rate %     + EBITDA Margin %  = Rule of 40 Score
-{{GROWTH_RATE}}%  + {{EBITDA_MARGIN}}%  = {{RULE_OF_40_SCORE}}
-
-Threshold: >= 40 = Healthy
-Status: {{RULE_OF_40_STATUS}}
-```
-
-### Trend Analysis
-
-| Period | Growth Rate | EBITDA Margin | Rule of 40 | Trend |
-|--------|-------------|---------------|------------|-------|
-{{#RULE_OF_40_TREND}}
-| {{PERIOD}} | {{GROWTH_RATE}}% | {{EBITDA_MARGIN}}% | {{SCORE}} | {{TREND_INDICATOR}} |
-{{/RULE_OF_40_TREND}}
-
-### Benchmark Comparison
-
-| Percentile | Score | Your Position |
-|------------|-------|---------------|
-| Top Quartile | 70+ | {{TOP_QUARTILE_STATUS}} |
-| Median | 45 | {{MEDIAN_STATUS}} |
-| Bottom Quartile | 20 | {{BOTTOM_QUARTILE_STATUS}} |
-
-**Interpretation:** {{RULE_OF_40_INTERPRETATION}}
-
-### Weighted Rule of 40
-
-**Score:** {{WEIGHTED_RULE_OF_40}}
-
-```
-Weighted Rule of 40 = (1.33 x Growth Rate) + (0.67 x EBITDA Margin)
-                    = (1.33 x {{GROWTH_RATE}}%) + (0.67 x {{EBITDA_MARGIN}}%)
-                    = {{WEIGHTED_RULE_OF_40}}
-```
-
-This weighted calculation favors growth, reflecting that high-growth companies command premium valuations even with lower profitability.
+<!-- the markdown of rule_of_40.py from ## Key Metrics on, headings demoted -->
+{{RULE_OF_40_SECTION}}
 
 ---
 
@@ -485,7 +438,6 @@ AI ROI = {{AI_ROI}}%
 | LTV:CAC Ratio | {{LTV_CAC_RATIO}}x | {{LTV_CAC_TARGET}}x | {{LTV_CAC_TOP_25}}x | {{LTV_CAC_MEDIAN}}x | {{LTV_CAC_BOTTOM_25}}x | {{LTV_CAC_BENCHMARK_STATUS}} |
 | CAC Payback | {{CAC_PAYBACK_MONTHS}}mo | {{PAYBACK_TARGET}}mo | {{PAYBACK_TOP_25}}mo | {{PAYBACK_MEDIAN}}mo | {{PAYBACK_BOTTOM_25}}mo | {{PAYBACK_BENCHMARK_STATUS}} |
 | Magic Number | {{MAGIC_NUMBER}} | {{MAGIC_TARGET}} | {{MAGIC_TOP_25}} | {{MAGIC_MEDIAN}} | {{MAGIC_BOTTOM_25}} | {{MAGIC_BENCHMARK_STATUS}} |
-| Rule of 40 | {{RULE_OF_40_SCORE}} | {{R40_TARGET}} | {{R40_TOP_25}} | {{R40_MEDIAN}} | {{R40_BOTTOM_25}} | {{R40_BENCHMARK_STATUS}} |
 
 ### Competitive Position Summary
 
@@ -659,19 +611,7 @@ By {{TWELVE_MONTH_DATE}}, the company should achieve:
 ## Appendix: Calculation Details
 
 ### Rule of 40 Calculation
-```
-Rule of 40 = ARR Growth Rate % + EBITDA Margin %
-
-Growth Rate = (Current ARR - Prior Year ARR) / Prior Year ARR x 100
-Growth Rate = ({{ARR_CURRENT}} - {{ARR_PRIOR_YEAR}}) / {{ARR_PRIOR_YEAR}} x 100
-Growth Rate = {{ARR_GROWTH_RATE}}%
-
-EBITDA Margin = EBITDA / ARR x 100
-EBITDA Margin = {{EBITDA}} / {{ARR_CURRENT}} x 100
-EBITDA Margin = {{EBITDA_MARGIN}}%
-
-Rule of 40 = {{ARR_GROWTH_RATE}}% + {{EBITDA_MARGIN}}% = {{RULE_OF_40_SCORE}}
-```
+See the Rule of 40 section.
 
 ### LTV Calculation
 ```
@@ -753,7 +693,7 @@ Burn Multiple = {{NET_BURN}} / {{NET_NEW_ARR}} = {{BURN_MULTIPLE}}
 | NRR | Net Revenue Retention - revenue retention including expansion |
 | GRR | Gross Revenue Retention - revenue retention excluding expansion |
 | EBITDA | Earnings Before Interest, Taxes, Depreciation, and Amortization |
-| Rule of 40 | Growth Rate % + EBITDA Margin % (target >= 40) |
+| Rule of 40 | Growth Rate % + EBITDA Margin %, against a target of 40, 50 or 60 (default 40) |
 | Magic Number | Sales efficiency ratio (Net New ARR / S&M Spend) |
 | Burn Multiple | Capital efficiency (Net Burn / Net New ARR) |
 | ARPC | Average Revenue Per Customer |

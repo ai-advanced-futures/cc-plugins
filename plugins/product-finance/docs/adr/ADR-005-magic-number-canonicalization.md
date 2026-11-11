@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-03
 **Status:** Accepted
-**Plugin:** product-finance v0.6.0, amended in v0.14.0
+**Plugin:** product-finance v0.6.0, amended in v0.14.0 and v0.16.0
 
 ## Context
 
@@ -102,3 +102,7 @@ The canonical `None`-spend branch returns `MetricHealth.UNKNOWN` ("unknown"). Th
 - **F55 ✅ RESOLVED:** `unit_economics.calculate_magic_number_safe` (test-only simple primitive) DELETED. The `DEFERRED_ALLOWLIST` in `test_magic_number.py` is now empty.
 - **F56 ✅ RESOLVED:** `utils/calculators.calculate_magic_number` (dead simple primitive) + its `scripts/utils/__init__.py` export DELETED. The canonical `magic_number.calculate_magic_number` and the live `unit_economics.calculate_magic_number` wrapper are unaffected.
 - **F51 (related):** the enum-consolidation pattern F6 established for health enums is extended to `GrowthStage` and `AIProvider`. Canonical `AIProvider` (`scripts/utils/enums.py`) is grown to a 10-member union (adds `AWS_BEDROCK`/`AZURE_OPENAI`/`HUGGINGFACE`/`CUSTOM`; existing `AWS`/`AZURE`/`OTHER` retained). `rule_of_40.py` and `ai_roi_calculator.py` now import the canonical enums; `test_enum_consolidation.py` bans all four enum names.
+
+## Amendment in v0.16.0
+
+The Rule of 40 report and JSON no longer print `interpretation`; the dict still carries it (#1 and LOCK-POINT A).
