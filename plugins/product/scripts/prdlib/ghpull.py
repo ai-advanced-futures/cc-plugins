@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import ghmodel, ghplan, ghsnapshot
+from . import DataError, ghmodel, ghplan, ghsnapshot
 from .ids import resolve
 from .new_page import create
 from .page import load_page, write_page
@@ -20,6 +20,18 @@ from .statecmd import change as change_state, stored_state
 from .tree import bundle_dir
 
 PULLED = " (pulled from GitHub)"
+APP_SUFFIX = "[bot]"
+
+
+def pull_actor(login: str) -> str:
+    """The actor of a pulled change. A GitHub App is an agent, not a person
+    (DECISION-04: an agent never writes a `human:` actor), and its login
+    ends with `[bot]`, which no actor holds. The actor is the slug with
+    `-bot`: `example-app[bot]` gives `agent:example-app-bot`. A person has
+    the `human:` actor, as before."""
+    if login.endswith(APP_SUFFIX):
+        return f"agent:{login[:-len(APP_SUFFIX)]}-bot"
+    return f"human:{login}"
 
 
 @dataclass
@@ -166,8 +178,28 @@ def _pull_state(root, page_id, frontmatter, issue, login, report, now, tree):
             f"because the blockers give {computed}. Close the blockers, or "
             f"change them, and run the sync again.")
         return False
-    change_state(root, page_id, live, f"human:{who or login}", now=now,
-                 tree=tree)
+    actor = pull_actor(who or login)
+    # The change is already made in GitHub. For an agent, the issue is the
+    # approval that the state command asks for (DECISION-04, D-037). A cancel
+    # and a reopen need a hitl card or a D-id: the pull has none, so it names
+    # the way out and writes nothing.
+    approved_by = None if actor.startswith("human:") else f"#{issue['number']}"
+    try:
+        change_state(root, page_id, live, actor, now=now, tree=tree,
+                     approved_by=approved_by)
+    except DataError as refusal:
+        if approved_by is None:
+            raise
+        line = (f"{page_id}: {actor} moved issue #{issue['number']} to "
+                f"{live}, and the bundle stays {page_state}. {refusal}.")
+        # Only a cancel or a reopen is a refusal that a card or a D-id fixes.
+        # Another refusal (for example, no spec for backlog to ready) stays
+        # with no command, because an approval does not change it.
+        if "hitl card link" in str(refusal):
+            line += (f" Make the move with `prd.py state {page_id} {live} "
+                     f"--actor {actor} --approved-by <card or D-id>`.")
+        report.conflicts.append(line)
+        return False
     if not who:
         _mark_pulled(root, page_id)
     report.applied.append(f"{page_id}: state {page_state} -> {live}")

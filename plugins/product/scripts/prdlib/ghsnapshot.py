@@ -35,7 +35,7 @@ query($owner: String!, $name: String!, $after: String,
         parent { number id }
         blockedBy(first: 50) { totalCount nodes { number id } }
         timelineItems(last: 1, itemTypes: [CLOSED_EVENT]) {
-          nodes { ... on ClosedEvent { actor { login } } }
+          nodes { ... on ClosedEvent { actor { __typename login } } }
         }
       }
     }
@@ -280,6 +280,19 @@ def _milestone(item: dict) -> dict:
             "okf": marker_target(item.get("description") or "")}
 
 
+def _actor_login(actor: dict | None) -> str | None:
+    """The login of a GraphQL actor, in the form of REST. For a GitHub App,
+    GraphQL gives `__typename: Bot` and the slug with no `[bot]`, and REST
+    gives `<slug>[bot]`. The pull reads the `[bot]` ending to tell an agent
+    from a person, so the reader adds it here, in the one place that reads an
+    actor."""
+    actor = actor or {}
+    login = actor.get("login")
+    if login and actor.get("__typename") == "Bot" and not login.endswith("[bot]"):
+        return f"{login}[bot]"
+    return login
+
+
 def _issue(node: dict, cards: dict | None = None) -> dict:
     closed = _nodes(node.get("timelineItems"))
     blockers = node.get("blockedBy") or {}
@@ -309,8 +322,7 @@ def _issue(node: dict, cards: dict | None = None) -> dict:
         "state": node.get("state", "OPEN"),
         "state_reason": node.get("stateReason"),
         "okf": marker_target(node.get("body") or ""),
-        "closed_by": ((closed[-1].get("actor") or {}).get("login")
-                      if closed else None),
+        "closed_by": _actor_login(closed[-1].get("actor")) if closed else None,
         "project_item": (cards or {}).get(node["number"]),
     }
 

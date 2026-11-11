@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.7.1
+
+### Fixed
+- `prd.py github pull` no longer stops with `human:<app>[bot] is not an actor` when a GitHub App closed an issue or moved a card. A login that ends with `[bot]` is an agent, not a person: the Event line names `agent:<slug>-bot` (`example-app[bot]` gives `agent:example-app-bot`), and the issue (`#<n>`) is the approval of the change, as `product:roadmap-sync` already tells an agent. A cancel or a reopen by an App needs a hitl card or a D-id (DECISION-04), so the pull writes nothing for it and reports a conflict with the `prd.py state ... --approved-by` command. The same holds when the gh login of the session is the App.
+- The GraphQL read of the closer asks for `__typename`. For an App, GraphQL gives `Bot` and the slug with no `[bot]`, so the reader adds `[bot]` (the form of REST). Before, an App closer reached the pull as a plain login.
+
 ## 6.7.0
 
 ### Changed
