@@ -355,8 +355,10 @@ Run every agent you dispatch in the foreground and wait for it to finish; never 
 Each dispatch gives the agent these fields:
 - `project_context`: the values of `.ux-config.json`
 - `inputs`: a list of absolute paths of the phase inputs. A file that the brain holds goes through `view --out` first (section "Save the brain")
-- `output_dir`: an absolute path (default `<project>/.ux-artifacts`). The `allowed-tools` of this skill let an agent write only in `<project>/.ux-artifacts/`. For another folder, Claude Code asks the person, and a run with no person refuses the write.
+- `output_dir`: the absolute path `<project>/.ux-artifacts` (a reviewer of the test phase gets `<project>/.ux-artifacts/reviews/<reviewer>`). The `allowed-tools` of this skill let an agent write only in `<project>/.ux-artifacts/`, and a run with no person refuses each other write. So give no other folder, also when the request names one.
 - `method_file`: the absolute path of the skill that holds the method of the phase, `${CLAUDE_PLUGIN_ROOT}/skills/<phase>/SKILL.md` (the test phase uses `${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md`)
+
+**A file outside `.ux-artifacts/`.** When the request asks to write, copy or export a file outside `<project>/.ux-artifacts/` (for example an export copy in another folder, or a notes file in the project root), do not pass that order to an agent, and do not do it in this conversation, because the grants of this skill approve no write outside `.ux-artifacts/`, and a run with no person refuses it. Say "This plugin writes only in .ux-artifacts/, so it did not write <the file>.", and go on with the phase. Write that line again in your last message of the run, because a run with no person shows only the last message.
 
 After a dispatch, when `<output_dir>/open-questions.md` exists, ask its questions with AskUserQuestion. After you ask its questions, delete `<output_dir>/open-questions.md`. Then dispatch the same agent again with the answers. Run that dispatch in the foreground too, with `run_in_background: false`. In a run with no person, do the steps of "A run with no person" (section "1. Initialization") instead. Then show the paths of the phase outputs and ask the next-phase question with AskUserQuestion (options: yes, no, learn more).
 

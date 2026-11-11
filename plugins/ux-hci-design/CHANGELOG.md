@@ -2,6 +2,13 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.6.6 - 2026-11-11
+
+STORY-369.
+
+- `ux-design` gives each phase agent the `output_dir` `<project>/.ux-artifacts` (a reviewer: `<project>/.ux-artifacts/reviews/<reviewer>`). The choice of another folder, in the text since 1.6.1, is removed, also when the request names one.
+- `ux-design` does not pass an order to write, copy or export a file outside `.ux-artifacts/` to an agent, and does not do it in the main conversation. It says "This plugin writes only in .ux-artifacts/, so it did not write <the file>.", goes on with the phase, and says the line again in its last message. Before this change, the main conversation tried the writes (3 of 3 live runs), and Claude Code refused each call.
+
 ## 1.6.5 - 2026-11-11
 
 STORY-370.
