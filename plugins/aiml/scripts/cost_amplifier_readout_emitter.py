@@ -140,9 +140,14 @@ def main(argv=None) -> int:
         print(f"Emit error: {e}", file=sys.stderr)
         return 1
 
+    try:
+        text = json.dumps(out_dict, indent=2, allow_nan=False)
+    except ValueError:
+        print("Output holds a number that is not finite", file=sys.stderr)
+        return 2
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(out_dict, indent=2))
+    out_path.write_text(text)
     if args.verbose:
         print(f"Wrote {out_path}", file=sys.stderr)
     return 0

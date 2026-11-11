@@ -110,6 +110,10 @@ def main(argv=None):
     import json
     import os
     import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _safe_input import InputFileError, finite_float, finite_int, read_json
 
     def fail(message):
         print(f"error: {message}", file=sys.stderr)
@@ -138,7 +142,10 @@ def main(argv=None):
 
     def emit(result, out):
         """Print the JSON object, or write it to `out` (the object and a new line) and print nothing."""
-        text = json.dumps(result)
+        try:
+            text = json.dumps(result, allow_nan=False)
+        except ValueError:
+            fail("the result holds a number that is not finite")
         if out is None:
             print(text)
             return
@@ -148,6 +155,9 @@ def main(argv=None):
                 handle.write(text + "\n")
         except OSError as exc:
             fail(f"{out}: cannot write the file: {exc.strerror}")
+
+    def show(result):
+        emit(result, None)
 
     def is_number(value):
         return isinstance(value, (int, float)) and not isinstance(value, bool)
@@ -171,12 +181,11 @@ def main(argv=None):
     def read_input(path):
         """Read the input file: each key is 1 or 2 values to check, in order. Returns the results in the same order."""
         try:
-            with open(path, encoding="utf-8") as handle:
-                data = json.load(handle)
+            data = read_json(path)
         except OSError as exc:
             fail(f"{path}: cannot read the file: {exc.strerror}")
-        except ValueError as exc:
-            fail(f"{path}: not valid JSON: {exc}")
+        except InputFileError as exc:
+            fail(str(exc))
         if not isinstance(data, dict):
             fail(f"{path}: must be a JSON object")
         for key, values in data.items():
@@ -199,12 +208,12 @@ def main(argv=None):
                                         'each key (lr, batch_size, epochs, lora) holds 1 or 2 values, in order')
     parser.add_argument("--out", help="with --input: write the JSON object to this file inside the folder .aiml "
                                       "(the old file is deleted first), and print nothing")
-    parser.add_argument("--lr", type=float, help="Validate learning rate value")
-    parser.add_argument("--batch-size", type=int, help="Validate batch size value")
-    parser.add_argument("--epochs", type=int, help="Validate epoch count")
-    parser.add_argument("--lora-rank", type=int, help="LoRA rank R (use with --lora-alpha and --lora-dropout)")
-    parser.add_argument("--lora-alpha", type=float, help="LoRA alpha A")
-    parser.add_argument("--lora-dropout", type=float, help="LoRA dropout D")
+    parser.add_argument("--lr", type=finite_float, help="Validate learning rate value")
+    parser.add_argument("--batch-size", type=finite_int, help="Validate batch size value")
+    parser.add_argument("--epochs", type=finite_int, help="Validate epoch count")
+    parser.add_argument("--lora-rank", type=finite_int, help="LoRA rank R (use with --lora-alpha and --lora-dropout)")
+    parser.add_argument("--lora-alpha", type=finite_float, help="LoRA alpha A")
+    parser.add_argument("--lora-dropout", type=finite_float, help="LoRA dropout D")
     args = parser.parse_args(arguments)
 
     if args.validate:
@@ -228,13 +237,13 @@ def main(argv=None):
         fail("--lora-rank, --lora-alpha and --lora-dropout go together")
 
     if args.lr is not None:
-        print(json.dumps(validate_learning_rate(args.lr)))
+        show(validate_learning_rate(args.lr))
     if args.batch_size is not None:
-        print(json.dumps(validate_batch_size(args.batch_size, dataset_size=10000)))
+        show(validate_batch_size(args.batch_size, dataset_size=10000))
     if args.epochs is not None:
-        print(json.dumps(validate_epochs(args.epochs, dataset_size=10000, batch_size=32)))
+        show(validate_epochs(args.epochs, dataset_size=10000, batch_size=32))
     if args.lora_rank is not None:
-        print(json.dumps(validate_lora_config(args.lora_rank, args.lora_alpha, args.lora_dropout)))
+        show(validate_lora_config(args.lora_rank, args.lora_alpha, args.lora_dropout))
 
 
 if __name__ == "__main__":

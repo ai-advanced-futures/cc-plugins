@@ -19,6 +19,7 @@ from jsonschema import Draft7Validator
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _jsonschema_formats import FORMAT_CHECKER, SCHEMAS_DIR  # noqa: E402
+from _safe_input import read_json  # noqa: E402
 
 INPUT_SCHEMA_PATH = SCHEMAS_DIR / "archetype-cost-samples.schema.json"
 
@@ -45,7 +46,7 @@ def _input_schema() -> dict:
 
 def load_and_validate(path: Path) -> ArchetypeCostSamples:
     """Parse + schema-validate an archetype-cost-samples v1.0.0 file."""
-    obj = json.loads(Path(path).read_text())
+    obj = read_json(path)
     Draft7Validator(_input_schema(), format_checker=FORMAT_CHECKER).validate(obj)
     archetypes = {
         name: ArchetypeSampleEntry(

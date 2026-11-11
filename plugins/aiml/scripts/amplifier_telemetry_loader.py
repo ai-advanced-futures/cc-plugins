@@ -12,6 +12,7 @@ from jsonschema import Draft7Validator
 # this loader is invoked as `python3 plugins/aiml/scripts/amplifier_telemetry_loader.py`.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _jsonschema_formats import FORMAT_CHECKER, SCHEMAS_DIR  # noqa: E402
+from _safe_input import read_json  # noqa: E402
 
 # Resolve schema path relative to repo root (3 parents up from plugins/aiml/scripts/).
 _SCHEMA_PATH = SCHEMAS_DIR / "amplifier-telemetry-input.schema.json"
@@ -49,7 +50,7 @@ class AmplifierTelemetryInput:
 def load_and_validate(path: Path) -> AmplifierTelemetryInput:
     """Load JSON, validate against Charter §7.10 schema, return AmplifierTelemetryInput."""
     try:
-        raw = json.loads(Path(path).read_text())
+        raw = read_json(path)
     except FileNotFoundError as e:
         raise FileNotFoundError(f"Input file not found: {path}") from e
     schema = json.loads(_SCHEMA_PATH.read_text())

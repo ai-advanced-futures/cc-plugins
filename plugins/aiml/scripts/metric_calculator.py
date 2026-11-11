@@ -60,6 +60,10 @@ def main(argv=None):
     import json
     import os
     import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _safe_input import InputFileError, finite_float, is_finite, read_json
 
     def fail(message):
         print(f"error: {message}", file=sys.stderr)
@@ -88,7 +92,10 @@ def main(argv=None):
 
     def emit(result, out):
         """Print the JSON object, or write it to `out` (the object and a new line) and print nothing."""
-        text = json.dumps(result)
+        try:
+            text = json.dumps(result, allow_nan=False)
+        except ValueError:
+            fail("the result holds a number that is not finite")
         if out is None:
             print(text)
             return
@@ -105,12 +112,11 @@ def main(argv=None):
     def read_input(path, keys):
         """Read the input file. Each key of `keys` maps to a check that returns True for a good value."""
         try:
-            with open(path, encoding="utf-8") as handle:
-                data = json.load(handle)
+            data = read_json(path)
         except OSError as exc:
             fail(f"{path}: cannot read the file: {exc.strerror}")
-        except ValueError as exc:
-            fail(f"{path}: not valid JSON: {exc}")
+        except InputFileError as exc:
+            fail(str(exc))
         if not isinstance(data, dict):
             fail(f"{path}: must be a JSON object")
         for key, (is_good, kind) in keys.items():
@@ -133,10 +139,10 @@ def main(argv=None):
     p = sub.add_parser("confusion", parents=[common], allow_abbrev=False,
                        help="Precision, recall, F1 and accuracy from a confusion matrix")
     p.add_argument("--input", help='JSON file, for example {"tp": 80, "tn": 90, "fp": 10, "fn": 20}')
-    p.add_argument("--tp", type=float)
-    p.add_argument("--tn", type=float)
-    p.add_argument("--fp", type=float)
-    p.add_argument("--fn", type=float)
+    p.add_argument("--tp", type=finite_float)
+    p.add_argument("--tn", type=finite_float)
+    p.add_argument("--fp", type=finite_float)
+    p.add_argument("--fn", type=finite_float)
 
     p = sub.add_parser("roc-auc", parents=[common], allow_abbrev=False,
                        help="AUC from (TPR, FPR) pairs by the trapezoidal rule")
@@ -164,7 +170,7 @@ def main(argv=None):
         discard_old(args.out)
         data = read_input(args.input, {"pairs": (
             lambda v: isinstance(v, list) and all(
-                isinstance(x, list) and len(x) == 2 and all(isinstance(n, (int, float)) for n in x)
+                isinstance(x, list) and len(x) == 2 and all(is_finite(n) for n in x)
                 for x in v
             ),
             "a list of [tpr, fpr] pairs")})

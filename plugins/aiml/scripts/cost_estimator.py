@@ -63,6 +63,10 @@ def main(argv=None):
     import argparse
     import json
     import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _safe_input import finite_float, finite_int
 
     def fail(message):
         print(f"error: {message}", file=sys.stderr)
@@ -77,18 +81,18 @@ def main(argv=None):
 
     p = sub.add_parser("training", help="Estimate the training cost")
     p.add_argument("--approach", required=True, help="pretrain, finetune, sft or rlhf")
-    p.add_argument("--params-billions", type=float, required=True)
-    p.add_argument("--hours", type=float, required=True)
+    p.add_argument("--params-billions", type=finite_float, required=True)
+    p.add_argument("--hours", type=finite_float, required=True)
     p.add_argument("--gpu", default="a100", help="a100, h100 or t4")
 
     p = sub.add_parser("inference", help="Estimate the daily inference cost")
     p.add_argument("--model-type", required=True, help="frontier_llm, hosted_oss or classifier")
-    p.add_argument("--requests-per-day", type=int, required=True)
-    p.add_argument("--tokens-per-request", type=int, default=AVG_TOKENS_PER_REQUEST)
+    p.add_argument("--requests-per-day", type=finite_int, required=True)
+    p.add_argument("--tokens-per-request", type=finite_int, default=AVG_TOKENS_PER_REQUEST)
 
     p = sub.add_parser("compare", help="Compare the inference cost of the three approaches")
-    p.add_argument("--requests-per-day", type=int, required=True)
-    p.add_argument("--training-hours", type=float, default=8)
+    p.add_argument("--requests-per-day", type=finite_int, required=True)
+    p.add_argument("--training-hours", type=finite_float, default=8)
 
     args = parser.parse_args(argv)
 
@@ -98,7 +102,11 @@ def main(argv=None):
         result = estimate_inference_cost(args.model_type, args.requests_per_day, args.tokens_per_request)
     else:
         result = {"options": compare_approaches(args.requests_per_day, args.training_hours)}
-    print(json.dumps(result))
+    try:
+        text = json.dumps(result, allow_nan=False)
+    except ValueError:
+        fail("the result holds a number that is not finite")
+    print(text)
 
 
 if __name__ == "__main__":

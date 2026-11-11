@@ -20,6 +20,7 @@ from jsonschema import Draft7Validator
 # this loader is invoked as a script directly.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _jsonschema_formats import FORMAT_CHECKER, SCHEMAS_DIR  # noqa: E402
+from _safe_input import read_json  # noqa: E402
 
 INPUT_SCHEMA_PATH = SCHEMAS_DIR / "amplifier-telemetry-input.schema.json"
 
@@ -43,7 +44,7 @@ def _input_schema() -> dict:
 
 def load_input(path: Path) -> dict:
     """Parse + schema-validate an amplifier-telemetry-input v1.1.0 file."""
-    obj = json.loads(Path(path).read_text())
+    obj = read_json(path)
     Draft7Validator(_input_schema(), format_checker=FORMAT_CHECKER).validate(obj)
     return obj
 
@@ -52,7 +53,7 @@ def load_history(path: Path | None) -> list[dict] | None:
     """Parse + validate a JSON array of v1.1.0 input objects. None if path absent."""
     if path is None:
         return None
-    arr = json.loads(Path(path).read_text())
+    arr = read_json(path)
     if not isinstance(arr, list):
         raise ValueError(f"history file must contain a JSON array, got {type(arr).__name__}")
     schema = _input_schema()

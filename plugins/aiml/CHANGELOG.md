@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.1
+
+### Fixed
+
+- Each `--input` reader of the scripts takes only a regular file of 8 MiB or less, and reads numbers that are finite. A folder, a device, a named pipe, a link to one of them, a larger file, text that is not UTF-8, a nesting that is too deep, `NaN`, `Infinity`, `1e999` and an integer that a float cannot hold give 1 line on standard error and exit 1, with no traceback and no wait. These `--input` readers are `balance`, `leakage`, `roc-auc`, `split`, `min-samples`, `confusion` and `hyperparameter_validator.py` (`--input`), `feasibility_check.py`, the 3 emitters, and the `--history` file of the P15 emitter.
+- `balance` takes only whole counts of 0 or more, and not `true`. A class with 0 samples gives `"imbalance_ratio": null`, and not `Infinity`.
+- Each number option refuses `nan`, `inf` and an integer that a float cannot hold, with 1 line and exit 1 (`--lr`, `--lora-alpha`, `--tp`, `--hours`, `--cap-pct` and the others). A result that is not finite gives 1 line and exit 1, and an emitter writes no file and exits 2. No script writes `NaN` or `Infinity`.
+
+### Added
+
+- The module `scripts/_safe_input.py` and the tests `test_safe_input.py` and `test_input_readers.py`. STORY-368, issue #1552.
+
 ## 0.8.0
 
 ### Changed

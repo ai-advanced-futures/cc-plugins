@@ -2,7 +2,7 @@
 
 Helps a software engineer build an AI or ML feature. It covers the choice of approach (LLM, classical ML or hybrid), the design, the plan, a check of the plan, the starter code, training guidance, evaluation, and MLOps. You need no data science background. The plugin asks short questions and writes specs, plans and code.
 
-13 agents, 12 skills, 15 Python scripts.
+13 agents, 12 skills, 17 Python scripts.
 
 ## Install
 
@@ -128,6 +128,8 @@ The folder `scripts/` holds math and validation helpers and the helpers of the t
 | `p15_trigger_input_loader.py`, `p15_trigger_detector.py`, `p15_trigger_emitter.py` | The P15 trigger event |
 | `archetype_baseline_input_loader.py`, `archetype_baseline_aggregator.py`, `archetype_baseline_emitter.py` | The archetype baseline |
 | `_jsonschema_formats.py` | The shared format checker and the path of `schemas/` |
+| `_out_path.py` | The check that the output file of an emitter is inside `.aiml` |
+| `_safe_input.py` | The shared read of each `--input` file (a regular file of 8 MiB or less, with finite numbers) and the number types of the options |
 
 Example:
 

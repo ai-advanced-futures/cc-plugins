@@ -31,7 +31,10 @@ def check_class_balance(class_counts: dict) -> dict:
     counts = list(class_counts.values())
     minority = min(counts)
     majority = max(counts)
-    ratio = majority / minority if minority > 0 else float("inf")
+    if minority == 0:
+        return {"balanced": False, "reason": "A class has 0 samples", "imbalance_ratio": None, "minority_pct": 0.0,
+                "recommendation": "Collect samples of each class that has 0, or remove the class"}
+    ratio = majority / minority
     minority_pct = (minority / total) * 100
     return {
         "balanced": ratio <= 10,
@@ -79,6 +82,10 @@ def main(argv=None):
     import json
     import os
     import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _safe_input import InputFileError, finite_float, finite_int, read_json
 
     def fail(message):
         print(f"error: {message}", file=sys.stderr)
@@ -107,7 +114,10 @@ def main(argv=None):
 
     def emit(result, out):
         """Print the JSON object, or write it to `out` (the object and a new line) and print nothing."""
-        text = json.dumps(result)
+        try:
+            text = json.dumps(result, allow_nan=False)
+        except ValueError:
+            fail("the result holds a number that is not finite")
         if out is None:
             print(text)
             return
@@ -127,12 +137,11 @@ def main(argv=None):
         A key of `optional` may be missing; when it is there, its value must pass its check.
         """
         try:
-            with open(path, encoding="utf-8") as handle:
-                data = json.load(handle)
+            data = read_json(path)
         except OSError as exc:
             fail(f"{path}: cannot read the file: {exc.strerror}")
-        except ValueError as exc:
-            fail(f"{path}: not valid JSON: {exc}")
+        except InputFileError as exc:
+            fail(str(exc))
         if not isinstance(data, dict):
             fail(f"{path}: must be a JSON object")
         for key, (is_good, kind) in keys.items():
@@ -165,10 +174,10 @@ def main(argv=None):
                        help="Check that train, val and test ratios sum to 1")
     p.add_argument("--input", help='JSON file, for example {"train": 0.7, "val": 0.15, "test": 0.15}; '
                                    'the key "tolerance" is optional (default 0.01)')
-    p.add_argument("--train", type=float)
-    p.add_argument("--val", type=float)
-    p.add_argument("--test", type=float)
-    p.add_argument("--tolerance", type=float)
+    p.add_argument("--train", type=finite_float)
+    p.add_argument("--val", type=finite_float)
+    p.add_argument("--test", type=finite_float)
+    p.add_argument("--tolerance", type=finite_float)
 
     p = sub.add_parser("balance", parents=[common], allow_abbrev=False, help="Check the class balance")
     p.add_argument("--input", required=True,
@@ -179,8 +188,8 @@ def main(argv=None):
     p.add_argument("--input", help='JSON file, for example {"task": "classification", "num_classes": 3}; '
                                    'the keys "num_classes" (default 2) and "target_accuracy" (default 0.90) are optional')
     p.add_argument("--task", help="classification, regression or llm_finetune")
-    p.add_argument("--num-classes", type=int)
-    p.add_argument("--target-accuracy", type=float)
+    p.add_argument("--num-classes", type=finite_int)
+    p.add_argument("--target-accuracy", type=finite_float)
 
     p = sub.add_parser("leakage", parents=[common], allow_abbrev=False,
                        help="Flag features that can leak the target")
@@ -208,8 +217,9 @@ def main(argv=None):
     elif args.command == "balance":
         discard_old(args.out)
         data = read_input(args.input, {"class_counts": (
-            lambda v: isinstance(v, dict) and all(isinstance(n, (int, float)) for n in v.values()),
-            "an object of numbers")})
+            lambda v: isinstance(v, dict) and all(
+                isinstance(n, int) and not isinstance(n, bool) and n >= 0 for n in v.values()),
+            "an object of whole numbers of 0 or more")})
         result = check_class_balance(data["class_counts"])
     elif args.command == "min-samples":
         if args.input is not None:

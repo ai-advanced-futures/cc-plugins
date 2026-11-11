@@ -34,6 +34,7 @@ from _jsonschema_formats import FORMAT_CHECKER, SCHEMAS_DIR  # noqa: E402
 from _out_path import out_path_error  # noqa: E402
 from archetype_baseline_aggregator import aggregate  # noqa: E402
 from archetype_baseline_input_loader import load_and_validate  # noqa: E402
+from _safe_input import InputFileError  # noqa: E402
 
 OUTPUT_SCHEMA_PATH = SCHEMAS_DIR / "archetype-baseline-telemetry.schema.json"
 DEFAULT_OUTPUT = ".aiml/archetype-baseline-telemetry.json"
@@ -75,6 +76,9 @@ def main(argv: list[str] | None = None) -> int:
     except FileNotFoundError:
         print(f"Input file not found: {args.input}", file=sys.stderr)
         return 1
+    except InputFileError as e:
+        print(f"Input file cannot be used: {e}", file=sys.stderr)
+        return 1
     except OSError as e:
         # IsADirectoryError / PermissionError / other filesystem errors on the input path
         print(f"Cannot read input file: {args.input}: {e}", file=sys.stderr)
@@ -108,8 +112,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Output schema validation failed (logic bug): {e.message}", file=sys.stderr)
         return 2
 
+    try:
+        text = json.dumps(out, indent=2, sort_keys=True, allow_nan=False)
+    except ValueError:
+        print("Output holds a number that is not finite", file=sys.stderr)
+        return 2
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(out, indent=2, sort_keys=True) + "\n")
+    args.out.write_text(text + "\n")
     if args.verbose:
         print(f"Wrote {args.out}", file=sys.stderr)
     return 0

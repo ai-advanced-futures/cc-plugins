@@ -99,9 +99,10 @@ def main(argv=None):
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from cost_estimator import estimate_inference_cost, estimate_training_cost
     from data_validator import estimate_minimum_samples
+    from _safe_input import InputFileError, read_json
 
     def finish(result, out, code):
-        text = json.dumps(result)
+        text = json.dumps(result, allow_nan=False)  # the check at "too large to calculate" keeps it finite
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(text + "\n", encoding="utf-8")
         if code:
@@ -122,9 +123,11 @@ def main(argv=None):
     out = Path(args.out)
 
     try:
-        data = json.loads(Path(args.input).read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
+        data = read_json(args.input)
+    except OSError as exc:
         finish({"ok": False, "errors": [f"cannot read {args.input}: {exc}"]}, out, 1)
+    except InputFileError as exc:
+        finish({"ok": False, "errors": [f"cannot read {exc}"]}, out, 1)
     errors = check_input(data)
     if errors:
         finish({"ok": False, "errors": errors}, out, 1)

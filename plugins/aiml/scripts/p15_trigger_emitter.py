@@ -30,6 +30,7 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 
 from _jsonschema_formats import FORMAT_CHECKER, SCHEMAS_DIR  # noqa: E402
 from _out_path import out_path_error  # noqa: E402
+from _safe_input import InputFileError, is_finite  # noqa: E402
 from p15_trigger_detector import derive_severity, detect  # noqa: E402
 from p15_trigger_input_loader import (  # noqa: E402
     NoThresholdsResolvedError,
@@ -66,6 +67,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--quality-floor-target", action="append", type=_parse_quality_floor_target,
                     default=None, help="Repeatable: metric_id=value")
     args = ap.parse_args(argv)
+    numbers = [("--threshold-pct", args.threshold_pct), ("--cap-pct", args.cap_pct)] + [
+        ("--quality-floor-target", t["target_value"]) for t in args.quality_floor_target or []]
+    for option, value in numbers:
+        if value is not None and not is_finite(value):
+            print(f"{option}: not a finite number: {value}", file=sys.stderr)
+            return 1
 
     refusal = out_path_error("--output", args.output)
     if refusal:
@@ -77,6 +84,9 @@ def main(argv: list[str] | None = None) -> int:
         current = load_input(args.input)
     except FileNotFoundError:
         print(f"Input file not found: {args.input}", file=sys.stderr)
+        return 1
+    except InputFileError as e:
+        print(f"Input file cannot be used: {e}", file=sys.stderr)
         return 1
     except (json.JSONDecodeError, jsonschema.ValidationError) as e:
         print(f"Input schema validation failed: {e}", file=sys.stderr)
@@ -141,8 +151,13 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     # Step 8: mkdir + write
+    try:
+        text = json.dumps(envelope, indent=2, sort_keys=True, allow_nan=False)
+    except ValueError:
+        print("Output holds a number that is not finite", file=sys.stderr)
+        return 2
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n")
+    args.output.write_text(text + "\n")
     return 0
 
 
