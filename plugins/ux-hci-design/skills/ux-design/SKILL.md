@@ -1,6 +1,6 @@
 ---
 name: ux-design
-description: Use for a UX design task, such as personas, journey maps, wireframes, a heuristic evaluation, or an accessibility or AI-HCI audit. Guides the person through the 5 Design Thinking phases, asks the questions of each phase, and starts the agent of the phase.
+description: Use for a UX design task, such as personas, journey maps, wireframes, a heuristic evaluation, or an accessibility or AI-HCI audit. Guides the person through the 5 Design Thinking phases, asks the questions of each phase, and starts the helper of the phase.
 allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/check_output.py *), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ux_graph.py *), Bash(git rev-parse *), Skill, Edit(/.ux-artifacts/**), Read(//**/ux-hci-design/**/skills/**), Read(//**/ux-hci-design/**/schemas/**)
 ---
 
@@ -26,11 +26,11 @@ Coordinate a comprehensive, methodologically-grounded UX design process that:
    - Support both guided (beginner) and flexible (advanced) modes
 
 2. **Phase-Specific Coordination**
-   - **EMPATHIZE**: User research and discovery → dispatches `ux-researcher` agent
-   - **DEFINE**: Synthesis into personas, journey maps, requirements → dispatches `ux-artifact-generator` agent
-   - **IDEATE**: Concept generation and exploration → dispatches `ux-concept-designer` agent
-   - **PROTOTYPE**: Wireframes and interactive prototypes → dispatches `ux-prototype-builder` agent
-   - **TEST**: Heuristic evaluation and accessibility audits → starts the domain reviewers in the main conversation, then the `ux-evaluator` agent, which merges their findings
+   - **EMPATHIZE**: User research and discovery → starts the helper `ux-researcher`
+   - **DEFINE**: Synthesis into personas, journey maps, requirements → starts the helper `ux-artifact-generator`
+   - **IDEATE**: Concept generation and exploration → starts the helper `ux-concept-designer`
+   - **PROTOTYPE**: Wireframes and interactive prototypes → starts the helper `ux-prototype-builder`
+   - **TEST**: Heuristic evaluation and accessibility audits → starts the domain reviewers one after the other, then the helper `ux-evaluator`, which merges their findings
 
 3. **Integration Bridge**
    - Import JTBD opportunity data and PRD requirements
@@ -52,7 +52,7 @@ Coordinate a comprehensive, methodologically-grounded UX design process that:
 
 ## Workflow Commands
 
-The person starts this skill with `/ux-hci-design:ux-design` and an optional argument. The 9 method skills of this plugin (`/ux-hci-design:empathize`, `define`, `ideate`, `prototype`, `ux-evaluate`, `accessibility-audit`, `ai-hci-audit`, `jtbd-bridge`, `prd-bridge`) hold the method of one phase or one framework. The phase agents read them. A person can also start them alone. The skills `setup`, `learn` and `ask` work on the brain.
+The person starts this skill with `/ux-hci-design:ux-design` and an optional argument. The 9 method skills of this plugin (`/ux-hci-design:empathize`, `define`, `ideate`, `prototype`, `ux-evaluate`, `accessibility-audit`, `ai-hci-audit`, `jtbd-bridge`, `prd-bridge`) hold the method of one phase or one framework. The phase helpers read them. A person can also start them alone. The skills `setup`, `learn` and `ask` work on the brain.
 
 ### Primary Command
 
@@ -79,12 +79,12 @@ The person starts this skill with `/ux-hci-design:ux-design` and an optional arg
 
 ### Quick-Action Commands
 
-Each quick action starts the agent of the matching phase with one input artifact:
+Each quick action starts the helper of the matching phase with one input artifact:
 
-**`/ux-hci-design:ux-design evaluate-heuristics`** - Quick Nielsen + AI-HCI evaluation (reviewers `usability-reviewer`, and `ai-hci-reviewer` when the project has AI features, then agent `ux-evaluator`; see the test phase)
-**`/ux-hci-design:ux-design accessibility-audit`** - WCAG 2.2 compliance check (reviewer `accessibility-reviewer`, then agent `ux-evaluator`; see the test phase)
-**`/ux-hci-design:ux-design generate-persona`** - Single persona from data (agent `ux-artifact-generator`, method `${CLAUDE_PLUGIN_ROOT}/skills/define/SKILL.md`)
-**`/ux-hci-design:ux-design journey-map`** - Single journey map from job steps (agent `ux-artifact-generator`, method `${CLAUDE_PLUGIN_ROOT}/skills/define/SKILL.md`)
+**`/ux-hci-design:ux-design evaluate-heuristics`** - Quick Nielsen + AI-HCI evaluation (reviewers `usability-reviewer`, and `ai-hci-reviewer` when the project has AI features, then helper `ux-evaluator`; see the test phase)
+**`/ux-hci-design:ux-design accessibility-audit`** - WCAG 2.2 compliance check (reviewer `accessibility-reviewer`, then helper `ux-evaluator`; see the test phase)
+**`/ux-hci-design:ux-design generate-persona`** - Single persona from data (helper `ux-artifact-generator`, method `${CLAUDE_PLUGIN_ROOT}/skills/define/SKILL.md`)
+**`/ux-hci-design:ux-design journey-map`** - Single journey map from job steps (helper `ux-artifact-generator`, method `${CLAUDE_PLUGIN_ROOT}/skills/define/SKILL.md`)
 
 ## Orchestration Protocol
 
@@ -105,15 +105,15 @@ When invoked, follow this sequence:
 5. Initialize phase tracking and artifact storage
 ```
 
-When the argument names the phase and the input paths, and .ux-config.json exists, ask nothing and dispatch the agent at once.
+When the argument names the phase and the input paths, and .ux-config.json exists, ask nothing and start the helper at once.
 
-Only this skill asks the person. The phase agents ask nothing: AskUserQuestion is not available to a subagent. When an agent needs an answer, it writes the open questions to `<output_dir>/open-questions.md` and returns. Ask these questions with AskUserQuestion. After you ask its questions, delete `<output_dir>/open-questions.md`. Then dispatch the same agent again with the answers. Run that dispatch in the foreground too, with `run_in_background: false`. In a run with no person, do the steps of "A run with no person" below instead.
+Only this skill asks the person. The phase helpers ask nothing: a helper has no AskUserQuestion. When a helper needs an answer, it writes the open questions to `<output_dir>/open-questions.md` and returns. Ask these questions with AskUserQuestion. After you ask its questions, delete `<output_dir>/open-questions.md`. Then start the same helper again with the `Skill` tool, with the answers in `args`. In a run with no person, do the steps of "A run with no person" below instead.
 
-To delete the file, run `G remove-questions <output_dir>` on its own (section "Save the brain" gives `G` and `<git root>`; when this run has no `<git root>` yet, run `git rev-parse --show-toplevel` first). For the file of a reviewer, add `--reviewer <reviewer>`, and run 1 command for each reviewer. Use this command for the delete, because no rule of this skill approves an `rm`, and a run with no person refuses an `rm` and stops. The command removes only the open-questions file, and exits 0 with `removed <path>` or `no file <path>`. When it exits with a code that is not 0, show its output, tell the person the path of the file and to delete it, and stop. Do not dispatch the agent again, because an old file starts the same questions again.
+To delete the file, run `G remove-questions <output_dir>` on its own (section "Save the brain" gives `G` and `<git root>`; when this run has no `<git root>` yet, run `git rev-parse --show-toplevel` first). For the file of a reviewer, add `--reviewer <reviewer>`, and run 1 command for each reviewer. Use this command for the delete, because no rule of this skill approves an `rm`, and a run with no person refuses an `rm` and stops. The command removes only the open-questions file, and exits 0 with `removed <path>` or `no file <path>`. When it exits with a code that is not 0, show its output, tell the person the path of the file and to delete it, and stop. Do not start the helper again, because an old file starts the same questions again.
 
 **An old file.** Before the first dispatch of each phase, read `<output_dir>/open-questions.md` with the Read tool. When it exists, run the command above for `<output_dir>`. In the test phase, do the same for `<output_dir>/reviews/<reviewer>/open-questions.md` of each reviewer of Step 1, with `--reviewer <reviewer>`. Run the command only for a file that exists, because before the first save the command exits 1 for an `output_dir` of another name, also when there is no file. An open-questions file that is there before the dispatch is from an earlier run, and the agent writes the file again when it still needs an answer.
 
-**A run with no person.** When AskUserQuestion is not in your tool set, or it gives an error, the run has no person. Then go on with the phase, and do not stop for the questions of an agent, because nobody can answer them. Read the open-questions file, and remove it with the command above. When the agent wrote no output file of the phase (for a reviewer, no `findings.json`), start it 1 more time in the foreground, with `run_in_background: false`, and give it this answer: "No person can answer in this run. Use a default for each open question, and write the output files of the phase." Start it only this 1 more time, because its questions get no answer in a later dispatch either. In your last message of the run, write this line 1 time in these words, because a run with no person shows only the last message: "No person answered the open questions of these agents: <the agents>. Each agent used its defaults. The saved run stays a draft until a person confirms it with /ux-hci-design:learn." `<the agents>` names each agent that wrote an open-questions file. After the line, give each question of the files in 1 line.
+**A run with no person.** When AskUserQuestion is not in your tool set, or it gives an error, the run has no person. Then go on with the phase, and do not stop for the questions of an agent, because nobody can answer them. Read the open-questions file, and remove it with the command above. When the agent wrote no output file of the phase (for a reviewer, no `findings.json`), start it 1 more time with the `Skill` tool, and give it this answer in `args`: "No person can answer in this run. Use a default for each open question, and write the output files of the phase." Start it only this 1 more time, because its questions get no answer in a later dispatch either. In your last message of the run, write this line 1 time in these words, because a run with no person shows only the last message: "No person answered the open questions of these agents: <the agents>. Each agent used its defaults. The saved run stays a draft until a person confirms it with /ux-hci-design:learn." `<the agents>` names each agent that wrote an open-questions file. After the line, give each question of the files in 1 line.
 
 **Artifact Directory:**
 Create `.ux-artifacts/` in the project root for all phase outputs:
@@ -349,11 +349,11 @@ Apply these frameworks explicitly at each phase:
 
 ## Agent Dispatch Protocol
 
-When entering each phase, ask the questions of the phase with AskUserQuestion. Then dispatch the appropriate specialist agent with the `Agent` tool. A plugin agent registers as `ux-hci-design:<agent>`, so use that full name (a bare name finds no agent).
+When entering each phase, ask the questions of the phase with AskUserQuestion. Then start the helper of the phase with the `Skill` tool. Each phase agent is a helper skill of this plugin (`context: fork`, `background: false`): it runs as a subagent, and this turn waits for its reply. Use the full name `ux-hci-design:<helper>`, because a bare name finds no skill. Do not start a helper with an `Agent` call: in an interactive session, Claude Code starts each `Agent` call in the background, and the step after it is then refused (STORY-371).
 
-Run every agent you dispatch in the foreground and wait for it to finish; never run one in the background, because an agent that runs in the background returns in a new turn that does not have the `allowed-tools` of this skill, and the next step is then refused. So set `run_in_background: false` in each `Agent` call. When Claude Code still starts an agent in the background (its result says "Async agent launched"), wait for its completion notice, and run no other step of the phase before it. When the `ingest` after it is then refused, say "The save did not run, because Claude Code refused the save command. The files of the phase stay in <output_dir>. To save them, run: <the ingest command>", and stop. When the agent could not write its files, because Claude Code refused its calls, say "The agent of the phase could not write its files, because Claude Code refused its calls. Run the phase again.", and stop, because no file is there to save.
+When the `ingest` after a helper is refused, say "The save did not run, because Claude Code refused the save command. The files of the phase stay in <output_dir>. To save them, run: <the ingest command>", and stop. When the agent could not write its files, because Claude Code refused its calls, say "The agent of the phase could not write its files, because Claude Code refused its calls. Run the phase again.", and stop, because no file is there to save.
 
-Each dispatch gives the agent these fields:
+Give the helper these fields in `args`, 1 field on each line in the form `<field>: <value>`. Give `project_context` as 1 line of JSON, and `inputs` as a JSON list of absolute paths:
 - `project_context`: the values of `.ux-config.json`
 - `inputs`: a list of absolute paths of the phase inputs. A file that the brain holds goes through `view --out` first (section "Save the brain")
 - `output_dir`: the absolute path `<project>/.ux-artifacts` (a reviewer of the test phase gets `<project>/.ux-artifacts/reviews/<reviewer>`). The `allowed-tools` of this skill let an agent write only in `<project>/.ux-artifacts/`, and a run with no person refuses each other write. So give no other folder, also when the request names one.
@@ -361,15 +361,15 @@ Each dispatch gives the agent these fields:
 
 **A file outside `.ux-artifacts/`.** When the request asks to write, copy or export a file outside `<project>/.ux-artifacts/` (for example an export copy in another folder, or a notes file in the project root), do not pass that order to an agent, and do not do it in this conversation, because the grants of this skill approve no write outside `.ux-artifacts/`, and a run with no person refuses it. Say "This plugin writes only in .ux-artifacts/, so it did not write <the file>.", and go on with the phase. Write that line again in your last message of the run, because a run with no person shows only the last message.
 
-After a dispatch, when `<output_dir>/open-questions.md` exists, ask its questions with AskUserQuestion. After you ask its questions, delete `<output_dir>/open-questions.md`. Then dispatch the same agent again with the answers. Run that dispatch in the foreground too, with `run_in_background: false`. In a run with no person, do the steps of "A run with no person" (section "1. Initialization") instead. Then show the paths of the phase outputs and ask the next-phase question with AskUserQuestion (options: yes, no, learn more).
+After a dispatch, when `<output_dir>/open-questions.md` exists, ask its questions with AskUserQuestion. After you ask its questions, delete `<output_dir>/open-questions.md`. Then start the same helper again with the `Skill` tool, with the 4 fields and the answers in `args`. In a run with no person, do the steps of "A run with no person" (section "1. Initialization") instead. Then show the paths of the phase outputs and ask the next-phase question with AskUserQuestion (options: yes, no, learn more).
 
 ### Empathize Phase → `ux-hci-design:ux-researcher` Agent
 
-Start `ux-hci-design:ux-researcher` with the `Agent` tool in the foreground: set `run_in_background: false`, and wait for it to finish, because the `ingest` of this phase runs after it in this turn.
+Start `ux-hci-design:ux-researcher` with the `Skill` tool, and wait for its reply, because the `ingest` of this phase runs after it in this turn.
 
 **Dispatch Command:**
 ```
-Dispatch agent: ux-hci-design:ux-researcher
+Start skill: ux-hci-design:ux-researcher
 Context: Project context from .ux-config.json
 Input: User research goals, existing data
 Output: research_findings.json
@@ -389,11 +389,11 @@ Ask the start point of this phase with AskUserQuestion (options: research from E
 
 Before the dispatch, run `view` for `research_findings.json` (section "Save the brain", "Before each dispatch").
 
-Start `ux-hci-design:ux-artifact-generator` with the `Agent` tool in the foreground: set `run_in_background: false`, and wait for it to finish, because the `ingest` of this phase runs after it in this turn.
+Start `ux-hci-design:ux-artifact-generator` with the `Skill` tool, and wait for its reply, because the `ingest` of this phase runs after it in this turn.
 
 **Dispatch Command:**
 ```
-Dispatch agent: ux-hci-design:ux-artifact-generator
+Start skill: ux-hci-design:ux-artifact-generator
 Context: Research findings from EMPATHIZE
 Input: research_findings.json (the path of `inputs`), JTBD data (optional)
 Output: personas.json, journey_maps.json, mental_models.mmd
@@ -412,11 +412,11 @@ Output: personas.json, journey_maps.json, mental_models.mmd
 
 Before the dispatch, run `view` for `personas.json` and for `journey_maps.json`.
 
-Start `ux-hci-design:ux-concept-designer` with the `Agent` tool in the foreground: set `run_in_background: false`, and wait for it to finish, because the `ingest` of this phase runs after it in this turn.
+Start `ux-hci-design:ux-concept-designer` with the `Skill` tool, and wait for its reply, because the `ingest` of this phase runs after it in this turn.
 
 **Dispatch Command:**
 ```
-Dispatch agent: ux-hci-design:ux-concept-designer
+Start skill: ux-hci-design:ux-concept-designer
 Context: Personas, journey maps from DEFINE
 Input: personas.json, journey_maps.json (the paths of `inputs`), design constraints
 Output: design_concepts.json
@@ -434,11 +434,11 @@ Output: design_concepts.json
 
 Before the dispatch, run `view` for `design_concepts.json`.
 
-Start `ux-hci-design:ux-prototype-builder` with the `Agent` tool in the foreground: set `run_in_background: false`, and wait for it to finish, because the `ingest` of this phase runs after it in this turn.
+Start `ux-hci-design:ux-prototype-builder` with the `Skill` tool, and wait for its reply, because the `ingest` of this phase runs after it in this turn.
 
 **Dispatch Command:**
 ```
-Dispatch agent: ux-hci-design:ux-prototype-builder
+Start skill: ux-hci-design:ux-prototype-builder
 Context: Selected design concept from IDEATE
 Input: design_concepts.json (the path of `inputs`), interaction requirements
 Output: wireframes.json, interaction_patterns.json, user_flows.mmd
@@ -455,9 +455,9 @@ Output: wireframes.json, interaction_patterns.json, user_flows.mmd
 
 ### Test Phase → `ux-hci-design:ux-evaluator` Agent (after the reviewers)
 
-A subagent cannot limit the agent types that it starts: Claude Code ignores a type list inside `Agent(...)` in an agent file. So you start the reviewers in the main conversation, and `ux-evaluator` has no `Agent` tool.
+A reviewer and the evaluator have no `Agent` and no `Skill` tool (their `disallowed-tools`). So you start the reviewers and the evaluator in the main conversation.
 
-**Step 1.** Start the reviewers with the `Agent` tool, all in one message, so they run in parallel. Run them in the foreground and wait for each of them. Set `run_in_background: false` in each `Agent` call. Do not run a reviewer in the background, because the evaluator needs the findings file of each reviewer. If Claude Code runs a reviewer in the background, wait for its completion notice. Before the dispatch, run `view` for `wireframes.json` and for `interaction_patterns.json`, and give each reviewer those paths in `inputs`, because the save removed the plain files. Give each one the 4 dispatch fields. Its `output_dir` is `<output_dir>/reviews/<reviewer>`, and it writes its findings to `<output_dir>/reviews/<reviewer>/findings.json`:
+**Step 1.** Start the reviewers with the `Skill` tool, one after the other, in this order: `accessibility-reviewer`, `usability-reviewer`, then `ai-hci-reviewer` when it applies. Start a reviewer only after the reviewer before it returned, because Claude Code runs forked skills one after the other also when they are in 1 message. Before the dispatch, run `view` for `wireframes.json` and for `interaction_patterns.json`, and give each reviewer those paths in `inputs`, because the save removed the plain files. Give each one the 4 dispatch fields. Its `output_dir` is `<output_dir>/reviews/<reviewer>`, and it writes its findings to `<output_dir>/reviews/<reviewer>/findings.json`:
 - `ux-hci-design:accessibility-reviewer` (always): `method_file` `${CLAUDE_PLUGIN_ROOT}/skills/accessibility-audit/SKILL.md`
 - `ux-hci-design:usability-reviewer` (always): `method_file` `${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md`
 - `ux-hci-design:ai-hci-reviewer` (only when `project_context.has_ai_features` in `.ux-config.json` is true, or `context.has_ai_features` in a config in the shape of the examples): `method_file` `${CLAUDE_PLUGIN_ROOT}/skills/ai-hci-audit/SKILL.md`
@@ -466,11 +466,11 @@ When the config has neither `project_context.has_ai_features` nor `context.has_a
 
 Each reviewer returns the paths of the files that it wrote.
 
-**Before Step 2.** Start Step 2 only after each reviewer of Step 1 has returned, and after you handled each `open-questions.md` of a reviewer (see the end of this phase). Read each `open-questions.md` and each findings file with the `Read` tool, one file at a time, and run each command on its own, with no loop, because a command with a loop or a variable is refused. When you dispatch a reviewer again with the answers, run it in the foreground too, and wait for it. Then read `<output_dir>/reviews/<reviewer>/findings.json` of each reviewer of Step 1. If a file is not there, or it has no list `findings`, do not start the evaluator. Tell the person "The reviewer <reviewer> wrote no findings file <path>. The evaluation stopped.", and stop.
+**Before Step 2.** Start Step 2 only after each reviewer of Step 1 has returned, and after you handled each `open-questions.md` of a reviewer (see the end of this phase). Read each `open-questions.md` and each findings file with the `Read` tool, one file at a time, and run each command on its own, with no loop, because a command with a loop or a variable is refused. When you start a reviewer again with the answers, use the `Skill` tool, and wait for its reply. Then read `<output_dir>/reviews/<reviewer>/findings.json` of each reviewer of Step 1. If a file is not there, or it has no list `findings`, do not start the evaluator. Tell the person "The reviewer <reviewer> wrote no findings file <path>. The evaluation stopped.", and stop.
 
 **Step 2.** Start the evaluator. Give it the same `inputs` paths as Step 1 (the `view` files stay until the next `ingest`). The findings file of each reviewer stays a plain file.
 ```
-Dispatch agent: ux-hci-design:ux-evaluator
+Start skill: ux-hci-design:ux-evaluator
 Context: Project context, weighting profile
 Input: wireframes.json and interaction_patterns.json (the paths of `inputs`), and the findings file of each reviewer of Step 1 (<output_dir>/reviews/<reviewer>/findings.json)
 Output: evaluation_report.json
@@ -478,7 +478,7 @@ method_file: ${CLAUDE_PLUGIN_ROOT}/skills/ux-evaluate/SKILL.md
 schema_file: ${CLAUDE_PLUGIN_ROOT}/schemas/outputs/evaluation-report-schema.json
 ```
 
-Run the evaluator in the foreground and wait for it, because the check of Step 3 needs the permission of this turn. Set `run_in_background: false` in its `Agent` call. The evaluator normalizes the severity, calculates the UX health score with contextual weighting, and writes the prioritized recommendations. When a reviewer wrote `<output_dir>/reviews/<reviewer>/open-questions.md`, handle it as in the dispatch protocol above, and delete that file in the same way after you ask its questions. The command is `G remove-questions <output_dir> --reviewer <reviewer>`. In a run with no person, do the steps of "A run with no person" (section "1. Initialization") with this command.
+Start the evaluator with the `Skill` tool and wait for its reply, because the check of Step 3 needs the permission of this turn. The evaluator normalizes the severity, calculates the UX health score with contextual weighting, and writes the prioritized recommendations. When a reviewer wrote `<output_dir>/reviews/<reviewer>/open-questions.md`, handle it as in the dispatch protocol above, and delete that file in the same way after you ask its questions. The command is `G remove-questions <output_dir> --reviewer <reviewer>`. In a run with no person, do the steps of "A run with no person" (section "1. Initialization") with this command.
 
 **After Step 2.** If the evaluator returns a line that starts with `MISSING_REVIEW:`, show the line to the person and stop. Do not write the report in the main conversation, because a report with a missing domain gives a wrong UX health score.
 
@@ -671,7 +671,7 @@ Workflow is successful when:
 
 ## Constraints
 
-1. **Scope**: this skill orchestrates. The phase agents hold the deep specialist work, so it stays out of their scope.
+1. **Scope**: this skill orchestrates. The phase helpers hold the deep specialist work, so it stays out of their scope.
 2. **Context**: artifacts and decisions carry across phases.
 3. **Education**: the person learns through exposure and explicit labels.
 
@@ -679,11 +679,11 @@ Workflow is successful when:
 
 When this skill is invoked:
 
-1. You are the orchestrator: you coordinate the workflow and dispatch the phase agents.
+1. You are the orchestrator: you coordinate the workflow and start the phase helpers.
 2. Reference the design master framework by name, for example "Nielsen Heuristic #1" (see Framework Fidelity).
 3. The weighting profile comes from the project context (detected, or loaded from .ux-config.json).
 4. Accessibility and AI-HCI apply in every phase.
-5. Dispatch each phase to its agent with the full name `ux-hci-design:<agent>`:
+5. Start the helper of each phase with the `Skill` tool and its full name `ux-hci-design:<helper>`:
    - EMPATHIZE → `ux-researcher`
    - DEFINE → `ux-artifact-generator`
    - IDEATE → `ux-concept-designer`

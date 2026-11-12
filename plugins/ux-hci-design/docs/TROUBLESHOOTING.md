@@ -315,25 +315,25 @@ pip install -r requirements-dev.txt
    claude plugin install ux-hci-design@cc-plugins
    ```
 
-4. Write the full name. A command without the plugin name does not work. The plugin has 13 skills. Each one is `/ux-hci-design:<skill>`.
+4. Write the full name. A command without the plugin name does not work. The plugin has 13 skills for a person. Each one is `/ux-hci-design:<skill>`.
 
 ---
 
-### Agent Not Found
+### Helper Not Found
 
-**Symptom:** A call to an agent fails because the agent does not exist
+**Symptom:** The start of a helper fails because the skill does not exist, or an `Agent` call with `ux-hci-design:<name>` finds no agent
 
-**Solution:** Use the full name `ux-hci-design:<agent>`. A bare agent name finds no agent. The 8 agents are `ux-researcher`, `ux-artifact-generator`, `ux-concept-designer`, `ux-prototype-builder`, `ux-evaluator`, `accessibility-reviewer`, `usability-reviewer`, and `ai-hci-reviewer`.
+**Solution:** Start a helper only with the `Skill` tool, and use the full name `ux-hci-design:<helper>`. A bare name finds no skill. The plugin has no agent files since version 1.8.0. The 8 helpers are `ux-researcher`, `ux-artifact-generator`, `ux-concept-designer`, `ux-prototype-builder`, `ux-evaluator`, `accessibility-reviewer`, `usability-reviewer`, and `ai-hci-reviewer`.
 
 ---
 
-### An Agent Wants an Answer
+### A Helper Wants an Answer
 
 **Symptom:** A phase ends with the file `<output_dir>/open-questions.md`
 
-**Cause:** An agent cannot ask the person a question. When it needs an answer, it writes its open questions to this file and returns.
+**Cause:** A helper cannot ask the person a question. When it needs an answer, it writes its open questions to this file and returns.
 
-**Solution:** Let the skill `ux-design` ask these questions. It removes the file with `ux_graph.py remove-questions`, and calls the same agent again with your answers. If you started the agent from another skill, answer the questions, remove the file, and call the agent again. An old file starts the same questions again.
+**Solution:** Let the skill `ux-design` ask these questions. It removes the file with `ux_graph.py remove-questions`, and starts the same helper again with your answers. If you started the helper from another skill, answer the questions, remove the file, and start the helper again. An old file starts the same questions again.
 
 ---
 

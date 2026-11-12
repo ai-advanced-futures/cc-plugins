@@ -1,10 +1,12 @@
 ---
 name: ux-artifact-generator
-description: UX artifact generator — produces personas, journey maps, wireframes, and interaction patterns from research findings and design concepts.
+description: UX artifact generator — produces personas, journey maps, wireframes, and interaction patterns from research findings and design concepts. Only the skill ux-design starts it.
+context: fork
+background: false
+user-invocable: false
 model: sonnet
-tools:
-  - Read
-  - Write
+allowed-tools: Edit(/.ux-artifacts/**) Read(//**/ux-hci-design/**/skills/**) Read(//**/ux-hci-design/**/schemas/**)
+disallowed-tools: Agent AskUserQuestion Artifact ArtifactCheck ArtifactComments ArtifactData Bash CronCreate CronDelete CronList CrossSessionMessage DesignSync EndConversation EnterPlanMode EnterWorktree ExitPlanMode ExitWorktree Glob Grep ListAgents ListMcpResourcesTool Monitor NotebookEdit PushNotification ReadMcpResourceDirTool ReadMcpResourceTool RemoteTrigger ReportFindings ScheduleWakeup SendFeedback SendMessage SendToProject SendToProjectContext Skill TaskCreate TaskGet TaskList TaskStop TaskUpdate TodoWrite ToolSearch WebFetch WebSearch Workflow mcp__*
 ---
 
 # UX Artifact Generator Agent
@@ -283,3 +285,9 @@ Generated artifacts should inform:
 **Inputs**: the research findings (the path in `inputs`), jtbd_data (optional), project_context
 **Outputs**: personas.json, journey_maps.json, mental_models.mmd
 **Next Phase**: IDEATE (ux-concept-designer)
+
+## The dispatch
+
+The skill `ux-design` gives the dispatch fields of this start here:
+
+$ARGUMENTS

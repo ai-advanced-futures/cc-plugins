@@ -1,10 +1,12 @@
 ---
 name: ux-evaluator
-description: UX evaluator — merges the reviewer findings (Nielsen heuristics, WCAG compliance, AI-HCI guidelines) into one evaluation report with a UX health score.
+description: UX evaluator — merges the reviewer findings (Nielsen heuristics, WCAG compliance, AI-HCI guidelines) into one evaluation report with a UX health score. Only the skill ux-design starts it.
+context: fork
+background: false
+user-invocable: false
 model: sonnet
-tools:
-  - Read
-  - Write
+allowed-tools: Edit(/.ux-artifacts/**) Read(//**/ux-hci-design/**/skills/**) Read(//**/ux-hci-design/**/schemas/**)
+disallowed-tools: Agent AskUserQuestion Artifact ArtifactCheck ArtifactComments ArtifactData Bash CronCreate CronDelete CronList CrossSessionMessage DesignSync EndConversation EnterPlanMode EnterWorktree ExitPlanMode ExitWorktree Glob Grep ListAgents ListMcpResourcesTool Monitor NotebookEdit PushNotification ReadMcpResourceDirTool ReadMcpResourceTool RemoteTrigger ReportFindings ScheduleWakeup SendFeedback SendMessage SendToProject SendToProjectContext Skill TaskCreate TaskGet TaskList TaskStop TaskUpdate TodoWrite ToolSearch WebFetch WebSearch Workflow mcp__*
 ---
 
 # UX Evaluator Agent
@@ -335,3 +337,9 @@ Pause and require remediation when:
 **Reads the findings of**: accessibility-reviewer, ai-hci-reviewer, usability-reviewer
 **Output**: evaluation_report.json
 **Next Step**: Remediation of critical findings
+
+## The dispatch
+
+The skill `ux-design` gives the dispatch fields of this start here:
+
+$ARGUMENTS

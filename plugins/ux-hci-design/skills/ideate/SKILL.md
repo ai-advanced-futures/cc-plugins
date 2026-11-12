@@ -1,6 +1,6 @@
 ---
 name: ideate
-description: Use in the ideate phase of Design Thinking, after the define phase. Holds the method that makes design concepts, with the 10 principles of Dieter Rams as quality limits. The agent ux-concept-designer reads it.
+description: Use in the ideate phase of Design Thinking, after the define phase. Holds the method that makes design concepts, with the 10 principles of Dieter Rams as quality limits. The helper skill ux-concept-designer reads it.
 ---
 
 # IDEATE Phase Skill
@@ -329,7 +329,7 @@ Ideation is complete when:
 
 **Previous Phase**: DEFINE (personas, journey maps)
 **Next Phase**: PROTOTYPE (wireframes)
-**Agent**: ux-concept-designer
+**Helper skill**: ux-concept-designer
 **Output**: design_concepts.json
 
 ---

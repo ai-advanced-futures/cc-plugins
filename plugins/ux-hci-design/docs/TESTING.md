@@ -121,15 +121,15 @@ These tests check the schema files in `schemas/`.
 - The WCAG schema has the correct level for each criterion.
 - The AI-HCI schema has 18 guidelines.
 
-### Skill and Agent Tests
+### Skill and Helper Tests
 
-These tests read the files `skills/*/SKILL.md` and `agents/*.md`. They check that the structure and the key rules are present.
+These tests read the files `skills/*/SKILL.md`. The 8 helpers are skills too. They check that the structure and the key rules are present.
 
-**Files:** `test_orchestrator.py`, `test_*_phase.py`, `test_*_reviewer.py`, `test_*_bridge.py`, `test_agent_structure.py`
+**Files:** `test_orchestrator.py`, `test_*_phase.py`, `test_*_reviewer.py`, `test_*_bridge.py`, `test_agent_structure.py`, `test_helper_skills.py`, `test_no_agent_form.py`
 
 **Examples:**
-- Each agent has a name, a model, and a tool list.
-- No agent has the `Agent` tool.
+- Each helper has a name, a model, `allowed-tools` and `disallowed-tools`, and `context: fork`.
+- Each helper denies the `Agent` tool.
 - The skill `ux-design` gives each reviewer its `method_file`.
 - Only `ux-prototype-builder` has the `Skill` tool.
 - The name of each skill is the name of its folder.

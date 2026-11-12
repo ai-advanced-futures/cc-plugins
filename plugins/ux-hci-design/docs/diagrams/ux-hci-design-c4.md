@@ -16,13 +16,13 @@ This level shows how the person and the plugin `ux-hci-design` work with the oth
 
 ## Container Level
 
-This level shows the agents, skills, and schemas inside the plugin.
+This level shows the helper skills, the skills, and the schemas inside the plugin.
 
-### Agents (execution layer)
+### Helper skills (execution layer)
 
-A skill starts an agent with the name `ux-hci-design:<agent>`. An agent cannot ask the person a question.
+A skill starts a helper with the `Skill` tool, with the name `ux-hci-design:<helper>`. A helper is a forked skill, so it runs as a subagent in the foreground. A helper cannot ask the person a question.
 
-| Agent | Model | Role |
+| Helper | Model | Role |
 |-------|-------|------|
 | `ux-researcher` | sonnet | EMPATHIZE: user research, Track 3 handoff decisions |
 | `ux-concept-designer` | sonnet | IDEATE: concept generation, Handoff-Complete criterion |
@@ -55,7 +55,7 @@ A skill starts an agent with the name `ux-hci-design:<agent>`. An agent cannot a
 
 - `scripts/ux_graph.py` and `scripts/uxlib/`: the save code. `ingest` maps the output files of a phase to pages, `view` prints a file again, `pages` and `behavior` list pages (`behavior --check-prd` compares them with the PRD), and `tokens` lists the design tokens (`tokens --save` writes them into the system design).
 - `docs/ux-hci-design/` (in the project): the pages. `hooks/brain-hook.sh` runs `regen` and the checks after a write.
-- The agents write plain files to `<output_dir>`. The skill `ux-design` saves them after each phase and removes them. The next agent reads a copy that `view --out` writes to `<output_dir>/inputs/`.
+- The helpers write plain files to `<output_dir>`. The skill `ux-design` saves them after each phase and removes them. The next helper reads a copy that `view --out` writes to `<output_dir>/inputs/`.
 
 ### Schemas (validation layer)
 

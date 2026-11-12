@@ -544,5 +544,5 @@ AI-HCI audit is complete when:
 **Started by**: the skill ux-design (the agent ux-evaluator reads the findings)
 **Framework**: Microsoft 18 Guidelines for Human-AI Interaction
 **Output**: AI-HCI findings for synthesis
-**Agent**: ai-hci-reviewer
+**Helper skill**: ai-hci-reviewer
 

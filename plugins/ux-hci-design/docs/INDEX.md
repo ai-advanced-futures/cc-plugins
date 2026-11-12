@@ -13,7 +13,7 @@
 
 ## Reference documents
 
-- [AGENTS.md](AGENTS.md): the 8 agents and how a skill starts them
+- [AGENTS.md](AGENTS.md): the 8 helper skills and how `ux-design` starts them
 - [SCHEMAS.md](SCHEMAS.md): the JSON schemas of the design documents
 - [SCHEMA-VALIDATION.md](SCHEMA-VALIDATION.md): how the schema validation works
 - [TESTING.md](TESTING.md): the layout of the test suite

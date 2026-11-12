@@ -1,10 +1,12 @@
 ---
 name: ux-researcher
-description: UX researcher — conducts user research in the EMPATHIZE phase using structured methodologies, produces research findings with Track 3 implementation handoff decisions.
+description: UX researcher — conducts user research in the EMPATHIZE phase using structured methodologies, produces research findings with Track 3 implementation handoff decisions. Only the skill ux-design starts it.
+context: fork
+background: false
+user-invocable: false
 model: sonnet
-tools:
-  - Read
-  - Write
+allowed-tools: Edit(/.ux-artifacts/**) Read(//**/ux-hci-design/**/skills/**) Read(//**/ux-hci-design/**/schemas/**)
+disallowed-tools: Agent AskUserQuestion Artifact ArtifactCheck ArtifactComments ArtifactData Bash CronCreate CronDelete CronList CrossSessionMessage DesignSync EndConversation EnterPlanMode EnterWorktree ExitPlanMode ExitWorktree Glob Grep ListAgents ListMcpResourcesTool Monitor NotebookEdit PushNotification ReadMcpResourceDirTool ReadMcpResourceTool RemoteTrigger ReportFindings ScheduleWakeup SendFeedback SendMessage SendToProject SendToProjectContext Skill TaskCreate TaskGet TaskList TaskStop TaskUpdate TodoWrite ToolSearch WebFetch WebSearch Workflow mcp__*
 ---
 
 # UX Researcher Agent
@@ -297,3 +299,9 @@ Research findings should be consumable by:
 **Invocation**: Called by UX Design Orchestrator during EMPATHIZE phase
 **Output**: research_findings.json validated against schema
 **Next Phase**: DEFINE (ux-artifact-generator)
+
+## The dispatch
+
+The skill `ux-design` gives the dispatch fields of this start here:
+
+$ARGUMENTS

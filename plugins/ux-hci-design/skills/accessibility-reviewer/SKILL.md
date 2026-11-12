@@ -1,10 +1,12 @@
 ---
 name: accessibility-reviewer
-description: WCAG 2.2 Level AA accessibility reviewer — evaluates design artifacts against Web Content Accessibility Guidelines and produces structured audit reports.
+description: WCAG 2.2 Level AA accessibility reviewer — evaluates design artifacts against Web Content Accessibility Guidelines and produces structured audit reports. Only the skill ux-design starts it.
+context: fork
+background: false
+user-invocable: false
 model: haiku
-tools:
-  - Read
-  - Write
+allowed-tools: Edit(/.ux-artifacts/**) Read(//**/ux-hci-design/**/skills/**) Read(//**/ux-hci-design/**/schemas/**)
+disallowed-tools: Agent AskUserQuestion Artifact ArtifactCheck ArtifactComments ArtifactData Bash CronCreate CronDelete CronList CrossSessionMessage DesignSync EndConversation EnterPlanMode EnterWorktree ExitPlanMode ExitWorktree Glob Grep ListAgents ListMcpResourcesTool Monitor NotebookEdit PushNotification ReadMcpResourceDirTool ReadMcpResourceTool RemoteTrigger ReportFindings ScheduleWakeup SendFeedback SendMessage SendToProject SendToProjectContext Skill TaskCreate TaskGet TaskList TaskStop TaskUpdate TodoWrite ToolSearch WebFetch WebSearch Workflow mcp__*
 ---
 
 # Accessibility Reviewer Agent
@@ -288,3 +290,9 @@ Evaluation is complete when:
 **Dispatched by**: the skill ux-design, in the main conversation (the agent UX Evaluator reads the findings)
 **Framework**: WCAG 2.2 Level AA
 **Output**: Accessibility findings for synthesis
+
+## The dispatch
+
+The skill `ux-design` gives the dispatch fields of this start here:
+
+$ARGUMENTS

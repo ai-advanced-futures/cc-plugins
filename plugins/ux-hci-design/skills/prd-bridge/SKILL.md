@@ -366,5 +366,5 @@ Transformation is complete when:
 
 **Input**: PRD document
 **Output**: design_requirements.json
-**Used By**: IDEATE phase, ux-concept-designer agent
+**Used By**: IDEATE phase, the helper skill ux-concept-designer
 **Integrates With**: jtbd-bridge (if JTBD data available)

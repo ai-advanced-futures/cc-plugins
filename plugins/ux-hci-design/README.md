@@ -1,6 +1,6 @@
 # ux-hci-design
 
-**Version:** 1.7.1
+**Version:** 1.8.0
 **Author:** Luis F. Amadeo (the original plugin). ai-advanced-futures ported it to this marketplace.
 **License:** MIT (see `NOTICE`)
 
@@ -17,7 +17,7 @@ $ claude plugin install ux-hci-design@cc-plugins
 
 ## Skills
 
-The plugin has 13 skills. Start the skill `ux-design` for the full workflow. The other skills hold the method of one phase or one framework. The phase agents read them. A person can also start them alone.
+The plugin has 13 skills for a person, and 8 helper skills that only `ux-design` starts. Start the skill `ux-design` for the full workflow. The other skills hold the method of one phase or one framework. The phase helpers read them. A person can also start them alone.
 
 | Skill | Command | Use |
 |-------|---------|-----|
@@ -59,7 +59,7 @@ The skill `ux-design` is the only part that asks questions. It uses AskUserQuest
 2. **Start of a phase.** You answer `yes`, `no`, or `learn more`.
 3. **Start point of the Define phase.** You choose research from the Empathize phase, JTBD data, or existing research.
 4. **Integration.** You choose JTBD only, PRD only, or both.
-5. **Open questions of an agent.** An agent cannot ask. It writes its questions to `<output_dir>/open-questions.md`. The skill asks them and starts the agent again with your answers.
+5. **Open questions of a helper.** A helper cannot ask. It writes its questions to `<output_dir>/open-questions.md`. The skill asks them and starts the helper again with your answers.
 
 ## Inputs
 
@@ -69,7 +69,7 @@ The skill `ux-design` is the only part that asks questions. It uses AskUserQuest
 
 ## Outputs
 
-The agents write these files to the folder `.ux-artifacts/` in your project. After each phase, the skill `ux-design` saves the files as pages of the brain `docs/ux-hci-design/` and removes the files that it read (see "Brain"). `ux_graph.py view` prints a saved file again. If you answer "No brain now", the files stay in `.ux-artifacts/`; add the folder to your `.gitignore` file.
+The helpers write these files to the folder `.ux-artifacts/` in your project. After each phase, the skill `ux-design` saves the files as pages of the brain `docs/ux-hci-design/` and removes the files that it read (see "Brain"). `ux_graph.py view` prints a saved file again. If you answer "No brain now", the files stay in `.ux-artifacts/`; add the folder to your `.gitignore` file.
 
 | Phase | Files |
 |-------|-------|
@@ -81,11 +81,11 @@ The agents write these files to the folder `.ux-artifacts/` in your project. Aft
 
 The JSON schemas for these files are in `schemas/outputs/`. The folder `examples/` holds 3 example projects with a `.ux-config.json` file.
 
-## Agents
+## Helper skills
 
-A skill starts an agent as `ux-hci-design:<agent>`. An agent cannot ask the person a question.
+Each helper is a forked skill in `skills/<name>/SKILL.md` (`context: fork`, `background: false`, `user-invocable: false`). The skill `ux-design` starts a helper as `ux-hci-design:<helper>` with the `Skill` tool. The helper runs as a subagent in the foreground, so you approve no write of a helper. You need no setting for fork mode. A helper cannot ask the person a question.
 
-| Agent | Phase | Task |
+| Helper | Phase | Task |
 |-------|-------|------|
 | `ux-researcher` | Empathize | Research and handoff decisions |
 | `ux-artifact-generator` | Define | Personas, journey maps, mental models |
@@ -96,11 +96,11 @@ A skill starts an agent as `ux-hci-design:<agent>`. An agent cannot ask the pers
 | `usability-reviewer` | Test | Nielsen heuristics and Rams principles |
 | `ai-hci-reviewer` | Test | Microsoft 18 Guidelines (only when the product has AI features) |
 
-No agent has the tool Agent. The skill `ux-design` starts the 3 reviewers in the main conversation, waits for each of them, and then starts the agent `ux-evaluator`. Each reviewer writes `.ux-artifacts/reviews/<reviewer>/findings.json`. Claude Code ignores a type list inside `Agent(...)` in an agent file, so this is the way to limit the agents that start. The agent `ux-prototype-builder` has the tool Skill, for the optional plugin below. No agent has the tool Bash.
+Each helper has a deny list (`disallowed-tools`): `Agent`, `Bash`, and `Skill` (except for `ux-prototype-builder`), and the other tools that it does not need. Claude Code 2.1.322 still shows these tools to a helper, so the list records the intent and the permission mode is the limit: a call of a tool that is not granted is refused (`-p`) or asked (interactive session). No helper may start another helper: an `Agent` call of a helper runs in the background in an interactive session. The skill `ux-design` starts the 3 reviewers in the main conversation, one after the other, waits for each of them, and then starts the helper `ux-evaluator`. Each reviewer writes `.ux-artifacts/reviews/<reviewer>/findings.json`. The helper `ux-prototype-builder` has the tool Skill, for the optional plugin below.
 
 ## Optional: tailwind-plus
 
-The paid plugin `tailwind-plus` is not in this marketplace. When you have it and `.ux-config.json` has `"tailwind_plus": true`, the agent `ux-prototype-builder` calls `/tailwind-plus:advise` for each wireframe region. Without the plugin, the agent marks the region `[FALLBACK: raw Tailwind]` and goes on.
+The paid plugin `tailwind-plus` is not in this marketplace. When you have it and `.ux-config.json` has `"tailwind_plus": true`, the helper `ux-prototype-builder` calls `/tailwind-plus:advise` for each wireframe region. Without the plugin, the helper marks the region `[FALLBACK: raw Tailwind]` and goes on.
 
 ## Scripts
 
@@ -135,7 +135,7 @@ A run with no person (for example `claude -p`) keeps the brain out of git and sa
 
 1. `/ux-hci-design:setup` makes the brain (or `ux-design` does it at the first save, after the question).
 2. After each phase, `ux-design` runs `ux_graph.py ingest`. The pages have `status: draft`. The test phase saves the report only after `check_output.py` exits 0.
-3. Before it starts the agent of the next phase, `ux-design` runs `ux_graph.py view ... --out` for each saved input file, and gives the agent that copy.
+3. Before it starts the helper of the next phase, `ux-design` runs `ux_graph.py view ... --out` for each saved input file, and gives the helper that copy.
 4. At the end of a run, `ux-design` asks "Learn these results?". `/ux-hci-design:learn` confirms the pages of the run. It also saves the behavior results into the PRD (through `product:learn`) and the design tokens into the system design.
 5. `ux_graph.py behavior` lists the screens, state rules, interaction rules and user flows for the PRD. `ux_graph.py behavior --check-prd` compares them with the Experience and Journey pages of the PRD.
 6. After `/ux-hci-design:learn` confirms a run, it saves the run into the PRD and the system design (Step 2b of the skill `learn`). See "The save into the PRD and the system design".
@@ -179,7 +179,7 @@ Each skill grants its own scripts in its turn, so the list has no `Bash` rule. C
 
 ## Documents
 
-- [docs/AGENTS.md](./docs/AGENTS.md): the agents
+- [docs/AGENTS.md](./docs/AGENTS.md): the helper skills
 - [docs/SCHEMAS.md](./docs/SCHEMAS.md) and [docs/SCHEMA-VALIDATION.md](./docs/SCHEMA-VALIDATION.md): the schemas
 - [docs/TESTING.md](./docs/TESTING.md) and [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)
 - [docs/adr/](./docs/adr/): the decisions on the architecture

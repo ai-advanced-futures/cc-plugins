@@ -1,6 +1,6 @@
 ---
 name: prototype
-description: Use in the prototype phase of Design Thinking, after the ideate phase. Holds the method that makes wireframe specifications with accessibility notes and interaction patterns. The agent ux-prototype-builder reads it.
+description: Use in the prototype phase of Design Thinking, after the ideate phase. Holds the method that makes wireframe specifications with accessibility notes and interaction patterns. The helper skill ux-prototype-builder reads it.
 ---
 
 # PROTOTYPE Phase Skill
@@ -409,7 +409,7 @@ Prototypes are ready for evaluation when:
 
 **Previous Phase**: IDEATE (design concepts)
 **Next Phase**: TEST (evaluation)
-**Agent**: ux-prototype-builder
+**Helper skill**: ux-prototype-builder
 **Outputs**: wireframes.json, interaction_patterns.json, user_flows.mmd
 
 ---

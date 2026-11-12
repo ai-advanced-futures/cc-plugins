@@ -207,13 +207,14 @@ QUICK-ACTION COMMANDS (SDLC checkpoints):
 - **Reuse.** Advanced users can start a specialist directly.
 - **Context control.** The orchestrator keeps the context across phases. The specialists do the work.
 
-**Agent structure (the design of 2026):**
+**Helper structure (STORY-371: the 8 helpers are forked skills, and the folder of the agent files is gone):**
 ```
-agents/
-  ux-orchestrator.md       → Manages full workflow, dispatches to specialists
-  ux-researcher.md         → Empathize phase expertise
-  ux-evaluator.md          → Test phase, all evaluation frameworks
-  ux-artifact-generator.md → Define/Prototype phases, generates deliverables
+skills/
+  ux-design/SKILL.md             → Manages full workflow, starts the helper skills
+  ux-researcher/SKILL.md         → Empathize phase expertise
+  ux-evaluator/SKILL.md          → Test phase, all evaluation frameworks
+  ux-artifact-generator/SKILL.md → Define phase, generates deliverables
+  (and 5 more helpers: the 3 reviewers, ux-concept-designer, ux-prototype-builder)
 ```
 
 **Trade-offs:**
@@ -558,7 +559,7 @@ The original decision of 2026 stands. The port to the cc-plugins marketplace cha
 - **Skill names.** The `name:` line in the frontmatter of a skill is the folder name (for example `name: ux-design`). The plugin adds the prefix `ux-hci-design:`.
 - **Agents.** The plugin has 8 agents: `accessibility-reviewer`, `ai-hci-reviewer`, `usability-reviewer`, `ux-artifact-generator`, `ux-concept-designer`, `ux-evaluator`, `ux-prototype-builder`, and `ux-researcher`. A skill calls an agent with the name `ux-hci-design:<agent>`. The skill `ux-design` coordinates the phases and starts every agent. The original design had a separate agent that managed the phases; it is not in the plugin.
 - **Questions.** An agent cannot ask the person a question. The skill `ux-design` asks the questions with AskUserQuestion.
-- **Tool grants.** No agent can start agents, because Claude Code ignores a type list inside `Agent(...)` in an agent file. The skill `ux-design` starts the 3 reviewers, then `ux-evaluator`. Only `ux-prototype-builder` has the Skill tool.
+- **Tool grants.** No helper can start a helper: each helper names `Agent` in its `disallowed-tools`, and each helper except `ux-prototype-builder` also names `Skill`. The skill `ux-design` starts the 3 reviewers, then `ux-evaluator`. Only `ux-prototype-builder` has the Skill tool.
 - **Optional plugin.** The tailwind-plus plugin is optional and paid. It is not in this marketplace.
 
 ---
@@ -639,3 +640,5 @@ The original decision of 2026 stands. The port to the cc-plugins marketplace cha
 
 **Status:** Ready for implementation
 **Next steps:** Start Phase 1 (Foundation)
+
+2026-11-11 (STORY-371, D-1064): the 8 agents are forked helper skills in `skills/<name>/`, and their agent files are deleted.

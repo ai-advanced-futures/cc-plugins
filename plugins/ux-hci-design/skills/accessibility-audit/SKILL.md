@@ -492,5 +492,5 @@ Accessibility audit is complete when:
 **Started by**: the skill ux-design (the agent ux-evaluator reads the findings)
 **Framework**: WCAG 2.2 Level AA
 **Output**: Accessibility findings for synthesis
-**Agent**: accessibility-reviewer
+**Helper skill**: accessibility-reviewer
 

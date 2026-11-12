@@ -2,6 +2,15 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.8.0 - 2026-11-11
+
+STORY-371.
+
+- The 8 agents of `agents/` (`accessibility-reviewer`, `ai-hci-reviewer`, `usability-reviewer`, `ux-artifact-generator`, `ux-concept-designer`, `ux-evaluator`, `ux-prototype-builder`, `ux-researcher`) are now forked helper skills in `skills/<name>/SKILL.md`, and the agent files are removed. An `Agent` call with `subagent_type` `ux-hci-design:<name>` finds no agent now. Only `ux-design` starts the helpers.
+- `ux-design` starts each helper with the `Skill` tool. In an interactive session, each helper runs in the foreground, so the person approves no write of a helper and no `ux_graph.py` command. Before this change, each `Agent` call ran in the background in an interactive session with fork mode on (the default). No setting of fork mode is necessary.
+- The 3 reviewers of the test phase run one after the other, so the test phase takes longer.
+- Each helper names each tool that it does not need (`disallowed-tools`, not `Edit`: the grant `Edit(/.ux-artifacts/**)` already limits `Write` and `Edit` to `.ux-artifacts/`), and has its own grants. Claude Code 2.1.322 still shows those tools to a forked helper, so the permission mode is the real limit (a call outside the grants is refused in `-p`, and asked in an interactive session). The deny list holds 7 names that the first list missed (`SendToProject`, `SendToProjectContext`, `CrossSessionMessage`, `ArtifactCheck`, `ListMcpResourcesTool`, `ReadMcpResourceTool`, `ReadMcpResourceDirTool`) and `EndConversation` (issue 1654).
+
 ## 1.7.1 - 2026-11-11
 
 - The README section "Grants for a `-p` caller" says that a `-p` run can need the 4 rules, in a build that refuses a `Skill` call. It said that a `-p` run needs them. Claude Code 2.1.322 refused 0 calls with the 4 rules and without them (the verifier of PR 1665).

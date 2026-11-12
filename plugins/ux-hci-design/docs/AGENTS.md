@@ -1,6 +1,6 @@
 # UX/HCI Design Plugin - Agent Reference
 
-This document describes the 8 agents of the UX/HCI Design plugin.
+This document describes the 8 helper skills of the UX/HCI Design plugin. Each one is a forked skill in `skills/<name>/SKILL.md` (`context: fork`), and only the skill `ux-design` starts it.
 
 ## Agent Architecture
 
@@ -20,7 +20,7 @@ UX Design Orchestrator (/ux-hci-design:ux-design skill)
     │   └── ux-prototype-builder
     │
     └── TEST Phase
-        ├── accessibility-reviewer   (the skill starts the reviewers in one message)
+        ├── accessibility-reviewer   (the skill starts the reviewers one after the other)
         ├── ai-hci-reviewer          (only when the product has AI features)
         ├── usability-reviewer
         └── ux-evaluator             (starts after them, and merges their findings)
@@ -32,9 +32,9 @@ UX Design Orchestrator (/ux-hci-design:ux-design skill)
 
 - An agent cannot ask the person a question. The skill `ux-design` asks the person with AskUserQuestion.
 - When an agent needs an answer, it writes its open questions to `<output_dir>/open-questions.md` and returns. The skill asks these questions and calls the agent again.
-- No agent has the `Agent` tool. Claude Code ignores a type list inside `Agent(...)` in an agent file, so the plugin cannot limit the agents that an agent starts. The skill `ux-design` starts all agents, in the main conversation.
-- Only `ux-prototype-builder` has the `Skill` tool.
-- All other agents have the tools `Read` and `Write` only.
+- No helper may use the `Agent` tool: its `disallowed-tools` names it, and an `Agent` call of a helper runs in the background in an interactive session. The skill `ux-design` starts all helpers with the `Skill` tool, in the main conversation.
+- Only `ux-prototype-builder` has the `Skill` tool (`Skill(tailwind-plus:advise)`).
+- Each helper has these `allowed-tools` (the builder has 1 more, the `Skill` grant above): `Edit(/.ux-artifacts/**)` (it approves `Write` and `Edit` in that folder) and `Read` of the skills and the schemas of the plugin. Its `disallowed-tools` names each other tool, among them `Bash`, `AskUserQuestion` and `mcp__*`, but not `Edit` (a reviewer called `Edit` on its own file in 2 of 6 live runs, and a denied name refuses that call). Measured in Claude Code 2.1.322 (8 live runs, 1 for each helper): a forked helper still lists `Agent`, `Bash` and `Skill`, in spite of this field. So the list records the intent, and the permission mode is the real limit: Claude Code refuses a call outside the grants in `-p`, and asks the person in an interactive session. A helper can still try a call of a tool that is not granted, for example `Bash`, and Claude Code refuses it.
 - An agent writes its files to `<output_dir>` and nothing else. It does not write the brain `docs/ux-hci-design/`. After each phase, the skill `ux-design` saves the files as pages (`ux_graph.py ingest`) and removes the files that it read. Before it starts an agent, the skill puts a copy of each saved input file in `<output_dir>/inputs/` (`ux_graph.py view --out`), and gives the agent that path. The agents have no Bash, so they cannot run the save code.
 
 ---
@@ -220,9 +220,9 @@ UX Design Orchestrator (/ux-hci-design:ux-design skill)
 
 ## Agent Dispatch
 
-The skill `ux-design` calls one agent for each phase. It calls an agent with the `Agent` tool. The agent name is `ux-hci-design:<agent>`. A bare agent name finds no agent.
+The skill `ux-design` starts one helper for each phase with the `Skill` tool. The name is `ux-hci-design:<helper>`. A bare name finds no skill.
 
-Each call gives the agent these fields:
+Each start gives the helper these fields in `args`:
 
 | Field | Meaning |
 |-------|---------|
@@ -264,7 +264,7 @@ All agents follow these quality criteria:
 
 ## Usage
 
-A person starts the agents through the skill `/ux-hci-design:ux-design`. The plugin has 13 skills. Each one is `/ux-hci-design:<skill>`.
+A person starts the helpers through the skill `/ux-hci-design:ux-design`. The plugin has 13 skills for a person. Each one is `/ux-hci-design:<skill>`.
 
 ```bash
 # Run full workflow

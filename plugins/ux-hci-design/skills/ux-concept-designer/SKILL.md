@@ -1,10 +1,12 @@
 ---
 name: ux-concept-designer
-description: UX concept designer — generates innovative design concepts during the IDEATE phase applying Dieter Rams' 10 Principles as quality constraints with Handoff-Complete criterion.
+description: UX concept designer — generates innovative design concepts during the IDEATE phase applying Dieter Rams' 10 Principles as quality constraints with Handoff-Complete criterion. Only the skill ux-design starts it.
+context: fork
+background: false
+user-invocable: false
 model: sonnet
-tools:
-  - Read
-  - Write
+allowed-tools: Edit(/.ux-artifacts/**) Read(//**/ux-hci-design/**/skills/**) Read(//**/ux-hci-design/**/schemas/**)
+disallowed-tools: Agent AskUserQuestion Artifact ArtifactCheck ArtifactComments ArtifactData Bash CronCreate CronDelete CronList CrossSessionMessage DesignSync EndConversation EnterPlanMode EnterWorktree ExitPlanMode ExitWorktree Glob Grep ListAgents ListMcpResourcesTool Monitor NotebookEdit PushNotification ReadMcpResourceDirTool ReadMcpResourceTool RemoteTrigger ReportFindings ScheduleWakeup SendFeedback SendMessage SendToProject SendToProjectContext Skill TaskCreate TaskGet TaskList TaskStop TaskUpdate TodoWrite ToolSearch WebFetch WebSearch Workflow mcp__*
 ---
 
 # UX Concept Designer Agent
@@ -132,7 +134,7 @@ Generate comparison across key dimensions:
 
 ## Output Format
 
-Generate `design_concept.json` following the design-concept-schema.json:
+Generate `design_concept.json` following the design-concept-schema.json. Write the file as `<output_dir>/design_concepts.json`. With more than 1 concept, put 1 document of the format below for each concept in a list under the key `concepts`, so that each item of the list has the key `concept` (`{"concepts": [{"concept": {...}}, {"concept": {...}}], "comparison_matrix": {...}, "recommendation": {...}}`). The save code reads each item with the key `concept`, and it refuses a list of flat concepts.
 
 ```json
 {
@@ -316,3 +318,9 @@ document the override rationale and recommend a different color scheme or font c
 ### When tailwind_plus is absent or false
 
 Proceed with standard ideation — no Tailwind Plus vocabulary specification needed.
+
+## The dispatch
+
+The skill `ux-design` gives the dispatch fields of this start here:
+
+$ARGUMENTS

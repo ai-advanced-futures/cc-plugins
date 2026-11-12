@@ -1,6 +1,6 @@
 ---
 name: define
-description: Use in the define phase of Design Thinking, after the research. Holds the method that turns research findings into personas, journey maps and mental models. The agent ux-artifact-generator reads it.
+description: Use in the define phase of Design Thinking, after the research. Holds the method that turns research findings into personas, journey maps and mental models. The helper skill ux-artifact-generator reads it.
 ---
 
 # DEFINE Phase Skill
@@ -404,5 +404,5 @@ DEFINE phase outputs enable:
 
 **Previous Phase**: EMPATHIZE (the research findings of the `inputs` list)
 **Next Phase**: IDEATE (design concepts)
-**Agent**: ux-artifact-generator
+**Helper skill**: ux-artifact-generator
 **Outputs**: personas.json, journey_maps.json, mental_models.mmd

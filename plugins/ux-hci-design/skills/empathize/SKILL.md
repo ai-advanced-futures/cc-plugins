@@ -1,6 +1,6 @@
 ---
 name: empathize
-description: Use in the empathize phase of Design Thinking, at the start of a design. Holds the method for user research, with interview guides, contextual inquiry and mental model mapping. The agent ux-researcher reads it.
+description: Use in the empathize phase of Design Thinking, at the start of a design. Holds the method for user research, with interview guides, contextual inquiry and mental model mapping. The helper skill ux-researcher reads it.
 ---
 
 # EMPATHIZE Phase Skill
@@ -272,5 +272,5 @@ Research is complete when:
 ---
 
 **Next Phase**: DEFINE — ux-artifact-generator synthesizes research into personas and journey maps
-**Agent**: ux-researcher (this phase only)
+**Helper skill**: ux-researcher (this phase only)
 **Output**: .ux-artifacts/research_findings.json

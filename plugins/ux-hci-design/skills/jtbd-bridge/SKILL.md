@@ -498,4 +498,4 @@ All transformed artifacts must:
 **Invocation**: `/ux-hci-design:ux-design integrate` or during DEFINE phase with JTBD input
 **Input**: JTBD opportunity analysis JSON
 **Output**: Personas, journey maps, prioritized requirements
-**Agent**: ux-artifact-generator (with JTBD bridge logic)
+**Helper skill**: ux-artifact-generator (with JTBD bridge logic)

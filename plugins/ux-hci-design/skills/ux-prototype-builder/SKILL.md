@@ -1,11 +1,12 @@
 ---
 name: ux-prototype-builder
-description: UX prototype builder — generates wireframe specifications, component interactions, and accessibility-annotated prototypes from design concepts.
+description: UX prototype builder — generates wireframe specifications, component interactions, and accessibility-annotated prototypes from design concepts. Only the skill ux-design starts it.
+context: fork
+background: false
+user-invocable: false
 model: sonnet
-tools:
-  - Read
-  - Write
-  - Skill
+allowed-tools: Edit(/.ux-artifacts/**) Read(//**/ux-hci-design/**/skills/**) Read(//**/ux-hci-design/**/schemas/**) Skill(tailwind-plus:advise)
+disallowed-tools: Agent AskUserQuestion Artifact ArtifactCheck ArtifactComments ArtifactData Bash CronCreate CronDelete CronList CrossSessionMessage DesignSync EndConversation EnterPlanMode EnterWorktree ExitPlanMode ExitWorktree Glob Grep ListAgents ListMcpResourcesTool Monitor NotebookEdit PushNotification ReadMcpResourceDirTool ReadMcpResourceTool RemoteTrigger ReportFindings ScheduleWakeup SendFeedback SendMessage SendToProject SendToProjectContext TaskCreate TaskGet TaskList TaskStop TaskUpdate TodoWrite ToolSearch WebFetch WebSearch Workflow mcp__*
 ---
 
 # UX Prototype Builder Agent
@@ -448,3 +449,9 @@ Add to Handoff Checklist:
 ### When tailwind_plus is absent or false
 
 Proceed with standard wireframe specification — no component advisor call needed.
+
+## The dispatch
+
+The skill `ux-design` gives the dispatch fields of this start here:
+
+$ARGUMENTS

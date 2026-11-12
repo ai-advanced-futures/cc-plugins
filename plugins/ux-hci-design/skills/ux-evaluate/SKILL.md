@@ -1,6 +1,6 @@
 ---
 name: ux-evaluate
-description: Use in the test phase of Design Thinking, when wireframes exist. Holds the method for an evaluation with the Nielsen heuristics, WCAG compliance and the AI-HCI guidelines. The agent ux-evaluator reads it.
+description: Use in the test phase of Design Thinking, when wireframes exist. Holds the method for an evaluation with the Nielsen heuristics, WCAG compliance and the AI-HCI guidelines. The helper skill ux-evaluator reads it.
 allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/check_output.py *)
 ---
 
@@ -8,7 +8,7 @@ allowed-tools: Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/check_output.py *)
 
 ## Purpose
 
-Evaluate design artifacts against multiple established frameworks. The skill `ux-design` starts the domain reviewers (accessibility, AI-HCI, usability) in the main conversation. The agent `ux-evaluator` then merges their findings into one UX health score with prioritized recommendations.
+Evaluate design artifacts against multiple established frameworks. The skill `ux-design` starts the domain reviewers (accessibility, AI-HCI, usability) one after the other. The helper skill `ux-evaluator` then merges their findings into one UX health score with prioritized recommendations.
 
 ## Theoretical Foundation
 
@@ -439,7 +439,7 @@ Evaluation is complete when:
 ---
 
 **Previous Phase**: PROTOTYPE (wireframes, interaction patterns)
-**Agent**: ux-evaluator (merges the reviewer findings)
+**Helper skill**: ux-evaluator (merges the reviewer findings)
 **Reviewers (started by the skill ux-design)**: accessibility-reviewer, ai-hci-reviewer, usability-reviewer
 **Output**: evaluation_report.json
 **Next Step**: Remediation of critical findings or implementation
