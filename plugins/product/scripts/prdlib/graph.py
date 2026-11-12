@@ -5,6 +5,7 @@ with a path shape, but not that the target exists, that its type is permitted,
 that its level is higher, or that the edges make no cycle. Those rules live
 here. Each function names the schema slot it covers.
 """
+import re
 from pathlib import Path
 
 from . import DataError
@@ -94,6 +95,38 @@ def check_targets(root: Path, bundle: str, frontmatter: dict,
             if target_type not in permitted:
                 raise DataError(
                     f"`{field}` does not accept a {target_type} target")
+
+
+# The pattern of RoadmapPath in schema/product.yaml, for `fullmatch`. Never
+# use `$` here: it also matches before a final line break.
+ROADMAP_PATH_RE = re.compile(r"/[a-z-]+/[A-Z]+-[0-9A-Za-z-]+\.md")
+
+
+def milestone_difference(milestone, parent: str, parent_milestone):
+    """The text of W9, or None. A Story is in the milestone of its parent.
+
+    It is None when the parent has no milestone. It is also None when a value
+    that the text would print (the parent, the milestone of the parent, the
+    milestone of the Story) is not a RoadmapPath: rule E2 reports that value,
+    and the text of W9 and the note of `new` must not print it raw, because a
+    line break or an ESC in it would forge a line. Each valid value is a
+    RoadmapPath, whose pattern allows one form for each page, so a string
+    compare is exact. `check` (rule W9) and `new` (its note) both call this,
+    so the 2 texts cannot drift apart.
+    """
+    if not isinstance(parent_milestone, str) \
+            or not ROADMAP_PATH_RE.fullmatch(parent_milestone) \
+            or not ROADMAP_PATH_RE.fullmatch(parent):
+        return None
+    parent_id, wanted = Path(parent).stem, Path(parent_milestone).stem
+    if not isinstance(milestone, str) or not milestone:
+        return f"the Story has no milestone, and its parent {parent_id} is in {wanted}"
+    if not ROADMAP_PATH_RE.fullmatch(milestone):
+        return None
+    if milestone != parent_milestone:
+        return (f"the milestone {Path(milestone).stem} differs from {wanted} "
+                f"of the parent {parent_id}")
+    return None
 
 
 def relative_target(path: Path, bundle_root: Path) -> str:

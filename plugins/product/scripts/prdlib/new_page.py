@@ -1,11 +1,12 @@
 """`prd.py new`: assign the ID under the lock and write the page."""
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
 
 from . import DataError, UsageError
-from .graph import FIELD_TARGETS, check_targets, target_path
+from .graph import FIELD_TARGETS, check_targets, milestone_difference, target_path
 from .hashing import body_hash
 from .ids import new_run_id, next_id
 from .lock import write_lock
@@ -28,6 +29,10 @@ REFUSED_LINK_FIELDS = {
 }
 
 
+# C0 controls (a line break, ESC) and C1 controls (0x9b starts a CSI).
+_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+
+
 def trace_entry(root: Path, target: str) -> dict:
     path = target_path(root, "roadmap", target)
     if not path.is_file():
@@ -35,12 +40,54 @@ def trace_entry(root: Path, target: str) -> dict:
     return {"to": target, "hash": body_hash(load_page(path).body, path.stem)}
 
 
+def _take_the_parent_milestone(root: Path, bundle: str, type_name: str,
+                               frontmatter: dict, notes: list | None) -> None:
+    """A new Story takes the milestone of its parent (STORY-427).
+
+    It copies the milestone when the Story has a parent and no `milestone`
+    key. A `milestone` that the caller gave stays, and a difference adds a
+    note: the text of rule W9. It runs before the lock and before the ID, so a
+    copy that `check` would refuse writes no page. The parent is read with
+    `.get`: a Story with no `parent` is legal, and it gets nothing here.
+    """
+    parent = frontmatter.get("parent")
+    if type_name != "Story" or not isinstance(parent, str) or not parent:
+        return
+    parent_milestone = load_page(target_path(root, bundle, parent)
+                                 ).frontmatter.get("milestone")
+    if "milestone" not in frontmatter:
+        if not isinstance(parent_milestone, str) or not parent_milestone:
+            return
+        frontmatter["milestone"] = parent_milestone
+        errors = validate_frontmatter(type_name, frontmatter)
+        cause = errors[0] if errors else None
+        if cause is None:
+            try:
+                check_targets(root, bundle, frontmatter, ["milestone"])
+            except DataError as error:
+                cause = str(error)
+        if cause is not None:
+            # The cause holds the value of the parent. A trailing line break
+            # passes the schema pattern and reaches check_targets raw, so
+            # escape each control character: one error is one line.
+            cause = _CONTROL_RE.sub(lambda m: f"\\x{ord(m.group()):02x}", cause)
+            raise DataError(
+                f"the milestone of the parent {parent} cannot be copied: "
+                f"{cause}. Give --link milestone=, or fix the parent.")
+        return
+    text = milestone_difference(frontmatter["milestone"], parent,
+                                parent_milestone)
+    if text and notes is not None:
+        notes.append(f"{text}. prd.py check gives W9 for it.")
+
+
 def create(root: Path, type_name: str, title: str, description: str,
            status: str | None = None, body: str | None = None,
            traces: list[str] | None = None,
            links: list[str] | None = None,
            sets: list[str] | None = None,
-           actor: str | None = None) -> Path:
+           actor: str | None = None,
+           notes: list | None = None) -> Path:
     if type_name not in TYPES:
         raise DataError(f"{type_name} is not a page type")
     spec = TYPES[type_name]
@@ -107,6 +154,7 @@ def create(root: Path, type_name: str, title: str, description: str,
     # the schema and not "does not exist".
     check_targets(root, spec.bundle, frontmatter,
                   [f for f in written if f in FIELD_TARGETS])
+    _take_the_parent_milestone(root, spec.bundle, type_name, frontmatter, notes)
 
     with write_lock(root):
         # A Run ID is a time and a token, never a number: two agents with no

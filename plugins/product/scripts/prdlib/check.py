@@ -15,7 +15,7 @@ import yaml
 
 from . import DataError, git
 from .graph import CYCLE_FIELDS, FIELD_TARGETS, find_cycle, level_of, \
-    relative_target, target_path, targets_of
+    milestone_difference, relative_target, target_path, targets_of
 from .page import load_page, normalise, safe_load, split_frontmatter
 from .registry import BY_DIRECTORY, CLOSED_STATES, DELIVERED_STATES, TYPES
 from .schema import validate_frontmatter
@@ -217,7 +217,7 @@ def _spec_owners(root: Path) -> dict:
 
 
 def check_warnings(root: Path, pages: dict) -> list[Issue]:
-    """W2 to W8. Each one is advice. Only --strict makes it an error."""
+    """W2 to W9. Each one is advice. Only --strict makes it an error."""
     issues = []
     children = {}
     for path, (_bundle, frontmatter, _text) in pages.items():
@@ -264,6 +264,16 @@ def check_warnings(root: Path, pages: dict) -> list[Issue]:
             issues.append(Issue(rel, 1, WARN, "W7",
                                 "the Story is ready and has no `spec`. Run "
                                 "`/product:specifying-stories` on its Feature."))
+        # W9: a Story is in the milestone of its parent (STORY-427). A parent
+        # that is not in `pages` gives no W9, because E4 reports the link.
+        parent = frontmatter.get("parent")
+        if type_name == "Story" and isinstance(parent, str) and parent:
+            found = pages.get(target_path(root, bundle, parent))
+            if found is not None:
+                text = milestone_difference(frontmatter.get("milestone"),
+                                            parent, found[1].get("milestone"))
+                if text:
+                    issues.append(Issue(rel, 1, WARN, "W9", text))
     # W8 reads the spec files, not the bundle pages, so it sits after the
     # page loop. A Story that two specs list would start two builds of one
     # file.
@@ -309,7 +319,7 @@ def check_generated(root: Path, pages: dict) -> list[Issue]:
 WHOLE_GRAPH_RULES = {
     "E4-E8": check_graph,
     "E9": check_runs_unchanged,
-    "W1-W8": check_warnings,
+    "W1-W9": check_warnings,
     "E10": check_generated,
 }
 

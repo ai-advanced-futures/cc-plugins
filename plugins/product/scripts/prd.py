@@ -111,11 +111,15 @@ def cmd_new(args) -> int:
         # The protocol gives an ID. The page stores a bundle-relative path.
         source = ids.resolve(args.root, args.discovered_from)
         links.append(f"discovered_from={own_target(args.root, source)}")
+    notes: list[str] = []
     path = new_page.create(
         args.root, args.type, args.title, args.description,
         status=args.status, body=args.body, traces=args.traces,
-        links=links, sets=args.set)
+        links=links, sets=args.set, notes=notes)
     print(path.relative_to(args.root))
+    # stdout holds the path only: each skill reads the path from it.
+    for note in notes:
+        print(f"note: {path.stem}: {note}", file=sys.stderr)
     return 0
 
 

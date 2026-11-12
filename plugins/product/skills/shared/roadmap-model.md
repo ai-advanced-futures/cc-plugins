@@ -70,6 +70,11 @@ A `traces` entry is `- { to: prd:/capabilities/CAPABILITY-03.md, hash: a1b2c3 }`
 An Epic and a Feature must have one trace or more, or the checker gives a warning.
 A Story or a Task stores a trace only when it narrows the traces of its parent.
 
+A new Story with a `parent` and no `milestone` takes the milestone of its parent.
+When the parent has a milestone, the checker gives a warning for a Story with no
+milestone or with another milestone. A later change of the milestone of the
+parent does not change the milestone of its Stories.
+
 These values are derived and not stored: the children of an item, `blocks`, the
 criteria of an item, the runs of an item, the items of a milestone, and "traced
 by" on a PRD page. The script writes each derived value into the `LINKS` block or

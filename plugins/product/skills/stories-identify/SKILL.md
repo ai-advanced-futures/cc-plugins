@@ -57,9 +57,9 @@ Do not read every file of a directory, because a large bundle fills the context.
 Open a page only when a question needs it. For a question about the whole graph,
 run `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/prd.py list Story`.
 
-The feature page gives the `milestone` link that each story of this run gets.
-If the feature page has no milestone, ask the user which milestone holds the
-stories, or write no `milestone` link.
+`prd.py new` copies the `milestone` link of the feature page to each story of
+this run. If the feature page has no milestone, ask the user which milestone
+holds the stories. Give that milestone with `--link milestone=`, or give none.
 
 **Caller contract**: when `/product:plan` calls this skill, the shared documents
 are already read (skip items 1 to 4), the feature comes from the caller, and
@@ -130,15 +130,19 @@ Run one command for each story:
 uv run ${CLAUDE_PLUGIN_ROOT}/scripts/prd.py new Story \
   --title "Pick a day" \
   --description "The customer picks a day and sees the free slots of that day." \
-  --link parent=/features/FEATURE-04.md \
-  --link milestone=/milestones/MILESTONE-01.md
+  --link parent=/features/FEATURE-04.md
 ```
 
 The command prints the path that it wrote. If the exit code is not 0, stop and
 show the output.
 
 Never choose an ID, because `prd.py new` assigns it and a hand-chosen ID can
-collide. Give `--link parent=` the feature that holds the story.
+collide. Give `--link parent=` the feature that holds the story. If the feature
+has a milestone, give no `--link milestone=`, because `prd.py new` copies it. A
+story in another milestone than its feature gets a note from `prd.py new` and
+warning W9 from `prd.py check`. A change of the milestone of a feature does not
+change the milestone of its stories: give each story the new milestone with
+`prd.py set <STORY-ID> milestone=<path>`.
 
 A story stores a `traces` entry only when it narrows the traces of its parent,
 as in a story that satisfies one step of a journey while the feature traces the

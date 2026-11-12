@@ -1,5 +1,15 @@
 # Changelog
 
+## 6.8.0
+
+### Added
+- `prd.py check` rule W9 (warning): a Story is in another milestone than its parent, or has no milestone while its parent has one. The parent can be a Feature or an Epic. A Task or a Feature gets no W9. A Story, a parent, or a parent `milestone` that is not a valid path gives no W9 and no note, because E2 reports that value and a line break in it would forge a line. The error of `prd.py new` for a parent milestone that cannot be copied writes each control character of the value as `\xNN`. With `--strict`, W9 gives exit 1, as each warning does. To clear it, run `prd.py set <STORY-ID> milestone=<the milestone of the parent>`, or give the Story a parent in its own milestone. The label of the whole-graph rule in a partial scan (`--bundle prd`) is now `W1-W9` (STORY-427).
+
+### Changed
+- `prd.py new Story` copies the `milestone` of its parent when the Story has a parent and no `milestone` (`--link milestone=` or `--set milestone=`). A parent with no milestone gives the Story none. A given `milestone` that differs from the milestone of the parent stays, and `new` writes 1 line `note: <ID>: ...` to stderr with the text of W9. The exit code is 0, and stdout holds the path only. When the milestone of the parent cannot be copied (its page does not exist, has another type, or has no valid path), `new` exits 1 and writes no page.
+- `/product:stories-identify` no longer shows `--link milestone=` in its example command, and it tells that `prd.py new` copies the milestone of the feature. `skills/shared/roadmap-model.md` states the rule. A later change of the milestone of a parent does not change the milestone of its Stories.
+- The Progress cell of a Milestone row counts each page whose `milestone` names it, so a new Story now counts there, as each Story on `main` already does.
+
 ## 6.7.1
 
 ### Fixed
