@@ -32,11 +32,11 @@ PYTEST := RELAY_ITEST=1 python3 -m pytest -m integration -q -rs $(OPTS)
 itest:
 	@test -n "$(TIER)" || { echo "TIER is required: make itest TIER=gates|e2e|acpx|all"; exit 2; }
 ifeq ($(TIER),all)
-	$(PYTEST) tests/integration/test_gates.py
+	$(PYTEST) tests/integration/test_gates*.py
 	$(PYTEST) tests/integration/test_acpx_live.py
 	$(PYTEST) tests/integration/test_e2e.py
 else ifeq ($(TIER),gates)
-	$(PYTEST) tests/integration/test_gates.py
+	$(PYTEST) tests/integration/test_gates*.py
 else ifeq ($(TIER),acpx)
 	$(PYTEST) tests/integration/test_acpx_live.py
 else ifeq ($(TIER),e2e)
