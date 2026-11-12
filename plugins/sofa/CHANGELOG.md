@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.17.2
+
+Text fix and 1 new check, no change in `sofa-state` (STORY-350, D-5239). `decision block` with no `--reserve` and no `--check` makes no call to origin. With `--db` it makes no git call at all. With no `--db` and no `SOFA_STATE_DB`, the main folder comes from 1 or 2 local `git rev-parse` calls, so it is not true that it makes no git call. `scripts/CLAUDE.md` and the name of the check `blkcmd` now say so. The new check `blkcmd: block makes no git call` runs the command with `--db` and `GIT_TRACE`, and fails when the trace file holds a line, so a call to origin that ignores its result turns it red. The check that sets `origin` to a missing path keeps its assertion and is now named `blkcmd: block with a missing origin exits 0 and prints the same`, because it cannot see a call. Two more names now say what they measure: `blkcmd: --reserve on a block with a free id pushes no second tag` (it counts the tags on origin) and `blknet: a store with a free id gives ids with a missing origin`.
+
 ## 7.17.1
 
 STORY-425: the git calls of `sofa-state` drop the repository env keys, and a refused push names its reason (issues 1845 and 1865).
