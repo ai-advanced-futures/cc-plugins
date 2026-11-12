@@ -6,7 +6,7 @@ change to a Run that git tracks.
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import DataError, UsageError
+from . import DataError
 from .checks import NOT_CHECKED, head_commit, results_for
 from .ghmodel import page_id_of
 from .graph import own_target

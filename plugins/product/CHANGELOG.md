@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.8.5
+
+### Fixed
+- The code and the tests of product have no old ruff F or E9 finding. `scripts/prdlib/runs.py` no longer imports `UsageError`, which it did not use, and the tests drop 9 unused imports. No behavior changes (STORY-430).
+
 ## 6.8.4
 
 ### Fixed
