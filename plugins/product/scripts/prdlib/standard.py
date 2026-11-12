@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 from . import logbook, regen
+from .lock import write_lock
 from .page import load_page, split_frontmatter, write_page
 from .registry import DIRECTORY_ORDER
 from .schema import plugin_actor
@@ -141,6 +142,15 @@ def backfill(root, actor) -> list[str]:
 
 
 def upgrade(root) -> list[str]:
+    """Take the lock, then bring the bundles to the standard (`_upgrade`)."""
+    with write_lock(root):
+        return _upgrade(root)
+
+
+def _upgrade(root) -> list[str]:
+    """`upgrade` with the lock held by the caller. The create of a missing
+    `log.md`, `backfill`, the regen, `finish` and the 2 `Upgrade` lines are
+    inside 1 lock (STORY-441)."""
     changes = backfill(root, ACTOR)
     for bundle in BUNDLES:
         log = bundle_dir(root, bundle) / "log.md"
@@ -148,7 +158,7 @@ def upgrade(root) -> list[str]:
             log.write_text(logbook.HEADER + "\n", encoding="utf-8")
             changes.append(f"added {bundle}/log.md")
     changes += ["regenerated " + escape_controls(p.relative_to(root).as_posix())
-                for p in regen.write(root)]
+                for p in regen.write_locked(root)]
     changes += finish(root)
     if changes:
         when = datetime.now(timezone.utc)

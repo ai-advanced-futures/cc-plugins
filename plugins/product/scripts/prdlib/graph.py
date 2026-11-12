@@ -76,7 +76,8 @@ def check_targets(root: Path, bundle: str, frontmatter: dict,
     """The E4 texts of `check`, for the fields that one write names.
 
     A page that `check` would refuse must not be written at all, so `new`,
-    `set` and `link` call this before the lock. It reads only the fields it
+    `set` and `link` call this inside the lock, before the first write. It
+    reads only the fields it
     is given: a page with a link that broke after a `remove` still takes a
     `set` of another field, and a `set` of the full correct list repairs the
     link. It raises DataError on the first target that does not exist or that

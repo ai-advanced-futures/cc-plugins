@@ -44,7 +44,7 @@ def _take_the_parent_milestone(root: Path, bundle: str, type_name: str,
 
     It copies the milestone when the Story has a parent and no `milestone`
     key. A `milestone` that the caller gave stays, and a difference adds a
-    note: the text of rule W9. It runs before the lock and before the ID, so a
+    note: the text of rule W9. It runs inside the lock, before the ID, so a
     copy that `check` would refuse writes no page. The parent is read with
     `.get`: a Story with no `parent` is legal, and it gets nothing here.
     """
@@ -87,6 +87,24 @@ def create(root: Path, type_name: str, title: str, description: str,
            sets: list[str] | None = None,
            actor: str | None = None,
            notes: list | None = None) -> Path:
+    """Take the lock, then make the page (`create_locked`). Each read of a
+    trace target, of a link target and of the parent is inside the lock, so
+    the page is not made from a copy that another writer changed
+    (STORY-441)."""
+    with write_lock(root):
+        return create_locked(root, type_name, title, description, status,
+                             body, traces, links, sets, actor, notes)
+
+
+def create_locked(root: Path, type_name: str, title: str, description: str,
+                  status: str | None = None, body: str | None = None,
+                  traces: list[str] | None = None,
+                  links: list[str] | None = None,
+                  sets: list[str] | None = None,
+                  actor: str | None = None,
+                  notes: list | None = None) -> Path:
+    """`create` with the lock held by the caller. write_lock is not
+    re-entrant, so `ghpull` calls this form."""
     if type_name not in TYPES:
         raise DataError(f"{escape_controls(type_name)} is not a page type")
     spec = TYPES[type_name]
@@ -99,7 +117,7 @@ def create(root: Path, type_name: str, title: str, description: str,
         frontmatter["state"] = "backlog"
 
     written = []
-    # Every value is built before the lock and before the first write, so a
+    # Every value is built before the ID and before the first write, so a
     # missing trace target leaves the repository with no change.
     for item in links or []:
         field, _, target = item.partition("=")
@@ -143,7 +161,8 @@ def create(root: Path, type_name: str, title: str, description: str,
                                 "at": timestamp(datetime.now(timezone.utc))}
 
     # The same check that rule E2 runs, before the ID is assigned and before
-    # the lock: a page that check would refuse must not be written at all.
+    # the first write: a page that check would refuse must not be written at
+    # all.
     errors = validate_frontmatter(type_name, frontmatter)
     if errors:
         raise DataError(
@@ -157,17 +176,16 @@ def create(root: Path, type_name: str, title: str, description: str,
                   [f for f in written if f in FIELD_TARGETS])
     _take_the_parent_milestone(root, spec.bundle, type_name, frontmatter, notes)
 
-    with write_lock(root):
-        # A Run ID is a time and a token, never a number: two agents with no
-        # lock between clones must not get the same one. registry.RUN_ID_RE
-        # rejects the counted shape, so `new Run` cannot use next_id.
-        page_id = new_run_id() if type_name == "Run" \
-            else next_id(root, type_name)
-        path = bundle_dir(root, spec.bundle) / spec.directory / f"{page_id}.md"
-        text = body or description
-        page = Page(path=path, frontmatter=frontmatter,
-                    body=f"\n# {page_id}: {title}\n\n{text}\n")
-        write_page(page)
+    # A Run ID is a time and a token, never a number: two agents with no
+    # lock between clones must not get the same one. registry.RUN_ID_RE
+    # rejects the counted shape, so `new Run` cannot use next_id.
+    page_id = new_run_id() if type_name == "Run" \
+        else next_id(root, type_name)
+    path = bundle_dir(root, spec.bundle) / spec.directory / f"{page_id}.md"
+    text = body or description
+    page = Page(path=path, frontmatter=frontmatter,
+                body=f"\n# {page_id}: {title}\n\n{text}\n")
+    write_page(page)
     # A bundle from an older release has no `experiences` in `id_folders`, so
     # the first page of a new folder would fail K-id (row 9 of the spec).
     from . import standard  # local import: standard imports regen

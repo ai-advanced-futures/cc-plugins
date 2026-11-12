@@ -59,6 +59,20 @@ argument. [inferred] For code 1 and code 2 the script prints one `ERROR:`
 line on stderr. [inferred] Step 5 gives the two causes of a `run-checks`
 code 1.
 
+Exit code 2 with "is held by another prd.py process" on stderr means that
+another `prd.py` run holds the write lock. The command wrote nothing: wait,
+then run the same command again. `run-checks` is the exception. It writes
+its Run page and its `Run` line in a first lock, and then runs the regen in a
+second lock. So after `run-checks` exits 2 with the lock message, list the Run
+pages of the item first: `prd.py list Run --where item=/<directory>/<ID>.md`,
+with the bundle path of the item (for example `/stories/STORY-12.md` or
+`/tasks/TASK-07.md`). A Run ID holds its UTC time to the second
+(`RUN-<date>-<time>-<token>`), so note the UTC time
+(`date -u +%Y%m%d-%H%M%S`) before you run `run-checks`. If a Run page has a
+time that is not before that noted time, run `prd.py regen` only, because the
+checks already ran and a second run writes a second Run page. If no such page
+is there, run `run-checks` again.
+
 ## Step 1: Take one item
 
 If the user gave an ID, use it. If not, ask the script for the work that is

@@ -99,21 +99,36 @@ def scan(root: Path, ids: list[str] | None = None) -> list[tuple[Path, str]]:
     return sorted(found)
 
 
+def scan_and_flag(root: Path, ids: list[str] | None = None
+                  ) -> tuple[list[tuple[Path, str]], list[Path]]:
+    """The scan and the flag step inside 1 lock. A scan from before an
+    `accept` would write the `drifted` flag back over the accept
+    (STORY-441). Gives `(found, changed)`."""
+    with write_lock(root):
+        found = scan(root, ids)
+        return found, _flag(root, found)
+
+
 def write_flags(root: Path, found: list[tuple[Path, str]]) -> list[Path]:
     """Add each drifted target to the `drifted` field of its work item."""
-    changed = []
     with write_lock(root):
-        by_item = {}
-        for path, target in found:
-            by_item.setdefault(path, []).append(target)
-        for path, targets in by_item.items():
-            page = load_page(path)
-            current = list(page.frontmatter.get("drifted") or [])
-            new = current + [t for t in targets if t not in current]
-            if new != current:
-                page.frontmatter["drifted"] = new
-                write_page(page)
-                changed.append(path)
+        return _flag(root, found)
+
+
+def _flag(root: Path, found: list[tuple[Path, str]]) -> list[Path]:
+    """`write_flags` with the lock held by the caller."""
+    changed = []
+    by_item = {}
+    for path, target in found:
+        by_item.setdefault(path, []).append(target)
+    for path, targets in by_item.items():
+        page = load_page(path)
+        current = list(page.frontmatter.get("drifted") or [])
+        new = current + [t for t in targets if t not in current]
+        if new != current:
+            page.frontmatter["drifted"] = new
+            write_page(page)
+            changed.append(path)
     return sorted(changed)
 
 

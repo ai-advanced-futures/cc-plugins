@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.8.6
+
+### Fixed
+- Concurrent `prd.py` writers on 1 checkout now lose no page change, and an agent log line names only a change that the page holds. Before, 12 `prd.py set` runs together on 12 pages kept only some of the changes, and each `Set` line of `--actor agent:<id>` was in `log.md` for a change that the page did not hold (STORY-441). Fixes #1960.
+- Each writer (`set`, `link`, `unlink`, `remove`, `new`, `regen`, `upgrade`, `github pull`, `drift --write` and `migrate --finish`) now reads, checks, changes, writes and logs inside 1 write lock. `set`, `link`, `unlink`, `remove`, `upgrade` and `migrate --finish` also run their regen inside that lock, and `regen` reads the whole tree after it takes the lock. `state`, `log`, `claim`, `heartbeat`, `release`, `expire` and `drift --accept` were correct, and have a test now.
+- When many writers run together, a writer waits longer for the lock. A writer (also one with a bad argument, such as an unknown ID) can exit 2 with the lock message "is held by another prd.py process". Run it again. After `run-checks`, look for its new Run page first, because `run-checks` can write that page and then exit 2 in its regen.
+- `drift --write` prints its lines after it writes the flags. A run that stops before the flag step ends prints no drift line.
+- The `work` and `checks-declare` skills tell the agent to wait and run the command again on the lock exit 2, except for `run-checks`, whose Run page can already be on disk.
+
 ## 6.8.5
 
 ### Fixed

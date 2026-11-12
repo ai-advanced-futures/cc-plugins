@@ -18,7 +18,7 @@ from .lock import write_lock
 from .logbook import append_entry, entry_line
 from .page import load_page, safe_load, write_page
 from .regen import require_readable
-from .regen import write as regen_write
+from .regen import write_locked
 from .tree import BUNDLES, bundle_dir, iter_pages, product_dir
 
 DRIFT_RECORD = "archive/migrate-drift.yaml"
@@ -61,25 +61,33 @@ def _items_with_traces(root: Path):
 
 
 def finish(root: Path) -> int:
+    """Take the lock, then store the hashes (`_finish`)."""
+    with write_lock(root):
+        return _finish(root)
+
+
+def _finish(root: Path) -> int:
+    """`finish` with the lock held by the caller. The read of the drift record
+    and of the tree, the hashes, the 2 `Migrate` lines and the regen are
+    inside 1 lock (STORY-441)."""
     entries = _entries(root)
     # A page the reader cannot use holds traces this step must store a hash
     # for, so it exits 1 here instead of skipping the page in silence.
     require_readable(root)
-    with write_lock(root):
-        for bundle, page in _items_with_traces(root):
-            drifted = []
-            for trace in page.frontmatter["traces"]:
-                # Both keys are new IDs: the main run wrote the record
-                # through the ID map, so no translation happens here.
-                was_drifted = _was_drifted(entries, page.id, trace.get("to"))
-                target = target_path(root, bundle, trace.get("to", ""))
-                if was_drifted or not target.is_file():
-                    drifted.append(trace["to"])
-                    continue
-                trace["hash"] = body_hash(load_page(target).body, target.stem)
-            if drifted:
-                page.frontmatter["drifted"] = drifted
-            write_page(page)
+    for bundle, page in _items_with_traces(root):
+        drifted = []
+        for trace in page.frontmatter["traces"]:
+            # Both keys are new IDs: the main run wrote the record
+            # through the ID map, so no translation happens here.
+            was_drifted = _was_drifted(entries, page.id, trace.get("to"))
+            target = target_path(root, bundle, trace.get("to", ""))
+            if was_drifted or not target.is_file():
+                drifted.append(trace["to"])
+                continue
+            trace["hash"] = body_hash(load_page(target).body, target.stem)
+        if drifted:
+            page.frontmatter["drifted"] = drifted
+        write_page(page)
     now = datetime.now(timezone.utc)
     for bundle in BUNDLES:
         page_id, link = LOG_SUBJECT[bundle]
@@ -87,7 +95,7 @@ def finish(root: Path) -> int:
                      entry_line("Migrate", page_id, link,
                                 "the v3 files became this bundle", ACTOR, now),
                      now)
-    regen_write(root)
+    write_locked(root)
     # The findings of `check` are printed, and they do not become the exit
     # code: a tree that was migrated one minute ago always holds E2 errors,
     # because `kind`, `role` and `addresses` are step 3 work that the script

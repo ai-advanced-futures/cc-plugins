@@ -114,7 +114,7 @@ def apply_change(root: Path, identifier: str, wanted: str, actor: str,
                  approved_by: str | None = None) -> str:
     """The same change with the lock already held.
 
-    claim, release, and expire call this one: write_lock is an exclusive
+    claim, release, expire, and `github pull` call this one: write_lock is an exclusive
     create and is not re-entrant, so a nested `with write_lock(root)` waits
     the full timeout and then raises.
 

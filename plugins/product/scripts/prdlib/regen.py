@@ -296,42 +296,54 @@ def differences(root: Path, pages: dict | None = None) -> dict[Path, str]:
 
 
 def write(root: Path) -> list[Path]:
+    """Read the tree, plan and write it, all inside 1 write lock.
+
+    The tree is read inside the lock (STORY-441, #1960). A read before the
+    lock can hold an old copy of a page that another writer changes in the
+    meantime, and the plan then writes that old copy back."""
+    with write_lock(root):
+        return write_locked(root)
+
+
+def write_locked(root: Path) -> list[Path]:
+    """`write` with the lock already held by the caller. write_lock is an
+    exclusive create and is not re-entrant, so a writer that holds the lock
+    calls this form."""
     pages, broken = read_tree(root)
     require_readable(root, broken)
     require_single_line(root, pages)
-    # regen rewrites pages and appends to log.md, so it takes the same lock as
-    # new, state and drift --write. Without it a regen and a state run
+    # regen rewrites pages and appends to log.md, so it runs under the same
+    # lock as new, state and drift --write. Without it a regen and a state run
     # interleave their writes to one page and to one log.
-    with write_lock(root):
-        changes = state_overrides(root, pages)
-        # The log line names the state that was stored, and plan() overwrites
-        # it in place, so it is read here, before plan runs.
-        before = {path: pages[path][1].get("state", "") for path in changes}
-        planned = plan(root, pages)
-        now = datetime.now(timezone.utc)
-        # One read and one write of each log, not one for each change.
-        # append_entry rewrites the whole file, and a regen that unblocks
-        # many items would rewrite the growing log once for each of them.
-        by_bundle = {}
-        for path, wanted in changes.items():
-            bundle, _frontmatter, _body = pages[path]
-            base = bundle_dir(root, bundle)
-            by_bundle.setdefault(base, []).append(
-                state_line(path.stem, str(path.relative_to(base)),
-                           before[path], wanted, REGEN_ACTOR, now))
-        for base, lines in by_bundle.items():
-            append_entries(base / "log.md", lines, now)
-        written = []
-        for path in stale(root, planned):
-            path.unlink()
+    changes = state_overrides(root, pages)
+    # The log line names the state that was stored, and plan() overwrites
+    # it in place, so it is read here, before plan runs.
+    before = {path: pages[path][1].get("state", "") for path in changes}
+    planned = plan(root, pages)
+    now = datetime.now(timezone.utc)
+    # One read and one write of each log, not one for each change.
+    # append_entry rewrites the whole file, and a regen that unblocks
+    # many items would rewrite the growing log once for each of them.
+    by_bundle = {}
+    for path, wanted in changes.items():
+        bundle, _frontmatter, _body = pages[path]
+        base = bundle_dir(root, bundle)
+        by_bundle.setdefault(base, []).append(
+            state_line(path.stem, str(path.relative_to(base)),
+                       before[path], wanted, REGEN_ACTOR, now))
+    for base, lines in by_bundle.items():
+        append_entries(base / "log.md", lines, now)
+    written = []
+    for path in stale(root, planned):
+        path.unlink()
+        written.append(path)
+    for path, text in planned.items():
+        if not path.exists() or path.read_text(encoding="utf-8") != text:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text, encoding="utf-8")
             written.append(path)
-        for path, text in planned.items():
-            if not path.exists() or path.read_text(encoding="utf-8") != text:
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(text, encoding="utf-8")
-                written.append(path)
-        from . import standard
-        for bundle in BUNDLES:
-            if standard.refresh_id_folders(root, bundle):
-                written.append(bundle_dir(root, bundle) / "manifest.md")
+    from . import standard
+    for bundle in BUNDLES:
+        if standard.refresh_id_folders(root, bundle):
+            written.append(bundle_dir(root, bundle) / "manifest.md")
     return sorted(written)

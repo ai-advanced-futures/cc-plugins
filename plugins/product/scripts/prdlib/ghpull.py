@@ -13,10 +13,11 @@ from pathlib import Path
 
 from . import DataError, ghmodel, ghplan, ghsnapshot
 from .ids import resolve
-from .new_page import create
+from .lock import write_lock
+from .new_page import create_locked
 from .page import load_page, write_page
 from .regen import collect
-from .statecmd import change as change_state, stored_state
+from .statecmd import apply_change as change_state, stored_state
 from .textsafe import escape_controls, fold_single_line
 from .tree import bundle_dir
 
@@ -72,6 +73,17 @@ def live_hash(root: Path, snapshot: dict, issue: dict, page_id: str) -> str:
 
 def pull(root: Path, snapshot: dict, login: str, adopt: bool = False,
          now: datetime | None = None) -> Report:
+    """Take the lock, then pull (`_pull`). The snapshot comes from the caller,
+    so the pull makes no network call while it holds the lock (STORY-441)."""
+    with write_lock(root):
+        return _pull(root, snapshot, login, adopt, now)
+
+
+def _pull(root: Path, snapshot: dict, login: str, adopt: bool = False,
+          now: datetime | None = None) -> Report:
+    """`pull` with the lock held by the caller. The state change calls
+    `apply_change` and the adopt calls `create_locked`, because write_lock is
+    not re-entrant."""
     now = now or datetime.now(timezone.utc)
     report = Report()
     # One walk of the tree for the whole pull. The readers below take the
@@ -307,11 +319,12 @@ def _adopt(root, snapshot, report, adopt, stored):
             continue
         # GitHub text is not ours to refuse: a body from the web UI ends each
         # line with CR LF, and a title can hold a tab. Fold both to one line.
-        path = create(root, type_name,
-                      fold_single_line(issue.get("title", "")),
-                      fold_single_line(
-                          (issue.get("body") or "").strip().split("\n")[0])[:200],
-                      status="draft", body=issue.get("body") or "")
+        path = create_locked(
+            root, type_name,
+            fold_single_line(issue.get("title", "")),
+            fold_single_line(
+                (issue.get("body") or "").strip().split("\n")[0])[:200],
+            status="draft", body=issue.get("body") or "")
         page = load_page(path)
         page.frontmatter["github"] = {
             "number": issue["number"], "node_id": issue["node_id"],

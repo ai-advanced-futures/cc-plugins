@@ -193,11 +193,14 @@ def cmd_drift(args) -> int:
     if not args.all and not args.ids:
         raise UsageError("give --all, --ids <ID>..., --show <ITEM> <TARGET>, "
                          "or --accept <ITEM> <TARGET>")
-    found = drift_mod.scan(args.root, args.ids)
+    if args.write:
+        # The scan and the flag step run inside 1 lock (STORY-441), so the
+        # lines print after the flag step.
+        found, _changed = drift_mod.scan_and_flag(args.root, args.ids)
+    else:
+        found = drift_mod.scan(args.root, args.ids)
     for path, target in found:
         print(f"{escape_controls(path.stem)}\t{escape_controls(target)}")
-    if args.write:
-        drift_mod.write_flags(args.root, found)
     # The exit code is the verdict, so a skill never parses this stdout.
     return 1 if found else 0
 
