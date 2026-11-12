@@ -3,6 +3,11 @@
 All notable changes to relay are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 5.5.1 — 2026-11-12
+
+### Fixed
+- `check-deps.sh` no longer takes the superpowers plugin from a folder of the project (`<project>/.claude/plugins/superpowers`). Claude Code installs no plugin there, and a project can hold files that the person did not write. Before, such a folder made the check pass when superpowers was not installed, and the command failed later (STORY-216).
+
 ## 5.5.0 — 2026-11-11
 
 ### Changed

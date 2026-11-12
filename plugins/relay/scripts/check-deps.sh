@@ -15,11 +15,12 @@ _relay_probe="skills/brainstorming/SKILL.md"
 _relay_manifest="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/upstream-superpowers-skills.txt"
 
 # Locate the claude-side superpowers install; echo its root, or empty if absent.
+# The order: the home install, then the plugin cache. It never tries a folder of the
+# project, because Claude Code installs no plugin there, and a project can hold files
+# that the person did not write (STORY-216, the rule of STORY-202).
 _relay_find_claude() {
   local probe="$1" hit=""
-  if test -f "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/plugins/superpowers/${probe}"; then
-    hit="${CLAUDE_PROJECT_DIR:-$PWD}/.claude/plugins/superpowers"
-  elif test -f "$HOME/.claude/plugins/superpowers/${probe}"; then
+  if test -f "$HOME/.claude/plugins/superpowers/${probe}"; then
     hit="$HOME/.claude/plugins/superpowers"
   else
     # marketplace cache: accept flat (<hit>/skills/...) AND versioned
