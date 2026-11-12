@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.17.1
+
+STORY-425: the git calls of `sofa-state` drop the repository env keys, and a refused push names its reason (issues 1845 and 1865).
+
+- Each git call of a block reservation, and the check of the store folder, runs with no key of `REPO_ENV_KEYS` (`GIT_DIR`, `GIT_WORK_TREE`, `GIT_CONFIG`, `GIT_NAMESPACE` and 10 more). A `GIT_DIR` of another repository no longer sends the block tag to the `origin` of that repository. The `GIT_CONFIG_*` entries of the session stay.
+- Each git call has an empty `GIT_ASKPASS` with `GIT_TERMINAL_PROMPT=0`, so no askpass program runs. A reservation that needed one for a store with no App values now fails at once.
+- A failed git step gives its reason: the first `! ` line of stderr, then the first `remote:` line, not `To <url>`.
+
 ## 7.17.0
 
 STORY-390: `/sofa:setup` installs the factory skills at project level.

@@ -328,12 +328,43 @@ def git_timeout():
     return value
 
 
+# The keys that select a repository, or change what `git config` reads. A value that a parent git
+# process (a hook, an `exec` step of a rebase) set for its own repository is wrong for the
+# repository of the store. 13 keys are the list of `git rev-parse --local-env-vars` (githooks(5)
+# tells a hook to clear them), without GIT_CONFIG_PARAMETERS and GIT_CONFIG_COUNT, which hold the
+# git setup of the session. GIT_CONFIG makes `git config` read 1 file, and `git push` reads the
+# full config (git-config(1)). GIT_NAMESPACE is not in the list of git: it moves a tag on a local
+# `origin` to a ref that other stores do not read. The case `envlist` compares this tuple with git.
+REPO_ENV_KEYS = (
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG", "GIT_OBJECT_DIRECTORY", "GIT_DIR",
+    "GIT_WORK_TREE", "GIT_IMPLICIT_WORK_TREE", "GIT_GRAFT_FILE", "GIT_INDEX_FILE",
+    "GIT_NO_REPLACE_OBJECTS", "GIT_REPLACE_REF_BASE", "GIT_PREFIX", "GIT_SHALLOW_FILE",
+    "GIT_COMMON_DIR", "GIT_NAMESPACE",
+)
+
+
+def git_env():
+    """The environment of each git call: a copy of os.environ with no key of REPO_ENV_KEYS.
+
+    The GIT_CONFIG_* entries of the session stay (the App git setup, ADR-0007, decision 3).
+    GIT_TERMINAL_PROMPT=0 stops the prompt on the terminal, and an empty GIT_ASKPASS stops each
+    askpass program (GIT_ASKPASS, core.askPass, SSH_ASKPASS), so a call with no credential fails.
+    """
+    env = {k: v for k, v in os.environ.items() if k not in REPO_ENV_KEYS}
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    env["GIT_ASKPASS"] = ""
+    return env
+
+
 def run_git(repo, args, env=None, stdin=None):
     """Run `git -C REPO ARGS` in its own process group. Return (exit code, stdout, stderr).
 
-    On the time limit the full group stops, not only `git`: `git` starts children (`ssh`,
-    `git-remote-https`, `upload-pack`) that hold the pipes open (docs/adlc.md, rule 16).
+    With `env=None` the call gets `git_env()`. On the time limit the full group stops, not only
+    `git`: `git` starts children (`ssh`, `git-remote-https`, `upload-pack`) that hold the pipes
+    open (docs/adlc.md, rule 16).
     """
+    if env is None:
+        env = git_env()
     limit = git_timeout()
     p = subprocess.Popen(["git", "-C", repo, *args], stdin=subprocess.PIPE if stdin is not None
                          else subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -357,12 +388,12 @@ def run_git(repo, args, env=None, stdin=None):
 
 
 class Git:
-    """The git calls of 1 reservation: 1 repository, 1 environment (row 10 of the spec)."""
+    """The git calls of 1 reservation: 1 repository, 1 environment (row 10 of the STORY-143 spec and
+    rows 2 to 4 of the STORY-425 spec)."""
 
     def __init__(self, repo):
         self.repo = repo
-        self.env = dict(os.environ)
-        self.env["GIT_TERMINAL_PROMPT"] = "0"
+        self.env = git_env()
         ssh = self.env.get("GIT_SSH_COMMAND")
         if not ssh:
             rc, out, _ = run_git(repo, ["config", "--get", "core.sshCommand"], env=self.env)
@@ -385,10 +416,24 @@ class Git:
 
     @staticmethod
     def failure(step, rc, err):
-        lines = err.strip().splitlines()
-        detail = lines[0] if lines else f"git exited {rc}"
-        return UsageError(f"{RESERVE_FAILED}: {step}: {detail}; no decision written. "
+        return UsageError(f"{RESERVE_FAILED}: {step}: {git_reason(err, rc)}; no decision written. "
                           "Try again in 1 minute.")
+
+
+def git_reason(err, rc):
+    """The detail of a failed git step, from its stderr ERR (row 5 of the STORY-425 spec).
+
+    A refused push prints `To <url>` first, which does not name the reason. The status line of the
+    ref (flag `!`, git-push(1)) holds the reason of git, and a `remote:` line is the text of the
+    hook or of the server. So: the first `! ` line, then `, ` and the first `remote:` line when
+    there is one; else the first line; else `git exited RC`. A line that is only `remote:` is skipped.
+    """
+    lines = [x for x in (line.strip() for line in err.splitlines()) if x and x != "remote:"]
+    flagged = [x for x in lines if x.startswith("! ")]
+    if flagged:
+        remote = [x for x in lines if x.startswith("remote:")]
+        return flagged[0] + (", " + remote[0] if remote else "")
+    return lines[0] if lines else f"git exited {rc}"
 
 
 def store_repo(path):
@@ -402,7 +447,7 @@ def store_repo(path):
     if os.path.basename(sofa) != ".sofa":
         return None
     folder = os.path.dirname(sofa)
-    rc, out, _ = run_git(folder, ["rev-parse", "--show-toplevel"], env=dict(os.environ))
+    rc, out, _ = run_git(folder, ["rev-parse", "--show-toplevel"])
     return folder if rc == 0 and os.path.realpath(out.strip()) == folder else None
 
 
