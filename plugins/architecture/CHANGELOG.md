@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.14
+
+### Fixed
+- The code, the tests and the verbatim templates have no old ruff F or E9 finding (STORY-431). 6 unused imports are removed, in `scripts/scaffold.py`, `tests/test_adr_py.py`, `tests/test_claude_md_router.py` and `templates/verbatim/tests/test_lifecycle.py`. The test `test_the_vendored_scripts_import_only_the_standard_library` in `templates/verbatim/tests/test_adr_lint.py` no longer builds the unused set `guarded`. No check of any test is weaker. The change to `templates/verbatim/` deletes 4 lines and adds none.
+- A project with the deterministic gate (`--gate-deterministic`) gets this fix in its copy `tests/adr/test_adr_lint.py` only when `/architecture:setup --refresh` runs. No project has a copy of `test_lifecycle.py`, because `scaffold.py` does not copy it. The public export leaves out `templates/verbatim/tests/` until STORY-439.
+
 ## 1.0.13
 
 ### Changed

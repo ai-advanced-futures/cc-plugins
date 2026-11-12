@@ -1,7 +1,7 @@
 {
   "name": "architecture",
   "displayName": "architecture",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "The architecture decisions of a repository as an OKF graph on the brain standard: architecture:setup makes or migrates the corpus, architecture:learn writes one ADR, architecture:ask answers from past decisions, and /architecture:check reviews a diff against them.",
   "author": {
     "name": "Yassel Piloto",

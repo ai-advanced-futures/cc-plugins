@@ -20,7 +20,6 @@ adr_index.py --write owns the generated block otherwise).
 import argparse
 import json
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
