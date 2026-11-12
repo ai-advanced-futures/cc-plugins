@@ -98,3 +98,7 @@ material, and the Apache License does not replace them.
 17. business-case, by ai-advanced-futures, MIT License.
     The business-case plugin ports it, with changes.
     The MIT notice is in plugins/business-case/NOTICE.
+
+18. find-docs, by Upstash, Inc. (https://github.com/upstash/context7), MIT License.
+    The skill skills/find-docs is a copy of it, with changes.
+    The MIT notice is in skills/find-docs/NOTICE.
