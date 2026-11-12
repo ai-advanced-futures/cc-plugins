@@ -3,6 +3,11 @@
 All notable changes to relay are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 5.5.4 — 2026-11-12
+
+### Fixed
+- `acpx-dispatch.sh` writes the prompt of each run to a new temporary folder outside the target repository, and removes it when it exits, also after a failure. Before, each run left an untracked `.acpx-prompts/` folder in the target repository, and a run with no `WORKTREE` (the dry run of `/relay:engines`) tried to write `/.acpx-prompts` and stopped with exit 1. A caller that sets `PROMPT_DIR` keeps its folder (STORY-25).
+
 ## 5.5.3 — 2026-11-12
 
 ### Fixed

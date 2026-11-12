@@ -20,6 +20,18 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+# --- Temporary paths (STORY-25) ---
+# Each temporary path of this run goes into this list, and the one EXIT handler
+# below removes each of them. Do not set a second EXIT handler: it replaces this one.
+_relay_tmp_paths=()
+_relay_cleanup() {
+    local p
+    for p in ${_relay_tmp_paths[@]+"${_relay_tmp_paths[@]}"}; do
+        rm -rf -- "$p"
+    done
+}
+trap _relay_cleanup EXIT
+
 # --- Pre-flight: require yq and jq on PATH (spec §5 implementation language) ---
 command -v yq >/dev/null 2>&1 || {
     echo "acpx-dispatch: yq not on PATH. Install: brew install yq (mikefarah/yq v4)." >&2
@@ -170,7 +182,14 @@ fi
 # shape carries no `required` marker) — unsupplied placeholders simply remain.
 # Honor pre-set PROMPT_DIR / PROMPT_FILE env (codex-session recursion path).
 # [inferred]
-: "${PROMPT_DIR:=${WORKTREE}/.acpx-prompts/${ACPX_RUN_ID}}"
+# The prompt folder of a run is a new temporary folder outside the target
+# repository, so a run that passes, fails or is stopped leaves no folder there,
+# also with no WORKTREE (STORY-25). A caller that sets PROMPT_DIR owns that
+# folder: the script makes it if it is absent and does not remove it.
+if [ -z "${PROMPT_DIR:-}" ]; then
+    PROMPT_DIR="$(mktemp -d "${TMPDIR:-/tmp}/relay-acpx-prompts.XXXXXX")"
+    _relay_tmp_paths+=("$PROMPT_DIR")
+fi
 mkdir -p "$PROMPT_DIR"
 : "${PROMPT_FILE:=$PROMPT_DIR/${ACPX_ROLE_SLUG}.md}"
 
@@ -515,7 +534,7 @@ if [ "$MECHANISM" = "codex-session" ]; then
 
     # Prepend the assembled preamble (isolation block + agents-autonomous contract).
     tmp_prompt=$(mktemp)
-    trap "rm -f \"$tmp_prompt\"" EXIT
+    _relay_tmp_paths+=("$tmp_prompt")
     { build_preamble; cat "$PROMPT_FILE"; } > "$tmp_prompt"
 
     # extract_envelope filter (shared with driver script).
@@ -541,6 +560,7 @@ if [ "$MECHANISM" = "codex-session" ]; then
     # Fast-path: no verify_artifact → direct exec (single-turn, no session driver).
     if [ -z "$TP_VERIFY_ARTIFACT_RESOLVED" ]; then
         tmp_out=$(mktemp)
+        _relay_tmp_paths+=("$tmp_out" "$tmp_out.ndjson")
         FP_CMD=(acpx --format json --json-strict --approve-all --permission-policy "$ACPX_POLICY_FILE" --cwd "${WORKTREE:-$REPO_ROOT}" --model "$MODEL" --timeout "$TIMEOUT_SECONDS" "${CODEX_ENGINE_ARGS[@]}" exec "${CODEX_EXEC_OPTS[@]}" -f "$tmp_prompt")
         if [ -n "${ACPX_FAKE_CHILD_OUTPUT:-}" ]; then
             # The fake is already envelope text, not NDJSON — it stands in for the
@@ -690,7 +710,7 @@ if [ "$MECHANISM" = "acpx-claude" ] || [ "$MECHANISM" = "acpx-opencode" ]; then
 
     # Prepend the assembled preamble (identical to the codex-session block).
     tmp_prompt=$(mktemp)
-    trap "rm -f \"$tmp_prompt\"" EXIT
+    _relay_tmp_paths+=("$tmp_prompt")
     { build_preamble; cat "$PROMPT_FILE"; } > "$tmp_prompt"
 
     # Derive engine name (strip acpx- prefix: acpx-claude → claude, acpx-opencode → opencode).
@@ -773,7 +793,7 @@ REQ_TOKENS="$(jq -r '.provides[]?' <<<"$BINDING_JSON" 2>/dev/null || true)"
 # the isolation block nor the autonomy contract that both other paths prepend.
 # Built once, outside the retry loop — every attempt reuses the same file.
 GENERIC_PROMPT=$(mktemp)
-trap 'rm -f "$GENERIC_PROMPT"' EXIT
+_relay_tmp_paths+=("$GENERIC_PROMPT")
 { build_preamble; cat "$PROMPT_FILE"; } > "$GENERIC_PROMPT"
 
 while [ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ]; do
