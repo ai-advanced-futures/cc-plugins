@@ -5,15 +5,22 @@ Many sessions write at the same time, so the database runs in WAL mode with a
 busy timeout. Each command creates the schema when it is not there.
 
 Database path: --db PATH, else $SOFA_STATE_DB, else <main folder>/.sofa/state.db.
-Exit code: 0 on success; 2 on a bad argument (argparse) and when `decision log` refuses
-its arguments; 1 on all other errors.
+Exit code: 0 on success; 2 on a bad argument (argparse), when `decision log` refuses
+its arguments, when `kv set` gets a key that starts with `decision.`, and when
+SOFA_GIT_TIMEOUT is not a number greater than 0 (read at the first git call, so a command
+that makes no git call does not read it); 1 on all other errors, also when
+`decision log` cannot reserve a block of decision ids (see "decisions" below).
 """
 
 import argparse
 import json
+import math
 import os
 import random
 import re
+import secrets
+import shlex
+import signal
 import sqlite3
 import subprocess
 import sys
@@ -61,6 +68,10 @@ class UsageError(Exception):
     def __init__(self, message, code=1):
         super().__init__(message)
         self.code = code
+
+
+class Quiet(UsageError):
+    """An exit code with no message on stderr: the command printed its report on stdout."""
 
 
 def now_iso():
@@ -234,7 +245,8 @@ def cmd_message_log(con, a):
 
 # --- decisions ---
 
-DECISION_ID_RE = re.compile(r"D-([0-9]+)")
+# An id is D- and 1 to 9 ASCII digits. Use `fullmatch`: a longer id makes `int()` slow or raise.
+DECISION_ID_RE = re.compile(r"D-([0-9]{1,9})")
 
 INSERT_DECISION = """
     INSERT INTO decisions (id, story, level, confidence, reversibility, visibility,
@@ -250,20 +262,309 @@ ON_ID_CONFLICT_UPDATE = """
 """
 
 
-def next_decision_id(con):
-    """Return D-<n>: n is 1 more than the highest D-<n> id in the store, with 3 digits at least."""
-    numbers = [int(m.group(1)) for row in con.execute("SELECT id FROM decisions")
-               if (m := DECISION_ID_RE.fullmatch(row[0] or ""))]
-    return f"D-{max(numbers, default=0) + 1:03d}"
+# A store gives ids only from its own block of ids. Block k holds D-<1000k+1> to
+# D-<1000k+999> (block 0: D-001 to D-999). A store reserves a block on origin with the tag
+# refs/tags/sofa-decision-block/<k>, which git creates only 1 time (ADR-0011).
+TAG_PREFIX = "refs/tags/sofa-decision-block/"
+TAG_RE = re.compile(r"refs/tags/sofa-decision-block/([0-9]{1,6})")
+MAX_BLOCK = 999999
+MAX_CITED_ID = 99999  # the highest id of main that counts; old ids are near 5000 (block 99 at most)
+MAX_PUSHES = 5
+APP_KEYS = ["app-id", "installation-id", "key-path", "slug", "bot-user-id"]
+RESERVE_FAILED = "cannot reserve a block of decision ids"
+
+
+def block_range(k):
+    """The first and the last id number of block K."""
+    return (1, 999) if k == 0 else (1000 * k + 1, 1000 * k + 999)
+
+
+def block_of(n):
+    """The block of id number N. D-1000 belongs to block 0, because block 1 starts at D-1001."""
+    return (n - 1) // 1000
+
+
+def store_numbers(con):
+    """The number of each id of the store that has the form of row 2."""
+    return [int(m.group(1)) for row in con.execute("SELECT id FROM decisions")
+            if (m := DECISION_ID_RE.fullmatch(row[0] or ""))]
+
+
+def next_decision_id(con, k):
+    """Return the next free D-<n> of block K (3 digits at least), or None when the block is full."""
+    first, last = block_range(k)
+    n = max((x for x in store_numbers(con) if first <= x <= last), default=first - 1) + 1
+    return None if n > last else f"D-{n:03d}"
+
+
+def stored_block(con):
+    """The block of this store (the key decision.block), or None."""
+    row = con.execute("SELECT value FROM kv WHERE key = 'decision.block'").fetchone()
+    try:
+        block = int(row[0]) if row else None
+    except ValueError:
+        return None
+    # A value out of range would give ids that do not have the form of row 2.
+    return block if block is not None and 0 <= block <= MAX_BLOCK else None
+
+
+def write_block(con, block):
+    """Make BLOCK the block of this store. The caller holds the write transaction."""
+    con.execute("INSERT INTO kv (key, value) VALUES ('decision.block', ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (str(block),))
+
+
+def git_timeout():
+    """The time limit of 1 git call in seconds: SOFA_GIT_TIMEOUT, else 60."""
+    raw = os.environ.get("SOFA_GIT_TIMEOUT")
+    if raw is None:
+        return 60.0
+    try:
+        value = float(raw)
+    except ValueError:
+        value = 0.0
+    if not (math.isfinite(value) and value > 0):
+        raise UsageError("SOFA_GIT_TIMEOUT must be a number of seconds greater than 0", code=2)
+    return value
+
+
+def run_git(repo, args, env=None, stdin=None):
+    """Run `git -C REPO ARGS` in its own process group. Return (exit code, stdout, stderr).
+
+    On the time limit the full group stops, not only `git`: `git` starts children (`ssh`,
+    `git-remote-https`, `upload-pack`) that hold the pipes open (docs/adlc.md, rule 16).
+    """
+    limit = git_timeout()
+    p = subprocess.Popen(["git", "-C", repo, *args], stdin=subprocess.PIPE if stdin is not None
+                         else subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         text=True, errors="replace", env=env, start_new_session=True)
+    try:
+        out, err = p.communicate(stdin, timeout=limit)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(p.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass  # the group ended between the time-out and the kill
+        try:
+            out, err = p.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            # A child that left the group still holds the pipes: do not wait for it.
+            p.stdout.close()
+            p.stderr.close()
+            out, err = "", ""
+        return 124, out, f"no end after {limit:g} seconds"
+    return p.returncode, out, err
+
+
+class Git:
+    """The git calls of 1 reservation: 1 repository, 1 environment (row 10 of the spec)."""
+
+    def __init__(self, repo):
+        self.repo = repo
+        self.env = dict(os.environ)
+        self.env["GIT_TERMINAL_PROMPT"] = "0"
+        ssh = self.env.get("GIT_SSH_COMMAND")
+        if not ssh:
+            rc, out, _ = run_git(repo, ["config", "--get", "core.sshCommand"], env=self.env)
+            ssh = out.strip() if rc == 0 else ""
+        if not ssh:
+            ssh = shlex.quote(self.env["GIT_SSH"]) if self.env.get("GIT_SSH") else "ssh"
+        self.env["GIT_SSH_COMMAND"] = ssh + " -o BatchMode=yes"
+
+    def run(self, *args, stdin=None):
+        # The output is parsed, so a color setting of the person must not add escape codes to it.
+        return run_git(self.repo, ["-c", "color.ui=never", "-c", "color.grep=never", *args],
+                       env=self.env, stdin=stdin)
+
+    def must(self, *args, stdin=None):
+        """Run a git call. Return stdout. Raise the error of row 9 when it fails."""
+        rc, out, err = self.run(*args, stdin=stdin)
+        if rc != 0:
+            raise self.failure(args[0], rc, err)
+        return out
+
+    @staticmethod
+    def failure(step, rc, err):
+        lines = err.strip().splitlines()
+        detail = lines[0] if lines else f"git exited {rc}"
+        return UsageError(f"{RESERVE_FAILED}: {step}: {detail}; no decision written. "
+                          "Try again in 1 minute.")
+
+
+def store_repo(path):
+    """The repository of the store at PATH, or None (row 10).
+
+    The folder F that holds the `.sofa` folder of the store, only when `git -C F rev-parse
+    --show-toplevel` prints the real path of F. A plain folder inside a checkout is no repository.
+    """
+    full = os.path.realpath(path)
+    sofa = os.path.dirname(full)
+    if os.path.basename(sofa) != ".sofa":
+        return None
+    folder = os.path.dirname(sofa)
+    rc, out, _ = run_git(folder, ["rev-parse", "--show-toplevel"], env=dict(os.environ))
+    return folder if rc == 0 and os.path.realpath(out.strip()) == folder else None
+
+
+def repo_of_store(a):
+    repo = store_repo(a.db_path)
+    if repo is None:
+        raise UsageError(f"{RESERVE_FAILED}: the store {a.db_path} is not <repository>/.sofa/"
+                         "state.db; give no --db, or give the path of the store of the main folder.")
+    return repo
+
+
+def origin_url(git):
+    """The 1 URL of origin, for fetch and for push (rows 3, 5, 6 and 20). The tags are read from the
+    fetch URL and pushed to each push URL, so a second URL would send the tag to another repository
+    (a fork, or an SSH address that uses the key of the person). It makes only local git calls."""
+    fetch = [u for u in git.must("remote", "get-url", "--all", "origin").split("\n") if u]
+    push = [u for u in git.must("remote", "get-url", "--push", "--all", "origin").split("\n") if u]
+    if len(fetch) != 1 or push != fetch:
+        raise UsageError(f"{RESERVE_FAILED}: remote: origin must have 1 URL for fetch and push "
+                         f"(fetch {' '.join(fetch) or 'none'}, push {' '.join(push) or 'none'}); "
+                         "no decision written.")
+    return fetch[0]
+
+
+def app_setup_ok(con, git, url):
+    """Row 20. Return None when the store has no App values or the git setup is the App setup,
+    else the text of the check that failed. URL is the 1 URL of origin. It makes no network call."""
+    marks = [f"machine.github-app.{k}" for k in APP_KEYS]
+    rows = con.execute(f"SELECT value FROM kv WHERE key IN ({','.join('?' * len(marks))})", marks)
+    if not any(row[0] for row in rows):
+        return None
+    rc, out, _ = git.run("config", "-z", "--get-regexp", r"^credential\..*helper$")
+    values = [e.split("\n", 1)[1] if "\n" in e else "" for e in out.split("\0") if e] if rc == 0 else []
+    while "" in values:
+        values = values[len(values) - values[::-1].index(""):]
+    if not values:
+        return "no credential helper is set after the last empty value"
+    for value in values:
+        try:
+            words = shlex.split(value[1:]) if value.startswith("!") else []
+        except ValueError:
+            words = []
+        if len(words) != 2 or words[1] != "credential" or os.path.basename(words[0]) != "sofa-github":
+            return f"the credential helper {value} is not sofa-github credential"
+    if not url.startswith("https://github.com/"):
+        return f"the URL of origin is {url}, not an https://github.com/ URL"
+    return None
+
+
+def tag_numbers(git):
+    """The reserved tags on origin, as {block number: object id of the tag}."""
+    out = git.must("ls-remote", "--tags", "origin", TAG_PREFIX + "*")
+    tags = {}
+    for line in out.splitlines():
+        oid, _, ref = line.partition("\t")
+        m = TAG_RE.fullmatch(ref.strip())
+        if m:
+            tags[int(m.group(1))] = oid.strip()
+    return tags
+
+
+def main_block(git):
+    """The highest block of an id that docs/ of origin/main cites, or -1 (row 7)."""
+    # The random part: a stale lock of a killed run must not stop a run with the same pid.
+    ref = f"refs/sofa-state/main-{os.getpid()}-{secrets.token_hex(4)}"
+    try:
+        git.must("fetch", "--no-tags", "--no-write-fetch-head", "--refmap=", "origin",
+                 f"+refs/heads/main:{ref}")
+        rc, out, err = git.run("grep", "--no-color", "-o", "-h", "-w", "-E", "D-[0-9]+", ref, "--", "docs/")
+        if rc not in (0, 1):
+            raise git.failure("grep", rc, err)
+    finally:
+        git.run("update-ref", "-d", ref)
+    ids = (DECISION_ID_RE.fullmatch(line.rsplit(":", 1)[-1].strip()) for line in out.splitlines())
+    # An id above MAX_CITED_ID is an example or a typo, not an old id: one D-<9 digits> in docs/
+    # must not stop each reservation (issue 1803). A block above it comes from a tag (k_tag).
+    return max((block_of(n) for n in (int(m.group(1)) for m in ids if m) if n <= MAX_CITED_ID),
+               default=-1)
+
+
+def store_id(con):
+    """The id of this store (the key decision.store). It is written and committed at once."""
+    con.execute("INSERT OR IGNORE INTO kv (key, value) VALUES ('decision.store', ?)",
+                (secrets.token_hex(8),))
+    con.commit()
+    return con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()[0]
+
+
+def reserve_block(con, repo):
+    """Reserve a new block on origin and return its number k (rows 6, 7, 18 and 20)."""
+    git = Git(repo)
+    problem = app_setup_ok(con, git, origin_url(git))
+    if problem:
+        raise UsageError(f"{RESERVE_FAILED}: this session has no App git setup ({problem}); "
+                         "no decision written. Start the session fresh with dispatch.sh.")
+    k_main = main_block(git)
+    tags = tag_numbers(git)
+    k_store = max((block_of(n) for n in store_numbers(con)), default=-1)
+    for _ in range(MAX_PUSHES):
+        k_tag = max(tags, default=-1)  # tags is a dict: max() reads its keys
+        k = 1 + max(k_tag, k_main, k_store, -1)
+        if k > MAX_BLOCK:
+            top = max(k_tag, k_main, k_store)
+            source = "the tags" if top == k_tag else "main" if top == k_main else "the store"
+            raise UsageError(f"{RESERVE_FAILED}: no block above {MAX_BLOCK} is free "
+                             f"(the highest is from {source}).")
+        sid = store_id(con)
+        blob = git.must("hash-object", "-w", "--stdin", stdin=f"store {sid}\nblock {k}\n").strip()
+        text = (f"object {blob}\ntype blob\ntag sofa-decision-block/{k}\n"
+                f"tagger sofa-state <sofa-state@localhost> {int(time.time())} +0000\n\nstore {sid}\n")
+        tag = git.must("hash-object", "-t", "tag", "-w", "--stdin", stdin=text).strip()
+        rc, _, err = git.run("push", "origin", f"{tag}:{TAG_PREFIX}{k}")
+        if rc == 0:
+            return k
+        # Another store may have taken block k. Read the tags again: a tag k there means yes.
+        try:
+            tags = tag_numbers(git)
+        except UsageError:
+            raise git.failure("push", rc, err) from None
+        if tags.get(k) == tag:
+            return k  # the push reached origin and the client saw a failure: the tag is ours
+        if k not in tags:
+            raise git.failure("push", rc, err)
+    raise UsageError(f"{RESERVE_FAILED}: push: {MAX_PUSHES} blocks were taken while this store "
+                     "reserved; no decision written. Try again in 1 minute.")
+
+
+def claim_block(con, a):
+    """Return the block that gives the next id, with the write transaction open (rows 8 and 12)."""
+    for _ in range(3):
+        block = stored_block(con)
+        if (block is None or next_decision_id(con, block) is None) \
+                and getattr(a, "reserved_block", None) is None:
+            a.reserved_block = reserve_block(con, repo_of_store(a))
+        # The write lock comes before the second read, so 2 sessions do not take the same id.
+        con.execute("BEGIN IMMEDIATE")
+        block = stored_block(con)
+        if block is None or next_decision_id(con, block) is None:
+            if getattr(a, "reserved_block", None) is None:
+                con.rollback()
+                continue
+            block = a.reserved_block
+            write_block(con, block)
+        if next_decision_id(con, block) is not None:
+            return block
+        con.rollback()
+        a.reserved_block = None
+    raise UsageError("the block of this store filled 3 times while it reserved; "
+                     "run the command again.")
 
 
 def cmd_decision_log(con, a):
-    """Record a decision and print its id. With no --id, take the next free id."""
+    """Record a decision and print its id. With no --id, take the next free id of the block."""
     if a.replace and not a.id:
         raise UsageError("--replace needs --id", code=2)
-    # The write lock comes before the read, so no other writer takes the same id.
-    con.execute("BEGIN IMMEDIATE")
-    decision_id = a.id or next_decision_id(con)
+    if a.id is not None and not DECISION_ID_RE.fullmatch(a.id):
+        raise UsageError("--id must be D- and 1 to 9 digits, for example D-042", code=2)
+    if a.id:
+        con.execute("BEGIN IMMEDIATE")
+        decision_id = a.id
+    else:
+        decision_id = next_decision_id(con, claim_block(con, a))
     old = con.execute("SELECT story FROM decisions WHERE id = ?", (decision_id,)).fetchone()
     if old and not a.replace:
         raise UsageError(f"decision {decision_id} exists (story {old['story']}); give no --id "
@@ -274,6 +575,57 @@ def cmd_decision_log(con, a):
                       a.visibility, a.by, a.summary, a.at))
     con.commit()
     print(decision_id)
+
+
+def check_tag(con, a, block):
+    """`decision block --check`: does origin hold the tag of this block, made by this store?"""
+    git = Git(repo_of_store(a))
+    problem = app_setup_ok(con, git, origin_url(git))
+    if problem:
+        raise UsageError(f"{RESERVE_FAILED}: this session has no App git setup ({problem}); "
+                         "no decision written. Start the session fresh with dispatch.sh.")
+    name = f"{TAG_PREFIX}{block}"
+    if not git.must("ls-remote", "--tags", "origin", name).strip():
+        print("tag missing")
+        raise Quiet("", code=1)
+    ref = f"refs/sofa-state/check-{os.getpid()}-{secrets.token_hex(4)}"
+    try:
+        git.must("fetch", "--no-tags", "--no-write-fetch-head", "--refmap=", "origin", f"+{name}:{ref}")
+        text = git.must("cat-file", "-p", f"{ref}^{{}}")
+    finally:
+        git.run("update-ref", "-d", ref)
+    owner = text.splitlines()[0].removeprefix("store ") if text.startswith("store ") else "unknown"
+    mine = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
+    if mine is None or owner != mine[0]:
+        print(f"tag of store {owner}")
+        raise Quiet("", code=1)
+    print("tag ok")
+
+
+def cmd_decision_block(con, a):
+    """Print the block of this store. --reserve reserves one when no id is free; --check reads its tag."""
+    block = stored_block(con)
+    if a.reserve and (block is None or next_decision_id(con, block) is None):
+        # `a` is the same object in each try of run_with_retry, so a lock after the push
+        # does not push a second tag.
+        if getattr(a, "reserved_block", None) is None:
+            a.reserved_block = reserve_block(con, repo_of_store(a))
+        con.execute("BEGIN IMMEDIATE")
+        block = stored_block(con)
+        if block is None or next_decision_id(con, block) is None:
+            block = a.reserved_block
+            write_block(con, block)
+        con.commit()
+    if block is None:
+        print("no block")
+        raise Quiet("", code=1)
+    if a.check:
+        return check_tag(con, a, block)
+    first, last = block_range(block)
+    free = next_decision_id(con, block)
+    row = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
+    print(f"block {block}: D-{first:03d} to D-{last:03d}, "
+          f"{'full' if free is None else 'next ' + free}, store {row[0] if row else 'unknown'}")
 
 
 def cmd_decision_veto(con, a):
@@ -354,7 +706,10 @@ def cmd_queue_list(con, a):
 
 
 def cmd_kv_set(con, a):
-    """Set one key."""
+    """Set one key. A key that starts with `decision.` is written only by `decision log`."""
+    if a.key.startswith("decision."):
+        raise UsageError("a key that starts with decision. is written only by sofa-state "
+                         "(the block of decision ids); do not set it by hand", code=2)
     con.execute("INSERT INTO kv (key, value) VALUES (?, ?) "
                 "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (a.key, a.value))
     con.commit()
@@ -565,6 +920,9 @@ def build_parser():
     sp.add_argument("--visibility", required=True, choices=DECISION_VISIBILITIES)
     sp.add_argument("--by", required=True, help="who decided, for example decision-judge or hitl")
     sp.add_argument("--summary", required=True)
+    sp = leaf(d, "block", cmd_decision_block, "print the block of decision ids of this store")
+    sp.add_argument("--reserve", action="store_true", help="reserve a block when no id is free")
+    sp.add_argument("--check", action="store_true", help="check that origin holds the tag of the block")
     sp = leaf(d, "veto", cmd_decision_veto, "mark a decision as vetoed")
     sp.add_argument("--id", required=True)
     sp = leaf(d, "list", cmd_decision_list, "print decisions")
@@ -629,7 +987,7 @@ def run_with_retry(a):
     deadlock between two connections in rollback mode. Each command commits only
     at its end, so a new try does not write a row twice.
     """
-    path = db_path(a.db)
+    path = a.db_path = db_path(a.db)
     for n in range(LOCK_TRIES):
         try:
             con = open_db(path)
@@ -653,7 +1011,8 @@ def main(argv=None):
     try:
         run_with_retry(a)
     except UsageError as e:
-        print(f"sofa-state: {e}", file=sys.stderr)
+        if not isinstance(e, Quiet):
+            print(f"sofa-state: {e}", file=sys.stderr)
         return e.code
     except subprocess.CalledProcessError:
         print("sofa-state: not in a git repository; give --db or set SOFA_STATE_DB", file=sys.stderr)
