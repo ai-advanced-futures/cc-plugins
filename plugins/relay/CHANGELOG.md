@@ -3,6 +3,11 @@
 All notable changes to relay are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 5.5.3 — 2026-11-12
+
+### Fixed
+- The acpx floor error tells the user to install the tested version, `npm install -g acpx@<floor>` (0.21.1 today), not `acpx@latest`, which can install a version that relay did not test. The `/relay:setup` text names no version and points to the line of the floor script (STORY-27).
+
 ## 5.5.2 — 2026-11-12
 
 ### Fixed

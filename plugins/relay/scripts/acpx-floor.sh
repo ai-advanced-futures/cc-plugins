@@ -13,6 +13,9 @@
 #
 # On success it prints `RELAY_ACPX_VERSION=<version>` on stdout and returns 0.
 # On failure it prints one `[relay] error:` line on stderr and returns 1.
+# The line names `npm install -g acpx@<RELAY_ACPX_MIN>`: the floor is the version
+# relay is live-proved against, and `acpx@latest` can install a version that relay
+# did not test (STORY-27).
 
 RELAY_ACPX_MIN=0.21.1
 
@@ -78,7 +81,8 @@ relay_acpx_version_ge() {
 relay_acpx_floor_check() {
     local found
     if ! found=$(acpx --version 2>/dev/null); then
-        printf '[relay] error: acpx is not on PATH. Run: npm install -g acpx@latest\n' >&2
+        printf '[relay] error: acpx is not on PATH. Run: npm install -g acpx@%s\n' \
+            "$RELAY_ACPX_MIN" >&2
         return 1
     fi
     # `acpx --version` prints a bare semver; extract the first dotted-number token
@@ -86,12 +90,13 @@ relay_acpx_floor_check() {
     # string that sorts ABOVE the floor and silently bypasses the gate.
     found=$(printf '%s' "$found" | head -1 | grep -oE '[0-9]+(\.[0-9]+)+' | head -1)
     if [ -z "$found" ]; then
-        printf '[relay] error: acpx --version printed no version. Run: npm install -g acpx@latest\n' >&2
+        printf '[relay] error: acpx --version printed no version. Run: npm install -g acpx@%s\n' \
+            "$RELAY_ACPX_MIN" >&2
         return 1
     fi
     if ! relay_acpx_version_ge "$found" "$RELAY_ACPX_MIN"; then
-        printf '[relay] error: acpx %s is below the floor %s. Run: npm install -g acpx@latest\n' \
-            "$found" "$RELAY_ACPX_MIN" >&2
+        printf '[relay] error: acpx %s is below the floor %s. Run: npm install -g acpx@%s\n' \
+            "$found" "$RELAY_ACPX_MIN" "$RELAY_ACPX_MIN" >&2
         return 1
     fi
     printf 'RELAY_ACPX_VERSION=%s\n' "$found"

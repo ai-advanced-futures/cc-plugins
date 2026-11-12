@@ -28,8 +28,8 @@ acpx flow --help >/dev/null 2>&1                     # must exit 0
 ```
 
 On the claude engine, also assert the `dispatching-acpx-agents` relay skill is installed (relay's
-acpx dispatch depends on it). When the floor script fails it already prints the remediation
-(`npm install -g acpx@latest`) — show that line and stop.
+acpx dispatch depends on it). When the floor script fails it already prints the remediation, an
+`npm install -g acpx@<version>` line with the floor version of `scripts/acpx-floor.sh` — show that line and stop.
 
 ## Step 1 — Engine-aware dependency check
 
