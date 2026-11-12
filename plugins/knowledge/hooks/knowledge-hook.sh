@@ -29,7 +29,8 @@
 # reads it twice. A list with no changed file ends the hook with no output.
 # When a Bash command leaves no list (a run that could not write it), the hook
 # checks everything and shows every warning, as it did before the list.
-# The hook keeps the K-size warnings of the changed files, and it counts the others.
+# The hook keeps the K-size and K-cite warnings of the changed files, and it counts the others
+# (each rule has its own count line).
 #
 #   no finding                    exit 0, no output
 #   warnings or SKIP lines only   exit 0, the lines as additionalContext
@@ -190,15 +191,21 @@ if ! general_out="$(run "$general" --root "$root" check --graph knowledge --cach
   printf 'knowledge hook: the general check found errors. Correct the page:\n%s\n' "$general_out" >&2
   exit 2
 fi
-# Keep a K-size warning only for a changed file. Count the others.
+# Keep a K-size or K-cite warning only for a changed file. Count the others, each rule apart.
 notes=""
 skipped=0
+skipped_cite=0
 while IFS= read -r line; do
   case "$line" in
-    "WARN: "*"[K-size]"*)
-      file="$(printf '%s' "$line" | sed -E 's/^WARN: (.*):[0-9]+ \[K-size\].*/\1/')"
+    "WARN: "*"[K-size]"*|"WARN: "*"[K-cite]"*)
+      file="$(printf '%s' "$line" | sed -E 's/^WARN: (.*):[0-9]+ \[K-(size|cite)\].*/\1/')"
       if [ -z "$changed" ] || printf '%s\n' "$changed" | grep -Fxq -- "$file"; then notes="$notes$line"$'\n'
-      else skipped=$((skipped + 1)); fi
+      else
+        case "$line" in
+          *"[K-cite]"*) skipped_cite=$((skipped_cite + 1)) ;;
+          *) skipped=$((skipped + 1)) ;;
+        esac
+      fi
       ;;
     "WARN: "*|"SKIP: "*) notes="$notes$line"$'\n' ;;
   esac
@@ -208,6 +215,9 @@ EOF_CHECKS
 notes="${notes%$'\n'}"
 if [ "$skipped" -gt 0 ]; then
   notes="${notes:+$notes$'\n'}K-size warnings on pages that did not change: $skipped."
+fi
+if [ "$skipped_cite" -gt 0 ]; then
+  notes="${notes:+$notes$'\n'}K-cite warnings on pages that did not change: $skipped_cite."
 fi
 [ -n "$notes" ] || exit 0
 context="The knowledge checks gave notes after the change:

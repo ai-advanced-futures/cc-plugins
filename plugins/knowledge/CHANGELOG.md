@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0
+
+### Added
+- The general check has a new rule, `K-cite` (WARN; `--strict` gives exit 1). It reads the pages of the folders in the new optional manifest key `cite_folders`, and it warns on 2 classes of text: a line citation with no commit in its sentence (a path and a line such as `file.py:12`, prose such as `line 12` or `lines 3-5`, and a backticked `:12`), and a PR or issue state next to a number (for example `open`, `not on main`, `not merged`, a draft PR) with no date and no commit in its sentence. A graph with no `cite_folders` key, a `null` value, or an empty list gets no `K-cite` warning. A `cite_folders` value that is not a list of strings, or a folder that is not in `id_folders`, gives a `K-manifest` error. The save code keeps the key and never writes it. Sections 6 and 9 of the brain standard say this (STORY-426).
+- The hook keeps each `K-cite` warning only for a changed page, as it does for `K-size`, and it adds the line `K-cite warnings on pages that did not change: <N>.` for the others.
+
 ## 1.6.1
 
 ### Fixed

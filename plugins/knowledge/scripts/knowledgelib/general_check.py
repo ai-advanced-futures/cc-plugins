@@ -7,7 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from knowledgelib import DataError, UsageError, links, manifest, okf, probe, registry
+from knowledgelib import DataError, UsageError, cite_check, links, manifest, okf, probe, registry
 from knowledgelib.issues import ERROR, SKIP, WARN, Issue, report
 from knowledgelib.okf import shown
 
@@ -16,7 +16,7 @@ RULES = {
     "K-dir-index": "ERROR", "K-log": "ERROR", "K-links-tsv": "ERROR", "K-okf": "ERROR",
     "K-fields": "ERROR", "K-provenance": "ERROR", "K-id": "ERROR", "K-links-block": "ERROR",
     "K-fresh": "ERROR, SKIP", "K-link": "ERROR, SKIP", "K-remote-link": "WARN, SKIP",
-    "K-unknown-graph": "WARN", "K-size": "WARN",
+    "K-unknown-graph": "WARN", "K-size": "WARN", "K-cite": "WARN",
 }
 ACTOR_RE = re.compile(r"^(human:[A-Za-z0-9._-]+|process:[A-Za-z0-9._-]+|[A-Za-z0-9._-]+/[A-Za-z0-9._-]+)$")
 TIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$")
@@ -131,6 +131,9 @@ def check_page(root, bundle, data, file) -> list[Issue]:
     lines, words = okf.size_of(text)
     if lines >= MAX_LINES or words >= MAX_WORDS:
         issues.append(Issue(WARN, "K-size", f"the page has {lines} lines and {words} words. Move long text to a linked page.", where, 1))
+    if folder in (data.get("cite_folders") or []):
+        issues += [Issue(WARN, "K-cite", message, where, line)
+                   for line, message in cite_check.issues(text, description if isinstance(description, str) else None)]
     return issues
 
 

@@ -56,6 +56,13 @@ def problems(data: dict) -> list[str]:
         out.append("required_links must map a page type to a list of fields")
     if "retired_ids" in data and not isinstance(data["retired_ids"], list):
         out.append("retired_ids must be a list")
+    cite = data.get("cite_folders")
+    if cite is not None and not (isinstance(cite, list) and all(isinstance(i, str) for i in cite)):
+        out.append("cite_folders must be a list of strings")
+    elif cite:
+        known = data.get("id_folders")
+        known = known if isinstance(known, list) else []
+        out += [f"cite_folders names {folder}, which is not in id_folders" for folder in cite if folder not in known]
     return out
 
 

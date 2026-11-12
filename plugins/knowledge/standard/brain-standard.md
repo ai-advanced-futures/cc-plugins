@@ -131,6 +131,10 @@ never loads a full graph.
   cannot exist without. `forget` reads it.
 - `fixed_pages`: the names or name patterns of the pages with no ID.
 - `retired_ids`: the IDs that `remove` retired. `new` never gives them again.
+- `cite_folders`: an optional list of folders of `id_folders`. The rule `K-cite`
+  reads the pages of these folders. With no key, a `null` value, or an empty
+  list, the rule is off. A person sets the key by hand. The save code keeps it
+  and never writes it.
 
 Each brain's `setup` writes the brain's router block in `CLAUDE.md` with
 its copy of `claude_md_router.py`.
@@ -190,6 +194,7 @@ it reports the problem and the reason (section 10).
 | `K-remote-link` | WARN, SKIP | A link into a remote graph resolves. SKIP when the hook finds no cache. |
 | `K-unknown-graph` | WARN | A `<graph>:/<path>` link names a graph that is in the registry. |
 | `K-size` | WARN | A page has fewer than 100 lines and fewer than 600 words. |
+| `K-cite` | WARN | In a folder of `cite_folders`, each line citation has a commit in its sentence, and each PR or issue state has a date or a commit in its sentence. |
 
 - Each linter has one output contract: one line for each finding,
   `<LEVEL>: <file>:<line> [<rule>] <message>`, with the levels `ERROR`,
@@ -206,8 +211,8 @@ it reports the problem and the reason (section 10).
   root of the `cwd` of the hook input, so a session in a worktree checks that
   worktree. When that root has no bundle of the brain, the hook does nothing. Claude Code runs the hooks of one event in parallel, so one
   hook does the three steps in this order. A hook can skip its steps when no
-  file of its bundle changed, and it can print the `K-size` warnings of the
-  changed files only, with a count of the others.
+  file of its bundle changed, and it can print the `K-size` and `K-cite`
+  warnings of the changed files only, with a count of the others.
 - Code that needs another plugin finds it with its copy of
   `probe-plugin.sh <name> <probe-path>`. The probe tries the sibling folder
   first (`<own root>/../<name>`), and uses it only when its `plugin.json`

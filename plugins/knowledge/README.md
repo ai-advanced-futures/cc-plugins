@@ -46,9 +46,11 @@ changed files in the change list that `knowledge_graph.py` writes
 (`<git dir>/knowledge-changed`), and in the file of an `Edit` or a `Write`.
 After a command that changed no file, the hook gives no output. When a command leaves no list (for example, `git` failed), the hook checks everything and shows every warning, as it did before the list.
 
-The hook shows each `K-size` warning only for a page that changed. It shows
-one line with the count of the `K-size` warnings of the other pages, for example
-`K-size warnings on pages that did not change: 3.` Each other `WARN` and `SKIP`
+The hook shows each `K-size` and each `K-cite` warning only for a page that
+changed. For each of the 2 rules, it shows one line with the count of the
+warnings of the other pages, for example
+`K-size warnings on pages that did not change: 3.` or
+`K-cite warnings on pages that did not change: 3.` Each other `WARN` and `SKIP`
 line stays.
 
 `KNOWLEDGE_NO_CHANGE_LIST=1` stops `knowledge_graph.py` from writing the change
