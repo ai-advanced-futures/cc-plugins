@@ -1,0 +1,10 @@
+# The factory skills: the skills that the roles of a sofa team and the sofa skills name, and that no plugin gives.
+# Columns: <skill> <source> <license> <commit>. /sofa:setup installs each skill from <source> at <commit>, and /sofa:readiness checks them.
+# A new <commit> is a PR. The security reviewer reads the skill text at the new commit before the merge.
+# `find-docs` is our copy of the skill of upstash/context7, with `ctx7` pinned (spec row 18). The security read also looks for unpinned package runs in each skill text (for example `npx <package>@latest`).
+wrapup                ai-advanced-futures/cc-plugins  Apache-2.0  b989b8f53e50df69a2d82273720ccf098987fadd
+rebase                ai-advanced-futures/cc-plugins  Apache-2.0  b989b8f53e50df69a2d82273720ccf098987fadd
+bg-watch              ai-advanced-futures/cc-plugins  Apache-2.0  b989b8f53e50df69a2d82273720ccf098987fadd
+osaat                 ai-advanced-futures/cc-plugins  Apache-2.0  b989b8f53e50df69a2d82273720ccf098987fadd
+find-docs             ai-advanced-futures/cc-plugins  MIT         b989b8f53e50df69a2d82273720ccf098987fadd
+systematic-debugging  obra/superpowers                MIT         22f0b463e7a5e579904dd6211a520321035526f7

@@ -8,7 +8,7 @@
 #    --format json`): prints a per-set matrix {"<set>":{"<skill>":"ok"|"missing"}} and exits.
 # Probe SET (the actual skill-set selector — NOT the in-session/acpx engine):
 #   CLAUDE set probed when RELAY_AGENT ∈ {claude, hybrid, opencode}; CODEX set
-#   (~/.agents/skills/ or $RELAY_CODEX_HOME/skills/) probed when RELAY_AGENT ∈ {codex,
+#   (the committed .agents/skills/ of the repository, ~/.agents/skills/ or $RELAY_CODEX_HOME/skills/) probed when RELAY_AGENT ∈ {codex,
 #   hybrid}. hybrid probes BOTH.
 # Uses `return` (not bare `exit 1`) in the sourced path so a failure aborts the parent via ||.
 _relay_probe="skills/brainstorming/SKILL.md"
@@ -45,10 +45,15 @@ _relay_find_claude() {
 # CODEX_HOME = the relay Codex home, and Codex loads user skills from ~/.agents/skills and
 # from $CODEX_HOME/skills. ~/.codex/skills is the desktop home, which a relay child does
 # not read. The relay home path is built as text: this probe must not create it.
+# Codex also reads <repository>/.agents/skills (project level, relay 5.5.0). A relay child works
+# in a worktree, which has only the committed files, so only a copy that git tracks counts.
 _relay_codex_has() {
-  local rc_home="${RELAY_CODEX_HOME:-$HOME/.relay/codex-home}"
+  local rc_home="${RELAY_CODEX_HOME:-$HOME/.relay/codex-home}" top
   case "$rc_home" in \~) rc_home="$HOME" ;; \~/*) rc_home="$HOME/${rc_home#\~/}" ;; esac
-  test -f "$HOME/.agents/skills/$1/SKILL.md" || test -f "$rc_home/skills/$1/SKILL.md"
+  test -f "$HOME/.agents/skills/$1/SKILL.md" && return 0
+  test -f "$rc_home/skills/$1/SKILL.md" && return 0
+  top="$(git rev-parse --show-toplevel 2>/dev/null)" || return 1
+  git -C "$top" ls-files --error-unmatch -- ".agents/skills/$1/SKILL.md" >/dev/null 2>&1
 }
 
 # Iterate manifest skill names (col 1), skipping comments/blanks.
@@ -144,7 +149,7 @@ fi
 if [ "$_need_codex" = "yes" ]; then
   while IFS= read -r _skill; do
     if ! _relay_codex_has "$_skill"; then
-      echo "[relay] BLOCKING: codex skill '$_skill' missing under ~/.agents/skills/ and the relay Codex home — run /relay:setup (a copy in ~/.codex/skills/ is not read by relay's codex children)" >&2
+      echo "[relay] BLOCKING: codex skill '$_skill' missing under the committed .agents/skills/ of the repository, ~/.agents/skills/ and the relay Codex home — run /relay:setup (a copy in ~/.codex/skills/ is not read by relay's codex children)" >&2
       _relay_ok=0
     fi
   done < <(_relay_manifest_skills)

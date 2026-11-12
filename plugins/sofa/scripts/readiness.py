@@ -43,9 +43,18 @@ BRAIN_FIX = {
 BRAINS_THAT_BLOCK = {"prd", "roadmap"}
 # Skills that Claude Code has built in, so no plugin or skill folder is necessary.
 BUILT_IN_SKILLS = {"verify", "simplify", "security-review", "loop"}
-# Skills of the sofa plugin. Other skills (rebase, wrapup, bg-watch, find-docs) are
-# not in the plugin, so the check reports them as missing when they are not installed.
+# Skills of the sofa plugin. The other skills of the roles table are not in the plugin,
+# so the check reports them as missing when they are not installed. The factory skills
+# (references/factory-skills.txt: wrapup, rebase, bg-watch, osaat, find-docs,
+# systematic-debugging) have their own check, check_factory_skills.
 OWN_SKILLS = {"station"}
+# The words of a row of references/factory-skills.txt. The first character of a skill
+# and of a source is a letter or a digit, so the CLI never reads a word as an option or a path.
+FACTORY_SKILLS_FILE = PLUGIN_ROOT / "references" / "factory-skills.txt"
+FACTORY_WORD = (r"[A-Za-z0-9][A-Za-z0-9._-]*",
+                r"[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*",
+                r"MIT|Apache-2\.0",
+                r"[0-9a-f]{40}")
 # Tool names that are a command on the PATH. Other values are services, so a
 # PATH check cannot judge them.
 CLI_TOOLS = {"gh", "jira", "linear", "semgrep", "snyk", "sonar-scanner", "gitleaks", "trivy"}
@@ -330,12 +339,17 @@ def check_repo(repo):
 CONTRACT_PATHS = (".claude/code-review/contract.md", ".claude/pr-flow/contract.md")
 
 
+def default_branch(root):
+    """The default branch on origin, as the local ref (origin/HEAD), or origin/main when the ref is not set."""
+    rc, out = run(["git", "-C", str(root), "symbolic-ref", "--short", "refs/remotes/origin/HEAD"])
+    return out.strip() if rc == 0 and out.strip() else "origin/main"
+
+
 def check_review_contract(root):
     """The review contract counts only when the default branch on origin has it,
     because each session makes its worktree from origin/main. Reads the local
     origin ref and changes nothing: sofa:start fetches origin before this check."""
-    rc, out = run(["git", "-C", str(root), "symbolic-ref", "--short", "refs/remotes/origin/HEAD"])
-    branch = out.strip() if rc == 0 and out.strip() else "origin/main"
+    branch = default_branch(root)
     for path in CONTRACT_PATHS:
         rc, _ = run(["git", "-C", str(root), "cat-file", "-e", f"{branch}:{path}"])
         if rc == 0:
@@ -529,17 +543,85 @@ def skill_names(roles):
     return names
 
 
+def factory_skills():
+    """The rows of references/factory-skills.txt: (rows, bad).
+
+    rows is a list of (skill, source, license, commit). A row with no 4 words, or with a word that
+    does not match its pattern, is not in rows: bad holds (line number, first word) for it. A missing
+    file gives no rows and no bad row. The patterns keep a shell character out of a command that
+    setup builds."""
+    if not FACTORY_SKILLS_FILE.is_file():
+        return [], []
+    rows, bad = [], []
+    for number, line in enumerate(read_text(FACTORY_SKILLS_FILE).splitlines(), 1):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        words = line.split()
+        if len(words) == 4 and all(re.fullmatch(p, w) for p, w in zip(FACTORY_WORD, words)):
+            rows.append(tuple(words))
+        else:
+            bad.append((number, words[0]))
+    return rows, bad
+
+
+def branch_paths(root, branch):
+    """{path: mode} of each file and link under .claude/skills and .agents/skills on the branch (1 git call)."""
+    rc, out = run(["git", "-C", str(root), "ls-tree", "-r", branch, "--", ".claude/skills", ".agents/skills"])
+    if rc != 0:
+        return {}
+    return {line.split("\t", 1)[1]: line.split()[0] for line in out.splitlines() if "\t" in line}
+
+
+def check_factory_skills(repo):
+    """1 item for each factory skill. ok when the default branch on origin has the skill, because
+    each session makes its worktree from origin/main. Reads the local origin ref and changes nothing."""
+    rows, bad = factory_skills()
+    items = []
+    if bad:
+        lines = ", ".join(str(n) for n, _ in bad)
+        items.append(item("factory-skills", "skills", "wrong",
+                          f"references/factory-skills.txt has a row with a bad word (line {lines})",
+                          "correct the row in the sofa plugin"))
+    if not rows:
+        return items
+    root = repo.root
+    branch = default_branch(root)
+    on_branch = branch_paths(root, branch)
+    fix = "/sofa:setup (step 2.5)"
+    for name, source, _, _ in rows:
+        id_ = f"skill-{name}"
+        link = f".claude/skills/{name}"
+        target = f".agents/skills/{name}/SKILL.md"
+        copy_there = f"{link}/SKILL.md" in on_branch
+        link_there = link in on_branch or any(path.startswith(f"{link}/") for path in on_branch)
+        if copy_there or (link_there and target in on_branch):
+            items.append(item(id_, "skills", "ok", f"{branch} has {link}"))
+        elif on_branch.get(link) == "120000":
+            items.append(item(id_, "skills", "wrong", f"the link {link} has no target on {branch}", fix))
+        elif (root / link / "SKILL.md").exists():
+            items.append(item(id_, "skills", "wrong",
+                              f"{name} is only in the working tree, and {branch} does not have it", fix))
+        elif (Path.home() / ".claude" / "skills" / name / "SKILL.md").exists():
+            items.append(item(id_, "skills", "wrong",
+                              f"{name} is only a personal skill: the project and other machines do not have it", fix))
+        else:
+            items.append(item(id_, "skills", "missing", f"no copy of {name} (source {source})", fix))
+    return items
+
+
 def check_skills(repo):
     items = []
     plugins = installed_plugins(cmd_name("READINESS_CLAUDE", "claude"))
     names = skill_names(repo.roles())
     home_skills = Path.home() / ".claude" / "skills"
     repo_skills = repo.root / ".claude" / "skills"
+    rows, bad = factory_skills()
+    factory = {row[0] for row in rows} | {word for _, word in bad}
     if not names:
         items.append(item("skills", "skills", "unknown", "no Skills column in the roles table", ""))
         return items
     for name in names:
-        if name in BUILT_IN_SKILLS:
+        if name in BUILT_IN_SKILLS or name in factory:
             continue
         as_skill = (home_skills / name).exists() or (repo_skills / name).exists()
         if name in OWN_SKILLS and (as_skill or (plugins and "sofa" in plugins)):
@@ -649,9 +731,9 @@ def check_human(repo):
     return items
 
 
-CHECKS = [check_claude, check_repo, check_brains, check_team, check_tools, check_skills, check_human]
+CHECKS = [check_claude, check_repo, check_brains, check_team, check_tools, check_skills, check_factory_skills, check_human]
 AREAS = {"check_claude": "claude", "check_repo": "repo", "check_brains": "brains", "check_team": "team",
-         "check_tools": "tools", "check_skills": "skills", "check_human": "human"}
+         "check_tools": "tools", "check_skills": "skills", "check_factory_skills": "skills", "check_human": "human"}
 
 
 def run_checks(repo):

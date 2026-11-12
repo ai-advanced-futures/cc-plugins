@@ -83,7 +83,7 @@ key. The non-obvious part is that **the current version is exact-pinned in a tes
 
 ```python
 # tests/unit/skill-structure/test_plugin.py
-assert manifest["version"] == "5.4.4"
+assert manifest["version"] == "5.5.0"
 ```
 
 Bumping fails the suite until you do the ratchet:

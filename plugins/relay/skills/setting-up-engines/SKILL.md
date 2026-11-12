@@ -183,7 +183,7 @@ Relay keeps its Codex sessions away from the Codex desktop app.
   CODEX_HOME="$RC_HOME" codex login
   ```
 - **Skills:** relay's codex children run in this home, so they do not read
-  `~/.codex/skills`. `/relay:setup` installs codex skills into `~/.agents/skills`, which
+  `~/.codex/skills`. `/relay:setup` installs codex skills into `<repository>/.agents/skills` (project level, committed) or `~/.agents/skills`, which
   Codex reads for every Codex home, the desktop one too.
 - **Configuration:** if you need one, write a small `config.toml` in the relay home. Do not
   copy `~/.codex/config.toml`: an MCP server entry can set `CODEX_HOME` back to the desktop

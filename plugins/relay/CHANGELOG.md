@@ -3,6 +3,13 @@
 All notable changes to relay are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 5.5.0 — 2026-11-11
+
+### Changed
+- `/relay:setup` installs the `obra/superpowers` skills for codex at project level, into `<repository>/.agents/skills/<name>`, with `DISABLE_TELEMETRY=1 npx --yes skills@1.8.1 add '<source>#<commit>' --skill <name> -a codex -y` (STORY-390). The CLI and the commit are pinned, and the setup text holds the integrity value of the CLI and the rule that a new pin is a release at least 14 days old. Before it asks, setup runs the audit of the source with no telemetry and shows only the risk value of each partner (not proof of safety). After the install it lists the third-party text of each skill, and tells the user to commit `.agents/skills` and `skills-lock.json`.
+- The probe of the codex set (`check-deps.sh`) also accepts `<repository>/.agents/skills/<name>/SKILL.md` when git tracks that file. A relay child works in a worktree, so an untracked copy does not count.
+- The fallback (`install-skill-from-github.py`, user level) stays for the `engineering` row and for a machine with no `npx`. It takes the default branch with no pin, and setup says so before it asks.
+
 ## 5.4.4 — 2026-11-06
 
 ### Changed
