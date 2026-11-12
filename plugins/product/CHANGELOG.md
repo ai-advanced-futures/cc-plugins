@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.8.3
+
+### Fixed
+- `check-plugin.sh`, which `check-relay.sh` and `check-superpowers.sh` call, finds a plugin in the Claude config folder: `$CLAUDE_CONFIG_DIR/plugins` when the variable is set, else `~/.claude/plugins`. Before, `/product:specifying-stories` and `/product:work` reported relay or superpowers as missing in a session with another config folder. A relative value gives no candidate (STORY-295, the rule of STORY-281).
+
 ## 6.8.2
 
 ### Fixed

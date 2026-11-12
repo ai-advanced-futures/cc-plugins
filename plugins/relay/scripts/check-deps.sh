@@ -18,10 +18,17 @@ _relay_manifest="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)/upstream-supe
 # The order: the home install, then the plugin cache. It never tries a folder of the
 # project, because Claude Code installs no plugin there, and a project can hold files
 # that the person did not write (STORY-216, the rule of STORY-202).
+# The home install and the cache are in the Claude config folder: $CLAUDE_CONFIG_DIR
+# when it is set and not empty, else $HOME/.claude (STORY-295, the rule of STORY-281).
+# A relative value would name a folder of the current project, so it gives no
+# candidate. The function returns, and does not exit, because a command sources it.
 _relay_find_claude() {
-  local probe="$1" hit=""
-  if test -f "$HOME/.claude/plugins/superpowers/${probe}"; then
-    hit="$HOME/.claude/plugins/superpowers"
+  local probe="$1" hit="" config_dir plugins_dir
+  config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+  case "$config_dir" in /*) ;; *) return 0 ;; esac
+  plugins_dir="$config_dir/plugins"
+  if test -f "$plugins_dir/superpowers/${probe}"; then
+    hit="$plugins_dir/superpowers"
   else
     # marketplace cache: accept flat (<hit>/skills/...) AND versioned
     # (<hit>/<version>/skills/...) layouts; prefer highest version. -maxdepth 6 reaches
@@ -37,7 +44,7 @@ _relay_find_claude() {
         if test -f "${_relay_vdir%/}/${probe}"; then hit="${_relay_vdir%/}"; break; fi
       done <<< "$_relay_ver"
       [ -n "$hit" ] && break
-    done <<< "$(find "$HOME/.claude/plugins" -maxdepth 6 -type d -name superpowers 2>/dev/null)"
+    done <<< "$(find "$plugins_dir" -maxdepth 6 -type d -name superpowers 2>/dev/null)"
   fi
   printf '%s' "$hit"
 }

@@ -3,6 +3,11 @@
 All notable changes to relay are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 5.5.2 — 2026-11-12
+
+### Fixed
+- `check-deps.sh` finds superpowers in the Claude config folder: `$CLAUDE_CONFIG_DIR/plugins` when the variable is set, else `~/.claude/plugins`. Before, a session with another config folder reported superpowers as missing when it was installed. A relative value gives no candidate (STORY-295, the rule of STORY-281).
+
 ## 5.5.1 — 2026-11-12
 
 ### Fixed

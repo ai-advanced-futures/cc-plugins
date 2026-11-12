@@ -9,6 +9,11 @@
 # fails, and prints no message: the caller owns the install text, because the
 # install command differs per plugin.
 #
+# The home root and the cache are in the Claude config folder: $CLAUDE_CONFIG_DIR
+# when it is set and not empty, else $HOME/.claude (STORY-295, the rule of
+# STORY-281). A relative value would name a folder of the current project, so it
+# gives no candidate and the script exits 1.
+#
 # The candidate order is the home root first, and then the cache sweep hits
 # with their version directories, the highest version first. It never tries a
 # folder of the project, because Claude Code installs no plugin there, and a
@@ -58,7 +63,11 @@ try() {
   fi
 }
 
-try "$HOME/.claude/plugins/$name"
+config_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+case "$config_dir" in /*) ;; *) exit 1 ;; esac
+plugins_dir="$config_dir/plugins"
+
+try "$plugins_dir/$name"
 
 while IFS= read -r cache; do
   [ -z "$cache" ] && continue
@@ -68,7 +77,7 @@ while IFS= read -r cache; do
     [ -z "$vdir" ] && continue
     try "${vdir%/}"
   done <<< "$(ls -d "$cache"/*/ 2>/dev/null | sort -rV)"
-done <<< "$(find "$HOME/.claude/plugins/cache" -maxdepth 6 -type d \
+done <<< "$(find "$plugins_dir/cache" -maxdepth 6 -type d \
                  -name "$name" 2>/dev/null)"
 
 exit 1
