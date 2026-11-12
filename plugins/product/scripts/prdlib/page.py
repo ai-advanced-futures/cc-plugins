@@ -7,6 +7,7 @@ from pathlib import Path
 import yaml
 
 from . import DataError
+from .textsafe import escape_controls
 
 try:
     # libyaml reads a frontmatter about 7 times faster. The pure-Python
@@ -118,13 +119,15 @@ def normalise(value):
 def load_page(path: Path) -> Page:
     fm_text, body = split_frontmatter(path.read_text(encoding="utf-8"))
     if fm_text is None:
-        raise DataError(f"{path}: the page has no frontmatter")
+        raise DataError(f"{escape_controls(path)}: the page has no frontmatter")
     try:
         data = safe_load(fm_text)
     except yaml.YAMLError as error:
-        raise DataError(f"{path}: the frontmatter does not parse: {error}")
+        raise DataError(f"{escape_controls(path)}: the frontmatter does not "
+                        f"parse: {escape_controls(error)}")
     if not isinstance(data, dict):
-        raise DataError(f"{path}: the frontmatter is not a mapping")
+        raise DataError(f"{escape_controls(path)}: the frontmatter is not a "
+                        "mapping")
     return Page(path=path, frontmatter=normalise(data), body=body)
 
 

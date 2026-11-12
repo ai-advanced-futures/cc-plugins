@@ -8,6 +8,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from . import UsageError
+from .textsafe import escape_controls
 
 SCHEMA_PATH = Path(__file__).resolve().parents[2] / "schema" / "product.schema.json"
 # gen-schema.sh pins the generator, and the committed schema is a Draft 2019-09
@@ -75,8 +76,15 @@ def _validator(type_name: str):
 def validate_frontmatter(type_name: str, frontmatter: dict) -> list[str]:
     """One message for each violation. An empty list means the page is valid."""
     if type_name not in _document().get(DEFS_KEY, {}):
-        return [f"the type '{type_name}' is not in {SCHEMA_PATH.name}"]
+        return [f"the type '{escape_controls(type_name)}' is not in {SCHEMA_PATH.name}"]
     errors = sorted(_validator(type_name).iter_errors(frontmatter),
                     key=lambda e: list(e.absolute_path))
-    return [f"{'/'.join(str(p) for p in e.absolute_path) or type_name}: {e.message}"
+    # The key path holds frontmatter keys, so it is escaped. `e.message` is
+    # not: jsonschema writes each value with `repr`, and `repr` writes a
+    # control character as `\xNN` or `\n` already.
+    return [f"{_path_of(e) or escape_controls(type_name)}: {e.message}"
             for e in errors]
+
+
+def _path_of(error) -> str:
+    return escape_controls("/".join(str(p) for p in error.absolute_path))

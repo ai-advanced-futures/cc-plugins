@@ -11,6 +11,7 @@ from . import logbook, regen
 from .page import load_page, split_frontmatter, write_page
 from .registry import DIRECTORY_ORDER
 from .schema import plugin_actor
+from .textsafe import escape_controls
 from .tree import BUNDLES, bundle_dir, iter_pages
 
 ACTOR = "process:prd-upgrade"
@@ -134,7 +135,8 @@ def backfill(root, actor) -> list[str]:
                 when = datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).replace(microsecond=0)
                 page.frontmatter["generated"] = {"by": actor, "at": logbook.timestamp(when)}
                 write_page(page)
-                changes.append(f"updated {path.relative_to(root).as_posix()}")
+                changes.append("updated " + escape_controls(
+                    path.relative_to(root).as_posix()))
     return changes
 
 
@@ -145,7 +147,8 @@ def upgrade(root) -> list[str]:
         if not log.exists():
             log.write_text(logbook.HEADER + "\n", encoding="utf-8")
             changes.append(f"added {bundle}/log.md")
-    changes += [f"regenerated {p.relative_to(root).as_posix()}" for p in regen.write(root)]
+    changes += ["regenerated " + escape_controls(p.relative_to(root).as_posix())
+                for p in regen.write(root)]
     changes += finish(root)
     if changes:
         when = datetime.now(timezone.utc)

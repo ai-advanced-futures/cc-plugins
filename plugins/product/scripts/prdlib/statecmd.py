@@ -17,6 +17,7 @@ from .logbook import append_entry, state_line
 from .page import load_page, write_page
 from .regen import COMPUTED_STATES, collect, computed_state
 from .registry import DELIVERED_STATES, STATES, WORK_ITEMS
+from .textsafe import escape_controls
 from .tree import bundle_dir
 
 # process:regen is regen's own internal actor (see regen.REGEN_ACTOR). regen
@@ -46,7 +47,8 @@ def require_actor(actor: str) -> None:
     sentence written one time."""
     if not ACTOR_RE.fullmatch(actor):
         raise UsageError(
-            f"{actor} is not an actor: use human:<login> or agent:<id>")
+            f"{escape_controls(actor)} is not an actor: use human:<login> or "
+            "agent:<id>")
 
 
 # The 5 moves of claim, release and expire. An agent makes them with no
@@ -71,7 +73,8 @@ def check_permission(root: Path, page, old: str, wanted: str, actor: str,
         return
     if given is None:
         raise DataError(
-            f"an agent change from {old} to {wanted} needs --approved-by: "
+            f"an agent change from {escape_controls(old)} to {wanted} needs "
+            "--approved-by: "
             f"{approval.SHAPE_LIST}")
     reopen = old in approval.REOPEN_FROM and wanted in approval.REOPEN_STATES
     if (wanted == "cancelled" or reopen) and given not in approval.STRONG:
@@ -86,13 +89,14 @@ def check_permission(root: Path, page, old: str, wanted: str, actor: str,
         spec = page.frontmatter.get("spec")
         if not isinstance(spec, str) or spec in ("", "none"):
             raise DataError(
-                f"{page.id} has no spec: an agent sets a Story to "
+                f"{escape_controls(page.id)} has no spec: an agent sets a Story to "
                 f"ready only when its spec file is in the tree")
         base = root.resolve()
         target = (base / spec).resolve()
         if not (target.is_relative_to(base) and target.is_file()):
             raise DataError(
-                f"{page.id}: the spec file {spec} is not in the tree")
+                f"{escape_controls(page.id)}: the spec file "
+                f"{escape_controls(spec)} is not in the tree")
 
 
 def change(root: Path, identifier: str, wanted: str, actor: str,
@@ -122,14 +126,15 @@ def apply_change(root: Path, identifier: str, wanted: str, actor: str,
     the map held when the loop started.
     """
     if wanted not in STATES:
-        raise DataError(f"{wanted} is not a state")
+        raise DataError(f"{escape_controls(wanted)} is not a state")
     require_actor(actor)
     now = now or datetime.now(timezone.utc)
 
     path = resolve(root, identifier, tree)
     page = load_page(path)
     if page.type not in WORK_ITEMS:
-        raise DataError(f"{path.stem} is a {page.type}, which has no state")
+        raise DataError(f"{escape_controls(path.stem)} is a "
+                        f"{escape_controls(page.type)}, which has no state")
     old = page.frontmatter.get("state", "backlog")
 
     # The permission answers the request, not the computed value. An agent

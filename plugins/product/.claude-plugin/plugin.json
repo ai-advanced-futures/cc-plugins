@@ -1,6 +1,6 @@
 {
   "name": "product",
-  "version": "6.8.0",
+  "version": "6.8.1",
   "description": "Product discovery and roadmap planning in two OKF graphs on the brain standard: one page for each requirement and each work item, typed links, product:setup, product:learn, product:ask, and a script that assigns IDs, checks the graph, and finds requirement drift",
   "dependencies": ["knowledge"],
   "author": {

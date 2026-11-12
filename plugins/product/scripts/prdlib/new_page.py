@@ -1,5 +1,4 @@
 """`prd.py new`: assign the ID under the lock and write the page."""
-import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -14,6 +13,7 @@ from .logbook import timestamp
 from .page import Page, load_page, load_set_value, normalise, write_page
 from .registry import TYPES, WORK_ITEMS
 from .schema import is_single_valued, plugin_actor, validate_frontmatter
+from .textsafe import escape_controls
 from .tree import bundle_dir
 
 # A new item starts in backlog. Only prd.py state sets `state`. Only regen and
@@ -29,14 +29,12 @@ REFUSED_LINK_FIELDS = {
 }
 
 
-# C0 controls (a line break, ESC) and C1 controls (0x9b starts a CSI).
-_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]")
-
 
 def trace_entry(root: Path, target: str) -> dict:
     path = target_path(root, "roadmap", target)
     if not path.is_file():
-        raise DataError(f"the trace target {target} does not exist")
+        raise DataError(
+            f"the trace target {escape_controls(target)} does not exist")
     return {"to": target, "hash": body_hash(load_page(path).body, path.stem)}
 
 
@@ -70,9 +68,10 @@ def _take_the_parent_milestone(root: Path, bundle: str, type_name: str,
             # The cause holds the value of the parent. A trailing line break
             # passes the schema pattern and reaches check_targets raw, so
             # escape each control character: one error is one line.
-            cause = _CONTROL_RE.sub(lambda m: f"\\x{ord(m.group()):02x}", cause)
+            cause = escape_controls(cause)
             raise DataError(
-                f"the milestone of the parent {parent} cannot be copied: "
+                f"the milestone of the parent {escape_controls(parent)} "
+                f"cannot be copied: "
                 f"{cause}. Give --link milestone=, or fix the parent.")
         return
     text = milestone_difference(frontmatter["milestone"], parent,
@@ -89,7 +88,7 @@ def create(root: Path, type_name: str, title: str, description: str,
            actor: str | None = None,
            notes: list | None = None) -> Path:
     if type_name not in TYPES:
-        raise DataError(f"{type_name} is not a page type")
+        raise DataError(f"{escape_controls(type_name)} is not a page type")
     spec = TYPES[type_name]
     if spec.prefix is None:
         raise DataError(f"a {type_name} page has no ID, so `new` cannot make one")
@@ -124,7 +123,8 @@ def create(root: Path, type_name: str, title: str, description: str,
         written.append(field)
     for item in sets or []:
         if "=" not in item:
-            raise UsageError(f"--set {item} has no `=`. Use --set FIELD=YAML.")
+            raise UsageError(f"--set {escape_controls(item)} has no `=`. "
+                             "Use --set FIELD=YAML.")
         field, _, raw = item.partition("=")
         if field in REFUSED_SET_FIELDS:
             raise UsageError(
@@ -133,7 +133,8 @@ def create(root: Path, type_name: str, title: str, description: str,
         try:
             frontmatter[field] = normalise(load_set_value(raw))
         except yaml.YAMLError as error:
-            raise UsageError(f"--set {item} does not parse: {error}")
+            raise UsageError(f"--set {escape_controls(item)} does not parse: "
+                             f"{escape_controls(error)}")
         written.append(field)
     if traces:
         frontmatter["traces"] = [trace_entry(root, t) for t in traces]

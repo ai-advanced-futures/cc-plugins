@@ -9,6 +9,7 @@ import yaml
 from . import UsageError
 from .page import safe_load
 from .registry import PRD_TYPES
+from .textsafe import escape_controls
 
 KEYS = ("prefixes", "ids")
 
@@ -36,7 +37,10 @@ def load_map(path) -> dict:
     try:
         data = safe_load(path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as error:
-        raise UsageError(f"the migration map does not load: {error}")
+        # PyYAML text holds line breaks and a snippet of the map. One line
+        # of it must not read as a second finding.
+        raise UsageError(
+            f"the migration map does not load: {escape_controls(error)}")
     if not isinstance(data, dict):
         raise UsageError("the migration map is a mapping with `prefixes` "
                          "and `ids` keys")
@@ -52,8 +56,8 @@ def load_map(path) -> dict:
             # block with that type has no page to go in.
             if type_name not in PRD_TYPES:
                 raise UsageError(
-                    f"{type_name} is not a PRD page type. The map gives one "
-                    f"of: {', '.join(sorted(PRD_TYPES))}.")
+                    f"{escape_controls(type_name)} is not a PRD page type. "
+                    f"The map gives one of: {', '.join(sorted(PRD_TYPES))}.")
         out[key] = dict(section)
     return out
 

@@ -6,6 +6,7 @@ or who wrote a card, so the log line names the text and a reader checks it.
 import re
 
 from . import UsageError
+from .textsafe import escape_controls
 
 # (kind, regex), in the order of the spec: the first kind whose regex matches
 # the whole text wins.
@@ -34,4 +35,5 @@ def kind(text: str) -> str:
     for name, pattern in SHAPES:
         if pattern.fullmatch(text):
             return name
-    raise UsageError(f"{text} is not an approval: give {SHAPE_LIST}")
+    raise UsageError(
+        f"{escape_controls(text)} is not an approval: give {SHAPE_LIST}")

@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.8.1
+
+### Fixed
+- A text of `prd.py` that prints a value that someone else wrote no longer lets that value forge a line or move the cursor. A line break, an ESC, another C0 control, DEL, or a C1 control (for example `0x9b`) in the value now prints as `\xNN`. Before, a page with a link value that held a line break gave an E4 finding of 2 lines, and the second line could read as a finding of another page. The same text came from `prd.py new`, `set` and `link` for a target that they refuse. The fix covers each text that prints a frontmatter value, a page name, a GitHub snapshot value, a YAML error, or a value that the caller gives: the findings of `check` (E1 to E6, E9, W8, and the page name of each finding), the errors of the commands, the lines of `prd.py github plan`, `apply` and `pull`, and the lists of `list`, `ready` and `stage`. One helper, `prdlib/textsafe.py`, writes the escape. A text that is a constant, a generated ID, or a member of a closed set is unchanged. The page body and the diff lines of `prd.py drift --show`, and the output of a declared check, are shown as they are, on purpose. A text with a clean value prints as before. Fixes #1906.
+
 ## 6.8.0
 
 ### Added

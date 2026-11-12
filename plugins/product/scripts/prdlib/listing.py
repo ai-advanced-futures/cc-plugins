@@ -8,6 +8,7 @@ from pathlib import Path
 from . import DataError, UsageError
 from .page import load_page
 from .registry import TYPES
+from .textsafe import escape_controls
 from .tree import bundle_dir
 
 MISSING = "-"
@@ -35,7 +36,7 @@ def _filters(where: list[str] | None) -> list[tuple[str, str]]:
         key, sign, value = item.partition("=")
         if not sign or not key:
             raise UsageError(
-                f"--where {item} has no `=`. Use --where KEY=VALUE, "
+                f"--where {escape_controls(item)} has no `=`. Use --where KEY=VALUE, "
                 f"such as --where state=ready.")
         out.append((key, value))
     return out
@@ -44,7 +45,7 @@ def _filters(where: list[str] | None) -> list[tuple[str, str]]:
 def rows(root: Path, type_name: str, where: list[str] | None = None,
          fields: str = "title") -> list[str]:
     if type_name not in TYPES:
-        raise DataError(f"{type_name} is not a page type")
+        raise DataError(f"{escape_controls(type_name)} is not a page type")
     spec = TYPES[type_name]
     if spec.directory is None:
         raise DataError(f"a {type_name} page is not in a directory")
@@ -61,6 +62,7 @@ def rows(root: Path, type_name: str, where: list[str] | None = None,
             continue
         if any(_cell(frontmatter.get(key)) != value for key, value in filters):
             continue
-        out.append("\t".join([path.stem]
-                             + [_cell(frontmatter.get(n)) for n in names]))
+        out.append("\t".join(
+            [escape_controls(path.stem)]
+            + [escape_controls(_cell(frontmatter.get(n))) for n in names]))
     return out

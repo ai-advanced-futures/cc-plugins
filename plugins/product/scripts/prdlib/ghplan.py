@@ -13,6 +13,7 @@ from . import UsageError, ghmodel, ghsnapshot
 from .graph import find_cycle
 from .regen import collect, read_tree, require_readable
 from .registry import TYPES, WORK_ITEMS
+from .textsafe import escape_controls
 
 # The documented GitHub limits. The probe has not run (D37), so `plan` refuses
 # a change set that goes over them instead of letting the API refuse it.
@@ -141,7 +142,8 @@ def build(root: Path, snapshot: dict, keep=()) -> Plan:
     unknown = sorted(set(keep) - set(pushed))
     if unknown:
         raise UsageError(
-            f"--keep names {', '.join(unknown)}, which has no issue in "
+            f"--keep names {escape_controls(', '.join(unknown))}, which has "
+            f"no issue in "
             f"GitHub, so there is no GitHub value to replace. Give the ID of "
             f"a page that a `DIFFERENT:` or `BOUND:` line of `github pull` "
             f"names.")
@@ -377,7 +379,7 @@ def _limit_refusals(pages: dict) -> list:
         parent = _page_of(frontmatter.get("parent"))
         if parent:
             counts[parent] = counts.get(parent, 0) + 1
-    return [f"{parent} has {count} children. GitHub holds "
+    return [f"{escape_controls(parent)} has {count} children. GitHub holds "
             f"{MAX_SUB_ISSUES} sub-issues for each parent. Move the extra "
             f"children under another parent."
             for parent, count in sorted(counts.items())
@@ -395,7 +397,8 @@ def _graph_refusals(pages: dict) -> list:
                  for page_id, (frontmatter, _body) in pages.items()}
         cycle = find_cycle(edges)
         if cycle:
-            out.append(f"`{name}` makes a cycle: {' -> '.join(cycle)} "
+            out.append(f"`{name}` makes a cycle: "
+                       f"{escape_controls(' -> '.join(cycle))} "
                        f"(rule {rule}). Remove one link of it.")
     parents = {page_id: _page_of(frontmatter.get("parent"))
                for page_id, (frontmatter, _body) in pages.items()}
@@ -409,7 +412,8 @@ def _graph_refusals(pages: dict) -> list:
         if depth > MAX_LEVELS:
             deep.append(page_id)
     if deep:
-        out.append(f"{', '.join(sorted(deep))} sit too deep: GitHub holds "
+        out.append(f"{escape_controls(', '.join(sorted(deep)))} sit too "
+                   f"deep: GitHub holds "
                    f"{MAX_LEVELS} levels of sub-issues. Move them under a "
                    f"parent of a higher level.")
     return out
@@ -443,7 +447,8 @@ def _state_changes(page_id, frontmatter, issue, changes, conflicts,
         cards.append(Change(
             "add_to_project", page_id,
             {"number": issue["number"], "node_id": issue["node_id"]},
-            f"issue #{issue['number']} is not on the Project"))
+            f"issue #{escape_controls(issue['number'])} is not on the "
+            f"Project"))
     if live is None:
         # A new card, or a card with no Status, holds no value to take, so
         # the bundle state is the one to send. A `take` here would leave the
@@ -460,7 +465,7 @@ def _state_changes(page_id, frontmatter, issue, changes, conflicts,
             "set_status", page_id,
             {"item_id": item.get("id"), "field": STATUS_FIELD,
              "option": ghmodel.STATUS_OPTIONS[state], "state": state},
-            f"the bundle moved {page_id} to {state}"))
+            f"the bundle moved {escape_controls(page_id)} to {state}"))
     # The open or closed state of the issue answers to the state of the page,
     # not to the verdict. A card that a person moved to Done gives `same`, and
     # the issue would then stay open for ever. `take` is the one verdict this
@@ -471,12 +476,13 @@ def _state_changes(page_id, frontmatter, issue, changes, conflicts,
                 "close_issue", page_id,
                 {"number": issue["number"], "node_id": issue["node_id"],
                  "reason": CLOSE_REASON[state]},
-                f"{page_id} is {state}"))
+                f"{escape_controls(page_id)} is {state}"))
         elif state not in CLOSE_REASON and issue.get("state") == "CLOSED":
             changes.append(Change(
                 "reopen_issue", page_id,
                 {"number": issue["number"], "node_id": issue["node_id"]},
-                f"{page_id} is {state} and the issue is closed"))
+                f"{escape_controls(page_id)} is {state} and the issue is "
+                f"closed"))
     owner = frontmatter.get("owner") or ""
     live = ghmodel.live_owner(issue)
     if owner.startswith("human:"):
@@ -494,7 +500,7 @@ def _state_changes(page_id, frontmatter, issue, changes, conflicts,
                 {"number": issue["number"], "login": login, "owner": owner,
                  "remove_logins": sorted(
                      set(issue.get("assignees") or []) - {login})},
-                f"the bundle owner of {page_id} changed"))
+                f"the bundle owner of {escape_controls(page_id)} changed"))
 
 
 def subject(change: Change) -> str:
@@ -503,8 +509,9 @@ def subject(change: Change) -> str:
     `create_issue_type` for Epic and for Story read the same line without
     it, and the user answers for each one before the apply."""
     if change.page:
-        return change.page
-    return change.detail.get("name") or change.detail.get("field") or "-"
+        return escape_controls(change.page)
+    name = change.detail.get("name") or change.detail.get("field")
+    return escape_controls(name) if name else "-"
 
 
 def render(plan: Plan, fmt: str = "text", prefix: str = "") -> str:

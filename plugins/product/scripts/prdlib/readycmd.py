@@ -14,6 +14,7 @@ from .claims import is_live
 from .ghmodel import page_id_of
 from .regen import collect
 from .registry import WORK_ITEMS
+from .textsafe import escape_controls
 
 MISSING = "-"
 
@@ -55,6 +56,7 @@ def rows(root: Path, milestone: str | None = None,
         # (0, date) sorts before (1, ""), so a dated milestone comes first.
         key = (0, str(date)) if date else (1, "")
         found.append((key, path.stem,
-                      f"{path.stem}\t{frontmatter.get('title', '')}"
-                      f"\t{own or MISSING}"))
+                      f"{escape_controls(path.stem)}\t"
+                      f"{escape_controls(frontmatter.get('title', ''))}\t"
+                      f"{escape_controls(own) if own else MISSING}"))
     return [row for _key, _page_id, row in sorted(found)]

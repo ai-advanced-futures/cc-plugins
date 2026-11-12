@@ -21,6 +21,7 @@ from .migrate_scan import (HEADING_RE, LENS_HEADINGS, LENS_SECTIONS,
 from .page import (Page, load_page, normalise, safe_dump, safe_load,
                    split_frontmatter, write_page)
 from .registry import BY_PREFIX, TYPES
+from .textsafe import escape_controls
 from .tree import (BUNDLES, PRODUCT_DIR, RESERVED_PAGES, V3_PRD, V3_ROADMAP,
                    iter_pages, product_dir)
 
@@ -109,7 +110,7 @@ def _frontmatter(text: str) -> tuple[dict | None, int]:
         data = safe_load(fm_text)
     except yaml.YAMLError as error:
         raise UsageError(f"docs/product/{V3_PRD}: the frontmatter does not "
-                         f"parse: {error}")
+                         f"parse: {escape_controls(error)}")
     start = text[:len(text) - len(body)].count("\n")
     return (data if isinstance(data, dict) else {}), start
 

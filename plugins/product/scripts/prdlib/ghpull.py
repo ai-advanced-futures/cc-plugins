@@ -17,6 +17,7 @@ from .new_page import create
 from .page import load_page, write_page
 from .regen import collect
 from .statecmd import change as change_state, stored_state
+from .textsafe import escape_controls
 from .tree import bundle_dir
 
 PULLED = " (pulled from GitHub)"
@@ -89,11 +90,13 @@ def pull(root: Path, snapshot: dict, login: str, adopt: bool = False,
         if not stored:
             if ghplan.is_bound(stored, issue):
                 report.bound.append(
-                    f"{page_id}: issue #{issue['number']} holds the title and "
+                    f"{escape_controls(page_id)}: issue "
+                    f"#{escape_controls(issue['number'])} holds the title and "
                     f"body that a person wrote, and the page has no "
                     f"pushed_hash. The sync sends no title or body to it. "
                     f"Send the bundle text with `github apply --keep "
-                    f"{page_id}`, or leave the issue as it is.")
+                    f"{escape_controls(page_id)}`, or leave the issue as it "
+                    f"is.")
             continue
         # The two-direction fields come first. A page that was pushed
         # correctly has a hash that matches, and the difference block below
@@ -121,9 +124,11 @@ def pull(root: Path, snapshot: dict, login: str, adopt: bool = False,
         # with no second list to keep in step.
         names = sorted(key for key in mine if live[key] != mine[key])
         report.differences.append(
-            f"{page_id}: a person changed {', '.join(names)} in issue "
-            f"#{issue['number']}. Keep the bundle value with `github apply "
-            f"--keep {page_id}`, or take the GitHub value into the page.")
+            f"{escape_controls(page_id)}: a person changed "
+            f"{', '.join(names)} in issue "
+            f"#{escape_controls(issue['number'])}. Keep the bundle value with "
+            f"`github apply --keep {escape_controls(page_id)}`, or take the "
+            f"GitHub value into the page.")
     _adopt(root, snapshot, report, adopt, known_numbers)
     return report
 
@@ -174,7 +179,8 @@ def _pull_state(root, page_id, frontmatter, issue, login, report, now, tree):
     computed = stored_state(root, frontmatter, live, tree)
     if computed != live:
         report.conflicts.append(
-            f"{page_id}: GitHub is {live} and the bundle stays {page_state}, "
+            f"{escape_controls(page_id)}: GitHub is {live} and the bundle "
+            f"stays {escape_controls(page_state)}, "
             f"because the blockers give {computed}. Close the blockers, or "
             f"change them, and run the sync again.")
         return False
@@ -190,19 +196,26 @@ def _pull_state(root, page_id, frontmatter, issue, login, report, now, tree):
     except DataError as refusal:
         if approved_by is None:
             raise
-        line = (f"{page_id}: {actor} moved issue #{issue['number']} to "
-                f"{live}, and the bundle stays {page_state}. {refusal}.")
+        # `refusal` is the text of the state command. It holds the actor, a
+        # value that a snapshot file gave, so it is escaped here as well.
+        line = (f"{escape_controls(page_id)}: {escape_controls(actor)} moved "
+                f"issue #{escape_controls(issue['number'])} to "
+                f"{live}, and the bundle stays {escape_controls(page_state)}. "
+                f"{escape_controls(refusal)}.")
         # Only a cancel or a reopen is a refusal that a card or a D-id fixes.
         # Another refusal (for example, no spec for backlog to ready) stays
         # with no command, because an approval does not change it.
         if "hitl card link" in str(refusal):
-            line += (f" Make the move with `prd.py state {page_id} {live} "
-                     f"--actor {actor} --approved-by <card or D-id>`.")
+            line += (f" Make the move with `prd.py state "
+                     f"{escape_controls(page_id)} {live} "
+                     f"--actor {escape_controls(actor)} --approved-by "
+                     f"<card or D-id>`.")
         report.conflicts.append(line)
         return False
     if not who:
         _mark_pulled(root, page_id)
-    report.applied.append(f"{page_id}: state {page_state} -> {live}")
+    report.applied.append(f"{escape_controls(page_id)}: state "
+                          f"{escape_controls(page_state)} -> {live}")
     return True
 
 
@@ -239,7 +252,9 @@ def _pull_owner(page, page_id, issue, report):
         return False
     frontmatter["owner"] = live
     write_page(page)
-    report.applied.append(f"{page_id}: owner {owner or '-'} -> {live}")
+    report.applied.append(f"{escape_controls(page_id)}: owner "
+                          f"{escape_controls(owner) if owner else '-'} -> "
+                          f"{escape_controls(live)}")
     return True
 
 
@@ -285,7 +300,8 @@ def _adopt(root, snapshot, report, adopt, stored):
         type_name = ghmodel.page_type_of_issue(issue)
         if not adopt:
             report.unknown.append(
-                f"#{issue['number']} {issue.get('title', '')} has no page. "
+                f"#{escape_controls(issue['number'])} "
+                f"{escape_controls(issue.get('title', ''))} has no page. "
                 f"Run `github pull --adopt` to make a {type_name} page in "
                 f"backlog.")
             continue
@@ -305,7 +321,8 @@ def _adopt(root, snapshot, report, adopt, stored):
         write_page(page)
         known.add(issue["number"])
         report.applied.append(
-            f"{path.stem}: adopted issue #{issue['number']} in backlog")
+            f"{escape_controls(path.stem)}: adopted issue "
+            f"#{escape_controls(issue['number'])} in backlog")
 
 
 def render(report: Report, fmt: str = "text") -> str:

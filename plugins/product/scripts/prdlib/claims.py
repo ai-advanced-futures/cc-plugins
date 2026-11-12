@@ -16,6 +16,7 @@ from .page import load_page, write_page
 from .regen import collect
 from .registry import WORK_ITEMS
 from .statecmd import apply_change, require_actor
+from .textsafe import escape_controls
 from .times import parse_time
 from .tree import bundle_dir, iter_pages
 
@@ -28,7 +29,8 @@ def parse_lease(text: str) -> int:
     """The seconds of a lease string such as 45s, 30m, or 2h."""
     match = LEASE_RE.match(str(text or ""))
     if not match:
-        raise UsageError(f"{text} is not a lease. Use 45s, 30m, or 2h.")
+        raise UsageError(
+            f"{escape_controls(text)} is not a lease. Use 45s, 30m, or 2h.")
     seconds = int(match.group(1)) * UNIT_SECONDS[match.group(2)]
     if seconds == 0:
         raise UsageError("a lease of zero holds the item for no time. Use 30m.")
@@ -57,7 +59,8 @@ def _refuse_unclaimable(page, now: datetime) -> None:
     runs it for every member before the group writes its first page."""
     if page.type not in WORK_ITEMS:
         raise DataError(
-            f"{page.path.stem} is a {page.type}, which cannot be claimed")
+            f"{escape_controls(page.path.stem)} is a "
+            f"{escape_controls(page.type)}, which cannot be claimed")
     # The live lease is read before the state, because a held item is
     # in the claimed state: reading the state first names the state and
     # hides the agent that holds the item.
@@ -67,12 +70,14 @@ def _refuse_unclaimable(page, now: datetime) -> None:
         # claim without it. This message must still name the holder and
         # not raise a KeyError over the page that E2 rejects.
         raise DataError(
-            f"{page.path.stem} is claimed by {held.get('by', 'no one')} until "
-            f"{held.get('lease_expires_at')}")
+            f"{escape_controls(page.path.stem)} is claimed by "
+            f"{escape_controls(held.get('by', 'no one'))} until "
+            f"{escape_controls(held.get('lease_expires_at'))}")
     state = page.frontmatter.get("state", "backlog")
     if state != "ready":
         raise DataError(
-            f"{page.path.stem} is {state}. Only a ready item can be claimed.")
+            f"{escape_controls(page.path.stem)} is {escape_controls(state)}. "
+            "Only a ready item can be claimed.")
 
 
 def claim(root: Path, identifier: str | list[str], actor: str,
@@ -146,10 +151,12 @@ def heartbeat(root: Path, identifier: str, actor: str,
         page = load_page(path)
         held = page.frontmatter.get("claim")
         if not isinstance(held, dict):
-            raise DataError(f"{path.stem} has no claim to extend")
+            raise DataError(
+                f"{escape_controls(path.stem)} has no claim to extend")
         if held.get("by") != actor:
             raise DataError(
-                f"{path.stem} is claimed by {held.get('by')}, not {actor}")
+                f"{escape_controls(path.stem)} is claimed by "
+                f"{escape_controls(held.get('by'))}, not {actor}")
         held["heartbeat_at"] = timestamp(now)
         held["lease_expires_at"] = timestamp(now + timedelta(seconds=seconds))
         write_page(page)
@@ -187,7 +194,8 @@ def release(root: Path, identifier: str, actor: str,
         path = resolve(root, identifier)
         page = load_page(path)
         if not isinstance(page.frontmatter.get("claim"), dict):
-            raise DataError(f"{path.stem} has no claim to release")
+            raise DataError(
+                f"{escape_controls(path.stem)} has no claim to release")
         release_page(root, page, actor, now)
     return path
 

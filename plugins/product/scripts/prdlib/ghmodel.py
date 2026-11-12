@@ -12,6 +12,7 @@ import re
 from .graph import CROSS_BUNDLE_PREFIX, entries_of
 from .hashing import GENERATED_BLOCK_RE, short_digest
 from .registry import DELIVERED_STATES, STATES, TYPES
+from .textsafe import escape_controls
 
 MARKER_RE = re.compile(r"<!--\s*okf:\s*(\S+)\s*-->")
 PRD_DIR = "docs/product/prd"
@@ -143,9 +144,14 @@ def reconcile(page_value, live_value, synced, unsynced: str = "push") -> str:
 
 
 def conflict_line(page_id: str, field: str, page_value, live_value) -> str:
-    """The one sentence both `plan` and `pull` give for a moved field."""
-    return (f"{page_id}: {field} is {page_value} in the bundle and "
-            f"{live_value} in GitHub. Both changed since the last sync. "
+    """The one sentence both `plan` and `pull` give for a moved field.
+
+    The page ID, the bundle value and the GitHub value come from a file name,
+    a frontmatter value and a snapshot file. Each one is escaped."""
+    return (f"{escape_controls(page_id)}: {field} is "
+            f"{escape_controls(page_value)} in the bundle and "
+            f"{escape_controls(live_value)} in GitHub. Both changed since the "
+            f"last sync. "
             f"Choose one and run the sync again.")
 
 
@@ -157,7 +163,8 @@ def page_id_of(target: str) -> str:
 def _number(refs: dict, target: str) -> int:
     page_id = page_id_of(target)
     if page_id not in refs:
-        raise Unresolved(page_id)
+        # The text of the error goes into a reason that a person reads.
+        raise Unresolved(escape_controls(page_id))
     return refs[page_id]
 
 

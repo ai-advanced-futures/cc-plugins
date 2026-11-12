@@ -56,6 +56,13 @@ from prdlib import statecmd  # noqa: E402
 from prdlib import tree  # noqa: E402
 from prdlib.graph import own_target  # noqa: E402
 from prdlib.hashing import body_hash  # noqa: E402
+from prdlib.textsafe import escape_controls  # noqa: E402
+
+
+def _shown(path: Path, root: Path) -> str:
+    """The path of a page for a line of output, below the root. A file name
+    can hold a line break or an ESC, so each control character is escaped."""
+    return escape_controls(path.relative_to(root))
 
 
 def needs_bundles(fn):
@@ -94,13 +101,14 @@ def cmd_stage(args) -> int:
 def cmd_hash(args) -> int:
     for identifier in args.ids:
         path = ids.resolve(args.root, identifier)
-        print(f"{path.stem} {body_hash(page_mod.load_page(path).body, path.stem)}")
+        print(f"{escape_controls(path.stem)} "
+              f"{body_hash(page_mod.load_page(path).body, path.stem)}")
     return 0
 
 
 @needs_bundles
 def cmd_resolve(args) -> int:
-    print(ids.resolve(args.root, args.id).relative_to(args.root))
+    print(_shown(ids.resolve(args.root, args.id), args.root))
     return 0
 
 
@@ -125,7 +133,8 @@ def cmd_new(args) -> int:
 
 @needs_bundles
 def cmd_set(args) -> int:
-    print(edit.set_fields(args.root, args.key, args.pairs, args.actor).relative_to(args.root))
+    print(_shown(edit.set_fields(args.root, args.key, args.pairs, args.actor),
+                 args.root))
     return 0
 
 
@@ -133,13 +142,14 @@ def cmd_set(args) -> int:
 def cmd_link(args) -> int:
     path = edit.link(args.root, args.key, args.field, args.target, args.actor,
                      remove=args.subcommand == "unlink")
-    print(path.relative_to(args.root))
+    print(_shown(path, args.root))
     return 0
 
 
 @needs_bundles
 def cmd_remove(args) -> int:
-    print(f"removed {edit.remove(args.root, args.key, args.actor).relative_to(args.root)}")
+    print("removed " + _shown(edit.remove(args.root, args.key, args.actor),
+                              args.root))
     return 0
 
 
@@ -158,10 +168,10 @@ def cmd_regen(args) -> int:
         regen_mod.require_readable(args.root, broken)
         found = regen_mod.differences(args.root, pages)
         for path in sorted(found):
-            print(f"STALE: {path.relative_to(args.root)}")
+            print(f"STALE: {_shown(path, args.root)}")
         return 1 if found else 0
     for path in regen_mod.write(args.root):
-        print(path.relative_to(args.root))
+        print(_shown(path, args.root))
     return 0
 
 
@@ -172,7 +182,7 @@ def cmd_drift(args) -> int:
             raise UsageError("--accept needs --actor human:<login>")
         item, target = args.accept
         path = drift_mod.accept(args.root, item, target, args.actor)
-        print(path.relative_to(args.root))
+        print(_shown(path, args.root))
         return 0
     if args.show:
         # Text for a person. It is not a verdict, so it exits 0.
@@ -184,7 +194,7 @@ def cmd_drift(args) -> int:
                          "or --accept <ITEM> <TARGET>")
     found = drift_mod.scan(args.root, args.ids)
     for path, target in found:
-        print(f"{path.stem}\t{target}")
+        print(f"{escape_controls(path.stem)}\t{escape_controls(target)}")
     if args.write:
         drift_mod.write_flags(args.root, found)
     # The exit code is the verdict, so a skill never parses this stdout.
@@ -196,27 +206,27 @@ def cmd_claim(args) -> int:
     # One line for each path, in the shape of cmd_expire: one spec covers one
     # Story or more, and the caller reads the lines it got.
     for path in claims.claim(args.root, args.id, args.actor, args.lease):
-        print(path.relative_to(args.root))
+        print(_shown(path, args.root))
     return 0
 
 
 @needs_bundles
 def cmd_heartbeat(args) -> int:
-    print(claims.heartbeat(args.root, args.id, args.actor,
-                           args.lease).relative_to(args.root))
+    print(_shown(claims.heartbeat(args.root, args.id, args.actor, args.lease),
+                 args.root))
     return 0
 
 
 @needs_bundles
 def cmd_release(args) -> int:
-    print(claims.release(args.root, args.id, args.actor).relative_to(args.root))
+    print(_shown(claims.release(args.root, args.id, args.actor), args.root))
     return 0
 
 
 @needs_bundles
 def cmd_expire(args) -> int:
     for path in claims.expire(args.root, args.actor):
-        print(path.relative_to(args.root))
+        print(_shown(path, args.root))
     return 0
 
 

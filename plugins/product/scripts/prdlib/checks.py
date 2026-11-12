@@ -15,6 +15,7 @@ from .ids import resolve
 from .page import load_page
 from .regen import collect
 from .registry import WORK_ITEMS
+from .textsafe import escape_controls
 
 NOT_CHECKED = "not-checked"
 # The codes a shell uses, so a reader of the Run page knows them.
@@ -28,7 +29,8 @@ def criteria_of(root: Path, identifier: str) -> list[Path]:
     path = resolve(root, identifier)
     page = load_page(path)
     if page.type not in WORK_ITEMS:
-        raise DataError(f"{path.stem} is a {page.type}, which has no criteria")
+        raise DataError(f"{escape_controls(path.stem)} is a "
+                        f"{escape_controls(page.type)}, which has no criteria")
     target = own_target(root, path)
     return sorted(candidate for candidate, _frontmatter
                   in _criteria_with_frontmatter(root, target))
@@ -54,7 +56,8 @@ def run_one(root: Path, argv: list) -> tuple[int, str]:
                                 capture_output=True, text=True,
                                 timeout=TIMEOUT_SECONDS)
     except OSError as error:
-        return MISSING_PROGRAM, f"{argv[0]}: {error}"
+        return MISSING_PROGRAM, (f"{escape_controls(argv[0])}: "
+                                 f"{escape_controls(error)}")
     except subprocess.TimeoutExpired:
         return TIMED_OUT, f"the check ran longer than {TIMEOUT_SECONDS} seconds"
     return result.returncode, result.stdout + result.stderr
@@ -77,7 +80,8 @@ def results_for(root: Path, identifier: str,
     path = resolve(root, identifier)
     page = load_page(path)
     if page.type not in WORK_ITEMS:
-        raise DataError(f"{path.stem} is a {page.type}, which has no criteria")
+        raise DataError(f"{escape_controls(path.stem)} is a "
+                        f"{escape_controls(page.type)}, which has no criteria")
     if commit is None:
         commit = head_commit(root)
     pairs = []

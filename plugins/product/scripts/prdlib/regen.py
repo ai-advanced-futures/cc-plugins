@@ -22,6 +22,7 @@ from .page import (Page, dump_page, normalise, safe_load,
                    split_frontmatter)
 from .registry import CLOSED_STATES, DIRECTORY_ORDER, WORK_ITEMS, spec_for_path
 from .status import END as STATUS_END, START as STATUS_START
+from .textsafe import escape_controls
 from .tree import BUNDLES, bundle_dir, iter_pages
 
 COMPUTED_STATES = ("ready", "blocked")
@@ -97,7 +98,8 @@ def require_readable(root: Path, broken: list | None = None) -> None:
     """
     broken = unreadable(root) if broken is None else broken
     if broken:
-        names = ", ".join(str(path.relative_to(root)) for path in broken)
+        names = ", ".join(escape_controls(path.relative_to(root))
+                          for path in broken)
         raise DataError(
             f"the reader cannot use the frontmatter of {names}. "
             f"Run `prd.py check` to see the details.")

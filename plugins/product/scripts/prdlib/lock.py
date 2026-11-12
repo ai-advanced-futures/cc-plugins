@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from . import UsageError, git
+from .textsafe import escape_controls
 from .tree import product_dir
 
 TIMEOUT_SECONDS = 10.0
@@ -61,7 +62,7 @@ def write_lock(root: Path, *, timeout: float = TIMEOUT_SECONDS,
                 continue
             if time.time() >= deadline:
                 raise UsageError(
-                    f"{path} is held by another prd.py process. "
+                    f"{escape_controls(path)} is held by another prd.py process. "
                     f"Wait for it to finish, then run the command again.")
             time.sleep(0.1)
     try:
@@ -92,7 +93,7 @@ def refresh(path: Path) -> None:
     """
     if not held(path):
         raise UsageError(
-            f"{path} is no longer held by this process: another prd.py "
+            f"{escape_controls(path)} is no longer held by this process: another prd.py "
             f"took it. Run the command again.")
     path.write_text(f"{os.getpid()} {time.time()}\n", encoding="utf-8")
 

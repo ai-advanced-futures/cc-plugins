@@ -13,6 +13,7 @@ from .lock import write_lock
 from .new_page import REFUSED_SET_FIELDS
 from .page import load_page, load_set_value, split_frontmatter, write_page
 from .schema import is_single_valued, plugin_actor, validate_frontmatter
+from .textsafe import escape_controls
 from .tree import BUNDLES, bundle_dir
 
 PROTECTED = ("type", "generated", "protected") + tuple(REFUSED_SET_FIELDS)
@@ -36,7 +37,7 @@ def _bundle_of(root, path) -> str:
             return bundle
         except ValueError:
             continue
-    raise DataError(f"{path} is not in a bundle")
+    raise DataError(f"{escape_controls(path)} is not in a bundle")
 
 
 def _save(root, path, page, frontmatter, actor, written=()) -> Path:
@@ -79,11 +80,15 @@ def link(root, key, field, target, actor=None, remove=False) -> Path:
         values = list(current or [])
         kept = [v for v in values if v != target and not (isinstance(v, dict) and target in v.values())]
         if remove and kept == values:
-            raise DataError(f"{key} has no {field} link to {target}")
+            raise DataError(f"{escape_controls(key)} has no "
+                            f"{escape_controls(field)} link to "
+                            f"{escape_controls(target)}")
         frontmatter[field] = kept if remove else (values if target in values else values + [target])
     elif remove:
         if current != target:
-            raise DataError(f"{key} has no {field} link to {target}")
+            raise DataError(f"{escape_controls(key)} has no "
+                            f"{escape_controls(field)} link to "
+                            f"{escape_controls(target)}")
         frontmatter.pop(field)
     else:
         frontmatter[field] = target
@@ -95,7 +100,8 @@ def remove(root, key, actor=None) -> Path:
     path = ids.resolve(root, key)
     page = load_page(path)
     if page.frontmatter.get("protected") is True:
-        raise DataError(f"{key} is protected. Only a person can remove protected: true.")
+        raise DataError(f"{escape_controls(key)} is protected. Only a person "
+                        "can remove protected: true.")
     bundle = _bundle_of(root, path)
     base = bundle_dir(root, bundle)
     manifest = base / "manifest.md"

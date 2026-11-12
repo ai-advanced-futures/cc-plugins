@@ -14,6 +14,7 @@ from .ids import resolve
 from .lock import write_lock
 from .page import load_page, split_frontmatter, write_page
 from .regen import read_tree, require_readable
+from .textsafe import escape_controls
 from .tree import bundle_dir
 
 HUMAN_PREFIX = "human:"
@@ -63,7 +64,8 @@ def _wanted_targets(root: Path, ids: list[str], pages: dict) -> set[str]:
             continue
         if prd_root not in path.parents:
             raise UsageError(
-                f"{identifier} is not a PRD page. `--ids` names the PRD pages "
+                f"{escape_controls(identifier)} is not a PRD page. `--ids` "
+                f"names the PRD pages "
                 f"that a trace points at.")
         wanted.add(CROSS_BUNDLE_PREFIX
                    + relative_target(path, prd_root))
@@ -86,7 +88,8 @@ def scan(root: Path, ids: list[str] | None = None) -> list[tuple[Path, str]]:
                 # Exit 1 is the `drifted` verdict, so a malformed entry must
                 # not reach it as a traceback. Rule E2 names the same fault.
                 raise UsageError(
-                    f"{path}: a `traces` entry is a mapping with a `to` key. "
+                    f"{escape_controls(path)}: a `traces` entry is a mapping "
+                    f"with a `to` key. "
                     f"Run `prd.py check` for rule E2.")
             target = trace.get("to", "")
             if wanted is not None and target not in wanted:
@@ -125,10 +128,12 @@ def accept(root: Path, identifier: str, target: str, actor: str) -> Path:
         match = next((t for t in traces
                       if isinstance(t, dict) and t.get("to") == target), None)
         if match is None:
-            raise DataError(f"{path.stem} has no trace to {target}")
+            raise DataError(f"{escape_controls(path.stem)} has no trace to "
+                            f"{escape_controls(target)}")
         source = target_path(root, "roadmap", target)
         if not source.is_file():
-            raise DataError(f"{target} does not exist, so it cannot be accepted")
+            raise DataError(f"{escape_controls(target)} does not exist, so it "
+                            "cannot be accepted")
         match["hash"] = body_hash(load_page(source).body, source.stem)
         page.frontmatter["drifted"] = [
             t for t in (page.frontmatter.get("drifted") or []) if t != target]
@@ -168,9 +173,11 @@ def show(root: Path, identifier: str, target: str) -> list[str]:
     trace = next((t for t in load_page(path).frontmatter.get("traces") or []
                   if isinstance(t, dict) and t.get("to") == target), None)
     if trace is None:
-        raise DataError(f"{path.stem} has no trace to {target}")
+        raise DataError(f"{escape_controls(path.stem)} has no trace to "
+                            f"{escape_controls(target)}")
     source = target_path(root, "roadmap", target)
-    lines = [f"ITEM: {path.stem}", f"TARGET: {target}"]
+    lines = [f"ITEM: {escape_controls(path.stem)}",
+             f"TARGET: {escape_controls(target)}"]
     if not source.is_file():
         return lines + ["NOTE: the target does not exist. The requirement "
                         "was deleted or moved."]
@@ -193,15 +200,17 @@ def show(root: Path, identifier: str, target: str) -> list[str]:
             "text is not known. The current text follows.", ""
         ] + _readable(current.body)
     revision, old = base
-    lines.append("BASE: " + git.output(
-        root, "log", "-1", "--format=%h %cs %s", revision))
+    lines.append("BASE: " + escape_controls(git.output(
+        root, "log", "-1", "--format=%h %cs %s", revision)))
     changes = git.output(root, "log", "--format=%h %s",
                          f"{revision}..HEAD", "--", str(source))
-    lines += [f"CHANGE: {line}" for line in (changes or "").splitlines()]
+    lines += [f"CHANGE: {escape_controls(line)}"
+              for line in (changes or "").splitlines()]
     if not git.ok(root, "diff", "--quiet", "HEAD", "--", str(source)):
         lines.append("CHANGE: not committed")
     lines.append("")
     lines += difflib.unified_diff(
         _readable(old), _readable(current.body),
-        f"{source.stem} at {revision[:7]}", f"{source.stem} now", lineterm="")
+        f"{escape_controls(source.stem)} at {revision[:7]}",
+        f"{escape_controls(source.stem)} now", lineterm="")
     return lines

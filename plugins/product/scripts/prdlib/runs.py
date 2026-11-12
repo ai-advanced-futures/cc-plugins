@@ -17,6 +17,7 @@ from .page import Page, write_page
 from .regen import write as regen_write  # [inferred]
 from .schema import validate_frontmatter
 from .statecmd import require_actor
+from .textsafe import escape_controls
 from .tree import bundle_dir
 
 PASSED = "passed"
@@ -35,6 +36,13 @@ def _body(page_id: str, title: str, item_id: str, results: list[dict]) -> str:
         lines.append(f"| {page_id_of(entry['criterion'])} | "
                      f"{NOT_CHECKED if code is None else code} |")
     return "\n".join(lines) + "\n"
+
+
+def failure_text(entry: dict, output: str) -> str:
+    """The text of one failed check: the criterion and the exit code, a line
+    break, then the output of the check."""
+    return (f"{escape_controls(page_id_of(entry['criterion']))} exited "
+            f"{entry['exit_code']}\n{output}")
 
 
 def run_checks(root: Path, identifier: str, actor: str,
@@ -60,8 +68,7 @@ def run_checks(root: Path, identifier: str, actor: str,
     commit = head_commit(root)
     pairs = results_for(root, identifier, commit)
     results = [entry for entry, _output in pairs]
-    failures = [f"{page_id_of(entry['criterion'])} exited "
-                f"{entry['exit_code']}\n{output}"
+    failures = [failure_text(entry, output)
                 for entry, output in pairs if entry.get("exit_code", 0) != 0]
     ended = started if now else datetime.now(timezone.utc)
     # A run in which no check ran tested nothing, so it did not pass. It is

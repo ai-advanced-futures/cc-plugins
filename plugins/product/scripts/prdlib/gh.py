@@ -11,6 +11,7 @@ from pathlib import Path
 from . import DataError, UsageError
 from .ids import resolve
 from .page import load_page
+from .textsafe import escape_controls
 
 PROJECT_PAGE = "PROJECT-01"
 
@@ -61,9 +62,11 @@ class Gh:
     def text(self, args) -> str:
         done = self.call(args)
         if done.returncode != 0:
+            # An argument holds a title, a body or an owner of a page, and
+            # the error text is the text of GitHub. Both are escaped.
             raise UsageError(
-                f"`gh {' '.join(args)}` failed: "
-                f"{(done.stderr or done.stdout).strip()}")
+                f"`gh {escape_controls(' '.join(args))}` failed: "
+                f"{escape_controls((done.stderr or done.stdout).strip())}")
         return done.stdout
 
     def json(self, args):
@@ -78,10 +81,11 @@ def project_field(root: Path) -> dict:
         raise UsageError(str(error))
     field = page.frontmatter.get("github") or {}
     if not field.get("owner") or not field.get("number"):
+        name = escape_controls(page.path.name)
         raise UsageError(
-            f"{page.path.name} has no GitHub Project. Add "
+            f"{name} has no GitHub Project. Add "
             f"`github: {{ owner: <login>, number: <n> }}` to "
-            f"docs/product/roadmap/projects/{page.path.name}, where <n> is the "
+            f"docs/product/roadmap/projects/{name}, where <n> is the "
             f"number in the Project URL.")
     return field
 

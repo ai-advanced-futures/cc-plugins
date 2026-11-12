@@ -12,6 +12,7 @@ from .graph import targets_of
 from .ids import resolve
 from .page import load_page
 from .registry import DELIVERED_STATES, TYPES, WORK_ITEMS
+from .textsafe import escape_controls
 from .tree import bundle_dir
 
 CAPABILITY_DIR = TYPES["Capability"].directory
@@ -67,11 +68,12 @@ def rows(root: Path, identifiers: list[str]) -> list[str]:
         paths = [resolve(root, i) for i in identifiers]
         for path, identifier in zip(paths, identifiers):
             if path.parent.name != CAPABILITY_DIR:
-                raise DataError(f"{identifier} is not a capability")
+                raise DataError(f"{escape_controls(identifier)} is not a capability")
     else:
         directory = bundle_dir(root, "prd") / CAPABILITY_DIR
         paths = [p for p in sorted(directory.glob("*.md"))
                  if p.name not in ("index.md", "closed.md")]
     done = mature(root)
-    return [f"{p.stem}\tmature\t{done[p.stem]}" if p.stem in done
-            else f"{p.stem}\tearly\t-" for p in paths]
+    return [f"{escape_controls(p.stem)}\tmature\t"
+            f"{escape_controls(done[p.stem])}" if p.stem in done
+            else f"{escape_controls(p.stem)}\tearly\t-" for p in paths]

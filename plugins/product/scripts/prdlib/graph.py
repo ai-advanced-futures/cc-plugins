@@ -10,6 +10,7 @@ from pathlib import Path
 
 from . import DataError
 from .registry import PRD_TYPES, TYPES, WORK_ITEMS
+from .textsafe import escape_controls
 from .tree import bundle_dir
 
 CROSS_BUNDLE_PREFIX = "prd:"
@@ -89,12 +90,12 @@ def check_targets(root: Path, bundle: str, frontmatter: dict,
         for target in targets_of(frontmatter, field):
             resolved = target_path(root, bundle, target)
             if not resolved.is_file():
-                raise DataError(
-                    f"`{field}` names {target}, which does not exist")
+                raise DataError(f"`{field}` names {escape_controls(target)}, "
+                                "which does not exist")
             target_type = load_page(resolved).type
             if target_type not in permitted:
-                raise DataError(
-                    f"`{field}` does not accept a {target_type} target")
+                raise DataError(f"`{field}` does not accept a "
+                                f"{escape_controls(target_type)} target")
 
 
 # The pattern of RoadmapPath in schema/product.yaml, for `fullmatch`. Never
@@ -144,7 +145,7 @@ def own_target(root: Path, path: Path) -> str:
     try:
         return relative_target(path, bundle_dir(root, "roadmap"))
     except ValueError:
-        raise DataError(f"{path.stem} is not a roadmap page")
+        raise DataError(f"{escape_controls(path.stem)} is not a roadmap page")
 
 
 def level_of(type_name: str) -> int | None:

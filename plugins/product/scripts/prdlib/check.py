@@ -19,6 +19,7 @@ from .graph import CYCLE_FIELDS, FIELD_TARGETS, find_cycle, level_of, \
 from .page import load_page, normalise, safe_load, split_frontmatter
 from .registry import BY_DIRECTORY, CLOSED_STATES, DELIVERED_STATES, TYPES
 from .schema import validate_frontmatter
+from .textsafe import escape_controls
 from .times import parse_time
 from .tree import BUNDLES, bundle_dir, iter_pages
 
@@ -41,7 +42,14 @@ class Issue:
     message: str
 
     def text(self) -> str:
-        return f"{self.level}: {self.file}:{self.line} [{self.rule}] {self.message}"
+        # The one place that escapes a finding: `file` and `message` hold a
+        # page name, a frontmatter value or a git text, and a site that builds
+        # a message puts the raw value in. A site must not escape it too: the
+        # escape here would hide a missing site escape from every test, and
+        # a new rule gets this one for free. `report` escapes the SKIP line
+        # the same way, because that line does not come through here.
+        return (f"{self.level}: {escape_controls(self.file)}:{self.line} "
+                f"[{self.rule}] {escape_controls(self.message)}")
 
 
 def _relative(root: Path, path: Path) -> str:
@@ -364,7 +372,8 @@ def report(issues: list[Issue], strict: bool, fmt: str) -> int:
             if issue.level == SKIP:
                 # A skipped rule changes no count and no exit code. The line
                 # says the rule did not run.
-                print(f"SKIP: {issue.rule} ({issue.message})")
+                print(f"SKIP: {escape_controls(issue.rule)} "
+                      f"({escape_controls(issue.message)})")
             else:
                 print(issue.text())
         # The last line is the summary (brain standard section 9).

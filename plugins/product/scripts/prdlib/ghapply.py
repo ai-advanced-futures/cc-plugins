@@ -15,6 +15,7 @@ from .ids import resolve
 from .lock import held, refresh as refresh_lock, write_lock
 from .logbook import append_entries, entry_line
 from .page import load_page, write_page
+from .textsafe import escape_controls
 from .tree import bundle_dir
 
 CREATE_ISSUE = """
@@ -224,7 +225,8 @@ def _run(root, snapshot, change, client, run) -> str:
         # Each value is in GitHub now, so the hash and the synced pair name
         # values that GitHub holds.
         _write_back(root, change, snapshot, run, synced=synced)
-        return f"created #{issue['number']} for {page}"
+        return (f"created #{escape_controls(issue['number'])} for "
+                f"{escape_controls(page)}")
     if change.action == "update_issue":
         _update_issue(snapshot, change, client, run.numbers)
         live = run.issues.get(page) or {}
@@ -235,27 +237,29 @@ def _run(root, snapshot, change, client, run) -> str:
         # direction values, which `set_status` and `set_assignee` send, so
         # the update leaves it alone.
         _write_back(root, change, snapshot, run)
-        return f"updated #{detail['number']} for {page}"
+        return (f"updated #{escape_controls(detail['number'])} for "
+                f"{escape_controls(page)}")
     if change.action == "add_to_project":
         run.item_ids[page] = _add_to_project(snapshot, client,
                                              detail["node_id"], page)
-        return f"put #{detail['number']} on the Project for {page}"
+        return (f"put #{escape_controls(detail['number'])} on the Project "
+                f"for {escape_controls(page)}")
     if change.action == "set_status":
         client.text(_status_argv(
             snapshot, detail.get("item_id") or run.item_ids.get(page), page,
             detail["option"]))
         _store_synced(root, page, "state", detail["state"], run)
-        return f"set_status {page}"
+        return f"set_status {escape_controls(page)}"
     if change.action == "set_assignee":
         client.text(_argv(snapshot, change))
         _store_synced(root, page, "owner", detail["owner"], run)
-        return f"set_assignee {page}"
+        return f"set_assignee {escape_controls(page)}"
     if change.action == "create_milestone":
         found = client.json(
             ["api", f"repos/{snapshot['repo']['full']}/milestones",
              *_milestone_args(detail)])
         run.numbers[page] = found["number"]
-        return f"made the milestone {detail['title']}"
+        return f"made the milestone {escape_controls(detail['title'])}"
     if change.action == "reread_fields":
         # The probe has not answered whether an option ID survives a change of
         # the option set (D37). Read the field list again and take the new IDs.
@@ -263,7 +267,7 @@ def _run(root, snapshot, change, client, run) -> str:
                                                                snapshot)
         return "read the Project fields again"
     client.text(_argv(snapshot, change))
-    return f"{change.action} {page or ''}".strip()
+    return f"{change.action} {escape_controls(page) if page else ''}".strip()
 
 
 def _add_to_project(snapshot, client, node_id, page) -> str:
@@ -284,7 +288,8 @@ def _add_to_project(snapshot, client, node_id, page) -> str:
     card = _card_on_board(snapshot, client, node_id)
     if not card:
         raise UsageError(
-            f"addProjectV2ItemById says {page} is on the Project, but its "
+            f"addProjectV2ItemById says {escape_controls(page)} is on the "
+            f"Project, but its "
             f"card was not found. Each change before it is on its page. "
             f"Correct the cause and run `github plan` again.")
     return card
@@ -320,10 +325,11 @@ def _mutation(result, name, key, page=None):
     message, and not later on a KeyError that names no page."""
     found = (((result or {}).get("data") or {}).get(name) or {}).get(key)
     if not found:
-        errors = "; ".join(error.get("message", "")
+        errors = "; ".join(escape_controls(error.get("message", ""))
                            for error in (result or {}).get("errors") or [])
+        shown = escape_controls(page) if page else ""
         raise UsageError(
-            f"{name} gave no {key}{f' for {page}' if page else ''}: "
+            f"{name} gave no {key}{f' for {shown}' if page else ''}: "
             f"{errors or 'the reply was empty'}. Each change before it is "
             f"on its page. Correct the cause and run `github plan` again.")
     return found
@@ -436,7 +442,8 @@ def _set_dates(snapshot, client, item_id, page, detail, live):
             continue
         if not item_id:
             raise UsageError(
-                f"{page} has no card on the Project, so its {name} date "
+                f"{escape_controls(page)} has no card on the Project, so "
+                f"its {name} date "
                 f"cannot be set. Run `github plan` again.")
         args = ["-f", f"project={project['node_id']}", "-f", f"item={item_id}",
                 "-f", f"field={_field(project, name)['id']}"]
@@ -502,7 +509,8 @@ def _status_argv(snapshot, item_id, page, option_name) -> list:
             f"after this plan was built.")
     if not item_id:
         raise UsageError(
-            f"{page} has no card on the Project, so its Status cannot be set. "
+            f"{escape_controls(page)} has no card on the Project, so its "
+            f"Status cannot be set. "
             f"Run `github plan` again.")
     return ["api", "graphql", "-f", f"query={SET_STATUS}",
             "-f", f"project={project['node_id']}",

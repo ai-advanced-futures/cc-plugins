@@ -15,6 +15,7 @@ import yaml
 from . import DataError
 from .page import load_page, split_frontmatter
 from .registry import ID_RE, TYPES
+from .textsafe import escape_controls
 from .tree import BUNDLES, bundle_dir, iter_pages
 
 MIN_DIGITS = 2
@@ -74,7 +75,8 @@ def resolve(root: Path, identifier: str, tree: dict | None = None) -> Path:
         for path, (_bundle, frontmatter, _body) in tree.items():
             if identifier in (frontmatter.get("aliases") or []):
                 return path
-        raise DataError(f"no page has the ID or the alias {identifier}")
+        raise DataError(
+            f"no page has the ID or the alias {escape_controls(identifier)}")
 
     candidates = []
     for bundle in BUNDLES:
@@ -91,4 +93,5 @@ def resolve(root: Path, identifier: str, tree: dict | None = None) -> Path:
             continue
         if identifier in aliases:
             return path
-    raise DataError(f"no page has the ID or the alias {identifier}")
+    raise DataError(
+            f"no page has the ID or the alias {escape_controls(identifier)}")

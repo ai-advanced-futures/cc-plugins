@@ -10,6 +10,7 @@ from pathlib import Path
 
 from . import UsageError
 from .ghmodel import marker_target, page_id_of
+from .textsafe import escape_controls
 
 # The API rejects a query that declares a variable it does not use, with
 # `variableNotUsed`. The Project number is not part of this query, so it is
@@ -298,7 +299,8 @@ def _issue(node: dict, cards: dict | None = None) -> dict:
     blockers = node.get("blockedBy") or {}
     if blockers.get("totalCount", 0) >= BLOCKERS_PAGE:
         raise UsageError(
-            f"issue #{node['number']} has {blockers['totalCount']} blockers, "
+            f"issue #{escape_controls(node['number'])} has "
+            f"{blockers['totalCount']} blockers, "
             f"and one read takes {BLOCKERS_PAGE}. The plan would remove the "
             f"blockers it did not read. Add paging to ghsnapshot.fetch "
             f"before you sync this repository.")
