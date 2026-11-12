@@ -10,6 +10,7 @@ from pathlib import Path
 from . import UsageError
 from .logbook import init_log
 from .page import Page, write_page
+from .schema import single_line_problems
 from .tree import (BUNDLES, PRODUCT_DIR, V3_PRD, V3_ROADMAP, bundle_dir,
                    product_dir)
 
@@ -40,6 +41,15 @@ def init(root: Path, title: str | None = None,
     title = title or root.name
     description = description or f"The product of the {root.name} repository."
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    # The rule of the single-line fields (issue 1915), before the first write:
+    # `init` writes the page with no `new`, and a line break in the title or
+    # the description would start a line of its own in the generated index.
+    # The Project page holds the same title in its own title and description.
+    problems = single_line_problems({"title": title,
+                                     "description": description})
+    if problems:
+        raise UsageError(f"init writes nothing: {'; '.join(problems)}")
 
     written = []
     _root_index(bundle_dir(root, "prd") / "index.md")

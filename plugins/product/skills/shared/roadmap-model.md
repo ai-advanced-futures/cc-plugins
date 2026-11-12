@@ -51,7 +51,8 @@ the heading for its date, and the script adds the heading if it does not exist.
 The log is append only. `prd.py init` writes only `# Log`.
 
 An actor string is `human:<login>`, `agent:<id>`, or `process:<id>`. Only the
-scripts use `process:` actors, and `prd.py state` refuses them.
+scripts use `process:` actors, and each `--actor` option of `prd.py` refuses
+them. `--actor` must match the whole text, so a line break is refused.
 
 ## Relationships
 

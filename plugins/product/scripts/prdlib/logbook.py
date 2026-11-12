@@ -7,6 +7,8 @@ the top of the heading for its date.
 from datetime import datetime
 from pathlib import Path
 
+from .textsafe import escape_controls
+
 HEADER = "# Log"
 
 
@@ -49,6 +51,11 @@ def append_entries(path: Path, new_lines: list, when: datetime) -> None:
     file once for each of them."""
     if not new_lines:
         return
+    # The one writer of log.md, so the one place that keeps a line of it one
+    # line (issue 1915): a value of a file name, a snapshot or a caller that
+    # holds a line break would otherwise start a line of its own. The callers
+    # that read a value from a person refuse it first, with a clean message.
+    new_lines = [escape_controls(line) for line in new_lines]
     heading = f"## {when.strftime('%Y-%m-%d')}"
     text = path.read_text(encoding="utf-8") if path.exists() else HEADER + "\n"
     lines = text.splitlines()

@@ -18,7 +18,7 @@ from .graph import CYCLE_FIELDS, FIELD_TARGETS, find_cycle, level_of, \
     milestone_difference, relative_target, target_path, targets_of
 from .page import load_page, normalise, safe_load, split_frontmatter
 from .registry import BY_DIRECTORY, CLOSED_STATES, DELIVERED_STATES, TYPES
-from .schema import validate_frontmatter
+from .schema import path_problems, validate_frontmatter
 from .textsafe import escape_controls
 from .times import parse_time
 from .tree import BUNDLES, bundle_dir, iter_pages
@@ -84,7 +84,8 @@ def check_page(root: Path, bundle: str, path: Path):
                       "the frontmatter has no `type`")], None, text
 
     issues = [Issue(rel, 1, ERROR, "E2", message)
-              for message in validate_frontmatter(type_name, frontmatter)]
+              for message in path_problems(rel)
+              + validate_frontmatter(type_name, frontmatter)]
 
     spec = TYPES.get(type_name)
     directory = path.parent.name

@@ -17,7 +17,7 @@ from .new_page import create
 from .page import load_page, write_page
 from .regen import collect
 from .statecmd import change as change_state, stored_state
-from .textsafe import escape_controls
+from .textsafe import escape_controls, fold_single_line
 from .tree import bundle_dir
 
 PULLED = " (pulled from GitHub)"
@@ -305,8 +305,12 @@ def _adopt(root, snapshot, report, adopt, stored):
                 f"Run `github pull --adopt` to make a {type_name} page in "
                 f"backlog.")
             continue
-        path = create(root, type_name, issue.get("title", ""),
-                      (issue.get("body") or "").strip().split("\n")[0][:200],
+        # GitHub text is not ours to refuse: a body from the web UI ends each
+        # line with CR LF, and a title can hold a tab. Fold both to one line.
+        path = create(root, type_name,
+                      fold_single_line(issue.get("title", "")),
+                      fold_single_line(
+                          (issue.get("body") or "").strip().split("\n")[0])[:200],
                       status="draft", body=issue.get("body") or "")
         page = load_page(path)
         page.frontmatter["github"] = {

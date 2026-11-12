@@ -7,14 +7,14 @@ HEADER = "source\trelation\ttarget\n"
 GRAPH_RE = re.compile(r"^[a-z][a-z0-9-]*:/[^/\s]\S*$")
 
 
-def _links(value) -> list[str]:
+def links_in(value) -> list[str]:
     if isinstance(value, str):
         v = value.strip()
         return [v] if (v.startswith("/") and ".md" in v) or GRAPH_RE.match(v) else []
     if isinstance(value, list):
-        return [x for item in value for x in _links(item)]
+        return [x for item in value for x in links_in(item)]
     if isinstance(value, dict):
-        return [x for item in value.values() for x in _links(item)]
+        return [x for item in value.values() for x in links_in(item)]
     return []
 
 
@@ -26,5 +26,5 @@ def text(bundle, base, for_links) -> str:
         for key, value in frontmatter.items():
             if key in ("generated", "verified"):
                 continue
-            rows |= {("/" + path.relative_to(base).as_posix(), key, link) for link in _links(value)}
+            rows |= {("/" + path.relative_to(base).as_posix(), key, link) for link in links_in(value)}
     return HEADER + "".join(f"{s}\t{r}\t{t}\n" for s, r, t in sorted(rows))

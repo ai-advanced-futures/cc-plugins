@@ -13,7 +13,7 @@ from .lock import write_lock
 from .new_page import REFUSED_SET_FIELDS
 from .page import load_page, load_set_value, split_frontmatter, write_page
 from .schema import is_single_valued, plugin_actor, validate_frontmatter
-from .textsafe import escape_controls
+from .textsafe import escape_controls, first_bad_character
 from .tree import BUNDLES, bundle_dir
 
 PROTECTED = ("type", "generated", "protected") + tuple(REFUSED_SET_FIELDS)
@@ -128,7 +128,16 @@ def remove(root, key, actor=None) -> Path:
 
 
 def log(root, operation, text, bundle="prd", actor=None) -> None:
+    # One line in log.md (issue 1915). The text folds its whitespace into
+    # single spaces, as it always did, so a line break there is safe. What is
+    # left after the fold must hold no control character: an ESC moves a
+    # terminal cursor. The actor is checked once in `prd.py` `main`.
+    text = " ".join(text.split())
+    bad = first_bad_character(text)
+    if bad:
+        raise UsageError(f"the text of log must be one line, it holds the "
+                         f"character {bad}")
     when = datetime.now(timezone.utc)
-    line = f"* **{operation}**: {' '.join(text.split())}, by {actor or plugin_actor()}, at {logbook.timestamp(when)}"
+    line = f"* **{operation}**: {text}, by {actor or plugin_actor()}, at {logbook.timestamp(when)}"
     with write_lock(root):
         logbook.append_entries(bundle_dir(root, bundle) / "log.md", [line], when)

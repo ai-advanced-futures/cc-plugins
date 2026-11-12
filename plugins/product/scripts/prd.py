@@ -166,6 +166,7 @@ def cmd_regen(args) -> int:
         # differences wants the readable ones, and read_tree gives both.
         pages, broken = regen_mod.read_tree(args.root)
         regen_mod.require_readable(args.root, broken)
+        regen_mod.require_single_line(args.root, pages)
         found = regen_mod.differences(args.root, pages)
         for path in sorted(found):
             print(f"STALE: {_shown(path, args.root)}")
@@ -531,6 +532,13 @@ def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
     args.root = args.root.resolve()
     try:
+        # The `--actor` of each command that takes one is checked here, one
+        # time (issue 1915). `require_actor` matches the whole text, so
+        # "human:a" and a line break is refused, and no actor can start a line
+        # of log.md or break `generated.by`. A library caller that has no
+        # `main` keeps its own `require_actor` call.
+        if getattr(args, "actor", None) is not None:
+            statecmd.require_actor(args.actor)
         return args.run(args)
     except UsageError as error:
         print(f"ERROR: {error}", file=sys.stderr)

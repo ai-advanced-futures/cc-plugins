@@ -1,5 +1,23 @@
 # Changelog
 
+## 6.8.2
+
+### Fixed
+- `prd.py check` now fails with rule E2 for a `title`, `description`, `aliases` entry or `owner` that holds a line break or another control character. `prd.py new`, `set` and `link` refuse to write such a value. `generated.by` and `generated.at` follow the same rule. The body of a page keeps its line breaks.
+- Before, a title with a line break passed `check`. `regen` then wrote its second line as a line of its own into the generated `index.md` and into the LINKS and STATUS blocks. A CR or NEL character also made `regen` unstable.
+- The characters are each C0 control (LF, CR, VT, FF, ESC, tab), DEL, each C1 control (NEL, CSI), U+2028 and U+2029. The message names the first one as `U+XXXX`. To repair a page that now fails, replace the character with a space.
+- `prd.py init` refuses a `--title` or `--description` with such a character. It writes nothing.
+- `prd.py regen` and `regen --check` refuse a page that holds such a character in a value that `regen` copies into a generated file. They exit 1, print one line for each page with its path and the field, and write no generated file. Before, `regen` wrote the second line of a hand-edited title into the generated files, and no workflow runs `check`. The rule is the same function as E2, and it now holds each such value: `title`, `description`, `owner`, `state`, `blocked_by`, the `priority` of an `includes` or `traces` entry, `generated.by`, `generated.at`, each link of each field and the name of the field (these two go to `links.tsv`). The message says that the generated files are not updated and that a page change made before this step is kept: `set`, `link`, `unlink`, `remove`, `run-checks`, `init`, `upgrade` and `migrate --finish` write their own change first, then stop at this step on a hand-edited bad page. To repair, edit the field and run `prd.py regen`.
+- A page whose file name, or the name of a folder above it, holds a line break or another control character is now refused. This is a visible change. `prd.py check` reports it as E2 ("the file name"), and `regen`, `regen --check`, `set`, `link`, `upgrade` and the other commands that call `regen` stop at the regen step. Before, `regen` copied the file name into each index, each STATUS row, each LINKS block and `links.tsv`, so a file named `FEATURE-02<LF>* [FORGED](x.md) - f.md` wrote a forged line into them, and `check` reported 0 errors. To repair, rename the file. The path in each message is still written with escapes. 5 tests of 6.8.1 (issue 1906) built such a file name and expected these commands to succeed; they now expect the refusal, with the path still escaped.
+- `github pull --adopt` folds the title and the first line of an issue body into one line. Each such character becomes a space. A body with CR LF line ends no longer stops the adopt.
+- `prd.py` now checks the `--actor` of each command that takes one: `set`, `link`, `unlink`, `remove`, `log`, `drift`, `state`, `claim`, `heartbeat`, `release`, `expire` and `run-checks`. It must be `human:<login>` or `agent:<id>` for the whole text. Before, `set`, `link`, `unlink`, `remove`, `log` and `drift --accept` took any text, and a line break in the actor wrote a second line into `log.md`. The pattern of the schema ends in `$`, which matches before a final line break. The new check does not.
+- The change has three visible results. `process:<id>` is no longer an accepted `--actor` for those 6 commands. `drift --accept` with a `process:` actor or a malformed actor exits 2, not 1. An `agent:` actor still exits 1. An empty `--actor` exits 2.
+- `prd.py log` still folds each run of whitespace in its text into one space, so a line break in the text never made a second line. It now also refuses a control character that the fold leaves, such as ESC.
+- `log.md` has one writer, `logbook.append_entries`. It now writes each control character that is still in a line as an escape. A value from a file name or a snapshot cannot start a line of its own.
+- `escape_controls` (6.8.1) now also writes U+2028 as `\u2028` and U+2029 as `\u2029`.
+
+Fixes #1915 and #1928.
+
 ## 6.8.1
 
 ### Fixed

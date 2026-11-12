@@ -21,6 +21,7 @@ from .logbook import append_entries, state_line
 from .page import (Page, dump_page, normalise, safe_load,
                    split_frontmatter)
 from .registry import CLOSED_STATES, DIRECTORY_ORDER, WORK_ITEMS, spec_for_path
+from .schema import path_problems, single_line_problems
 from .status import END as STATUS_END, START as STATUS_START
 from .textsafe import escape_controls
 from .tree import BUNDLES, bundle_dir, iter_pages
@@ -103,6 +104,31 @@ def require_readable(root: Path, broken: list | None = None) -> None:
         raise DataError(
             f"the reader cannot use the frontmatter of {names}. "
             f"Run `prd.py check` to see the details.")
+
+
+def require_single_line(root: Path, pages: dict) -> None:
+    """Raise a DataError for each page that holds a line break or another
+    control character in a single-line field (issue 1915).
+
+    `check` reports the same pages as E2, but no workflow runs `check` on
+    `docs/product`, so a hand-edited title would reach a generated file when
+    `regen` runs. regen reads the same rule as E2 (`single_line_problems`), and
+    stops before it writes any file. One line for each page: its path and the
+    field of each finding. The text holds no raw value, only the field name
+    and the code point."""
+    lines = []
+    for path in sorted(pages):
+        problems = (path_problems(path.relative_to(root))
+                    + single_line_problems(pages[path][1]))
+        if problems:
+            lines.append(f"{escape_controls(path.relative_to(root))}: "
+                         f"{'; '.join(problems)}")
+    if lines:
+        raise DataError(
+            "the generated files are not updated: a single-line field holds "
+            "a line break or another control character. A page change made "
+            "before this step is kept. Edit the field, then run "
+            "`prd.py regen`.\n" + "\n".join(lines))
 
 
 def computed_state(frontmatter: dict, bundle_root: Path, pages: dict) -> str | None:
@@ -272,6 +298,7 @@ def differences(root: Path, pages: dict | None = None) -> dict[Path, str]:
 def write(root: Path) -> list[Path]:
     pages, broken = read_tree(root)
     require_readable(root, broken)
+    require_single_line(root, pages)
     # regen rewrites pages and appends to log.md, so it takes the same lock as
     # new, state and drift --write. Without it a regen and a state run
     # interleave their writes to one page and to one log.
