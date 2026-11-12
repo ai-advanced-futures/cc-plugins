@@ -35,7 +35,7 @@ def state_line(page_id: str, link: str, old: str, new: str,
 
 def entry_line(kind: str, page_id: str, link: str, text: str,
                actor: str, when: datetime) -> str:
-    """A Save, Migrate, Plan, Sync, Claim, or Run entry, with the same
+    """A Migrate, Sync, Claim, Run, Forget, Set, Link or Unlink entry, with the same
     shape as the State line."""
     return (f"* **{kind}**: [{page_id}]({link}) "
             f"{text}, by {actor}, at {timestamp(when)}")

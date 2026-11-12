@@ -9,7 +9,7 @@ This document gives the format of the two OKF bundles. Every product skill obeys
 | Path | Type |
 |---|---|
 | `prd/index.md` | the bundle index. It holds `okf_version` |
-| `prd/log.md` | the log. Save and Migrate entries |
+| `prd/log.md` | the log. Learn, Report, Upgrade, Migrate and Forget entries, and a Set, Link or Unlink entry for each change by an agent |
 | `prd/product.md` | Product |
 | `prd/problems/` | Problem |
 | `prd/personas/` | Persona |
@@ -26,7 +26,7 @@ This document gives the format of the two OKF bundles. Every product skill obeys
 | `prd/decisions/` | Decision |
 | `prd/questions/` | Question |
 | `roadmap/index.md` | the bundle index. It holds `okf_version` |
-| `roadmap/log.md` | the log. Plan, Sync, State, Claim, and Run entries |
+| `roadmap/log.md` | the log. State, Sync, Claim, Run, Learn, Report, Upgrade, Migrate and Forget entries, and a Set, Link or Unlink entry for each change by an agent |
 | `roadmap/projects/` | Project. The bundle has exactly one Project page |
 | `roadmap/milestones/` | Milestone |
 | `roadmap/epics/` | Epic |
@@ -57,7 +57,9 @@ Rules for each page:
    and `generated`. The type fields follow. The relationships come last. The script writes the
    keys in the order that the schema gives. The frontmatter has no comments.
 2. `generated` is the OKF provenance field. It is a mapping `{ by: <string>, at: <UTC timestamp> }`.
-   The save code writes `generated` on each page.
+   The save code writes `generated` on each page. When a person gives `--actor human:<login>` to
+   `set`, `link` or `unlink`, `by` is `human:<login>`. When an agent gives `--actor agent:<id>`, `by`
+   is `prd/<version>`, and the command adds 1 line to `log.md` that names the agent (D-024).
 3. `status` is the page lifecycle: `draft`, `stable`, or `deprecated`. The work status of a roadmap
    item is `state`.
 4. The body starts with `# <ID>: <title>`. The page text follows. `product.md` and `closed.md` have

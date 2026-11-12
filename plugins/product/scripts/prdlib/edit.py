@@ -26,10 +26,6 @@ def parse_pair(item):
     return key.strip(), (load_set_value(value) if value.strip() else "")
 
 
-def _now() -> str:
-    return logbook.timestamp(datetime.now(timezone.utc))
-
-
 def _bundle_of(root, path) -> str:
     for bundle in BUNDLES:
         try:
@@ -40,17 +36,31 @@ def _bundle_of(root, path) -> str:
     raise DataError(f"{escape_controls(path)} is not in a bundle")
 
 
-def _save(root, path, page, frontmatter, actor, written=()) -> Path:
-    frontmatter["generated"] = {"by": actor or plugin_actor(), "at": _now()}
+def _save(root, path, page, frontmatter, actor, entry, written=()) -> Path:
+    # D-024: `generated.by` names the plugin whose code writes the page. The
+    # OKF actor of the stamp has no agent form, so an agent goes into 1 line
+    # of log.md (STORY-24). A person keeps the stamp, and writes no line.
+    agent = actor if actor and actor.startswith("agent:") else None
+    when = datetime.now(timezone.utc)
+    frontmatter["generated"] = {
+        "by": plugin_actor() if agent else (actor or plugin_actor()),
+        "at": logbook.timestamp(when)}
     problems = validate_frontmatter(page.type, frontmatter)
     if problems:
         raise DataError("the page is not valid, so nothing is written: " + "; ".join(problems))
+    bundle = _bundle_of(root, path)
     # Only the fields that this call writes (row 8 of the spec of FEATURE-31),
     # after the schema check, so a wrong form gets the text of the schema.
-    check_targets(root, _bundle_of(root, path), frontmatter, written)
+    check_targets(root, bundle, frontmatter, written)
     page.frontmatter = frontmatter
     with write_lock(root):
         write_page(page)
+        if agent:
+            base = bundle_dir(root, bundle)
+            kind, text = entry
+            logbook.append_entries(base / "log.md", [logbook.entry_line(
+                kind, path.stem, path.relative_to(base).as_posix(), text,
+                agent, when)], when)
     regen.write(root)
     return path
 
@@ -66,7 +76,8 @@ def set_fields(root, key, pairs, actor=None) -> Path:
             raise UsageError(f"set does not change {name}: use prd.py state, prd.py drift, or ask a person")
         frontmatter[name] = value
         written.append(name)
-    return _save(root, path, page, frontmatter, actor, written)
+    return _save(root, path, page, frontmatter, actor,
+                 ("Set", ", ".join(dict.fromkeys(written))), written)
 
 
 def link(root, key, field, target, actor=None, remove=False) -> Path:
@@ -93,6 +104,7 @@ def link(root, key, field, target, actor=None, remove=False) -> Path:
     else:
         frontmatter[field] = target
     return _save(root, path, page, frontmatter, actor,
+                 ("Unlink" if remove else "Link", f"{field} {target}"),
                  () if remove else (field,))
 
 

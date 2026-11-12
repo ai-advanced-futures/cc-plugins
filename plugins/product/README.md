@@ -94,6 +94,8 @@ If `uv` is not available, run `python3` with the same path.
 | `run-checks` | Runs the declared checks of one item and writes one Run page. |
 | `github` | The GitHub round trip: `github plan`, `github apply`, and `github pull`. See "Connect a GitHub Project". |
 
+`set`, `link` and `unlink` take `--actor`. With `--actor human:<login>`, `generated.by` of the page names the person. With `--actor agent:<id>`, `generated.by` is `prd/<version>`, and the command adds 1 line to `log.md` of the bundle that names the agent, for example `* **Set**: [STORY-12](stories/STORY-12.md) size, parent, by agent:<id>, at <time>`. With no `--actor`, `generated.by` is `prd/<version>`, and no line is written. `remove` names its actor in its `Forget` line.
+
 **The exit code is the verdict.** A skill gets the verdict from the exit code,
 not from the output:
 
@@ -177,7 +179,7 @@ Writes the findings into the PRD bundle:
 
 - One page for each finding, through `prd.py new`. The script gives the ID.
 - The relationships, stored one time on the page of the later lens.
-- The summary in `prd/product.md`, and one Save line in `prd/log.md`.
+- The summary in `prd/product.md`, and one Learn line in `prd/log.md`.
 - The drift check for each requirement the session changed.
 
 ### `/product:simulate [capability | --all] [--decide autonomously|interactively]`

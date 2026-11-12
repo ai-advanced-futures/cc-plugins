@@ -33,7 +33,7 @@ Project.
 | AcceptanceCriterion | Page in `criteria/`, prefix CRITERION | The criterion text, `item`, and an optional `check` (an argv list) with `check_declared_by` |
 | Run | Page in `runs/`, prefix RUN | One agent execution: `agent`, `started_at`, `ended_at`, `outcome`, `spec`, `pull_request`, `commit`, and `results[]` (`criterion`, `exit_code`, `commit`) |
 | Claim | A field group on the work item | `claim: { by, at, lease_expires_at, heartbeat_at }` |
-| Event | One line in `roadmap/log.md` | A state change, a claim, a plan, a sync, or a run |
+| Event | One line in `roadmap/log.md` | A state change, a claim, a sync, a run, a learn, a report, an upgrade, a migration, a removal (`remove`), or a change of a page by an agent (`set`, `link`, `unlink`) |
 
 The script writes a Run page one time. After that the page is read-only.
 

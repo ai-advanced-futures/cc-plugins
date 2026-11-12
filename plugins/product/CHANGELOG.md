@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.8.4
+
+### Fixed
+- `prd.py set`, `link` and `unlink` with `--actor agent:<id>` now write the page. Before, they exited 1, because the OKF stamp `generated.by` has no `agent:` form. Now `generated.by` is `prd/<version>`, and each such command adds 1 line to `log.md` that names the agent (`Set`, `Link` or `Unlink`). A person actor and no actor write the same stamp as before, and no line (STORY-24, D-024). Fixes #295.
+
 ## 6.8.3
 
 ### Fixed
