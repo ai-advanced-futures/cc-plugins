@@ -1,6 +1,6 @@
 ---
 name: bg-watch
-description: Watch the background Claude Code sessions on this machine. Find a session that stopped on an API error, restart it, and send it `retry`. jag decides which sessions are stuck, and each jag decision goes into a log. Use "start" to run the check on a schedule, "check" to run it one time, and "stop" to cancel the schedule.
+description: Watch the background Claude Code sessions on this machine. Find a live session whose turn ended on an API error, restart it with `claude respawn`, and send it `retry`. jag decides which sessions are stuck, and each jag decision goes into a log. Use "start" to run the check on a schedule, "check" to run it one time, and "stop" to cancel the schedule.
 when_to_use: The user asks to watch, monitor, or babysit background sessions, to rescue sessions stuck on an API error, or to retry failed bg sessions on a schedule.
 argument-hint: "[start [interval] | check | stop]"
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/run.py)
@@ -35,16 +35,19 @@ Do the mode in `$ARGUMENTS`. If `$ARGUMENTS` is empty, do `start` with the defau
    - It reads each session log with `claude logs`.
    - It sets its own `stuck` flag when an `API Error` line is the last real event in the log. Any API error counts. The footer of a screen redraw (the input box, the status line, and the lines under it) is not a real event.
    - It asks `jag --ask` which sessions are stuck. jag decides from the facts of each session (the count of real lines after the last error and the first one). The input holds no `stuck` value. jag marks each session line of a block, so the script restarts a session that jag marked only when the session has 0 real lines after its last error. The flag is only a second opinion. If `--ask` cannot run, the script uses a free `jag -F "real_lines_after_last_error=0 |"` search. If jag is not installed, it uses the flag.
-   - For each stuck session that is not `busy`, it runs `claude stop <id>` and then `claude respawn <id>`.
+   - For each stuck session with the status `idle`, it runs `claude respawn <id>`, with no `claude stop` before it. `claude respawn` starts a new process for the same session id, and the session keeps its conversation. It sends no prompt, so step 2 sends `retry`.
+   - It does not restart a stuck session with the status `busy`, a stopped session, or a session with another status. A stopped session is each session with no live process (no status), whatever its state. The table shows each one as `skipped`, with its status (`stopped` for no status).
    - It keeps the failure counts in `~/.claude/bg-watch/failure-history.json`.
    - It adds one line to `~/.claude/bg-watch/jag-log.jsonl`: the jag command, the exit code, the time, the jag output, and the sessions where jag and the flag do not agree. The jag input of each check stays in `~/.claude/bg-watch/jag-input/`.
    - It prints the jag mode, the disagreements, a table, and a last line `RETRY_TO: [names]`.
-2. For each name in `RETRY_TO`, send the message `retry` with SendMessage. Use the session name. If two sessions have the same name, use the ref that the error message gives, for example `marina-implementer [e253e8]`.
+2. For each name in `RETRY_TO`, send 1 message, `retry`, with SendMessage. Use the session name. If two sessions have the same name, use the ref that the error message gives, for example `marina-implementer [e253e8]`.
 3. If the table shows a session as `STUCK (+1), skipped (busy)`, wait 30 seconds and run the script again. If the session is still stuck, rescue it with steps 1 and 2.
 4. Report to the user:
    - Show the stuck sessions first, with the mark **(+1)** and the words "restarted, now working, `retry` sent".
    - Then show the table of the sessions with the most failures.
    - If the table shows `respawn failed`, give the user the session and the error text. The script did not send `retry` to it.
+   - If the table shows `skipped (stopped)`, give the user the session. The script does not wake a stopped session: the tool or the team that started it starts it again.
+   - If the table shows `skipped` with another status (for example `waiting`), give the user the session and the status.
    - Then a **jag** part: the mode that ran, each session where jag and the flag do not agree, and the path of the jag log. If the script printed `jag error cause` and `jag error fix`, give them to the user. If the script printed `jag left out`, tell the user that jag did not judge all sessions.
    - Tell the user what changed since the last check: new sessions, counts that went up, and sessions that moved into or out of the log window.
 
@@ -57,7 +60,10 @@ Do the mode in `$ARGUMENTS`. If `$ARGUMENTS` is empty, do `start` with the defau
 ## Rules
 
 - Never run `claude rm`. Never delete a session.
-- Do not restart a session with the status `busy`. It can be in the middle of a turn.
+- Restart a stuck session only with `claude respawn <id>`, with 1 session id. Never run `claude stop` before it, because `claude respawn` starts the new process in 1 call. Never run `claude respawn --all`, because it restarts each background session of the machine, also the sessions of other repositories.
+- Restart only a session with the status `idle`. Do not restart a session with the status `busy`, because a respawn cuts its turn and the command that runs in it.
+- A respawn is for the rescue of a stuck session. It does not load a new start prompt or new settings. A sofa team does each other restart with a fresh restart, not with a respawn. For example, a reload, a colour restart and the start of a stopped session are fresh restarts (the sofa orchestrator role file, "A fresh restart").
+- Never respawn your own session in a foreground Bash call, because the session stops and stays stopped. To restart your own session, use another session or a detached call.
 - Do not restart a session that jag did not select, even if the flag says it is stuck. Report the disagreement.
 - The script skips the session that runs this skill. A session that only quotes error text (for example, a report about errors) can show as a false positive. Tell the user about it, and do not restart it.
 - For jag: use `--json --max-chars N`. Do not run `jag --check` or `jag --setup`. Never read or print `~/.config/jag/`.

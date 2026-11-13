@@ -58,7 +58,8 @@ else:
     stuck = picked(res)
 left_out = res.get("left_out", 0) if isinstance(res, dict) else 0
 disagree = sorted(set(flag) ^ set(stuck))
-# history + rescue (stop then respawn; never rm); sessions that no longer exist leave the history
+# history + rescue (claude respawn only: no claude stop, no --all, never rm); sessions that no longer exist
+# leave the history
 hist = json.load(open(P("failure-history.json"))) if os.path.exists(P("failure-history.json")) else {}
 hist = {k: v for k, v in hist.items() if k in known}
 agents_now = lambda: {s["id"]: s for s in json.loads(subprocess.run(["claude","agents","--json","--all"],capture_output=True,text=True).stdout or "[]") if s.get("id")}
@@ -70,9 +71,11 @@ if stuck:
     # read the status again: the logs and jag take time, and a session can start a turn in that time
     fresh = agents_now()
     for sid in stuck:
-        if fresh.get(sid, info[sid]).get("status") == "busy":   # actively running: leave alone
-            info[sid]["status"] = "busy"; continue
-        subprocess.run(["claude","stop",sid],capture_output=True)
+        # Only an idle session gets a respawn. busy: a respawn cuts its turn. No status: no live process (stopped).
+        # Another value: unknown. Each of them is left alone, and the table names it.
+        status = fresh.get(sid, info[sid]).get("status") or ""
+        if status != "idle":
+            info[sid]["status"] = status or "stopped"; continue
         r = subprocess.run(["claude","respawn",sid],capture_output=True,text=True)
         if r.returncode: failed[sid] = (r.stderr or r.stdout).strip()[:110]
         else: rescued[sid] = "?"
@@ -95,7 +98,8 @@ print("| Session | Name | Total failures seen | Status now |\n|---|---|---|---|"
 for sid, h in sorted(hist.items(), key=lambda kv: -kv[1]["count"]):
     if sid in stuck:
         now_s = "STUCK (+1), " + (f"restarted: {rescued[sid]}" if sid in rescued
-                                  else f"respawn failed: {failed[sid]}" if sid in failed else "skipped (busy)")
+                                  else f"respawn failed: {failed[sid]}" if sid in failed
+                                  else f"skipped ({info[sid]['status']})")
     elif sid in info: now_s = "recovered"
     else: now_s = "recovered (not in log window)"
     print(f'| `{sid}` | {h["name"]} | {h["count"]} | {now_s} |')
