@@ -1,7 +1,7 @@
 {
   "name": "corporate-development",
   "displayName": "corporate-development",
-  "version": "0.20.2",
+  "version": "0.20.3",
   "description": "Run an M&A deal from the readiness of the buyer to the final recommendation. Seven phases with a gate at each phase: sourcing, assessment, due diligence, integration planning and decision.",
   "author": {
     "name": "ai-advanced-futures"

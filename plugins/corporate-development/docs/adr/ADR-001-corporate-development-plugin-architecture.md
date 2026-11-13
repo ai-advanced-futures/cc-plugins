@@ -120,7 +120,7 @@ corporate_development/
 ├── operational_dd/            Scoring engines for the Phase 3 dimensions
 ├── financial_dd/              EarningsCalculator, FinancingAnalyzer, HealthScorer
 ├── decision_framework/        ScoreAggregator, StrategyEvaluator
-└── main.py                    run_investigation() and run_pipeline()
+└── main.py                    run_pipeline()
 ```
 
 #### PhaseHandoff pattern
@@ -163,7 +163,7 @@ The agent layer dispatches both phases in one message with 2 `Agent` calls.
 - **Parallel due diligence:** Phase 3 and Phase 4 run at the same time in both layers.
 - **One result:** The command shows one `PipelineResult.to_summary()`.
 - **Safe failure:** A missing handoff file gives CONDITIONAL, and not NO_GO. A crash of an agent is logged and the pipeline continues. A missing optional plugin is skipped.
-- **Two entry points:** `run_pipeline()` and `run_investigation()` are in `main.py`.
+- **One entry point:** `main.py` has only `run_pipeline()`. The 2 scripts `scripts/run_pipeline.py` and `scripts/run_investigation.py` and `python -m corporate_development` call it.
 - **Questions without a stop:** A phase agent writes its questions to a file. The command asks, and the run continues from the saved handoffs.
 
 ### Negative and trade-offs

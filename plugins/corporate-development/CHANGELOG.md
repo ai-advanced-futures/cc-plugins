@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.20.3
+
+- Docs: `docs/adr/ADR-001-corporate-development-plugin-architecture.md` named a function `run_investigation()` in `main.py`. `main.py` has only `run_pipeline()`, so the ADR now names 1 entry point, and the 2 scripts and `python -m corporate_development` that call it.
+
 ## 0.20.2
 
 - Fix: `python -m corporate_development <input_json>` works again. `corporate_development/__main__.py` imported `run_investigation` from `main.py`, but `main.py` defines only `run_pipeline`, so the command stopped with `ImportError`. The module now imports and calls `run_pipeline`. Add `tests/unit/test_main_module.py`.
