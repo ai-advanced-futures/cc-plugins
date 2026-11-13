@@ -1,5 +1,14 @@
 # Changelog
 
+## 9.1.1
+
+STORY-504: station Rule 8 takes the new `main` with a merge, never with a rebase (FEATURE-54, D-7246, D-7247, D-7248, D-7258, D-7266, D-7271).
+
+- `skills/station/SKILL.md`, Rule 8: after `RELOAD`, a session runs `git fetch origin main` and `git merge --no-edit origin/main` in the worktree of the branch of its item, and pushes a pushed branch with a plain `git push`. It never rebases a pushed branch and never force-pushes it. Before, the rule said "rebase your worktree on `main`", and a pushed branch then needed a forced push.
+- A session with no worktree of its own, a detached worktree of a PR head that a session checks, a worktree of a branch that another role writes (a checkout of a PR for a review), and the worktree of an item whose PR is merged skip the merge. Before the merge, the session commits only the files of its item.
+- A conflict that the session cannot solve, a merge that exits with no conflict, a failed fetch or `ls-remote`, and a refused push go to the orchestrator as `BLOCKED · team`. After a solved conflict or a commit of step 1 on a branch with an open PR, the session sends `REVIEW` again.
+- `tests/template.test.sh`: a new case (25 checks) for the texts of Rule 8, and 2 scans of `skills/` and `references/roles/` that deny by default each text that tells a session to rebase, to `git pull` or to force-push. The private-data scan also reads `skills/station/SKILL.md`.
+
 ## 9.1.0
 
 STORY-444: each line publishes its snapshot to a dedicated ref, and a reader gives all the lines (FEATURE-47, ADR-0012, ADR-0013, D-7187, D-7188, D-7192, D-7199).
