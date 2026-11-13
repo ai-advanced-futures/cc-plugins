@@ -321,9 +321,15 @@ review. A person, or an agent with a recorded approval (`--approved-by`), sets `
    github:
      owner: acme
      number: 7
+     type_mode: labels
    ```
 
-3. Give the token the `project` scope: `gh auth refresh -s project`.
+   `type_mode: labels` gives each issue a `type:` label. `type_mode: issue_types`
+   sets the issue type of the organization.
+
+3. A classic token needs the `project` and `repo` scopes
+   (`gh auth refresh -s project`). A GitHub App needs the permissions
+   Issues: write and Projects: write.
 4. Run `/product:roadmap-sync`. It shows the change set and asks before it pushes.
 
 The three commands behind it:
@@ -343,10 +349,12 @@ Each plan line names its subject: `create_issue_type Epic`,
 line adds that name to every repository of the organization, not to this one,
 so the skill names it in the question before the apply.
 
-A repository that a user owns has no issue types. The push then gives each
-issue the label `type:epic`, `type:feature`, `type:story`, or `type:task`.
-An organization repository takes the same labels when the token has no
-`admin:org` scope, because GitHub makes an issue type only with that scope.
+The `type_mode` of the Project page sets the type form. `labels` gives each
+issue the label `type:epic`, `type:feature`, `type:story` or `type:task`.
+`issue_types` sets the issue type of the organization, and a repository that a
+user owns cannot use it. With no `type_mode`, a repository that a user owns
+takes `labels`, and the sync of an organization repository stops and asks for
+the value. The token of the sync never changes the mode.
 
 ## Traceability model
 

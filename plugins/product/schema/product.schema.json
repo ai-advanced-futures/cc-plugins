@@ -1517,7 +1517,7 @@
         },
         "GithubProject": {
             "additionalProperties": false,
-            "description": "The `github` field of the Project page. All keys are optional until phase 3.",
+            "description": "The `github` field of the Project page. All keys are optional until phase 3. `type_mode` is the way that the sync writes the type of an issue. A repository of an organization must name it.",
             "properties": {
                 "node_id": {
                     "type": [
@@ -1536,6 +1536,9 @@
                         "string",
                         "null"
                     ]
+                },
+                "type_mode": {
+                    "$ref": "#/$defs/TypeMode"
                 }
             },
             "title": "GithubProject",
@@ -4038,6 +4041,15 @@
             ],
             "title": "Trace",
             "type": "object"
+        },
+        "TypeMode": {
+            "description": "How the sync writes the type of an issue. `labels` writes a `type:` label. `issue_types` writes an organization issue type.",
+            "enum": [
+                "labels",
+                "issue_types"
+            ],
+            "title": "TypeMode",
+            "type": "string"
         },
         "UsageWindow": {
             "additionalProperties": false,

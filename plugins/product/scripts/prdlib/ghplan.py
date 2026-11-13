@@ -97,30 +97,67 @@ def _tree(root: Path, tree: dict | None) -> dict:
     return collect(root) if tree is None else tree
 
 
-def uses_issue_types(snapshot: dict) -> bool:
-    """An issue type belongs to an organization, and the REST call that
-    makes one needs the `admin:org` scope. A user-owned repository, and a
-    token with no such scope, both take the `type:` label path. `ghsnapshot.fetch` puts
-    `org_write` in the snapshot; a recorded snapshot that holds no such key
-    is read as a token that may write. [inferred]"""
-    return bool(snapshot.get("repo", {}).get("owner_is_org")
-                and snapshot.get("org_write", True))
+TYPE_MODES = ("labels", "issue_types")
+PROJECT_PAGE_PATH = "docs/product/roadmap/projects/PROJECT-01.md"
 
 
-def type_label(frontmatter: dict, snapshot: dict) -> str:
-    """The issue type name, or the `type:` label of a user-owned repository."""
+def _count(number: int, noun: str) -> str:
+    return f"{number} {noun}" if number == 1 else f"{number} {noun}s"
+
+
+def type_mode(tree: dict, snapshot: dict) -> str:
+    """The type form of the board: the `type_mode` of the Project page, or
+    `labels` for a repository that a user owns. No right of a token changes
+    it (STORY-351): an issue type belongs to an organization, and the
+    same bundle must give the same plan to each token and each machine."""
+    field = next(((frontmatter.get("github") or {})
+                  for _path, (bundle, frontmatter, _body) in tree.items()
+                  if bundle == "roadmap"
+                  and frontmatter.get("type") == "Project"), {})
+    value = field.get("type_mode")
+    repo = snapshot.get("repo") or {}
+    is_org = bool(repo.get("owner_is_org"))
+    if value is None and not is_org:
+        return "labels"
+    if value == "issue_types" and not is_org:
+        owner = escape_controls(str(repo.get("full", "")).split("/")[0])
+        raise UsageError(
+            f"issue types belong to an organization, and `{owner}` is a user. "
+            f"Set `type_mode: labels` in {PROJECT_PAGE_PATH}.")
+    if value in TYPE_MODES:
+        return value
+    issues = snapshot.get("issues") or []
+    labelled = sum(1 for issue in issues if any(
+        name.startswith(ghmodel.LABEL_PREFIX)
+        for name in issue.get("labels") or []))
+    typed = sum(1 for issue in issues if issue.get("type"))
+    raise UsageError(
+        f"{PROJECT_PAGE_PATH} has no valid `type_mode` in its `github` "
+        f"field. Set it to `labels` or `issue_types`. The board has "
+        f"{_count(labelled, 'issue')} with a `{ghmodel.LABEL_PREFIX}` label "
+        f"and {_count(typed, 'issue')} with an issue type: record the form "
+        f"that the board holds.")
+
+
+def uses_issue_types(mode: str) -> bool:
+    """True when the sync writes an organization issue type, not a label."""
+    return mode == "issue_types"
+
+
+def type_label(frontmatter: dict, mode: str) -> str:
+    """The issue type name, or the `type:` label of the `labels` mode."""
     name = frontmatter.get("type", "")
-    if uses_issue_types(snapshot):
+    if uses_issue_types(mode):
         return name
     return f"{ghmodel.LABEL_PREFIX}{name.lower()}"
 
 
 def stored_payload(page_id: str, frontmatter: dict, body: str,
-                   snapshot: dict, refs: dict, criteria: dict) -> dict:
+                   mode: str, refs: dict, criteria: dict) -> dict:
     """The nine push values a page holds now. `plan`, `apply`, and `pull` all
     compare against this one shape, so they build it the one way."""
     return ghmodel.push_payload(page_id, frontmatter, body,
-                                type_label(frontmatter, snapshot), refs,
+                                type_label(frontmatter, mode), refs,
                                 criteria.get(page_id, []))
 
 
@@ -133,6 +170,7 @@ def build(root: Path, snapshot: dict, keep=()) -> Plan:
     # the same pages, and a walk for each would read every file four times.
     tree, broken = read_tree(root)
     require_readable(root, broken)
+    mode = type_mode(tree, snapshot)
     plan = Plan(tree=tree)
     pages = work_items(root, tree)
     criteria = criteria_of(root, tree)
@@ -152,7 +190,7 @@ def build(root: Path, snapshot: dict, keep=()) -> Plan:
     card_changes = []
     state_changes = []
     for page_id, (frontmatter, body) in pages.items():
-        label = type_label(frontmatter, snapshot)
+        label = type_label(frontmatter, mode)
         if page_id in pushed:
             change = _update_change(page_id, frontmatter, body,
                                     pushed[page_id], label,
@@ -181,7 +219,8 @@ def build(root: Path, snapshot: dict, keep=()) -> Plan:
     # The order is the run order of `apply`: a label and an issue type exist
     # before the issue that carries them, a Project field before any value it
     # holds, and a milestone before the issue that names it.
-    plan.changes.extend(_type_changes(snapshot, used_labels))
+    type_changes = _type_changes(mode, snapshot, used_labels)
+    plan.changes.extend(type_changes)
     plan.changes.extend(_field_changes(snapshot))
     plan.changes.extend(_milestone_changes(root, snapshot, tree))
     # A card before the update of its issue: the update sets the two date
@@ -191,7 +230,38 @@ def build(root: Path, snapshot: dict, keep=()) -> Plan:
     plan.changes.extend(state_changes)
     plan.refusals.extend(_limit_refusals(pages))
     plan.refusals.extend(_graph_refusals(pages))
+    if uses_issue_types(mode):
+        _refuse_missing_type_rights(snapshot, type_changes, issue_changes,
+                                    pushed)
     return plan
+
+
+def _refuse_missing_type_rights(snapshot, type_changes, issue_changes, pushed):
+    """The `issue_types` mode needs 2 rights that a token may lack: to make
+    an issue type (an owner of the organization), and to set the type of an
+    issue (push access). GitHub drops the second with no error, so the plan
+    stops here and names the issue. A recorded snapshot with no `rights` key,
+    or an issue with no `can_type`, gives no check. [inferred]"""
+    made = [change.detail["name"] for change in type_changes
+            if change.action == "create_issue_type"]
+    if made and (snapshot.get("rights") or {}).get("org_admin") is False:
+        raise UsageError(
+            f"the organization has no issue type "
+            f"`{escape_controls(', '.join(made))}`. Making one needs an "
+            f"owner of the organization (a classic token also needs "
+            f"`admin:org`).")
+    blocked = sorted(
+        change.detail["number"] for change in issue_changes
+        if change.action == "update_issue"
+        and pushed[change.page].get("can_type") is False
+        and change.detail["type"] != ghmodel.live_type(
+            pushed[change.page], change.detail["type"]))
+    if blocked:
+        names = ", ".join(f"#{escape_controls(number)}" for number in blocked)
+        repo = escape_controls(snapshot.get("repo", {}).get("full", ""))
+        raise UsageError(
+            f"the token cannot set the issue type of {names}. It needs push "
+            f"access to `{repo}`.")
 
 
 def _page_of(target):
@@ -276,14 +346,14 @@ def _update_change(page_id, frontmatter, body, issue, label, criteria, refs,
                   reason=reason)
 
 
-def _type_changes(snapshot: dict, used_labels: set) -> list:
-    """An issue type is made on the organization, with the `admin:org`
-    scope. A repository that a user owns gets the labels type:epic,
-    type:feature, type:story, and type:task instead."""
+def _type_changes(mode: str, snapshot: dict, used_labels: set) -> list:
+    """An issue type is made on the organization, by an owner of it. The
+    `labels` mode gets the labels type:epic, type:feature, type:story, and
+    type:task instead."""
     out = []
     used = set(used_labels)
     live_labels = set(snapshot.get("labels") or [])
-    if uses_issue_types(snapshot):
+    if uses_issue_types(mode):
         live_types = set(snapshot.get("issue_types") or {})
         for name in WORK_ITEMS:
             if name not in live_types:

@@ -42,6 +42,12 @@ types:
     pattern: '^(human|agent|process):[A-Za-z0-9._-]+$'
 
 enums:
+  TypeMode:
+    description: How the sync writes the type of an issue. `labels` writes a
+      `type:` label. `issue_types` writes an organization issue type.
+    permissible_values:
+      labels:
+      issue_types:
   WorkState:
     permissible_values:
       backlog:
@@ -399,12 +405,15 @@ classes:
 
   GithubProject:
     description: The `github` field of the Project page. All keys are optional
-      until phase 3.
+      until phase 3. `type_mode` is the way that the sync writes the type of
+      an issue. A repository of an organization must name it.
     attributes:
       owner:
       number:
         range: integer
       node_id:
+      type_mode:
+        range: TypeMode
 
   GithubSynced:
     description: The value of a two-direction field at the last sync.

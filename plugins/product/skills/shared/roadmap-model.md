@@ -9,10 +9,10 @@ This document gives the model of the roadmap bundle. Every roadmap skill obeys i
 |---|---|---|---|
 | Project | PROJECT | `projects/`, exactly one page | ProjectV2. It holds the Status options and the date fields |
 | Milestone | MILESTONE | `milestones/` | Milestone. It has `target_date`, and `traces` and `drifted` as a work item has. It is a container: no parent and no state |
-| Epic | EPIC | `epics/` | Issue with the issue type "Epic" |
-| Feature | FEATURE | `features/` | Issue with the issue type "Feature" |
-| Story | STORY | `stories/` | Issue with the issue type "Story" |
-| Task | TASK | `tasks/` | Issue with the issue type "Task" |
+| Epic | EPIC | `epics/` | Issue with the issue type "Epic", or the label `type:epic` (the `type_mode` of the Project page) |
+| Feature | FEATURE | `features/` | Issue with the issue type "Feature", or the label `type:feature` (the `type_mode` of the Project page) |
+| Story | STORY | `stories/` | Issue with the issue type "Story", or the label `type:story` (the `type_mode` of the Project page) |
+| Task | TASK | `tasks/` | Issue with the issue type "Task", or the label `type:task` (the `type_mode` of the Project page) |
 
 Epic, Feature, Story, and Task are the work items. They share one field set. The
 level order is Epic, Feature, Story, Task. A parent is of a higher level. A level
@@ -172,6 +172,7 @@ the STATUS block, the same as the LINKS block.
 | Enum | Values |
 |---|---|
 | `WorkState` | `backlog`, `ready`, `claimed`, `in_progress`, `in_review`, `blocked`, `done`, `released`, `cancelled` |
+| `TypeMode` | `labels`, `issue_types` |
 | `Size` | `S`, `M`, `L` |
 | `RunOutcome` | `passed`, `failed`, `not-checked`, `abandoned` |
 

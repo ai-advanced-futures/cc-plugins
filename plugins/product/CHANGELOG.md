@@ -1,5 +1,16 @@
 # Changelog
 
+## 6.9.0
+
+### Changed
+- The type form of the board is a value of the Project page, not a result of the token. The key `github.type_mode` of `PROJECT-01.md` takes `labels` or `issue_types`. Before, the sync read the text of `gh auth status` for the `admin:org` scope, so the same bundle gave a different plan on each machine, and a GitHub App in a team session (an empty `GH_CONFIG_DIR`) could not sync at all. Now no right of a token changes the mode (STORY-351).
+- A repository that a user owns takes `labels` when the page has no `type_mode`. A repository of an organization with no `type_mode` makes `github plan`, `apply` and `pull` stop with exit 2. The message names the key, the 2 values, the page path, and the number of issues with a `type:` label and with an issue type. `type_mode: issue_types` on a repository that a user owns stops with exit 2.
+- `gh.preconditions` reads the rights of the token with 1 GraphQL call (`viewer`, `viewerCanCreateIssues`, `viewerCanAdminister`, `viewerCanUpdate`) and no longer runs `gh auth status`, `gh api user` or `gh api repos/<repo>`. A classic token still needs the `project` and `repo` scopes, from its `X-OAuth-Scopes` header. A token with no such header (a GitHub App) is checked by the viewer fields. A token that cannot make issues, or cannot write the Project, stops with the permission that it needs. The snapshot holds `rights` in place of `org_write`; an old snapshot file with `org_write` gives the same plan.
+- In the `issue_types` mode, the plan stops when it must make an issue type and the token is not an owner of the organization, and when an issue needs a new type and the token has no push access. `github apply` reads the type back from the PATCH reply and stops when GitHub dropped it.
+
+### Added
+- The enum `TypeMode` and the key `type_mode` of the Project page in the schema. `PROJECT-01.md` of this repository records `type_mode: labels`.
+
 ## 6.8.6
 
 ### Fixed

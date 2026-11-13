@@ -46,13 +46,17 @@ class Report:
 
 
 def live_payload(root: Path, snapshot: dict, issue: dict, page_id: str,
-                 frontmatter: dict | None = None) -> dict:
+                 frontmatter: dict | None = None,
+                 mode: str | None = None) -> dict:
     """The nine values, read from GitHub, in the same form the push uses.
 
-    `frontmatter` is the page, when the caller already holds it."""
+    `frontmatter` is the page, and `mode` is the type mode, when the caller
+    already holds them."""
     if frontmatter is None:
         frontmatter, _body = ghplan.work_items(root)[page_id]
-    label = ghplan.type_label(frontmatter, snapshot)
+    if mode is None:
+        mode = ghplan.type_mode(collect(root), snapshot)
+    label = ghplan.type_label(frontmatter, mode)
     item = issue.get("project_item") or {}
     return {
         "title": issue.get("title", ""),
@@ -89,6 +93,7 @@ def _pull(root: Path, snapshot: dict, login: str, adopt: bool = False,
     # One walk of the tree for the whole pull. The readers below take the
     # page they need from it, so no page is parsed again for each item.
     tree = collect(root)
+    mode = ghplan.type_mode(tree, snapshot)
     pages = ghplan.work_items(root, tree)
     known_numbers = ghplan.numbers_of(pages)
     issues = ghsnapshot.issues_by_page(snapshot, known_numbers)
@@ -125,11 +130,11 @@ def _pull(root: Path, snapshot: dict, login: str, adopt: bool = False,
             agreed.add("owner")
         _store_synced(page, agreed)
         try:
-            mine = ghplan.stored_payload(page_id, frontmatter, body, snapshot,
+            mine = ghplan.stored_payload(page_id, frontmatter, body, mode,
                                          refs, criteria)
         except ghmodel.Unresolved:
             continue
-        live = live_payload(root, snapshot, issue, page_id, frontmatter)
+        live = live_payload(root, snapshot, issue, page_id, frontmatter, mode)
         if ghmodel.push_hash(live) == stored:
             continue
         # The payload is the key set: a value added to it is named here
@@ -141,7 +146,7 @@ def _pull(root: Path, snapshot: dict, login: str, adopt: bool = False,
             f"#{escape_controls(issue['number'])}. Keep the bundle value with "
             f"`github apply --keep {escape_controls(page_id)}`, or take the "
             f"GitHub value into the page.")
-    _adopt(root, snapshot, report, adopt, known_numbers)
+    _adopt(root, snapshot, report, adopt, known_numbers, mode)
     return report
 
 
@@ -291,7 +296,7 @@ def _store_synced(page, agreed):
     write_page(page)
 
 
-def _adopt(root, snapshot, report, adopt, stored):
+def _adopt(root, snapshot, report, adopt, stored, mode):
     """An issue in the Project with no page. The spec pulls it in only after
     the user agrees, so the default reports it and writes nothing, and
     --adopt is the gate. [inferred P3-6]
@@ -334,7 +339,8 @@ def _adopt(root, snapshot, report, adopt, stored):
         # bound page, and a person's edit after the adopt gives a difference.
         # The next apply sends the bundle text, which keeps the issue body.
         page.frontmatter["github"]["pushed_hash"] = ghmodel.push_hash(
-            live_payload(root, snapshot, issue, path.stem, page.frontmatter))
+            live_payload(root, snapshot, issue, path.stem, page.frontmatter,
+                         mode))
         write_page(page)
         known.add(issue["number"])
         report.applied.append(

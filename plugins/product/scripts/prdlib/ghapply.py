@@ -15,6 +15,7 @@ from .ids import resolve
 from .lock import held, refresh as refresh_lock, write_lock
 from .logbook import append_entries, entry_line
 from .page import load_page, write_page
+from .regen import collect
 from .textsafe import escape_controls
 from .tree import bundle_dir
 
@@ -145,6 +146,9 @@ class _Run:
     item_ids: dict
     criteria: dict
     tree: dict | None
+    # The type mode of the Project page (STORY-351). It is one value for the
+    # whole run, so each write-back hashes the page the way the plan did.
+    mode: str
     # page ID -> the path a write resolved, so `_log` names the same file
     # again with no second walk of the tree for each page.
     pushed: dict = dataclass_field(default_factory=dict)
@@ -178,7 +182,8 @@ def apply(root: Path, snapshot: dict, plan: ghplan.Plan, client,
                   for page, issue in issues.items()
                   if (issue.get("project_item") or {}).get("id")},
         criteria=ghplan.criteria_of(root, tree),
-        tree=tree)
+        tree=tree,
+        mode=ghplan.type_mode(tree or collect(root), snapshot))
     done = []
     with write_lock(root) as lock:
         try:
@@ -360,10 +365,23 @@ def _patch_issue(snapshot, detail, client, number, numbers):
         # A user-owned repository has no issue type, and its type travels as
         # the `type:` label. [inferred]
         patch += ["-f", f"type={type_name}"]
-    if patch:
-        client.text(["api",
-                     f"repos/{snapshot['repo']['full']}/issues/{number}",
-                     "-X", "PATCH", *patch])
+    if not patch:
+        return
+    reply = client.json(["api",
+                         f"repos/{snapshot['repo']['full']}/issues/{number}",
+                         "-X", "PATCH", *patch])
+    # Without push access GitHub drops the type and still answers 200
+    # (STORY-351, the docs of "update an issue"). The reply holds the type
+    # that the issue has now, so a name that differs stops the run, before a
+    # page stores a hash of a type that GitHub never got.
+    if type_name and not type_name.startswith("type:"):
+        held = ((reply or {}).get("type") or {}).get("name")
+        if held != type_name:
+            raise UsageError(
+                f"GitHub did not set the issue type "
+                f"`{escape_controls(type_name)}` on #{escape_controls(number)}"
+                f". The token has no push access to "
+                f"{escape_controls(snapshot['repo']['full'])}.")
 
 
 def _update_issue(snapshot, change, client, numbers):
@@ -571,7 +589,7 @@ def _write_back(root, change, snapshot, run, synced=None):
         else:
             field["pushed_hash"] = planned or ghmodel.push_hash(
                 ghplan.stored_payload(change.page, page.frontmatter,
-                                      page.body, snapshot, run.numbers,
+                                      page.body, run.mode, run.numbers,
                                       run.criteria))
     except ghmodel.Unresolved:
         # A relationship names a page that this same run creates later, so

@@ -30,6 +30,7 @@ query($owner: String!, $name: String!, $after: String,
       nodes {
         number id url title body state stateReason
         issueType { name }
+        viewerCanType
         milestone { number }
         labels(first: 50) { nodes { name } }
         assignees(first: 10) { nodes { login } }
@@ -121,9 +122,13 @@ def fetch(client, context) -> dict:
         "repo": {"full": context.repo, "node_id": context.repo_node_id,
                  "owner_is_org": context.owner_is_org,
                  "owner_node_id": context.owner_node_id},
-        # An issue type needs the `admin:org` scope. Without it the
-        # plan takes the `type:` label path.
-        "org_write": context.org_write,
+        # What the token may do (STORY-351). `plan` reads `org_admin` only in
+        # the `issue_types` mode. No right changes the mode.
+        "rights": {"scopes": (None if context.scopes is None
+                              else list(context.scopes)),
+                   "org_admin": context.org_admin,
+                   "create_issues": context.can_create_issues,
+                   "update_project": context.can_update_project},
         # The fallback actor of a pulled state change. A pull that replays
         # this file then names the same person as the live pull.
         "login": context.login,
@@ -310,6 +315,8 @@ def _issue(node: dict, cards: dict | None = None) -> dict:
         "url": node.get("url", ""), "title": node.get("title", ""),
         "body": node.get("body") or "",
         "type": (node.get("issueType") or {}).get("name"),
+        # Without push access GitHub drops a type with no error.
+        "can_type": node.get("viewerCanType"),
         "parent": parent.get("number"),
         # removeSubIssue names the old parent by its node ID.
         "parent_id": parent.get("id"),
