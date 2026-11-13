@@ -65,7 +65,7 @@
     },
     {
       "name": "status",
-      "description": "A Nord status bar (below the prompt in a terminal, in a band above it in the desktop app): the model, the context, a prompt cache pill (cold, or warm with the time left and the hit percent), the 7-day limit, the folder, the worktree and the git branch.",
+      "description": "A Nord status bar (below the prompt in a terminal, in a band above it in the desktop app): the model, the context, a prompt cache pill (cold, or warm with the time left and the hit percent), the 7-day limit (or, on a session with no usage limit, the cost of this month), the folder, the worktree and the git branch.",
       "source": "./plugins/status",
       "strict": false
     },

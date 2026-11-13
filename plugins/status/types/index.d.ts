@@ -17,6 +17,14 @@ export type Cache = {
   plan?: boolean
 }
 
+// What the newest main reply of a session said: no rate-limit window, or some.
+export type Kind = 'none' | 'limit'
+
+// The spend of 1 session in 1 month, under the store key `month-cost:<session id>`.
+// month: the local calendar month (YYYY-MM). usd: the spend of the session in that
+// month. seen: the cost total of the session at the last refresh.
+export type MonthCost = { month: string; usd: number; seen: number }
+
 // All the status bar draws from, read once per refresh.
 export type Bar = {
   now: number
@@ -31,6 +39,12 @@ export type Bar = {
   cache: Cache
   // The API's model id of the last request, kept so a reload of the mod has it.
   apiModel?: string
+  // A session with no usage limit: the bar shows the cost of this month, not the
+  // 7-day chip. monthUsd is that cost, and it is absent when it is not known yet.
+  noLimit?: boolean
+  monthUsd?: number
+  // The decision of this session, kept so a reload of the mod has it.
+  kind?: Kind
 }
 
 declare module 'claude-code' {

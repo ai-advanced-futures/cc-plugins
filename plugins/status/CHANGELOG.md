@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+- A session with no usage limit shows the cost of this month in the bar (`$ 12.34`), not the 7-day chip, which showed `--% -d -h` there. The rule: the newest main reply of the session reported no rate-limit window. It finds an enterprise seat, an API key, a cloud provider, and a gateway with no spend limit, and also a claude.ai Team seat. A subscription, and a gateway with a spend limit, keep the 7-day chip. In the desktop app the chip is `$12.34`.
+- The month total is the sum of the spend of all sessions that load this install of the plugin in the same Claude Code configuration folder. Each session writes only its own store key, `month-cost:<session id>`, so 2 sessions never write the same key. The total starts again on the first day of each month, and the keys of an older month go at the start of a session. It is the estimate of Claude Code (`/cost`), not the bill. A session in another configuration folder, from another marketplace, or from a `--plugin-dir` copy has its own total.
+- A new or resumed session uses the plan mark of the machine (the store key `plan-kind`) until its first reply, so on a machine with no usage limit the `$` chip shows at once.
+
+### Fixed
+- A store write that the lock refuses ("Lock file is already being held") no longer stops the refresh. The 7-day window and the learned cache lifetime are set again at the next refresh, and the bar still draws.
+
 ## 0.2.3
 
 ### Changed

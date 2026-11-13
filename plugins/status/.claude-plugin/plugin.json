@@ -1,8 +1,8 @@
 {
   "name": "status",
   "displayName": "status",
-  "version": "0.2.3",
-  "description": "A Nord status bar (below the prompt in a terminal, in a band above it in the desktop app): the model, the context, the 7-day limit, the prompt cache state, the folder, the worktree and the git branch.",
+  "version": "0.3.0",
+  "description": "A Nord status bar (below the prompt in a terminal, in a band above it in the desktop app): the model, the context, the 7-day limit (or, on a session with no usage limit, the cost of this month), the prompt cache state, the folder, the worktree and the git branch.",
   "author": {
     "name": "Yassel Piloto",
     "email": "yasselpiloto@gmail.com"

@@ -1,9 +1,10 @@
 import type { TurnUsage } from 'claude-code'
 
-import type { Bar, Cache, RateLimits, Ttl, Window } from '../types'
+import type { Bar, Cache, MonthCost, RateLimits, Ttl, Window } from '../types'
 
-// The status bar as colored runs: model, context, 7-day limit, folder, branch,
-// with the prompt cache pill in the context segment.
+// The status bar as colored runs: model, context, 7-day limit (or, with no usage
+// limit, the cost of this month), folder, branch, with the prompt cache pill in
+// the context segment.
 
 export type Run = { text: string; color?: string; bg?: string }
 type Colored = { text: string; color: string }
@@ -88,6 +89,45 @@ export function newestRateLimits(nowSec: number, own: RateLimits, stored: RateLi
 
 export function sameWindow(a: Window | undefined, b: Window | undefined): boolean {
   return a?.used === b?.used && a?.resetsAt === b?.resetsAt
+}
+
+// ---- month cost -----------------------------------------------------------------
+
+// Each session keeps its own spend of the month under its own store key. Nothing
+// reads, adds to and writes a shared number, so 2 sessions never write 1 key, and
+// the total is the sum of the keys.
+export const COST_PREFIX = 'month-cost:'
+
+// The local calendar month of a time, as YYYY-MM.
+export function monthOf(ms: number): string {
+  const d = new Date(ms)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+export function isMonthCost(value: unknown): value is MonthCost {
+  if (typeof value !== 'object' || value === null) return false
+  const r = value as Record<string, unknown>
+  return typeof r.month === 'string' && Number.isFinite(r.usd) && Number.isFinite(r.seen)
+}
+
+// The record of a session after a refresh with `total`, the cost total of the
+// session. The first sight of a session, and a new month, start at 0: the cost
+// that a resume or a fork restores is not new spend. A total below `seen` (after
+// /clear) moves `seen` down and adds nothing. `counts` is false on a session that
+// pays no use (a subscription): it follows `seen` and adds nothing.
+export function addSpend(rec: MonthCost | undefined, total: number, month: string, counts: boolean): MonthCost {
+  const from: MonthCost = !rec ? { month, usd: 0, seen: total } : rec.month === month ? rec : { month, usd: 0, seen: rec.seen }
+  return { month, usd: from.usd + (counts ? Math.max(0, total - from.seen) : 0), seen: total }
+}
+
+// The spend of the month in a list of values from the store. A value of another
+// shape, or of another month, adds nothing.
+export function monthTotal(month: string, records: readonly unknown[]): number {
+  return records.reduce<number>((sum, r) => (isMonthCost(r) && r.month === month ? sum + r.usd : sum), 0)
+}
+
+export function costRun(usd: number | undefined): Colored {
+  return usd === undefined ? { text: '--', color: NORD.n3 } : { text: usd.toFixed(2), color: NORD.n14 }
 }
 
 // ---- the line ---------------------------------------------------------------
@@ -180,6 +220,8 @@ export function parts(bar: Bar) {
     cache: cacheRun(bar.cache, bar.now),
     quota: sevenDayRun(bar.rateLimits.seven_day, Math.floor(bar.now / 1000)),
     quotaPct: bar.rateLimits.seven_day?.used ?? 0,
+    // On a session with no usage limit this chip takes the place of the 7-day chip.
+    cost: bar.noLimit ? costRun(bar.monthUsd) : undefined,
   }
 }
 
@@ -195,8 +237,7 @@ export function segments(bar: Bar): Run[] {
     { text: ' ' },
     p.cache,
     ...SEP,
-    { text: `${GAUGE} `, color: NORD.n3 },
-    p.quota,
+    ...(p.cost ? [{ text: '$ ', color: NORD.n3 }, p.cost] : [{ text: `${GAUGE} `, color: NORD.n3 }, p.quota]),
     ...SEP,
     { text: `${FOLDER} ${compactCwd(bar.cwd)}`, color: NORD.n9 },
   ]
@@ -244,7 +285,8 @@ export function barSvg(p: ReturnType<typeof parts>): string {
   chip({ label: p.model.text, fill: p.model.color })
   chip({ label: `${Math.floor(p.pct)}%/${p.size}`, fill: p.color, pct: p.pct, width: 165 })
   chip({ label: p.cache.text.trim(), fill: p.cache.bg })
-  chip({ label: `⏱ ${p.quota.text}`, fill: p.quota.color, pct: p.quotaPct, width: 130 })
+  if (p.cost) chip({ label: `$${p.cost.text}`, fill: p.cost.color })
+  else chip({ label: `⏱ ${p.quota.text}`, fill: p.quota.color, pct: p.quotaPct, width: 130 })
   const width = Math.ceil(x - GAP)
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${SVG_HEIGHT}" viewBox="0 0 ${width} ${SVG_HEIGHT}">${out.join('')}</svg>`
 }
