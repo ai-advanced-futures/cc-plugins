@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.20.1
+
+STORY-485: the place of a guard message of `snapshot take` holds only names of the script (FEATURE-47, D-7100 to D-7104).
+
+- The place (`<where>` in `the snapshot holds <kind>; no snapshot written (in <where>)`) is a path of names of the new constant `WHERE_NAMES` (the keys that `build_snapshot` writes). Below a key that is not such a name, the place stops, so a section keyed by data of the store cannot print a key that is not a name of the script in stderr. A top-level key that is not such a name gives the place `the snapshot`.
+- The snapshot, the text of the message, the exit codes and the refusals do not change. `schema_version` stays `1`.
+- `tests/sofa-state.test.sh`: the new case `snapwhere` (17 checks), and the 3 place checks of the case `snapkeys` now expect `the snapshot`.
+
 ## 7.20.0
 
 STORY-401: the dashboard names the instance and the bot of the state store (FEATURE-46, D-7028 to D-7031, D-7053, D-7054, D-7066).

@@ -917,7 +917,7 @@ _REVERSIBILITY, _VISIBILITY = set(DECISION_REVERSIBILITIES), set(DECISION_VISIBI
 # A section of the snapshot: the query of cmd_report, and each field that may go into it with its form (a regex,
 # fullmatch, or a set of words). A field that is not here goes nowhere: only a list of allowed fields is safe,
 # because the free-text columns (waits_for, summary) and the person columns (decided_by, by_whom) hold any text.
-SNAPSHOT_FIELDS = {
+SNAPSHOT_FIELDS: dict[str, tuple[str, dict]] = {
     "sessions": ("SELECT * FROM sessions ORDER BY name", {
         "name": _NAME, "role": _ROLE, "model": _MODEL, "state": _STATE, "item": _ID,
         "since": _TIME, "last_heartbeat": _TIME, "free_since": _TIME}),
@@ -933,6 +933,16 @@ SNAPSHOT_FIELDS = {
 # The fields of each rule set that may go into the key `rules`. Version 1 has none, so each set is {}.
 # The story that owns a field adds it here with its form (D-7032, CONSTRAINT-01).
 RULE_FIELDS: dict[str, dict] = {name: {} for name in FLOOR_SETS}
+
+# The names that may go into the place (WHERE) of a guard message: each key that build_snapshot writes. A key of a
+# dict that is not here comes from data (the store or the file), so it never goes into a message (STORY-485). A story
+# that adds a section, a key or a field adds its name here, in the same change. Each name is a word of the script:
+# a key that comes from data (a login, a path, a work order) is never added here.
+WHERE_NAMES = frozenset({
+    "schema_version", "taken_at", "line", "store", "queue", "rules", "rules_digest", "nulled",
+    *SNAPSHOT_FIELDS, *(f for _, fields in SNAPSHOT_FIELDS.values() for f in fields),
+    *FLOOR_SETS, *(f for fields in RULE_FIELDS.values() for f in fields),
+})
 
 GUARD_MIN_CHARS = 4
 
@@ -1044,17 +1054,25 @@ def _texts(obj, where, found, extend):
     """Add each text of OBJ (a parsed JSON value) to FOUND as (where, text): each key of a dict, each string, and the
     text of each number. A boolean and null have no text of a value, so they are left out.
 
-    WHERE of a key is the path of its dict, and WHERE of a value is its own path (a list adds nothing). When EXTEND is
-    false, WHERE stays as given, because the keys of that OBJ come from the file and must not go into a message.
+    WHERE of a key is the path of its dict, and WHERE of a value is its own path (a list adds nothing). A key adds a
+    part to the path of its value only when the path is still open and the text of the key is in WHERE_NAMES. Below
+    any other key, the path stops: that value and each node under it get the path of the dict, so no key of the store
+    or of the file goes into a message (STORY-485). When EXTEND is false, the path is closed from the start, because
+    the keys of that OBJ come from the file.
     """
-    stack = [(where, obj)]
+    stack = [(where, obj, extend)]
     while stack:
-        path, node = stack.pop()
+        path, node, grows = stack.pop()
         if isinstance(node, dict):
             found.extend((path, str(k)) for k in node)
-            stack.extend(((f"{path}.{k}" if path else str(k)) if extend else path, v) for k, v in node.items())
+            for k, v in node.items():
+                name = str(k)
+                if grows and name in WHERE_NAMES:
+                    stack.append((f"{path}.{name}" if path else name, v, True))
+                else:
+                    stack.append((path, v, False))
         elif isinstance(node, list):
-            stack.extend((path, v) for v in node)
+            stack.extend((path, v, grows) for v in node)
         elif isinstance(node, str):
             found.append((path, node))
         elif isinstance(node, (int, float)) and not isinstance(node, bool):
@@ -1065,9 +1083,10 @@ def snapshot_strings(snap, sets):
     """Each text that goes into the snapshot, or that the file holds in a rule set, as (where, text).
 
     This is the full JSON text of spec row 10: the keys, the strings and the numbers of the snapshot and of the rule
-    sets. WHERE is the path of the keys of the snapshot (`items.id`; a key adds its dict), or `the floor configuration
-    set <name>` for a key, a string or a number of a rule set. The names in a path come from this script, and a rule
-    set has 1 of 3 fixed names, so WHERE never holds a value of the store or of the file.
+    sets. WHERE is a path of names of `WHERE_NAMES` (`items.id`; a key adds its dict), or `the snapshot`, or `the
+    floor configuration set <name>`. WHERE holds only names of `WHERE_NAMES`: a key of the store or of the file adds a
+    part only when its text is such a name, and below any other key the path stops, so no other text of the store or
+    of the file goes into WHERE.
     """
     found = []
     _texts(snap, "", found, True)
