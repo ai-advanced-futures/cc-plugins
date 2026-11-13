@@ -5,16 +5,17 @@ SHELL := /bin/bash
 TIER ?=
 
 # A tier is the first part of a test name: pipeline (4 live turns of /corporate-development:pipeline,
-# list price about 2.3 USD, --max-budget-usd caps 3.5 USD). It is the only tier, so all runs the same tests.
+# list price about 2.3 USD, --max-budget-usd caps 3.5 USD),
+# module (python -m corporate_development in an empty folder, no paid session).
 PYTEST := CORPORATE_DEVELOPMENT_ITEST=1 uv run --quiet --no-project --with-requirements requirements-dev.txt python -m pytest tests/integration -m integration -rs
 
 .PHONY: itest
 itest:
-	@test -n "$(TIER)" || { echo "TIER is required: make itest TIER=pipeline|all"; exit 2; }
+	@test -n "$(TIER)" || { echo "TIER is required: make itest TIER=pipeline|module|all"; exit 2; }
 ifeq ($(TIER),all)
 	$(PYTEST)
-else ifeq ($(TIER),pipeline)
-	$(PYTEST) -k "test_pipeline_"
+else ifneq ($(filter $(TIER),pipeline module),)
+	$(PYTEST) -k "test_$(TIER)_"
 else
-	@echo "unknown TIER '$(TIER)': use pipeline|all"; exit 2
+	@echo "unknown TIER '$(TIER)': use pipeline|module|all"; exit 2
 endif
