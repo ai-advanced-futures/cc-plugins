@@ -2,6 +2,16 @@
 
 The `sofa:start` skill reads this file when `docs/adlc.md` has a lower `sofa-template-version` than `templates/ADLC.md`. Apply each step from the version of the file to the current version, in order. Keep each value and each repository rule of the file. Ask the user only for the values that a step marks `ask`.
 
+## 11 → 12
+
+1. Section 3, the paragraph that starts with `Tier:`: if it has the words `, and it resumes a session that Claude Code stopped`, replace them with `. It gives a session that Claude Code stopped a fresh restart`. Skip it if the paragraph does not have these words.
+2. Section 8, the line of the dispatch script: if it has the option `--resume`, remove that option and its value. In the template 11 text, that is the part ` [--resume <session id>]` at the end of the line. Skip it if the line does not have `--resume`.
+3. Section 8, the paragraph that starts with `Exception, a fresh restart`. Replace the sentence `The same holds for the new session that the orchestrator starts when a resume fails.` with the 2 sentences of the template from `This holds for each restart`. Replace the sentence `Why: a store row with the old id makes the orchestrator resume a session that can lack the App env.` with the `Why:` sentence of the template. Skip each sentence that the paragraph does not have, because the paragraph can hold the words of the repository.
+4. Section 8, the paragraph that starts with `If a session stops before its item is done`: find the sentence that has `--resume <session id>`. Replace that sentence with the text of the template paragraph after its first sentence. Remove each other sentence of the paragraph that has `You were resumed` or `If the resume fails`. Keep each other sentence of the paragraph, because it can be a rule of the repository. Skip this item if the paragraph does not have `--resume <session id>`, because then the repository already gives a stopped session a fresh restart.
+5. Section 5, the row of `RESUME`: if its text is `From the orchestrator: continue the open item from the branch`, replace that text with the text of the template row. Skip this item if the row has other text, because it can be a rule of the repository.
+6. Section 9: add the row `Migrated to sofa template version 12`.
+7. Set `<!-- sofa-template-version: 12 -->`.
+
 ## 10 → 11
 
 1. Section 2: add the template rules "Mention the operator" and "The App identity for git and gh" at the end of the list, with the next free numbers. Skip a rule if section 2 already has a rule whose text, after its number, starts with the title of the template rule (the words in quotes above): keep that rule as it is, because its text can hold the details of this repository. Each file cites these 2 rules by their title, not by their number, so the numbers can differ from the template.
@@ -14,7 +24,7 @@ The `sofa:start` skill reads this file when `docs/adlc.md` has a lower `sofa-tem
 ## 9 → 10
 
 1. Section 3: replace the `Tier:` text with the `Tier:` text of the template. Keep a `Tier:` text that differs from the template 9 text, because that difference is a choice of this repository.
-2. Section 8: remove the sentence "A session that the orchestrator deleted (`claude rm`) is not in that list, so its number is free again." In the last paragraph, replace the resume prompt with the template text (the added sentence about the worktree).
+2. Section 8: remove the sentence "A session that the orchestrator deleted (`claude rm`) is not in that list, so its number is free again." In the last paragraph, replace the resume prompt with the template text (the added sentence about the worktree). If the template has no resume prompt (template version 12 or later), skip this sentence. The step 11 → 12, item 4, then replaces the resume text of that paragraph.
 3. Section 9: add the row `Migrated to sofa template version 10`.
 4. Set `<!-- sofa-template-version: 10 -->`.
 

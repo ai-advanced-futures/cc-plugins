@@ -1,6 +1,6 @@
 # ADLC — Agent Development Life Cycle
 
-<!-- sofa-template-version: 11 -->
+<!-- sofa-template-version: 12 -->
 
 This file defines the agent team for this repository.
 The `sofa:start` skill reads this file to start the team.
@@ -78,7 +78,7 @@ The rules that are the same for all roles are in the `sofa:station` skill, which
 
 ## 3. Roles
 
-Tier: `always` sessions start with the team. `on demand` sessions start at the first trigger of the role. Each session stays live after its start: the orchestrator does not stop a free session, and it resumes a session that Claude Code stopped (orchestrator role file, "Stopped sessions"). `cron` is a system cron job, not a session.
+Tier: `always` sessions start with the team. `on demand` sessions start at the first trigger of the role. Each session stays live after its start: the orchestrator does not stop a free session. It gives a session that Claude Code stopped a fresh restart (orchestrator role file, "Stopped sessions"). `cron` is a system cron job, not a session.
 
 | Role | Tier | Model | Effort | Compact at | Output style | Count | Starts when | Skills | Input | Output |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -308,7 +308,7 @@ Types:
 | `RETRO` | User wants a team change |
 | `RELOAD` | `docs/adlc.md` or a role file changed. Read them again |
 | `PAUSE` | From the orchestrator: finish the turn, push the branch, send `STATUS`, then idle. With `now`: stop at once |
-| `RESUME` | From the orchestrator: continue the open item from the branch |
+| `RESUME` | From the orchestrator: continue the open item from the branch. The message `RESUME` and the command `/sofa:resume` mean: continue the work of the team or of an open item. They are not `--resume`, which continues the old conversation of a session. |
 
 ## 6. Retro fast path
 
@@ -366,7 +366,7 @@ Rules:
 The `sofa:start` skill starts the orchestrator. The orchestrator starts each other session with the dispatch script of the plugin, from the main folder of this machine:
 
 ```
-<skill folder>/scripts/dispatch.sh --adlc docs/adlc.md --role <role> [--n <n>] --prompt-file <file> [--resume <session id>]
+<skill folder>/scripts/dispatch.sh --adlc docs/adlc.md --role <role> [--n <n>] --prompt-file <file>
 ```
 
 The script reads the row of the role in section 3 and runs:
@@ -377,11 +377,11 @@ claude --bg -n <prefix>-<role>[-n] --model <model> [--effort <effort>] --autocom
 
 It prints the session id and the name. The orchestrator gives each session a name that no other session of this repository has, live or stopped (`claude agents --json --all`). The first session of a role has no number. The next sessions take the lowest free number, from `-2`.
 
-Exception, a fresh restart: when the orchestrator stops a session and starts a fresh session in its place (not `--resume`), the fresh session takes the store name of the stopped session (its row in `sofa-state session list`), not the next number. The same holds for the new session that the orchestrator starts when a resume fails. The orchestrator runs `dispatch.sh` with the `--n` of that store name (no `--n` for a name with no number), so a fresh `<prefix>-hitl` stays `<prefix>-hitl`, not `<prefix>-hitl-2`. The fresh session writes its new id on the store row of that name with `sofa-state session upsert` (station skill, step 3), so no store row keeps the id of the stopped session. The orchestrator stops the old session before it starts the fresh one, and it does not resume the old id again. Why: a store row with the old id makes the orchestrator resume a session that can lack the App env. Claude Code can change the list name of a session, so the store row gives the name, not the list.
+Exception, a fresh restart: when the orchestrator stops a session and starts a fresh session in its place (not `--resume`), the fresh session takes the store name of the stopped session (its row in `sofa-state session list`), not the next number. This holds for each restart of a session. The restarts are the reload, a change of section 3, the colour, a failed identity check, and a session that Claude Code stopped. The orchestrator runs `dispatch.sh` with the `--n` of that store name (no `--n` for a name with no number), so a fresh `<prefix>-hitl` stays `<prefix>-hitl`, not `<prefix>-hitl-2`. The fresh session writes its new id on the store row of that name with `sofa-state session upsert` (station skill, step 3), so no store row keeps the id of the stopped session. The orchestrator stops the old session before it starts the fresh one, and it does not resume the old id again. Why: the orchestrator finds each session by the id on its store row. Claude Code can change the list name of a session, so the store row gives the name, not the list.
 
 A live session does not change its model, effort, compact value or output style after `RELOAD`. If section 3 changes one of them, restart each session of that role when it has no work. The colour of each role is in `<skill folder>/references/colours.md`, not in this file. The orchestrator restarts a session that does not have the colour of its role (orchestrator role file, "Status check").
 
-If a session stops before its item is done, the `scheduler` (system cron, `bg-watch check`) restarts it and sends it `retry`. If the orchestrator finds a stopped session with an open item that the scheduler did not restart in 15 minutes, it resumes it with the dispatch script and `--resume <session id>` and the prompt `You were resumed. Continue your open item.` If the open item has a worktree in the store, the prompt starts with `You were resumed. Your worktree is <path>: if your current folder is not that folder, enter it with the EnterWorktree tool and its path.` If the resume fails, it starts a new session.
+If a session stops before its item is done, the `scheduler` (system cron, `bg-watch check`) restarts it and sends it `retry`. The orchestrator checks the stopped sessions with an open item. It does a fresh restart of each one that the scheduler did not restart in 15 minutes (the paragraph "Exception, a fresh restart"). It runs the dispatch script with no `--resume` and with the store name of the session. The first message of the start prompt starts with the line `First message: RESUME · orchestrator → <role> · <item>` and the line `You have a fresh start. Continue your open item <item>.` The next lines give the branch, the PR and the worktree of the item when the store has them (orchestrator role file, "A fresh restart"). It does not resume the old id, because a resume can make a copy that runs in another permission mode and has no App env.
 
 Start prompt:
 
@@ -398,4 +398,4 @@ The orchestrator start prompt is in the `sofa:start` skill. It gives the machine
 
 | Date | Change | Why |
 |---|---|---|
-| `<date>` | Created from the sofa template version 11 | Team setup for `<repo>` |
+| `<date>` | Created from the sofa template version 12 | Team setup for `<repo>` |

@@ -1,5 +1,24 @@
 # Changelog
 
+## 8.0.0
+
+STORY-474 and STORY-475: template version 12. Each restart of a session is a fresh start with the store name of the session, never `dispatch.sh --resume`. A resume with an option makes a copy. A copy can run in another permission mode, and a resume gives the session no App env.
+
+`/sofa:start` on a repository with template 11 migrates `docs/adlc.md` to template 12 first (`templates/MIGRATION.md`, step 11 → 12). It starts the team only after you agree and the migration PR merges. The step changes only the restart texts of the file and the row of `RESUME`.
+
+After the update to this version, start the team again 1 time (`/sofa:stop`, then `/sofa:start`). Why: the orchestrator that gets the reload of this update still has the old text. Do it only when hitl, requests and monitoring hold no open work, because a new start of the team loses that work. To check it, look at `/sofa:status`: it shows no open `ASK`. Then open the requests session and the monitoring session with `claude attach <name>` (`claude agents` shows the names). They must have no open request and no feature under watch. Until then, the orchestrator keeps the text of the version before.
+
+- `references/roles/orchestrator.md`: the new subsection "A fresh restart" of "Stopped sessions". It says that the message `RESUME` and `/sofa:resume` are not `--resume`. The reload, the colour restart, "Use the sessions again", "Timer roles" step 3 and "Stopped sessions" step 3 use it. It does not restart a busy session or its own session. It does not restart a live session of hitl, requests or monitoring for the reload, the colour or a change of section 3, and such a session gets `RELOAD`, with the new skill folder when `sofa` changed. The first message of a session with an open item is a `RESUME` with the item, its branch, its PR and its worktree. A free session gets the first message of a first start of its role. A fresh restart clears the colour of the store row. The old step 4 (the id of a copy) is gone. "Status check" restarts a stopped session only in 5 cases, and restarts the free live sessions of `reload.pending`.
+- `references/roles/updater.md`: "The reload" is the same fresh restart. The reload `TASK` is the last step of a run, and it gives the new plugin root.
+- `references/roles/plan-auditor.md`: the time of the last audit is in `plan-auditor.last`.
+- `references/roles/scheduler.md` and `commands/resume.md`: the same fresh restart.
+- `commands/pause.md`: `--now` also keeps monitoring live, and sends it `PAUSE` with no `now`.
+- `commands/stop.md`: the reason for no `claude rm` does not name `--resume`.
+- `skills/start/SKILL.md`: only a fresh start gives a session the App settings.
+- `templates/ADLC.md`: section 3 (`Tier:`) and section 8 give a stopped session a fresh restart. The row of `RESUME` in section 5 says that `RESUME` is not `--resume`. The dispatch line has no `[--resume <session id>]`. `dispatch.sh` keeps the option.
+- `templates/MIGRATION.md`: the step 11 → 12, and a skip in the step 9 → 10.
+- `tests/template.test.sh`: 138 new checks and 2 changed version checks, with a guard for a resume in a role file or a command file. `tests/integration/test_start_migration_live.py` accepts the step 11 → 12.
+
 ## 7.20.1
 
 STORY-485: the place of a guard message of `snapshot take` holds only names of the script (FEATURE-47, D-7100 to D-7104).

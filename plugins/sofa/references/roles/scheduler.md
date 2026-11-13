@@ -22,4 +22,4 @@ cargo install --locked --git https://github.com/ai-ready-future/jag --rev 8ea270
 
 `sofa:setup` installs the line (it shows it first, and the user agrees). `bg-watch check` finds each session that stopped on an API error, restarts it, and sends it `retry`. The heartbeat shows on the dashboard; a heartbeat older than 15 minutes means the cron does not run. Read `.sofa/scheduler.log` to find the cause.
 
-The orchestrator does not restart a session that stopped on an API error. It resumes a session that Claude Code stopped when it was free (orchestrator role file, "Stopped sessions").
+The orchestrator does not restart a session that stopped on an API error. It gives a session that Claude Code stopped a fresh restart only in the cases of the orchestrator role file ("Status check", "A fresh restart").

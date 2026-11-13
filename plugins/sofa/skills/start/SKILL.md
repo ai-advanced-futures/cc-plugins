@@ -48,7 +48,7 @@ Find the machine values of this start. They go in the start prompts and not in `
 - GitHub person: the active account of `gh auth status` in this session.
 - Launcher name: your session name, on the first line of `ListAgents`.
 
-When the state store has the GitHub App values, `dispatch.sh` gives each new session the App identity (`sofa-github settings`): each `gh` and each `git` of the session acts as `<slug>[bot]`. A resumed session keeps the settings of its first start. So after the App setup (`sofa:setup`, step 5.5), stop the team and start it again.
+When the state store has the GitHub App values, `dispatch.sh` gives each new session the App identity (`sofa-github settings`): each `gh` and each `git` of the session acts as `<slug>[bot]`. Only a fresh start with `dispatch.sh` gives a session these settings: a `--resume` copy does not keep the settings of its first start. So after the App setup (`sofa:setup`, step 5.5), stop the team and start it again.
 
 If the `CLAUDE.md` of the repository names a different process or harness for product work, ask the user which one wins before step 2.
 

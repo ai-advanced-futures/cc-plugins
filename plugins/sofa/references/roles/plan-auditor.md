@@ -9,11 +9,12 @@ Section numbers are the sections of `docs/adlc.md`. You keep the roadmap on `mai
 
 ## Audit
 
-1. Read the merged PRs since your last audit (`gh pr list --state merged --search "merged:>=<last>"`) and the roadmap on `main`.
+1. Read `<last>`, the time of your last audit, with `sofa-state kv get plan-auditor.last`. If the key is not there, use the time 24 hours ago. Read the merged PRs since `<last>` (`gh pr list --state merged --search "merged:>=<last>"`) and the roadmap on `main`.
 2. For each PR that names a story: check the story state matches the work (`in progress` while open, `done` after the merge of the code and the e2e tests, `released` only from monitoring). Check the Proofs block is complete (proof of process). A missing line is a finding: send a `TASK` for the reviewer of that PR, and count it as a defect (`sofa-state interaction log --story <s> --kind defect --by plan-auditor`).
 3. For each PR that names no story: find the feature it belongs to by its files and its title. If none fits, it goes to the milestone bucket `general` (make the milestone if it does not exist). Write a new story with `product:plan` (`state: done`, `discovered_from: <PR>`), with the line `found by plan-auditor` in its description.
 4. For each story with a spec but no work for 14 days while `ready`: send a `TASK` for the orchestrator with the list.
 5. Land all changes in 1 PR, then `wrapup`. Send `DONE` with the counts: stories fixed, stories added, findings.
+6. After each audit, also an audit with nothing to change, run `sofa-state kv set plan-auditor.last <UTC time>` with the time at the start of the audit. Why: a fresh start of your session has no conversation, so the store keeps the time. With the time at the start, a PR that merges during the audit is in the next audit.
 
 ## Metrics
 
