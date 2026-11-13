@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.18.1
+
+Test only, no change in a skill or a script (STORY-466). A live test of the migration of `docs/adlc.md` from template version 10 to 11, run by `/sofa:start`.
+
+- `tests/integration/test_start_migration_live.py`, tier `start`: a fixture repository with a local bare `origin` and a template 10 `docs/adlc.md` (`tests/fixtures/adlc-v10.md`: no `GitHub person` bullet, a custom `GitHub account` text, no GitHub person in `Machine values:`). Turn 1 must tell about the migration and change nothing. Turn 2 (`yes`) must leave the migrated file on `origin`: version 11, the rules "Mention the operator" and "The App identity for git and gh" as rules 4 and 5, the bot sentence on the custom account text, the person bullet after it, the GitHub person in `Machine values:`, the fresh restart paragraph, 1 section 9 row, and no other line of the repository removed. A `gh` stub logs each call and answers `gh auth`, so no call reaches GitHub.
+- `tests/integration/test_review_contract.py`: `Start` takes the text of `docs/adlc.md` (`adlc=`). Each `claude -p` turn runs in its own process group, and at the time limit the whole group stops (adlc rule 16). The turn does not inherit the team env of the session that runs the test (`SOFA_*`, `GIT_CONFIG_*`, `GIT_AUTHOR_*`, `GIT_COMMITTER_*`, `GH_CONFIG_DIR`, `GH_TOKEN`, `GITHUB_TOKEN`): a `/sofa:start` in the fixture read the real state store of the team before this change.
+
 ## 7.18.0
 
 STORY-466: template version 11. A new team gets 3 rules that a team tried first.

@@ -6,7 +6,7 @@ TIER ?=
 
 # A tier is the first part of a test name: rule2 (a live session that runs station Rule 2),
 # readiness (readiness.py on fixture repositories, no paid session),
-# start (live /sofa:start sessions with a claude stub),
+# start (live /sofa:start sessions with a claude stub, and the migration of a template 10 docs/adlc.md),
 # slack (sofa-slack with the fake Slack API, no paid session),
 # slacklive (live /sofa:setup sessions, step 5, with the fake Slack API),
 # skillslive (live /sofa:setup sessions, step 2.5, the factory skills; needs the network),
