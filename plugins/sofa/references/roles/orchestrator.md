@@ -53,6 +53,25 @@ The `scheduler` restarts the sessions that stopped on an API error (section 8). 
 
 If `sofa-state kv get reload.pending` prints names, do a fresh restart of each free live session of that list (see "A fresh restart"). Then write the list again without the names that you restarted and without the stopped sessions. Why: the next start of a stopped session loads the latest skills. The check sends no other messages to the sessions, because each message interrupts the work of a session. The colour check can send 1 `TASK` to the troubleshooter.
 
+### Snapshot publish
+
+Each status check runs `sofa-state snapshot publish` (STORY-444). It pushes the scrubbed snapshot of this line to the ref `refs/sofa-floor/<store id>` on `origin`, so each view of the floor can read it. Read the exit code:
+
+- **Exit 0:** run `sofa-state kv set floor.publish.refused ""`. The key is empty, so a later refusal is sent again.
+- **Exit 3:** the guard refused the snapshot, and nothing was pushed. The first line of stderr is `sofa-state: the snapshot holds <kind>; no snapshot written (in <where>)`. `<where>` names up to 5 places. Find each place in the table below, and do the step of the table. Send the user step 1 time: if `sofa-state kv get floor.publish.refused` already prints this first line, do nothing. Else run `sofa-state kv set floor.publish.refused "<the first line>"` and send the step.
+- **Any other non-zero exit:** this is an error, not a refusal. Send 1 `TASK` to the troubleshooter with the first line of stderr, at most 1 time each hour (`sofa-state kv get timer.floor-publish-error` holds the UTC time of the last `TASK`; write the time with `kv set` when you send it).
+
+| Place | Step |
+|---|---|
+| `decisions_24h.<field>` | None. The row leaves the snapshot 24 hours after its `at`. |
+| `items.<field>` other than `items.id`, `sessions.<field>` other than `sessions.name`, and `open_asks.<field>` | A user step: the person finds the row with `report` and names its owner. Then send a `TASK` to the owner, who writes its row again with no private value. |
+| `queue` | A user step: the person decides if the item leaves the queue (`queue set` with no item takes it out of the work). |
+| `line.label` | A user step: the person runs `$ sofa-state --db <main folder>/.sofa/state.db kv set line.label <label>`. |
+| `items.id`, `sessions.name` | A user step with no check: no `sofa-state` command removes or renames such a row, so the line stays refused. Send the step 1 time only, and suggest the later story (a command that removes or renames a row) to the planner as a `TASK`, 1 time. |
+| `the floor configuration set <name>` | A user step: the person changes the file `.claude/sofa-floor.json`. |
+
+A user step has 4 items (the commands of each place, a folder of the person that is not the main folder and not `~`, the person, and the session that needs it with the check). Send it on the route of a user step (the bullet "Route each `BLOCKED` by its tag"), with the commands of the places that need a step. The first command is `$ sofa-state --db <main folder>/.sofa/state.db report`, so that the person finds the row. The person answers with the id or the name of the row, never with the refused value. The check is `sofa-state --db <main folder>/.sofa/state.db snapshot take --out <temporary file>` and it exits 0. For a place `items.id` or `sessions.name`, the check can never pass, so send no check, and stop after the first failed check.
+
 ### Timer roles
 
 The status check starts a timer role when its time is due: plan-auditor every 30 minutes, feedback every 2 hours, ux-quality every 4 hours, and updater once a day. The role stays live after its run. The store holds 1 value for each timer role: the UTC time of its last run, in `timer.<role>`.

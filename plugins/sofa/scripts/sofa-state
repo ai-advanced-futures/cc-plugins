@@ -8,7 +8,8 @@ Database path: --db PATH, else $SOFA_STATE_DB, else <main folder>/.sofa/state.db
 Exit code: 0 on success; 2 on a bad argument (argparse), when `decision log` refuses
 its arguments, when `kv set` gets a key that starts with `decision.`, and when
 SOFA_GIT_TIMEOUT is not a number greater than 0 (read at the first git call, so a command
-that makes no git call does not read it); 1 on all other errors, also when
+that makes no git call does not read it); 3 when `snapshot publish` refuses a snapshot because the guard
+found a private value (nothing is pushed; `snapshot take` keeps exit 1 for the same output line); 1 on all other errors, also when
 `decision log` cannot reserve a block of decision ids (see "decisions" below); also on
 `snapshot take` when the floor configuration is missing or wrong, and when the snapshot or a rule set of the
 file would hold a known private value (a session id, a path, a person login or a machine value).
@@ -276,6 +277,10 @@ MAX_CITED_ID = 99999  # the highest id of main that counts; old ids are near 500
 MAX_PUSHES = 5
 APP_KEYS = ["app-id", "installation-id", "key-path", "slug", "bot-user-id"]
 RESERVE_FAILED = "cannot reserve a block of decision ids"
+RESERVE_TAIL = "no decision written. Try again in 1 minute."
+RESERVE_SHORT = "no decision written."
+PUBLISH_FAILED = "cannot publish the snapshot"
+PUBLISH_TAIL = "nothing pushed."
 
 
 def block_range(k):
@@ -395,7 +400,12 @@ class Git:
     """The git calls of 1 reservation: 1 repository, 1 environment (row 10 of the STORY-143 spec and
     rows 2 to 4 of the STORY-425 spec)."""
 
-    def __init__(self, repo):
+    def __init__(self, repo, failed=None, tail=None, short=None):
+        # The text of an error is an argument, so a reservation and a publish each keep their own (row 8 of the
+        # STORY-444 spec). The default is the text of a reservation. SHORT ends a message that gives no advice.
+        self.failed = failed or RESERVE_FAILED
+        self.tail = RESERVE_TAIL if tail is None else tail
+        self.short = RESERVE_SHORT if short is None else short
         self.repo = repo
         self.env = git_env()
         ssh = self.env.get("GIT_SSH_COMMAND")
@@ -406,22 +416,23 @@ class Git:
             ssh = shlex.quote(self.env["GIT_SSH"]) if self.env.get("GIT_SSH") else "ssh"
         self.env["GIT_SSH_COMMAND"] = ssh + " -o BatchMode=yes"
 
-    def run(self, *args, stdin=None):
+    def run(self, *args, stdin=None, extra=None):
         # The output is parsed, so a color setting of the person must not add escape codes to it.
+        # EXTRA are more variables for this 1 call (the identity of a commit).
+        env = {**self.env, **extra} if extra else self.env
         return run_git(self.repo, ["-c", "color.ui=never", "-c", "color.grep=never", *args],
-                       env=self.env, stdin=stdin)
+                       env=env, stdin=stdin)
 
-    def must(self, *args, stdin=None):
+    def must(self, *args, stdin=None, extra=None):
         """Run a git call. Return stdout. Raise the error of row 9 when it fails."""
-        rc, out, err = self.run(*args, stdin=stdin)
+        rc, out, err = self.run(*args, stdin=stdin, extra=extra)
         if rc != 0:
             raise self.failure(args[0], rc, err)
         return out
 
-    @staticmethod
-    def failure(step, rc, err):
-        return UsageError(f"{RESERVE_FAILED}: {step}: {git_reason(err, rc)}; no decision written. "
-                          "Try again in 1 minute.")
+    def failure(self, step, rc, err):
+        text = f"{self.failed}: {step}: {git_reason(err, rc)}"
+        return UsageError(f"{text}; {self.tail}" if self.tail else text)
 
 
 def git_reason(err, rc):
@@ -455,10 +466,10 @@ def store_repo(path):
     return folder if rc == 0 and os.path.realpath(out.strip()) == folder else None
 
 
-def repo_of_store(a):
+def repo_of_store(a, failed=RESERVE_FAILED):
     repo = store_repo(a.db_path)
     if repo is None:
-        raise UsageError(f"{RESERVE_FAILED}: the store {a.db_path} is not <repository>/.sofa/"
+        raise UsageError(f"{failed}: the store {a.db_path} is not <repository>/.sofa/"
                          "state.db; give no --db, or give the path of the store of the main folder.")
     return repo
 
@@ -470,18 +481,23 @@ def origin_url(git):
     fetch = [u for u in git.must("remote", "get-url", "--all", "origin").split("\n") if u]
     push = [u for u in git.must("remote", "get-url", "--push", "--all", "origin").split("\n") if u]
     if len(fetch) != 1 or push != fetch:
-        raise UsageError(f"{RESERVE_FAILED}: remote: origin must have 1 URL for fetch and push "
-                         f"(fetch {' '.join(fetch) or 'none'}, push {' '.join(push) or 'none'}); "
-                         "no decision written.")
+        raise UsageError((f"{git.failed}: remote: origin must have 1 URL for fetch and push "
+                          f"(fetch {' '.join(fetch) or 'none'}, push {' '.join(push) or 'none'}); "
+                          f"{git.short}").rstrip("; "))
     return fetch[0]
+
+
+def has_app_values(con):
+    """Does the store hold at least 1 of the machine.github-app.* values?"""
+    marks = [f"machine.github-app.{k}" for k in APP_KEYS]
+    rows = con.execute(f"SELECT value FROM kv WHERE key IN ({','.join('?' * len(marks))})", marks)
+    return any(row[0] for row in rows)
 
 
 def app_setup_ok(con, git, url):
     """Row 20. Return None when the store has no App values or the git setup is the App setup,
     else the text of the check that failed. URL is the 1 URL of origin. It makes no network call."""
-    marks = [f"machine.github-app.{k}" for k in APP_KEYS]
-    rows = con.execute(f"SELECT value FROM kv WHERE key IN ({','.join('?' * len(marks))})", marks)
-    if not any(row[0] for row in rows):
+    if not has_app_values(con):
         return None
     rc, out, _ = git.run("config", "-z", "--get-regexp", r"^credential\..*helper$")
     values = [e.split("\n", 1)[1] if "\n" in e else "" for e in out.split("\0") if e] if rc == 0 else []
@@ -533,7 +549,12 @@ def main_block(git):
 
 
 def store_id(con):
-    """The id of this store (the key decision.store). It is written and committed at once."""
+    """The id of this store (the key decision.store). It is read first, so a store that has an id needs no write
+    lock (in WAL mode a read goes on while another writer holds the lock, STORY-444 row 18). Only when the key is
+    absent, it is written and committed at once."""
+    row = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
+    if row:
+        return row[0]
     con.execute("INSERT OR IGNORE INTO kv (key, value) VALUES ('decision.store', ?)",
                 (secrets.token_hex(8),))
     con.commit()
@@ -930,16 +951,22 @@ SNAPSHOT_FIELDS: dict[str, tuple[str, dict]] = {
         "id": _ID, "story": _ID, "level": _LEVEL, "confidence": _CONFIDENCE,
         "reversibility": _REVERSIBILITY, "visibility": _VISIBILITY, "at": _TIME, "vetoed_at": _TIME}),
 }
-# The fields of each rule set that may go into the key `rules`. Version 1 has none, so each set is {}.
-# The story that owns a field adds it here with its form (D-7032, CONSTRAINT-01).
+# The fields of each rule set that may go into the key `rules`. The story that owns a field adds it here with its
+# form (D-7032, CONSTRAINT-01). `health.snapshot_max_age_seconds` (STORY-444, D-7199) is the age in seconds after
+# which a reader marks the snapshot of a line as old: a whole number from 60 to 86400.
+SNAPSHOT_MAX_AGE = range(60, 86401)
 RULE_FIELDS: dict[str, dict] = {name: {} for name in FLOOR_SETS}
+RULE_FIELDS["health"]["snapshot_max_age_seconds"] = SNAPSHOT_MAX_AGE
+# The label of a line (the key line.label of the store): the name that a view shows for the line (STORY-444).
+_LABEL = re.compile(r"[a-z0-9][a-z0-9-]{0,31}")
+_STORE_ID = re.compile(r"[0-9a-f]{16}")
 
 # The names that may go into the place (WHERE) of a guard message: each key that build_snapshot writes. A key of a
 # dict that is not here comes from data (the store or the file), so it never goes into a message (STORY-485). A story
 # that adds a section, a key or a field adds its name here, in the same change. Each name is a word of the script:
 # a key that comes from data (a login, a path, a work order) is never added here.
 WHERE_NAMES = frozenset({
-    "schema_version", "taken_at", "line", "store", "queue", "rules", "rules_digest", "nulled",
+    "schema_version", "taken_at", "line", "store", "label", "queue", "rules", "rules_digest", "nulled",
     *SNAPSHOT_FIELDS, *(f for _, fields in SNAPSHOT_FIELDS.values() for f in fields),
     *FLOOR_SETS, *(f for fields in RULE_FIELDS.values() for f in fields),
 })
@@ -954,9 +981,15 @@ class Scrubber:
         self.nulled = 0
 
     def value(self, form, value):
+        """FORM is a regex (fullmatch), a set of words, or a `range` (a whole number inside it; a boolean and a
+        float are no whole number)."""
         if value is None:
             return None
-        if isinstance(value, str) and (value in form if isinstance(form, set) else form.fullmatch(value)):
+        if isinstance(form, range):
+            ok = type(value) is int and value in form
+        else:
+            ok = isinstance(value, str) and (value in form if isinstance(form, set) else form.fullmatch(value))
+        if ok:
             return value
         self.nulled += 1
         return None
@@ -1007,7 +1040,10 @@ def build_snapshot(con, sets, at, store):
     """
     scrub = Scrubber()
     day_ago = (parse_iso(at) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    snap = {"schema_version": SCHEMA_VERSION, "taken_at": at, "line": {"store": store}}
+    # The label is the key line.label of the store; a store with no such key gets line-<6 hex digits of its id>.
+    row = con.execute("SELECT value FROM kv WHERE key = 'line.label'").fetchone()
+    label = scrub.value(_LABEL, row[0] if row else f"line-{store[:6]}")
+    snap = {"schema_version": SCHEMA_VERSION, "taken_at": at, "line": {"store": store, "label": label}}
     for section, (query, fields) in SNAPSHOT_FIELDS.items():
         rows = con.execute(query, (day_ago,) if "?" in query else ()).fetchall()
         snap[section] = [{f: scrub.value(form, r[f]) for f, form in fields.items()} for r in rows]
@@ -1095,7 +1131,7 @@ def snapshot_strings(snap, sets):
     return [(where or "the snapshot", text) for where, text in found]
 
 
-def guard_snapshot(con, a, snap, sets):
+def guard_snapshot(con, a, snap, sets, code=1):
     """Fail closed: stop when the snapshot, or a rule set of the file, holds a known private value (any letter case).
 
     The rule sets are read too, because version 1 copies none of their fields into the snapshot, so a path in the
@@ -1107,7 +1143,7 @@ def guard_snapshot(con, a, snap, sets):
         needle = value.casefold()
         where = sorted({w for w, s in strings if needle in s})
         if where:
-            raise UsageError(f"the snapshot holds {kind}; no snapshot written (in {', '.join(where[:5])})")
+            raise UsageError(f"the snapshot holds {kind}; no snapshot written (in {', '.join(where[:5])})", code=code)
 
 
 def write_atomic(path, text):
@@ -1126,8 +1162,9 @@ def write_atomic(path, text):
                 pass
 
 
-def cmd_snapshot_take(con, a):
-    """Write 1 scrubbed snapshot of this line as JSON, to stdout or to --out."""
+def snapshot_text(con, a, code):
+    """The snapshot text of this line (rows 3 to 5 and 15): read the floor configuration, take the store id, then
+    build and guard the snapshot in 1 read transaction. CODE is the exit code of a refusal of the guard."""
     path = a.config
     if not path:
         try:
@@ -1135,22 +1172,166 @@ def cmd_snapshot_take(con, a):
         except (subprocess.CalledProcessError, OSError):
             raise UsageError("not in a git repository; give --config") from None
     sets = read_floor_config(path)
-    store = store_id(con)  # the only write: it commits at once
+    store = store_id(con)  # a write only when the store has no id yet: it commits at once
     # 1 read transaction for each read below (WAL): the sections and the guard show 1 state of the store, also when
     # another session writes while this command runs.
     con.execute("BEGIN")
     try:
         snap = build_snapshot(con, sets, a.at, store)
-        guard_snapshot(con, a, snap, sets)
-        text = dump(snap) + "\n"
+        guard_snapshot(con, a, snap, sets, code=code)
+        return dump(snap) + "\n", snap
     except RecursionError:
         raise UsageError("the floor configuration is nested too deep; no snapshot written") from None
     finally:
         con.rollback()
+
+
+def cmd_snapshot_take(con, a):
+    """Write 1 scrubbed snapshot of this line as JSON, to stdout or to --out."""
+    text, _ = snapshot_text(con, a, 1)
     if a.out:
         write_atomic(a.out, text)
     else:
         sys.stdout.write(text)
+
+
+# --- snapshot publish and snapshot lines (STORY-444) ---
+# Each line pushes its snapshot to 1 ref of origin, `refs/sofa-floor/<store id>`, and a reader gets the snapshot of
+# each line from the refs. The ref holds 1 commit with no parent, so a new snapshot replaces the old one (ADR-0012,
+# ADR-0013). The only forced push of the team is the push of the own ref with an explicit old id (rule 24).
+FLOOR_REF = "refs/sofa-floor/"
+READ_FAILED = "cannot read the lines"
+READ_TMP = "refs/sofa-state/floor-"
+LINE_MAX_BYTES = 1048576
+SNAPSHOT_FILE = "snapshot.json"
+
+
+def remote_old(git, ref):
+    """The object id that REF has on origin, or an empty text when origin has no such ref."""
+    for row in git.must("ls-remote", "origin", ref).splitlines():
+        oid, _, name = row.partition("\t")
+        if name.strip() == ref:
+            return oid.strip()
+    return ""
+
+
+def make_snapshot_commit(git, text, taken_at):
+    """Write the commit of the snapshot into the object store of the repository and return its id: the file
+    snapshot.json (mode 100644), a tree with that 1 entry, no parent, and the identity sofa-state (never the identity
+    of the person), the date TAKEN_AT, the message `snapshot <taken_at>`."""
+    blob = git.must("hash-object", "-w", "--stdin", stdin=text).strip()
+    tree = git.must("mktree", stdin=f"100644 blob {blob}\t{SNAPSHOT_FILE}\n").strip()
+    stamp = f"{int(parse_iso(taken_at).timestamp())} +0000"
+    who = {"GIT_AUTHOR_NAME": "sofa-state", "GIT_AUTHOR_EMAIL": "sofa-state@localhost", "GIT_AUTHOR_DATE": stamp,
+           "GIT_COMMITTER_NAME": "sofa-state", "GIT_COMMITTER_EMAIL": "sofa-state@localhost",
+           "GIT_COMMITTER_DATE": stamp}
+    return git.must("-c", "commit.gpgsign=false", "commit-tree", tree, "-m", f"snapshot {taken_at}",
+                    extra=who).strip()
+
+
+def cmd_snapshot_publish(con, a):
+    """Push the scrubbed snapshot of this line to refs/sofa-floor/<store id> on origin (rows 3 to 8, 15 and 19)."""
+    text, snap = snapshot_text(con, a, 3)  # a config error and a refusal of the guard stop before the first git call
+    if not has_app_values(con):
+        raise UsageError(f"{PUBLISH_FAILED}: the store has no App values; run /sofa:setup")
+    git = Git(repo_of_store(a, PUBLISH_FAILED), failed=PUBLISH_FAILED, tail=PUBLISH_TAIL, short=PUBLISH_TAIL)
+    problem = app_setup_ok(con, git, origin_url(git))
+    if problem:
+        raise UsageError(f"{PUBLISH_FAILED}: this session has no App git setup ({problem}); {PUBLISH_TAIL}")
+    ref = f"{FLOOR_REF}{snap['line']['store']}"
+    commit = make_snapshot_commit(git, text, snap["taken_at"])
+    old = remote_old(git, ref)
+    for attempt in (1, 2):
+        # The lease names the old id that we read, so another publish of this store between the read and the push
+        # makes git refuse (an empty old id means that the ref must not exist).
+        rc, _, err = git.run("push", "origin", f"--force-with-lease={ref}:{old}", f"{commit}:{ref}")
+        if rc == 0:
+            print(f"published {ref} {snap['taken_at']}")
+            return
+        new = remote_old(git, ref)
+        if attempt == 2 or new == old:
+            raise git.failure("push", rc, err)
+        old = new  # the lease was stale: read again and push 1 more time
+
+
+def cmd_snapshot_lines(con, a):
+    """Print the snapshot of each line on origin as JSON (rows 10 to 13)."""
+    git = Git(repo_of_store(a, READ_FAILED), failed=READ_FAILED, tail="", short="")
+    origin_url(git)  # origin must have 1 URL; no App check, so a session with no App values reads the lines too
+    read_at = a.now or now_iso()
+    row = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
+    own = row[0] if row else None  # a read: this command writes no store id
+    lines = []
+    if git.must("ls-remote", "origin", FLOOR_REF + "*").strip():
+        tmp = f"{READ_TMP}{os.getpid()}-{secrets.token_hex(4)}"
+        try:
+            git.must("fetch", "--no-tags", "--no-write-fetch-head", "--refmap=", "origin",
+                     f"+{FLOOR_REF}*:{tmp}/*")
+            names = git.must("for-each-ref", "--format=%(refname)", f"{tmp}/").split()
+            for name in sorted(names):
+                store = name[len(tmp) + 1:]
+                if _STORE_ID.fullmatch(store):
+                    lines.append(read_line(git, name, store, read_at, own))
+        finally:
+            # Only local refs go: the temporary refs of this run (never a ref of origin).
+            for name in git.run("for-each-ref", "--format=%(refname)", f"{tmp}/")[1].split():
+                git.run("update-ref", "-d", name)
+    lines.sort(key=lambda line: (line["label"] is None, line["label"] or "", line["store"]))
+    sys.stdout.write(dump({"lines": lines, "read_at": read_at}) + "\n")
+
+
+def read_line(git, name, store, read_at, own):
+    """The line of the ref NAME (the temporary copy of refs/sofa-floor/STORE): its snapshot, or the reason that no
+    snapshot is there. The text comes from another machine, so it is data: a bad line gives an error, never a stop."""
+    line = {"store": store, "label": None, "taken_at": None, "age_seconds": None, "old": None,
+            "own": store == own, "schema_version": None, "snapshot": None, "error": None}
+
+    def bad(message):
+        line["error"] = message
+        return line
+
+    rc, size, _ = git.run("cat-file", "-s", f"{name}:{SNAPSHOT_FILE}")
+    if rc != 0:
+        return bad(f"the ref has no {SNAPSHOT_FILE}")
+    if int(size.strip()) > LINE_MAX_BYTES:
+        return bad(f"the snapshot is over {LINE_MAX_BYTES} bytes")
+    rc, text, _ = git.run("cat-file", "blob", f"{name}:{SNAPSHOT_FILE}")
+    if rc != 0:
+        return bad(f"the ref has no {SNAPSHOT_FILE}")
+    try:
+        snap = json.loads(text)
+    except (ValueError, RecursionError):
+        return bad("the snapshot is not JSON")
+    if not isinstance(snap, dict):
+        return bad("the snapshot is not 1 JSON object")
+    version = snap.get("schema_version")
+    if type(version) is not int:
+        return bad("schema_version is not a whole number")
+    line["schema_version"] = version
+    if version > SCHEMA_VERSION:
+        return bad(f"unknown schema {version}")
+    taken = snap.get("taken_at")
+    try:
+        taken_dt = parse_iso(taken) if isinstance(taken, str) and _TIME.fullmatch(taken) else None
+    except ValueError:
+        taken_dt = None
+    if taken_dt is None:
+        return bad("taken_at is not a time of the form YYYY-MM-DDTHH:MM:SSZ")
+    info = snap.get("line") if isinstance(snap.get("line"), dict) else {}
+    named = info.get("store")
+    if named != store:
+        return bad(f"the snapshot names store {named}" if isinstance(named, str) and _STORE_ID.fullmatch(named)
+                   else "the snapshot names no store of the form of a store id")
+    label = info.get("label")
+    line["label"] = label if isinstance(label, str) and _LABEL.fullmatch(label) else None
+    line["taken_at"] = taken
+    line["age_seconds"] = age = max(0, int((parse_iso(read_at) - taken_dt).total_seconds()))
+    rules = snap.get("rules") if isinstance(snap.get("rules"), dict) else {}
+    health = rules.get("health") if isinstance(rules.get("health"), dict) else {}
+    limit = health.get("snapshot_max_age_seconds")
+    line["old"] = age > limit if type(limit) is int and limit in SNAPSHOT_MAX_AGE else None
+    line["snapshot"] = snap
+    return line
 
 
 # --- output helpers ---
@@ -1311,6 +1492,15 @@ def build_parser():
     sp = leaf(sn, "take", cmd_snapshot_take, "write 1 scrubbed snapshot of this line as JSON")
     sp.add_argument("--config", help=f"the floor configuration (default: <main folder>/{FLOOR_CONFIG})")
     sp.add_argument("--out", help="write the snapshot to this file, not to stdout")
+    sp.set_defaults(lock_tries=1, locked="the store is locked by another writer; no snapshot written")
+
+    sp = leaf(sn, "publish", cmd_snapshot_publish, "push the scrubbed snapshot of this line to its ref on origin")
+    sp.add_argument("--config", help=f"the floor configuration (default: <main folder>/{FLOOR_CONFIG})")
+    sp.set_defaults(lock_tries=1,
+                    locked=f"{PUBLISH_FAILED}: the store is locked by another writer; {PUBLISH_TAIL}")
+
+    sp = leaf(sn, "lines", cmd_snapshot_lines, "print the snapshot of each line on origin as JSON")
+    sp.add_argument("--now", type=norm_iso, help="the time of the read, ISO-8601 (default: now, UTC)")
 
     sp = leaf(top, "prune", cmd_prune, "remove heartbeats and messages older than N days")
     sp.add_argument("--days", required=True, type=int)
@@ -1329,7 +1519,10 @@ def run_with_retry(a):
     at its end, so a new try does not write a row twice.
     """
     path = a.db_path = db_path(a.db)
-    for n in range(LOCK_TRIES):
+    # A leaf may set lock_tries and locked (the output line of its stop): `snapshot take` and `snapshot publish`
+    # make 1 try, so they stop at the first "database is locked" error, after the busy timeout of open_db.
+    tries = getattr(a, "lock_tries", LOCK_TRIES)
+    for n in range(tries):
         try:
             con = open_db(path)
             try:
@@ -1339,7 +1532,11 @@ def run_with_retry(a):
                 con.close()
         except sqlite3.OperationalError as e:
             locked = "locked" in str(e) or "busy" in str(e)
-            if not locked or n == LOCK_TRIES - 1:
+            if not locked:
+                raise
+            if n == tries - 1:
+                if getattr(a, "locked", None):
+                    raise UsageError(a.locked) from None
                 raise
             time.sleep(random.uniform(0.02, 0.1 * (n + 1)))
 

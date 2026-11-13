@@ -1,5 +1,16 @@
 # Changelog
 
+## 9.1.0
+
+STORY-444: each line publishes its snapshot to a dedicated ref, and a reader gives all the lines (FEATURE-47, ADR-0012, ADR-0013, D-7187, D-7188, D-7192, D-7199).
+
+- `sofa-state snapshot publish [--config PATH]`: pushes the scrubbed snapshot of this line to `refs/sofa-floor/<store id>` on `origin`, as 1 commit with no parent and the identity `sofa-state`. The push is the only forced push of the team: `--force-with-lease=<ref>:<explicit old id>` of the own ref (rule 24). A refused lease is read again and pushed 1 more time. A store with no App values, or a session with no App git setup, pushes nothing and exits 1.
+- `sofa-state snapshot lines [--now TIME]`: prints the snapshot of each line on `origin` as JSON, with `age_seconds`, `old` and `own`. It needs no App values. A snapshot of another machine that is bad gives 1 line with an `error`, and the other lines stay.
+- New exit code 3: `snapshot publish` exits 3 when the guard refuses the snapshot (nothing is pushed), so the orchestrator can tell a refusal from an error. `snapshot take` keeps exit 1.
+- The snapshot has the new key `line.label` (kv `line.label`, default `line-` and 6 hex digits of the store id) and the new rule field `rules.health.snapshot_max_age_seconds`. `schema_version` stays 1. `.claude/sofa-floor.json` sets the limit to 1800 seconds.
+- `snapshot take` and `snapshot publish` read `decision.store` first and write it only when it is absent, and make 1 try for the store lock: another writer gives exit 1 and the line `the store is locked by another writer`, not a wait of up to 25 tries. Each other command keeps its tries.
+- `references/roles/orchestrator.md`, "Snapshot publish": the status check runs `snapshot publish`; an exit 3 goes on the route of a user step as 1 user step (sent 1 time, kept in the kv `floor.publish.refused`), and any other error goes to the troubleshooter at most 1 time each hour.
+
 ## 9.0.0
 
 STORY-359: the merger merges the checked head and keeps the worktree of the author (FEATURE-04, D-7140 to D-7146, D-7153 to D-7156, D-7159, D-7160, D-7166).
