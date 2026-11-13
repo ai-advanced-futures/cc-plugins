@@ -54,5 +54,17 @@ A JSON list. 1 item for each person:
 
 1. Show the draft as 1 table. Ask which rows are on the human team, and which person is missing.
 2. For each person, ask 3 questions in 1 `AskUserQuestion`: the role; the decision areas (`multiSelect`, from `decision-areas.md`); and who the person escalates to (the other people, and `none`). The first option is the most likely answer, from the draft and the earlier answers.
+   - Then ask for the GitHub login of the person in its own `AskUserQuestion`, not in the `AskUserQuestion` of the 3 questions.
+   - For the GitHub login, the first option is the login of the draft row.
+   - With no login in the draft row, the first option is the GitHub person of this machine (item 4), but only while no item of the batch and no person page has that login.
+   - The last option is "no GitHub login". For that answer, leave out the key `github` of the item.
+   - The user types another login with "Other".
+   - When "no GitHub login" is the only option left, ask for the login as text, not in an `AskUserQuestion`.
 3. Ask for the Slack handle only when the draft has none.
-4. Run `add` with `--by agent:<your session name>` and `--confirmed-by human:<login of the person who answered>`.
+4. Check the operator before you write the batch.
+   - Find the GitHub person of this machine. In a team session, it is the GitHub person of the machine values of your start prompt. Else it is the active account of `gh auth status`. Else it is the value of `<skill folder>/scripts/sofa-state kv get machine.instance`, run from the main folder. When no source gives a login, stop step 6 and say which source failed.
+   - Run `sofa-people list --json`. 1 item of the batch, or 1 page of that list, must have that login as `github` (the case of the letters does not count).
+   - Else ask the user which person has that login. Give at most 4 options: the people of the batch or of that list who most likely have it, and "a new person". When the batch and that list have no person, do not ask this question, because "a new person" is the only answer.
+   - For a person of the batch, set `github` of that item. For a person who has a page but is not in the batch, add the object of that page from `sofa-people list --json` to the batch, and set its `github`. That object has each field of the page, so `add` keeps the role, the decision areas and the escalation of the page. For "a new person", ask the 3 questions of item 2 for the operator, set `github` to that login, and add the operator to the batch.
+   - The user can skip this check. Then the readiness item `operator-page` blocks the start of the team, and the report of step 7 names the skip.
+5. Run `add` with `--by agent:<your session name>` and `--confirmed-by human:<login of the person who answered>`.

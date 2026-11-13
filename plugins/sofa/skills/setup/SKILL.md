@@ -107,6 +107,8 @@ The outcome: 1 person page for each person of the human team in the `knowledge` 
 
 Interview the user and write the batch as `<skill folder>/references/human-team.md` says. On a running team, send the batch to the orchestrator as a `TASK` for scribe instead of the PR.
 
+Each team mentions its operator, the person whose page has the tag `github:<GitHub person>` (rule "Mention the operator" of `docs/adlc.md` section 2). The interview asks for the GitHub login of each person. Item 4 of the interview checks the batch for the GitHub person before you write the batch. After `add`, run `python3 <skill folder>/scripts/readiness.py --json` in the worktree of the PR, and read the item `operator-page`. When its detail says "only in the working tree", the batch is correct, and the item waits for the merge of the PR. When its detail says that no person page has the tag, show the detail and go back to item 4 of the interview. When the item is `unknown`, show its detail and its fix: step 6 ends, and the report of step 7 names the item. After the merge, run `git fetch origin` in the main folder, and run `readiness.py --json` there again. The item must be `ok`, because it blocks the start of the team. Until then, the report of step 7 names the PR, or the skip of item 4. On a running team, the check of item 4 is the only check, because scribe writes the pages.
+
 ## Step 7 — Report
 
 Run `sofa:readiness` again and show the table. List the items the user skipped.

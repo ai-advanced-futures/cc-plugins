@@ -166,11 +166,18 @@ class Repo:
         self.template = PLUGIN_ROOT / "templates" / "ADLC.md"
         self._tables = None
         self._adlc_text = None
+        self._gh = None
 
     def adlc_text(self):
         if self._adlc_text is None:
             self._adlc_text = read_text(self.adlc) if self.adlc.exists() else ""
         return self._adlc_text
+
+    def gh_status(self):
+        """The exit code and the output of `gh auth status`. It runs 1 time, for the items gh-auth and operator-page."""
+        if self._gh is None:
+            self._gh = run([cmd_name("READINESS_GH", "gh"), "auth", "status"])
+        return self._gh
 
     def tables(self):
         """Tables of docs/adlc.md, or of the template when docs/adlc.md is missing."""
@@ -468,7 +475,7 @@ def check_github_app(repo):
 
 def check_tools(repo):
     items = []
-    rc, out = run([cmd_name("READINESS_GH", "gh"), "auth", "status"])
+    rc, out = repo.gh_status()
     if rc == 0:
         items.append(item("gh-auth", "tools", "ok", "gh is logged in"))
     elif rc == 127:
@@ -651,7 +658,11 @@ def knowledge_path(root):
 
 def frontmatter(path):
     """The keys of a page that the save code wrote: scalars, and the block lists tags, aliases and sources."""
-    text = read_text(path)
+    return page_data(read_text(path))
+
+
+def page_data(text):
+    """The keys of the frontmatter of the text of a page, as frontmatter() gives them."""
     if not text.startswith("---\n"):
         return {}
     data, key = {}, None
@@ -671,21 +682,136 @@ def frontmatter(path):
 
 def person_pages(bundle):
     """Each Entity page with entity_kind person: slug, name, aliases, sources, owns, and 1 field for each other tag."""
+    people = (person_from(page.stem, frontmatter(page)) for page in sorted((Path(bundle) / "entities").glob("*.md")))
+    return [p for p in people if p]
+
+
+def person_from(slug, data):
+    """The person of 1 page, from the keys of its frontmatter, or None for a page that is no person page."""
+    if data.get("entity_kind") != "person":
+        return None
+    person = {"slug": slug, "name": data.get("title", slug), "owns": [],
+              "aliases": data.get("aliases", []), "sources": data.get("sources", [])}
+    for tag in data.get("tags", []):
+        key, sep, value = tag.partition(":")
+        if sep and key == "owns":
+            person["owns"].append(value)
+        elif sep and key in PERSON_TAG_KEYS:
+            person[key.replace("-", "_")] = value
+    return person
+
+
+def branch_person_pages(root, branch, path):
+    """The person pages of <branch>:<path>/entities. Each session makes its worktree from origin/main and reads the
+    pages there with sofa-people list, so a page that is only in the working tree of this folder reaches no session.
+    An empty list when git cannot read that folder on the branch (no origin, or no such folder)."""
+    folder = f"{branch}:{path.strip('/')}/entities"
+    # -z: git quotes a file name with a letter that is not ASCII in its default output, so a page would not be read.
+    rc, out = run(["git", "-C", str(root), "ls-tree", "-z", "--name-only", folder])
+    if rc != 0:
+        return []
     people = []
-    for page in sorted((Path(bundle) / "entities").glob("*.md")):
-        data = frontmatter(page)
-        if data.get("entity_kind") != "person":
+    for name in sorted(n for n in out.split("\0") if n):
+        if not name.endswith(".md"):
             continue
-        person = {"slug": page.stem, "name": data.get("title", page.stem), "owns": [],
-                  "aliases": data.get("aliases", []), "sources": data.get("sources", [])}
-        for tag in data.get("tags", []):
-            key, sep, value = tag.partition(":")
-            if sep and key == "owns":
-                person["owns"].append(value)
-            elif sep and key in PERSON_TAG_KEYS:
-                person[key.replace("-", "_")] = value
-        people.append(person)
+        rc, text = run(["git", "-C", str(root), "cat-file", "-p", f"{folder}/{name}"])
+        person = person_from(name[:-3], page_data(text)) if rc == 0 else None
+        if person:
+            people.append(person)
     return people
+
+
+ANSI_CODE = re.compile(r"\x1b\[[0-9;]*m")
+GH_ACCOUNT = re.compile(r"(Logged in to|Failed to log in to|Timeout trying to log in to) (\S+)(?: (?:account|as) (\S+))?")
+GH_LOGIN = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?")
+
+
+def gh_person(out):
+    """The active account of a person in the output of `gh auth status`, or None.
+
+    gh 2.40 and later print `Logged in to <host> account <login> (<source>)`, then `- Active account: true` or `false`,
+    for each account, with the active account of each host first. A failed account gives `Failed to log in to ...` or
+    `Timeout trying to log in to ...`, with `account <login>`, or with `using token (<source>)` and no login. Each of
+    these lines opens an account, so its active line does not go to the account before it, and a failed account never
+    counts. gh before 2.40 prints `Logged in to <host> as <login> (<source>)`, 1 account for each host and no active
+    line, so that account is active. The active account of github.com wins; with no github.com account, the 1 active
+    account. None also for an App login (`[bot]`), because the GitHub person is a person."""
+    accounts = []
+    for line in ANSI_CODE.sub("", out).splitlines():
+        m = GH_ACCOUNT.search(line)
+        if m:
+            accounts.append({"ok": m.group(1) == "Logged in to" and bool(m.group(3)), "host": m.group(2),
+                             "login": m.group(3), "active": True})
+        elif accounts and "Active account:" in line:
+            accounts[-1]["active"] = line.split("Active account:", 1)[1].strip() == "true"
+    active = [a for a in accounts if a["ok"] and a["active"]]
+    pick = [a for a in active if a["host"] == "github.com"] or (active if len(active) == 1 else [])
+    if not pick or pick[0]["login"].endswith("[bot]"):
+        return None
+    return pick[0]["login"]
+
+
+def store_instance(repo):
+    """The key machine.instance of the state store: the GitHub person that /sofa:start step 3 wrote. None when there
+    is no store or no key, or when the value is no login."""
+    db = Path(main_folder(repo.root) or repo.root) / ".sofa" / "state.db"
+    if not db.exists():
+        return None
+    try:
+        con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+        try:
+            row = con.execute("SELECT value FROM kv WHERE key = 'machine.instance'").fetchone()
+        finally:
+            con.close()
+    except sqlite3.Error:
+        return None
+    value = (row[0] or "") if row else ""
+    return value if GH_LOGIN.fullmatch(value) else None
+
+
+def github_person(repo):
+    """The GitHub person (docs/adlc.md section 1, machine values) and its source, or (None, None).
+
+    1st, the active account of gh auth status: the session of the person, where /sofa:start finds it. 2nd, the key
+    machine.instance of the state store: in a team session the shim gives gh no account (ADR-0007), and /sofa:start
+    step 3 wrote the key for the team."""
+    who = gh_person(repo.gh_status()[1])
+    if who:
+        return who, "the active account of gh auth status"
+    who = store_instance(repo)
+    if who:
+        return who, "machine.instance of the state store"
+    return None, None
+
+
+def operator_page(repo, path, pages):
+    """Rule "Mention the operator" of docs/adlc.md section 2: 1 person page on the default branch of origin has the
+    tag github:<GitHub person>. `pages` are the person pages of the working tree.
+
+    It blocks the start, because with no such page each card, issue, PR comment and Slack message for a human
+    becomes a BLOCKED · team. The case of the letters does not count, because GitHub does not use it in a login."""
+    who, source = github_person(repo)
+    if who is None:
+        return item("operator-page", "human", "unknown",
+                    "gh auth status names no active account of a person, and the state store has no machine.instance",
+                    "gh auth login, in the session of the person")
+    branch = default_branch(repo.root)
+
+    def tagged(page):
+        return page.get("github", "").casefold() == who.casefold()
+
+    page = next((p for p in branch_person_pages(repo.root, branch, path) if tagged(p)), None)
+    if page:
+        return item("operator-page", "human", "ok",
+                    f"{branch} has {path}/entities/{page['slug']}.md with the tag github:{page['github']} ({source})")
+    local = next((p for p in pages if tagged(p)), None)
+    if local:
+        return item("operator-page", "human", "missing",
+                    f"{path}/entities/{local['slug']}.md has the tag github:{who} only in the working tree, not on {branch}",
+                    "merge the PR of /sofa:setup step 6, then git fetch origin", True)
+    return item("operator-page", "human", "missing",
+                f"no person page of {path} on {branch} has the tag github:{who}, {source}",
+                "/sofa:setup (step 6, scripts/sofa-people); when its PR is open, merge it, then git fetch origin", True)
 
 
 def slack_token(root):
@@ -715,9 +841,11 @@ def check_human(repo):
     path = knowledge_path(repo.root)
     if not path:
         items.append(item("people-page", "human", "unknown", "no knowledge brain in the registry", "/knowledge:setup"))
+        items.append(item("operator-page", "human", "unknown", "no knowledge brain in the registry", "/knowledge:setup"))
         return items
     brain = repo.root / path
-    if person_pages(brain):
+    pages = person_pages(brain)
+    if pages:
         items.append(item("people-page", "human", "ok", f"{path} has a person page"))
     elif (brain / "people").is_dir() or (brain / "people.md").exists():
         # The roles read the team with sofa-people list, which reads only Entity person pages.
@@ -728,6 +856,7 @@ def check_human(repo):
         items.append(item("people-page", "human", "missing",
                           f"{path} has no person page (an Entity with entity_kind: person)",
                           "/sofa:setup (step 6, scripts/sofa-people)"))
+    items.append(operator_page(repo, path, pages))
     return items
 
 

@@ -333,6 +333,7 @@ def find_page(p, known):
 
 
 ACTOR_RE = re.compile(r"(human|agent):[A-Za-z0-9._-]+")
+GITHUB_LOGIN_RE = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?")
 HUMAN_RE = re.compile(r"human:[A-Za-z0-9._-]+")
 
 
@@ -398,6 +399,17 @@ def check_batch(batch, known):
         if slugify(p["escalates_to"] or "none") not in targets:
             raise Fail(f"person {i}: escalates_to {p['escalates_to']!r} is not a person of the batch or the brain, "
                        f"and not none")
+        # A value that is no login becomes a tag and an alias, and find_page then finds the page of another person
+        # by that alias (STORY-476). An empty value is no value: add writes no tag for it.
+        login = p.get("github")
+        if login not in (None, "") and (not isinstance(login, str) or not GITHUB_LOGIN_RE.fullmatch(login)
+                                         or login.casefold() == "none"):
+            raise Fail(f"person {i}: github {login!r} is not a GitHub login; for a person with no login, "
+                       f"leave out the key github")
+    logins = [p["github"].casefold() for p in batch if p.get("github")]
+    double = sorted({login for login in logins if logins.count(login) > 1})
+    if double:
+        raise Fail(f"2 people of the batch have the github login {double[0]!r}; 1 login goes on 1 person page")
 
 
 def confirmation(confirmer, day, by):

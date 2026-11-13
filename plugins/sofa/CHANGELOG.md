@@ -1,5 +1,17 @@
 # Changelog
 
+## 10.0.0
+
+STORY-476: readiness checks that a person page has the tag of the GitHub person (FEATURE-04).
+
+New stop. `/sofa:start` stops when no person page of the `knowledge` brain on the default branch of `origin` has the tag `github:<GitHub person>`, where the GitHub person is the active account of `gh auth status`. To pass it, run `/sofa:setup`, step 6: it asks for the GitHub login of each person, writes the tag, and opens a PR. Merge the PR before the start. Why: each team mentions its operator, the person whose page has that tag (rule "Mention the operator" of `docs/adlc.md`), and with no such page each card, issue, PR comment and Slack message for a human stops.
+
+- `scripts/readiness.py`: the new item `operator-page` (area `human`). It reads the person pages of the default branch of `origin`, because each session reads them there. It is `ok` when 1 page there has the tag (the case of the letters does not count). It is `missing`, and it blocks the start, when no page there has the tag; when only the working tree has it, the fix is the merge of the PR of setup step 6. It is `unknown`, and it does not block, when there is no knowledge brain, or when `gh auth status` names no active account of a person and the state store has no `machine.instance`. `gh auth status` runs 1 time for the items `gh-auth` and `operator-page`.
+- `scripts/sofa-people`: `add` refuses a `github` value that is not a GitHub login, also `none`, and 1 login for 2 people of the batch.
+- `skills/setup/SKILL.md`, step 6, and `references/human-team.md`, "The interview": the interview asks for the GitHub login of each person, checks the batch for the GitHub person before it writes the batch, and reads the item `operator-page` after `add` and after the merge.
+- `skills/readiness/SKILL.md`: the list of the items names `operator-page`.
+- Tests: 56 new checks in `tests/readiness.test.sh` (the `op-` cases, with a local bare `origin`, and checks in the cases `full` and `empty`), with a fake `gh` that prints the text of `gh auth status` that a case gives; 13 in `tests/sofa-people.test.sh` (also a letter that is not ASCII, a new line at the end, and 40 and 39 characters in a `github` value); 29 in `tests/template.test.sh`.
+
 ## 9.1.1
 
 STORY-504: station Rule 8 takes the new `main` with a merge, never with a rebase (FEATURE-54, D-7246, D-7247, D-7248, D-7258, D-7266, D-7271).
