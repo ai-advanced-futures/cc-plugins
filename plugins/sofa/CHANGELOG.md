@@ -1,5 +1,17 @@
 # Changelog
 
+## 7.19.0
+
+STORY-443: `sofa-state snapshot take` gives 1 versioned, scrubbed snapshot of a line (FEATURE-47, D-7032, D-7023 to D-7026).
+
+- New command `sofa-state snapshot take [--config PATH] [--out PATH]`. It writes 1 JSON object (version 1) with the keys `schema_version`, `taken_at`, `line` (the store id), `rules`, `rules_digest`, `nulled`, and the 5 sections of `report`: `sessions`, `items`, `open_asks`, `queue`, `decisions_24h`. The text has sorted keys and no space, so the same state gives the same text. `--out` writes through a temporary file in the folder of the target and `os.replace`, so a reader sees all of the file or none.
+- The scrub is a list of allowed fields (never a list of removed fields): a field that is not in the list goes nowhere. Each text value must match the form of its field, else it is `null` and `nulled` counts it. The snapshot never holds a session id, a branch, a worktree path, `waits_for`, `decided_by`, a decision summary, or a row of `messages`, `trips`, `interactions`, `usage`, `heartbeats` or `kv`.
+- A guard runs on each key, string and number of the snapshot, and of the rule sets of the file (the full JSON text; a boolean and null have no text of a value), before any output. It looks (in any letter case) for each session id, each worktree, `HOME`, the main folder, the folder of the store, each person login of the form `human:<login>`, and each `machine.*` value. A session id that is its own name is no secret and is not searched, unless it has the form of a UUID. A hit exits 1 with `the snapshot holds <kind>; no snapshot written (in <where>)` (the section and the field, for example `items.id`, never the value), no output and no file. A value of fewer than 4 characters is not searched.
+- The sections and the guard read the store in 1 read transaction, after the `INSERT OR IGNORE` of the store id commits, so 1 snapshot shows 1 state of the store.
+- New file `.claude/sofa-floor.json` (the floor rules, in git): `schema_version` 1 and the 3 rule sets `health`, `streams` and `prices`, each `{}`. Only `snapshot take` reads it. The command exits 1 with 1 line when the file is missing, is over 262144 bytes, is not JSON, or has a wrong key. The rule sets are empty in version 1; a value of a rule set goes into `rules` only through a field with a form.
+- Rule of change: a new key, section or field keeps `schema_version` 1. A removed or renamed key, or a changed type, adds 1. A reader ignores a key that it does not know, and a reader that gets a higher number shows `unknown schema <n>`.
+- `tests/sofa-state.test.sh`: the `snap*` cases.
+
 ## 7.18.1
 
 Test only, no change in a skill or a script (STORY-466). A live test of the migration of `docs/adlc.md` from template version 10 to 11, run by `/sofa:start`.

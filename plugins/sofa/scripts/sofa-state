@@ -9,10 +9,13 @@ Exit code: 0 on success; 2 on a bad argument (argparse), when `decision log` ref
 its arguments, when `kv set` gets a key that starts with `decision.`, and when
 SOFA_GIT_TIMEOUT is not a number greater than 0 (read at the first git call, so a command
 that makes no git call does not read it); 1 on all other errors, also when
-`decision log` cannot reserve a block of decision ids (see "decisions" below).
+`decision log` cannot reserve a block of decision ids (see "decisions" below); also on
+`snapshot take` when the floor configuration is missing or wrong, and when the snapshot or a rule set of the
+file would hold a known private value (a session id, a path, a person login or a machine value).
 """
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -24,6 +27,7 @@ import signal
 import sqlite3
 import subprocess
 import sys
+import tempfile
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -862,6 +866,252 @@ def cmd_prune(con, a):
         con.execute("DELETE FROM messages WHERE at < ?", (limit,))
 
 
+# --- snapshot ---
+# `snapshot take` writes 1 versioned, scrubbed JSON snapshot of the line (STORY-443). Each view of the
+# floor reads this and nothing else, so no view can leak a value that it did not get.
+#
+# How a later story adds data and keeps SCHEMA_VERSION at 1: it adds a new top-level section or a new field of
+# a row, with its form, to SNAPSHOT_FIELDS (or RULE_FIELDS, for a field of a rule set), and 1 new key or field
+# of `build_snapshot`. A story that removes or renames a key, or changes the meaning or the type of a value,
+# adds 1 to SCHEMA_VERSION. A reader ignores a key that it does not know, and a reader that gets a higher
+# number judges nothing in that line.
+
+SCHEMA_VERSION = 1
+FLOOR_CONFIG = os.path.join(".claude", "sofa-floor.json")
+FLOOR_MAX_BYTES = 262144
+FLOOR_SETS = ["health", "streams", "prices"]
+
+_NAME = re.compile(r"[a-z0-9][a-z0-9._-]{0,63}")
+_ROLE = re.compile(r"[a-z][a-z0-9-]{0,39}")
+_MODEL = re.compile(r"[a-z0-9][a-z0-9.\[\]-]{0,63}")
+_STATE = re.compile(r"[a-z][a-z _-]{0,31}")
+_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,79}")
+_TIME = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
+_PR = re.compile(r"[0-9]{1,9}")
+_UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.IGNORECASE)
+_LEVEL, _CONFIDENCE = set(DECISION_LEVELS), set(DECISION_CONFIDENCES)
+_REVERSIBILITY, _VISIBILITY = set(DECISION_REVERSIBILITIES), set(DECISION_VISIBILITIES)
+
+# A section of the snapshot: the query of cmd_report, and each field that may go into it with its form (a regex,
+# fullmatch, or a set of words). A field that is not here goes nowhere: only a list of allowed fields is safe,
+# because the free-text columns (waits_for, summary) and the person columns (decided_by, by_whom) hold any text.
+SNAPSHOT_FIELDS = {
+    "sessions": ("SELECT * FROM sessions ORDER BY name", {
+        "name": _NAME, "role": _ROLE, "model": _MODEL, "state": _STATE, "item": _ID,
+        "since": _TIME, "last_heartbeat": _TIME, "free_since": _TIME}),
+    "items": ("SELECT * FROM items ORDER BY id", {
+        "id": _ID, "state": _STATE, "pr": _PR, "session": _NAME,
+        "picked_up_at": _TIME, "released_at": _TIME, "updated_at": _TIME}),
+    "open_asks": ("SELECT * FROM asks WHERE closed_at IS NULL ORDER BY opened_at", {
+        "id": _ID, "story": _ID, "priority": _STATE, "opened_at": _TIME}),
+    "decisions_24h": ("SELECT * FROM decisions WHERE at >= ? ORDER BY at", {
+        "id": _ID, "story": _ID, "level": _LEVEL, "confidence": _CONFIDENCE,
+        "reversibility": _REVERSIBILITY, "visibility": _VISIBILITY, "at": _TIME, "vetoed_at": _TIME}),
+}
+# The fields of each rule set that may go into the key `rules`. Version 1 has none, so each set is {}.
+# The story that owns a field adds it here with its form (D-7032, CONSTRAINT-01).
+RULE_FIELDS: dict[str, dict] = {name: {} for name in FLOOR_SETS}
+
+GUARD_MIN_CHARS = 4
+
+
+class Scrubber:
+    """Keep a value only when it has the form of its field, and count each value that it replaces."""
+
+    def __init__(self):
+        self.nulled = 0
+
+    def value(self, form, value):
+        if value is None:
+            return None
+        if isinstance(value, str) and (value in form if isinstance(form, set) else form.fullmatch(value)):
+            return value
+        self.nulled += 1
+        return None
+
+
+def read_floor_config(path):
+    """Read and check the floor configuration. Return its 3 rule sets. Raise UsageError (exit 1)."""
+    where = f"the floor configuration {path}"
+    if not os.path.exists(path):
+        raise UsageError(f"no floor configuration: {path} does not exist; create it with the keys "
+                         "schema_version (1), health, streams and prices")
+    try:
+        with open(path, "rb") as f:
+            raw = f.read(FLOOR_MAX_BYTES + 1)
+    except OSError as e:
+        raise UsageError(f"{where} cannot be read: {e.strerror or type(e).__name__}") from None
+    if len(raw) > FLOOR_MAX_BYTES:
+        raise UsageError(f"{where} is over {FLOOR_MAX_BYTES} bytes")
+    try:
+        data = json.loads(raw)
+    except (ValueError, RecursionError) as e:
+        raise UsageError(f"{where} is not JSON: {e if isinstance(e, json.JSONDecodeError) else type(e).__name__}") from None
+    if not isinstance(data, dict):
+        raise UsageError(f"{where}: the top level is not a JSON object")
+    for key in ["schema_version"] + FLOOR_SETS:
+        if key not in data:
+            raise UsageError(f"{where}: {key} is missing")
+    if type(data["schema_version"]) is not int or data["schema_version"] != 1:
+        raise UsageError(f"{where}: schema_version is not 1")
+    for key in FLOOR_SETS:
+        if not isinstance(data[key], dict):
+            raise UsageError(f"{where}: {key} is not a JSON object")
+    for key in data:
+        if key != "schema_version" and key not in FLOOR_SETS:
+            raise UsageError(f"{where}: {key} is not a key of the file")
+    return {key: data[key] for key in FLOOR_SETS}
+
+
+def dump(obj, ascii_only=True):
+    """The one JSON text of this module: sorted keys, no space, so the same state gives the same text."""
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=ascii_only)
+
+
+def build_snapshot(con, sets, at, store):
+    """Return the snapshot of version 1 as a dict. SETS are the rule sets as read from the file.
+
+    The caller has an open read transaction (`cmd_snapshot_take`), so all sections show 1 state of the store.
+    """
+    scrub = Scrubber()
+    day_ago = (parse_iso(at) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    snap = {"schema_version": SCHEMA_VERSION, "taken_at": at, "line": {"store": store}}
+    for section, (query, fields) in SNAPSHOT_FIELDS.items():
+        rows = con.execute(query, (day_ago,) if "?" in query else ()).fetchall()
+        snap[section] = [{f: scrub.value(form, r[f]) for f, form in fields.items()} for r in rows]
+    snap["queue"] = [scrub.value(_ID, r["item"])
+                     for r in con.execute("SELECT item FROM queue ORDER BY position")]
+    snap["rules"] = {name: {f: scrub.value(form, sets[name][f]) for f, form in RULE_FIELDS[name].items()
+                            if f in sets[name]} for name in FLOOR_SETS}
+    snap["rules_digest"] = "sha256:" + hashlib.sha256(dump(sets).encode()).hexdigest()
+    snap["nulled"] = scrub.nulled
+    return snap
+
+
+def private_values(con, db_path_arg):
+    """The values that no snapshot may hold, as a list of (kind, value). A value under 4 characters is left out."""
+    found = []
+
+    def add(kind, values):
+        found.extend((kind, v.strip()) for v in values if isinstance(v, str) and len(v.strip()) >= GUARD_MIN_CHARS)
+
+    # A session id that is its own name is no secret: the name goes into the snapshot on purpose. A real store holds
+    # such a row (a stopped session that was written by hand), and it would stop the snapshot each time. An id of the
+    # form of a UUID is a real session id (issue 2097), so it stays on the list also when it is its own name.
+    add("a session id", [sid for sid, name in con.execute("SELECT id, name FROM sessions")
+                         if (sid or "").strip() != (name or "").strip() or _UUID.fullmatch((sid or "").strip())])
+    paths = [r[0] for r in con.execute("SELECT worktree FROM items")]
+    paths.append(os.environ.get("HOME"))
+    paths.append(os.path.realpath(os.path.dirname(os.path.abspath(db_path_arg))))
+    try:
+        paths.append(main_folder())
+    except (subprocess.CalledProcessError, OSError):
+        pass
+    add("a path", paths)
+    logins = []
+    for (who,) in con.execute("SELECT decided_by FROM decisions UNION ALL SELECT by_whom FROM interactions"):
+        m = re.fullmatch(r"human:(.+)", who or "", re.DOTALL)
+        if m:
+            logins.append(m.group(1))
+    add("a person login", logins)
+    add("a machine value", [r[0] for r in con.execute("SELECT value FROM kv WHERE key LIKE 'machine.%'")])
+    return found
+
+
+def _texts(obj, where, found, extend):
+    """Add each text of OBJ (a parsed JSON value) to FOUND as (where, text): each key of a dict, each string, and the
+    text of each number. A boolean and null have no text of a value, so they are left out.
+
+    WHERE of a key is the path of its dict, and WHERE of a value is its own path (a list adds nothing). When EXTEND is
+    false, WHERE stays as given, because the keys of that OBJ come from the file and must not go into a message.
+    """
+    stack = [(where, obj)]
+    while stack:
+        path, node = stack.pop()
+        if isinstance(node, dict):
+            found.extend((path, str(k)) for k in node)
+            stack.extend(((f"{path}.{k}" if path else str(k)) if extend else path, v) for k, v in node.items())
+        elif isinstance(node, list):
+            stack.extend((path, v) for v in node)
+        elif isinstance(node, str):
+            found.append((path, node))
+        elif isinstance(node, (int, float)) and not isinstance(node, bool):
+            found.append((path, str(node)))
+
+
+def snapshot_strings(snap, sets):
+    """Each text that goes into the snapshot, or that the file holds in a rule set, as (where, text).
+
+    This is the full JSON text of spec row 10: the keys, the strings and the numbers of the snapshot and of the rule
+    sets. WHERE is the path of the keys of the snapshot (`items.id`; a key adds its dict), or `the floor configuration
+    set <name>` for a key, a string or a number of a rule set. The names in a path come from this script, and a rule
+    set has 1 of 3 fixed names, so WHERE never holds a value of the store or of the file.
+    """
+    found = []
+    _texts(snap, "", found, True)
+    for name in FLOOR_SETS:
+        _texts(sets[name], f"the floor configuration set {name}", found, False)
+    return [(where or "the snapshot", text) for where, text in found]
+
+
+def guard_snapshot(con, a, snap, sets):
+    """Fail closed: stop when the snapshot, or a rule set of the file, holds a known private value (any letter case).
+
+    The rule sets are read too, because version 1 copies none of their fields into the snapshot, so a path in the
+    file would not show in the snapshot, and the file is the place where an operator can write one. The message names
+    the kind and where the value is (never the value), so the operator can find it.
+    """
+    strings = [(where, s.casefold()) for where, s in snapshot_strings(snap, sets)]
+    for kind, value in private_values(con, a.db_path):
+        needle = value.casefold()
+        where = sorted({w for w, s in strings if needle in s})
+        if where:
+            raise UsageError(f"the snapshot holds {kind}; no snapshot written (in {', '.join(where[:5])})")
+
+
+def write_atomic(path, text):
+    """Write TEXT to PATH through a temporary file in the same folder, so a reader sees all of it or none."""
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(path)), prefix=".snapshot-", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(text)
+        os.replace(tmp, path)
+        tmp = None
+    finally:
+        if tmp is not None:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+
+
+def cmd_snapshot_take(con, a):
+    """Write 1 scrubbed snapshot of this line as JSON, to stdout or to --out."""
+    path = a.config
+    if not path:
+        try:
+            path = os.path.join(main_folder(), FLOOR_CONFIG)
+        except (subprocess.CalledProcessError, OSError):
+            raise UsageError("not in a git repository; give --config") from None
+    sets = read_floor_config(path)
+    store = store_id(con)  # the only write: it commits at once
+    # 1 read transaction for each read below (WAL): the sections and the guard show 1 state of the store, also when
+    # another session writes while this command runs.
+    con.execute("BEGIN")
+    try:
+        snap = build_snapshot(con, sets, a.at, store)
+        guard_snapshot(con, a, snap, sets)
+        text = dump(snap) + "\n"
+    except RecursionError:
+        raise UsageError("the floor configuration is nested too deep; no snapshot written") from None
+    finally:
+        con.rollback()
+    if a.out:
+        write_atomic(a.out, text)
+    else:
+        sys.stdout.write(text)
+
+
 # --- output helpers ---
 
 def table(rows, header, width=28):
@@ -1015,6 +1265,11 @@ def build_parser():
 
     sp = leaf(top, "report", cmd_report, "print the dashboard tables")
     sp.add_argument("--json", action="store_true")
+
+    sn = group("snapshot", "the scrubbed snapshot of this line")
+    sp = leaf(sn, "take", cmd_snapshot_take, "write 1 scrubbed snapshot of this line as JSON")
+    sp.add_argument("--config", help=f"the floor configuration (default: <main folder>/{FLOOR_CONFIG})")
+    sp.add_argument("--out", help="write the snapshot to this file, not to stdout")
 
     sp = leaf(top, "prune", cmd_prune, "remove heartbeats and messages older than N days")
     sp.add_argument("--days", required=True, type=int)
