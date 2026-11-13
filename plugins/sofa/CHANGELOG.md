@@ -1,5 +1,15 @@
 # Changelog
 
+## 9.0.0
+
+STORY-359: the merger merges the checked head and keeps the worktree of the author (FEATURE-04, D-7140 to D-7146, D-7153 to D-7156, D-7159, D-7160, D-7166).
+
+- `references/roles/merger.md`, step 4: the merger merges with `gh pr merge <n> --squash --match-head-commit <commit>`, where `<commit>` is the head that step 1 read by REST before its gates. It no longer adds `--delete-branch`, so the worktree and the local branch of the author stay for its `wrapup`. When GitHub refuses the merge, the merger reads the head again, and starts again at step 1 when the head changed. A refusal for a branch that is not up to date goes to the author; a rate limit goes to the orchestrator.
+- Step 3 is new: the merger removes its own check worktree and deletes no branch or worktree of the author. GitHub deletes the remote head branch when the repository setting "Automatically delete head branches" is on.
+- New stop. Step 2 no longer rebases or pushes to the branch of the author. It fetches `main` and the PR head, finds a PR that is behind `main` with `git merge-base --is-ancestor`, and checks a local merge with `origin/main` that it does not push. A conflict that the `rebase` skill solved before now goes back to the author as `BLOCKED · team`, and so does a local merge that fails the `Build` command of section 1. To pass it, the author updates its branch with `origin/main` in its own worktree, pushes, and sends `REVIEW` again.
+- `templates/ADLC.md`: the merger row has the Skills cell `station`, and the feature flow line says that the merger does not rebase. The template version does not change; the next template step carries the change to a team file.
+- `tests/template.test.sh`: a new case (29 checks) for the merge command, the head pin, step 2, step 3, `--admin` and the 2 template lines.
+
 ## 8.0.0
 
 STORY-474 and STORY-475: template version 12. Each restart of a session is a fresh start with the store name of the session, never `dispatch.sh --resume`. A resume with an option makes a copy. A copy can run in another permission mode, and a resume gives the session no App env.

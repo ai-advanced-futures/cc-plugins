@@ -89,7 +89,7 @@ Tier: `always` sessions start with the team. `on demand` sessions start at the f
 | scribe | `on demand` | `claude-sonnet-5-5` | `medium` | `300k` | `Concise` | 1 | A `learn:`, `validate` or `lower` task | station, knowledge:learn, knowledge:validate | Facts, answers, results | Pages in the `knowledge` brain, veracity updates |
 | tracker | `on demand` | `claude-haiku-5-5` | `medium` | `200k` | `Concise` | 1 | A PR that changes `docs/product` merges, or the orchestrator asks for a claim | station, product:roadmap-sync | Merged roadmap, or claim request | Board that matches `main`, and claims |
 | plan-auditor | `on demand` | `claude-sonnet-5-5` | `high` | `300k` | `Concise` | 1 | Each merge on `main`, and every 30 minutes | station, loop, product:plan, wrapup | Merges, state store | PR with roadmap fixes and story metrics |
-| merger | `on demand` | `claude-haiku-5-5` | `medium` | `200k` | `Concise` | 1 | All reviews of a PR are in | station, rebase | PR number and verdicts | Merged PR, or `BLOCKED` |
+| merger | `on demand` | `claude-haiku-5-5` | `medium` | `200k` | `Concise` | 1 | All reviews of a PR are in | station | PR number and verdicts | Merged PR, or `BLOCKED` |
 | monitoring | `on demand` | `claude-sonnet-5-5` | `medium` | `300k` | `Concise` | 1 | An environment with logs or metrics exists, or a feature is `done` | station, loop | Logs, metrics, traces, evals | `released` PRs, problem reports |
 | scheduler | `cron` | `claude-haiku-5-5` | `low` | — | — | — | Every 5 minutes (system cron) | bg-watch | Session states | Restarted sessions |
 | retro | `on demand` | `claude-opus-5-5` | `medium` | `400k` | `Concise` | 1 | The user changes or adds a role | station, wrapup | `RETRO` signal | Updated `docs/adlc.md` on `main` |
@@ -159,7 +159,7 @@ roadmap (main)
   → reviewer (code, Proofs block, autonomous decisions), verifier (functions, product line), security and code-quality, at the same time
        request changes → implementer fixes → the same roles again (max 3 rounds)
        after 3 rounds  → decision-judge → hitl ASK
-  → merger: rebase if needed, squash merge → author runs `wrapup`
+  → merger: squash merge, also when the PR is behind main (no rebase by the merger; a conflict goes back to the author) → author runs `wrapup`
   → tester: e2e tests from the verifier scenarios → test PR → reviewer → merger
   → plan-auditor: story done, metrics in the state store
   → orchestrator: send SYNC to tracker if roadmap changed
