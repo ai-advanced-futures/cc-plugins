@@ -1,5 +1,17 @@
 # Changelog
 
+## 7.20.0
+
+STORY-401: the dashboard names the instance and the bot of the state store (FEATURE-46, D-7028 to D-7031, D-7053, D-7054, D-7066).
+
+- `sofa-state report` prints 1 header line first: `instance <instance> · bot <slug>[bot]`, then 1 empty line, then the sessions table as before. The pane of `/sofa-dashboard` and `/sofa:status` show it. No new column.
+- `sofa-state report --json` has 2 new top-level keys, `instance` and `bot`, before the 5 keys of before. Each is a string, or `null`.
+- The instance is the value of the key `machine.instance` (a GitHub login). The bot is `<slug>[bot]` from the key `machine.github-app.slug`. The report reads no other `machine.` key, so it never shows the key path of the App. A missing key, or a value that does not match its pattern, shows `?` in the text and `null` in the JSON.
+- `/sofa:start`, step 3, writes `machine.instance` from the GitHub person: item 1 writes it when the key is missing (also when the team runs), item 3 writes over a value that is not the GitHub person before the orchestrator starts, and item 5 names the old and the new value. A live team (item 2) changes no value.
+- To set the instance on a running team: run `/sofa:start` (item 1 writes a missing key), or run `<skill folder>/scripts/sofa-state kv set machine.instance <login>` from the main folder.
+- The report names this store only. The claimed items of the other team are not in it (STORY-444 shares the snapshot of each line).
+- `tests/sofa-state.test.sh`: the `owner*` cases and the 7-part JSON check. `tests/template.test.sh`: 7 checks of `/sofa:start`, step 3.
+
 ## 7.19.0
 
 STORY-443: `sofa-state snapshot take` gives 1 versioned, scrubbed snapshot of a line (FEATURE-47, D-7032, D-7023 to D-7026).

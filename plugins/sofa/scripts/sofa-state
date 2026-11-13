@@ -824,8 +824,26 @@ def age(text, now):
     return f"{seconds // 86400}d"
 
 
+# The slug pattern of sofa-github (Values.slug) and the pattern of a GitHub login.
+SLUG_RE = r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,98}[A-Za-z0-9])?"
+LOGIN_RE = r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?"
+
+
+def store_owner(con):
+    """The instance and the bot of this store, from 2 keys. A missing value, or a value that does
+    not match its pattern, gives None. It reads no other machine. key, so the report never shows
+    the key path of the App."""
+    def value(key, pattern):
+        row = con.execute("SELECT value FROM kv WHERE key = ?", (key,)).fetchone()
+        text = (row["value"] or "") if row else ""
+        return text if re.fullmatch(pattern, text) else None
+    slug = value("machine.github-app.slug", SLUG_RE)
+    return value("machine.instance", LOGIN_RE), (f"{slug}[bot]" if slug else None)
+
+
 def cmd_report(con, a):
-    """Print the dashboard: sessions, items, open asks, queue, recent decisions."""
+    """Print the dashboard: the instance and the bot of the store, sessions, items, open asks, queue,
+    recent decisions."""
     now = parse_iso(a.at)
     day_ago = (now - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
     sessions = con.execute("SELECT * FROM sessions ORDER BY name").fetchall()
@@ -833,8 +851,11 @@ def cmd_report(con, a):
     asks = con.execute("SELECT * FROM asks WHERE closed_at IS NULL ORDER BY opened_at").fetchall()
     queue = [r["item"] for r in con.execute("SELECT item FROM queue ORDER BY position")]
     decisions = con.execute("SELECT * FROM decisions WHERE at >= ? ORDER BY at", (day_ago,)).fetchall()
+    instance, bot = store_owner(con)
     if a.json:
         print(json.dumps({
+            "instance": instance,
+            "bot": bot,
             "sessions": [dict(r, heartbeat_age=age(r["last_heartbeat"], now)) for r in sessions],
             "items": [dict(r) for r in items],
             "open_asks": [dict(r) for r in asks],
@@ -842,7 +863,8 @@ def cmd_report(con, a):
             "decisions_24h": [dict(r) for r in decisions],
         }))
         return
-    print("sessions")
+    print(f"instance {instance or '?'} · bot {bot or '?'}")
+    print("\nsessions")
     table([[s["name"], s["role"], s["state"], s["item"], age(s["last_heartbeat"], now)] for s in sessions],
           ["name", "role", "state", "item", "beat"])
     print("\nitems")
