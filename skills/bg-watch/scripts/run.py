@@ -1,15 +1,27 @@
-import json, os, shutil, subprocess, sys, time
+import fcntl, json, os, shutil, subprocess, sys, time
 from datetime import datetime, timezone
+import claude_agents
 HERE = os.path.dirname(os.path.abspath(__file__))
 STATE = os.path.expanduser(os.environ.get("BG_WATCH_STATE", "~/.claude/bg-watch"))
 os.makedirs(STATE, exist_ok=True)
 P = lambda n: os.path.join(STATE, n)
+# 1 check at a time (STORY-508). build_info.py gets the lock file too (pass_fds), so the lock ends only when
+# run.py and build_info.py have both ended, also after a kill. No other child gets it: a session that claude respawn
+# starts must not hold the lock.
+# check.lock, not run.lock: a scheduler can hold its own lock file around the call that runs this script, and this
+# script cannot take a lock that its caller holds. Never delete check.lock: a new file would let 2 checks run.
+LOCK = open(P("check.lock"), "a")
+try: fcntl.flock(LOCK, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except BlockingIOError:
+    print("another check is running"); print("RETRY_TO: []"); sys.exit(0)
 KEEP_INPUTS = 500
 QUESTION = "Which session is stuck: nothing real happened after its last API Error?"
 # The free search term: the sessions with no real line after the last API Error, which are the sessions of the built-in rule.
 FREE_TERM = "real_lines_after_last_error=0 |"
 # stderr stays visible, so that a failure of build_info.py shows its cause
-subprocess.run([sys.executable, os.path.join(HERE, "build_info.py")],check=True,stdout=subprocess.DEVNULL)
+build = subprocess.run([sys.executable, os.path.join(HERE, "build_info.py")],stdout=subprocess.DEVNULL,pass_fds=(LOCK.fileno(),))
+# a code below 0 is a signal: sys.exit(-9) would give the shell exit 247
+if build.returncode: sys.exit(build.returncode if build.returncode > 0 else f"bg-watch: build_info.py stopped on signal {-build.returncode}")
 info = {}
 for line in open(P("sessions.jsonl")):
     o = json.loads(line); info[o["id"]] = o
@@ -62,7 +74,11 @@ disagree = sorted(set(flag) ^ set(stuck))
 # leave the history
 hist = json.load(open(P("failure-history.json"))) if os.path.exists(P("failure-history.json")) else {}
 hist = {k: v for k, v in hist.items() if k in known}
-agents_now = lambda: {s["id"]: s for s in json.loads(subprocess.run(["claude","agents","--json","--all"],capture_output=True,text=True).stdout or "[]") if s.get("id")}
+def agents_now():
+    # None when the read fails: an empty output or a failed read is not "no session" (claude_agents.read)
+    d, cause = claude_agents.read()
+    if d is None: print("the read of claude agents --json --all failed:", cause)
+    return None if d is None else {s["id"]: s for s in d if s.get("id")}
 rescued, failed = {}, {}
 for sid, o in info.items():
     h = hist.setdefault(sid, {"name": o["name"], "count": 0, "keys": []})
@@ -71,6 +87,8 @@ if stuck:
     # read the status again: the logs and jag take time, and a session can start a turn in that time
     fresh = agents_now()
     for sid in stuck:
+        if fresh is None:   # no fresh status: a respawn could cut a turn that started after the first read
+            info[sid]["status"] = "agents read failed"; continue
         # Only an idle session gets a respawn. busy: a respawn cuts its turn. No status: no live process (stopped).
         # Another value: unknown. Each of them is left alone, and the table names it.
         status = fresh.get(sid, info[sid]).get("status") or ""
@@ -80,7 +98,7 @@ if stuck:
         if r.returncode: failed[sid] = (r.stderr or r.stdout).strip()[:110]
         else: rescued[sid] = "?"
     if rescued:
-        fresh = agents_now()
+        fresh = agents_now() or {}   # a failed read leaves the state of each rescued session as "?"
         rescued = {sid: fresh.get(sid, {}).get("state") or "?" for sid in rescued}
 json.dump(hist, open(P("failure-history.json"),"w"), indent=1)
 with open(P("jag-log.jsonl"),"a") as f:

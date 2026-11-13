@@ -1,5 +1,6 @@
-import json, os, re, subprocess
+import json, os, re, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
+import claude_agents
 # State lives in one fixed folder; the watcher skips its own session (bg job id = $CLAUDE_JOB_DIR basename).
 STATE = os.path.expanduser(os.environ.get("BG_WATCH_STATE", "~/.claude/bg-watch"))
 os.makedirs(STATE, exist_ok=True)
@@ -9,12 +10,16 @@ NOISE = re.compile(r"^\s*(\d+|[✻✶✳✢✽·]\S*|.*(thinking with|Contemplat
 SKIP = re.compile(r"^(✻|❯|›|…|\?|Checking for updates|\d+ agents|\d*\s*ne+ds? input)")
 EVENT = re.compile(r"^(⏺|⎿|✻|›|※)")   # a line that starts a transcript event
 BORDER = re.compile(r"^[─━═]{8,}$")   # the border of the input box
-agents = json.loads(subprocess.run(["claude","agents","--json","--all"],capture_output=True,text=True).stdout or "[]")
+agents, cause = claude_agents.read()
+if agents is None:   # an empty output or a failed read is not "no session": write no state file, so the history stays
+    sys.exit(f"bg-watch: the read of claude agents --json --all failed ({cause}); no state file changed")
 # Every known id, so that run.py can drop history of sessions that no longer exist.
 with open(os.path.join(STATE, "agents.json"),"w") as f:
     json.dump([s["id"] for s in agents if s.get("id")], f)
-sessions = [s for s in agents if s.get("id") and s["id"] != SELF]
-# One `claude logs` call takes about 0.7 s, so read the logs at the same time.
+# Only a live session (a session with a status) gets a logs call. A session with no status has no live process, and
+# claude logs gives no log for it ("job not found"). Its id stays in agents.json above. (STORY-508)
+sessions = [s for s in agents if s.get("id") and s["id"] != SELF and s.get("status")]
+# One `claude logs` call takes about 2 s, so read the logs at the same time.
 with ThreadPoolExecutor(8) as pool:
     logs = list(pool.map(lambda s: subprocess.run(["claude","logs",s["id"]],capture_output=True,text=True).stdout, sessions))
 out = []
