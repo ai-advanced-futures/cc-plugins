@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.18.0
+
+STORY-466: template version 11. A new team gets 3 rules that a team tried first.
+
+- Section 2, rule "Mention the operator": each card, issue, PR comment and Slack message for a human mentions the operator, the person whose page has the tag `github:<GitHub person>` of the machine values. Also the owner of the decision when the operator does not own its area. With no GitHub person or no page, the session sends `BLOCKED · team` and posts no mention.
+- Section 2, rule "The App identity for git and gh": with a team App account, no session injects the App identity for 1 command; 3 checks before each push (the credential helper trace, `GIT_AUTHOR_IDENT`, `GIT_COMMITTER_IDENT`); each `gh` write runs as `sofa-github gh`; a plain `gh` write needs the 2 checks of station step 3b. A failed check is `BLOCKED · team`, and the orchestrator starts the session again fresh.
+- Section 8: a fresh restart, and the new session after a failed resume, keep the store name of the stopped session, and the fresh session writes its new id on that store row.
+- `MIGRATION.md`, step 10 → 11. It keeps a rule or a paragraph that a repository already has, and it adds the GitHub person bullet, the App text of the GitHub account bullet and the GitHub person of the start prompt when they are missing.
+- Section 9 names the template version of the marker.
+- `tests/template.test.sh`: 1 case for each phrase, and 1 case that the template and `MIGRATION.md` hold no D-id, no Slack ID, no GitHub mention and no name of a person page.
+
 ## 7.17.2
 
 Text fix and 1 new check, no change in `sofa-state` (STORY-350, D-5239). `decision block` with no `--reserve` and no `--check` makes no call to origin. With `--db` it makes no git call at all. With no `--db` and no `SOFA_STATE_DB`, the main folder comes from 1 or 2 local `git rev-parse` calls, so it is not true that it makes no git call. `scripts/CLAUDE.md` and the name of the check `blkcmd` now say so. The new check `blkcmd: block makes no git call` runs the command with `--db` and `GIT_TRACE`, and fails when the trace file holds a line, so a call to origin that ignores its result turns it red. The check that sets `origin` to a missing path keeps its assertion and is now named `blkcmd: block with a missing origin exits 0 and prints the same`, because it cannot see a call. Two more names now say what they measure: `blkcmd: --reserve on a block with a free id pushes no second tag` (it counts the tags on origin) and `blknet: a store with a free id gives ids with a missing origin`.

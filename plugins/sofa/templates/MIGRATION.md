@@ -2,6 +2,15 @@
 
 The `sofa:start` skill reads this file when `docs/adlc.md` has a lower `sofa-template-version` than `templates/ADLC.md`. Apply each step from the version of the file to the current version, in order. Keep each value and each repository rule of the file. Ask the user only for the values that a step marks `ask`.
 
+## 10 → 11
+
+1. Section 2: add the template rules "Mention the operator" and "The App identity for git and gh" at the end of the list, with the next free numbers. Skip a rule if section 2 already has a rule whose text, after its number, starts with the title of the template rule (the words in quotes above): keep that rule as it is, because its text can hold the details of this repository. Each file cites these 2 rules by their title, not by their number, so the numbers can differ from the template.
+2. Section 8: add the paragraph "Exception, a fresh restart" of the template after the paragraph about the session names. Skip it if section 8 already has a paragraph that starts with `Exception, a fresh restart`.
+3. Section 1, machine values: if the list has no bullet that starts with `- GitHub person:`, add the `GitHub person` bullet of the template after the `GitHub account` bullet. If the `GitHub account` bullet is ``- GitHub account: the active `gh` account on this machine. Sessions commit, push and open PRs as this account.`` (the text of version 10 before the App), replace it with the `GitHub account` bullet of the template. If it has another text that does not name `<slug>[bot]`, keep that text and add the sentence ``With a team App (`sofa-github check` exits 0), it is `<slug>[bot]`.`` at its end. The template got these 2 bullets after version 10 with no step, and the 2 new rules use them.
+4. Section 8, start prompt: if the `Machine values:` line has no `GitHub person <gh person>`, add `, GitHub person <gh person>` before its final full stop. The template got this value after version 10 with no step, and the rule "Mention the operator" needs it.
+5. Section 9: add the row `Migrated to sofa template version 11`.
+6. Set `<!-- sofa-template-version: 11 -->`.
+
 ## 9 → 10
 
 1. Section 3: replace the `Tier:` text with the `Tier:` text of the template. Keep a `Tier:` text that differs from the template 9 text, because that difference is a choice of this repository.

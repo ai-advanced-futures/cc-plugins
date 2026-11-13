@@ -1,6 +1,6 @@
 # ADLC — Agent Development Life Cycle
 
-<!-- sofa-template-version: 10 -->
+<!-- sofa-template-version: 11 -->
 
 This file defines the agent team for this repository.
 The `sofa:start` skill reads this file to start the team.
@@ -66,6 +66,15 @@ The rules that are the same for all roles are in the `sofa:station` skill, which
     When a feature gets the state `done`, the same PR sets to `ready` each story that waited only for this feature and has a merged spec.
 2. States of a story: `backlog` → `ready` → `in progress` → `done` → `released`. `monitoring` sets `released` (section 4, "Release flow"). A feature is `released` when each of its stories is.
 3. Each role writes only the files of its row in section 3, "Who writes which file".
+4. Mention the operator. Each team mentions the person who runs it, because 2 teams on 2 machines can work on 1 repository. The operator is the person of the human team whose page has the tag `github:<GitHub person>` (section 1, machine values). `sofa-people list --json` gives the `github` value of each page. A session whose start prompt has no GitHub person (it started before this rule) uses the GitHub person that the `RELOAD` or `TASK` of the orchestrator names. Each card, issue, PR comment and Slack message that the team posts for a human mentions the operator: in Slack `<@slack-id>` with the `slack-id:` tag of that page, on GitHub `@<GitHub person>`. Also mention the owner of the decision when the `owner:` line of the card names a person who is not the operator, and no `owns:` tag of the operator names the decision area of the card (`<skill folder>/references/decision-areas.md`). Do not mention any other person of the human team. Mention another person only when a human of the team asks for it for that message. The `owner:` line of a card still names the owner of the decision. If no GitHub person is known, or no page has its tag, send `BLOCKED · team` to the orchestrator and post no mention.
+5. The App identity for git and gh. This rule applies when the GitHub account of the machine values is a team App account (`<slug>[bot]`, the login that `sofa-github check` prints). That account is the bot. A team with no App acts as the `gh` account of the person, and this rule does not apply to it.
+    - No session injects the App git identity for 1 command. These forms are forbidden: `source <file> && <command>`, `git -c ...`, a `GIT_CONFIG_*`, `GIT_AUTHOR_*` or `GIT_COMMITTER_*` prefix on a command, and a full path to the real `gh`. Never write the identity with `git config`. Only the start of the session gives the App env (`dispatch.sh`, section 8).
+    - Before each `git push`, check your own env. If `[ "$SOFA_GITHUB_APP" = 1 ] && echo app-env` prints nothing, the check fails. Else all 3 of these must be true:
+        - (a) The credential helper. Run these as separate commands, because the worktree guard of Claude Code refuses a `$(...)` form that holds `git`: `GIT_TRACE=1 git ls-remote origin HEAD > <tmp>/trace.txt 2>&1`, then `grep 'run_command:.*credential' <tmp>/trace.txt > <tmp>/cred.txt`, then `grep -c . <tmp>/cred.txt` and `grep -vc 'scripts/sofa-github' <tmp>/cred.txt`. The check passes only when the first count is 1 or more and the second count is 0. Do not grep for the literal text `sofa-github credential`: the trace has a quote after the path, so that text matches no line.
+        - (b) `git var GIT_AUTHOR_IDENT` names the bot.
+        - (c) `git var GIT_COMMITTER_IDENT` names the bot.
+    - Each `gh` write (a PR, a comment, an issue, a label, a merge, a body edit): run it as `<skill folder>/scripts/sofa-github gh <args>`. It needs no check, because it always sets the App token and stops when it has no token. Run a plain `gh` write only when the 2 commands of station skill step 3b pass under the same `PATH` as the write: `command -v gh` prints `<skill folder>/scripts/github-shim/gh`, and `gh api installation/repositories --jq .total_count` exits 0 and prints a number. `gh api user` is not an identity check: through the shim, `sofa-github` changes `user` to `users/<bot>`, so it prints the bot each time. `git var GIT_AUTHOR_IDENT` does not prove the `gh` identity either: a plain `gh` can use the login of the person while git uses the App.
+    - If a check fails, do not push and do not write. Send `BLOCKED · team` with the output of the check, `command -v gh` and the first 3 `PATH` entries. The orchestrator starts the session again fresh with `dispatch.sh`, not with `--resume` (section 8, "Exception, a fresh restart"), because `dispatch.sh --resume` gives the session no new `--settings`, and only a fresh start gives it the App env.
 
 ## 3. Roles
 
@@ -368,6 +377,8 @@ claude --bg -n <prefix>-<role>[-n] --model <model> [--effort <effort>] --autocom
 
 It prints the session id and the name. The orchestrator gives each session a name that no other session of this repository has, live or stopped (`claude agents --json --all`). The first session of a role has no number. The next sessions take the lowest free number, from `-2`.
 
+Exception, a fresh restart: when the orchestrator stops a session and starts a fresh session in its place (not `--resume`), the fresh session takes the store name of the stopped session (its row in `sofa-state session list`), not the next number. The same holds for the new session that the orchestrator starts when a resume fails. The orchestrator runs `dispatch.sh` with the `--n` of that store name (no `--n` for a name with no number), so a fresh `<prefix>-hitl` stays `<prefix>-hitl`, not `<prefix>-hitl-2`. The fresh session writes its new id on the store row of that name with `sofa-state session upsert` (station skill, step 3), so no store row keeps the id of the stopped session. The orchestrator stops the old session before it starts the fresh one, and it does not resume the old id again. Why: a store row with the old id makes the orchestrator resume a session that can lack the App env. Claude Code can change the list name of a session, so the store row gives the name, not the list.
+
 A live session does not change its model, effort, compact value or output style after `RELOAD`. If section 3 changes one of them, restart each session of that role when it has no work. The colour of each role is in `<skill folder>/references/colours.md`, not in this file. The orchestrator restarts a session that does not have the colour of its role (orchestrator role file, "Status check").
 
 If a session stops before its item is done, the `scheduler` (system cron, `bg-watch check`) restarts it and sends it `retry`. If the orchestrator finds a stopped session with an open item that the scheduler did not restart in 15 minutes, it resumes it with the dispatch script and `--resume <session id>` and the prompt `You were resumed. Continue your open item.` If the open item has a worktree in the store, the prompt starts with `You were resumed. Your worktree is <path>: if your current folder is not that folder, enter it with the EnterWorktree tool and its path.` If the resume fails, it starts a new session.
@@ -387,4 +398,4 @@ The orchestrator start prompt is in the `sofa:start` skill. It gives the machine
 
 | Date | Change | Why |
 |---|---|---|
-| `<date>` | Created from the sofa template version 9 | Team setup for `<repo>` |
+| `<date>` | Created from the sofa template version 11 | Team setup for `<repo>` |
