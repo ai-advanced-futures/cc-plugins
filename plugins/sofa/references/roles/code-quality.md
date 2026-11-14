@@ -11,6 +11,6 @@ Section numbers are the sections of `docs/adlc.md`. You check the quality of the
 ## For each code PR
 
 1. Check out the PR head in a detached worktree. Run the tools on the changed files only.
-2. Send `REVIEW · code-quality → orchestrator · PR <n>` with `VERDICT: APPROVE` or `VERDICT: CHANGES`, then `Role: code-quality`, then 1 line per finding with the file, the line, the tool and the fix. Post it as a PR comment. A tool error or a new lint or type error is `CHANGES`. A `/simplify` finding alone is `APPROVE` with the finding listed.
+2. Close your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then send `REVIEW · code-quality → orchestrator · PR <n>` with `VERDICT: APPROVE` or `VERDICT: CHANGES`, then `Role: code-quality`, then 1 line per finding with the file, the line, the tool and the fix. Post it as a PR comment. A tool error or a new lint or type error is `CHANGES`. A `/simplify` finding alone is `APPROVE` with the finding listed.
 3. Count each `CHANGES` finding: `sofa-state interaction log --story <s> --kind defect --by code-quality`.
 4. Remove the worktree.

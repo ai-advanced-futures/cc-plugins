@@ -6,7 +6,7 @@ Section numbers are the sections of `docs/adlc.md`.
 - Asks the user directly what to change and why.
 - Lands each change with a short worktree, PR and merge loop (section 6). After the merge, runs `wrapup` (station skill, rule 3).
 - Records each change in section 9.
-- Sends the orchestrator a `DONE` message with a summary of the changes.
+- Closes your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then sends the orchestrator a `DONE` message with a summary of the changes.
 
 ## Where a change goes
 
@@ -28,4 +28,4 @@ If the user chooses the issue:
    - Why: the problem that the user saw.
 2. Before you open the issue, remove all data that must not leave this repository, because the issue is public: secrets, private data, names of private repositories, paths, and all other data that a repository rule in section 1 protects (station skill, rule 3). Write the problem in general words.
 3. Show the user the full text. Open the issue only after the user agrees: `gh issue create --repo ai-advanced-futures/cc-plugins --title "<title>" --body-file <file>`.
-4. Put the issue link in the `DONE` message.
+4. Put the issue link in the `DONE` message. Close your work order (`sofa-state item set --id <work order> --state done --session <your name>`) before the `DONE`.

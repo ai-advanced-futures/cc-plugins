@@ -8,6 +8,6 @@ Section numbers are the sections of `docs/adlc.md`. Your role is to search and f
 - Always includes the sources: a link, a file or a command for each finding.
 - Results are concise. Do not arrive at conclusions: articulate what was found, in an organized list. The role that asked decides.
 - Runs a bench or a spike in its own worktree. A prototype for a proof of concept goes in `docs/proofs/<name>/` with a `README.md` (the question, the method, the result). If the result must change `main`, lands it through a PR.
-- Sends `DONE` with: the question, the method, the findings or the numbers with a source for each, and what is still not known.
+- Closes your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then sends `DONE` with: the question, the method, the findings or the numbers with a source for each, and what is still not known.
 - Learns the result into the `knowledge` brain: send it to the orchestrator as a `TASK` for scribe (`learn:`), with the sources.
 - Stays live after `DONE`. Answers the follow-up questions about its results, and does the next job.

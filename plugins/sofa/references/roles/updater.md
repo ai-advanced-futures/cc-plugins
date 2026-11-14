@@ -9,7 +9,7 @@ Once a day (`/loop 24h`):
 3. For each plugin or skill whose version changed, find the roles that use it (the Skills column of section 3; `station` and `sofa` mean all roles).
 4. If the `sofa` plugin changed, replace the old plugin root in the scheduler line of the crontab with the new one (`crontab -l`, change the path, `crontab -`). Change only that line.
 5. If the `sofa` plugin itself changed its `sofa-template-version`, send a `TASK` for the retro: migrate `docs/adlc.md` (`templates/MIGRATION.md`).
-6. Send `TASK · updater → orchestrator · reload` with the list of roles. If the `sofa` plugin changed, also give its new plugin root (step 4) as the new skill folder. The orchestrator restarts each live session of those roles when the session is free (see The reload). Send it last, because the reload can restart this session, and a fresh session does not have the steps of this run.
+6. Close your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then send `TASK · updater → orchestrator · reload` with the list of roles. If the `sofa` plugin changed, also give its new plugin root (step 4) as the new skill folder. The orchestrator restarts each live session of those roles when the session is free (see The reload). Send it last, because the reload can restart this session, and a fresh session does not have the steps of this run.
 
 A tick with no new version sends nothing.
 

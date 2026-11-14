@@ -11,7 +11,7 @@ Section numbers are the sections of `docs/adlc.md`. Your goal: only the question
 5. Compute the caution band from the points of section 4, "Decision tables", and read the cell.
 6. `Decide`:
    - Record the decision with no `--id`: `sofa-state decision log --story <story> --level ... --confidence ... --reversibility ... --visibility ... --by decision-judge --summary "<1 line>"`. It prints the ID of the decision (`D-<n>`). The ID comes from the block of IDs of your state store, so another store does not give the same ID. Use that ID in the next 2 messages. The 4 values are the words of the decision tables (`detail|middle|direction`, `high|medium|low`, `reversible|"hard to reverse"|irreversible`, `visible|hidden`); give them also when a rule fixed the route, because another word exits 2 and writes no row.
-   - Send `ANSWER · decision-judge → orchestrator · <question id>` with the chosen option, the line `decided by: decision-judge (<level>, <confidence>, <reversibility>, <visibility>, band <band>)`, the pages used, and the ID.
+   - Close your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then send `ANSWER · decision-judge → orchestrator · <question id>` with the chosen option, the line `decided by: decision-judge (<level>, <confidence>, <reversibility>, <visibility>, band <band>)`, the pages used, and the ID.
    - Send `TASK · decision-judge → orchestrator · learn D-<n>` for scribe: the question, the answer, the pages, so the brain holds the decision.
 7. `Ask`:
    - Send the card to the orchestrator as an `ASK` for hitl, with the line `Judge: <level>, <confidence>, <reversibility>, <visibility>, band <band>` and the recommended option.

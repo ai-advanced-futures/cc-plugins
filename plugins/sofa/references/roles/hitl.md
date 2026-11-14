@@ -7,7 +7,7 @@ Section numbers are the sections of `docs/adlc.md`. You are the only session tha
 - Use the card in section 7 for each question, every time.
 - Ask the cards in priority order: first `blocks code now`, then `blocks later`.
 - Ask the cards of 1 feature together, up to 4 cards at a time.
-- Send each answer to the orchestrator as an `ANSWER` message, with the question ID, the chosen option, and the words of the human when they add a condition.
+- Close your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then send each answer to the orchestrator as an `ANSWER` message, with the question ID, the chosen option, and the words of the human when they add a condition.
 - Log each card and each answer: `sofa-state interaction log --story <story> --kind ask --by human` and `--kind answer`.
 
 ## Without Slack (section 1, Slack = `none`)

@@ -6,7 +6,11 @@ busy timeout. Each command creates the schema when it is not there.
 
 Database path: --db PATH, else $SOFA_STATE_DB, else <main folder>/.sofa/state.db.
 Exit code: 0 on success; 2 on a bad argument (argparse), when `decision log` refuses
-its arguments, when `kv set` gets a key that starts with `decision.`, and when
+its arguments, when `kv set` gets a key that starts with `decision.`, when `item set` refuses
+its input (an id that is not in the form of an item id, a state that is not in the list, a new row with no
+`--state`, a closed row that opens again with no `--reopen`, a `--session` that is not a name of the caller,
+the work order of another session with no `--take-over`, `--take-over` with no `--session`, or a work order
+with no holder), and when
 SOFA_GIT_TIMEOUT is not a number greater than 0 (read at the first git call, so a command
 that makes no git call does not read it); 3 when `snapshot publish` refuses a snapshot because the guard
 found a private value (nothing is pushed; `snapshot take` keeps exit 1 for the same output line); 1 on all other errors, also when
@@ -60,6 +64,24 @@ CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
 """
 
 INTERACTION_KINDS = ["ask", "answer", "veto", "request", "defect"]
+# The states of an item row (a work order or a roadmap row). STORY-502, D-7200, D-7212.
+OPEN_STATES = ["backlog", "ready", "in progress", "in review", "fix round", "waiting", "blocked"]
+STARTED_STATES = ["in progress", "in review", "fix round", "waiting", "blocked"]
+CLOSED_STATES = ["done", "merged", "released", "cancelled", "superseded"]
+ITEM_STATES = OPEN_STATES + CLOSED_STATES
+# The known old words of the live stores and their new word.
+OLD_STATES = {"in_progress": "in progress", "building": "in progress", "spec": "in progress",
+              "claimed": "in progress", "in_review": "in review", "review": "in review",
+              "ready to merge": "in review", "waits": "waiting", "changes requested": "done",
+              "": "backlog", "specified": "done", "approved": "done"}
+# The floor stage of each state (owner rule 5). STORY-502 amendment 1, D-7268, D-7276, ADR-0015.
+STAGES = ["open", "on hold", "shipped", "closed"]
+STATE_STAGES = {"backlog": "open", "ready": "open", "in progress": "open", "in review": "open",
+                "fix round": "open", "waiting": "on hold", "blocked": "on hold",
+                "released": "shipped",
+                "done": "closed", "merged": "closed", "cancelled": "closed", "superseded": "closed"}
+_FIX_ROUND = re.compile(r"fix round( [0-9]+)?")
+_ROADMAP_ID = re.compile(r"(STORY|FEATURE|MILESTONE)-[0-9]+")
 # The values of the decision tables (docs/adlc.md, section 4).
 DECISION_LEVELS = ["detail", "middle", "direction"]
 DECISION_CONFIDENCES = ["high", "medium", "low"]
@@ -140,10 +162,23 @@ def open_db(path):
     con.execute("PRAGMA busy_timeout=5000")
     con.execute("PRAGMA journal_mode=WAL")
     con.executescript(SCHEMA)
-    # A store from an earlier version has no sessions.colour column.
-    if "colour" not in [row[1] for row in con.execute("PRAGMA table_info(sessions)")]:
-        con.execute("ALTER TABLE sessions ADD COLUMN colour TEXT")
+    # A store from an earlier version has no sessions.colour, items.left_over_at and items.state_was column.
+    add_column(con, "sessions", "colour", "TEXT")
+    add_column(con, "items", "left_over_at", "TEXT")
+    add_column(con, "items", "state_was", "TEXT")
     return con
+
+
+def add_column(con, table, column, decl):
+    """Add a column that an old store has not. Many processes can open an old store at the same time: the
+    process that loses the race gets `duplicate column name`, and the column is there, so that error is no failure."""
+    if column in [row[1] for row in con.execute(f"PRAGMA table_info({table})")]:
+        return
+    try:
+        con.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
+    except sqlite3.OperationalError as error:
+        if "duplicate column name" not in str(error):
+            raise
 
 
 def blank_to_none(value):
@@ -154,23 +189,46 @@ def blank_to_none(value):
 # --- sessions ---
 
 def cmd_session_upsert(con, a):
-    """Insert or update a session. `since` changes only with the state."""
+    """Insert or update a session. `since` changes with the state, and at a restart (STORY-502, row 17). A restart is
+    an upsert of a name whose stored id and whose new id both have the form of a session id (_UUID) and are not equal.
+    At a restart, the work orders of the name that are started and older than --at get the mark left_over_at. A
+    roadmap row has no mark: it follows its page. An empty --id keeps the stored id. The upsert maps the known old
+    state words first (D-7221). The 3 steps are 1 write transaction."""
     at = a.at
-    con.execute("""
-        INSERT INTO sessions (name, id, role, model, state, item, since, free_since)
-        VALUES (:name, :id, :role, :model, COALESCE(:state, 'live'), :item, :at, NULL)
-        ON CONFLICT(name) DO UPDATE SET
-            id = excluded.id,
-            role = excluded.role,
-            model = COALESCE(excluded.model, sessions.model),
-            state = COALESCE(:state, sessions.state),
-            item = COALESCE(excluded.item, sessions.item),
-            since = CASE WHEN :state IS NOT NULL AND :state IS NOT sessions.state
-                         THEN excluded.since ELSE sessions.since END,
-            free_since = CASE WHEN excluded.item IS NOT NULL THEN NULL ELSE sessions.free_since END
-    """, dict(name=a.name, id=a.id, role=a.role, model=a.model,
-              state=a.state, item=a.item, at=at))
-    con.commit()
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        _, _, _, changed = map_old_states(con, False)
+        old = con.execute("SELECT id FROM sessions WHERE name = ?", (a.name,)).fetchone()
+        old_id = old["id"] if old else None
+        restart = bool(old_id and a.id and _UUID.fullmatch(old_id) and _UUID.fullmatch(a.id) and old_id != a.id)
+        con.execute("""
+            INSERT INTO sessions (name, id, role, model, state, item, since, free_since)
+            VALUES (:name, NULLIF(:id, ''), :role, :model, COALESCE(:state, 'live'), :item, :at, NULL)
+            ON CONFLICT(name) DO UPDATE SET
+                id = COALESCE(NULLIF(excluded.id, ''), sessions.id),
+                role = excluded.role,
+                model = COALESCE(excluded.model, sessions.model),
+                state = COALESCE(:state, sessions.state),
+                item = COALESCE(excluded.item, sessions.item),
+                since = CASE WHEN :restart OR (:state IS NOT NULL AND :state IS NOT sessions.state)
+                             THEN excluded.since ELSE sessions.since END,
+                free_since = CASE WHEN excluded.item IS NOT NULL THEN NULL ELSE sessions.free_since END
+        """, dict(name=a.name, id=a.id, role=a.role, model=a.model,
+                  state=a.state, item=a.item, at=at, restart=restart))
+        if restart:
+            # SQLite has no regex, so the ids are read first and filtered here.
+            marks = ", ".join("?" for _ in STARTED_STATES)
+            ids = [r["id"] for r in con.execute(
+                f"SELECT id FROM items WHERE session = ? AND state IN ({marks}) AND updated_at < ? "
+                "AND left_over_at IS NULL", [a.name, *STARTED_STATES, at])]
+            for item_id in ids:
+                if not _ROADMAP_ID.fullmatch(item_id):
+                    con.execute("UPDATE items SET left_over_at = ? WHERE id = ?", (at, item_id))
+        con.commit()
+    except BaseException:
+        con.rollback()
+        raise
+    report_map(changed)
 
 
 def cmd_session_free(con, a):
@@ -205,15 +263,137 @@ def cmd_session_list(con, a):
 
 # --- items ---
 
+def plain(text):
+    """TEXT with each control character and each line separator (U+2028, U+2029) changed to ?, so a message or a
+    table cell is 1 line."""
+    return re.sub(r"[\x00-\x1f\x7f-\x9f  ]", "?", text)
+
+
+def state_hint(word):
+    """The new word of a known old state word, or None."""
+    if word in OLD_STATES:
+        return OLD_STATES[word]
+    if _FIX_ROUND.fullmatch(word):
+        return "fix round"
+    return None
+
+
+def map_old_states(con, unknown_to_blocked):
+    """Change the old state words of the items rows to the words of ITEM_STATES (D-7221). It runs in the transaction
+    of its caller and does not commit, so a refusal of the caller rolls it back. A known old word gets its new word
+    (OLD_STATES, a numbered fix round, NULL). Another word gets `blocked` when UNKNOWN_TO_BLOCKED is true, else it
+    stays. The map changes only `state` and `state_was` (the first old word is kept), so the age and the holder of a
+    row stay true. It returns the count of each pair (old word, new word), the (id, old word) of each row that got
+    `blocked`, the (id, word) of each row that stayed, and the (id, old word, new word) of each row that it changed.
+    When no row has an old word, it reads 1 query and writes nothing."""
+    marks = ", ".join("?" for _ in ITEM_STATES)
+    rows = con.execute(f"SELECT id, state FROM items WHERE state IS NULL OR state NOT IN ({marks})",
+                       ITEM_STATES).fetchall()
+    pairs, blocked, stayed, changed = {}, [], [], []
+    for row in rows:
+        old = row["state"]
+        if old in OLD_STATES:
+            new = OLD_STATES[old]
+        elif old is not None and _FIX_ROUND.fullmatch(old):
+            new = "fix round"
+        elif old is None:
+            new = "backlog"
+        elif unknown_to_blocked:
+            new = "blocked"
+            blocked.append((row["id"], old))
+        else:
+            stayed.append((row["id"], old))
+            continue
+        con.execute("UPDATE items SET state_was = COALESCE(state_was, state), state = :new WHERE id = :id",
+                    dict(new=new, id=row["id"]))
+        pairs[(old, new)] = pairs.get((old, new), 0) + 1
+        changed.append((row["id"], old, new))
+    return pairs, blocked, stayed, changed
+
+
+def report_map(changed, own_id=None):
+    """Print 1 line on stderr for each row that the map changed, except the row OWN_ID (D-7349): `<id>: <old> -> <new>`.
+    The caller prints after the commit, so a refusal that rolled the map back prints nothing."""
+    for item_id, old, new in changed:
+        if item_id != own_id:
+            word = "NULL" if old is None else (old if old != "" else '""')
+            print(f"{plain(item_id)}: {plain(word)} -> {new}", file=sys.stderr)
+
+
+def caller_names(con):
+    """The names of the sessions rows whose id is $CLAUDE_CODE_SESSION_ID: the caller. An empty set means
+    that the caller is unknown (the variable is not set or is empty, or no row has that id), and no guard
+    of the caller runs. STORY-469 uses this function too."""
+    sid = os.environ.get("CLAUDE_CODE_SESSION_ID")
+    if not sid:
+        return set()
+    return {r["name"] for r in con.execute("SELECT name FROM sessions WHERE id = ?", (sid,))}
+
+
+def check_item_set(con, a):
+    """The refusals of item set that need the old row. Raise UsageError (exit 2). The caller holds the write lock."""
+    old = con.execute("SELECT * FROM items WHERE id = ?", (a.id,)).fetchone()
+    if a.state is None and old is None:
+        raise UsageError(f"item {a.id} is new; give --state", 2)
+    names = caller_names(con)
+    stored = (old["session"] if old else None) or ""
+    roadmap = bool(_ROADMAP_ID.fullmatch(a.id))
+    # The reopen guard (row 2).
+    if old is not None and old["state"] in CLOSED_STATES and a.state in OPEN_STATES and not a.reopen:
+        raise UsageError(f"item {a.id} is {plain(old['state'])}; a closed row opens again only with --reopen (STORY-502)", 2)
+    # The session guard (row 3): a session writes only its own name.
+    if names and a.session is not None:
+        own = (old is None or stored in names) if a.session == "" else a.session in names
+        if not own:
+            raise UsageError(f"--session {plain(a.session)} is not your session (you are {', '.join(sorted(names))}); "
+                             "a session writes only its own rows (station rule 6)", 2)
+    # The owner guard (row 4): a work order of another session. A roadmap row is outside it.
+    if names and old is not None and not roadmap and stored.strip() != "" and stored not in names and not a.take_over:
+        raise UsageError(f"item {a.id} is a work order of {plain(stored)}; a session writes only its own rows "
+                         "(give --take-over only when a TASK gives you this work order)", 2)
+    # The holder rule (row 30): a work order always has a holder. It does not read the caller.
+    # The raw --session value counts here (blank_to_none comes later), and a new row has no old session.
+    after = a.session if a.session is not None else stored
+    if not roadmap and (after or "").strip() == "":
+        raise UsageError(f"item {a.id} is a work order with no holder; give --session <your name> (owner rule 4)", 2)
+    # The form of --session (security issue 2354): the name form of `session upsert --name`. '' clears a roadmap row.
+    if a.session and not _NAME.fullmatch(a.session):
+        raise UsageError(f"--session {plain(a.session)} is not a session name (form [a-z0-9][a-z0-9._-]{{0,63}})", 2)
+
+
 def cmd_item_set(con, a):
-    """Insert or update an item. Omitted flags keep the old value; '' clears it."""
+    """Insert or update an item. Omitted flags keep the old value. '' clears --pr, --branch, --worktree,
+    --waits-for, and --session of a roadmap row. '' for --id, --state, or --session of a work order exits 2."""
+    if not _ID.fullmatch(a.id):
+        raise UsageError(f"item id {plain(a.id)} is not in the form [A-Za-z0-9][A-Za-z0-9._:-]{{0,79}}", 2)
+    if a.state is not None and a.state not in ITEM_STATES:
+        hint = state_hint(a.state)
+        raise UsageError(f"{plain(a.state)} is not a state of an item row; use 1 of: {', '.join(ITEM_STATES)}"
+                         + (f' (use "{hint}")' if hint else ""), 2)
+    if a.take_over and a.session is None:
+        raise UsageError("--take-over needs --session <your name>", 2)
+    # 1 write transaction: the reads and the write are 1 step. A refusal rolls back and writes nothing.
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        _, _, _, changed = map_old_states(con, False)
+        check_item_set(con, a)
+        write_item(con, a)
+        con.commit()
+    except BaseException:
+        con.rollback()
+        raise
+    report_map(changed, a.id)
+
+
+def write_item(con, a):
+    """The upsert of item set. The caller checked the refusals and holds the write lock."""
     con.execute("""
         INSERT INTO items (id, state, pr, branch, worktree, waits_for, session,
                            picked_up_at, released_at, updated_at)
         VALUES (:id, :state, :pr, :branch, :worktree, :waits_for, :session,
                 :at, CASE WHEN :state = 'released' THEN :at END, :at)
         ON CONFLICT(id) DO UPDATE SET
-            state = excluded.state,
+            state = CASE WHEN :state_given THEN excluded.state ELSE items.state END,
             pr = CASE WHEN :pr_given THEN excluded.pr ELSE items.pr END,
             branch = CASE WHEN :branch_given THEN excluded.branch ELSE items.branch END,
             worktree = CASE WHEN :worktree_given THEN excluded.worktree ELSE items.worktree END,
@@ -222,14 +402,57 @@ def cmd_item_set(con, a):
             released_at = CASE WHEN excluded.state = 'released'
                                THEN COALESCE(items.released_at, excluded.updated_at)
                                ELSE items.released_at END,
+            left_over_at = NULL,
+            state_was = NULL,
             updated_at = excluded.updated_at
-    """, dict(id=a.id, state=a.state, at=a.at,
+    """, dict(id=a.id, state=a.state, state_given=a.state is not None, at=a.at,
               pr=blank_to_none(a.pr), pr_given=a.pr is not None,
               branch=blank_to_none(a.branch), branch_given=a.branch is not None,
               worktree=blank_to_none(a.worktree), worktree_given=a.worktree is not None,
               waits_for=blank_to_none(a.waits_for), waits_for_given=a.waits_for is not None,
               session=blank_to_none(a.session), session_given=a.session is not None))
-    con.commit()
+
+
+def cmd_item_migrate(con, a):
+    """Change each old state word of the items rows to a word of ITEM_STATES (D-7221). A word that the map does not
+    know gets `blocked`, and the output names its row. --dry-run prints the same lines and changes nothing."""
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        pairs, blocked, _, _ = map_old_states(con, True)
+        open_rows = con.execute(f"SELECT COUNT(*) FROM items WHERE state NOT IN ({', '.join('?' for _ in CLOSED_STATES)})",
+                                CLOSED_STATES).fetchone()[0]
+        if a.dry_run:
+            con.rollback()
+        else:
+            con.commit()
+    except BaseException:
+        con.rollback()
+        raise
+    for (old, new), count in sorted(pairs.items(), key=lambda p: (p[0][0] or "", p[0][1])):
+        word = "NULL" if old is None else (old if old != "" else '""')
+        print(f"{plain(word)} -> {new}: {count}")
+    if blocked:
+        print("fallback blocked: " + " ".join(f"{plain(i)} ({plain(w)})" for i, w in blocked))
+    print(f"open rows: {open_rows}")
+
+
+def cmd_item_list(con, a):
+    """Print the item rows, oldest write first (a read command: no map, no write). --session keeps the rows of that
+    session. --open keeps the rows whose state is not in CLOSED_STATES, also a row with no state or with an old word."""
+    where, args = [], []
+    if a.session is not None:
+        where.append("session = ?")
+        args.append(a.session)
+    if a.open:
+        where.append(f"(state IS NULL OR state NOT IN ({', '.join('?' for _ in CLOSED_STATES)}))")
+        args.extend(CLOSED_STATES)
+    rows = con.execute("SELECT * FROM items" + (" WHERE " + " AND ".join(where) if where else "")
+                       + " ORDER BY updated_at, id", args).fetchall()
+    if a.json:
+        print(json.dumps([dict(r) for r in rows]))
+        return
+    table([[r["id"], r["state"], r["pr"], r["branch"], r["worktree"], r["waits_for"], r["left_over_at"]] for r in rows],
+          ["id", "state", "pr", "branch", "worktree", "waits", "left over"])
 
 
 def cmd_item_trip(con, a):
@@ -796,12 +1019,17 @@ def cmd_kv_get(con, a):
 # --- metrics, report, prune ---
 
 def story_metrics(con, story):
-    """Compute the metrics of one story."""
+    """Compute the metrics of one story (STORY-502, row 20). The work orders of a story are the item rows whose id
+    starts with the story id and a dash (STORY-1-build is of STORY-1; STORY-10-build is not). `picked_up_at` is the
+    earliest `picked_up_at` of the work orders; a story with no work order uses the one of its roadmap row.
+    `released_at` is the one of the roadmap row. `trips` counts the trips of the story and of its work orders."""
     one = lambda sql, *args: con.execute(sql, args).fetchone()[0]
     closed_asks = one("SELECT COUNT(*) FROM asks WHERE story = ? AND closed_at IS NOT NULL", story)
     ask_inter = one("SELECT COUNT(*) FROM interactions WHERE story = ? AND kind = 'ask'", story)
     item = con.execute("SELECT picked_up_at, released_at FROM items WHERE id = ?", (story,)).fetchone()
-    picked = item["picked_up_at"] if item else None
+    prefix = story + "-"
+    work_picked = one("SELECT MIN(picked_up_at) FROM items WHERE substr(id, 1, length(?)) = ?", prefix, prefix)
+    picked = work_picked or (item["picked_up_at"] if item else None)
     released = item["released_at"] if item else None
     cycle = None
     if picked and released:
@@ -813,7 +1041,8 @@ def story_metrics(con, story):
         "autonomous_decisions": one("SELECT COUNT(*) FROM decisions WHERE story = ? "
                                     "AND decided_by != 'hitl' AND vetoed_at IS NULL", story),
         "review_defects": one("SELECT COUNT(*) FROM interactions WHERE story = ? AND kind = 'defect'", story),
-        "trips": one("SELECT COUNT(*) FROM trips WHERE item = ?", story),
+        "trips": one("SELECT COUNT(*) FROM trips WHERE item = ? OR substr(item, 1, length(?)) = ?",
+                     story, prefix, prefix),
         "picked_up_at": picked,
         "released_at": released,
         "cycle_hours": cycle,
@@ -889,7 +1118,8 @@ def cmd_report(con, a):
     table([[s["name"], s["role"], s["state"], s["item"], age(s["last_heartbeat"], now)] for s in sessions],
           ["name", "role", "state", "item", "beat"])
     print("\nitems")
-    table([[i["id"], i["state"], i["pr"], i["session"], i["waits_for"]] for i in items],
+    table([[i["id"], f"{i['state'] or ''} (left over)" if i["left_over_at"] else i["state"], i["pr"], i["session"], i["waits_for"]]
+           for i in items],
           ["id", "state", "pr", "session", "waits"])
     print("\nopen asks")
     table([[k["id"], k["story"], k["priority"], age(k["opened_at"], now)] for k in asks],
@@ -936,7 +1166,8 @@ _LEVEL, _CONFIDENCE = set(DECISION_LEVELS), set(DECISION_CONFIDENCES)
 _REVERSIBILITY, _VISIBILITY = set(DECISION_REVERSIBILITIES), set(DECISION_VISIBILITIES)
 
 # A section of the snapshot: the query of cmd_report, and each field that may go into it with its form (a regex,
-# fullmatch, or a set of words). A field that is not here goes nowhere: only a list of allowed fields is safe,
+# fullmatch, or a set of words). The field `stage` of `items` is not a column: build_snapshot computes it from
+# STATE_STAGES. A field that is not here goes nowhere: only a list of allowed fields is safe,
 # because the free-text columns (waits_for, summary) and the person columns (decided_by, by_whom) hold any text.
 SNAPSHOT_FIELDS: dict[str, tuple[str, dict]] = {
     "sessions": ("SELECT * FROM sessions ORDER BY name", {
@@ -944,7 +1175,8 @@ SNAPSHOT_FIELDS: dict[str, tuple[str, dict]] = {
         "since": _TIME, "last_heartbeat": _TIME, "free_since": _TIME}),
     "items": ("SELECT * FROM items ORDER BY id", {
         "id": _ID, "state": _STATE, "pr": _PR, "session": _NAME,
-        "picked_up_at": _TIME, "released_at": _TIME, "updated_at": _TIME}),
+        "picked_up_at": _TIME, "released_at": _TIME, "updated_at": _TIME,
+        "left_over_at": _TIME, "stage": set(STAGES)}),
     "open_asks": ("SELECT * FROM asks WHERE closed_at IS NULL ORDER BY opened_at", {
         "id": _ID, "story": _ID, "priority": _STATE, "opened_at": _TIME}),
     "decisions_24h": ("SELECT * FROM decisions WHERE at >= ? ORDER BY at", {
@@ -1046,7 +1278,10 @@ def build_snapshot(con, sets, at, store):
     snap = {"schema_version": SCHEMA_VERSION, "taken_at": at, "line": {"store": store, "label": label}}
     for section, (query, fields) in SNAPSHOT_FIELDS.items():
         rows = con.execute(query, (day_ago,) if "?" in query else ()).fetchall()
-        snap[section] = [{f: scrub.value(form, r[f]) for f, form in fields.items()} for r in rows]
+        # `items.stage` is no column. It comes from STATE_STAGES in Python, and not from the query: the query must stay
+        # `SELECT * FROM items` (D-7303). A state with no stage gives null.
+        snap[section] = [{f: scrub.value(form, STATE_STAGES.get(r["state"]) if (section, f) == ("items", "stage") else r[f])
+                          for f, form in fields.items()} for r in rows]
     snap["queue"] = [scrub.value(_ID, r["item"])
                      for r in con.execute("SELECT item FROM queue ORDER BY position")]
     snap["rules"] = {name: {f: scrub.value(form, sets[name][f]) for f, form in RULE_FIELDS[name].items()
@@ -1337,11 +1572,11 @@ def read_line(git, name, store, read_at, own):
 # --- output helpers ---
 
 def table(rows, header, width=28):
-    """Print rows as aligned text columns. Each cell is cut at WIDTH."""
+    """Print rows as aligned text columns. Each cell is 1 line (plain) and is cut at WIDTH."""
     if not rows:
         print("  (none)")
         return
-    cells = [[("" if c is None else str(c))[:width] for c in r] for r in [header] + rows]
+    cells = [[plain("" if c is None else str(c))[:width] for c in r] for r in [header] + rows]
     widths = [max(len(r[i]) for r in cells) for i in range(len(header))]
     for r in cells:
         print("  " + "  ".join(c.ljust(w) for c, w in zip(r, widths)).rstrip())
@@ -1385,7 +1620,7 @@ def build_parser():
     leaf(top, "init", lambda con, a: None, "create the schema when it is not there")
 
     s = group("session", "sessions of the fleet")
-    sp = leaf(s, "upsert", cmd_session_upsert, "insert or update a session")
+    sp = leaf(s, "upsert", cmd_session_upsert, "insert or update a session; it does not check the caller (a consistency guard, not a security boundary), and at a restart it marks the started work orders of that name left over")
     sp.add_argument("--name", required=True)
     sp.add_argument("--id", required=True)
     sp.add_argument("--role", required=True)
@@ -1404,14 +1639,23 @@ def build_parser():
     sp.add_argument("--json", action="store_true")
 
     i = group("item", "work items (stories, features)")
-    sp = leaf(i, "set", cmd_item_set, "insert or update an item; an empty value clears a field")
+    sp = leaf(i, "set", cmd_item_set, "insert or update an item; an empty value clears --pr, --branch, --worktree, --waits-for, and --session of a roadmap row. The guards (reopen, session, owner) are a consistency check, not a security boundary: they run only when the caller is known (CLAUDE_CODE_SESSION_ID names a session). It prints 1 stderr line `<id>: <old> -> <new>` for each other row that the map of old state words changed")
     sp.add_argument("--id", required=True)
-    sp.add_argument("--state", required=True)
+    sp.add_argument("--state")
     sp.add_argument("--pr")
     sp.add_argument("--branch")
     sp.add_argument("--worktree")
     sp.add_argument("--waits-for", dest="waits_for")
     sp.add_argument("--session")
+    sp.add_argument("--reopen", action="store_true")
+    sp.add_argument("--take-over", dest="take_over", action="store_true",
+                    help="write a work order of another session; give it only when a TASK gives you that work order (a plain flag: no check of who gave it)")
+    sp = leaf(i, "migrate", cmd_item_migrate, "change the old state words of the items to the new words")
+    sp.add_argument("--dry-run", dest="dry_run", action="store_true")
+    sp = leaf(i, "list", cmd_item_list, "print the item rows (a read command)")
+    sp.add_argument("--session", help="keep only the rows of this session")
+    sp.add_argument("--open", action="store_true", help="keep only the rows whose state is not closed")
+    sp.add_argument("--json", action="store_true")
     sp = leaf(i, "trip", cmd_item_trip, "record a hand-over between two roles")
     sp.add_argument("--id", required=True)
     sp.add_argument("--from", dest="from_role", required=True)

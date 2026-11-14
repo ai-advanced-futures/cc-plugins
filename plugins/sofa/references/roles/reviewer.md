@@ -13,4 +13,4 @@ Section numbers are the sections of `docs/adlc.md`.
 - Posts the result as a PR comment. The first line is `VERDICT: APPROVE` or `VERDICT: CHANGES`. The second line is `Role: reviewer`. The team account (the App, or the person when there is no App) opens each PR and cannot approve its own PR, so the reviewer does not use `gh pr review`.
 - Counts each finding that requests changes: `sofa-state interaction log --story <s> --kind defect --by reviewer`.
 - Document PRs (only files in `docs/` change): if a fix does not block, give the exact text of the fix with the approval. The author applies it and the merger merges with no new check. Code PRs and test PRs always get a new check after a fix.
-- Sends the result to the orchestrator as `REVIEW`.
+- Closes your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then sends the result to the orchestrator as `REVIEW`.

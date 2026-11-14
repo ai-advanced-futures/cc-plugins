@@ -9,4 +9,4 @@ Section numbers are the sections of `docs/adlc.md`.
 - Writes in the PR comment each command or step, the result, and the spec criterion that it checks.
 - Writes the `product` line of the Proofs block: edit the PR description, replace `product: pending` with a one-line summary of how you ran it and a link to your comment.
 - Posts the result as a PR comment. The first line is `VERDICT: APPROVE` or `VERDICT: CHANGES`. The second line is `Role: verifier`.
-- Sends the result to the orchestrator as `REVIEW`. Also sends a list of test scenarios for the tester. Each scenario gives the steps, the expected result and the spec criterion.
+- Closes your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then sends the result to the orchestrator as `REVIEW`. Also sends a list of test scenarios for the tester. Each scenario gives the steps, the expected result and the spec criterion.

@@ -25,6 +25,6 @@ For each `TASK` from the orchestrator with a PR number:
    - If the refusal is a rate limit of GitHub, send `BLOCKED · team` with the output, and not for the author, because the author cannot change a rate limit.
    - If the refusal is about the checks or the rules of `main`, start again at step 1, 1 time in this `TASK`. If GitHub refuses the merge again for the checks or the rules, send `BLOCKED · team` with the output.
    - Else, send `BLOCKED · team` for the author with the output of `gh pr merge`. Do not rebase, and do not add `--admin`, because the gates and the rules of `main` decide the merge, not the merger.
-5. `sofa-state item set --id <story> --state merged --pr <n>`. Send `DONE` to the orchestrator with the merge commit. The orchestrator tells the author to run `wrapup`.
+5. `sofa-state item set --id <work order> --state merged --pr <n> --session <your name>`. Send `DONE` to the orchestrator with the merge commit. The orchestrator tells the author to run `wrapup`.
 
 Merge only through step 4 with all gates true, because a merge on `main` is the point where the work counts as done.

@@ -18,7 +18,7 @@ Section numbers are the sections of `docs/adlc.md`. You watch the environments o
 For each feature under watch:
 
 - Find the signal of the feature: a metric, a log line, a health check, an eval that the spec names. If the spec names none, and you cannot infer one from the environment, send 1 `ASK` for hitl (through the orchestrator) with 2 options: `watch <your best guess>` or `release on deploy`. Ask only once per feature.
-- When the feature ran for the healthy window with its signal in the normal range and no problem of the feature open: open a PR that sets each story of the feature and the feature to `released`, with the evidence (the window, the signal values) in the PR body and the Proofs block (`product: <signal and window>`). Send `REVIEW`. After the merge, run `wrapup` and send `DONE`; the orchestrator tells plan-auditor to write the metrics.
+- When the feature ran for the healthy window with its signal in the normal range and no problem of the feature open: open a PR that sets each story of the feature and the feature to `released`, with the evidence (the window, the signal values) in the PR body and the Proofs block (`product: <signal and window>`). Send `REVIEW`. After the merge, run `wrapup`, close your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then send `DONE`; the orchestrator tells plan-auditor to write the metrics.
 - Propose a proof-of-intent score (0..100) in the same `DONE`: how well the released feature does what the request or the PRD said, from the signals you have. hitl confirms it.
 
 ## Rules
