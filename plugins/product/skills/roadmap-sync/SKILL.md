@@ -33,7 +33,12 @@ warning does not stop you, but show it.
 
 ## Part 1: the GitHub round trip
 
-1. Run `prd.py github pull`. It reports each field a person changed in GitHub,
+1. Make a new folder with `mktemp -d`, and use its path as `<tmp>` in steps 1,
+   5, 6 and 7. The snapshot holds the title and the body of each issue, so the
+   folder is outside the repository. When Part 1 ends or stops, at any step and
+   also when the user does not agree to the apply, remove the folder with
+   `rm -r <tmp>`. Run `prd.py github pull --save-snapshot <tmp>/snapshot.json`.
+   It reads GitHub 1 time. It reports each field a person changed in GitHub,
    each conflict, and each issue that has no page.
 2. For each `DIFFERENT:` line, ask the user with `AskUserQuestion`: keep the
    bundle value, or take the GitHub value. To take the GitHub value, change the
@@ -51,12 +56,18 @@ warning does not stop you, but show it.
    or a D-id that hitl decided, because `'#<n>'` is refused there. Never use the
    Edit tool, because `prd.py state` is the one write path and logs each change.
 5. For each `UNKNOWN:` line, ask the user whether to adopt the issue. Run
-   `prd.py github pull --adopt` when the user agrees to all of them.
-6. Run `prd.py github plan`, with `--keep <ID>` for each page of steps 2 and 3
-   whose bundle value the user keeps. Show the change set to the user.
+   `prd.py github pull --adopt --snapshot <tmp>/snapshot.json` when the user
+   agrees to all of them. Steps 2 to 4 write no GitHub data, so this step reads
+   the file of step 1 and calls no GitHub API.
+6. Run `prd.py github plan --snapshot <tmp>/snapshot.json`, with `--keep <ID>`
+   for each page of steps 2 and 3 whose bundle value the user keeps. Show the
+   change set to the user. The json form of the same plan is
+   `prd.py github plan --snapshot <tmp>/snapshot.json --format json`. Neither
+   plan calls GitHub.
 7. Ask the user to confirm with `AskUserQuestion`. Run `prd.py github apply`,
-   with the same `--keep` options, only after the user agrees. A `REFUSE:` line means no apply: fix the bundle
-   first.
+   with the same `--keep` options, only after the user agrees. It reads GitHub
+   itself. A `REFUSE:` line means no apply: fix the bundle first. After the
+   apply, remove the folder of step 1 with `rm -r <tmp>`.
 8. A `create_issue_type` line adds that name to every repository of the
    organization, not to this one. [inferred] Name that effect in the question
    of step 7, and let the user answer before the apply. [inferred]

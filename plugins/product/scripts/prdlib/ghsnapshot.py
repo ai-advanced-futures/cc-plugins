@@ -6,6 +6,9 @@ part that talks to GitHub. It makes one GraphQL call for each 100 issues,
 one REST call, and three `gh project` calls.
 """
 import json
+import os
+import stat
+import tempfile
 from pathlib import Path
 
 from . import UsageError
@@ -57,6 +60,79 @@ BLOCKERS_PAGE = 50
 
 def load(path: Path) -> dict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def check_save_path(path) -> None:
+    """Refuse a save path before the first GitHub call, so a wrong path costs
+    no GitHub read (STORY-498)."""
+    path = Path(path)
+    folder = path.parent
+    try:
+        # os.stat, not Path.is_dir: on Python 3.14, Path.is_dir gives False
+        # for each OSError, so a failed stat would pass as "does not exist".
+        try:
+            folder_mode = os.stat(folder).st_mode
+        except (FileNotFoundError, NotADirectoryError):
+            folder_mode = 0
+        if not stat.S_ISDIR(folder_mode):
+            raise UsageError(
+                f"--save-snapshot names a file in {escape_controls(folder)}, "
+                f"and that folder does not exist. Make the folder, or name a "
+                f"file in a folder that exists.")
+        if not os.access(folder, os.W_OK | os.X_OK):
+            raise UsageError(
+                f"--save-snapshot names a file in {escape_controls(folder)}, "
+                f"and this process cannot write in that folder. Name a file "
+                f"in a folder that you can write.")
+        # The folder first: in a folder that the process cannot search, a
+        # stat of the path fails.
+        try:
+            path_mode = os.stat(path).st_mode
+        except FileNotFoundError:
+            path_mode = 0
+        if stat.S_ISDIR(path_mode):
+            raise UsageError(f"--save-snapshot names the folder "
+                             f"{escape_controls(path)}. Name a file.")
+    except OSError as error:
+        # A stat that fails (a folder above that the process cannot search,
+        # a name that is too long) is a wrong path too, not a traceback.
+        raise UsageError(
+            f"--save-snapshot names {escape_controls(path)}, and this process "
+            f"cannot check that path: {escape_controls(error.strerror or error)}. "
+            f"Name a file in a folder that you can write.") from error
+
+
+def save(data: dict, path) -> None:
+    """Write 1 fetched snapshot, so the plans of 1 sync read the file and
+    fetch no second time (STORY-498). The file holds the dictionary of
+    `fetch` in its own key order, so `load` gives the same dictionary and
+    the same plan. It holds the text of each issue, so only its owner can
+    read it (mode 0600). A temporary file and a rename keep a reader from a
+    half-written file."""
+    path = Path(path)
+    # ASCII JSON: each other character is written as \uXXXX, so no text of
+    # an issue can stop the write.
+    text = json.dumps(data, indent=1) + "\n"
+    temp = None
+    try:
+        handle, temp = tempfile.mkstemp(dir=path.parent,
+                                        prefix=f".{path.name}.", suffix=".tmp")
+        with os.fdopen(handle, "w", encoding="utf-8") as stream:
+            stream.write(text)
+        os.replace(temp, path)
+    except OSError as error:
+        if temp:
+            Path(temp).unlink(missing_ok=True)
+        raise UsageError(
+            f"cannot write the snapshot file {escape_controls(path)}: "
+            f"{escape_controls(error.strerror or error)}. The command read "
+            f"GitHub and changed nothing.") from error
+    except BaseException:
+        # A Ctrl-C is no OSError. The temporary file holds the text of each
+        # issue, so remove it on each other exit too.
+        if temp:
+            Path(temp).unlink(missing_ok=True)
+        raise
 
 
 def issues_by_page(data: dict, stored: dict | None = None) -> dict:

@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.10.0
+
+### Added
+- `prd.py github pull` and `prd.py github plan` take `--save-snapshot FILE`. They write the snapshot that they read from GitHub to FILE (mode 0600), and `github plan --snapshot FILE` (text or `--format json`) gives the same plan with no GitHub call. The pull and the plans of 1 sync read GitHub 1 time: about 745 GraphQL points for a board of 563 cards, in place of 1 read for each command (STORY-498). `github apply` reads GitHub again.
+
+### Changed
+- The `roadmap-sync` skill saves 1 snapshot in a `mktemp -d` folder in step 1, steps 5 and 6 read it, and step 7 removes the folder.
+
 ## 6.9.0
 
 ### Changed

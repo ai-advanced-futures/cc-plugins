@@ -344,6 +344,11 @@ Each of the three takes `--snapshot <file>`, which reads a recorded API
 snapshot instead of calling GitHub. The whole test suite runs on recorded
 snapshots.
 
+`github pull` and `github plan` also take `--save-snapshot <file>`. They write
+the snapshot that they read to the file. The plans of 1 sync read it with
+`--snapshot`, so the pull and the plans read GitHub 1 time. The file holds the
+text of each issue, so put it outside the repository.
+
 Each plan line names its subject: `create_issue_type Epic`,
 `create_field Planned start`, `create_issue STORY-12`. A `create_issue_type`
 line adds that name to every repository of the organization, not to this one,

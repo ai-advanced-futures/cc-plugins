@@ -265,6 +265,13 @@ def cmd_github(args) -> int:
             "`github apply --snapshot` needs --dry-run. A snapshot is a "
             "recorded read, so apply reads GitHub itself before it pushes. "
             "Run `github apply` with no --snapshot.")
+    save_to = getattr(args, "save_snapshot", None)
+    if save_to and args.snapshot:
+        raise UsageError(
+            "--save-snapshot writes the snapshot that the command reads from "
+            "GitHub, and --snapshot reads no GitHub. Give 1 of the 2.")
+    if save_to:
+        ghsnapshot.check_save_path(save_to)
     context = None
     if args.snapshot:
         snapshot = ghsnapshot.load(args.snapshot)
@@ -273,6 +280,8 @@ def cmd_github(args) -> int:
         client = gh.Gh()
         context = gh.preconditions(args.root, client)
         snapshot = ghsnapshot.fetch(client, context)
+        if save_to:
+            ghsnapshot.save(snapshot, save_to)
     if args.github_command == "pull":
         report = ghpull.pull(args.root, snapshot,
                              login=(context.login if context
@@ -505,8 +514,19 @@ def build_parser() -> argparse.ArgumentParser:
                                     "command calls no GitHub API.")
     github_common.add_argument("--format", choices=["text", "json"],
                                default="text")
-    github_parser = _add(sub, "github", run=cmd_github,
-                         help="the GitHub round trip")
+    github_parser = _add(
+        sub, "github", run=cmd_github,
+        help="the GitHub round trip",
+        description=(
+            "The GitHub round trip. The pull and the plans of 1 sync read "
+            "GitHub 1 time: save 1 snapshot, then run the plans from it. "
+            "`github apply` reads GitHub again."),
+        epilog=(
+            "1 sync: `github pull --save-snapshot F`, with F in a new folder "
+            "outside the repository (for example from `mktemp -d`), then "
+            "`github plan --snapshot F` and "
+            "`github plan --snapshot F --format json`. "
+            "`github apply` reads GitHub again."))
     github_sub = github_parser.add_subparsers(dest="github_command",
                                               required=True)
     # A page did not change, so its hash matches and the plan sends nothing
@@ -516,15 +536,27 @@ def build_parser() -> argparse.ArgumentParser:
                              help="send the bundle values of this page over "
                                   "an edit in GitHub. Give it once for each "
                                   "page.")
-    github_sub.add_parser("plan", parents=[github_common, keep_common],
+    # `plan` and `pull` read GitHub and can save what they read. `apply` takes
+    # no `--save-snapshot`: its snapshot is the state before its writes.
+    save_common = argparse.ArgumentParser(add_help=False)
+    save_common.add_argument(
+        "--save-snapshot", type=Path, metavar="FILE",
+        help="write the snapshot that this command reads from GitHub to "
+             "FILE, with mode 0600. The file holds the title and the body "
+             "of each issue, so name a file outside the repository. Then "
+             "`github plan --snapshot FILE` (text or --format json) reads it "
+             "and calls no GitHub API.")
+    github_sub.add_parser("plan",
+                          parents=[github_common, keep_common, save_common],
                           help="print the change set, write nothing")
     apply_parser = github_sub.add_parser(
         "apply", parents=[github_common, keep_common],
         help="execute the change set")
     apply_parser.add_argument("--dry-run", action="store_true",
                               help="print each change and call nothing")
-    pull_parser = github_sub.add_parser("pull", parents=[github_common],
-                                        help="read GitHub back")
+    pull_parser = github_sub.add_parser(
+        "pull", parents=[github_common, save_common],
+        help="read GitHub back")
     pull_parser.add_argument("--adopt", action="store_true",
                              help="make a page for an issue on the "
                                   "Project that has none")
