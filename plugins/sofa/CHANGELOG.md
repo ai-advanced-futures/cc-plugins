@@ -1,5 +1,18 @@
 # Changelog
 
+## 11.1.0
+
+STORY-513: the snapshot publish checks the store id, and the reader rebuilds each snapshot and limits its fetch (FEATURE-47).
+
+The minor step is here because the output of `sofa-state snapshot lines` gets a new key, `skipped`. There is no maximum count of lines, so the reader still gives all the lines, and each line in the output is complete.
+
+- `scripts/sofa-state snapshot publish`: it checks the store id (the key `decision.store`) before it builds the snapshot. A value that is not 16 hex digits (`0-9`, `a-f`) exits 1 with `cannot publish the snapshot: the store id (the key decision.store) is not 16 hex digits (0-9, a-f); nothing pushed.` Nothing is pushed, and the message does not show the value. Why: the id names the ref of the forced push, and the lease guards a race, not the choice of the ref. A store with no id gets a new id as before. The command checks the id of the snapshot again before the commit and the push.
+- `scripts/sofa-state snapshot lines`, the rebuild: the snapshot of each line is now rebuilt from the known keys of version 1, each with the form of its field. An unknown key goes out. A value of the wrong form becomes `null`, a section or rule set of the wrong type becomes `null`, and a row that is not an object goes out of its section. `nulled` is the `nulled` of the publisher plus the count of these values. Why: a view must not show a value that the publisher did not scrub.
+- A `schema_version` below 1 now gives `unknown schema <n>`, as a version above 1 did. A line whose `taken_at`, `line.store` or size check fails gives the same errors as before.
+- `snapshot lines`, the names: it lists the names with `git ls-remote`, keeps the names of the form `refs/sofa-floor/<16 hex digits>`, and counts each other name under `refs/sofa-floor/` in the new key `skipped`: `{"bad_name": <n>}`. With no skipped name the key is not there, so the output is the output of 11.0.0. The output never names a skipped name.
+- `snapshot lines`, the fetch: it runs in a new scratch repository in `TMPDIR`, never in the main folder, with `--depth=1` and `--filter=blob:limit=1048577`, and it writes the lines as `refs/sofa-read/<store id>`. So the objects of another line do not stay in the main folder, and a blob over 1048576 bytes does not come when `origin` honors the filter. The scratch folder goes after each run. A line that git or `origin` cannot filter is read with a fetch with no filter and no depth, and the size check of each line stays. A ref that `origin` loses during the run gives 1 more fetch. The fetch does not limit the count of lines or of blobs of a tree.
+- Tests: the new section `STORY-513` of `tests/sofa-state.test.sh`.
+
 ## 11.0.0
 
 STORY-502: the rows of the team store stay true (FEATURE-48).

@@ -20,6 +20,7 @@ file would hold a known private value (a session id, a path, a person login or a
 """
 
 import argparse
+import copy
 import hashlib
 import json
 import math
@@ -28,6 +29,7 @@ import random
 import re
 import secrets
 import shlex
+import shutil
 import signal
 import sqlite3
 import subprocess
@@ -1147,7 +1149,8 @@ def cmd_prune(con, a):
 # a row, with its form, to SNAPSHOT_FIELDS (or RULE_FIELDS, for a field of a rule set), and 1 new key or field
 # of `build_snapshot`. A story that removes or renames a key, or changes the meaning or the type of a value,
 # adds 1 to SCHEMA_VERSION. A reader ignores a key that it does not know, and a reader that gets a higher
-# number judges nothing in that line.
+# number, or a number below 1, judges nothing in that line (`unknown schema <n>`). A story that adds a key, a
+# section or a field to `build_snapshot` adds it to `rebuild_snapshot` in the same change (STORY-513).
 
 SCHEMA_VERSION = 1
 FLOOR_CONFIG = os.path.join(".claude", "sofa-floor.json")
@@ -1223,6 +1226,11 @@ class Scrubber:
             ok = isinstance(value, str) and (value in form if isinstance(form, set) else form.fullmatch(value))
         if ok:
             return value
+        self.nulled += 1
+        return None
+
+    def drop(self):
+        """Count 1 value that goes nowhere because its container has the wrong type, and give null (STORY-513)."""
         self.nulled += 1
         return None
 
@@ -1435,9 +1443,21 @@ def cmd_snapshot_take(con, a):
 # each line from the refs. The ref holds 1 commit with no parent, so a new snapshot replaces the old one (ADR-0012,
 # ADR-0013). The only forced push of the team is the push of the own ref with an explicit old id (rule 24).
 FLOOR_REF = "refs/sofa-floor/"
+# The local name of a line in the scratch repository of the reader. It is outside refs/sofa-floor/*, so only
+# snapshot publish writes a ref refs/sofa-floor/* (ADR-0012, decision 2), also in a local repository (STORY-513).
+READ_REF = "refs/sofa-read/"
 READ_FAILED = "cannot read the lines"
-READ_TMP = "refs/sofa-state/floor-"
 LINE_MAX_BYTES = 1048576
+# The reader reads each line of the form, with no maximum count (ADR-0012, decision 3; STORY-513, D-7398).
+# The fetch takes 1 commit of each line (--depth=1) and, when origin honors the filter, no blob of LINE_MAX_BYTES + 1
+# bytes or more. It does not limit the count of the lines, the count of the blobs of a tree, or a ref that names a blob
+# or a tag of a blob (git sends an object that a ref names, whole). SOFA_GIT_TIMEOUT limits the time of the call, the
+# scratch repository goes after the run, and read_line reads at most LINE_MAX_BYTES of each line.
+# blob:limit=<n> leaves out each blob of n bytes or more, so n is LINE_MAX_BYTES + 1: a blob of LINE_MAX_BYTES stays.
+READ_FILTER = f"blob:limit={LINE_MAX_BYTES + 1}"
+_DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
+# nulled of another line: a whole number from 0 to LINE_MAX_BYTES (a snapshot cannot null more values than its bytes).
+NULLED_FORM = range(0, LINE_MAX_BYTES + 1)
 SNAPSHOT_FILE = "snapshot.json"
 
 
@@ -1466,14 +1486,27 @@ def make_snapshot_commit(git, text, taken_at):
 
 def cmd_snapshot_publish(con, a):
     """Push the scrubbed snapshot of this line to refs/sofa-floor/<store id> on origin (rows 3 to 8, 15 and 19)."""
+    # The store id names the ref of the push, so it must have the form of a store id before the first git call
+    # (STORY-513, item a): `snapshot_text` already runs git (the guard reads the main folder). A store with no id gets
+    # a new id of that form from `store_id`. The message names the rule, never the value of the store.
+    row = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
+    if row is not None and not (isinstance(row[0], str) and _STORE_ID.fullmatch(row[0])):
+        raise UsageError(f"{PUBLISH_FAILED}: the store id (the key decision.store) is not 16 hex digits "
+                         f"(0-9, a-f); {PUBLISH_TAIL}")
     text, snap = snapshot_text(con, a, 3)  # a config error and a refusal of the guard stop before the first git call
+    # The ref comes from the id of the snapshot (the id that store_id read or wrote). Another writer can change the
+    # row after the check above, so the id of the snapshot is checked again before the commit and the push.
+    store = snap["line"]["store"]
+    if not (isinstance(store, str) and _STORE_ID.fullmatch(store)):
+        raise UsageError(f"{PUBLISH_FAILED}: the store id (the key decision.store) is not 16 hex digits "
+                         f"(0-9, a-f); {PUBLISH_TAIL}")
     if not has_app_values(con):
         raise UsageError(f"{PUBLISH_FAILED}: the store has no App values; run /sofa:setup")
     git = Git(repo_of_store(a, PUBLISH_FAILED), failed=PUBLISH_FAILED, tail=PUBLISH_TAIL, short=PUBLISH_TAIL)
     problem = app_setup_ok(con, git, origin_url(git))
     if problem:
         raise UsageError(f"{PUBLISH_FAILED}: this session has no App git setup ({problem}); {PUBLISH_TAIL}")
-    ref = f"{FLOOR_REF}{snap['line']['store']}"
+    ref = f"{FLOOR_REF}{store}"
     commit = make_snapshot_commit(git, text, snap["taken_at"])
     old = remote_old(git, ref)
     for attempt in (1, 2):
@@ -1489,35 +1522,149 @@ def cmd_snapshot_publish(con, a):
         old = new  # the lease was stale: read again and push 1 more time
 
 
+def floor_names(git):
+    """The names of the lines on origin, from `git ls-remote origin refs/sofa-floor/*` (STORY-513, item c).
+
+    Return (NAMES, BAD). NAMES are the names `refs/sofa-floor/<store id>` in sorted order, with no maximum count. BAD
+    counts the names under refs/sofa-floor/ whose part after it is not a store id. `ls-remote` matches the tail of a
+    name, so a name that does not start with refs/sofa-floor/ (refs/heads/refs/sofa-floor/<id>) names no floor ref and
+    is not counted.
+    No name of origin goes into an output: names of origin are data."""
+    names, bad = [], 0
+    for row in git.must("ls-remote", "origin", FLOOR_REF + "*").splitlines():
+        name = row.partition("\t")[2].strip()
+        if not name.startswith(FLOOR_REF) or name.endswith("^{}"):
+            continue  # not under refs/sofa-floor/, or the peeled line of a tag: no floor ref
+        if _STORE_ID.fullmatch(name[len(FLOOR_REF):]):
+            names.append(name)
+        else:
+            bad += 1
+    names.sort()
+    return names, bad
+
+
+def scratch_url(top, url):
+    """The URL of origin for the scratch repository of the reader. A relative path names a folder from the main folder
+    TOP, and the scratch is in another folder, so it becomes absolute. A URL with a scheme, an absolute path and an scp
+    address (host:path, with no / before the first :) stay as they are, as git reads them."""
+    if "://" in url or os.path.isabs(url):
+        return url
+    colon, slash = url.find(":"), url.find("/")
+    if colon > 0 and (slash < 0 or colon < slash):
+        return url
+    return os.path.normpath(os.path.join(top, url))
+
+
+def add_origin(repo, url):
+    """Write the remote origin with URL into the config of the scratch repository REPO, with no git call, so the URL
+    is not an argument of `git fetch` or of `git config`. A fetch with --filter needs a remote with a name (git writes
+    `remote.<name>.promisor`, and a name cannot start with /). For an http(s) URL, git still gives the URL to its
+    remote helper (`git remote-http origin <url>`) as an argument, as on main and for the ls-remote of the main
+    folder."""
+    value = url.replace("\\", "\\\\").replace('"', '\\"')
+    with open(os.path.join(repo, ".git", "config"), "a", encoding="utf-8") as config:
+        config.write(f'[remote "origin"]\n\turl = "{value}"\n')
+
+
+def no_warnings(err):
+    """The stderr ERR of a failed fetch with no `warning:` line, so that the reason is the line of the error."""
+    kept = [line for line in err.splitlines() if not line.strip().startswith("warning:")]
+    return "\n".join(kept) if kept else err
+
+
+REFUSED = re.compile(r"filter '[^']*' not supported|does not support shallow")
+
+
+def refused(err):
+    """True when the stderr ERR of a failed fetch (LC_ALL=C) says that git or origin refused the filter or the depth:
+    `filter 'blob:limit' not supported` (upload-pack, uploadpackfilter.<kind>.allow false), `dumb http transport does
+    not support shallow capabilities`, `Server does not support shallow clients`."""
+    return REFUSED.search(err) is not None
+
+
+def new_scratch(git, url, form):
+    """A new scratch repository of the reader and a Git object for its calls. The folder is new in TMPDIR (mode 700).
+    The repository has the object format FORM of the main folder, no hook (--template=), and the remote origin with
+    URL. It is not bare, because a person with safe.bareRepository=explicit cannot use a bare repository that git finds
+    by its folder. The calls take the env of the main folder (the GIT_CONFIG_* of the session, the ssh command, no key
+    of REPO_ENV_KEYS), GIT_NO_LAZY_FETCH=1, so no read fetches a blob that the filter left out, and LC_ALL=C, so the
+    text of a refusal (refused) is not translated."""
+    scratch = tempfile.mkdtemp(prefix="sofa-floor-")
+    try:
+        local = copy.copy(git)  # no second Git(): its constructor runs git in the folder before the init
+        local.repo, local.env = scratch, {**git.env, "GIT_NO_LAZY_FETCH": "1", "LC_ALL": "C"}
+        local.must("init", "-q", "--template=", f"--object-format={form}")
+        add_origin(scratch, scratch_url(git.repo, url))
+    except BaseException:
+        shutil.rmtree(scratch, ignore_errors=True)
+        raise
+    return scratch, local
+
+
 def cmd_snapshot_lines(con, a):
-    """Print the snapshot of each line on origin as JSON (rows 10 to 13)."""
+    """Print the snapshot of each line on origin as JSON (rows 10 to 13; STORY-513, items b and c)."""
     git = Git(repo_of_store(a, READ_FAILED), failed=READ_FAILED, tail="", short="")
-    origin_url(git)  # origin must have 1 URL; no App check, so a session with no App values reads the lines too
+    url = origin_url(git)  # origin must have 1 URL; no App check, so a session with no App values reads the lines too
     read_at = a.now or now_iso()
     row = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
     own = row[0] if row else None  # a read: this command writes no store id
+    names, bad = floor_names(git)
     lines = []
-    if git.must("ls-remote", "origin", FLOOR_REF + "*").strip():
-        tmp = f"{READ_TMP}{os.getpid()}-{secrets.token_hex(4)}"
+    if names:
+        # The fetch runs in a scratch repository (new_scratch), never in the main folder: a fetch with --filter
+        # writes the config of the repository that runs it (a partial clone: promisor, partialclonefilter), and the
+        # objects of another line must not stay in the main folder. The object format is the format of the main
+        # folder, not the default of the person (init.defaultObjectFormat, GIT_DEFAULT_HASH): a scratch of another
+        # format cannot fetch from origin. The folder goes in `finally`.
+        form = git.must("rev-parse", "--show-object-format").strip()
+        limits = ["--depth=1", f"--filter={READ_FILTER}"]
+        scratch, local = new_scratch(git, url, form)
         try:
-            git.must("fetch", "--no-tags", "--no-write-fetch-head", "--refmap=", "origin",
-                     f"+{FLOOR_REF}*:{tmp}/*")
-            names = git.must("for-each-ref", "--format=%(refname)", f"{tmp}/").split()
-            for name in sorted(names):
-                store = name[len(tmp) + 1:]
-                if _STORE_ID.fullmatch(store):
-                    lines.append(read_line(git, name, store, read_at, own))
+            for attempt in (1, 2):
+                rc, _, err = local.run("fetch", "--no-tags", "--no-write-fetch-head", "--refmap=", *limits,
+                                       "origin", *(f"{name}:{READ_REF}{name[len(FLOOR_REF):]}" for name in names))
+                if rc == 0:
+                    break
+                if attempt == 2:
+                    raise local.failure("fetch", rc, no_warnings(err))
+                if refused(err):
+                    # git or origin refused the filter or the depth (Done when 3: "else the current read"): the 1 more
+                    # fetch has no filter and no depth, in a new scratch, because the refused fetch already wrote the
+                    # promisor config of the filter. read_line checks the size of each line. A lost name after this
+                    # exits 1: the read has at most 2 fetches, and the first failure takes the second.
+                    limits = []
+                    shutil.rmtree(scratch, ignore_errors=True)
+                    scratch, local = new_scratch(git, url, form)
+                    continue
+                # A name that origin lost between the ls-remote and the fetch fails the whole fetch: read the names
+                # again and fetch 1 more time. The same names exit 1.
+                again = floor_names(git)
+                if again[0] == names:
+                    raise local.failure("fetch", rc, no_warnings(err))
+                names, bad = again
+                if not names:
+                    break
+            if names:
+                # No remote after the fetch: a read of a blob that the filter left out then fails with no fetch,
+                # because the scratch has no promisor remote (probe 8, C3, on git 2.50.1; build step 6 checks the git
+                # of CI; an unset remote.origin.promisor alone does not stop the fetch), and the URL leaves the config
+                # of the scratch. GIT_NO_LAZY_FETCH=1 (git 2.45 and later) is the second guard.
+                local.must("config", "--remove-section", "remote.origin")
+                stores = [name[len(FLOOR_REF):] for name in names]
+                lines = [read_line(local, READ_REF + store, store, read_at, own) for store in stores]
         finally:
-            # Only local refs go: the temporary refs of this run (never a ref of origin).
-            for name in git.run("for-each-ref", "--format=%(refname)", f"{tmp}/")[1].split():
-                git.run("update-ref", "-d", name)
+            shutil.rmtree(scratch, ignore_errors=True)
     lines.sort(key=lambda line: (line["label"] is None, line["label"] or "", line["store"]))
-    sys.stdout.write(dump({"lines": lines, "read_at": read_at}) + "\n")
+    out = {"lines": lines, "read_at": read_at}
+    if bad:
+        out["skipped"] = {"bad_name": bad}
+    sys.stdout.write(dump(out) + "\n")
 
 
 def read_line(git, name, store, read_at, own):
-    """The line of the ref NAME (the temporary copy of refs/sofa-floor/STORE): its snapshot, or the reason that no
-    snapshot is there. The text comes from another machine, so it is data: a bad line gives an error, never a stop."""
+    """The line of the ref NAME (refs/sofa-read/STORE in the scratch repository of the reader): its snapshot, or the
+    reason that no snapshot is there. The text comes from another machine, so it is data: a bad line gives an error,
+    never a stop. The snapshot of the line is rebuilt from the known keys (rebuild_snapshot), never the parsed text."""
     line = {"store": store, "label": None, "taken_at": None, "age_seconds": None, "old": None,
             "own": store == own, "schema_version": None, "snapshot": None, "error": None}
 
@@ -1525,12 +1672,21 @@ def read_line(git, name, store, read_at, own):
         line["error"] = message
         return line
 
-    rc, size, _ = git.run("cat-file", "-s", f"{name}:{SNAPSHOT_FILE}")
-    if rc != 0:
+    # The entry first, with no read of the blob: the filter of the fetch can leave the blob out (STORY-513, item c).
+    rc, entry, _ = git.run("ls-tree", name, SNAPSHOT_FILE)
+    meta, _, path = entry.partition("\t")
+    parts = meta.split()
+    if rc != 0 or path.strip() != SNAPSHOT_FILE or len(parts) != 3 or parts[1] != "blob":
+        return bad(f"the ref has no {SNAPSHOT_FILE}")
+    blob = parts[2]
+    if git.run("cat-file", "-e", blob)[0] != 0:
+        return bad(f"the snapshot is over {LINE_MAX_BYTES} bytes")  # the filter left out a blob over the limit
+    rc, size, _ = git.run("cat-file", "-s", blob)
+    if rc != 0 or not size.strip().isdigit():
         return bad(f"the ref has no {SNAPSHOT_FILE}")
     if int(size.strip()) > LINE_MAX_BYTES:
-        return bad(f"the snapshot is over {LINE_MAX_BYTES} bytes")
-    rc, text, _ = git.run("cat-file", "blob", f"{name}:{SNAPSHOT_FILE}")
+        return bad(f"the snapshot is over {LINE_MAX_BYTES} bytes")  # origin did not honor the filter
+    rc, text, _ = git.run("cat-file", "blob", blob)
     if rc != 0:
         return bad(f"the ref has no {SNAPSHOT_FILE}")
     try:
@@ -1543,7 +1699,7 @@ def read_line(git, name, store, read_at, own):
     if type(version) is not int:
         return bad("schema_version is not a whole number")
     line["schema_version"] = version
-    if version > SCHEMA_VERSION:
+    if version > SCHEMA_VERSION or version < 1:
         return bad(f"unknown schema {version}")
     taken = snap.get("taken_at")
     try:
@@ -1557,16 +1713,68 @@ def read_line(git, name, store, read_at, own):
     if named != store:
         return bad(f"the snapshot names store {named}" if isinstance(named, str) and _STORE_ID.fullmatch(named)
                    else "the snapshot names no store of the form of a store id")
-    label = info.get("label")
-    line["label"] = label if isinstance(label, str) and _LABEL.fullmatch(label) else None
+    clean = rebuild_snapshot(snap, store)
+    line["label"] = clean["line"].get("label")
     line["taken_at"] = taken
     line["age_seconds"] = age = max(0, int((parse_iso(read_at) - taken_dt).total_seconds()))
-    rules = snap.get("rules") if isinstance(snap.get("rules"), dict) else {}
-    health = rules.get("health") if isinstance(rules.get("health"), dict) else {}
-    limit = health.get("snapshot_max_age_seconds")
-    line["old"] = age > limit if type(limit) is int and limit in SNAPSHOT_MAX_AGE else None
-    line["snapshot"] = snap
+    limit = ((clean.get("rules") or {}).get("health") or {}).get("snapshot_max_age_seconds")
+    line["old"] = age > limit if type(limit) is int else None
+    line["snapshot"] = clean
     return line
+
+
+def scrub_rows(scrub, rows, fields):
+    """The rows of 1 section of another line: each row keeps only the fields of FIELDS, each with its form. A section
+    that is not a list is null, and a row that is not an object goes nowhere; each counts 1 in nulled."""
+    if not isinstance(rows, list):
+        return scrub.drop()
+    out = []
+    for row in rows:
+        if isinstance(row, dict):
+            out.append({f: scrub.value(form, row[f]) for f, form in fields.items() if f in row})
+        else:
+            scrub.drop()
+    return out
+
+
+def scrub_rules(scrub, rules):
+    """The rule sets of another line: only the sets of FLOOR_SETS, and in each set only the fields of RULE_FIELDS."""
+    if not isinstance(rules, dict):
+        return scrub.drop()
+    out = {}
+    for name in FLOOR_SETS:
+        if name in rules:
+            fields = rules[name]
+            out[name] = ({f: scrub.value(form, fields[f]) for f, form in RULE_FIELDS[name].items() if f in fields}
+                         if isinstance(fields, dict) else scrub.drop())
+    return out
+
+
+def rebuild_snapshot(snap, store):
+    """The snapshot of another line, rebuilt from the known keys of version 1 (STORY-513, item b).
+
+    SNAP passed the checks of read_line (schema_version, taken_at, line.store). The rebuild takes only the keys that
+    build_snapshot writes, each with the form of its field (SNAPSHOT_FIELDS, RULE_FIELDS, the Scrubber). A value that
+    does not have its form is null, and nulled adds 1 for it to the nulled of the publisher. An unknown key goes
+    nowhere and is not counted, because a reader ignores an unknown key (the rule of change of STORY-443). A known key
+    that the snapshot does not hold stays out. The parsed object never goes into the output."""
+    scrub = Scrubber()
+    out = {"schema_version": snap["schema_version"], "taken_at": snap["taken_at"], "line": {"store": store}}
+    if "label" in snap["line"]:
+        out["line"]["label"] = scrub.value(_LABEL, snap["line"]["label"])
+    for section, (_, fields) in SNAPSHOT_FIELDS.items():
+        if section in snap:
+            out[section] = scrub_rows(scrub, snap[section], fields)
+    if "queue" in snap:
+        queue = snap["queue"]
+        out["queue"] = [scrub.value(_ID, item) for item in queue] if isinstance(queue, list) else scrub.drop()
+    if "rules" in snap:
+        out["rules"] = scrub_rules(scrub, snap["rules"])
+    if "rules_digest" in snap:
+        out["rules_digest"] = scrub.value(_DIGEST, snap["rules_digest"])
+    base = scrub.value(NULLED_FORM, snap.get("nulled", 0))
+    out["nulled"] = (base or 0) + scrub.nulled
+    return out
 
 
 # --- output helpers ---
