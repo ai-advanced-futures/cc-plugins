@@ -6,14 +6,17 @@ busy timeout. Each command creates the schema when it is not there.
 
 Database path: --db PATH, else $SOFA_STATE_DB, else <main folder>/.sofa/state.db.
 Exit code: 0 on success; 2 on a bad argument (argparse), when `decision log` refuses
-its arguments, when `kv set` gets a key that starts with `decision.`, when `item set` refuses
+its arguments, when `kv set` gets a key that starts with `decision.` or `rows.retired.`, when `item set` refuses
 its input (an id that is not in the form of an item id, a state that is not in the list, a new row with no
 `--state`, a closed row that opens again with no `--reopen`, a `--session` that is not a name of the caller,
 the work order of another session with no `--take-over`, `--take-over` with no `--session`, or a work order
-with no holder), and when
+with no holder), when
 SOFA_GIT_TIMEOUT is not a number greater than 0 (read at the first git call, so a command
-that makes no git call does not read it); 3 when `snapshot publish` refuses a snapshot because the guard
+that makes no git call does not read it; the 4 leaves `item remove`, `item rename`, `session remove`
+and `session rename` read it before the lock), and when a `--to` of `item rename` or `session rename`
+does not have the form of its key; 3 when `snapshot publish` refuses a snapshot because the guard
 found a private value (nothing is pushed; `snapshot take` keeps exit 1 for the same output line); 1 on all other errors, also when
+a leaf of `item remove`, `item rename`, `session remove` or `session rename` refuses a change of a row (STORY-503), and when
 `decision log` cannot reserve a block of decision ids (see "decisions" below); also on
 `snapshot take` when the floor configuration is missing or wrong, and when the snapshot or a rule set of the
 file would hold a known private value (a session id, a path, a person login or a machine value).
@@ -131,18 +134,56 @@ def parse_iso(text):
     return datetime.strptime(text, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
 
 
-def main_folder():
+class GitTimeout(UsageError):
+    """A git call of main_folder did not end in its time limit. Its full process group is stopped."""
+
+
+def main_folder(limit=None):
     """The main folder of the repository: the parent of the common .git folder.
 
     The same folder in the main checkout and in each worktree. Raises
-    subprocess.CalledProcessError outside a git repository.
+    subprocess.CalledProcessError outside a git repository. LIMIT: the time limit of each
+    git call in seconds (see rev_parse); None gives no limit, as on main.
     """
-    common = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
-                            capture_output=True, text=True, check=True).stdout.strip()
+    common = rev_parse(["--path-format=absolute", "--git-common-dir"], limit)
     if os.path.basename(common) == ".git":
         return os.path.dirname(common)
-    return subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True,
-                          text=True, check=True).stdout.strip()
+    return rev_parse(["--show-toplevel"], limit)
+
+
+def rev_parse(args, limit=None):
+    """The stdout of 1 `git rev-parse ARGS` with no white space at its ends. The environment is the
+    environment of the session in each case (the suite case `envall`).
+
+    With LIMIT None, the call of main: no time limit. With LIMIT, git runs in its own process group,
+    and on the limit the full group stops, not only git, because a git wrapper can start children
+    that hold the pipes open (docs/adlc.md, rule 16, as run_git). Then GitTimeout. A git that exits
+    non-zero raises subprocess.CalledProcessError in each case.
+    """
+    cmd = ["git", "rev-parse", *args]
+    if limit is None:
+        return subprocess.run(cmd, capture_output=True, text=True, check=True).stdout.strip()
+    p = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                         start_new_session=True)
+    try:
+        out, err = p.communicate(timeout=limit)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(p.pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            # The group ended between the time-out and the kill. macOS answers EPERM for a group that holds only
+            # zombies, so PermissionError ends the same way: as the time-out, not as a traceback with the lock held.
+            pass
+        try:
+            p.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            # A child that left the group still holds the pipes: do not wait for it.
+            p.stdout.close()
+            p.stderr.close()
+        raise GitTimeout(f"git did not end after {limit:g} seconds; no change (try again)") from None
+    if p.returncode:
+        raise subprocess.CalledProcessError(p.returncode, cmd, out, err)
+    return out.strip()
 
 
 def db_path(arg):
@@ -200,6 +241,9 @@ def cmd_session_upsert(con, a):
     con.execute("BEGIN IMMEDIATE")
     try:
         _, _, _, changed = map_old_states(con, False)
+        # Row 19 of STORY-503: under the write lock, after the map and before the upsert (D-7358).
+        refuse_retired(con, a, "sessions", a.name, "--name")
+        refuse_retired(con, a, "items", a.item, "--item")
         old = con.execute("SELECT id FROM sessions WHERE name = ?", (a.name,)).fetchone()
         old_id = old["id"] if old else None
         restart = bool(old_id and a.id and _UUID.fullmatch(old_id) and _UUID.fullmatch(a.id) and old_id != a.id)
@@ -241,6 +285,8 @@ def cmd_session_free(con, a):
 
 def cmd_session_colour(con, a):
     """Record the colour that /color set in the session. A row is created when it is not there."""
+    con.execute("BEGIN IMMEDIATE")  # T1: the check and the write under 1 write lock
+    refuse_retired(con, a, "sessions", a.name, "--name")
     con.execute("INSERT INTO sessions (name, state, since) VALUES (?, 'live', ?) "
                 "ON CONFLICT(name) DO NOTHING", (a.name, a.at))
     con.execute("UPDATE sessions SET colour = ? WHERE name = ?", (a.colour, a.name))
@@ -249,6 +295,8 @@ def cmd_session_colour(con, a):
 
 def cmd_session_heartbeat(con, a):
     """Record a heartbeat. A session row is created when it is not there."""
+    con.execute("BEGIN IMMEDIATE")  # T1: the check and the write under 1 write lock
+    refuse_retired(con, a, "sessions", a.name, "--name")
     con.execute("INSERT INTO sessions (name, state, since) VALUES (?, 'live', ?) "
                 "ON CONFLICT(name) DO NOTHING", (a.name, a.at))
     con.execute("UPDATE sessions SET last_heartbeat = ? WHERE name = ?", (a.at, a.name))
@@ -378,6 +426,10 @@ def cmd_item_set(con, a):
     con.execute("BEGIN IMMEDIATE")
     try:
         _, _, _, changed = map_old_states(con, False)
+        # Row 19 of STORY-503: after the map and before the guards of check_item_set, so a key that the operator took
+        # out gets the message of row 19, not a guard message (D-7358).
+        refuse_retired(con, a, "items", a.id, "--id")
+        refuse_retired(con, a, "sessions", a.session, "--session")
         check_item_set(con, a)
         write_item(con, a)
         con.commit()
@@ -459,6 +511,8 @@ def cmd_item_list(con, a):
 
 def cmd_item_trip(con, a):
     """Record one hand-over of an item between two roles."""
+    con.execute("BEGIN IMMEDIATE")  # T1: the check and the write under 1 write lock
+    refuse_retired(con, a, "items", a.id, "--id")
     con.execute("INSERT INTO trips (item, from_role, to_role, at) VALUES (?, ?, ?, ?)",
                 (a.id, a.from_role, a.to_role, a.at))
     con.commit()
@@ -855,11 +909,16 @@ def cmd_decision_log(con, a):
         raise UsageError("--replace needs --id", code=2)
     if a.id is not None and not DECISION_ID_RE.fullmatch(a.id):
         raise UsageError("--id must be D- and 1 to 9 digits, for example D-042", code=2)
+    # Before claim_block: a refused call must not reserve a block on origin.
+    refuse_retired(con, a, "items", a.story, "--story")
     if a.id:
         con.execute("BEGIN IMMEDIATE")
         decision_id = a.id
     else:
         decision_id = next_decision_id(con, claim_block(con, a))
+    # Again under the write lock of the write (each branch holds it here): a rename may have committed after the
+    # early check. claim_block runs no git while the lock is held.
+    refuse_retired(con, a, "items", a.story, "--story")
     old = con.execute("SELECT story FROM decisions WHERE id = ?", (decision_id,)).fetchone()
     if old and not a.replace:
         raise UsageError(f"decision {decision_id} exists (story {old['story']}); give no --id "
@@ -949,6 +1008,8 @@ def cmd_decision_list(con, a):
 
 def cmd_ask_open(con, a):
     """Open an ask to hitl."""
+    con.execute("BEGIN IMMEDIATE")  # T1: the check and the write under 1 write lock
+    refuse_retired(con, a, "items", a.story, "--story")
     con.execute("INSERT INTO asks (id, story, priority, opened_at, closed_at) VALUES (?, ?, ?, ?, NULL) "
                 "ON CONFLICT(id) DO UPDATE SET story = excluded.story, priority = excluded.priority",
                 (a.id, a.story, a.priority, a.at))
@@ -973,6 +1034,8 @@ def cmd_ask_list(con, a):
 
 def cmd_interaction_log(con, a):
     """Record one human interaction on a story."""
+    con.execute("BEGIN IMMEDIATE")  # T1: the check and the write under 1 write lock
+    refuse_retired(con, a, "items", a.story, "--story")
     con.execute("INSERT INTO interactions (story, kind, by_whom, at) VALUES (?, ?, ?, ?)",
                 (a.story, a.kind, a.by, a.at))
     con.commit()
@@ -988,6 +1051,9 @@ def cmd_usage_set(con, a):
 
 def cmd_queue_set(con, a):
     """Replace the queue with the given items, in order."""
+    con.execute("BEGIN IMMEDIATE")  # T1: the check and the write under 1 write lock
+    for item in a.items:
+        refuse_retired(con, a, "items", item, "ITEM")
     with con:
         con.execute("DELETE FROM queue")
         con.executemany("INSERT INTO queue (position, item) VALUES (?, ?)",
@@ -1001,10 +1067,15 @@ def cmd_queue_list(con, a):
 
 
 def cmd_kv_set(con, a):
-    """Set one key. A key that starts with `decision.` is written only by `decision log`."""
+    """Set one key. A key that starts with `decision.` is written only by `decision log`, and a key that starts
+    with `rows.retired.` only by `item remove`, `item rename`, `session remove` and `session rename`."""
     if a.key.startswith("decision."):
         raise UsageError("a key that starts with decision. is written only by sofa-state "
                          "(the block of decision ids); do not set it by hand", code=2)
+    if a.key.startswith("rows.retired."):
+        raise UsageError("a key that starts with rows.retired. is written only by sofa-state item remove, item "
+                         "rename, session remove and session rename (the keys that the operator took out); do not "
+                         "set it by hand", code=2)
     con.execute("INSERT INTO kv (key, value) VALUES (?, ?) "
                 "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (a.key, a.value))
     con.commit()
@@ -1299,8 +1370,12 @@ def build_snapshot(con, sets, at, store):
     return snap
 
 
-def private_values(con, db_path_arg):
-    """The values that no snapshot may hold, as a list of (kind, value). A value under 4 characters is left out."""
+def private_values(con, db_path_arg, limit=None):
+    """The values that no snapshot may hold, as a list of (kind, value). A value under 4 characters is left out.
+
+    LIMIT: the time limit of the git call of main_folder (None: no limit, as on main, for `snapshot take`). A
+    GitTimeout is not caught here: the caller stops, and the main folder never leaves the list without a word.
+    """
     found = []
 
     def add(kind, values):
@@ -1315,7 +1390,7 @@ def private_values(con, db_path_arg):
     paths.append(os.environ.get("HOME"))
     paths.append(os.path.realpath(os.path.dirname(os.path.abspath(db_path_arg))))
     try:
-        paths.append(main_folder())
+        paths.append(main_folder(limit))
     except (subprocess.CalledProcessError, OSError):
         pass
     add("a path", paths)
@@ -1777,6 +1852,331 @@ def rebuild_snapshot(snap, store):
     return out
 
 
+# --- rows: remove or rename 1 row of items or sessions (STORY-503) ---
+# The guard of `snapshot take` refuses a snapshot when a key (items.id, sessions.name) holds a private value, and no
+# other leaf changes a key: `item set` and `session upsert` write a row by its key. These 4 leaves change 1 key row,
+# and only a row that the guard refuses. They are a delete of data, so the rule card of the STORY-503 spec decides
+# who runs them and when. Each of the 4 records the old key as retired (a digest in kv), and the writers of a key call
+# refuse_retired, so no writer writes a key again that the operator took out. Any other key passes as on main.
+# A twin of a key K is another key of the same table that is K in any letter case, and is not the exact text of K. The
+# 1 rule of the twins: at each place that compares a key or a reference, a key that has a twin compares the exact text,
+# and a key with no twin compares in any letter case, as the guard (compare_of). A writer of the exact text of a live
+# key passes refuse_retired, also when its twin was taken out. Each of the 9 writers checks under the write lock of
+# its write (BEGIN IMMEDIATE before refuse_retired), so a writer that starts during a rename reads the kv row of the
+# rename after its commit (review 3, T1).
+
+# For each table: the key column, the form of a key (the form of the field in SNAPSHOT_FIELDS: the snapshot keeps
+# only a value of this form), the places of the snapshot that hold a reference to the key (section and field; a
+# remove stops while one holds it), and each column of the store that holds a reference (a rename writes the new key
+# into each). An item id is also the story id of asks, decisions and interactions (story_metrics reads them with 1
+# value). A story that adds a field of the snapshot that holds a key adds it here in the same change, as for
+# WHERE_NAMES.
+ROW_TABLES = {
+    "items": {"key": "id", "form": _ID, "label": "item",
+              "places": [("sessions", "item"), ("queue", "item"), ("open_asks", "story"), ("decisions_24h", "story")],
+              "refs": [("sessions", "item"), ("queue", "item"), ("trips", "item"), ("usage", "item"),
+                         ("messages", "subject"), ("asks", "story"), ("decisions", "story"),
+                         ("interactions", "story")]},
+    "sessions": {"key": "name", "form": _NAME, "label": "session",
+                 "places": [("items", "session")],
+                 "refs": [("items", "session"), ("heartbeats", "name"), ("usage", "session"),
+                            ("messages", "from_name"), ("messages", "to_name")]},
+}
+# The rows of each section of the snapshot: the query of build_snapshot (decisions_24h takes the time 24 hours ago).
+PLACE_QUERIES = {"queue": "SELECT item FROM queue ORDER BY position",
+                 **{s: q for s, (q, _) in SNAPSHOT_FIELDS.items()}}
+# The line `| Team prefix | `<prefix>` ...` of docs/adlc.md: the regex of teamPrefix in hooks/register.tsx.
+TEAM_PREFIX_RE = re.compile(r"^\|\s*Team prefix\s*\|\s*`([^`<>]+)`", re.MULTILINE)
+# The kv row of a key that remove or rename took out. Its value is the --at of the change.
+RETIRE = "INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+# The names of the copy of 1 second of --at: <store>.copy-<stamp>, then -2 to -99 (review 3, T2).
+COPY_NAMES = 99
+# The roadmap prefix of an item id: STORY-<n>-, FEATURE-<n>- or MILESTONE-<n>- at its start. story_metrics counts the
+# work orders of a story by this prefix (STORY-502, row 20), so an item rename keeps it (row 10, D-7357).
+_ROADMAP_PREFIX = re.compile(r"(STORY|FEATURE|MILESTONE)-[0-9]+-")
+
+
+def roadmap_prefix(key):
+    """The roadmap prefix at the start of KEY (its exact text, as story_metrics compares it), or "" for none."""
+    m = _ROADMAP_PREFIX.match(key)
+    return m.group(0) if m else ""
+
+
+def match_rows(con, table, key):
+    """The key of TABLE that is exactly KEY; when there is none, each key that is KEY in any letter case (casefold,
+    the match of the guard)."""
+    col = ROW_TABLES[table]["key"]
+    if con.execute(f"SELECT 1 FROM {table} WHERE {col} = ?", (key,)).fetchone():
+        return [key]
+    needle = key.casefold()
+    return [k for (k,) in con.execute(f"SELECT {col} FROM {table}") if (k or "").casefold() == needle]
+
+
+# The 2 compares of compare_of, as SQL conditions on the column {c} with 1 parameter.
+EXACT, ANY_CASE = "{c} = ?", "lower({c}) = lower(?)"
+# For each table: the column of usage that holds its key, and the other column of UNIQUE(session, item).
+USAGE_PAIR = {"items": ("item", "session"), "sessions": ("session", "item")}
+
+
+def compare_of(con, table, key):
+    """The compare of a key or a reference with KEY of TABLE: EXACT when KEY has a twin, else ANY_CASE (the match of
+    the guard). The forms _ID and _NAME are ASCII, so lower() gives the result of casefold() for a key of the form."""
+    col = ROW_TABLES[table]["key"]
+    twin = con.execute(f"SELECT 1 FROM {table} WHERE lower({col}) = lower(?) AND {col} != ?", (key, key)).fetchone()
+    return EXACT if twin else ANY_CASE
+
+
+def holds_private(values, text):
+    """True when TEXT holds a value of VALUES (the list of `private_values`) in any letter case, as the guard tests
+    it."""
+    folded = text.casefold()
+    return any(v.casefold() in folded for _, v in values)
+
+
+def retired_key(table, key):
+    """The kv key that records KEY of TABLE as taken out: the sha256 of the casefolded key, so the store keeps no old
+    key, and the match is in any letter case, as the match of the guard."""
+    digest = hashlib.sha256(key.casefold().encode("utf-8", "surrogateescape")).hexdigest()
+    return f"rows.retired.{table}.{digest}"
+
+
+def refuse_retired(con, a, table, value, arg):
+    """Stop a writer that would write a key that remove or rename took out of TABLE. Exit 1 and write nothing.
+
+    VALUE passes when it is exactly a key of TABLE (the table of its key kind): a live key, also the twin of a key that
+    was taken out, or a key that a rename gave again. Else VALUE is refused when kv records it as retired, in any
+    letter case. Any other value passes as on main, also a new key that holds a private value: the guard and the route
+    of STORY-444 handle it. It does no form check, reads no private value and starts no git. The message names ARG,
+    never the value.
+    """
+    if not value:
+        return
+    col = ROW_TABLES[table]["key"]
+    if con.execute(f"SELECT 1 FROM {table} WHERE {col} = ?", (value,)).fetchone():
+        return
+    if con.execute("SELECT 1 FROM kv WHERE key = ?", (retired_key(table, value),)).fetchone():
+        raise UsageError(f"{a.cmd} {a.sub}: {arg} is a key that the operator took out of {table}; no change "
+                         "(use the new key)")
+
+
+def team_prefix(a):
+    """The team prefix of docs/adlc.md in the main folder of the store, or None.
+
+    db_path puts the store at <main folder>/.sofa/state.db, so the main folder is the parent of the folder `.sofa`. A
+    store in another folder has no main folder here, and no prefix.
+    """
+    folder = os.path.dirname(os.path.abspath(a.db_path))
+    if os.path.basename(folder) != ".sofa":
+        return None
+    try:
+        with open(os.path.join(os.path.dirname(folder), "docs", "adlc.md"), encoding="utf-8") as f:
+            m = TEAM_PREFIX_RE.search(f.read())
+    except (OSError, UnicodeDecodeError):
+        return None
+    return m.group(1) if m else None
+
+
+def copy_store(con, a, lead):
+    """Copy the store to a new file next to it with the backup API, and return the path. LEAD: the words of the leaf.
+
+    The store runs in WAL mode, so the last writes can be in the -wal file: a copy of the main file alone can miss
+    them. The backup API reads 1 consistent state. It reads through a second connection, because SQLite refuses
+    (SQLITE_LOCKED) a backup from a connection that holds a write transaction, and the backup of Python then waits
+    for ever. The caller holds the write lock (BEGIN IMMEDIATE) and has written nothing yet, so the second
+    connection reads the state before the change, and no other session can commit between the copy and the change.
+    The file is made first with O_EXCL and mode 600, so the copy is never looser than the store and never replaces a
+    file. When the name <store>.copy-<stamp> is taken (2 commands in the same second of --at), the copy takes the
+    next free name <store>.copy-<stamp>-2 to -99, each with O_EXCL. Each message names the file, not its folder: the
+    folder can hold the home path.
+    """
+    stamp = a.at.replace("-", "").replace(":", "")
+    first = f"{os.path.abspath(a.db_path)}.copy-{stamp}"
+    for n in range(1, COPY_NAMES + 1):
+        path = first if n == 1 else f"{first}-{n}"
+        try:
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            break
+        except FileExistsError:
+            continue
+        except OSError as e:
+            raise UsageError(f"{lead}: the copy {os.path.basename(path)} cannot be made ({e.strerror}); "
+                             "no change") from None
+    else:
+        raise UsageError(f"{lead}: the copy {os.path.basename(first)} is there already; no change "
+                         "(give another --at, not later than now)")
+    os.close(fd)
+    try:
+        src, dst = sqlite3.connect(a.db_path, timeout=5), sqlite3.connect(path)
+        try:
+            src.backup(dst)
+        finally:
+            dst.close()
+            src.close()
+    except (sqlite3.Error, OSError):
+        os.unlink(path)
+        raise UsageError(f"{lead}: the copy {os.path.basename(path)} cannot be made; no change") from None
+    except BaseException:
+        os.unlink(path)
+        raise
+    return path
+
+
+def change_row(con, a, table, key, new_key):
+    """Remove (NEW_KEY None) or rename 1 row of TABLE, in 1 write transaction, after 1 copy of the store. The same
+    transaction records the old key as retired (refuse_retired)."""
+    t = ROW_TABLES[table]
+    col, where = t["key"], f"{table}.{t['key']}"
+    verb = "remove" if new_key is None else "rename"
+    lead = f"{t['label']} {verb}"
+    if new_key is not None and not t["form"].fullmatch(new_key):
+        raise UsageError(f"{lead}: --to does not have the form of {where}; no change", code=2)
+    # The time limit of the git call of the checks (review 5, risk 10). A SOFA_GIT_TIMEOUT that is not a number stops
+    # the leaf here, before the write lock, with exit 2.
+    try:
+        limit = git_timeout()
+    except UsageError as e:
+        raise UsageError(f"{lead}: {e}; no change", code=e.code) from None
+    con.execute("BEGIN IMMEDIATE")
+    path = None
+    try:
+        rows = match_rows(con, table, key)
+        if len(rows) != 1:
+            hint = "; `report` cuts a cell at 28 characters, `report --json` gives the full key" if not rows else ""
+            raise UsageError(f"{lead}: the key matches {len(rows)} rows of {table} in any letter case; no change{hint}")
+        old = rows[0]
+        # The guard reads the scrubbed snapshot, where a key without the form of its field is null.
+        if not t["form"].fullmatch(old):
+            raise UsageError(f"{lead}: the key does not have the form of {where}, so the snapshot has no such value "
+                             "and the guard does not refuse it; no change")
+        # 1 read of the private values for the command (1 git call, main_folder), under the write lock: the block
+        # "row 11" uses this git call as its seam. Each check of a private value below uses this list (review 3, Q2).
+        # The git call runs in its own process group with the time limit LIMIT, and the full group stops on the
+        # limit: a git that does not end cannot hold the write lock of the team (review 5, risk 10).
+        try:
+            values = private_values(con, a.db_path, limit)
+        except GitTimeout as e:
+            raise UsageError(f"{lead}: {e}") from None
+        if not holds_private(values, old):
+            raise UsageError(f"{lead}: the key holds no private value of the snapshot guard, so the guard does not "
+                             "refuse it; no change")
+        if new_key is None:
+            # The guard matches in any letter case, so a place holds the key also in another letter case, unless the
+            # key has a twin: then a place in another letter case belongs to the twin, and only the exact text counts.
+            same = compare_of(con, table, old)
+            # The window ends at --at, and never later than now: an --at in the future (a typo of a year) would move
+            # the start of the window past each decision of now, and the remove would leave a key that the snapshot
+            # still refuses for 24 hours (review 6, finding 1). --at still names the copy and the retired value.
+            day_ago = (min(parse_iso(a.at), datetime.now(timezone.utc)) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            held = []
+            for section, field in t["places"]:
+                query = PLACE_QUERIES[section]
+                n = con.execute(f"SELECT COUNT(*) FROM ({query}) WHERE {same.format(c=field)}",
+                                ((day_ago,) if "?" in query else ()) + (old,)).fetchone()[0]
+                if n:
+                    held.append(f"{section if section == 'queue' else section + '.' + field} ({n} rows)")
+            if held:
+                raise UsageError(f"{lead}: the key is still in {', '.join(held)}; no change (rename the row instead)")
+        else:
+            # An item rename keeps the roadmap prefix of the old id, or has none when the old id has none (row 10,
+            # D-7357). Else story_metrics moves the trips and the start of the work order to another story, or out of
+            # its story.
+            if table == "items" and roadmap_prefix(new_key) != roadmap_prefix(old):
+                raise UsageError(f"{lead}: --to must keep the roadmap prefix of the old id; no change")
+            # A bare roadmap id is the id of a roadmap row, which only the plan-auditor writes (rule 15). A rename to it
+            # would turn the work order into a roadmap row (D-7393).
+            if table == "items" and _ROADMAP_ID.fullmatch(new_key):
+                raise UsageError(f"{lead}: --to is a bare roadmap id; no change (give a work order id)")
+            # The hook counts a session as a team session only by the form <team prefix>-<role>[-n] (roleOf).
+            role = con.execute("SELECT role FROM sessions WHERE name = ?", (old,)).fetchone()[0] \
+                if table == "sessions" else None
+            prefix = team_prefix(a) if role else None
+            if prefix is not None and holds_private(values, f"{prefix}-{role}"):
+                raise UsageError(f"{lead}: the team form of the row holds a private value; no change (remove the row)")
+            if prefix is not None and not re.fullmatch(re.escape(f"{prefix}-{role}") + r"(-[0-9]+)?", new_key):
+                raise UsageError(f"{lead}: --to does not have the form <team prefix>-<role>[-n] of the row; no change",
+                                 code=2)
+            if holds_private(values, new_key):
+                raise UsageError(f"{lead}: --to holds a private value of the snapshot guard; no change")
+            if match_rows(con, table, new_key):
+                raise UsageError(f"{lead}: --to is a key of {table} already; no change")
+            # A reference column that holds --to in any letter case is the history of another key (old rows of a key
+            # that was removed, or rows with no key row). The rename would merge it with the history of the row, and
+            # story_metrics would count both as 1 (review 3, Q1).
+            history = []
+            for tbl, c in t["refs"]:
+                n = con.execute(f"SELECT COUNT(*) FROM {tbl} WHERE lower({c}) = lower(?)", (new_key,)).fetchone()[0]
+                if n:
+                    history.append(f"{tbl}.{c} ({n} rows)")
+            if history:
+                raise UsageError(f"{lead}: --to is in the history of other rows ({', '.join(history)}); no change "
+                                 "(give another --to)")
+            # A reference in another letter case is a reference to the old key, unless the old key has a twin: then
+            # such a reference belongs to the twin, and only the exact text changes.
+            same = compare_of(con, table, old)
+            # With no twin, the rename changes each reference in any letter case. When usage holds the key in 2 letter
+            # cases for 1 session (an item) or for 1 item (a session), both rows get the same pair, and
+            # UNIQUE(session, item) breaks. The check of the history reads only --to, so it cannot see them (review 4,
+            # F1).
+            mine, other = USAGE_PAIR[table]
+            if same == ANY_CASE and con.execute(
+                    f"SELECT 1 FROM usage WHERE lower({mine}) = lower(?) AND {other} IS NOT NULL GROUP BY {other} HAVING COUNT(*) > 1 LIMIT 1",
+                    (old,)).fetchone():
+                raise UsageError(f"{lead}: usage holds the key in 2 letter cases for 1 {other}; no change "
+                                 "(no rename can pass; clear each place that the remove names, then remove the row)")
+        path = copy_store(con, a, lead)
+        # From the copy to the commit, each error of SQLite stops the leaf with the leaf words. The rollback below
+        # takes back the change and deletes the copy (review 4, F1; review 5, G2).
+        try:
+            if new_key is None:
+                con.execute(f"DELETE FROM {table} WHERE {col} = ?", (old,))
+            else:
+                con.execute(f"UPDATE {table} SET {col} = ? WHERE {col} = ?", (new_key, old))
+                # The check of the history refuses a --to that a reference column holds, and the check of usage
+                # refuses 2 rows of usage that would get the same pair. So UNIQUE(session, item) of usage does not
+                # break here. Another unique key of the store (a later index) can still break: the catch below.
+                refs = sum(con.execute(f"UPDATE {tbl} SET {c} = ? WHERE {same.format(c=c)}", (new_key, old)).rowcount
+                           for tbl, c in t["refs"])
+            con.execute(RETIRE, (retired_key(table, old), a.at))
+            con.commit()
+        except sqlite3.IntegrityError:
+            raise UsageError(f"{lead}: the change breaks a unique key of the store; no change") from None
+        except sqlite3.Error as e:
+            # Only the code name of the error (for example SQLITE_IOERR_WRITE), never its text: a trigger can put any
+            # text in it, and a message names no key and no folder.
+            name = getattr(e, "sqlite_errorname", type(e).__name__)
+            raise UsageError(f"{lead}: the store gave an error ({name}); no change") from None
+    except BaseException:
+        con.rollback()
+        if path is not None:
+            os.unlink(path)
+        raise
+    print(f"copy {path}")
+    if new_key is None:
+        print(f"removed 1 row of {table}")
+    else:
+        print(f"renamed 1 row of {table}, and {refs} references to the key in other rows")
+
+
+def cmd_item_remove(con, a):
+    """Remove 1 item whose id the snapshot guard refuses."""
+    change_row(con, a, "items", a.id, None)
+
+
+def cmd_item_rename(con, a):
+    """Give 1 item whose id the snapshot guard refuses a new id."""
+    change_row(con, a, "items", a.id, a.to)
+
+
+def cmd_session_remove(con, a):
+    """Remove 1 session whose name the snapshot guard refuses."""
+    change_row(con, a, "sessions", a.name, None)
+
+
+def cmd_session_rename(con, a):
+    """Give 1 session whose name the snapshot guard refuses a new name."""
+    change_row(con, a, "sessions", a.name, a.to)
+
+
 # --- output helpers ---
 
 def table(rows, header, width=28):
@@ -1843,6 +2243,13 @@ def build_parser():
     sp.add_argument("--colour", required=True)
     sp = leaf(s, "heartbeat", cmd_session_heartbeat, "record a heartbeat")
     sp.add_argument("--name", required=True)
+    sp = leaf(s, "remove", cmd_session_remove, "remove 1 session whose name the snapshot guard refuses")
+    sp.add_argument("--name", required=True)
+    sp.set_defaults(lock_tries=1, locked="session remove: the store is locked by another writer; no change (try again)")
+    sp = leaf(s, "rename", cmd_session_rename, "give 1 session whose name the snapshot guard refuses a new name")
+    sp.add_argument("--name", required=True)
+    sp.add_argument("--to", required=True)
+    sp.set_defaults(lock_tries=1, locked="session rename: the store is locked by another writer; no change (try again)")
     sp = leaf(s, "list", cmd_session_list, "print all sessions")
     sp.add_argument("--json", action="store_true")
 
@@ -1864,6 +2271,13 @@ def build_parser():
     sp.add_argument("--session", help="keep only the rows of this session")
     sp.add_argument("--open", action="store_true", help="keep only the rows whose state is not closed")
     sp.add_argument("--json", action="store_true")
+    sp = leaf(i, "remove", cmd_item_remove, "remove 1 item whose id the snapshot guard refuses")
+    sp.add_argument("--id", required=True)
+    sp.set_defaults(lock_tries=1, locked="item remove: the store is locked by another writer; no change (try again)")
+    sp = leaf(i, "rename", cmd_item_rename, "give 1 item whose id the snapshot guard refuses a new id")
+    sp.add_argument("--id", required=True)
+    sp.add_argument("--to", required=True)
+    sp.set_defaults(lock_tries=1, locked="item rename: the store is locked by another writer; no change (try again)")
     sp = leaf(i, "trip", cmd_item_trip, "record a hand-over between two roles")
     sp.add_argument("--id", required=True)
     sp.add_argument("--from", dest="from_role", required=True)
@@ -1971,8 +2385,9 @@ def run_with_retry(a):
     at its end, so a new try does not write a row twice.
     """
     path = a.db_path = db_path(a.db)
-    # A leaf may set lock_tries and locked (the output line of its stop): `snapshot take` and `snapshot publish`
-    # make 1 try, so they stop at the first "database is locked" error, after the busy timeout of open_db.
+    # A leaf may set lock_tries and locked (the output line of its stop): `snapshot take`, `snapshot publish` and
+    # the 4 leaves remove and rename of items and sessions make 1 try, so they stop at the first "database is locked"
+    # error, after the busy timeout of open_db.
     tries = getattr(a, "lock_tries", LOCK_TRIES)
     for n in range(tries):
         try:

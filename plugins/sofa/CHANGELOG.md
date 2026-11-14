@@ -1,5 +1,19 @@
 # Changelog
 
+## 11.2.0
+
+STORY-503: a `sofa-state` command removes or renames 1 refused store row (FEATURE-47, ADR-0016).
+
+New commands. A row of `items.id` or `sessions.name` that holds a private value stops `snapshot publish`. Before this version, only a hand edit of the store file cleared such a row. Now the person runs 1 command for each refused row.
+
+- `scripts/sofa-state`, 4 new leaves: `item remove --id`, `item rename --id --to`, `session remove --name` and `session rename --name --to`. Each takes `--db` and `--at`. Each changes only a refused row: the key has the form of `items.id` or `sessions.name` and holds a private value in any letter case. Another key exits 1 and changes nothing.
+- Before the change, a leaf makes a copy of the store: `<store path>.copy-<--at stamp>`, mode 600, made with the SQLite backup API through a second connection. A copy name that is taken gets `-2` to `-99`. A leaf prints the path of the copy only after the commit.
+- A rename changes the key row and each column that holds the key: for an item, `sessions.item`, `queue.item`, `trips.item`, `usage.item`, `messages.subject`, `asks.story`, `decisions.story` and `interactions.story`; for a session, `items.session`, `heartbeats.name`, `usage.session`, `messages.from_name` and `messages.to_name`. A remove stops while a place of a snapshot holds the key. `--to` must have the form of the key, hold no private value, and not be a key or a value of the history in any letter case. A bad `--to` exits 2.
+- The 4 leaves use `BEGIN IMMEDIATE` and 1 lock try. A store that another writer holds stops with `<leaf words>: the store is locked by another writer; no change (try again)`.
+- The check of a retired key: each of the 4 leaves writes the `kv` key `rows.retired.<table>.<sha256 of the casefolded key>` with the `--at` value. The 9 leaves that write a key (`item set`, `session upsert`, `session heartbeat`, `session colour`, `queue set`, `ask open`, `decision log`, `item trip` and `interaction log`) refuse a retired key with exit 1 after `BEGIN IMMEDIATE`, so a late writer cannot put the old key back. `kv set` refuses a key that starts with `rows.retired.` (exit 2).
+- `references/roles/orchestrator.md`: the places `items.id` and `sessions.name` are now a user step with the 4 commands, and the `TASK` and the fresh restart that follow the answer. `references/roles/plan-auditor.md`: the write of a roadmap row that holds a session name. `scripts/CLAUDE.md`: 2 bullets.
+- Tests: the new section of `tests/sofa-state.test.sh` (35 case blocks, `rowrename` to `rowrelative`) and the case `rowpub`.
+
 ## 11.1.0
 
 STORY-513: the snapshot publish checks the store id, and the reader rebuilds each snapshot and limits its fetch (FEATURE-47).

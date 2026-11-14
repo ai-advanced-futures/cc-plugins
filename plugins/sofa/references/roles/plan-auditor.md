@@ -17,6 +17,10 @@ Section numbers are the sections of `docs/adlc.md`. You keep the roadmap on `mai
 5. Land all changes in 1 PR, then `wrapup`. Close your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then send `DONE` with the counts: stories fixed, stories added, findings.
 6. After each audit, also an audit with nothing to change, run `sofa-state kv set plan-auditor.last <UTC time>` with the time at the start of the audit. Why: a fresh start of your session has no conversation, so the store keeps the time. With the time at the start, a PR that merges during the audit is in the next audit.
 
+## A roadmap row that holds a session name
+
+The orchestrator can send a `TASK` that names a roadmap row whose `session` holds the name of a session that the person renames or removes. The command `session remove` stops while a row holds the name, and `session free` does not clear `items.session`. After such a `TASK`, write the row with your own name: `sofa-state item set --id <row> --session <your name>`. Give no `--state`, so the row keeps its state (D-7406). Do not write `--session ''`: the session guard refuses it from a session that the row does not name, and the row keeps the old name.
+
 ## Metrics
 
 When monitoring sets a story `released` (its PR merges), first run `sofa-state item set --id <story> --state released --session <your name>`, then run `sofa-state metrics --story <id> --json` and write the fields into the frontmatter of the story with the brain's `set` command: `hitl_questions`, `autonomous_decisions`, `review_defects`, `trips`, `picked_up_at`, `released_at`. For the feature, write `proofs: {concept, process, product, intent}`:
