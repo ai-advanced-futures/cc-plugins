@@ -1,0 +1,12 @@
+{
+  "name": "plan",
+  "displayName": "plan",
+  "version": "0.1.2",
+  "description": "Plan product work in an optional Beads store. Generate and develop milestones, epics, features, and stories from a Product PRD. Assign work and check its status without changing the Product roadmap or starting Sofa.",
+  "author": {
+    "name": "ai-advanced-futures"
+  },
+  "homepage": "https://github.com/ai-advanced-futures/cc-plugins",
+  "repository": "https://github.com/ai-advanced-futures/cc-plugins",
+  "keywords": ["planning", "beads", "roadmap", "product"]
+}

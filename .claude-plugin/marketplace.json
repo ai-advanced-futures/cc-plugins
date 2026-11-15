@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.14.0"
+    "version": "2.15.2"
   },
   "plugins": [
     {
@@ -25,6 +25,12 @@
       "name": "product",
       "description": "Product discovery and roadmap planning in two OKF graphs on the brain standard: one page for each requirement and each work item, typed links, product:setup, product:learn, product:ask, and a script that assigns IDs, checks the graph, and finds requirement drift",
       "source": "./plugins/product",
+      "strict": false
+    },
+    {
+      "name": "plan",
+      "description": "Plan product work in an optional Beads store. Generate and develop milestones, epics, features, and stories from a Product PRD. Assign work and check its status without changing the Product roadmap or starting Sofa.",
+      "source": "./plugins/plan",
       "strict": false
     },
     {
