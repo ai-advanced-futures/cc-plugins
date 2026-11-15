@@ -16,6 +16,8 @@ LOGS_TOTAL = _limit("BG_WATCH_LIMIT_LOGS_TOTAL", 360)   # all claude logs calls 
 JAG = _limit("BG_WATCH_LIMIT_JAG", 120)                 # 1 jag call
 RESPAWN = _limit("BG_WATCH_LIMIT_RESPAWN", 180)         # 1 claude respawn <id> call
 CHECK = _limit("BG_WATCH_LIMIT_CHECK", 540)             # all calls of 1 run of run.py (and of build_info.py)
+TRANSCRIPT = _limit("BG_WATCH_LIMIT_TRANSCRIPT", 30)    # 1 shadow read of a transcript (STORY-562)
+TRANSCRIPT_TOTAL = _limit("BG_WATCH_LIMIT_TRANSCRIPT_TOTAL", 120)   # all shadow reads of 1 check
 secs = lambda s: f"{s:g} s"
 # The end of the check. No call starts after it, and a call that runs at that time stops then, so 1 run of run.py ends
 # within CHECK + 5 s. The Bash tool of the cron session stops a command after about 12 minutes (the spec, "The limits

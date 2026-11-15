@@ -42,6 +42,7 @@ Do the mode in `$ARGUMENTS`. If `$ARGUMENTS` is empty, do `start` with the defau
    - It does not restart a stuck session with the status `busy`, a stopped session, or a session with another status. A stopped session is each session with no live process (no status), whatever its state. The table shows each one as `skipped`, with its status (`stopped` for no status).
    - It keeps the failure counts in `~/.claude/bg-watch/failure-history.json`.
    - It adds one line to `~/.claude/bg-watch/jag-log.jsonl`: the jag command, the exit code (`"timeout"` for a timeout or a call that did not start), the time, the jag output, the sessions where jag and the flag do not agree, and the sessions that this check did not judge (`not_judged`). The jag input of each check stays in `~/.claude/bg-watch/jag-input/`.
+   - In a shadow mode, it also reads the transcript of each live session that `claude logs` judged and writes that result to the same line (`transcript`). The transcript changes no verdict, no restart and no table row.
    - It prints the jag mode, the disagreements, a table, and a last line `RETRY_TO: [names]`.
 2. For each name in `RETRY_TO`, send 1 message, `retry`, with SendMessage. Use the session name. If two sessions have the same name, use the ref that the error message gives, for example `marina-implementer [e253e8]`.
 3. If the table shows a session as `STUCK (+1), skipped (busy)`, wait 30 seconds and run the script again, only 1 time in 1 check. If the session is still stuck, rescue it with steps 1 and 2.

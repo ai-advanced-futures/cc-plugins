@@ -1,4 +1,5 @@
 import fcntl, json, os, shutil, subprocess, sys, time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import call, claude_agents
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -29,9 +30,11 @@ known = set(json.load(open(P("agents.json"))))
 # the live sessions whose claude logs call timed out or failed: no verdict in this check (STORY-518)
 nj = json.load(open(P("not-judged.json")))
 unjudged = {o["id"]: o for o in nj["sessions"]}
+logs_unjudged = set(unjudged)   # claude logs did not judge these sessions: no shadow read (STORY-562)
 flag = sorted(k for k, o in info.items() if o["stuck"])   # second opinion only: jag decides
 # compact records for jag: one per session, decision fields first; each check keeps its own input file
 now = datetime.now(timezone.utc)
+T = now.strftime("%Y-%m-%dT%H:%M:%S.") + "%03dZ" % (now.microsecond // 1000)   # the format of a transcript timestamp
 os.makedirs(P("jag-input"), exist_ok=True)
 inp = os.path.join(P("jag-input"), now.strftime("%Y%m%dT%H%M%S.%fZ") + ".txt")
 with open(inp,"w") as f:
@@ -144,11 +147,43 @@ if stuck:
         fresh = agents_now() or {}   # a failed read leaves the state of each rescued session as "?"
         rescued = {sid: fresh.get(sid, {}).get("state") or "?" for sid in rescued}
 json.dump(hist, open(P("failure-history.json"),"w"), indent=1)
+# Shadow mode (STORY-562): read the transcript of each live session that claude logs judged, up to the check time T,
+# and write both results to the jag log row. It runs after the verdicts and the restarts, so it takes no time from
+# them, and nothing in it changes a verdict, a restart, the table or another state file. Each read has its own limit
+# and all reads share 1 budget, both inside the check limit (call.limit). A failed or late read writes its cause.
+def read_transcript(s):
+    sid = s["id"]
+    o = {"id": sid, "logs_error": sid in info, "logs_stuck": bool(info.get(sid, {}).get("stuck")),
+         "errors": None, "quote": None, "stuck": None, "cause": ""}
+    try:
+        if not s.get("sessionId"):
+            o["cause"] = "no sessionId"; return o
+        left = t_end - time.monotonic()
+        if left <= 0:   # the budget of the shadow reads is spent, not the check limit (call.cause)
+            o["cause"] = f"not started: the transcript budget of {call.secs(call.TRANSCRIPT_TOTAL)} is spent"; return o
+        lim = call.limit(min(call.TRANSCRIPT, left))
+        r = call.run([sys.executable, os.path.join(HERE, "transcript.py"), s["sessionId"], T], lim)
+        if r is None: o["cause"] = call.cause(lim)
+        elif r.returncode: o["cause"] = ((r.stderr or "").strip().splitlines() or [f"exit {r.returncode}"])[0][:110]
+        else:
+            try: o.update({k: json.loads(r.stdout)[k] for k in ("errors", "quote", "stuck")})
+            except (ValueError, KeyError, TypeError): o["cause"] = "the output of transcript.py is not its JSON"
+    except Exception as x:   # a fault of 1 read (for example a sessionId that is not text) stops no check: the row,
+        # the count lines, the table and RETRY_TO still come
+        o.update({"errors": None, "quote": None, "stuck": None, "cause": f"shadow error: {type(x).__name__}"})
+    return o
+t0 = time.monotonic(); t_end = t0 + call.TRANSCRIPT_TOTAL
+try: live = json.load(open(P("live.json")))
+except (OSError, ValueError): live = []
+with ThreadPoolExecutor(8) as pool:
+    shadow = list(pool.map(read_transcript, [s for s in live if s["id"] not in logs_unjudged]))
 with open(P("jag-log.jsonl"),"a") as f:
     f.write(json.dumps({"at": now.isoformat(), "mode": mode, "cmd": cmd, "exit": code, "seconds": secs,
                         "input": inp, "output": res, "ask_error": ask_error, "left_out": left_out,
                         "flag_stuck": flag, "jag_stuck": stuck, "disagree": disagree,
-                        "not_judged": nj["sessions"]}, ensure_ascii=False)+"\n")
+                        "not_judged": nj["sessions"],
+                        "transcript": {"at": T, "seconds": round(time.monotonic() - t0, 2), "sessions": shadow}},
+                       ensure_ascii=False)+"\n")
 print(f"jag mode: {mode} | exit {code} | stuck: {len(stuck)}")
 if isinstance(ask_error, dict):
     print("jag error cause:", ask_error.get("cause")); print("jag error fix:", ask_error.get("fix"))

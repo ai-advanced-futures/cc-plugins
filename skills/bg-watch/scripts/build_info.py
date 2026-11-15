@@ -24,6 +24,9 @@ sessions = [s for s in agents if s.get("id") and s["id"] != SELF and s.get("stat
 try: prev = {o["id"] for o in json.load(open(os.path.join(STATE, "not-judged.json")))["sessions"]}
 except (OSError, ValueError, KeyError, TypeError): prev = set()
 sessions.sort(key=lambda s: s["id"] not in prev)
+# The id and the sessionId of each live session, for the shadow read of run.py (STORY-562).
+with open(os.path.join(STATE, "live.json"),"w") as f:
+    json.dump([{"id": s["id"], "sessionId": s.get("sessionId")} for s in sessions], f)
 # One `claude logs` call is a full claude start: about 1 s on a quiet machine, about 2 minutes under a high load
 # (STORY-518). So read the logs at the same time. Each call has a time limit, and all calls of 1 check share 1 time
 # budget: a call that cannot start before the end of the budget is a timeout too.
