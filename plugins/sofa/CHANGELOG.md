@@ -1,5 +1,19 @@
 # Changelog
 
+## 11.2.2
+
+STORY-536: the decision block and `snapshot take` refuse a store id that is not 16 hex digits (FEATURE-47).
+
+A patch step: the change adds a guard, and no key or command. STORY-513 added this rule to `snapshot publish` only. The store id (the key `decision.store`) also goes into the blob and the message of each decision block tag, and into `line.store` of each snapshot, so each of them checks it now.
+
+- `scripts/sofa-state`, `store_id`: it checks the value that it returns, also a value that it wrote and read again. A value that is not a store id (a text that is not 16 hex digits, a BLOB, a NULL) exits 1 with a line that names the rule and never the value. A store with no id gets a new id as before.
+- A reservation (`decision block --reserve`, and `decision log` with no `--id` when it must reserve a block) checks the row before its first git call, so no fetch, no `ls-remote`, no `hash-object` and no push runs, no tag is made, and no row is written: `cannot reserve a block of decision ids: the store id (the key decision.store) is not 16 hex digits (0-9, a-f); no decision written.` The line has no "Try again" text, because a second try reads the same row.
+- `snapshot take` exits 1 with `the store id (the key decision.store) is not 16 hex digits (0-9, a-f); no snapshot written`, with no stdout and no `--out` file. A NULL or a BLOB in the row gave a traceback before.
+- `snapshot publish`: the check of `line.store` after the build goes, because `store_id` checks the value that names the ref. A NULL or a BLOB that another writer puts into the row between the 2 reads gives the 1 line of 11.1.0, and no traceback.
+- `decision block --check` prints `tag of store <id>` only for an owner that is a store id; else it prints `tag of store unknown` (exit 1, as before). `decision block` prints `store unknown` for a row that is not a store id.
+- A store with a bad id cannot reserve a block until a person edits the store file (`kv set` refuses the key). `decision log` with no `--id` exits 1 with the line above each time it must reserve a block. While a free block remains, it takes the next id of that block as before, with no check of the store id and no git call.
+- Tests: the new section `STORY-536` of `tests/sofa-state.test.sh`. The case `blkcmd` now writes the owner `9f00000000000000`, because `other` is not a store id.
+
 ## 11.2.1
 
 STORY-488: the messages of a bad floor configuration (`snapshot take` and `snapshot publish`) name the file as `.claude/sofa-floor.json` or `the file of --config`, never its path, and the message of an unknown key names the 4 keys of the file, not the unknown key. The exit codes and the order of the checks do not change.

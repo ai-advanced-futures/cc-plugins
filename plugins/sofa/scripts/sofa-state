@@ -560,6 +560,10 @@ RESERVE_TAIL = "no decision written. Try again in 1 minute."
 RESERVE_SHORT = "no decision written."
 PUBLISH_FAILED = "cannot publish the snapshot"
 PUBLISH_TAIL = "nothing pushed."
+# The store id (the key decision.store) names the line: it goes into the blob and the message of each decision block
+# tag, into the ref of snapshot publish and into line.store of each snapshot, so it has 1 form (STORY-513, STORY-536).
+_STORE_ID = re.compile(r"[0-9a-f]{16}")
+STORE_ID_RULE = "the store id (the key decision.store) is not 16 hex digits (0-9, a-f)"
 
 
 def block_range(k):
@@ -827,21 +831,41 @@ def main_block(git):
                default=-1)
 
 
-def store_id(con):
+def is_store_id(value):
+    """A store id is a str of 16 lower-case hex digits (a BLOB, a NULL and a str of another form are not)."""
+    return isinstance(value, str) and _STORE_ID.fullmatch(value) is not None
+
+
+def refuse_bad_store_row(con, refusal):
+    """Raise UsageError(REFUSAL) when the row decision.store holds a value that is not a store id. A read with no
+    write, for a caller that runs git before it calls store_id. A store with no row passes."""
+    row = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
+    if row is not None and not is_store_id(row[0]):
+        raise UsageError(refusal)
+
+
+def store_id(con, refusal):
     """The id of this store (the key decision.store). It is read first, so a store that has an id needs no write
     lock (in WAL mode a read goes on while another writer holds the lock, STORY-444 row 18). Only when the key is
-    absent, it is written and committed at once."""
+    absent, it is written and committed at once. The value that it returns is checked (STORY-536): a value that is
+    not a store id raises UsageError(REFUSAL), which names the rule and never the value."""
     row = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
-    if row:
-        return row[0]
-    con.execute("INSERT OR IGNORE INTO kv (key, value) VALUES ('decision.store', ?)",
-                (secrets.token_hex(8),))
-    con.commit()
-    return con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()[0]
+    if row is None:
+        con.execute("INSERT OR IGNORE INTO kv (key, value) VALUES ('decision.store', ?)",
+                    (secrets.token_hex(8),))
+        con.commit()
+        row = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
+    if row is None or not is_store_id(row[0]):
+        raise UsageError(refusal)
+    return row[0]
 
 
 def reserve_block(con, repo):
     """Reserve a new block on origin and return its number k (rows 6, 7, 18 and 20)."""
+    # The store id goes into the tag, so it is checked before the first git call (STORY-536) and again where it is
+    # used. The line names the rule, never the value. No second try, because it reads the same row.
+    refusal = f"{RESERVE_FAILED}: {STORE_ID_RULE}; {RESERVE_SHORT}"
+    refuse_bad_store_row(con, refusal)
     git = Git(repo)
     problem = app_setup_ok(con, git, origin_url(git))
     if problem:
@@ -858,7 +882,7 @@ def reserve_block(con, repo):
             source = "the tags" if top == k_tag else "main" if top == k_main else "the store"
             raise UsageError(f"{RESERVE_FAILED}: no block above {MAX_BLOCK} is free "
                              f"(the highest is from {source}).")
-        sid = store_id(con)
+        sid = store_id(con, refusal)
         blob = git.must("hash-object", "-w", "--stdin", stdin=f"store {sid}\nblock {k}\n").strip()
         text = (f"object {blob}\ntype blob\ntag sofa-decision-block/{k}\n"
                 f"tagger sofa-state <sofa-state@localhost> {int(time.time())} +0000\n\nstore {sid}\n")
@@ -951,7 +975,7 @@ def check_tag(con, a, block):
     owner = text.splitlines()[0].removeprefix("store ") if text.startswith("store ") else "unknown"
     mine = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
     if mine is None or owner != mine[0]:
-        print(f"tag of store {owner}")
+        print(f"tag of store {owner if is_store_id(owner) else 'unknown'}")
         raise Quiet("", code=1)
     print("tag ok")
 
@@ -978,8 +1002,9 @@ def cmd_decision_block(con, a):
     first, last = block_range(block)
     free = next_decision_id(con, block)
     row = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
+    sid = row[0] if row and is_store_id(row[0]) else "unknown"  # a value that is not a store id is not printed
     print(f"block {block}: D-{first:03d} to D-{last:03d}, "
-          f"{'full' if free is None else 'next ' + free}, store {row[0] if row else 'unknown'}")
+          f"{'full' if free is None else 'next ' + free}, store {sid}")
 
 
 def cmd_decision_veto(con, a):
@@ -1265,7 +1290,6 @@ RULE_FIELDS: dict[str, dict] = {name: {} for name in FLOOR_SETS}
 RULE_FIELDS["health"]["snapshot_max_age_seconds"] = SNAPSHOT_MAX_AGE
 # The label of a line (the key line.label of the store): the name that a view shows for the line (STORY-444).
 _LABEL = re.compile(r"[a-z0-9][a-z0-9-]{0,31}")
-_STORE_ID = re.compile(r"[0-9a-f]{16}")
 
 # The names that may go into the place (WHERE) of a guard message: each key that build_snapshot writes. A key of a
 # dict that is not here comes from data (the store or the file), so it never goes into a message (STORY-485). A story
@@ -1485,9 +1509,10 @@ def write_atomic(path, text):
                 pass
 
 
-def snapshot_text(con, a, code):
+def snapshot_text(con, a, code, refusal):
     """The snapshot text of this line (rows 3 to 5 and 15): read the floor configuration, take the store id, then
-    build and guard the snapshot in 1 read transaction. CODE is the exit code of a refusal of the guard."""
+    build and guard the snapshot in 1 read transaction. CODE is the exit code of a refusal of the guard. REFUSAL is the
+    line of a store id that is not a store id (STORY-536)."""
     path, name = a.config, "the file of --config"
     if not path:
         try:
@@ -1496,7 +1521,7 @@ def snapshot_text(con, a, code):
             raise UsageError("not in a git repository; give --config") from None
         name = FLOOR_CONFIG
     sets = read_floor_config(path, name)
-    store = store_id(con)  # a write only when the store has no id yet: it commits at once
+    store = store_id(con, refusal)  # a write only when the store has no id yet: it commits at once
     # 1 read transaction for each read below (WAL): the sections and the guard show 1 state of the store, also when
     # another session writes while this command runs.
     con.execute("BEGIN")
@@ -1512,7 +1537,7 @@ def snapshot_text(con, a, code):
 
 def cmd_snapshot_take(con, a):
     """Write 1 scrubbed snapshot of this line as JSON, to stdout or to --out."""
-    text, _ = snapshot_text(con, a, 1)
+    text, _ = snapshot_text(con, a, 1, f"{STORE_ID_RULE}; no snapshot written")
     if a.out:
         write_atomic(a.out, text)
     else:
@@ -1569,18 +1594,12 @@ def cmd_snapshot_publish(con, a):
     """Push the scrubbed snapshot of this line to refs/sofa-floor/<store id> on origin (rows 3 to 8, 15 and 19)."""
     # The store id names the ref of the push, so it must have the form of a store id before the first git call
     # (STORY-513, item a): `snapshot_text` already runs git (the guard reads the main folder). A store with no id gets
-    # a new id of that form from `store_id`. The message names the rule, never the value of the store.
-    row = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
-    if row is not None and not (isinstance(row[0], str) and _STORE_ID.fullmatch(row[0])):
-        raise UsageError(f"{PUBLISH_FAILED}: the store id (the key decision.store) is not 16 hex digits "
-                         f"(0-9, a-f); {PUBLISH_TAIL}")
-    text, snap = snapshot_text(con, a, 3)  # a config error and a refusal of the guard stop before the first git call
-    # The ref comes from the id of the snapshot (the id that store_id read or wrote). Another writer can change the
-    # row after the check above, so the id of the snapshot is checked again before the commit and the push.
+    # a new id of that form from `store_id`, which also checks the value that it returns, so the id of the snapshot is
+    # the value that names the ref (STORY-536). The line names the rule, never the value of the store.
+    refusal = f"{PUBLISH_FAILED}: {STORE_ID_RULE}; {PUBLISH_TAIL}"
+    refuse_bad_store_row(con, refusal)
+    text, snap = snapshot_text(con, a, 3, refusal)  # a config error or a refusal of the guard stops before git
     store = snap["line"]["store"]
-    if not (isinstance(store, str) and _STORE_ID.fullmatch(store)):
-        raise UsageError(f"{PUBLISH_FAILED}: the store id (the key decision.store) is not 16 hex digits "
-                         f"(0-9, a-f); {PUBLISH_TAIL}")
     if not has_app_values(con):
         raise UsageError(f"{PUBLISH_FAILED}: the store has no App values; run /sofa:setup")
     git = Git(repo_of_store(a, PUBLISH_FAILED), failed=PUBLISH_FAILED, tail=PUBLISH_TAIL, short=PUBLISH_TAIL)
