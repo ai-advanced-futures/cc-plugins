@@ -1,5 +1,12 @@
 # Changelog
 
+## 11.2.1
+
+STORY-488: the messages of a bad floor configuration (`snapshot take` and `snapshot publish`) name the file as `.claude/sofa-floor.json` or `the file of --config`, never its path, and the message of an unknown key names the 4 keys of the file, not the unknown key. The exit codes and the order of the checks do not change.
+
+- `scripts/sofa-state`: `read_floor_config(path, name)` takes the name of the file for its messages; `snapshot_text` gives `the file of --config` when `--config` is not empty, else `.claude/sofa-floor.json`.
+- `tests/sofa-state.test.sh`: the new case `floormsg` (9 cases, each with `--config` and with the default file, with a marker in the path and in a key) and 4 changed checks (`snapnocfg`, `snapbadcfg` "an extra key", `snapdefault`, `snappubdeny`).
+
 ## 11.2.0
 
 STORY-503: a `sofa-state` command removes or renames 1 refused store row (FEATURE-47, ADR-0016).

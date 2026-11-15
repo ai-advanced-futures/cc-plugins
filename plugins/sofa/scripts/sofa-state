@@ -1306,11 +1306,16 @@ class Scrubber:
         return None
 
 
-def read_floor_config(path):
-    """Read and check the floor configuration. Return its 3 rule sets. Raise UsageError (exit 1)."""
-    where = f"the floor configuration {path}"
+def read_floor_config(path, name):
+    """Read and check the floor configuration at PATH. Return its 3 rule sets. Raise UsageError (exit 1).
+
+    NAME names the file in each message: FLOOR_CONFIG for the default file, or "the file of --config". A message never
+    holds PATH or a part of it, and never a key or other text read from the file; the key names that it prints come
+    from the script (STORY-488)."""
+    keys = ["schema_version"] + FLOOR_SETS
+    where = f"the floor configuration ({name})"
     if not os.path.exists(path):
-        raise UsageError(f"no floor configuration: {path} does not exist; create it with the keys "
+        raise UsageError(f"no floor configuration: {name} does not exist; create it with the keys "
                          "schema_version (1), health, streams and prices")
     try:
         with open(path, "rb") as f:
@@ -1325,7 +1330,7 @@ def read_floor_config(path):
         raise UsageError(f"{where} is not JSON: {e if isinstance(e, json.JSONDecodeError) else type(e).__name__}") from None
     if not isinstance(data, dict):
         raise UsageError(f"{where}: the top level is not a JSON object")
-    for key in ["schema_version"] + FLOOR_SETS:
+    for key in keys:
         if key not in data:
             raise UsageError(f"{where}: {key} is missing")
     if type(data["schema_version"]) is not int or data["schema_version"] != 1:
@@ -1333,9 +1338,9 @@ def read_floor_config(path):
     for key in FLOOR_SETS:
         if not isinstance(data[key], dict):
             raise UsageError(f"{where}: {key} is not a JSON object")
-    for key in data:
-        if key != "schema_version" and key not in FLOOR_SETS:
-            raise UsageError(f"{where}: {key} is not a key of the file")
+    if any(key not in keys for key in data):
+        raise UsageError(f"{where}: a key is unknown; the keys of the file are "
+                         f"{', '.join(keys[:-1])} and {keys[-1]}")
     return {key: data[key] for key in FLOOR_SETS}
 
 
@@ -1483,13 +1488,14 @@ def write_atomic(path, text):
 def snapshot_text(con, a, code):
     """The snapshot text of this line (rows 3 to 5 and 15): read the floor configuration, take the store id, then
     build and guard the snapshot in 1 read transaction. CODE is the exit code of a refusal of the guard."""
-    path = a.config
+    path, name = a.config, "the file of --config"
     if not path:
         try:
             path = os.path.join(main_folder(), FLOOR_CONFIG)
         except (subprocess.CalledProcessError, OSError):
             raise UsageError("not in a git repository; give --config") from None
-    sets = read_floor_config(path)
+        name = FLOOR_CONFIG
+    sets = read_floor_config(path, name)
     store = store_id(con)  # a write only when the store has no id yet: it commits at once
     # 1 read transaction for each read below (WAL): the sections and the guard show 1 state of the store, also when
     # another session writes while this command runs.
