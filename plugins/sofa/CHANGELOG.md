@@ -1,5 +1,15 @@
 # Changelog
 
+## 11.2.3
+
+STORY-559: `run_git` ends as the time-out when the kill of the git group answers `PermissionError` (FEATURE-47).
+
+A patch step: the change adds a guard, and no key or command.
+
+- `scripts/sofa-state`, `run_git`: the group kill at the time limit catches `ProcessLookupError` and `PermissionError`, as `rev_parse` does. On macOS, `os.killpg` on a group that holds only zombies answers EPERM, so a git call that passed its limit while its group held only zombies left `run_git` with the error: at the command line, `main` catches `OSError` and printed `sofa-state: [Errno 1] Operation not permitted` with exit 1, and not the time-out. It now returns `124` with `no end after <n> seconds`. No other error of the kill is caught: another `OSError` still leaves `run_git`.
+- Tests: the cases `denied`, `einval` and `zombie` of `tests/sofa-state.test.sh` (check labels `blkkill: ...`). `zombie` runs on Darwin only; on another system the suite prints a `skip blkzombie` line with the reason, and the skip is no pass.
+- `tests/test_child_kill_guard.py`: the list `COVERED_ELSEWHERE` and its test leave the guard, because their last entry, the kill of `run_git`, is guarded now.
+
 ## 11.2.2
 
 STORY-536: the decision block and `snapshot take` refuse a store id that is not 16 hex digits (FEATURE-47).

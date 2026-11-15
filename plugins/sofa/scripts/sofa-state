@@ -666,8 +666,10 @@ def run_git(repo, args, env=None, stdin=None):
     except subprocess.TimeoutExpired:
         try:
             os.killpg(p.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass  # the group ended between the time-out and the kill
+        except (ProcessLookupError, PermissionError):
+            # The group ended between the time-out and the kill. macOS answers EPERM for a group that holds only
+            # zombies, so PermissionError ends the same way: as the time-out, not as a traceback.
+            pass
         try:
             out, err = p.communicate(timeout=5)
         except subprocess.TimeoutExpired:
