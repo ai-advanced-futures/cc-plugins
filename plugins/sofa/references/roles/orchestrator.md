@@ -58,7 +58,7 @@ If `sofa-state kv get reload.pending` prints names, do a fresh restart of each f
 
 ### Snapshot publish
 
-Each status check runs `sofa-state snapshot publish` (STORY-444). It pushes the scrubbed snapshot of this line to the ref `refs/sofa-floor/<store id>` on `origin`, so each view of the floor can read it. Read the exit code:
+Each status check runs `sofa-state snapshot publish` (STORY-444). It pushes the scrubbed snapshot of this line to the ref `refs/sofa-floor/<store id>` on `origin`, so each view of the floor can read it. The snapshot holds the roadmap of `origin/main` (STORY-519), read from the local ref `refs/remotes/origin/main` with no network call. So before each publish, run `git fetch origin main` in the main folder. When the fetch fails, run the publish all the same, and send 1 `TASK` to the troubleshooter with the first line of stderr of the fetch, at most 1 time each hour (`sofa-state kv get timer.floor-fetch-error` holds the UTC time of the last `TASK`; write the time with `kv set` when you send it). An old ref is not silent: `roadmap.committed_at` is the time of the newest commit that the ref holds. Read the exit code:
 
 - **Exit 0:** run `sofa-state kv set floor.publish.refused ""`. The key is empty, so a later refusal is sent again.
 - **Exit 3:** the guard refused the snapshot, and nothing was pushed. The first line of stderr is `sofa-state: the snapshot holds <kind>; no snapshot written (in <where>)`. `<where>` names up to 5 places. Find each place in the table below, and do the step of the table. Send the user step 1 time: if `sofa-state kv get floor.publish.refused` already prints this first line, do nothing. Else run `sofa-state kv set floor.publish.refused "<the first line>"` and send the step.
@@ -67,6 +67,9 @@ Each status check runs `sofa-state snapshot publish` (STORY-444). It pushes the 
 | Place | Step |
 |---|---|
 | `decisions_24h.<field>` | None. The row leaves the snapshot 24 hours after its `at`. |
+| `roadmap.commit` and `roadmap.committed_at` | None. The next commit of `main` replaces the value. |
+| `roadmap.<field>` other than these 2 | A `TASK` to the planner: the value comes from a roadmap page on `main`, so the planner changes the page. |
+| `defects.<field>` | The step of the source of the value: a `TASK` to the planner when it comes from a page, or the step of the store place when it comes from the store. |
 | `items.<field>` other than `items.id`, `sessions.<field>` other than `sessions.name`, and `open_asks.<field>` | A user step: the person finds the row with `report` and names its owner. Then send a `TASK` to the owner, who writes its row again with no private value. |
 | `queue` | A user step: the person decides if the item leaves the queue (`queue set` with no item takes it out of the work). |
 | `line.label` | A user step: the person runs `$ <plugin root>/scripts/sofa-state --db <main folder>/.sofa/state.db kv set line.label <label>`. |

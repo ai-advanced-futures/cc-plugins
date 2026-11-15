@@ -648,19 +648,21 @@ def git_env():
     return env
 
 
-def run_git(repo, args, env=None, stdin=None):
+def run_git(repo, args, env=None, stdin=None, binary=False):
     """Run `git -C REPO ARGS` in its own process group. Return (exit code, stdout, stderr).
 
     With `env=None` the call gets `git_env()`. On the time limit the full group stops, not only
     `git`: `git` starts children (`ssh`, `git-remote-https`, `upload-pack`) that hold the pipes
-    open (docs/adlc.md, rule 16).
+    open (docs/adlc.md, rule 16). With `binary` true, STDIN and the stdout are bytes (the stderr is
+    text), so a byte count of the output is exact (STORY-519, row 5).
     """
     if env is None:
         env = git_env()
     limit = git_timeout()
     p = subprocess.Popen(["git", "-C", repo, *args], stdin=subprocess.PIPE if stdin is not None
                          else subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                         text=True, errors="replace", env=env, start_new_session=True)
+                         **({} if binary else {"text": True, "errors": "replace"}), env=env,
+                         start_new_session=True)
     try:
         out, err = p.communicate(stdin, timeout=limit)
     except subprocess.TimeoutExpired:
@@ -677,7 +679,9 @@ def run_git(repo, args, env=None, stdin=None):
             p.stdout.close()
             p.stderr.close()
             out, err = "", ""
-        return 124, out, f"no end after {limit:g} seconds"
+        return 124, (b"" if binary else ""), f"no end after {limit:g} seconds"
+    if binary:
+        err = err.decode("utf-8", errors="replace")
     return p.returncode, out, err
 
 
@@ -701,16 +705,16 @@ class Git:
             ssh = shlex.quote(self.env["GIT_SSH"]) if self.env.get("GIT_SSH") else "ssh"
         self.env["GIT_SSH_COMMAND"] = ssh + " -o BatchMode=yes"
 
-    def run(self, *args, stdin=None, extra=None):
+    def run(self, *args, stdin=None, extra=None, binary=False):
         # The output is parsed, so a color setting of the person must not add escape codes to it.
-        # EXTRA are more variables for this 1 call (the identity of a commit).
+        # EXTRA are more variables for this 1 call (the identity of a commit). BINARY: see run_git.
         env = {**self.env, **extra} if extra else self.env
         return run_git(self.repo, ["-c", "color.ui=never", "-c", "color.grep=never", *args],
-                       env=env, stdin=stdin)
+                       env=env, stdin=stdin, binary=binary)
 
-    def must(self, *args, stdin=None, extra=None):
+    def must(self, *args, stdin=None, extra=None, binary=False):
         """Run a git call. Return stdout. Raise the error of row 9 when it fails."""
-        rc, out, err = self.run(*args, stdin=stdin, extra=extra)
+        rc, out, err = self.run(*args, stdin=stdin, extra=extra, binary=binary)
         if rc != 0:
             raise self.failure(args[0], rc, err)
         return out
@@ -1288,10 +1292,50 @@ SNAPSHOT_FIELDS: dict[str, tuple[str, dict]] = {
 # form (D-7032, CONSTRAINT-01). `health.snapshot_max_age_seconds` (STORY-444, D-7199) is the age in seconds after
 # which a reader marks the snapshot of a line as old: a whole number from 60 to 86400.
 SNAPSHOT_MAX_AGE = range(60, 86401)
+
+
+class MapForm:
+    """The form of a JSON object: each key has the regex KEY (fullmatch), and each value is a word of the set VALUE.
+    `Scrubber.value` keeps each entry of that form and counts each other entry (STORY-519, row 9)."""
+
+    def __init__(self, key, value):
+        self.key, self.value = key, value
+
+
+# The streams of DECISION-06, item 4, and the form of the 2 maps of `rules.streams` (STORY-519, row 9).
+STREAMS = {"product", "quality", "operations"}
 RULE_FIELDS: dict[str, dict] = {name: {} for name in FLOOR_SETS}
 RULE_FIELDS["health"]["snapshot_max_age_seconds"] = SNAPSHOT_MAX_AGE
+RULE_FIELDS["streams"]["milestones"] = MapForm(re.compile(r"MILESTONE-[0-9]+"), STREAMS)
+RULE_FIELDS["streams"]["features"] = MapForm(re.compile(r"FEATURE-[0-9]+"), STREAMS)
 # The label of a line (the key line.label of the store): the name that a view shows for the line (STORY-444).
 _LABEL = re.compile(r"[a-z0-9][a-z0-9-]{0,31}")
+
+# The section `roadmap` of the snapshot (STORY-519, rows 5 to 8): the 8 fields of a roadmap page that the script reads,
+# and the form of each value in the snapshot. A value of another form is null and counts 1 in `nulled`.
+ROADMAP_DIR = "docs/product/roadmap"
+ROADMAP_PAGES = {"milestones": "MILESTONE", "features": "FEATURE", "stories": "STORY"}
+PAGE_KEYS = ["state", "parent", "milestone", "target_date", "planned_start_date", "planned_end_date",
+             "actual_start_date", "actual_end_date"]
+PAGE_STATES = {"backlog", "ready", "claimed", "in_progress", "in_review", "blocked", "done", "released", "cancelled"}
+_COMMIT = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
+_DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
+_MILESTONE_ID, _FEATURE_ID, _STORY_ID = (re.compile(f"{prefix}-[0-9]+") for prefix in ROADMAP_PAGES.values())
+_MILESTONE_LINK = re.compile(r"/milestones/(MILESTONE-[0-9]+)\.md")
+_FEATURE_LINK = re.compile(r"/features/(FEATURE-[0-9]+)\.md")
+_PAGE_PATH = re.compile(re.escape(ROADMAP_DIR) + r"/(milestones|features|stories)/(MILESTONE|FEATURE|STORY)-([0-9]+)\.md")
+_DEFECT_ID = re.compile(r"(MILESTONE|FEATURE)-[0-9]+")
+_DATES = {d: _DATE for d in ("planned_start_date", "planned_end_date", "actual_start_date", "actual_end_date")}
+ROADMAP_FIELDS = {
+    "milestones": {"id": _MILESTONE_ID, "stream": STREAMS, "target_date": _DATE},
+    "features": {"id": _FEATURE_ID, "state": PAGE_STATES, "milestone": _MILESTONE_ID, "stream": STREAMS, **_DATES},
+    "stories": {"id": _STORY_ID, "state": PAGE_STATES, "feature": _FEATURE_ID, "milestone": _MILESTONE_ID,
+                "stream": STREAMS, **_DATES},
+}
+# The kinds of `defects` that this version knows (STORY-519, row 11; STORY-512 adds its kinds).
+DEFECT_KINDS = ["no_stream"]
+ROADMAP_NAMES = {"roadmap", "commit", "committed_at", "milestones", "features", "stories", "defects", "count", "ids",
+                 *DEFECT_KINDS, *(f for fields in ROADMAP_FIELDS.values() for f in fields)}
 
 # The names that may go into the place (WHERE) of a guard message: each key that build_snapshot writes. A key of a
 # dict that is not here comes from data (the store or the file), so it never goes into a message (STORY-485). A story
@@ -1300,7 +1344,7 @@ _LABEL = re.compile(r"[a-z0-9][a-z0-9-]{0,31}")
 WHERE_NAMES = frozenset({
     "schema_version", "taken_at", "line", "store", "label", "queue", "rules", "rules_digest", "nulled",
     *SNAPSHOT_FIELDS, *(f for _, fields in SNAPSHOT_FIELDS.values() for f in fields),
-    *FLOOR_SETS, *(f for fields in RULE_FIELDS.values() for f in fields),
+    *FLOOR_SETS, *(f for fields in RULE_FIELDS.values() for f in fields), *ROADMAP_NAMES,
 })
 
 GUARD_MIN_CHARS = 4
@@ -1313,10 +1357,21 @@ class Scrubber:
         self.nulled = 0
 
     def value(self, form, value):
-        """FORM is a regex (fullmatch), a set of words, or a `range` (a whole number inside it; a boolean and a
-        float are no whole number)."""
+        """FORM is a regex (fullmatch), a set of words, a `range` (a whole number inside it; a boolean and a
+        float are no whole number), or a MapForm (a JSON object: it keeps each good entry and counts each other)."""
         if value is None:
             return None
+        if isinstance(form, MapForm):
+            if not isinstance(value, dict):
+                self.nulled += 1
+                return None
+            kept = {}
+            for k, v in value.items():
+                if isinstance(k, str) and form.key.fullmatch(k) and isinstance(v, str) and v in form.value:
+                    kept[k] = v
+                else:
+                    self.nulled += 1
+            return kept
         if isinstance(form, range):
             ok = type(value) is int and value in form
         else:
@@ -1375,8 +1430,158 @@ def dump(obj, ascii_only=True):
     return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=ascii_only)
 
 
-def build_snapshot(con, sets, at, store):
+# --- the roadmap of the snapshot (STORY-519, ADR-0018) ---
+# The roadmap comes from the commit that `refs/remotes/origin/main` names in the repository of the store, and from no
+# other place: never a work tree, the index or HEAD. The script makes no fetch, and no call can start a network call.
+ROADMAP_FAILED = "cannot read the roadmap"
+ROADMAP_TAIL = "no snapshot written"
+ROADMAP_REF = "refs/remotes/origin/main"
+NO_LAZY_FETCH = {"GIT_NO_LAZY_FETCH": "1"}
+_PAGE_LINE = re.compile(r"([A-Za-z][A-Za-z0-9_]*):(?: (.*))?")
+
+
+def page_fields(text):
+    """The 8 fields of PAGE_KEYS from the frontmatter of the page TEXT, as {key: raw text}.
+
+    The frontmatter is the lines after a first line `---` and before the next line `---`; a page with no such block
+    has no fields. A line that starts with a letter and has `: ` (or ends with `:`) is a top-level key; an indented
+    line belongs to the key above it and is not read. The value is the text after `: ` with 1 pair of `'` or `"` at
+    its ends taken off. An empty value, `null` and `~` mean no value, so the key is left out. A line of the body is
+    not read. No YAML library: the script uses the standard library only."""
+    lines = text.split("\n")
+    if not lines or lines[0].rstrip() != "---":
+        return {}
+    fields = {}
+    for line in lines[1:]:
+        line = line.rstrip("\r")
+        if line.rstrip() == "---":
+            break
+        m = _PAGE_LINE.fullmatch(line.rstrip())
+        if not m or m.group(1) not in PAGE_KEYS or m.group(1) in fields:
+            continue
+        value = (m.group(2) or "").strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+            value = value[1:-1]
+        elif value in ("", "null", "~"):
+            continue
+        fields[m.group(1)] = value
+    else:
+        return {}  # no closing line: the page has no block, so the lines of its body are no fields
+    return fields
+
+
+def read_roadmap(db_path):
+    """The roadmap of the store at DB_PATH: (commit, committed_at, pages), or None (STORY-519, rows 2, 5 and 12).
+
+    PAGES is a list of (kind, id, fields), with KIND one of the keys of ROADMAP_PAGES and FIELDS from `page_fields`.
+    The result is None in 3 cases only: the store is not `<top level of a repository>/.sofa/state.db`, the repository
+    has no `refs/remotes/origin/main`, or its commit holds no page. A git call that fails, or that does not end in
+    `SOFA_GIT_TIMEOUT`, raises UsageError (exit 1), also a blob that git does not hold with exit 0. That holds for
+    the first call too: the form `<folder>/.sofa/state.db` is checked with no git, and then `rev-parse
+    --show-toplevel` runs through `Git.run`. Only the answer `not a git repository` (the folder is in no repository)
+    and a top level that is another folder give None; each other failure (for example `dubious ownership`, exit 128)
+    raises (fix round 1; `store_repo`, which the STORY-444 callers use, keeps its answer None on each failure)."""
+    sofa = os.path.dirname(os.path.realpath(db_path))
+    if os.path.basename(sofa) != ".sofa":
+        return None
+    repo = os.path.dirname(sofa)
+    git = Git(repo, failed=ROADMAP_FAILED, tail=ROADMAP_TAIL, short=ROADMAP_TAIL)
+    rc, top, err = git.run("rev-parse", "--show-toplevel", extra={"LC_ALL": "C"})
+    if rc != 0:
+        if err.startswith("fatal: not a git repository"):
+            return None
+        raise git.failure("rev-parse", rc, err)
+    if os.path.realpath(top.strip()) != repo:
+        return None
+    commit = git.must("for-each-ref", "--format=%(objectname)", ROADMAP_REF, extra=NO_LAZY_FETCH).strip()
+    if not commit:
+        return None
+    if not _COMMIT.fullmatch(commit):
+        raise git.failure("for-each-ref", 0, "the ref names no object id")
+    # --no-show-signature: with `log.showSignature=true` git prints the lines of gpg on stdout before the format, and
+    # GitHub signs the merge commits of main (fix round 1).
+    stamp = git.must("show", "-s", "--no-show-signature", "--format=%ct", commit, extra=NO_LAZY_FETCH).strip()
+    if not (stamp.isascii() and stamp.isdigit()):
+        raise git.failure("show", 0, "the commit has no time")
+    committed_at = datetime.fromtimestamp(int(stamp), timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    tree = git.must("ls-tree", "-r", "-z", commit, "--", *(f"{ROADMAP_DIR}/{k}" for k in ROADMAP_PAGES),
+                    extra=NO_LAZY_FETCH)
+    found = []  # (kind, id, blob id), in the order of the tree
+    for entry in tree.split("\0"):
+        meta, _, path = entry.partition("\t")
+        parts = meta.split()
+        m = _PAGE_PATH.fullmatch(path)
+        # A link (mode 120000) and each other entry that is no file are not read.
+        if len(parts) != 3 or not m or parts[1] != "blob" or not parts[0].startswith("100"):
+            continue
+        if m.group(2) != ROADMAP_PAGES[m.group(1)]:
+            continue
+        if not _COMMIT.fullmatch(parts[2]):
+            raise git.failure("ls-tree", 0, "an entry has no object id")
+        found.append((m.group(1), f"{m.group(2)}-{m.group(3)}", parts[2]))
+    if not found:
+        return None
+    data = git.must("cat-file", "--batch", stdin="".join(f"{oid}\n" for _, _, oid in found).encode("ascii"),
+                    extra=NO_LAZY_FETCH, binary=True)
+    pages, pos = [], 0
+    for kind, page_id, oid in found:
+        end = data.find(b"\n", pos)
+        head = data[pos:end].decode("ascii", errors="replace").split(" ") if end >= 0 else []
+        if len(head) == 2 and head[1] == "missing":
+            # A partial clone does not hold the blob, and git can exit 0.
+            raise git.failure("cat-file", 0, "a page blob is not in the repository")
+        if len(head) != 3 or head[0] != oid or head[1] != "blob" or not (head[2].isascii() and head[2].isdigit()):
+            raise git.failure("cat-file", 0, "the output has no header of a blob")
+        size = int(head[2])
+        body = data[end + 1:end + 1 + size]
+        if len(body) != size or data[end + 1 + size:end + 2 + size] != b"\n":
+            raise git.failure("cat-file", 0, "the output ends inside a blob")
+        pos = end + 2 + size
+        # The cut is by bytes, and only the page is decoded.
+        pages.append((kind, page_id, page_fields(body.decode("utf-8", errors="replace"))))
+    return commit, committed_at, pages
+
+
+def roadmap_section(scrub, streams, roadmap):
+    """The section `roadmap` and the key `defects` for ROADMAP from `read_roadmap` (rows 7, 10 and 11 of STORY-519).
+
+    STREAMS is the scrubbed `rules.streams`, so a bad entry of the file has no effect. A stream: a milestone, its entry;
+    a feature, its entry, else the stream of its milestone; a story, the stream of its feature, else (its feature has
+    no page at the commit) the stream of its own milestone line, else null. A bad link or value is null and counts 1; a
+    key that the page does not have is null and counts nothing. Return (roadmap, defects)."""
+    commit, committed_at, pages = roadmap
+    by_milestone, by_feature = streams.get("milestones") or {}, streams.get("features") or {}
+    kinds = {k: sorted(((pid, f) for kind, pid, f in pages if kind == k),
+                       key=lambda x: (int(x[0].rsplit("-", 1)[1]), x[0])) for k in ROADMAP_PAGES}
+
+    def link(form, raw):
+        got = scrub.value(form, raw)
+        return form.fullmatch(got).group(1) if got else None
+
+    def item(kind, raw):
+        return {f: scrub.value(form, raw.get(f)) for f, form in ROADMAP_FIELDS[kind].items()}
+
+    milestones = [item("milestones", {**f, "id": pid, "stream": by_milestone.get(pid)}) for pid, f in kinds["milestones"]]
+    features, feature_stream = [], {}
+    for pid, f in kinds["features"]:
+        milestone = link(_MILESTONE_LINK, f.get("milestone"))
+        feature_stream[pid] = by_feature.get(pid) or by_milestone.get(milestone)
+        features.append(item("features", {**f, "id": pid, "milestone": milestone, "stream": feature_stream[pid]}))
+    stories = []
+    for pid, f in kinds["stories"]:
+        feature, milestone = link(_FEATURE_LINK, f.get("parent")), link(_MILESTONE_LINK, f.get("milestone"))
+        stream = feature_stream[feature] if feature in feature_stream else by_milestone.get(milestone)
+        stories.append(item("stories", {**f, "id": pid, "feature": feature, "milestone": milestone, "stream": stream}))
+    ids = [m["id"] for m in milestones if m["stream"] is None] + [x["id"] for x in features if x["stream"] is None]
+    section = {"commit": commit, "committed_at": committed_at, "milestones": milestones, "features": features,
+               "stories": stories}
+    return section, {"no_stream": {"count": len(ids), "ids": ids}}
+
+
+def build_snapshot(con, sets, at, store, roadmap=None):
     """Return the snapshot of version 1 as a dict. SETS are the rule sets as read from the file.
+
+    ROADMAP is the result of `read_roadmap` (None: the section `roadmap` and `defects.no_stream` are null).
 
     The caller has an open read transaction (`cmd_snapshot_take`), so all sections show 1 state of the store.
     """
@@ -1397,6 +1602,10 @@ def build_snapshot(con, sets, at, store):
     snap["rules"] = {name: {f: scrub.value(form, sets[name][f]) for f, form in RULE_FIELDS[name].items()
                             if f in sets[name]} for name in FLOOR_SETS}
     snap["rules_digest"] = "sha256:" + hashlib.sha256(dump(sets).encode()).hexdigest()
+    if roadmap is None:
+        snap["roadmap"], snap["defects"] = None, {kind: None for kind in DEFECT_KINDS}
+    else:
+        snap["roadmap"], snap["defects"] = roadmap_section(scrub, snap["rules"]["streams"], roadmap)
     snap["nulled"] = scrub.nulled
     return snap
 
@@ -1524,11 +1733,14 @@ def snapshot_text(con, a, code, refusal):
         name = FLOOR_CONFIG
     sets = read_floor_config(path, name)
     store = store_id(con, refusal)  # a write only when the store has no id yet: it commits at once
+    # The roadmap comes from origin/main with local git calls, before the read transaction, so that transaction does not
+    # wait for git (STORY-519, row 2). A failed git call stops here with exit 1 and no output.
+    roadmap = read_roadmap(a.db_path)
     # 1 read transaction for each read below (WAL): the sections and the guard show 1 state of the store, also when
     # another session writes while this command runs.
     con.execute("BEGIN")
     try:
-        snap = build_snapshot(con, sets, a.at, store)
+        snap = build_snapshot(con, sets, a.at, store, roadmap)
         guard_snapshot(con, a, snap, sets, code=code)
         return dump(snap) + "\n", snap
     except RecursionError:
@@ -1852,6 +2064,49 @@ def scrub_rules(scrub, rules):
     return out
 
 
+def scrub_roadmap(scrub, roadmap):
+    """The section `roadmap` of another line: only `commit`, `committed_at` and the 3 lists, each row with only the
+    fields of ROADMAP_FIELDS. A null section is a good value (a line that sees no roadmap). A section that is not an
+    object, a list that is not a list, and a row that is no object go nowhere and count 1 (STORY-519, row 13)."""
+    if roadmap is None:
+        return None
+    if not isinstance(roadmap, dict):
+        return scrub.drop()
+    out = {}
+    for key, form in (("commit", _COMMIT), ("committed_at", _TIME)):
+        if key in roadmap:
+            out[key] = scrub.value(form, roadmap[key])
+    for kind, fields in ROADMAP_FIELDS.items():
+        if kind in roadmap:
+            out[kind] = scrub_rows(scrub, roadmap[kind], fields)
+    return out
+
+
+def scrub_defects(scrub, defects):
+    """The key `defects` of another line: only the kinds of DEFECT_KINDS, each null or `count` and `ids`. A null kind
+    is a good value (the roadmap was not seen)."""
+    if not isinstance(defects, dict):
+        return scrub.drop()
+    out = {}
+    for kind in DEFECT_KINDS:
+        if kind not in defects:
+            continue
+        found = defects[kind]
+        if found is None:
+            out[kind] = None
+        elif not isinstance(found, dict):
+            out[kind] = scrub.drop()
+        else:
+            out[kind] = {}
+            if "count" in found:
+                out[kind]["count"] = scrub.value(NULLED_FORM, found["count"])
+            if "ids" in found:
+                ids = found["ids"]
+                out[kind]["ids"] = ([scrub.value(_DEFECT_ID, i) for i in ids] if isinstance(ids, list)
+                                    else scrub.drop())
+    return out
+
+
 def rebuild_snapshot(snap, store):
     """The snapshot of another line, rebuilt from the known keys of version 1 (STORY-513, item b).
 
@@ -1874,6 +2129,10 @@ def rebuild_snapshot(snap, store):
         out["rules"] = scrub_rules(scrub, snap["rules"])
     if "rules_digest" in snap:
         out["rules_digest"] = scrub.value(_DIGEST, snap["rules_digest"])
+    if "roadmap" in snap:
+        out["roadmap"] = scrub_roadmap(scrub, snap["roadmap"])
+    if "defects" in snap:
+        out["defects"] = scrub_defects(scrub, snap["defects"])
     base = scrub.value(NULLED_FORM, snap.get("nulled", 0))
     out["nulled"] = (base or 0) + scrub.nulled
     return out

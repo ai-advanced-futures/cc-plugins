@@ -1,5 +1,20 @@
 # Changelog
 
+## 11.3.0
+
+STORY-519: the snapshot reads the roadmap from `origin/main`, and each milestone has 1 stream (FEATURE-47, ADR-0018).
+
+A minor step: the snapshot gets 2 new keys, and the floor configuration gets a new form for `streams`. `schema_version` stays 1.
+
+- `scripts/sofa-state`, the new keys `roadmap` and `defects` of `snapshot take` and `snapshot publish` (the snapshot has 13 keys now). `roadmap` holds `commit`, `committed_at` and the lists `milestones`, `features` and `stories`. Each work item has `id`, `stream` and the fields of its page (`state`, `milestone`, `feature`, `target_date` and 4 other dates). `defects.no_stream` is `{"count", "ids"}`: the milestones and then the features that have no stream.
+- `read_roadmap` reads only the commit of `refs/remotes/origin/main` in the repository of the store, with local git calls only (no fetch, no work tree, no index, no `HEAD`). A store that is not at `<top level>/.sofa/state.db`, a repository with no `origin/main`, or a commit with no page gives `roadmap: null` and `defects.no_stream: null`. A git call that fails exits 1 with `cannot read the roadmap: <step>: <reason>; no snapshot written`, and `snapshot publish` pushes nothing.
+- `read_roadmap` reads the commit time with `git show -s --no-show-signature`, so `log.showSignature=true` does not break it. The first git call (`rev-parse --show-toplevel`) is a checked call: only `not a git repository` gives a null roadmap, and another failure (for example `dubious ownership`) exits 1. A page with an opening `---` and no closing `---` has no fields.
+- `run_git` has the argument `binary`, so a page that holds a character of more than 1 byte is read as bytes.
+- `rules.streams` has 2 fields: `milestones` (`MILESTONE-<n>` to a stream) and `features` (`FEATURE-<n>` to a stream). A stream is `product`, `quality` or `operations`. An entry of another form goes out and `nulled` counts it. `rebuild_snapshot` and the guard know the new keys, so `snapshot lines` shows the roadmap of each line.
+- `.claude/sofa-floor.json` of this repository sets the stream of `MILESTONE-06` to `operations`. The other milestones have no stream yet, so the snapshot of this repository lists them in `defects.no_stream`.
+- `references/roles/orchestrator.md`, "Snapshot publish": the orchestrator runs `git fetch origin main` in the main folder before each publish, and the table of places has 3 new rows.
+- Tests: the new section `STORY-519` of `tests/sofa-state.test.sh` (the fixture `mkroadmap` and the cases `roadmapref`, `roadmapnull`, `roadmapfail`, `streams`, `streamsbad`, `nostream`, `roadmapform`, `roadmapprivate` and `roadmaplines`), and the changed checks `snapcmd` and `snapfloor`.
+
 ## 11.2.3
 
 STORY-559: `run_git` ends as the time-out when the kill of the git group answers `PermissionError` (FEATURE-47).
