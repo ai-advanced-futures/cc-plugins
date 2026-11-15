@@ -5,12 +5,13 @@ from datetime import datetime, timezone
 #   python3 shadow_report.py [--since TIME] [--until TIME] [--log FILE]
 # TIME is an ISO 8601 time (UTC when it has no zone). The default log is jag-log.jsonl of the state folder.
 # Each session of the "transcript" part of a row is 1 pair (check time, session). The classes are those of the STORY-518
-# spike, for a pair where claude logs saw an "API Error" line (a logs-positive pair):
+# spike, for a pair where claude logs saw an "API Error" line and the transcript read has a result:
 #   AGREE  the transcript has an API error entry, and its stuck value is the stuck value of claude logs
 #   DIFF   the transcript has an API error entry, and its stuck value is not the stuck value of claude logs
 #   MISS   the transcript has no API error entry and no "API Error" text
 #   QUOTE  the transcript has no API error entry, but an entry quotes the text "API Error"
-# The stop rule (the STORY-518 spec, "The spike", item 5) gives the result line.
+# A logs-positive pair is a pair of class AGREE, DIFF or MISS. A QUOTE pair is not one, and the stop rule (the STORY-518
+# spec, "The spike", item 5) does not count it. The stop rule gives the result lines.
 STATE = os.path.expanduser(os.environ.get("BG_WATCH_STATE", "~/.claude/bg-watch"))
 def when(text):
     try: t = datetime.fromisoformat(text[:-1] + "+00:00" if text.endswith("Z") else text)
