@@ -78,11 +78,13 @@ else:
         cmd, code, res, s2 = jag(["-F",FREE_TERM]); secs += s2; mode = "jag free mode (--ask failed)"
     stuck = picked(res)
     # jag gave no answer: a timeout, a call with no time left, an output that is not a JSON object, an exit code that is
-    # not 0 or 1, or an error. Then no session of the jag input gets a verdict in this check: no restart, not "recovered",
-    # and no history change (STORY-518). The real jag prints "results" in each output, also with an error, so the rule
-    # reads the exit code and "error". A free search that finds no match exits 1 with "error": null and "results": [],
-    # and that is an answer.
-    no_answer = not isinstance(res, dict) or code not in (0, 1) or res.get("error") is not None
+    # not 0, 1, 7 or 8, or an error. Then no session of the jag input gets a verdict in this check: no restart, not
+    # "recovered", and no history change (STORY-518). The real jag prints "results" in each output, also with an error, so
+    # the rule reads the exit code and "error". A free search that finds no match exits 1 with "error": null and
+    # "results": [], and that is an answer. 7 (the cost limit) and 8 (the size limit) are answers too: jag says "The
+    # results are valid. Use them." The block after this one finds the sessions that such an answer does not show
+    # (STORY-563).
+    no_answer = not isinstance(res, dict) or code not in (0, 1, 7, 8) or res.get("error") is not None
     if no_answer:
         stuck = []   # no verdict: an output with no answer can hold matched lines, and they restart no session
         jag_cause = "jag timeout" if code == "timeout" else "jag failed"
@@ -91,7 +93,23 @@ else:
         # the next check reads the logs of these sessions first, as for a failed read (build_info.py)
         json.dump(nj, open(P("not-judged.json"), "w"))
 left_out = res.get("left_out", 0) if isinstance(res, dict) else 0
-disagree = [] if no_answer else sorted(set(flag) ^ set(stuck))   # no answer: no opinion of jag
+# jag left out results (the size limit: left_out, top_result_cut) or did not score them (the cost limit: results_skipped)
+# (STORY-563). jag gives a verdict on a session only in a line that it shows. Only a session with 0 real lines after its
+# last error can be stuck (picked()), so each such session that no line of a result names gets no verdict in this check,
+# as for no answer: no restart, not "recovered", and no history change. jag scores each kept result before the size limit
+# leaves results out, so with no_good_answer only skipped results (the cost limit) give no verdict.
+if isinstance(res, dict) and not no_answer and (
+        res.get("results_skipped") or (not res.get("no_good_answer") and (left_out or res.get("top_result_cut")))):
+    shown = {w[1] for x in res.get("results", []) for l in x.get("lines", [])
+             if len(w := l.get("text", "").split()) > 1 and w[0] == "SESSION"}
+    missed = [sid for sid, o in info.items() if sid not in shown and o["real_lines_after_last_error"] == 0]
+    for sid in missed: unjudged[sid] = {"id": sid, "name": info[sid]["name"], "cause": "jag left out"}
+    if missed:
+        nj["sessions"] += [unjudged[sid] for sid in missed]
+        # the next check reads the logs of these sessions first, as for a failed read (build_info.py)
+        json.dump(nj, open(P("not-judged.json"), "w"))
+# no answer: no opinion of jag. A session that jag did not judge is not a disagreement.
+disagree = [] if no_answer else sorted((set(flag) ^ set(stuck)) - set(unjudged))
 # history + rescue (claude respawn only: no claude stop, no --all, never rm); sessions that no longer exist
 # leave the history
 hist = json.load(open(P("failure-history.json"))) if os.path.exists(P("failure-history.json")) else {}
@@ -135,7 +153,7 @@ print(f"jag mode: {mode} | exit {code} | stuck: {len(stuck)}")
 if isinstance(ask_error, dict):
     print("jag error cause:", ask_error.get("cause")); print("jag error fix:", ask_error.get("fix"))
 if left_out:
-    print(f"jag left out {left_out} result(s): the size limit was too small, so these sessions were not judged")
+    print(f"jag left out {left_out} result(s): the size limit was too small")
 print("jag disagrees:", ", ".join(disagree) or "none")
 print("jag log:", P("jag-log.jsonl"))
 causes = [o["cause"] for o in nj["sessions"]]
@@ -143,6 +161,7 @@ causes = [o["cause"] for o in nj["sessions"]]
 print(f'{sum(c in ("timeout", "jag timeout") for c in causes)} of {nj["live"]} not judged: timeout')
 print(f'{causes.count("logs failed")} of {nj["live"]} not judged: logs failed')
 print(f'{causes.count("jag failed")} of {nj["live"]} not judged: jag failed')
+print(f'{causes.count("jag left out")} of {nj["live"]} not judged: jag left out')
 print("| Session | Name | Total failures seen | Status now |\n|---|---|---|---|")
 for sid, h in sorted(hist.items(), key=lambda kv: -kv[1]["count"]):
     if sid in stuck:
