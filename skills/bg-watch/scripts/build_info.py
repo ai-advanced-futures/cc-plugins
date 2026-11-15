@@ -1,6 +1,6 @@
-import json, os, re, subprocess, sys
+import json, os, re, sys, time
 from concurrent.futures import ThreadPoolExecutor
-import claude_agents
+import call, claude_agents
 # State lives in one fixed folder; the watcher skips its own session (bg job id = $CLAUDE_JOB_DIR basename).
 STATE = os.path.expanduser(os.environ.get("BG_WATCH_STATE", "~/.claude/bg-watch"))
 os.makedirs(STATE, exist_ok=True)
@@ -19,11 +19,30 @@ with open(os.path.join(STATE, "agents.json"),"w") as f:
 # Only a live session (a session with a status) gets a logs call. A session with no status has no live process, and
 # claude logs gives no log for it ("job not found"). Its id stays in agents.json above. (STORY-508)
 sessions = [s for s in agents if s.get("id") and s["id"] != SELF and s.get("status")]
-# One `claude logs` call takes about 2 s, so read the logs at the same time.
+# A session that the last check did not judge gets the first calls, so that under a steady load the same sessions do not
+# stay unjudged in each check (STORY-518). A not-judged.json that cannot be read gives the order of claude agents.
+try: prev = {o["id"] for o in json.load(open(os.path.join(STATE, "not-judged.json")))["sessions"]}
+except (OSError, ValueError, KeyError, TypeError): prev = set()
+sessions.sort(key=lambda s: s["id"] not in prev)
+# One `claude logs` call is a full claude start: about 1 s on a quiet machine, about 2 minutes under a high load
+# (STORY-518). So read the logs at the same time. Each call has a time limit, and all calls of 1 check share 1 time
+# budget: a call that cannot start before the end of the budget is a timeout too.
+end = time.monotonic() + call.LOGS_TOTAL
+def read_log(s):
+    lim = call.limit(min(call.LOGS, end - time.monotonic()))
+    r = call.run(["claude","logs",s["id"]], lim)
+    if r is None: return None, "timeout"
+    if r.returncode or not r.stdout.strip(): return None, "logs failed"   # a live session always has a screen
+    return r.stdout, ""
 with ThreadPoolExecutor(8) as pool:
-    logs = list(pool.map(lambda s: subprocess.run(["claude","logs",s["id"]],capture_output=True,text=True).stdout, sessions))
+    logs = list(pool.map(read_log, sessions))
+# A session with a failed read gets no verdict in this check: it is not "no API error" (STORY-518).
+with open(os.path.join(STATE, "not-judged.json"),"w") as f:
+    json.dump({"live": len(sessions), "sessions": [{"id": s["id"], "name": s.get("name"), "cause": cause}
+               for s, (raw, cause) in zip(sessions, logs) if raw is None]}, f)
 out = []
-for s, raw in zip(sessions, logs):
+for s, (raw, _) in zip(sessions, logs):
+    if raw is None: continue
     sid = s["id"]
     t = re.sub(r"\x1b\[[0-9;]*[A-Za-z]","",raw).replace("\r","").replace("⏺","\n⏺")
     lines, in_recap = [], False

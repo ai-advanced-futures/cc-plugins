@@ -1,6 +1,6 @@
 import fcntl, json, os, shutil, subprocess, sys, time
 from datetime import datetime, timezone
-import claude_agents
+import call, claude_agents
 HERE = os.path.dirname(os.path.abspath(__file__))
 STATE = os.path.expanduser(os.environ.get("BG_WATCH_STATE", "~/.claude/bg-watch"))
 os.makedirs(STATE, exist_ok=True)
@@ -26,6 +26,9 @@ info = {}
 for line in open(P("sessions.jsonl")):
     o = json.loads(line); info[o["id"]] = o
 known = set(json.load(open(P("agents.json"))))
+# the live sessions whose claude logs call timed out or failed: no verdict in this check (STORY-518)
+nj = json.load(open(P("not-judged.json")))
+unjudged = {o["id"]: o for o in nj["sessions"]}
 flag = sorted(k for k, o in info.items() if o["stuck"])   # second opinion only: jag decides
 # compact records for jag: one per session, decision fields first; each check keeps its own input file
 now = datetime.now(timezone.utc)
@@ -42,7 +45,10 @@ def jag(args):
     # 8000 characters hold about 20 sessions; a larger input gets a larger limit, so jag leaves out no session
     cmd = ["jag","--json","--max-chars",str(max(8000, 4*os.path.getsize(inp))),*args,inp]
     t = time.monotonic()
-    r = subprocess.run(cmd,capture_output=True,text=True)
+    lim = call.limit(call.JAG)
+    r = call.run(cmd, lim)
+    # a call that times out or has no time left gives the code "timeout", and its cause in place of the output
+    if r is None: return cmd, "timeout", call.cause(lim), round(time.monotonic()-t, 2)
     try: out = json.loads(r.stdout)
     except ValueError: out = r.stdout   # keep the raw text for the jag log
     return cmd, r.returncode, out, round(time.monotonic()-t, 2)
@@ -57,19 +63,35 @@ def picked(res):
                    and info[words[1]]["real_lines_after_last_error"] == 0})
 
 ask_error = None
-if not info:   # nothing to judge: no model call
-    mode, cmd, code, res, secs, stuck = "no session with an API Error", None, 0, None, 0, []
+no_answer = False
+if not info:   # nothing to judge: no model call. A session whose read failed is not in info, so the mode line names them.
+    mode = "no session with an API Error" + (f" in the logs that were read ({len(unjudged)} not judged)" if unjudged else "")
+    cmd, code, res, secs, stuck = None, 0, None, 0, []
 elif shutil.which("jag") is None:   # jag not installed: use the script's own stuck flag
     mode, cmd, code, res, secs, stuck = "built-in stuck flag (jag not installed)", None, 127, None, 0, flag
 else:
     cmd, code, res, secs = jag(["--ask",QUESTION,"SESSION"]); mode = "jag --ask"
     if isinstance(res, dict) and res.get("error"): ask_error = res["error"]
-    if code in (3, 4, 5, 6, 126):   # jag cannot run (key, credit, service, start): free jag search of the same fact
+    # jag cannot run (key, credit, service, start) or times out: free jag search of the same fact
+    if code in (3, 4, 5, 6, 126, "timeout"):
         if ask_error is None: ask_error = res
         cmd, code, res, s2 = jag(["-F",FREE_TERM]); secs += s2; mode = "jag free mode (--ask failed)"
     stuck = picked(res)
+    # jag gave no answer: a timeout, a call with no time left, an output that is not a JSON object, an exit code that is
+    # not 0 or 1, or an error. Then no session of the jag input gets a verdict in this check: no restart, not "recovered",
+    # and no history change (STORY-518). The real jag prints "results" in each output, also with an error, so the rule
+    # reads the exit code and "error". A free search that finds no match exits 1 with "error": null and "results": [],
+    # and that is an answer.
+    no_answer = not isinstance(res, dict) or code not in (0, 1) or res.get("error") is not None
+    if no_answer:
+        stuck = []   # no verdict: an output with no answer can hold matched lines, and they restart no session
+        jag_cause = "jag timeout" if code == "timeout" else "jag failed"
+        for sid, o in info.items(): unjudged[sid] = {"id": sid, "name": o["name"], "cause": jag_cause}
+        nj["sessions"] += [unjudged[sid] for sid in info]
+        # the next check reads the logs of these sessions first, as for a failed read (build_info.py)
+        json.dump(nj, open(P("not-judged.json"), "w"))
 left_out = res.get("left_out", 0) if isinstance(res, dict) else 0
-disagree = sorted(set(flag) ^ set(stuck))
+disagree = [] if no_answer else sorted(set(flag) ^ set(stuck))   # no answer: no opinion of jag
 # history + rescue (claude respawn only: no claude stop, no --all, never rm); sessions that no longer exist
 # leave the history
 hist = json.load(open(P("failure-history.json"))) if os.path.exists(P("failure-history.json")) else {}
@@ -81,6 +103,7 @@ def agents_now():
     return None if d is None else {s["id"]: s for s in d if s.get("id")}
 rescued, failed = {}, {}
 for sid, o in info.items():
+    if sid in unjudged: continue   # no answer of jag: the history stays
     h = hist.setdefault(sid, {"name": o["name"], "count": 0, "keys": []})
     h["name"] = o["name"]; h["count"] = max(h["count"], o["api_errors_in_log"]); h["faulty_last_check"] = sid in stuck
 if stuck:
@@ -94,8 +117,10 @@ if stuck:
         status = fresh.get(sid, info[sid]).get("status") or ""
         if status != "idle":
             info[sid]["status"] = status or "stopped"; continue
-        r = subprocess.run(["claude","respawn",sid],capture_output=True,text=True)
-        if r.returncode: failed[sid] = (r.stderr or r.stdout).strip()[:110]
+        lim = call.limit(call.RESPAWN)
+        r = call.run(["claude","respawn",sid], lim)
+        if r is None: failed[sid] = call.cause(lim)
+        elif r.returncode: failed[sid] = (r.stderr or r.stdout).strip()[:110]
         else: rescued[sid] = "?"
     if rescued:
         fresh = agents_now() or {}   # a failed read leaves the state of each rescued session as "?"
@@ -104,7 +129,8 @@ json.dump(hist, open(P("failure-history.json"),"w"), indent=1)
 with open(P("jag-log.jsonl"),"a") as f:
     f.write(json.dumps({"at": now.isoformat(), "mode": mode, "cmd": cmd, "exit": code, "seconds": secs,
                         "input": inp, "output": res, "ask_error": ask_error, "left_out": left_out,
-                        "flag_stuck": flag, "jag_stuck": stuck, "disagree": disagree}, ensure_ascii=False)+"\n")
+                        "flag_stuck": flag, "jag_stuck": stuck, "disagree": disagree,
+                        "not_judged": nj["sessions"]}, ensure_ascii=False)+"\n")
 print(f"jag mode: {mode} | exit {code} | stuck: {len(stuck)}")
 if isinstance(ask_error, dict):
     print("jag error cause:", ask_error.get("cause")); print("jag error fix:", ask_error.get("fix"))
@@ -112,13 +138,21 @@ if left_out:
     print(f"jag left out {left_out} result(s): the size limit was too small, so these sessions were not judged")
 print("jag disagrees:", ", ".join(disagree) or "none")
 print("jag log:", P("jag-log.jsonl"))
+causes = [o["cause"] for o in nj["sessions"]]
+# each session that is not judged counts on 1 line: a timeout of claude logs or of jag counts on the timeout line
+print(f'{sum(c in ("timeout", "jag timeout") for c in causes)} of {nj["live"]} not judged: timeout')
+print(f'{causes.count("logs failed")} of {nj["live"]} not judged: logs failed')
+print(f'{causes.count("jag failed")} of {nj["live"]} not judged: jag failed')
 print("| Session | Name | Total failures seen | Status now |\n|---|---|---|---|")
 for sid, h in sorted(hist.items(), key=lambda kv: -kv[1]["count"]):
     if sid in stuck:
         now_s = "STUCK (+1), " + (f"restarted: {rescued[sid]}" if sid in rescued
                                   else f"respawn failed: {failed[sid]}" if sid in failed
                                   else f"skipped ({info[sid]['status']})")
+    elif sid in unjudged: now_s = f'not judged: {unjudged[sid]["cause"]}'
     elif sid in info: now_s = "recovered"
     else: now_s = "recovered (not in log window)"
     print(f'| `{sid}` | {h["name"]} | {h["count"]} | {now_s} |')
+for sid, o in unjudged.items():   # a session with no failure history: 1 line too
+    if sid not in hist: print(f'| `{sid}` | {o["name"]} | 0 | not judged: {o["cause"]} |')
 print("RETRY_TO:", json.dumps([info[s]["name"] for s in rescued]))
