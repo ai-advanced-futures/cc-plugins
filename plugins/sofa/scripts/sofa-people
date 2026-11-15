@@ -175,8 +175,10 @@ def src_git(root, fixtures):
     if fixtures:
         text = (fixtures / "git.log").read_text("utf-8")
     else:
-        out = subprocess.run(["git", "log", "--since=180.days", "--format=%an%x09%ae"], cwd=root,
-                             capture_output=True, text=True)
+        # --no-show-signature: with log.showSignature=true, git writes the lines of each signature check on stdout,
+        # and each such line would be a person with no email (STORY-584).
+        out = subprocess.run(["git", "log", "--no-show-signature", "--since=180.days", "--format=%an%x09%ae"],
+                             cwd=root, capture_output=True, text=True)
         if out.returncode != 0:
             raise Fail(out.stderr.strip())
         text = out.stdout

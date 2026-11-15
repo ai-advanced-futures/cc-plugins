@@ -1,5 +1,14 @@
 # Changelog
 
+## 11.3.1
+
+STORY-584: `sofa-people draft` reads `git log` with `--no-show-signature`, so a signed commit gives 1 person (FEATURE-68).
+
+A patch step: the change adds 1 flag to 1 git call, and no key or command.
+
+- `scripts/sofa-people`, `src_git`: the git source runs `git log --no-show-signature --since=180.days --format=%an%x09%ae`. With `log.showSignature=true`, git wrote the lines of each signature check on stdout (a `gpg:` line of OpenPGP, a `Good "git" signature` line of SSH), and `draft` showed each such line as a person with no email.
+- Tests: the case `signed:` of `tests/sofa-people.test.sh` runs the real git source on a repository with 2 signed commits of a made-up person and `log.showSignature=true`. The suite needs `ssh-keygen`.
+
 ## 11.3.0
 
 STORY-519: the snapshot reads the roadmap from `origin/main`, and each milestone has 1 stream (FEATURE-47, ADR-0018).
