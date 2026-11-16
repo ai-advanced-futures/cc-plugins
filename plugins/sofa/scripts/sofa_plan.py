@@ -18,7 +18,7 @@ class PlanFailure(Exception):
 def run(args, *, cwd=None, capture=True, env=None):
     """Run without a shell. Stop the process group at the time limit."""
     try:
-        limit = float(os.environ.get("SOFA_PLAN_TIMEOUT", "60"))
+        limit = float(os.environ.get("SOFA_PLAN_TIMEOUT", "1800"))
         if not math.isfinite(limit) or limit <= 0:
             raise ValueError
     except ValueError:

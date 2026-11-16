@@ -1,5 +1,15 @@
 # Changelog
 
+## 11.4.1
+
+`sofa_plan.py` stops each Plan call after 1800 seconds (30 minutes) by default, not 60. The `sofa-plan` wrapper and readiness use this limit.
+
+A patch step: the change sets 1 default value. `SOFA_PLAN_TIMEOUT` and its check stay the same.
+
+- With the shared Plan of a real factory (762 records, shared mode over git), one `describe` took about 40 seconds, and a shared write or a `recover` took far longer. When the 60-second limit stopped a shared call while it held the gate, the gate stayed locked and the next calls refused until an operator ran `recover`.
+- `references/planning.md` and `scripts/CLAUDE.md` give the default and say that a shorter limit can stop a shared Plan call while it holds the gate.
+- Tests: `test_plan_runtime.py` checks the default limit of 1800 seconds.
+
 ## 11.4.0
 
 Factories can explicitly select Plan instead of Product roadmap files. Product remains the PRD source. Existing factories retain Product until an approved migration and activation.
