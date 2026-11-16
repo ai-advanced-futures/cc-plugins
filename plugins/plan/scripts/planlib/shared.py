@@ -30,6 +30,23 @@ REPO_ENV_KEYS = {
 }
 
 
+_URL_REWRITE = re.compile(r"url\..*\.(?:push)?insteadof", re.IGNORECASE | re.DOTALL)
+_SSH_TRANSPORT = re.compile(r"git\+ssh://git@([^/:@\s]+)/(\S+)")
+_HTTPS_TRANSPORT = re.compile(r"git\+https://([^/:@\s]+)/(\S+)")
+
+
+def equivalent_transports(transport_url: str) -> set[str]:
+    """Give the SSH and HTTPS forms of one host and path; Plan 0.2.0 saved either form."""
+    forms = {transport_url}
+    ssh = _SSH_TRANSPORT.fullmatch(transport_url)
+    https = _HTTPS_TRANSPORT.fullmatch(transport_url)
+    if ssh:
+        forms.add("git+https://" + ssh[1] + "/" + ssh[2])
+    elif https:
+        forms.add("git+ssh://git@" + https[1] + "/" + https[2])
+    return forms
+
+
 class SharedCommandError(PlanError):
     """A shared command has an unknown effect, not a validation refusal."""
 
@@ -48,6 +65,13 @@ def git_environment():
     count = int(count)
     if any("GIT_CONFIG_KEY_" + str(i) not in env or "GIT_CONFIG_VALUE_" + str(i) not in env for i in range(count)):
         raise PlanError("session Git configuration is incomplete")
+    # A session URL rewrite routes the shared remote to another address than Beads saved.
+    pairs = [(env.pop("GIT_CONFIG_KEY_" + str(i)), env.pop("GIT_CONFIG_VALUE_" + str(i))) for i in range(count)]
+    pairs = [(key, value) for key, value in pairs if not _URL_REWRITE.fullmatch(key)]
+    for index, (key, value) in enumerate(pairs):
+        env["GIT_CONFIG_KEY_" + str(index)] = key
+        env["GIT_CONFIG_VALUE_" + str(index)] = value
+    count = len(pairs)
     for key, value in (("core.hooksPath", os.devnull), ("protocol.ext.allow", "never"), ("commit.gpgsign", "false")):
         env["GIT_CONFIG_KEY_" + str(count)] = key
         env["GIT_CONFIG_VALUE_" + str(count)] = value
@@ -366,9 +390,10 @@ class GitGate:
                   "operation", "request_id", "gate_state", "phase", "owned_local", "publication"}
         if not isinstance(journal, dict) or set(journal) != fields or type(journal.get("schema_version")) is not int or journal["schema_version"] != 1:
             raise PlanError("unsupported shared recovery journal; no gate was cleared")
-        identity = {"workspace_id": self.workspace_id, "control_id": self.control_id, "remote": self.remote,
-                    "remote_fingerprint": hashlib.sha256(self.transport_url.encode()).hexdigest()}
-        if any(journal.get(key) != value for key, value in identity.items()):
+        identity = {"workspace_id": self.workspace_id, "control_id": self.control_id, "remote": self.remote}
+        fingerprints = {hashlib.sha256(url.encode()).hexdigest() for url in equivalent_transports(self.transport_url)}
+        if (any(journal.get(key) != value for key, value in identity.items())
+                or journal.get("remote_fingerprint") not in fingerprints):
             raise PlanError("shared recovery journal does not match this workspace and remote")
         if journal["phase"] not in ("acquiring", "read-sync", "operation", "publishing", "releasing"):
             raise PlanError("shared recovery journal phase is invalid")

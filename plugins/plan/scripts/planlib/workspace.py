@@ -348,12 +348,13 @@ class Workspace:
             self._check_local_baseline()
             self.backend.validate_local()
             gate = self._gate()
+            # Check local remote configuration before the shared gate is taken.
+            self.backend.shared_remote(gate.remote, gate.transport_url)
             gate.acquire()
             self._shared_gate = gate
             self.backend.shared_checkpoint = self._checkpoint
             try:
                 self._checkpoint()
-                self.backend.shared_remote(gate.remote, gate.transport_url)
                 if gate.remote_ref(DATA_REF) != gate.state["published_data_ref"]:
                     raise PlanError("shared data changed outside its gate; retain the gate")
                 self._note_publication(gate, gate.state["digest"], gate.state["published_data_ref"], phase="read-sync")

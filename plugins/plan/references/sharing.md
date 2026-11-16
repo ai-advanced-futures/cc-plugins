@@ -32,6 +32,8 @@ All writers use Plan. Raw `bd` mutations, synchronization, and independent datab
 
 ## Git transport
 
+Plan and Beads use the configured remote address. Plan ignores the session rules `url.<base>.insteadOf` and `url.<base>.pushInsteadOf` (from `GIT_CONFIG_COUNT`) for this remote, and keeps the session credentials and identity. If the Beads remote is not the Plan remote, the operation stops before it takes the gate. Recovery accepts a saved attempt for the SSH or HTTPS form of the same host and path.
+
 Beads 1.3.4 stores Dolt data under `refs/dolt/data`, separate from source branches. Its supported transport uses guarded data-ref replacement and can replace `refs/heads/__dolt_remote_info__`. The repository must explicitly permit those transport operations. This grants no permission to force a source branch or delete a ref.
 
 ## GitHub Projects

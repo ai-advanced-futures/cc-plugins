@@ -1,7 +1,7 @@
 {
   "name": "plan",
   "displayName": "plan",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Plan product work in an explicit local or shared Beads store. Generate and develop work from a Product PRD, coordinate claims, and publish a GitHub Project without changing Product roadmap files or starting Sofa.",
   "author": {
     "name": "ai-advanced-futures"
