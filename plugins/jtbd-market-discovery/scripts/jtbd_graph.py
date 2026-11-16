@@ -206,13 +206,15 @@ def add_results(parser) -> None:
 def cmd_pages(args) -> int:
     from jtbdlib import read
 
-    print(json.dumps(read.pages(args.root, args.type, args.run), indent=2, ensure_ascii=False))
+    print(json.dumps(read.pages(args.root, args.type, args.run, args.outcome, args.segment), indent=2, ensure_ascii=False))
     return 0
 
 
 def add_pages(parser) -> None:
     parser.add_argument("type")
     parser.add_argument("--run", metavar="KEY", help="only the pages of this run")
+    parser.add_argument("--outcome", metavar="KEY", help="only Segment pages whose top_outcomes links to this Outcome")
+    parser.add_argument("--segment", metavar="KEY", help="only WtpValidation pages linked to this Segment")
 
 
 COMMANDS = [

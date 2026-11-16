@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.0
+
+- Use `knowledge:ask` as the normal evidence reader before domain page reads. Requires knowledge 2.0.0 or later; the manifest dependency remains `knowledge` because it has no version floor field. The shared reader takes a question only and searches local registered graphs. No plugin-specific ponder is added.
+- Add the read-only bc_graph.py select query to enforce an exact Case slug, offering, or ID and Part.part. Keep latest reviews, open items, evidence links, and funding decisions.
+- Known single read queries leave the brain hook without regeneration; write commands retain regeneration and both checks.
+- Live checks and speed or cost measurements remain separate; offline tests do not establish a performance gain.
+
 ## 0.11.2
 
 - **fix:** An analyst now fixes a refused plan in the same run. The analyst write guard (ADR-006) runs the plan rules of `bc.py team-reply --check` on the text of a plan reply before the Write lands: the plan schema, the rules on the cards, the card ids, `follow_up` and `runs`. A plan with a fault is denied, the deny names each problem (a card by its id, at most 10 problems, each cut to 200 characters), and the analyst writes the whole reply again with one Write. Before, the faulty plan landed, got its receipt, and `team-reply --check` refused it after the run, so the coach had no plan and the analyst could not write a second time. The guard does not read a file that `results[].cites` names, and it gives no deny for a fault of a questions list (a fault of the brief or of the case). An error in the pre-check allows the Write, with the name of the error class as the reason, and `team-reply --check` still decides. The 8 analysts get `maxTurns: 30` in their frontmatter, as the hard stop of a run that the guard keeps refusing (STORY-387, D-1160 to D-1173).

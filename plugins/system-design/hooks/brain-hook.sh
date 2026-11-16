@@ -13,7 +13,8 @@
 #   2. <save script> check                                      (the brain check)
 #   3. knowledge.py check --graph <each graph> --cache-only     (the general check)
 # Claude Code runs the hooks of one event in parallel, so one hook does the
-# three steps. Any other tool call ends the hook at once.
+# three steps. A single read query or regen --check exits without these steps.
+# READ_COMMANDS in brain-hook.conf lists the read queries. Other tool calls exit at once.
 #
 # A Bash command runs the save script when the script is in command position:
 # at the start of the command, after ; & | ( $( or a new line, or after
@@ -144,6 +145,72 @@ runs_save_script() {
     LC_ALL=C grep -E "^[[:space:]]*${assign}${runner}[^[:space:]]*${script}([[:space:])]|\$)" >/dev/null
 }
 
+# Exit 0 only for one known read command; compound commands retain the write checks.
+read_only_command() {
+  python3 - "$1" "$SAVE_SCRIPT" "${READ_COMMANDS:-}" <<'BRAIN_READ_ONLY'
+import pathlib
+import shlex
+import sys
+
+# shlex keeps a quoted substitution in one token. Check shell syntax first.
+# Keep shell expansion on the existing check path; its word rules differ.
+command = sys.argv[1]
+quote = None
+word_start = True
+index = 0
+while index < len(command):
+    char = command[index]
+    if quote == "'":
+        if char == "'":
+            quote = None
+    elif char == "\\":
+        if quote is None:
+            word_start = False
+        index += 2
+        continue
+    elif quote is None and char == "#" and word_start:
+        command = command[:index]
+        break
+    elif char == "'" and quote is None:
+        quote = "'"
+    elif char == '"':
+        quote = None if quote == '"' else '"'
+    elif char in "`$" or (
+            quote is None and command[index:index + 2] in ("<(", ">(", "=(")):
+        sys.exit(1)
+    if quote is None:
+        word_start = char in " \t\n;&|()<>"
+    index += 1
+
+try:
+    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+    # The scan removes real comments; shlex must keep # inside a word.
+    lexer.commenters = ""
+    lexer.whitespace_split = True
+    words = list(lexer)
+except ValueError:
+    sys.exit(1)
+if "\n" in sys.argv[1] or any(w and all(c in ";&|()<>" for c in w) for w in words):
+    sys.exit(1)
+for prefix in (["uv", "run", "--quiet"], ["uv", "run"], ["python3"], ["python"]):
+    if words[:len(prefix)] == prefix:
+        words = words[len(prefix):]
+        break
+if not words or pathlib.PurePath(words.pop(0)).name != sys.argv[2]:
+    sys.exit(1)
+if words[:1] == ["--root"]:
+    words = words[2:]
+elif words and words[0].startswith("--root="):
+    words = words[1:]
+# argparse accepts each unambiguous long-option prefix, also with =PATH.
+options = [word.split("=", 1)[0] for word in words if word.startswith("--")]
+writes_output = any(option != "--" and "--out".startswith(option) for option in options)
+readonly = (words == ["regen", "--check"] or
+            bool(words and words[0] in sys.argv[3].split() and not writes_output))
+sys.exit(0 if readonly else 1)
+BRAIN_READ_ONLY
+}
+
 input="$(cat)"
 tool="$(printf '%s' "$input" | json_get '.tool_name' 'd.get("tool_name")')"
 save="$plugin_root/scripts/$SAVE_SCRIPT"
@@ -152,6 +219,7 @@ case "$tool" in
   Bash)
     command="$(printf '%s' "$input" | json_get '.tool_input.command' 'd.get("tool_input", {}).get("command")')"
     runs_save_script "$command" || exit 0
+    read_only_command "$command" && exit 0
     cwd="$(printf '%s' "$input" | json_get '.cwd' 'd.get("cwd")')"
     root="$(git -C "${cwd:-${CLAUDE_PROJECT_DIR:-$PWD}}" rev-parse --show-toplevel 2>/dev/null)" || exit 0
     [ -n "$(bundle_dirs "$root")" ] || exit 0

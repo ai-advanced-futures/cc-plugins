@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.11.0
+
+- Use `knowledge:ask` as the normal evidence reader before domain page reads. Requires knowledge 2.0.0 or later; the manifest dependency remains `knowledge` because it has no version floor field. The shared reader takes a question only and searches local registered graphs. No plugin-specific ponder is added.
+- Keep the PRD migration guard and exact state and trace queries.
+- Known single read queries leave the brain hook without regeneration; write commands retain regeneration and both checks.
+- Live checks and speed or cost measurements remain separate; offline tests do not establish a performance gain.
+
 ## 6.10.0
 
 ### Added

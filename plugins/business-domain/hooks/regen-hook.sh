@@ -2,14 +2,13 @@
 # regen-hook.sh: the PostToolUse hook of the business-domain plugin, for Write, Edit,
 # and Bash.
 #
-# After an edit of a file inside the domain bundle, or a Bash command that
-# runs `ddd.py`, run three steps in this order:
-#   1. ddd.py regen
-#   2. ddd.py check                                        (the ddd check)
-#   3. knowledge.py check --graph ddd --cache-only     (the general check)
-# so the LINKS blocks, the indexes, and links.tsv agree with the frontmatter
-# again, and the general check reports any cross-graph finding. The hook
-# does not undo or block the edit: a PostToolUse hook runs after the tool.
+# After a direct Write or Edit inside the bundle, run writing `ddd.py regen`,
+# `ddd.py check`, then `knowledge.py check --graph ddd --cache-only`.
+# Navigation-changing CLI operations already regenerate their own output.
+# A Bash event runs only `regen --check` and the two checks, even for an
+# unrecognized or compound command. Stale navigation stops with a separate
+# repair instruction; the Bash hook never repairs it. A known single read can
+# exit before these checks. This hook runs after the tool, not before it.
 #
 # A Bash command runs ddd.py when the script is in command position: at the
 # start of the command, after ; & | ( $( or a new line, or after variable
@@ -111,6 +110,7 @@ strip_quoted() {
 
 # Exit 0 when the Bash command $1 runs the save script.
 SAVE_SCRIPT=ddd.py
+READ_COMMANDS=""
 runs_save_script() {
   case "$1" in *"$SAVE_SCRIPT"*) ;; *) return 1 ;; esac # the common case: no quote scan
   local script="${SAVE_SCRIPT//./\\.}"
@@ -124,12 +124,79 @@ runs_save_script() {
     LC_ALL=C grep -E "^[[:space:]]*${assign}${runner}[^[:space:]]*${script}([[:space:])]|\$)" >/dev/null
 }
 
+# Exit 0 only for one known read command; compound commands retain the write checks.
+read_only_command() {
+  python3 - "$1" "$SAVE_SCRIPT" "${READ_COMMANDS:-}" <<'BRAIN_READ_ONLY'
+import pathlib
+import shlex
+import sys
+
+# shlex keeps a quoted substitution in one token. Check shell syntax first.
+# Keep shell expansion on the existing check path; its word rules differ.
+command = sys.argv[1]
+quote = None
+word_start = True
+index = 0
+while index < len(command):
+    char = command[index]
+    if quote == "'":
+        if char == "'":
+            quote = None
+    elif char == "\\":
+        if quote is None:
+            word_start = False
+        index += 2
+        continue
+    elif quote is None and char == "#" and word_start:
+        command = command[:index]
+        break
+    elif char == "'" and quote is None:
+        quote = "'"
+    elif char == '"':
+        quote = None if quote == '"' else '"'
+    elif char in "`$" or (
+            quote is None and command[index:index + 2] in ("<(", ">(", "=(")):
+        sys.exit(1)
+    if quote is None:
+        word_start = char in " \t\n;&|()<>"
+    index += 1
+
+try:
+    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+    # The scan removes real comments; shlex must keep # inside a word.
+    lexer.commenters = ""
+    lexer.whitespace_split = True
+    words = list(lexer)
+except ValueError:
+    sys.exit(1)
+if "\n" in sys.argv[1] or any(w and all(c in ";&|()<>" for c in w) for w in words):
+    sys.exit(1)
+for prefix in (["uv", "run", "--quiet"], ["uv", "run"], ["python3"], ["python"]):
+    if words[:len(prefix)] == prefix:
+        words = words[len(prefix):]
+        break
+if not words or pathlib.PurePath(words.pop(0)).name != sys.argv[2]:
+    sys.exit(1)
+if words[:1] == ["--root"]:
+    words = words[2:]
+elif words and words[0].startswith("--root="):
+    words = words[1:]
+# argparse accepts each unambiguous long-option prefix, also with =PATH.
+options = [word.split("=", 1)[0] for word in words if word.startswith("--")]
+writes_output = any(option != "--" and "--out".startswith(option) for option in options)
+readonly = (words == ["regen", "--check"] or
+            bool(words and words[0] in sys.argv[3].split() and not writes_output))
+sys.exit(0 if readonly else 1)
+BRAIN_READ_ONLY
+}
+
 input="$(cat)"
 tool="$(printf '%s' "$input" | json_get '.tool_name' 'd.get("tool_name")')"
 case "$tool" in
   Bash)
     command="$(printf '%s' "$input" | json_get '.tool_input.command' 'd.get("tool_input", {}).get("command")')"
     runs_save_script "$command" || exit 0
+    read_only_command "$command" && exit 0
     root="$(git -C "${CLAUDE_PROJECT_DIR:-$PWD}" rev-parse --show-toplevel 2>/dev/null)" || exit 0
     [ -f "$root/.claude/ddd.json" ] || exit 0
     path="$root/.claude/ddd.json"
@@ -171,7 +238,20 @@ else
   runner=(python3 "$script")
 fi
 
-if ! out="$("${runner[@]}" --root "$root" regen 2>&1)"; then
+stale=0
+if [ "$tool" = Bash ]; then
+  out="$("${runner[@]}" --root "$root" regen --check 2>&1)"
+  rc=$?
+  if [ "$rc" -eq 1 ]; then
+    stale=1
+    printf 'business-domain hook: navigation is stale; no files were repaired.\n%s\nRepair requires separate approval. After approval, run:\n$ ' "$out" >&2
+    printf '%q ' "${runner[@]}" >&2
+    printf -- '--root %q regen\n' "$root" >&2
+  elif [ "$rc" -ne 0 ]; then
+    printf 'business-domain hook: `ddd.py regen --check` failed after the Bash call:\n%s\n' "$out" >&2
+    exit 2
+  fi
+elif ! out="$("${runner[@]}" --root "$root" regen 2>&1)"; then
   printf 'business-domain hook: `ddd.py regen` failed after the edit of %s:\n%s\n' "$path" "$out" >&2
   exit 2
 fi
@@ -179,7 +259,7 @@ fi
 out="$("${runner[@]}" --root "$root" check 2>&1)"
 rc=$?
 if [ "$rc" -ne 0 ]; then
-  printf 'business-domain hook: `ddd.py check` found errors after the edit of %s. Correct the page:\n%s\n' "$path" "$out" >&2
+  printf 'business-domain hook: `ddd.py check` found errors after the %s call for %s. Correct the page:\n%s\n' "$tool" "$path" "$out" >&2
   exit 2
 fi
 
@@ -188,13 +268,15 @@ if [ -z "$knowledge" ]; then
   general="SKIP: K-general (the knowledge plugin is not installed, so the general check did not run)"
 else
   if ! general="$("${runner[0]}" "${runner[@]:1:$((${#runner[@]}-2))}" "$knowledge/scripts/knowledge.py" --root "$root" check --graph ddd --cache-only 2>&1)"; then
-    printf 'business-domain hook: the general check found errors after the change of %s. Correct the page:\n%s\n' "$path" "$general" >&2
+    printf 'business-domain hook: the general check found errors after the %s call for %s. Correct the page:\n%s\n' "$tool" "$path" "$general" >&2
     exit 2
   fi
 fi
 
+[ "$stale" -eq 0 ] || exit 2
+
 if printf '%s\n%s\n' "$out" "$general" | grep -q '^\(WARN\|SKIP\): '; then
-  context="ddd.py check gave notes after the edit of $path:
+  context="ddd.py check gave notes after the $tool call for $path:
 $out
 $general"
   if command -v jq >/dev/null 2>&1; then

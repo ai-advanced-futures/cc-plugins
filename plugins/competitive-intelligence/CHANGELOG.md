@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.12.0
+
+- Use `knowledge:ask` as the normal evidence reader before domain page reads. Requires knowledge 2.0.0 or later; the manifest dependency remains `knowledge` because it has no version floor field. The shared reader takes a question only and searches local registered graphs. No plugin-specific ponder is added.
+- Keep market and competitor selection, latest results, SWOT, and exact run files.
+- Known single read queries leave the brain hook without regeneration; write commands retain regeneration and both checks.
+- Live checks and speed or cost measurements remain separate; offline tests do not establish a performance gain.
+
 ## 1.11.9
 
 - After an `ingest` that exits 1, the 7 skills that ingest (`competitive-intelligence`, `discover`, `analyze`, `monitor`, `respond`, `validate` and `vendor-archetype-classify`) tell the model not to write or change a file in `.competitive-intelligence/` or in the graph, and not to run the `ingest` again in that turn, so that the graph holds only data that a step of the skill made. The full run `competitive-intelligence` still shows its completion summary (step 7). Before, a model could change the files between the calls and run the ingest again, and a live run left a file in the graph that no step of the skill made (STORY-344).

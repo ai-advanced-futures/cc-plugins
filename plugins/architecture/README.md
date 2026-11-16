@@ -8,6 +8,10 @@ standard-library-only vendored toolchain and a pytest suite.
 **The reference corpus is synthetic.** It is in `tests/parity/`. It holds each ADR graph and
 register convention that the plugin supports, and the register and check output that it must make.
 
+`ask` requires knowledge 2.0.0 or later. A single known read query, including
+`regen --check`, leaves the brain hook without regeneration or checks. Writes
+retain regeneration and both checks. Compound commands retain the write-check path.
+
 ## The bar
 
 **Record a decision when it would be expensive to undo.** Cheap to change your mind, no ADR.
@@ -38,8 +42,7 @@ never fires on its own either; the rest are invoked by a human.
   session, mid-flow, without stopping to ask. Applies the distillation standard from
   `skills/learn/distillation.md`.
 - **`/architecture:ask`** — recall. Answers a question from the corpus with `path:line` citations. Backed
-  by the `architecture:ask` skill, which reads only: it reads files with Read and searches them with `grep` through Bash, and it writes no file. It reads `index.md` first, or the register when that file does not
-  exist, before it opens any single ADR.
+  by the read-only `architecture:ask` skill. Normal questions use `knowledge:ask` first, then source lifecycle and history checks. Exact sets and legacy corpora use the index or register path. Requires knowledge 2.0.0 or later.
 - **`/architecture:index`** — regenerate the register and lint the corpus. Backed by the `indexing-adrs`
   skill, which never reports success on a red lint and never hand-edits between the generated
   markers.
@@ -220,8 +223,9 @@ text that the generator derives from the first block of the `## Decision` sectio
 marked `(derived)`. The generator writes the `LINKS` block at the end of each ADR. Do not
 edit it.
 
-`/architecture:ask` reads `index.md` first when the file exists, and the register when it does
-not. To stop navigation, delete the 3 files.
+`/architecture:ask` uses the shared reader first for normal registered corpora. It uses the index
+or register for exact sets and legacy corpora, and checks each selected ADR source and history.
+To stop navigation, delete the 3 files.
 
 ## The schema pipeline
 
@@ -317,7 +321,7 @@ pip install -r scripts/adr/requirements.txt && python3 -m pytest tests/adr
 7. **Autonomous capture writes `lifecycle: accepted` and never interrupts.** The review of the pull
    request is the acceptance. Asking mid-session was rejected: it breaks flow, and in an unattended
    session nobody is there to answer. `proposed` is only for a decision that a person keeps open.
-8. `architecture:ask` is read-only. It reads the generated index before any ADR, or the register when no index exists.
+8. `architecture:ask` is read-only. It uses shared evidence first for normal questions, and keeps exact index or register queries and source history checks.
 9. **Commands set `disable-model-invocation: true`. Skills never do, except `setup`.** Commands
    are user-typed; most skills are what a session reaches for on its own, but `setup` is
    user-typed only.

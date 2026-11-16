@@ -10,6 +10,21 @@ The question is: **$ARGUMENTS**
 
 Never write a page, because the person makes each change through the `ux-hci-design:learn` skill or a run. Answer from the graphs only.
 
+## Normal questions
+
+Load `knowledge:ask` with the question unchanged before any page read, root command,
+or plugin probe. Requires knowledge 2.0.0 or later. This is the normal evidence reader.
+It searches local registered graphs, with no caller-selected nodes or filters.
+A graph name in a question does not restrict search. Use UX evidence; use linked
+sources only when they state a fact or condition that the question asks for. When a graph is unregistered or remote, use local source files
+when available and report the coverage gap.
+
+## Exact checks
+
+For typed lists, findings, behavior results, diagram or journey relations, and exact run
+files, use the matching query below instead of ranked search. Otherwise use a check
+only when the returned evidence needs it. Resolve the root and plugin only for these queries.
+
 Run `git rev-parse --show-toplevel` on its own. Its output is `<git root>`. When that command fails, stop with: "This is not a git repository." Write that path itself in each command, and not a command or a variable, because Claude Code cannot check such a command before it runs, and it then asks the person or refuses the command.
 Run each command on its own: one command per Bash call, with no pipe (`|`), no `;` and no `&&`. Also, do not add an `echo` of the exit code, because the Bash tool shows the exit code of a command that fails.
 `U` is `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ux_graph.py --root <git root>`.
@@ -18,9 +33,7 @@ Find the knowledge plugin with
 `bash ${CLAUDE_PLUGIN_ROOT}/scripts/probe-plugin.sh knowledge scripts/knowledge.py`.
 When the probe exits 1, stop with: "ux-hci-design:ask needs the knowledge plugin. Install it: claude plugin install knowledge@cc-plugins."
 
-## Step 1: the shortcuts
-
-Use the first shortcut that fits the question. Each one gives start nodes.
+Use only the check that fits the question. Read the selected pages to verify their fields.
 
 | Question | Shortcut |
 |---|---|
@@ -31,10 +44,6 @@ Use the first shortcut that fits the question. Each one gives start nodes.
 | What does the PRD need from the behavior results? | `$U behavior`. |
 | What did a run say, as the file it made? | `$U view <RUN ID> <file name>`. |
 
-## Step 2: the generic procedure
-
-Load the `knowledge:ask` skill. Give it the question and the start nodes of Step 1 (or `ux-hci-design:/index.md` when no shortcut fits). It walks the graphs one step at a time, also into the other graphs.
-
-## Step 3: answer
+## Answer
 
 Cite each page with its graph and path, for example `(ux-hci-design:/personas/PERSONA-03.md)`. Write `(draft)` after each page with `status: draft`, because the person has not confirmed it.

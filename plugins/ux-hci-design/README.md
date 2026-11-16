@@ -1,8 +1,17 @@
 # ux-hci-design
 
-**Version:** 1.8.0
+**Version:** 1.9.0
 **Author:** Luis F. Amadeo (the original plugin). ai-advanced-futures ported it to this marketplace.
 **License:** MIT (see `NOTICE`)
+
+`ask` requires knowledge 2.0.0 or later. A single known read query, including
+`regen --check`, leaves the brain hook without regeneration or checks. Writes
+retain regeneration and both checks. Compound commands retain the write-check path.
+
+## Changes in v1.9.0
+
+`ask` uses the shared evidence reader first for normal questions. It requires knowledge 2.0.0 or later. Exact domain checks remain available.
+
 
 ## What this plugin does
 
@@ -140,7 +149,7 @@ A run with no person (for example `claude -p`) keeps the brain out of git and sa
 5. `ux_graph.py behavior` lists the screens, state rules, interaction rules and user flows for the PRD. `ux_graph.py behavior --check-prd` compares them with the Experience and Journey pages of the PRD.
 6. After `/ux-hci-design:learn` confirms a run, it saves the run into the PRD and the system design (Step 2b of the skill `learn`). See "The save into the PRD and the system design".
 
-The plugin `knowledge` must be version 1.6.0 or later. Version 1.5.x gives a `K-manifest` error for this brain.
+The plugin `knowledge` must be version 2.0.0 or later for `ask`. Version 1.5.x gives a `K-manifest` error for this brain.
 
 ### The save into the PRD and the system design
 

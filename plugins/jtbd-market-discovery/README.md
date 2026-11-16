@@ -2,11 +2,20 @@
 
 Find market opportunities with Jobs To Be Done (JTBD) and numbers. The plugin guides you from one job statement to ranked opportunities, customer segments and a validated price.
 
-**Version:** 1.11.10
+**Version:** 1.12.0
 **Author:** ai-advanced-futures
 **License:** MIT (see `NOTICE`)
 
-## What's New in v1.11.10
+`ask` requires knowledge 2.0.0 or later. A single known read query, including
+`regen --check`, leaves the brain hook without regeneration or checks. Writes
+retain regeneration and both checks. Compound commands retain the write-check path.
+
+## Changes in v1.12.0
+
+`ask` uses the shared evidence reader first for normal questions. It requires knowledge 2.0.0 or later. Exact domain checks remain available.
+
+
+## Earlier changes in v1.11.10
 
 - The skills `discover` and `wtp-check` grant `Edit(/.jtbd-market-discovery/**)` in place of `Write`, so they write files only in `.jtbd-market-discovery/` with the file tools, and each other write asks you. Before, the bare `Write` let a plugin run write any path in the project with no question (issue 1598, STORY-378).
 

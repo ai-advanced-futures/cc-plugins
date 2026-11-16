@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.12.0
+
+- Use `knowledge:ask` as the normal evidence reader before domain page reads. Requires knowledge 2.0.0 or later; the manifest dependency remains `knowledge` because it has no version floor field. The shared reader takes a question only and searches local registered graphs. No plugin-specific ponder is added.
+- Add typed pages filters for Segment.top_outcomes and WtpValidation.segment. Keep latest scores, run comparisons, and default-dependent results in the jtbd graph.
+- Known single read queries leave the brain hook without regeneration; write commands retain regeneration and both checks.
+- Live checks and speed or cost measurements remain separate; offline tests do not establish a performance gain.
+
 ## 1.11.10
 
 - **fix:** the skills `discover` and `wtp-check` grant `Edit(/.jtbd-market-discovery/**)` in place of `Write`, so a plugin run writes files with the file tools only in `.jtbd-market-discovery/`, and each other file tool write asks. Before, the bare `Write` let a route write any path in the project with no question. The skills `learn` and `quick-validate` keep `Write`, and the bare `Skill` of the 2 routes stays (issue 1598, STORY-378).

@@ -3,6 +3,10 @@
 Product-level PRD creation and roadmap planning through lens-driven Socratic
 exploration, with full traceability from the PRD to the roadmap and to GitHub.
 
+`ask` requires knowledge 2.0.0 or later. A single known read query, including
+`regen --check`, leaves the brain hook without regeneration or checks. Writes
+retain regeneration and both checks. Compound commands retain the write-check path.
+
 ## Overview
 
 The plugin writes two OKF v0.2 bundles for each repository:
@@ -158,11 +162,10 @@ text outside the markers. A repository that holds the v3 file
 ### `/product:ask <question>`
 
 Answers a question about the product from the two bundles, with no write.
-Four shortcuts cover a broad question (`prd/product.md`), a capability by
-name (`prd/capabilities/index.md` and its `aliases`), a roadmap item's PRD
-reason (its `traces`), and the work state (`prd.py list`). Any other
-question goes to the `knowledge:ask` skill, which can also follow a link
-into the system design or the ADRs.
+Normal questions use `knowledge:ask` first, with knowledge 2.0.0 or later.
+Exact state and trace questions keep `prd.py list`, source `traces`, and reverse trace
+links. Unresolved names use the capability index and aliases. The PRD migration guard
+still runs before a lookup. Linked system design and ADR evidence stays available.
 
 ### `/product:explore [lens]`
 

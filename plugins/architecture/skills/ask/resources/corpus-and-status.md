@@ -39,3 +39,24 @@ Normalize compound status strings case-insensitively while preserving the raw st
 lifecycle words appear, choose the strongest signal in this order: `superseded` or `deprecated`;
 then `implemented`, `converged`, `approved`, `design`, `ready`, or `saved`; then `draft`,
 `proposed`, or `refinement`. Match recognized word stems, so `Drafted` normalizes to `draft`.
+
+## Search form
+
+Each search of the procedure is one `grep` command through Bash, in this form. `grep` is a
+read-only command, so it runs with no permission prompt.
+
+- `grep -n -E '<pattern>' <path> | head -n 60`. Put the pattern in single quotes: write each `'`
+  of a term as `'\''`. Use a plain `|` for "or". A pattern has no "and" of terms.
+- Write each path in full. Use no loop and no shell variable, because Claude Code cannot check
+  such a command before it runs: it asks the person, and `claude -p` refuses it.
+- `<path>` is the one file. For a directory, use `-r --include='*.md' <dir>`.
+- `-l` in place of `-n` only when the step says "file names".
+- `-i` only when the step says "ignore letter case". `-A <n>` only when the step gives it.
+- `head -n 60` keeps 60 lines. A result of 60 lines is possibly cut. Make the pattern narrower,
+  or write in Gaps that the result was cut.
+- `[[:blank:]]` in a pattern matches a tab of `links.tsv`: `grep -E` has no tab escape.
+- `<file>` in a pattern is the file name with each `.` written as `\.`. An unescaped `.` matches
+  each character.
+- `<arch>` in a pattern is `(<archive_dir>/)?` with the value from `.claude/adr.json`, for
+  example `(archive/)?`. When `archive_dir` is null, leave `<arch>` out, and skip each step that
+  names the archive index.

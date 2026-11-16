@@ -4,6 +4,10 @@ A person brings a thin business case. The plugin maps it against a versioned rub
 
 Use it when someone has to decide whether to fund an offering, and the business case for it is thin, has claims with no evidence, or is not finished. Bring the document you have: a proposal, a strategy, or both. The plugin checks the case against a versioned rubric, helps you fill each gap, works out the numbers from the figures you confirm, has an independent review in a fresh context check the case, and records each decision you make, in the proposer role and then in the funder role. Code decides when the case is done. The run ends with a decision to fund, not fund or defer.
 
+`ask` requires knowledge 2.0.0 or later. A single known read query, including
+`regen --check`, leaves the brain hook without regeneration or checks. Writes
+retain regeneration and both checks. Compound commands retain the write-check path.
+
 ## Install
 
 ```
@@ -183,7 +187,7 @@ The graph has 14 page types. The schema is `schema/business-case.yaml`. `scripts
 | ItemVerdict | `VERDICT` | `verdicts` | the verdict of one report on one rubric item |
 | Finding | `FINDING` | `findings` | one finding of one report |
 
-Only `scripts/bc_graph.py` writes the graph. Do not edit a page by hand. The coach and the 3 skills call it; you can also run it with `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/bc_graph.py" <operation>`. The operations are `init`, `upgrade`, `new`, `set`, `body`, `link`, `unlink`, `remove`, `resolve`, `verify`, `verify-case`, `regen`, `check`, `log` and `publish`. An operation exits with 0 when it succeeds, with 1 when the data is wrong, and with 2 when the input is wrong.
+Only `scripts/bc_graph.py` writes the graph. Do not edit a page by hand. The coach and the 3 skills call it; you can also run it with `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/bc_graph.py" <operation>`. The operations are `init`, `upgrade`, `new`, `set`, `body`, `link`, `unlink`, `remove`, `resolve`, `select`, `verify`, `verify-case`, `regen`, `check`, `log` and `publish`. The read-only `select --case <slug, offering, or CASE ID> [--part <part>]` query returns one exact Case and its matching Parts. An operation exits with 0 when it succeeds, with 1 when the data is wrong, and with 2 when the input is wrong.
 
 - `publish --case DIR` writes the case folder `DIR` into pages. It works on a copy, runs `regen` and `check`, and moves the pages only when the check finds no ERROR. It leaves the case folder unchanged. When the project has no graph, it makes one and prints `INIT: docs/business-case/`. When git ignores the case folder, it writes no page and prints a `PRIVATE:` line that says what to add to the ignore file of git. The graph would show a private case otherwise.
 - `check` runs the brain check. Its rules are `BC-schema`, `BC-id`, `BC-link`, `BC-required`, `BC-case`, `BC-run`, `BC-alias`, `BC-part`, `BC-source`, `BC-fresh`, `BC-upstream` and `BC-stale`. `BC-fresh` and `BC-upstream` give a WARN. `BC-upstream` gives a SKIP when the `knowledge` plugin is not there.

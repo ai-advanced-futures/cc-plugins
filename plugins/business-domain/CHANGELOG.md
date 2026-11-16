@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.0
+
+- Use `knowledge:ask` as the normal evidence reader before domain page reads. Requires knowledge 2.0.0 or later; the manifest dependency remains `knowledge` because it has no version floor field. The shared reader takes a question only and searches local registered graphs. No plugin-specific ponder is added.
+- Breaking change: ask stops on stale generated files instead of writing repairs. Run regen and check as a separate approved repair, then repeat the lookup. Keep bundle-only answers, aliases, replacements, and exact typed edges.
+- The Bash hook runs checks only, even for compound or unrecognized commands. Stale generated files stop with a repair command that requires separate approval. Known single reads skip extra hook work. Navigation-changing CLI operations regenerate their own output; direct Write/Edit events retain automatic regeneration. Successful writes retain the brain and general checks.
+- Live checks and speed or cost measurements remain separate; offline tests do not establish a performance gain.
+
 ## 1.0.10
 
 ### Changed

@@ -2,7 +2,16 @@
 
 This plugin maps the competitors of a market, gathers public facts about them, and analyzes a competitor through six lenses. It writes a SWOT, recommendations, and the pages of a graph that other plugins read.
 
-## What's New in v1.11.9
+`ask` requires knowledge 2.0.0 or later. A single known read query, including
+`regen --check`, leaves the brain hook without regeneration or checks. Writes
+retain regeneration and both checks. Compound commands retain the write-check path.
+
+## Changes in v1.12.0
+
+`ask` uses the shared evidence reader first for normal questions. It requires knowledge 2.0.0 or later. Exact domain checks remain available.
+
+
+## Earlier changes in v1.11.9
 
 - After an `ingest` that exits 1, the 7 skills that ingest (`competitive-intelligence`, `discover`, `analyze`, `monitor`, `respond`, `validate` and `vendor-archetype-classify`) tell the model not to write or change a file in `.competitive-intelligence/` or in the graph, and not to run the `ingest` again in that turn, so that the graph holds only data that a step of the skill made. The full run `competitive-intelligence` still shows its completion summary (step 7). Before, a model could change the files between the calls and run the ingest again, and a live run left a file in the graph that no step of the skill made (STORY-344).
 

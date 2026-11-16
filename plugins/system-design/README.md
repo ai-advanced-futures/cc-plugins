@@ -3,6 +3,10 @@
 The architecture of a repository as one OKF graph on the brain standard of the
 `knowledge` plugin (a dependency). The default folder is `docs/system-design/`.
 
+`ask` requires knowledge 2.0.0 or later. A single known read query, including
+`regen --check`, leaves the brain hook without regeneration or checks. Writes
+retain regeneration and both checks. Compound commands retain the write-check path.
+
 ## Skills
 
 - `/system-design:setup`: make the graph, the manifest, the registry entry,

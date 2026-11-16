@@ -5,37 +5,31 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Skill
 
 # ask
 
-Answer a question from what the ADR corpus already records. This skill is read-only: it reads
-the generated index `index.md` first. When no index exists, it reads the register first. It
-opens an ADR body only after that. The inputs are `question`, and `mode`: `human` for `/architecture:ask`, or
+Answer a question from what the ADR corpus already records. This skill is read-only. The normal evidence reader
+is `knowledge:ask` (knowledge 2.0.0 or later). Keep the source and history checks below: ranked search alone
+cannot establish a current decision. The inputs are `question`, and `mode`: `human` for `/architecture:ask`, or
 `subagent` for a delegated lookup.
 
-## Search form
-
-Each search of the procedure is one `grep` command through Bash, in this form. `grep` is a
-read-only command, so it runs with no permission prompt.
-
-- `grep -n -E '<pattern>' <path> | head -n 60`. Put the pattern in single quotes: write each `'`
-  of a term as `'\''`. Use a plain `|` for "or". A pattern has no "and" of terms.
-- Write each path in full. Use no loop and no shell variable, because Claude Code cannot check
-  such a command before it runs: it asks the person, and `claude -p` refuses it.
-- `<path>` is the one file. For a directory, use `-r --include='*.md' <dir>`.
-- `-l` in place of `-n` only when the step says "file names".
-- `-i` only when the step says "ignore letter case". `-A <n>` only when the step gives it.
-- `head -n 60` keeps 60 lines. A result of 60 lines is possibly cut. Make the pattern narrower,
-  or write in Gaps that the result was cut.
-- `[[:blank:]]` in a pattern matches a tab of `links.tsv`: `grep -E` has no tab escape.
-- `<file>` in a pattern is the file name with each `.` written as `\.`. An unescaped `.` matches
-  each character.
-- `<arch>` in a pattern is `(<archive_dir>/)?` with the value from `.claude/adr.json`, for
-  example `(archive/)?`. When `archive_dir` is null, leave `<arch>` out, and skip each step that
-  names the archive index.
+For source and edge searches in steps 4 to 8 or exact routing, use the search form in
+[resources/corpus-and-status.md](resources/corpus-and-status.md). The initial navigation flag check
+needs only a match for `^okf_version:`, not a term search.
 
 ## Procedure
 
 1. **Entry.** Read `.claude/adr.json`. Get `dir`, `register.path`, `archive_dir` and
    `extra_corpora`. If `dir` is empty or missing, put that fact first in Gaps and stop.
-2. **Routing.** Search `<dir>/index.md` for `^okf_version:`.
+2. **Evidence first.** Read the `adr` entry of `.claude/knowledge.json` and check only whether `<dir>/index.md`
+   has `^okf_version:`. Leave term searches for exact routing. For a normal question with a local registered ADR
+   corpus and generated navigation, load `knowledge:ask` with the question unchanged, before term searches or
+   ADR body reads. Use its cited ADRs as candidates in step 3. Pass only the question, because the reader
+   accepts no caller-selected nodes or filters. A graph name is a search term, not a filter. Reject evidence
+   outside the configured corpora. Then do steps 4 to 8 and the output contract here, not the reader's short
+   answer alone. Check the index lines only for the selected candidates and neighbours. For a complete set,
+   missing registration, remote entry, legacy register, or no useful ADR evidence, use **Exact routing** below,
+   because ranked search can omit a recorded decision. Keep `extra_corpora` in step 8 even when the shared
+   reader cannot search them.
+
+   **Exact routing.** Search `<dir>/index.md` for `^okf_version:`.
    - **a. The search has a hit. Navigation is on.**
      1. Select the most exact term of the question: a product name, a technology name, or the
         least frequent noun. Search `index.md` for it, and ignore letter case. For a term with
@@ -136,7 +130,7 @@ read-only command, so it runs with no permission prompt.
    the record.
 9. **Set question.** If the question is about all the decisions of one area, Read
    [resources/graph-walk.md](resources/graph-walk.md) and use its set-question procedure in place
-   of steps 3 to 6.
+   of steps 3 to 6. Select this path before the shared reader; ranked search is not a full set.
 10. **Stop rule.** Stop at the first of these conditions:
     - Each part of the question has a cited decision with the lifecycle `accepted`, or a cited
       proposed ADR that the answer gives as a candidate. The neighbours of walk orders 1 to 3 of
@@ -203,13 +197,13 @@ each of these 5 lines that applies:
 **Sources**
 
 List every cited artifact with its `path`, its raw status, and its normalized treatment. Add
-"reached by", with one of these values: `index`, `register`, `title grep`, or
-`edge:<key> from <file>`. Add "now", with each chain end.
+"reached by", with one of these values: `knowledge:ask`, `index`, `register`,
+`title grep`, or `edge:<key> from <file>`. Add "now", with each chain end.
 
 ## The rest of the question
 
-When the shortcuts above leave the question unanswered, load the `knowledge:ask`
-skill. Give it the question and the start nodes that you found: each ADR as
-`adr:/<file name>`, or `adr:/index.md` when you found none. It walks the
-graph one step at a time, and it follows a `parent_spec` such as
-`system-design:/areas/data.md` into the system design.
+For a remaining cross-graph question, load `knowledge:ask` with that question only if it has not already run. A
+`parent_spec`, such as `system-design:/areas/data.md`, is source evidence to check locally, not a caller control
+for the shared reader. Read necessary linked sources directly. Keep recommendations separate from the ADR
+record. In Sources, use `reached by: knowledge:ask` for candidates from the shared reader, then record each
+checked successor or amendment as usual. Give all citations as `path:line`.

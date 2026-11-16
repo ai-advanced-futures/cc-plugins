@@ -104,13 +104,26 @@ def results(root, run, run_id, latest_flag, command, case) -> dict:
             "gaps": gaps}
 
 
-def pages(root, type_name, run) -> list:
+def pages(root, type_name, run, outcome=None, segment=None) -> list:
     require_type(type_name)
     bundle = read_whole(root)
+    if outcome and (type_name != "Segment" or segment):
+        raise UsageError("--outcome requires pages Segment and no --segment")
+    if segment and type_name != "WtpValidation":
+        raise UsageError("--segment requires pages WtpValidation")
+    target_ref = None
+    if outcome or segment:
+        target = bundle.pages[resolve(bundle, outcome or segment)]
+        expected = "Outcome" if outcome else "Segment"
+        if target.type != expected:
+            raise DataError(f"expected {expected}, found {target.type}")
+        target_ref = ref(bundle.dir, target.path)
     wanted = find_run(bundle, run) if run else None
     out = []
     for path, page in sorted(bundle.pages.items()):
         if page.type != type_name:
+            continue
+        if target_ref and target_ref not in schema.edge_values(page.frontmatter, "top_outcomes" if outcome else "segment"):
             continue
         if wanted is not None and path != wanted.path and run_ref(bundle, wanted) not in schema.edge_values(page.frontmatter, "run"):
             continue

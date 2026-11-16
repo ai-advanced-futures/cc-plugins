@@ -2,6 +2,13 @@
 
 This file records the changes of the ux-hci-design plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). The version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.9.0 - 2026-11-15
+
+- Use `knowledge:ask` as the normal evidence reader before domain page reads. Requires knowledge 2.0.0 or later; the manifest dependency remains `knowledge` because it has no version floor field. The shared reader takes a question only and searches local registered graphs. No plugin-specific ponder is added.
+- Keep typed lists, findings, behavior results, diagram and journey links, and exact run files.
+- Known single read queries leave the brain hook without regeneration; write commands retain regeneration and both checks.
+- Live checks and speed or cost measurements remain separate; offline tests do not establish a performance gain.
+
 ## 1.8.0 - 2026-11-11
 
 STORY-371.

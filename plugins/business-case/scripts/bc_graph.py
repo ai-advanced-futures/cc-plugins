@@ -20,8 +20,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # lib/ of the plugin holds the readers of the case folder; it never imports bclib.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from bclib import DataError, UsageError, check, regen, writer  # noqa: E402
-from bclib.bundle import DEFAULT_DIR, shown  # noqa: E402
+from bclib import DataError, UsageError, check, regen, schema, writer  # noqa: E402
+from bclib.bundle import DEFAULT_DIR, read, ref, shown  # noqa: E402
 from bclib.issues import report  # noqa: E402
 
 
@@ -190,6 +190,33 @@ def add_key(parser) -> None:
     parser.add_argument("--by", help="the actor")
 
 
+def cmd_select(args) -> int:
+    """Read one exact case and its parts without generated indexes or ranked search."""
+    bundle = read(args.root)
+    cases = [(path, page) for path, page in bundle.pages.items()
+             if page.type == "Case" and args.case in
+             (page.id, page.frontmatter.get("slug"), page.frontmatter.get("offering"))]
+    if len(cases) != 1:
+        raise DataError(f"expected one Case for {args.case!r}; found {len(cases)}. Give a unique slug or CASE ID.")
+    case_path, case_page = cases[0]
+    case_ref = ref(bundle.dir, case_path)
+
+    def entry(path, page):
+        return {"path": shown(args.root, path), "frontmatter": page.frontmatter,
+                "body": regen.strip_generated(page.body).strip("\n")}
+
+    parts = [entry(path, page) for path, page in sorted(bundle.pages.items())
+             if page.type == "Part" and case_ref in schema.edge_values(page.frontmatter, "case")
+             and (not args.part or page.frontmatter.get("part") == args.part)]
+    print(json.dumps({"case": entry(case_path, case_page), "parts": parts}, indent=2, ensure_ascii=False))
+    return 0
+
+
+def add_select(parser) -> None:
+    parser.add_argument("--case", required=True, help="an exact Case slug, offering, or CASE ID")
+    parser.add_argument("--part", choices=("job", "market", "competition", "price", "gtm", "finance", "baseline", "strategy"))
+
+
 COMMANDS = [
     ("init", add_init, cmd_init, "make the bundle, the manifest, the log, and the registry entry"),
     ("upgrade", add_upgrade, cmd_upgrade, "bring an existing bundle to the standard"),
@@ -200,6 +227,7 @@ COMMANDS = [
     ("unlink", add_link, cmd_unlink, "remove a typed link"),
     ("remove", add_key, cmd_remove, "delete a page and retire its ID"),
     ("resolve", add_key, cmd_resolve, "print the path of a page"),
+    ("select", add_select, cmd_select, "read one exact case and its selected parts"),
     ("verify", add_verify, cmd_verify, "a person confirms a page: status stable and one more verified entry"),
     ("verify-case", add_verify_case, cmd_verify_case, "a person confirms a case: its pages get status stable and a verified entry"),
     ("regen", add_regen, cmd_regen, "write the indexes, the LINKS blocks, and links.tsv"),

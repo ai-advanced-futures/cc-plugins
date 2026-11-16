@@ -1,76 +1,83 @@
 ---
-description: Answer a question about the domain model from the ddd bundle only. Reads the root index, one context, one page, and links.tsv, in that order, and cites each page it used. Use for "what does X mean in context Y", "which contexts use X", "what emits OrderPlaced", and before a change to a domain boundary.
+description: Answer a question about the domain model from the ddd bundle only. Uses the shared local evidence reader, checks aliases and status, and cites each page. Use for "what does X mean in context Y", "which contexts use X", "what emits OrderPlaced", and before a change to a domain boundary.
 argument-hint: "<question>"
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Skill(knowledge:ask), Bash(uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ddd.py regen --check), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/ddd.py regen --check)
 ---
 
 # Ask: answer from the domain bundle
 
-This skill writes no page. It reads the bundle in the read order of
-`${CLAUDE_PLUGIN_ROOT}/skills/shared/bundle-schema.md`, and stops when it has the answer.
-Bash is only for the `regen --check`, `regen`, and `check` commands of Step 2.
+The question is: **$ARGUMENTS**
 
-## Step 1: find the bundle
+This skill writes no page or generated file. Answer from the domain bundle only.
+
+## Find the bundle and check drift
 
 Read `.claude/ddd.json`. If the file does not exist, tell the user: "This repository has no
-domain bundle. Run `/business-domain:setup` first." Then stop. The `dir` value is `<dir>` below.
+domain bundle. Run `/business-domain:setup` first." Then stop. Its `dir` is `<dir>`.
 
-## Step 2: the drift check
-
-Run this command first, before you read a page:
+Before a page read or shared search, run the read-only drift check:
 
     uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ddd.py regen --check
 
 If `uv` is not installed, run `python3` with the same path.
 
-- Exit 0: the generated parts agree with the frontmatter. Go to Step 3.
-- Exit 1: each `STALE:` line names one generated part that does not agree with the
-  frontmatter. An edit outside Claude Code caused it. Run these two commands:
+- Exit 0: continue to the normal reader or exact query.
+- Exit 1: show each `STALE:` line. Stop this lookup because generated edges can give a wrong
+  answer. Repair is a separate action that writes files, not part of this read-only ask.
+  Offer the existing repair commands below for explicit approval, then rerun the ask.
+- Exit 2 or another error: stop and show the output.
 
-      uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ddd.py regen
-      uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ddd.py check
+Separate repair commands, only after approval outside this lookup:
 
-  Tell the user each generated part that `regen` rewrote. If `regen` gives an exit code that
-  is not 0, stop and show the output. If `check` gives exit code 1, show each `ERROR:` line,
-  and say that the answer can use a page with a broken edge. Then go to Step 3.
-- Exit 2: stop. Show the output.
+    uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ddd.py regen
+    uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ddd.py check
 
-## Step 3: read in order
+Use `python3` if `uv` is absent. Report the files that repair rewrites and each `ERROR:`
+line. A failed repair is not a successful lookup. Version 2.0 stops on drift instead
+of silently regenerating the graph; repair remains available as an explicit write.
 
-Each Read of one file counts as one read. The limit is 8 reads. A search with `grep` does not count.
+## Normal questions
 
-1. Read `<dir>/index.md`. It has one line for each context.
-2. Select the context of the question. Read its page, `<dir>/contexts/<ID>.md`. Its `LINKS`
-   block lists the terms, aggregates, events, and relationships of the context, each with its
-   title.
-3. If the answer needs more, Read one page from that `LINKS` block. The frontmatter gives the
-   stored edges. The `LINKS` block gives the reverse edges.
-4. For a question about the full graph, as in "which contexts consume `OrderPlaced`?", get the
-   ID from the type index, then search `<dir>/links.tsv` for the ID with `grep`. Do not read each page,
-   because `links.tsv` holds each edge in one file.
-5. To find a name, search the type indexes, `<dir>/*/index.md`, with `grep -i`. A name
-   can also be in `aliases`: run `grep -r -i --include='*.md' '^aliases:.*<name>' <dir>`.
-   Put a search term in single quotes, and write each `'` in the term as `'\''` (or use a term with no `'`), because the shell reads the rest of the term as part of the command.
+Load `knowledge:ask` with the question unchanged before reading the root index,
+context, or term page. Requires knowledge 2.0.0 or later. The shared reader searches
+local registered graphs; it accepts no caller-selected nodes or filters. A graph word
+in the question is a search term, not an enforced filter. Keep only evidence inside
+`<dir>` and check the selected source pages for context, aliases, and status before
+answering, because the answer must represent the recorded domain model.
 
-After 8 reads, stop reading. Say which pages you read, and that the bundle did not give the
-answer in 8 reads.
+If `ddd` is unregistered or remote, or its local evidence does not resolve the name,
+use the local read order below. Report the coverage gap instead of treating a search
+miss as proof that the domain model is silent.
 
-## Step 4: answer
+## Exact queries and unresolved names
 
-- Cite each page that you used by its path, as in `<dir>/terms/TERM-01.md`.
-- Put "(draft)" after each cited page that has `status: draft`. A person accepted the page,
-  but it is not settled.
-- A page with `status: deprecated` is not an answer. Find the page that has its ID in
-  `aliases`, and use that page.
-- If the bundle does not hold the answer, say so. Do not answer from outside the bundle.
-  The reason: the user reads the answer as the recorded model of this repository. Tell
-  the user how to add the knowledge: run
-  `uv run ${CLAUDE_PLUGIN_ROOT}/scripts/ddd.py new <Type> --title <title> --description <description>`,
-  or edit a page.
+For a complete list or typed relation, use the type index and `<dir>/links.tsv` instead
+of ranked search. Resolve the ID first and match the relation key and direction in
+that edge file, because it holds the full relation set in one place. For names, search `<dir>/*/index.md` and `aliases` in the source pages,
+including multiline alias lists.
 
-## The rest of the question
+Put a search term in single quotes, and write each `'` in the term as `'\''`
+(or use a term with no `'`), because the shell reads the rest of the term as part
+of the command.
 
-When the read order above does not answer the question, load the
-`knowledge:ask` skill. Give it the question and the start nodes that you
-found, as `ddd:/<folder>/<ID>.md` (or `ddd:/index.md`). It walks every graph
-one step at a time.
+When direct reading is necessary, follow the read order of
+`${CLAUDE_PLUGIN_ROOT}/skills/shared/bundle-schema.md`:
+
+1. Read `<dir>/index.md` to select a context.
+2. Read `<dir>/contexts/<ID>.md` for its terms, aggregates, events, and relationships.
+3. Read only the matching page. Its frontmatter holds stored edges; its LINKS block
+   holds reverse edges.
+4. For full-graph relations, search `<dir>/links.tsv` with the resolved ID.
+
+The limit is 8 reads of bundle pages in this lookup. After 8 reads, state what remains
+unanswered and which pages you read.
+
+## Answer
+
+- Cite each page by its path, for example `<dir>/terms/TERM-01.md`.
+- Put "(draft)" after each cited page with `status: draft`.
+- A page with `status: deprecated` is not an answer. Find the replacement with the old
+  ID in `aliases`, check its context, and use that page. Report a missing replacement.
+- If the bundle does not hold the answer, say so. Do not answer from outside the bundle,
+  because the reader needs the recorded domain model. To add knowledge, suggest
+  `/business-domain:learn` as a separate approved write.
