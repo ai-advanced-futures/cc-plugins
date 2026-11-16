@@ -67,7 +67,8 @@ class Service:
     def check(self):
         with self.workspace.lock():
             control = self.workspace.control()
-            records = self.workspace.records(allow_incomplete=True)
+            issues = self.workspace.backend.issues()  # One store read for the two passes.
+            records = self.workspace.records(allow_incomplete=True, issues=issues)
             errors, warnings = model.validate(records, control.get("retired_ids") or [])
             if control.get("import_state") and control["import_state"].get("status") != "complete":
                 errors.append("import is incomplete")
@@ -83,11 +84,11 @@ class Service:
                         errors.append(f"{record['id']}: {exc}")
             if not errors:
                 try:
-                    self._records()  # Also verify native field projections.
+                    self.workspace.records(issues=issues)  # Also verify native field projections.
                 except PlanError as exc:
                     errors.append(str(exc))
             return {"errors": errors, "warnings": warnings, "records": len(records),
-                    "workspace_id": self.workspace.id, "saved": "shared" if self.workspace.shared else "local"}
+                    "workspace_id": self.workspace.id, "saved": "local"}
 
     def _request(self, records, action, payload, request_id):
         request_id = request_id or uuid.uuid4().hex
@@ -99,7 +100,7 @@ class Service:
                 if event.get("id") == request_id:
                     if event.get("fingerprint") != fingerprint:
                         raise PlanError("request ID was already used for another operation")
-                    return request_id, fingerprint, {"record": self.view(record, records), "operation": event, "replayed": True, "saved": "shared" if self.workspace.shared else "local"}
+                    return request_id, fingerprint, {"record": self.view(record, records), "operation": event, "replayed": True, "saved": "local"}
         return request_id, fingerprint, None
 
     def _save(self, candidate, records, action, payload, request_id, fingerprint, creating=False):
@@ -116,7 +117,7 @@ class Service:
                             "claim_token": candidate.get("claim_token")}}
         saved = self.workspace.commit(candidate, records, event, creating=creating)
         desired = [saved if r["id"] == saved["id"] else r for r in desired]
-        return {"record": self.view(saved, desired), "operation": event, "replayed": False, "saved": "shared" if self.workspace.shared else "local"}
+        return {"record": self.view(saved, desired), "operation": event, "replayed": False, "saved": "local"}
 
     @staticmethod
     def _revision(record, expected):

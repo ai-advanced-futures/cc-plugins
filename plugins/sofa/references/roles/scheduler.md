@@ -1,6 +1,6 @@
 # scheduler
 
-Section numbers are the sections of `docs/adlc.md`. The scheduler is not a session. It is a line in the crontab of the machine, so it fires even when a Claude call of the last run failed on an API error:
+Section numbers are the sections of `docs/adlc.md`. The scheduler is not a session. It is a line in the crontab of the factory machine, so it fires even when a Claude call of the last run failed on an API error:
 
 ```
 */5 * * * * PATH=<claude folder>:/usr/local/bin:/usr/bin:/bin:<jag folder>; cd <main folder> && claude -p --model claude-haiku-5-5 --permission-mode bypassPermissions "/bg-watch check" >> <main folder>/.sofa/scheduler.log 2>&1; <plugin root>/scripts/sofa-state --db <main folder>/.sofa/state.db session heartbeat --name <prefix>-scheduler
@@ -23,3 +23,4 @@ cargo install --locked --git https://github.com/ai-ready-future/jag --rev 8ea270
 `sofa:setup` installs the line (it shows it first, and the user agrees). `bg-watch check` finds each session that stopped on an API error, restarts it, and sends it `retry`. The heartbeat shows on the dashboard; a heartbeat older than 15 minutes means the cron does not run. Read `.sofa/scheduler.log` to find the cause.
 
 The orchestrator does not restart a session that stopped on an API error. It gives a session that Claude Code stopped a fresh restart only in the cases of the orchestrator role file ("Status check", "A fresh restart").
+

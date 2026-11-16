@@ -14,16 +14,13 @@ with no holder), when
 SOFA_GIT_TIMEOUT is not a number greater than 0 (read at the first git call, so a command
 that makes no git call does not read it; the 4 leaves `item remove`, `item rename`, `session remove`
 and `session rename` read it before the lock), and when a `--to` of `item rename` or `session rename`
-does not have the form of its key; 3 when `snapshot publish` refuses a snapshot because the guard
-found a private value (nothing is pushed; `snapshot take` keeps exit 1 for the same output line); 1 on all other errors, also when
-a leaf of `item remove`, `item rename`, `session remove` or `session rename` refuses a change of a row (STORY-503), and when
-`decision log` cannot reserve a block of decision ids (see "decisions" below); also on
+does not have the form of its key; 1 on all other errors, also when
+a leaf of `item remove`, `item rename`, `session remove` or `session rename` refuses a change of a row (STORY-503); also on
 `snapshot take` when the floor configuration is missing or wrong, and when the snapshot or a rule set of the
 file would hold a known private value (a session id, a path, a person login or a machine value).
 """
 
 import argparse
-import copy
 import hashlib
 import json
 import math
@@ -32,7 +29,6 @@ import random
 import re
 import secrets
 import shlex
-import shutil
 import signal
 import sqlite3
 import subprocess
@@ -550,34 +546,14 @@ ON_ID_CONFLICT_UPDATE = """
 """
 
 
-# A store gives ids only from its own block of ids. Block k holds D-<1000k+1> to
-# D-<1000k+999> (block 0: D-001 to D-999). A store reserves a block on origin with the tag
-# refs/tags/sofa-decision-block/<k>, which git creates only 1 time (ADR-0011).
-TAG_PREFIX = "refs/tags/sofa-decision-block/"
-TAG_RE = re.compile(r"refs/tags/sofa-decision-block/([0-9]{1,6})")
-MAX_BLOCK = 999999
-MAX_CITED_ID = 99999  # the highest id of main that counts; old ids are near 5000 (block 99 at most)
-MAX_PUSHES = 5
-APP_KEYS = ["app-id", "installation-id", "key-path", "slug", "bot-user-id"]
-RESERVE_FAILED = "cannot reserve a block of decision ids"
-RESERVE_TAIL = "no decision written. Try again in 1 minute."
-RESERVE_SHORT = "no decision written."
-PUBLISH_FAILED = "cannot publish the snapshot"
-PUBLISH_TAIL = "nothing pushed."
-# The store id (the key decision.store) names the line: it goes into the blob and the message of each decision block
-# tag, into the ref of snapshot publish and into line.store of each snapshot, so it has 1 form (STORY-513, STORY-536).
+# A repository has 1 factory on 1 machine, so 1 store gives each decision id. The next id is the highest D-<n> of the
+# store plus 1: a local counter, with no git call and no network call. The ids of an older store stay valid; its key
+# decision.block (the block that it reserved with a tag on origin) is not read any more.
+MAX_DECISION_NUMBER = 999999999  # 9 digits, the longest id of DECISION_ID_RE
+# The store id (the key decision.store) names the line: it goes into line.store of each snapshot, so it has 1 form
+# (STORY-513, STORY-536).
 _STORE_ID = re.compile(r"[0-9a-f]{16}")
 STORE_ID_RULE = "the store id (the key decision.store) is not 16 hex digits (0-9, a-f)"
-
-
-def block_range(k):
-    """The first and the last id number of block K."""
-    return (1, 999) if k == 0 else (1000 * k + 1, 1000 * k + 999)
-
-
-def block_of(n):
-    """The block of id number N. D-1000 belongs to block 0, because block 1 starts at D-1001."""
-    return (n - 1) // 1000
 
 
 def store_numbers(con):
@@ -586,28 +562,34 @@ def store_numbers(con):
             if (m := DECISION_ID_RE.fullmatch(row[0] or ""))]
 
 
-def next_decision_id(con, k):
-    """Return the next free D-<n> of block K (3 digits at least), or None when the block is full."""
-    first, last = block_range(k)
-    n = max((x for x in store_numbers(con) if first <= x <= last), default=first - 1) + 1
-    return None if n > last else f"D-{n:03d}"
+# The floor (the key decision.floor, a whole number): the next id is above it. A store of sofa 11 and before shared
+# its ids with a second machine through blocks of 1000 ids (block 0 is D-001 to D-999, block K is D-<1000K+1> to
+# D-<1000K+999>, each with a tag refs/tags/sofa-decision-block/<K>). The ids of the other machine are not in this
+# store, so `decision floor --from-tags` sets the floor to the end of the highest block of the local tags.
+FLOOR_RE = re.compile(r"[0-9]{1,9}")
+BLOCK_TAG_RE = re.compile(r"sofa-decision-block/([0-9]{1,6})")
+FLOOR_RULE = "the key decision.floor is not a whole number of 1 to 9 digits; set it with decision floor --set"
 
 
-def stored_block(con):
-    """The block of this store (the key decision.block), or None."""
-    row = con.execute("SELECT value FROM kv WHERE key = 'decision.block'").fetchone()
-    try:
-        block = int(row[0]) if row else None
-    except ValueError:
-        return None
-    # A value out of range would give ids that do not have the form of row 2.
-    return block if block is not None and 0 <= block <= MAX_BLOCK else None
+def stored_floor(con, strict=True):
+    """The floor of the store: 0 with no key. A value that is no number raises (STRICT), so no id repeats."""
+    row = con.execute("SELECT value FROM kv WHERE key = 'decision.floor'").fetchone()
+    if row is None:
+        return 0
+    if not FLOOR_RE.fullmatch(row[0] or ""):
+        if strict:
+            raise UsageError(f"{FLOOR_RULE}; no decision written.")
+        return 0
+    return int(row[0])
 
 
-def write_block(con, block):
-    """Make BLOCK the block of this store. The caller holds the write transaction."""
-    con.execute("INSERT INTO kv (key, value) VALUES ('decision.block', ?) "
-                "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (str(block),))
+def next_decision_id(con):
+    """Return the next free D-<n> (3 digits at least): the highest id of the store, or the floor when it is
+    higher, plus 1. The caller holds the write transaction, so 2 sessions do not take the same id."""
+    n = max(max(store_numbers(con), default=0), stored_floor(con)) + 1
+    if n > MAX_DECISION_NUMBER:
+        raise UsageError(f"the store holds D-{MAX_DECISION_NUMBER}, so no decision id is free; no decision written.")
+    return f"D-{n:03d}"
 
 
 def git_timeout():
@@ -629,8 +611,8 @@ def git_timeout():
 # repository of the store. 13 keys are the list of `git rev-parse --local-env-vars` (githooks(5)
 # tells a hook to clear them), without GIT_CONFIG_PARAMETERS and GIT_CONFIG_COUNT, which hold the
 # git setup of the session. GIT_CONFIG makes `git config` read 1 file, and `git push` reads the
-# full config (git-config(1)). GIT_NAMESPACE is not in the list of git: it moves a tag on a local
-# `origin` to a ref that other stores do not read. The case `envlist` compares this tuple with git.
+# full config (git-config(1)). GIT_NAMESPACE is not in the list of git: it moves each ref name of a
+# local `origin`. The case `envlist` compares this tuple with git.
 REPO_ENV_KEYS = (
     "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG", "GIT_OBJECT_DIRECTORY", "GIT_DIR",
     "GIT_WORK_TREE", "GIT_IMPLICIT_WORK_TREE", "GIT_GRAFT_FILE", "GIT_INDEX_FILE",
@@ -690,15 +672,11 @@ def run_git(repo, args, env=None, stdin=None, binary=False):
 
 
 class Git:
-    """The git calls of 1 reservation: 1 repository, 1 environment (row 10 of the STORY-143 spec and
-    rows 2 to 4 of the STORY-425 spec)."""
+    """The git calls of 1 command: 1 repository, 1 environment (row 10 of the STORY-143 spec and
+    rows 2 to 4 of the STORY-425 spec). FAILED starts the text of an error, and TAIL ends it."""
 
-    def __init__(self, repo, failed=None, tail=None, short=None):
-        # The text of an error is an argument, so a reservation and a publish each keep their own (row 8 of the
-        # STORY-444 spec). The default is the text of a reservation. SHORT ends a message that gives no advice.
-        self.failed = failed or RESERVE_FAILED
-        self.tail = RESERVE_TAIL if tail is None else tail
-        self.short = RESERVE_SHORT if short is None else short
+    def __init__(self, repo, failed, tail):
+        self.failed, self.tail = failed, tail
         self.repo = repo
         self.env = git_env()
         ssh = self.env.get("GIT_SSH_COMMAND")
@@ -717,7 +695,7 @@ class Git:
                        env=env, stdin=stdin, binary=binary)
 
     def must(self, *args, stdin=None, extra=None, binary=False):
-        """Run a git call. Return stdout. Raise the error of row 9 when it fails."""
+        """Run a git call. Return stdout. Raise `failure` when it fails."""
         rc, out, err = self.run(*args, stdin=stdin, extra=extra, binary=binary)
         if rc != 0:
             raise self.failure(args[0], rc, err)
@@ -744,114 +722,9 @@ def git_reason(err, rc):
     return lines[0] if lines else f"git exited {rc}"
 
 
-def store_repo(path):
-    """The repository of the store at PATH, or None (row 10).
-
-    The folder F that holds the `.sofa` folder of the store, only when `git -C F rev-parse
-    --show-toplevel` prints the real path of F. A plain folder inside a checkout is no repository.
-    """
-    full = os.path.realpath(path)
-    sofa = os.path.dirname(full)
-    if os.path.basename(sofa) != ".sofa":
-        return None
-    folder = os.path.dirname(sofa)
-    rc, out, _ = run_git(folder, ["rev-parse", "--show-toplevel"])
-    return folder if rc == 0 and os.path.realpath(out.strip()) == folder else None
-
-
-def repo_of_store(a, failed=RESERVE_FAILED):
-    repo = store_repo(a.db_path)
-    if repo is None:
-        raise UsageError(f"{failed}: the store {a.db_path} is not <repository>/.sofa/"
-                         "state.db; give no --db, or give the path of the store of the main folder.")
-    return repo
-
-
-def origin_url(git):
-    """The 1 URL of origin, for fetch and for push (rows 3, 5, 6 and 20). The tags are read from the
-    fetch URL and pushed to each push URL, so a second URL would send the tag to another repository
-    (a fork, or an SSH address that uses the key of the person). It makes only local git calls."""
-    fetch = [u for u in git.must("remote", "get-url", "--all", "origin").split("\n") if u]
-    push = [u for u in git.must("remote", "get-url", "--push", "--all", "origin").split("\n") if u]
-    if len(fetch) != 1 or push != fetch:
-        raise UsageError((f"{git.failed}: remote: origin must have 1 URL for fetch and push "
-                          f"(fetch {' '.join(fetch) or 'none'}, push {' '.join(push) or 'none'}); "
-                          f"{git.short}").rstrip("; "))
-    return fetch[0]
-
-
-def has_app_values(con):
-    """Does the store hold at least 1 of the machine.github-app.* values?"""
-    marks = [f"machine.github-app.{k}" for k in APP_KEYS]
-    rows = con.execute(f"SELECT value FROM kv WHERE key IN ({','.join('?' * len(marks))})", marks)
-    return any(row[0] for row in rows)
-
-
-def app_setup_ok(con, git, url):
-    """Row 20. Return None when the store has no App values or the git setup is the App setup,
-    else the text of the check that failed. URL is the 1 URL of origin. It makes no network call."""
-    if not has_app_values(con):
-        return None
-    rc, out, _ = git.run("config", "-z", "--get-regexp", r"^credential\..*helper$")
-    values = [e.split("\n", 1)[1] if "\n" in e else "" for e in out.split("\0") if e] if rc == 0 else []
-    while "" in values:
-        values = values[len(values) - values[::-1].index(""):]
-    if not values:
-        return "no credential helper is set after the last empty value"
-    for value in values:
-        try:
-            words = shlex.split(value[1:]) if value.startswith("!") else []
-        except ValueError:
-            words = []
-        if len(words) != 2 or words[1] != "credential" or os.path.basename(words[0]) != "sofa-github":
-            return f"the credential helper {value} is not sofa-github credential"
-    if not url.startswith("https://github.com/"):
-        return f"the URL of origin is {url}, not an https://github.com/ URL"
-    return None
-
-
-def tag_numbers(git):
-    """The reserved tags on origin, as {block number: object id of the tag}."""
-    out = git.must("ls-remote", "--tags", "origin", TAG_PREFIX + "*")
-    tags = {}
-    for line in out.splitlines():
-        oid, _, ref = line.partition("\t")
-        m = TAG_RE.fullmatch(ref.strip())
-        if m:
-            tags[int(m.group(1))] = oid.strip()
-    return tags
-
-
-def main_block(git):
-    """The highest block of an id that docs/ of origin/main cites, or -1 (row 7)."""
-    # The random part: a stale lock of a killed run must not stop a run with the same pid.
-    ref = f"refs/sofa-state/main-{os.getpid()}-{secrets.token_hex(4)}"
-    try:
-        git.must("fetch", "--no-tags", "--no-write-fetch-head", "--refmap=", "origin",
-                 f"+refs/heads/main:{ref}")
-        rc, out, err = git.run("grep", "--no-color", "-o", "-h", "-w", "-E", "D-[0-9]+", ref, "--", "docs/")
-        if rc not in (0, 1):
-            raise git.failure("grep", rc, err)
-    finally:
-        git.run("update-ref", "-d", ref)
-    ids = (DECISION_ID_RE.fullmatch(line.rsplit(":", 1)[-1].strip()) for line in out.splitlines())
-    # An id above MAX_CITED_ID is an example or a typo, not an old id: one D-<9 digits> in docs/
-    # must not stop each reservation (issue 1803). A block above it comes from a tag (k_tag).
-    return max((block_of(n) for n in (int(m.group(1)) for m in ids if m) if n <= MAX_CITED_ID),
-               default=-1)
-
-
 def is_store_id(value):
     """A store id is a str of 16 lower-case hex digits (a BLOB, a NULL and a str of another form are not)."""
     return isinstance(value, str) and _STORE_ID.fullmatch(value) is not None
-
-
-def refuse_bad_store_row(con, refusal):
-    """Raise UsageError(REFUSAL) when the row decision.store holds a value that is not a store id. A read with no
-    write, for a caller that runs git before it calls store_id. A store with no row passes."""
-    row = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
-    if row is not None and not is_store_id(row[0]):
-        raise UsageError(refusal)
 
 
 def store_id(con, refusal):
@@ -870,89 +743,17 @@ def store_id(con, refusal):
     return row[0]
 
 
-def reserve_block(con, repo):
-    """Reserve a new block on origin and return its number k (rows 6, 7, 18 and 20)."""
-    # The store id goes into the tag, so it is checked before the first git call (STORY-536) and again where it is
-    # used. The line names the rule, never the value. No second try, because it reads the same row.
-    refusal = f"{RESERVE_FAILED}: {STORE_ID_RULE}; {RESERVE_SHORT}"
-    refuse_bad_store_row(con, refusal)
-    git = Git(repo)
-    problem = app_setup_ok(con, git, origin_url(git))
-    if problem:
-        raise UsageError(f"{RESERVE_FAILED}: this session has no App git setup ({problem}); "
-                         "no decision written. Start the session fresh with dispatch.sh.")
-    k_main = main_block(git)
-    tags = tag_numbers(git)
-    k_store = max((block_of(n) for n in store_numbers(con)), default=-1)
-    for _ in range(MAX_PUSHES):
-        k_tag = max(tags, default=-1)  # tags is a dict: max() reads its keys
-        k = 1 + max(k_tag, k_main, k_store, -1)
-        if k > MAX_BLOCK:
-            top = max(k_tag, k_main, k_store)
-            source = "the tags" if top == k_tag else "main" if top == k_main else "the store"
-            raise UsageError(f"{RESERVE_FAILED}: no block above {MAX_BLOCK} is free "
-                             f"(the highest is from {source}).")
-        sid = store_id(con, refusal)
-        blob = git.must("hash-object", "-w", "--stdin", stdin=f"store {sid}\nblock {k}\n").strip()
-        text = (f"object {blob}\ntype blob\ntag sofa-decision-block/{k}\n"
-                f"tagger sofa-state <sofa-state@localhost> {int(time.time())} +0000\n\nstore {sid}\n")
-        tag = git.must("hash-object", "-t", "tag", "-w", "--stdin", stdin=text).strip()
-        rc, _, err = git.run("push", "origin", f"{tag}:{TAG_PREFIX}{k}")
-        if rc == 0:
-            return k
-        # Another store may have taken block k. Read the tags again: a tag k there means yes.
-        try:
-            tags = tag_numbers(git)
-        except UsageError:
-            raise git.failure("push", rc, err) from None
-        if tags.get(k) == tag:
-            return k  # the push reached origin and the client saw a failure: the tag is ours
-        if k not in tags:
-            raise git.failure("push", rc, err)
-    raise UsageError(f"{RESERVE_FAILED}: push: {MAX_PUSHES} blocks were taken while this store "
-                     "reserved; no decision written. Try again in 1 minute.")
-
-
-def claim_block(con, a):
-    """Return the block that gives the next id, with the write transaction open (rows 8 and 12)."""
-    for _ in range(3):
-        block = stored_block(con)
-        if (block is None or next_decision_id(con, block) is None) \
-                and getattr(a, "reserved_block", None) is None:
-            a.reserved_block = reserve_block(con, repo_of_store(a))
-        # The write lock comes before the second read, so 2 sessions do not take the same id.
-        con.execute("BEGIN IMMEDIATE")
-        block = stored_block(con)
-        if block is None or next_decision_id(con, block) is None:
-            if getattr(a, "reserved_block", None) is None:
-                con.rollback()
-                continue
-            block = a.reserved_block
-            write_block(con, block)
-        if next_decision_id(con, block) is not None:
-            return block
-        con.rollback()
-        a.reserved_block = None
-    raise UsageError("the block of this store filled 3 times while it reserved; "
-                     "run the command again.")
-
-
 def cmd_decision_log(con, a):
-    """Record a decision and print its id. With no --id, take the next free id of the block."""
+    """Record a decision and print its id. With no --id, take the next id of the store."""
     if a.replace and not a.id:
         raise UsageError("--replace needs --id", code=2)
     if a.id is not None and not DECISION_ID_RE.fullmatch(a.id):
         raise UsageError("--id must be D- and 1 to 9 digits, for example D-042", code=2)
-    # Before claim_block: a refused call must not reserve a block on origin.
+    # The write lock comes before each read, so 2 sessions do not take the same id, and a rename that commits first
+    # is read here.
+    con.execute("BEGIN IMMEDIATE")
     refuse_retired(con, a, "items", a.story, "--story")
-    if a.id:
-        con.execute("BEGIN IMMEDIATE")
-        decision_id = a.id
-    else:
-        decision_id = next_decision_id(con, claim_block(con, a))
-    # Again under the write lock of the write (each branch holds it here): a rename may have committed after the
-    # early check. claim_block runs no git while the lock is held.
-    refuse_retired(con, a, "items", a.story, "--story")
+    decision_id = a.id or next_decision_id(con)
     old = con.execute("SELECT story FROM decisions WHERE id = ?", (decision_id,)).fetchone()
     if old and not a.replace:
         raise UsageError(f"decision {decision_id} exists (story {old['story']}); give no --id "
@@ -965,56 +766,47 @@ def cmd_decision_log(con, a):
     print(decision_id)
 
 
-def check_tag(con, a, block):
-    """`decision block --check`: does origin hold the tag of this block, made by this store?"""
-    git = Git(repo_of_store(a))
-    problem = app_setup_ok(con, git, origin_url(git))
-    if problem:
-        raise UsageError(f"{RESERVE_FAILED}: this session has no App git setup ({problem}); "
-                         "no decision written. Start the session fresh with dispatch.sh.")
-    name = f"{TAG_PREFIX}{block}"
-    if not git.must("ls-remote", "--tags", "origin", name).strip():
-        print("tag missing")
-        raise Quiet("", code=1)
-    ref = f"refs/sofa-state/check-{os.getpid()}-{secrets.token_hex(4)}"
-    try:
-        git.must("fetch", "--no-tags", "--no-write-fetch-head", "--refmap=", "origin", f"+{name}:{ref}")
-        text = git.must("cat-file", "-p", f"{ref}^{{}}")
-    finally:
-        git.run("update-ref", "-d", ref)
-    owner = text.splitlines()[0].removeprefix("store ") if text.startswith("store ") else "unknown"
-    mine = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
-    if mine is None or owner != mine[0]:
-        print(f"tag of store {owner if is_store_id(owner) else 'unknown'}")
-        raise Quiet("", code=1)
-    print("tag ok")
+def local_block_end(db_path):
+    """The last id number of the highest block that a local tag sofa-decision-block/<K> names, or None with no such
+    tag. It runs 1 `git tag -l` in the folder of the store (else the current folder): no fetch, no network."""
+    sofa = os.path.dirname(os.path.realpath(db_path))
+    repo = os.path.dirname(sofa) if os.path.basename(sofa) == ".sofa" else os.getcwd()
+    rc, out, err = run_git(repo, ["tag", "-l", "sofa-decision-block/*"])
+    if rc != 0:
+        raise UsageError(f"cannot read the local tags: {git_reason(err, rc)}; no floor written.")
+    blocks = [int(m.group(1)) for line in out.splitlines() if (m := BLOCK_TAG_RE.fullmatch(line.strip()))]
+    return 1000 * max(blocks) + 999 if blocks else None
 
 
-def cmd_decision_block(con, a):
-    """Print the block of this store. --reserve reserves one when no id is free; --check reads its tag."""
-    block = stored_block(con)
-    if a.reserve and (block is None or next_decision_id(con, block) is None):
-        # `a` is the same object in each try of run_with_retry, so a lock after the push
-        # does not push a second tag.
-        if getattr(a, "reserved_block", None) is None:
-            a.reserved_block = reserve_block(con, repo_of_store(a))
-        con.execute("BEGIN IMMEDIATE")
-        block = stored_block(con)
-        if block is None or next_decision_id(con, block) is None:
-            block = a.reserved_block
-            write_block(con, block)
-        con.commit()
-    if block is None:
-        print("no block")
-        raise Quiet("", code=1)
-    if a.check:
-        return check_tag(con, a, block)
-    first, last = block_range(block)
-    free = next_decision_id(con, block)
-    row = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
-    sid = row[0] if row and is_store_id(row[0]) else "unknown"  # a value that is not a store id is not printed
-    print(f"block {block}: D-{first:03d} to D-{last:03d}, "
-          f"{'full' if free is None else 'next ' + free}, store {sid}")
+def cmd_decision_floor(con, a):
+    """Print the floor and the next id. --from-tags and --set write the floor first."""
+    if a.from_tags and a.set is not None:
+        raise UsageError("give --from-tags or --set, not the 2", code=2)
+    con.execute("BEGIN IMMEDIATE")
+    highest = max(store_numbers(con), default=0)
+    floor = None
+    if a.set is not None:
+        if not FLOOR_RE.fullmatch(a.set):
+            raise UsageError("--set must be a whole number of 1 to 9 digits", code=2)
+        floor = int(a.set)
+        if floor < highest:
+            raise UsageError(f"--set {floor} is below the highest id of the store (D-{highest:03d}); "
+                             "no floor written.", code=2)
+    elif a.from_tags:
+        end = local_block_end(a.db_path)
+        if end is None:
+            raise UsageError("no local tag sofa-decision-block/<number>; no floor written.")
+        # A second run does not lower a floor.
+        floor = max(end, stored_floor(con, strict=False))
+    if floor is not None:
+        con.execute("INSERT INTO kv (key, value) VALUES ('decision.floor', ?) "
+                    "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (str(floor),))
+    has_key = con.execute("SELECT 1 FROM kv WHERE key = 'decision.floor'").fetchone() is not None
+    text = f"floor {stored_floor(con)}" if has_key else "floor none"
+    next_id = next_decision_id(con)
+    con.commit()
+    print(text)
+    print(f"next {next_id}")
 
 
 def cmd_decision_veto(con, a):
@@ -1102,11 +894,11 @@ def cmd_queue_list(con, a):
 
 
 def cmd_kv_set(con, a):
-    """Set one key. A key that starts with `decision.` is written only by `decision log`, and a key that starts
+    """Set one key. A key that starts with `decision.` is written only by sofa-state (the store id), and a key that starts
     with `rows.retired.` only by `item remove`, `item rename`, `session remove` and `session rename`."""
     if a.key.startswith("decision."):
         raise UsageError("a key that starts with decision. is written only by sofa-state "
-                         "(the block of decision ids); do not set it by hand", code=2)
+                         "(the store id, and the floor: use decision floor --set); do not set it by hand", code=2)
     if a.key.startswith("rows.retired."):
         raise UsageError("a key that starts with rows.retired. is written only by sofa-state item remove, item "
                          "rename, session remove and session rename (the keys that the operator took out); do not "
@@ -1182,25 +974,20 @@ def age(text, now):
     return f"{seconds // 86400}d"
 
 
-# The slug pattern of sofa-github (Values.slug) and the pattern of a GitHub login.
+# The slug pattern of sofa-github (Values.slug).
 SLUG_RE = r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,98}[A-Za-z0-9])?"
-LOGIN_RE = r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?"
 
 
-def store_owner(con):
-    """The instance and the bot of this store, from 2 keys. A missing value, or a value that does
-    not match its pattern, gives None. It reads no other machine. key, so the report never shows
-    the key path of the App."""
-    def value(key, pattern):
-        row = con.execute("SELECT value FROM kv WHERE key = ?", (key,)).fetchone()
-        text = (row["value"] or "") if row else ""
-        return text if re.fullmatch(pattern, text) else None
-    slug = value("machine.github-app.slug", SLUG_RE)
-    return value("machine.instance", LOGIN_RE), (f"{slug}[bot]" if slug else None)
+def store_bot(con):
+    """The bot of this store, from the key machine.github-app.slug. A missing value, or a value that does not match
+    the pattern, gives None. It reads no other machine. key, so the report never shows the key path of the App."""
+    row = con.execute("SELECT value FROM kv WHERE key = 'machine.github-app.slug'").fetchone()
+    slug = (row["value"] or "") if row else ""
+    return f"{slug}[bot]" if re.fullmatch(SLUG_RE, slug) else None
 
 
 def cmd_report(con, a):
-    """Print the dashboard: the instance and the bot of the store, sessions, items, open asks, queue,
+    """Print the dashboard: the bot of the store, sessions, items, open asks, queue,
     recent decisions."""
     now = parse_iso(a.at)
     day_ago = (now - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -1209,10 +996,9 @@ def cmd_report(con, a):
     asks = con.execute("SELECT * FROM asks WHERE closed_at IS NULL ORDER BY opened_at").fetchall()
     queue = [r["item"] for r in con.execute("SELECT item FROM queue ORDER BY position")]
     decisions = con.execute("SELECT * FROM decisions WHERE at >= ? ORDER BY at", (day_ago,)).fetchall()
-    instance, bot = store_owner(con)
+    bot = store_bot(con)
     if a.json:
         print(json.dumps({
-            "instance": instance,
             "bot": bot,
             "sessions": [dict(r, heartbeat_age=age(r["last_heartbeat"], now)) for r in sessions],
             "items": [dict(r) for r in items],
@@ -1221,7 +1007,7 @@ def cmd_report(con, a):
             "decisions_24h": [dict(r) for r in decisions],
         }))
         return
-    print(f"instance {instance or '?'} · bot {bot or '?'}")
+    print(f"bot {bot or '?'}")
     print("\nsessions")
     table([[s["name"], s["role"], s["state"], s["item"], age(s["last_heartbeat"], now)] for s in sessions],
           ["name", "role", "state", "item", "beat"])
@@ -1255,8 +1041,7 @@ def cmd_prune(con, a):
 # a row, with its form, to SNAPSHOT_FIELDS (or RULE_FIELDS, for a field of a rule set), and 1 new key or field
 # of `build_snapshot`. A story that removes or renames a key, or changes the meaning or the type of a value,
 # adds 1 to SCHEMA_VERSION. A reader ignores a key that it does not know, and a reader that gets a higher
-# number, or a number below 1, judges nothing in that line (`unknown schema <n>`). A story that adds a key, a
-# section or a field to `build_snapshot` adds it to `rebuild_snapshot` in the same change (STORY-513).
+# number, or a number below 1, judges nothing in that line (`unknown schema <n>`).
 
 SCHEMA_VERSION = 1
 FLOOR_CONFIG = os.path.join(".claude", "sofa-floor.json")
@@ -1385,11 +1170,6 @@ class Scrubber:
         self.nulled += 1
         return None
 
-    def drop(self):
-        """Count 1 value that goes nowhere because its container has the wrong type, and give null (STORY-513)."""
-        self.nulled += 1
-        return None
-
 
 def read_floor_config(path, name):
     """Read and check the floor configuration at PATH. Return its 3 rule sets. Raise UsageError (exit 1).
@@ -1484,12 +1264,12 @@ def read_roadmap(db_path):
     the first call too: the form `<folder>/.sofa/state.db` is checked with no git, and then `rev-parse
     --show-toplevel` runs through `Git.run`. Only the answer `not a git repository` (the folder is in no repository)
     and a top level that is another folder give None; each other failure (for example `dubious ownership`, exit 128)
-    raises (fix round 1; `store_repo`, which the STORY-444 callers use, keeps its answer None on each failure)."""
+    raises (fix round 1)."""
     sofa = os.path.dirname(os.path.realpath(db_path))
     if os.path.basename(sofa) != ".sofa":
         return None
     repo = os.path.dirname(sofa)
-    git = Git(repo, failed=ROADMAP_FAILED, tail=ROADMAP_TAIL, short=ROADMAP_TAIL)
+    git = Git(repo, ROADMAP_FAILED, ROADMAP_TAIL)
     rc, top, err = git.run("rev-parse", "--show-toplevel", extra={"LC_ALL": "C"})
     if rc != 0:
         if err.startswith("fatal: not a git repository"):
@@ -1754,7 +1534,7 @@ def snapshot_strings(snap, sets):
     return [(where or "the snapshot", text) for where, text in found]
 
 
-def guard_snapshot(con, a, snap, sets, code=1):
+def guard_snapshot(con, a, snap, sets):
     """Fail closed: stop when the snapshot, or a rule set of the file, holds a known private value (any letter case).
 
     The rule sets are read too, because version 1 copies none of their fields into the snapshot, so a path in the
@@ -1766,7 +1546,7 @@ def guard_snapshot(con, a, snap, sets, code=1):
         needle = value.casefold()
         where = sorted({w for w, s in strings if needle in s})
         if where:
-            raise UsageError(f"the snapshot holds {kind}; no snapshot written (in {', '.join(where[:5])})", code=code)
+            raise UsageError(f"the snapshot holds {kind}; no snapshot written (in {', '.join(where[:5])})")
 
 
 def write_atomic(path, text):
@@ -1785,10 +1565,9 @@ def write_atomic(path, text):
                 pass
 
 
-def snapshot_text(con, a, code, refusal):
+def snapshot_text(con, a):
     """The snapshot text of this line (rows 3 to 5 and 15): read the floor configuration, take the store id, then
-    build and guard the snapshot in 1 read transaction. CODE is the exit code of a refusal of the guard. REFUSAL is the
-    line of a store id that is not a store id (STORY-536)."""
+    build and guard the snapshot in 1 read transaction."""
     path, name = a.config, "the file of --config"
     if not path:
         try:
@@ -1797,7 +1576,7 @@ def snapshot_text(con, a, code, refusal):
             raise UsageError("not in a git repository; give --config") from None
         name = FLOOR_CONFIG
     sets = read_floor_config(path, name)
-    store = store_id(con, refusal)  # a write only when the store has no id yet: it commits at once
+    store = store_id(con, f"{STORE_ID_RULE}; no snapshot written")  # a write only when the store has no id yet: it commits at once
     # The roadmap comes from origin/main with local git calls, before the read transaction, so that transaction does not
     # wait for git (STORY-519, row 2). A failed git call stops here with exit 1 and no output.
     roadmap = read_selected_roadmap(a.db_path)
@@ -1806,8 +1585,8 @@ def snapshot_text(con, a, code, refusal):
     con.execute("BEGIN")
     try:
         snap = build_snapshot(con, sets, a.at, store, roadmap)
-        guard_snapshot(con, a, snap, sets, code=code)
-        return dump(snap) + "\n", snap
+        guard_snapshot(con, a, snap, sets)
+        return dump(snap) + "\n"
     except RecursionError:
         raise UsageError("the floor configuration is nested too deep; no snapshot written") from None
     finally:
@@ -1816,391 +1595,11 @@ def snapshot_text(con, a, code, refusal):
 
 def cmd_snapshot_take(con, a):
     """Write 1 scrubbed snapshot of this line as JSON, to stdout or to --out."""
-    text, _ = snapshot_text(con, a, 1, f"{STORE_ID_RULE}; no snapshot written")
+    text = snapshot_text(con, a)
     if a.out:
         write_atomic(a.out, text)
     else:
         sys.stdout.write(text)
-
-
-# --- snapshot publish and snapshot lines (STORY-444) ---
-# Each line pushes its snapshot to 1 ref of origin, `refs/sofa-floor/<store id>`, and a reader gets the snapshot of
-# each line from the refs. The ref holds 1 commit with no parent, so a new snapshot replaces the old one (ADR-0012,
-# ADR-0013). The only forced push of the team is the push of the own ref with an explicit old id (rule 24).
-FLOOR_REF = "refs/sofa-floor/"
-# The local name of a line in the scratch repository of the reader. It is outside refs/sofa-floor/*, so only
-# snapshot publish writes a ref refs/sofa-floor/* (ADR-0012, decision 2), also in a local repository (STORY-513).
-READ_REF = "refs/sofa-read/"
-READ_FAILED = "cannot read the lines"
-LINE_MAX_BYTES = 1048576
-# The reader reads each line of the form, with no maximum count (ADR-0012, decision 3; STORY-513, D-7398).
-# The fetch takes 1 commit of each line (--depth=1) and, when origin honors the filter, no blob of LINE_MAX_BYTES + 1
-# bytes or more. It does not limit the count of the lines, the count of the blobs of a tree, or a ref that names a blob
-# or a tag of a blob (git sends an object that a ref names, whole). SOFA_GIT_TIMEOUT limits the time of the call, the
-# scratch repository goes after the run, and read_line reads at most LINE_MAX_BYTES of each line.
-# blob:limit=<n> leaves out each blob of n bytes or more, so n is LINE_MAX_BYTES + 1: a blob of LINE_MAX_BYTES stays.
-READ_FILTER = f"blob:limit={LINE_MAX_BYTES + 1}"
-_DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
-# nulled of another line: a whole number from 0 to LINE_MAX_BYTES (a snapshot cannot null more values than its bytes).
-NULLED_FORM = range(0, LINE_MAX_BYTES + 1)
-SNAPSHOT_FILE = "snapshot.json"
-
-
-def remote_old(git, ref):
-    """The object id that REF has on origin, or an empty text when origin has no such ref."""
-    for row in git.must("ls-remote", "origin", ref).splitlines():
-        oid, _, name = row.partition("\t")
-        if name.strip() == ref:
-            return oid.strip()
-    return ""
-
-
-def make_snapshot_commit(git, text, taken_at):
-    """Write the commit of the snapshot into the object store of the repository and return its id: the file
-    snapshot.json (mode 100644), a tree with that 1 entry, no parent, and the identity sofa-state (never the identity
-    of the person), the date TAKEN_AT, the message `snapshot <taken_at>`."""
-    blob = git.must("hash-object", "-w", "--stdin", stdin=text).strip()
-    tree = git.must("mktree", stdin=f"100644 blob {blob}\t{SNAPSHOT_FILE}\n").strip()
-    stamp = f"{int(parse_iso(taken_at).timestamp())} +0000"
-    who = {"GIT_AUTHOR_NAME": "sofa-state", "GIT_AUTHOR_EMAIL": "sofa-state@localhost", "GIT_AUTHOR_DATE": stamp,
-           "GIT_COMMITTER_NAME": "sofa-state", "GIT_COMMITTER_EMAIL": "sofa-state@localhost",
-           "GIT_COMMITTER_DATE": stamp}
-    return git.must("-c", "commit.gpgsign=false", "commit-tree", tree, "-m", f"snapshot {taken_at}",
-                    extra=who).strip()
-
-
-def cmd_snapshot_publish(con, a):
-    """Push the scrubbed snapshot of this line to refs/sofa-floor/<store id> on origin (rows 3 to 8, 15 and 19)."""
-    # The store id names the ref of the push, so it must have the form of a store id before the first git call
-    # (STORY-513, item a): `snapshot_text` already runs git (the guard reads the main folder). A store with no id gets
-    # a new id of that form from `store_id`, which also checks the value that it returns, so the id of the snapshot is
-    # the value that names the ref (STORY-536). The line names the rule, never the value of the store.
-    refusal = f"{PUBLISH_FAILED}: {STORE_ID_RULE}; {PUBLISH_TAIL}"
-    refuse_bad_store_row(con, refusal)
-    text, snap = snapshot_text(con, a, 3, refusal)  # a config error or a refusal of the guard stops before git
-    store = snap["line"]["store"]
-    if not has_app_values(con):
-        raise UsageError(f"{PUBLISH_FAILED}: the store has no App values; run /sofa:setup")
-    git = Git(repo_of_store(a, PUBLISH_FAILED), failed=PUBLISH_FAILED, tail=PUBLISH_TAIL, short=PUBLISH_TAIL)
-    problem = app_setup_ok(con, git, origin_url(git))
-    if problem:
-        raise UsageError(f"{PUBLISH_FAILED}: this session has no App git setup ({problem}); {PUBLISH_TAIL}")
-    ref = f"{FLOOR_REF}{store}"
-    commit = make_snapshot_commit(git, text, snap["taken_at"])
-    old = remote_old(git, ref)
-    for attempt in (1, 2):
-        # The lease names the old id that we read, so another publish of this store between the read and the push
-        # makes git refuse (an empty old id means that the ref must not exist).
-        rc, _, err = git.run("push", "origin", f"--force-with-lease={ref}:{old}", f"{commit}:{ref}")
-        if rc == 0:
-            print(f"published {ref} {snap['taken_at']}")
-            return
-        new = remote_old(git, ref)
-        if attempt == 2 or new == old:
-            raise git.failure("push", rc, err)
-        old = new  # the lease was stale: read again and push 1 more time
-
-
-def floor_names(git):
-    """The names of the lines on origin, from `git ls-remote origin refs/sofa-floor/*` (STORY-513, item c).
-
-    Return (NAMES, BAD). NAMES are the names `refs/sofa-floor/<store id>` in sorted order, with no maximum count. BAD
-    counts the names under refs/sofa-floor/ whose part after it is not a store id. `ls-remote` matches the tail of a
-    name, so a name that does not start with refs/sofa-floor/ (refs/heads/refs/sofa-floor/<id>) names no floor ref and
-    is not counted.
-    No name of origin goes into an output: names of origin are data."""
-    names, bad = [], 0
-    for row in git.must("ls-remote", "origin", FLOOR_REF + "*").splitlines():
-        name = row.partition("\t")[2].strip()
-        if not name.startswith(FLOOR_REF) or name.endswith("^{}"):
-            continue  # not under refs/sofa-floor/, or the peeled line of a tag: no floor ref
-        if _STORE_ID.fullmatch(name[len(FLOOR_REF):]):
-            names.append(name)
-        else:
-            bad += 1
-    names.sort()
-    return names, bad
-
-
-def scratch_url(top, url):
-    """The URL of origin for the scratch repository of the reader. A relative path names a folder from the main folder
-    TOP, and the scratch is in another folder, so it becomes absolute. A URL with a scheme, an absolute path and an scp
-    address (host:path, with no / before the first :) stay as they are, as git reads them."""
-    if "://" in url or os.path.isabs(url):
-        return url
-    colon, slash = url.find(":"), url.find("/")
-    if colon > 0 and (slash < 0 or colon < slash):
-        return url
-    return os.path.normpath(os.path.join(top, url))
-
-
-def add_origin(repo, url):
-    """Write the remote origin with URL into the config of the scratch repository REPO, with no git call, so the URL
-    is not an argument of `git fetch` or of `git config`. A fetch with --filter needs a remote with a name (git writes
-    `remote.<name>.promisor`, and a name cannot start with /). For an http(s) URL, git still gives the URL to its
-    remote helper (`git remote-http origin <url>`) as an argument, as on main and for the ls-remote of the main
-    folder."""
-    value = url.replace("\\", "\\\\").replace('"', '\\"')
-    with open(os.path.join(repo, ".git", "config"), "a", encoding="utf-8") as config:
-        config.write(f'[remote "origin"]\n\turl = "{value}"\n')
-
-
-def no_warnings(err):
-    """The stderr ERR of a failed fetch with no `warning:` line, so that the reason is the line of the error."""
-    kept = [line for line in err.splitlines() if not line.strip().startswith("warning:")]
-    return "\n".join(kept) if kept else err
-
-
-REFUSED = re.compile(r"filter '[^']*' not supported|does not support shallow")
-
-
-def refused(err):
-    """True when the stderr ERR of a failed fetch (LC_ALL=C) says that git or origin refused the filter or the depth:
-    `filter 'blob:limit' not supported` (upload-pack, uploadpackfilter.<kind>.allow false), `dumb http transport does
-    not support shallow capabilities`, `Server does not support shallow clients`."""
-    return REFUSED.search(err) is not None
-
-
-def new_scratch(git, url, form):
-    """A new scratch repository of the reader and a Git object for its calls. The folder is new in TMPDIR (mode 700).
-    The repository has the object format FORM of the main folder, no hook (--template=), and the remote origin with
-    URL. It is not bare, because a person with safe.bareRepository=explicit cannot use a bare repository that git finds
-    by its folder. The calls take the env of the main folder (the GIT_CONFIG_* of the session, the ssh command, no key
-    of REPO_ENV_KEYS), GIT_NO_LAZY_FETCH=1, so no read fetches a blob that the filter left out, and LC_ALL=C, so the
-    text of a refusal (refused) is not translated."""
-    scratch = tempfile.mkdtemp(prefix="sofa-floor-")
-    try:
-        local = copy.copy(git)  # no second Git(): its constructor runs git in the folder before the init
-        local.repo, local.env = scratch, {**git.env, "GIT_NO_LAZY_FETCH": "1", "LC_ALL": "C"}
-        local.must("init", "-q", "--template=", f"--object-format={form}")
-        add_origin(scratch, scratch_url(git.repo, url))
-    except BaseException:
-        shutil.rmtree(scratch, ignore_errors=True)
-        raise
-    return scratch, local
-
-
-def cmd_snapshot_lines(con, a):
-    """Print the snapshot of each line on origin as JSON (rows 10 to 13; STORY-513, items b and c)."""
-    git = Git(repo_of_store(a, READ_FAILED), failed=READ_FAILED, tail="", short="")
-    url = origin_url(git)  # origin must have 1 URL; no App check, so a session with no App values reads the lines too
-    read_at = a.now or now_iso()
-    row = con.execute("SELECT value FROM kv WHERE key = 'decision.store'").fetchone()
-    own = row[0] if row else None  # a read: this command writes no store id
-    names, bad = floor_names(git)
-    lines = []
-    if names:
-        # The fetch runs in a scratch repository (new_scratch), never in the main folder: a fetch with --filter
-        # writes the config of the repository that runs it (a partial clone: promisor, partialclonefilter), and the
-        # objects of another line must not stay in the main folder. The object format is the format of the main
-        # folder, not the default of the person (init.defaultObjectFormat, GIT_DEFAULT_HASH): a scratch of another
-        # format cannot fetch from origin. The folder goes in `finally`.
-        form = git.must("rev-parse", "--show-object-format").strip()
-        limits = ["--depth=1", f"--filter={READ_FILTER}"]
-        scratch, local = new_scratch(git, url, form)
-        try:
-            for attempt in (1, 2):
-                rc, _, err = local.run("fetch", "--no-tags", "--no-write-fetch-head", "--refmap=", *limits,
-                                       "origin", *(f"{name}:{READ_REF}{name[len(FLOOR_REF):]}" for name in names))
-                if rc == 0:
-                    break
-                if attempt == 2:
-                    raise local.failure("fetch", rc, no_warnings(err))
-                if refused(err):
-                    # git or origin refused the filter or the depth (Done when 3: "else the current read"): the 1 more
-                    # fetch has no filter and no depth, in a new scratch, because the refused fetch already wrote the
-                    # promisor config of the filter. read_line checks the size of each line. A lost name after this
-                    # exits 1: the read has at most 2 fetches, and the first failure takes the second.
-                    limits = []
-                    shutil.rmtree(scratch, ignore_errors=True)
-                    scratch, local = new_scratch(git, url, form)
-                    continue
-                # A name that origin lost between the ls-remote and the fetch fails the whole fetch: read the names
-                # again and fetch 1 more time. The same names exit 1.
-                again = floor_names(git)
-                if again[0] == names:
-                    raise local.failure("fetch", rc, no_warnings(err))
-                names, bad = again
-                if not names:
-                    break
-            if names:
-                # No remote after the fetch: a read of a blob that the filter left out then fails with no fetch,
-                # because the scratch has no promisor remote (probe 8, C3, on git 2.50.1; build step 6 checks the git
-                # of CI; an unset remote.origin.promisor alone does not stop the fetch), and the URL leaves the config
-                # of the scratch. GIT_NO_LAZY_FETCH=1 (git 2.45 and later) is the second guard.
-                local.must("config", "--remove-section", "remote.origin")
-                stores = [name[len(FLOOR_REF):] for name in names]
-                lines = [read_line(local, READ_REF + store, store, read_at, own) for store in stores]
-        finally:
-            shutil.rmtree(scratch, ignore_errors=True)
-    lines.sort(key=lambda line: (line["label"] is None, line["label"] or "", line["store"]))
-    out = {"lines": lines, "read_at": read_at}
-    if bad:
-        out["skipped"] = {"bad_name": bad}
-    sys.stdout.write(dump(out) + "\n")
-
-
-def read_line(git, name, store, read_at, own):
-    """The line of the ref NAME (refs/sofa-read/STORE in the scratch repository of the reader): its snapshot, or the
-    reason that no snapshot is there. The text comes from another machine, so it is data: a bad line gives an error,
-    never a stop. The snapshot of the line is rebuilt from the known keys (rebuild_snapshot), never the parsed text."""
-    line = {"store": store, "label": None, "taken_at": None, "age_seconds": None, "old": None,
-            "own": store == own, "schema_version": None, "snapshot": None, "error": None}
-
-    def bad(message):
-        line["error"] = message
-        return line
-
-    # The entry first, with no read of the blob: the filter of the fetch can leave the blob out (STORY-513, item c).
-    rc, entry, _ = git.run("ls-tree", name, SNAPSHOT_FILE)
-    meta, _, path = entry.partition("\t")
-    parts = meta.split()
-    if rc != 0 or path.strip() != SNAPSHOT_FILE or len(parts) != 3 or parts[1] != "blob":
-        return bad(f"the ref has no {SNAPSHOT_FILE}")
-    blob = parts[2]
-    if git.run("cat-file", "-e", blob)[0] != 0:
-        return bad(f"the snapshot is over {LINE_MAX_BYTES} bytes")  # the filter left out a blob over the limit
-    rc, size, _ = git.run("cat-file", "-s", blob)
-    if rc != 0 or not size.strip().isdigit():
-        return bad(f"the ref has no {SNAPSHOT_FILE}")
-    if int(size.strip()) > LINE_MAX_BYTES:
-        return bad(f"the snapshot is over {LINE_MAX_BYTES} bytes")  # origin did not honor the filter
-    rc, text, _ = git.run("cat-file", "blob", blob)
-    if rc != 0:
-        return bad(f"the ref has no {SNAPSHOT_FILE}")
-    try:
-        snap = json.loads(text)
-    except (ValueError, RecursionError):
-        return bad("the snapshot is not JSON")
-    if not isinstance(snap, dict):
-        return bad("the snapshot is not 1 JSON object")
-    version = snap.get("schema_version")
-    if type(version) is not int:
-        return bad("schema_version is not a whole number")
-    line["schema_version"] = version
-    if version > SCHEMA_VERSION or version < 1:
-        return bad(f"unknown schema {version}")
-    taken = snap.get("taken_at")
-    try:
-        taken_dt = parse_iso(taken) if isinstance(taken, str) and _TIME.fullmatch(taken) else None
-    except ValueError:
-        taken_dt = None
-    if taken_dt is None:
-        return bad("taken_at is not a time of the form YYYY-MM-DDTHH:MM:SSZ")
-    info = snap.get("line") if isinstance(snap.get("line"), dict) else {}
-    named = info.get("store")
-    if named != store:
-        return bad(f"the snapshot names store {named}" if isinstance(named, str) and _STORE_ID.fullmatch(named)
-                   else "the snapshot names no store of the form of a store id")
-    clean = rebuild_snapshot(snap, store)
-    line["label"] = clean["line"].get("label")
-    line["taken_at"] = taken
-    line["age_seconds"] = age = max(0, int((parse_iso(read_at) - taken_dt).total_seconds()))
-    limit = ((clean.get("rules") or {}).get("health") or {}).get("snapshot_max_age_seconds")
-    line["old"] = age > limit if type(limit) is int else None
-    line["snapshot"] = clean
-    return line
-
-
-def scrub_rows(scrub, rows, fields):
-    """The rows of 1 section of another line: each row keeps only the fields of FIELDS, each with its form. A section
-    that is not a list is null, and a row that is not an object goes nowhere; each counts 1 in nulled."""
-    if not isinstance(rows, list):
-        return scrub.drop()
-    out = []
-    for row in rows:
-        if isinstance(row, dict):
-            out.append({f: scrub.value(form, row[f]) for f, form in fields.items() if f in row})
-        else:
-            scrub.drop()
-    return out
-
-
-def scrub_rules(scrub, rules):
-    """The rule sets of another line: only the sets of FLOOR_SETS, and in each set only the fields of RULE_FIELDS."""
-    if not isinstance(rules, dict):
-        return scrub.drop()
-    out = {}
-    for name in FLOOR_SETS:
-        if name in rules:
-            fields = rules[name]
-            out[name] = ({f: scrub.value(form, fields[f]) for f, form in RULE_FIELDS[name].items() if f in fields}
-                         if isinstance(fields, dict) else scrub.drop())
-    return out
-
-
-def scrub_roadmap(scrub, roadmap):
-    """The section `roadmap` of another line: only `commit`, `committed_at` and the 3 lists, each row with only the
-    fields of ROADMAP_FIELDS. A null section is a good value (a line that sees no roadmap). A section that is not an
-    object, a list that is not a list, and a row that is no object go nowhere and count 1 (STORY-519, row 13)."""
-    if roadmap is None:
-        return None
-    if not isinstance(roadmap, dict):
-        return scrub.drop()
-    out = {}
-    for key, form in (("commit", _COMMIT), ("committed_at", _TIME), ("source", {"plan"}), ("read_at", _TIME)):
-        if key in roadmap:
-            out[key] = scrub.value(form, roadmap[key])
-    for kind, fields in ROADMAP_FIELDS.items():
-        if kind in roadmap:
-            out[kind] = scrub_rows(scrub, roadmap[kind], fields)
-    return out
-
-
-def scrub_defects(scrub, defects):
-    """The key `defects` of another line: only the kinds of DEFECT_KINDS, each null or `count` and `ids`. A null kind
-    is a good value (the roadmap was not seen)."""
-    if not isinstance(defects, dict):
-        return scrub.drop()
-    out = {}
-    for kind in DEFECT_KINDS:
-        if kind not in defects:
-            continue
-        found = defects[kind]
-        if found is None:
-            out[kind] = None
-        elif not isinstance(found, dict):
-            out[kind] = scrub.drop()
-        else:
-            out[kind] = {}
-            if "count" in found:
-                out[kind]["count"] = scrub.value(NULLED_FORM, found["count"])
-            if "ids" in found:
-                ids = found["ids"]
-                out[kind]["ids"] = ([scrub.value(_DEFECT_ID, i) for i in ids] if isinstance(ids, list)
-                                    else scrub.drop())
-    return out
-
-
-def rebuild_snapshot(snap, store):
-    """The snapshot of another line, rebuilt from the known keys of version 1 (STORY-513, item b).
-
-    SNAP passed the checks of read_line (schema_version, taken_at, line.store). The rebuild takes only the keys that
-    build_snapshot writes, each with the form of its field (SNAPSHOT_FIELDS, RULE_FIELDS, the Scrubber). A value that
-    does not have its form is null, and nulled adds 1 for it to the nulled of the publisher. An unknown key goes
-    nowhere and is not counted, because a reader ignores an unknown key (the rule of change of STORY-443). A known key
-    that the snapshot does not hold stays out. The parsed object never goes into the output."""
-    scrub = Scrubber()
-    out = {"schema_version": snap["schema_version"], "taken_at": snap["taken_at"], "line": {"store": store}}
-    if "label" in snap["line"]:
-        out["line"]["label"] = scrub.value(_LABEL, snap["line"]["label"])
-    for section, (_, fields) in SNAPSHOT_FIELDS.items():
-        if section in snap:
-            out[section] = scrub_rows(scrub, snap[section], fields)
-    if "queue" in snap:
-        queue = snap["queue"]
-        out["queue"] = [scrub.value(_ID, item) for item in queue] if isinstance(queue, list) else scrub.drop()
-    if "rules" in snap:
-        out["rules"] = scrub_rules(scrub, snap["rules"])
-    if "rules_digest" in snap:
-        out["rules_digest"] = scrub.value(_DIGEST, snap["rules_digest"])
-    if "roadmap" in snap:
-        out["roadmap"] = scrub_roadmap(scrub, snap["roadmap"])
-    if "defects" in snap:
-        out["defects"] = scrub_defects(scrub, snap["defects"])
-    base = scrub.value(NULLED_FORM, snap.get("nulled", 0))
-    out["nulled"] = (base or 0) + scrub.nulled
-    return out
 
 
 # --- rows: remove or rename 1 row of items or sessions (STORY-503) ---
@@ -2643,7 +2042,7 @@ def build_parser():
 
     d = group("decision", "decisions per story")
     sp = leaf(d, "log", cmd_decision_log, "record a decision and print its id")
-    sp.add_argument("--id", help="the id; with no --id, the next free D-<n>")
+    sp.add_argument("--id", help="the id; with no --id, the highest D-<n> of the store plus 1")
     sp.add_argument("--replace", action="store_true", help="write over the decision with this --id")
     sp.add_argument("--story", required=True)
     # The 4 values of the decision tables of docs/adlc.md, section 4. A value outside
@@ -2654,9 +2053,10 @@ def build_parser():
     sp.add_argument("--visibility", required=True, choices=DECISION_VISIBILITIES)
     sp.add_argument("--by", required=True, help="who decided, for example decision-judge or hitl")
     sp.add_argument("--summary", required=True)
-    sp = leaf(d, "block", cmd_decision_block, "print the block of decision ids of this store")
-    sp.add_argument("--reserve", action="store_true", help="reserve a block when no id is free")
-    sp.add_argument("--check", action="store_true", help="check that origin holds the tag of the block")
+    sp = leaf(d, "floor", cmd_decision_floor, "print the floor of the decision ids and the next id")
+    sp.add_argument("--from-tags", action="store_true",
+                    help="set the floor to the end of the highest block of the local tags sofa-decision-block/<K>")
+    sp.add_argument("--set", metavar="N", help="set the floor to N; not below the highest id of the store")
     sp = leaf(d, "veto", cmd_decision_veto, "mark a decision as vetoed")
     sp.add_argument("--id", required=True)
     sp = leaf(d, "list", cmd_decision_list, "print decisions")
@@ -2711,14 +2111,6 @@ def build_parser():
     sp.add_argument("--out", help="write the snapshot to this file, not to stdout")
     sp.set_defaults(lock_tries=1, locked="the store is locked by another writer; no snapshot written")
 
-    sp = leaf(sn, "publish", cmd_snapshot_publish, "push the scrubbed snapshot of this line to its ref on origin")
-    sp.add_argument("--config", help=f"the floor configuration (default: <main folder>/{FLOOR_CONFIG})")
-    sp.set_defaults(lock_tries=1,
-                    locked=f"{PUBLISH_FAILED}: the store is locked by another writer; {PUBLISH_TAIL}")
-
-    sp = leaf(sn, "lines", cmd_snapshot_lines, "print the snapshot of each line on origin as JSON")
-    sp.add_argument("--now", type=norm_iso, help="the time of the read, ISO-8601 (default: now, UTC)")
-
     sp = leaf(top, "prune", cmd_prune, "remove heartbeats and messages older than N days")
     sp.add_argument("--days", required=True, type=int)
     return p
@@ -2736,7 +2128,7 @@ def run_with_retry(a):
     at its end, so a new try does not write a row twice.
     """
     path = a.db_path = db_path(a.db)
-    # A leaf may set lock_tries and locked (the output line of its stop): `snapshot take`, `snapshot publish` and
+    # A leaf may set lock_tries and locked (the output line of its stop): `snapshot take` and
     # the 4 leaves remove and rename of items and sessions make 1 try, so they stop at the first "database is locked"
     # error, after the busy timeout of open_db.
     tries = getattr(a, "lock_tries", LOCK_TRIES)

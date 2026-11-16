@@ -62,7 +62,7 @@ The CLI records state changes and manages actual dates. Page lifecycle (`draft`,
 
 ## Claims
 
-A claim holds `by`, `at`, `lease_expires_at`, and `heartbeat_at`. The lease limits how long a claim lasts without renewal. Local claims coordinate one machine only. In shared mode, the coordination gate protects the checked claim through publication. A failed or uncertain publication gives no permission to start work. [Shared Plan workspaces](sharing.md) defines activation and recovery limits. `claim` takes ready work, `heartbeat` renews the current holder's lease, and `release` gives work back. The requested lease is checked by code. Claim returns a token for the current work attempt. Heartbeat, release, and changes to held work need that exact token; a token from an earlier claim is refused.
+A claim holds `by`, `at`, `lease_expires_at`, and `heartbeat_at`. The lease limits how long a claim lasts without renewal. Claims coordinate the sessions of one machine. A failed claim command gives no permission to start work. [One factory on one machine](single-factory.md) gives the rules. `claim` takes ready work, `heartbeat` renews the current holder's lease, and `release` gives work back. The requested lease is checked by code. Claim returns a token for the current work attempt. Heartbeat, release, and changes to held work need that exact token; a token from an earlier claim is refused.
 
 Releasing a claim returns `claimed` or `in_progress` work to the computed ready or blocked state. Work in another state keeps that state. Claim release does not mark the work `released`. Product release status uses `status ... released` with the required approval.
 

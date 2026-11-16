@@ -1,7 +1,6 @@
 """Publish a fixed Plan source to GitHub. The caller holds the workspace lock.
 
 No Product files are read or written. GitHub is a view, never a work-state source.
-A shared caller holds its gate across these functions and publication of checkpoints.
 """
 from __future__ import annotations
 
@@ -11,7 +10,7 @@ import re
 from dataclasses import dataclass
 
 from . import PlanError, model
-from .shared import SharedCommandError, capture
+from .proc import CommandError, capture
 
 MAX_PAGES = 100
 WORK = set(model.WORK_TYPES)
@@ -61,7 +60,7 @@ def _run(args, payload=None):
     try:
         result = capture(["gh", *args], cwd=None, env=None,
                          stdin=json.dumps(payload) if payload is not None else None)
-    except SharedCommandError as exc:
+    except CommandError as exc:
         if isinstance(exc.__cause__, OSError):
             raise PlanError("GitHub CLI could not start; no result was confirmed") from None
         raise PlanError("GitHub CLI did not end before the time limit; inspect the publication before retry") from None
@@ -672,7 +671,7 @@ def _identity(issue):
 
 
 def apply(workspace, fingerprint, writer, client=None):
-    """Publish one preview. Caller holds the write gate until checkpoints are published."""
+    """Publish one preview. The caller holds the workspace lock until the checkpoints are saved."""
     client = client or Gh()
     records, config, snapshot, selected, found, desired, publication, active = _read(workspace, client)
     records = list(records)  # Binding commits replace records; keep the read index immutable.

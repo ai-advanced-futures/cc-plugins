@@ -11,6 +11,11 @@ import subprocess
 import sys
 
 
+# The time limit of 1 Plan command in seconds, when SOFA_PLAN_TIMEOUT is not set.
+DEFAULT_TIMEOUT = 300
+STILL_SHARED = "the Plan profile is still shared"
+
+
 class PlanFailure(Exception):
     pass
 
@@ -18,7 +23,7 @@ class PlanFailure(Exception):
 def run(args, *, cwd=None, capture=True, env=None):
     """Run without a shell. Stop the process group at the time limit."""
     try:
-        limit = float(os.environ.get("SOFA_PLAN_TIMEOUT", "1800"))
+        limit = float(os.environ.get("SOFA_PLAN_TIMEOUT", str(DEFAULT_TIMEOUT)))
         if not math.isfinite(limit) or limit <= 0:
             raise ValueError
     except ValueError:
@@ -132,16 +137,19 @@ def plan_script(root):
     return script.resolve()
 
 
-def shared_readiness(description):
-    """Require the shared-workspace guarantees of the selected Plan store."""
-    if any(description.get(flag) is not True for flag in ("shared", "distributed_claims", "automatic_publish")):
-        raise PlanFailure("the selected Plan workspace has no shared coordination contract; factory start is blocked")
+def still_shared(profile):
+    """True when the profile has a `sharing` block of an earlier Plan. It reads the profile JSON and makes no Plan call."""
+    try:
+        document = json.loads(profile.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return isinstance(document, dict) and "sharing" in document
 
 
 class Plan:
-    def __init__(self, root, profile, *, env=None, allow_missing=False):
+    def __init__(self, root, profile, *, env=None):
         self.root, self.profile, self.env = root, profile, env
-        if not allow_missing and not profile.is_file():
+        if not profile.is_file():
             raise PlanFailure("the Plan workspace profile is missing; no store was created")
         self.command = ["uv", "run", str(plan_script(root)), "--workspace", str(profile)]
 
@@ -175,8 +183,11 @@ class Plan:
             raise PlanFailure("the Plan import is incomplete; complete it before start")
         return description
 
-    def validate(self, *, require_records=False, require_shared=False):
-        description = self.describe()
+    def validate(self, *, require_records=False):
+        # Before each Plan call: Plan refuses a shared profile, and the fix is 1 command.
+        if still_shared(self.profile):
+            raise PlanFailure(f"{STILL_SHARED}; run sofa-plan unshare (see references/planning.md)")
+        self.describe()
         check = self.read("check")
         if not isinstance(check, dict) or not isinstance(check.get("errors"), list) or check["errors"]:
             raise PlanFailure("Plan check found errors; correct them before start")
@@ -185,8 +196,6 @@ class Plan:
             raise PlanFailure("Plan list did not return a record list")
         if require_records and not any(r["fields"].get("type") in {"Story", "Feature", "Milestone"} for r in records):
             raise PlanFailure("Plan has no roadmap records but the legacy roadmap exists; import it before start")
-        if require_shared:
-            shared_readiness(description)
         return records
 
 
@@ -231,7 +240,7 @@ def station_settings(repo, settings, adlc=None, *, validation_helper=None, outpu
         helper = [validation_helper, "--db", str(root / ".sofa/state.db")] if validation_helper else None
         environment = validation_environment(root, data, helper=helper, output_style=output_style)
         main_repo(root)
-        Plan(root, profile, env=environment).validate(require_records=legacy_roadmap(root), require_shared=True)
+        Plan(root, profile, env=environment).validate(require_records=legacy_roadmap(root))
         data.setdefault("env", {})["PLAN_WORKSPACE"] = str(profile)
     return data
 

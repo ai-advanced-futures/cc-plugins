@@ -4,7 +4,7 @@ Section numbers are the sections of `docs/adlc.md`. The `sofa:station` skill app
 
 ## At start
 
-The `sofa:start` skill starts this session. Its start prompt gives the launcher name and the machine values (main folder, skill folder, GitHub account, GitHub person).
+The `sofa:start` skill starts this session. Its start prompt gives the launcher name and the machine values (main folder, skill folder, GitHub account).
 
 The start is complete when each `always` role of section 3 has 1 live session that sent `DONE · ready`, the status check runs (`/loop 10m`, see "Status check"), and the launcher has a `DONE` with the names of the live sessions. Also start monitoring now when section 1 `Environments` names logs or metrics, because a problem can start before the first feature, and name it in the `DONE`. Start each session with the dispatch script (section 8), with the machine values of your start prompt in its start prompt. Start the other `on demand` roles when an item needs them. If the board tool access needs a user step (for example a token scope), start chores first.
 
@@ -15,8 +15,7 @@ The `scheduler` is a system cron job, not a session. If `crontab -l` has no `bg-
 ## Work
 
 - Read `<skill folder>/references/planning.md` and keep a queue in the selected roadmap order (`sofa-state queue set ...`).
-- For Plan: follow the shared-write contract in `references/planning.md`. Refresh the same published workspace/control through the approved remote, then read `ready`, `list`, and `show` through the selected wrapper. Ask tracker to assign responsibility, then ask the actual station to claim eligible work as itself. Wait for guarded publication and fresh holder verification before execution starts. A local claim, board assignee, or Sofa row is not success. A conflict or uncertain publication blocks affected work; do not take over automatically or use raw `bd` sync. Keep the sequence: spec merge, spec attachment, approved promotion, published working-station claim, code and tests merge, plan-auditor completion, monitoring release. Route confirmed changes to the named GitHub Project publisher. Missing installed shared/publisher support blocks the affected operation.
-- For legacy Product (backend absent or `product`): make sure that a feature is claimed by this team on the board before assignment to a specifier (tracker role file). If tracker reports another team's claim, take the next ready feature. If all ready features belong to other teams, send `BLOCKED · decision` for decision-judge with priority `blocks code now`, and wait.
+- For Plan: follow `references/planning.md`. Read `ready`, `list`, and `show` through the wrapper. Ask tracker to assign responsibility, then ask the actual station to claim eligible work as itself. Wait for the claim before execution starts. A board assignee or a Sofa row is not a claim. A claim of another station blocks the affected work; do not take it over, and run no raw `bd` command. Keep the sequence: spec merge, spec attachment, approved promotion, working-station claim, code and tests merge, plan-auditor completion, monitoring release.
 - As soon as a story is `ready` in the selected roadmap and its spec is merged on `main`, send it to a free implementer. For Plan, the implementer takes its own claim before it starts.
 - Run 2 features at the same time only if they change different areas.
 - Send each code PR to a reviewer, a verifier, security and code-quality at the same time. Send a document PR or a test PR only to a reviewer. When the 4 `REVIEW` results are in and all say `APPROVE`, send the PR to the merger.
@@ -33,7 +32,7 @@ The `scheduler` is a system cron job, not a session. If `crontab -l` has no `bg-
   - Keep 1 session of each `always` role live, also when it has no work.
   - Do not stop or delete a free session, because it takes the next item of its role, and a `/loop` role loops only while its session is live.
 - On a `TASK · updater → orchestrator · reload`, do a fresh restart of each live session of the roles that it lists, when the session is free. Follow "A fresh restart" (see "Stopped sessions") and `docs/adlc.md` section 8, "Exception, a fresh restart". If the `TASK` gives a new skill folder, use it from then on in the dispatch command and in each start prompt. When the list names your own role, read your role files again from the new skill folder (station skill, Rule 8). A message with `/reload-skills` or `/reload-plugins` does not run the command (updater role file).
-- After each merge on `main`, send a `TASK` to plan-auditor. For Plan, also send a `TASK` after a confirmed shared lifecycle change so the auditor updates Sofa projections, and route a `SYNC` to the named tracker publisher for the existing GitHub Project. Other trackers only check/report. For legacy Product, after a PR that changes `docs/product` merges, send a `SYNC` to tracker.
+- After each merge on `main`, send a `TASK` to plan-auditor. For Plan, also send a `TASK` after a Plan lifecycle change so the auditor updates Sofa projections, and send a `SYNC` to tracker for the existing GitHub Project. For legacy Product, after a PR that changes `docs/product` merges, send a `SYNC` to tracker.
 - When a feature is `done`, send a `TASK` to the operator (deploy, if the environments need a step) and to monitoring (watch it for the healthy window).
 
 ## Status check
@@ -52,55 +51,22 @@ The `scheduler` restarts the sessions that stopped on an API error (section 8). 
 - When the time of a timer role is due ("Timer roles").
 - For an open item that the scheduler did not restart in 15 minutes (section 8).
 
-If `sofa-state kv get reload.pending` prints names, do a fresh restart of each free live session of that list (see "A fresh restart"). Then write the list again without the names that you restarted and without the stopped sessions. Why: the next start of a stopped session loads the latest skills. The check sends no other messages to the sessions, except the `TASK`s of the 2 bullets below, because each message interrupts the work of a session. The colour check can send 1 `TASK` to the troubleshooter.
+If `sofa-state kv get reload.pending` prints names, do a fresh restart of each free live session of that list (see "A fresh restart"). Then write the list again without the names that you restarted and without the stopped sessions. Why: the next start of a stopped session loads the latest skills. The check sends no other messages to the sessions, except the `TASK`s of the 2 bullets below, because each message interrupts the work of a session. The colour check and the backup check can each send 1 `TASK`.
 
 - For each `left over: <id>` line in a `DONE · ready`, send that session 1 `TASK` for each id: continue it (with the branch, the PR and the worktree of `sofa-state item list --session <name> --json`), or close it as `cancelled` when the work is gone. Write no row yourself.
 - When you give a session the work order of another session (for example the next review round of a PR to another reviewer), say `--take-over` in the `TASK`, and `--reopen` when the row is closed.
 
-### Snapshot publish
+### Backup check
 
-Each status check runs `sofa-state snapshot publish` (STORY-444). It pushes the scrubbed snapshot of this line to the ref `refs/sofa-floor/<store id>` on `origin`, so each view of the floor can read it. For legacy Product, the snapshot holds the roadmap of `origin/main` (STORY-519), read from the local ref `refs/remotes/origin/main` with no network call. For Plan, the snapshot reads Plan directly and marks `roadmap.source` as `plan` with `roadmap.read_at`; `roadmap.commit` and `roadmap.committed_at` are null. A failed Plan read stops publication, with no Product fallback. Use fresh confirmed shared Plan state for work decisions; a floor report is not the shared claim authority. Before each publish, run `git fetch origin main` in the main folder. When the fetch fails, run the publish all the same, and send 1 `TASK` to the troubleshooter with the first line of stderr of the fetch, at most 1 time each hour (`sofa-state kv get timer.floor-fetch-error` holds the UTC time of the last `TASK`; write the time with `kv set` when you send it). For legacy Product, `roadmap.committed_at` is the newest commit time of that ref. For Plan, use `roadmap.read_at` for the read time; do not invent Git provenance for Plan. Read the exit code:
+Do this check only with the backend `plan`. Run `<skill folder>/scripts/sofa-plan --repo <main folder> describe --json` and read `backup`:
 
-- **Exit 0:** run `sofa-state kv set floor.publish.refused ""`. The key is empty, so a later refusal is sent again.
-- **Exit 3:** the guard refused the snapshot, and nothing was pushed. The first line of stderr is `sofa-state: the snapshot holds <kind>; no snapshot written (in <where>)`. `<where>` names up to 5 places. Find each place in the table below, and do the step of the table. Send the user step 1 time: if `sofa-state kv get floor.publish.refused` already prints this first line, do nothing. Else run `sofa-state kv set floor.publish.refused "<the first line>"` and send the step.
-- **Any other non-zero exit:** this is an error, not a refusal. Send 1 `TASK` to the troubleshooter with the first line of stderr, at most 1 time each hour (`sofa-state kv get timer.floor-publish-error` holds the UTC time of the last `TASK`; write the time with `kv set` when you send it).
+- `auto` is `false`: send 1 `TASK` to chores to run `/sofa:setup`, step 2.4. Send it 1 time: write `sofa-state kv set backup.check auto-off`, and send nothing while the key holds that value.
+- `pending` is `false`: run `sofa-state kv set backup.check ""`.
+- `pending` is `true`, and `sofa-state kv get backup.check` prints nothing or exits 1: run `sofa-state kv set backup.check pending`. Send nothing, because the next push of Plan can send the data.
+- `pending` is `true`, and the key holds `pending`: the push failed across 2 checks. Send 1 user step on the route of a user step (the bullet "Route each `BLOCKED` by its tag") with `last_error` and the command `$ <skill folder>/scripts/sofa-plan --repo <main folder> backup`. Then run `sofa-state kv set backup.check reported`.
+- The key holds `reported`: do nothing.
 
-| Place | Step |
-|---|---|
-| `decisions_24h.<field>` | None. The row leaves the snapshot 24 hours after its `at`. |
-| `roadmap.commit` and `roadmap.committed_at` | Legacy Product: the next commit of `main` replaces the value. Plan: both are null, with `source: plan` and `read_at` as read evidence. |
-| `roadmap.<field>` other than these 2 | A `TASK` to planner: correct the value in the selected Plan record, or the roadmap page on `main` for legacy Product. Never change a historical Product page to correct Plan work. |
-| `defects.<field>` | The step of the source of the value: a `TASK` to the planner when it comes from a page, or the step of the store place when it comes from the store. |
-| `items.<field>` other than `items.id`, `sessions.<field>` other than `sessions.name`, and `open_asks.<field>` | A user step: the person finds the row with `report` and names its owner. Then send a `TASK` to the owner, who writes its row again with no private value. |
-| `queue` | A user step: the person decides if the item leaves the queue (`queue set` with no item takes it out of the work). |
-| `line.label` | A user step: the person runs `$ <plugin root>/scripts/sofa-state --db <main folder>/.sofa/state.db kv set line.label <label>`. |
-| `items.id`, `sessions.name` | A user step: the person runs 1 command for each refused row (see "A refused `items.id` or `sessions.name`" below). |
-| `the floor configuration set <name>` | A user step: the person changes the file `.claude/sofa-floor.json`. |
-
-A user step has 4 items (the commands of each place, a folder of the person that is not the main folder and not `~`, the person, and the session that needs it with the check). Send it on the route of a user step (the bullet "Route each `BLOCKED` by its tag"), with the commands of the places that need a step. The first command is `$ <plugin root>/scripts/sofa-state --db <main folder>/.sofa/state.db report`, so that the person finds the row. `<plugin root>` is the skill folder of your start prompt. The terminal of the person does not have `sofa-state` on its `PATH`, so each command of a user step names this absolute path. The person answers with the id or the name of the row, never with the refused value. The check is `<plugin root>/scripts/sofa-state --db <main folder>/.sofa/state.db snapshot take --out <temporary file>` and it exits 0.
-
-#### A refused `items.id` or `sessions.name`
-
-A key is the `id` of a row of `items` or the `name` of a row of `sessions`. Only the person runs the 4 commands below, in their own terminal (ADR-0016). A command changes only a row whose key holds a private value that the guard finds. No team session runs it.
-
-- **The places.** The step also covers the reference places of the key: `queue`, `sessions.item`, `open_asks.story` and `items.session`. For these places, send no step and no `TASK` for their own rows, because a rename corrects them.
-- **The 4 items.** The commands, the folder, the person and the check, as above.
-- **The commands.**
-  1. `$ <plugin root>/scripts/sofa-state --db <main folder>/.sofa/state.db report` finds the refused rows. `report` cuts a cell at 28 characters. For a longer key, add `--json`.
-  2. For each refused row, 1 of these commands, with the full store path (`--db <main folder>/.sofa/state.db`) and the same `<plugin root>/scripts/sofa-state` path: `item rename --id <id> --to <new id>`, `item remove --id <id>`, `session rename --name <name> --to <new name>` or `session remove --name <name>`.
-  - Use `rename` when another row holds the key or a live session works on the row. Use `remove` only when no session works on the row any more. A remove stops while another place of the snapshot holds the key.
-  - A new item id keeps the roadmap prefix of the old id (the start `STORY-<n>-`, `FEATURE-<n>-`, `MILESTONE-<n>-`, or its `PLAN-` form), or has none when the old id has none. It is never a bare roadmap id.
-  - A new session name is `<team prefix>-<role>-<n>`. The `<n>` is a number that no session of the team used, for example the date of the step (`20261114`). A `--to` that the history of the store holds is refused.
-  - A rename can stop with `usage holds the key in 2 letter cases`. Then no rename can pass. Clear each place that the remove names, then remove the row. For an item, the session of the item runs `session free`. For a session, `session free` does not clear `items.session`. So for each work order that names the session, send a `TASK` to a live session of the role of the work order, or to a fresh session of that role (D-7361, D-7366). That session runs `item set --id <work order> --take-over --session <its name>`, with no `--state`. You do not take the work order over, because you write only your own rows. For a roadmap row that names the session, send the `TASK` to the plan-auditor, the 1 writer of a roadmap row (D-7406).
-- **The answer.** The person answers with each new key, or with `removed`. The answer never holds the old key or the output of a command, because the line `copy <path>` names the folder of the store.
-- **An ask id.** An ask id that holds the key as a part is the place `open_asks.id`. It is the row `open_asks.<field>` of the table above: the owner closes the ask with `ask close`.
-- **An undo.** The step says how to get an old row back. `report --json` with `--db <copy path>` shows it, where `<copy path>` is the path of the line `copy <path>`. `item set` or `session upsert` writes it again with a new key that holds no private value, and with the `--state` of the old row. The old key is refused. A work order also needs `--session` with its holder. When the caller is known, the session guard refuses the name of another session, so the holder writes its own row, or the person runs the command in a terminal of no session. Never copy the file of a copy over the store, because the sessions write to it.
-- **1 step for 1 output line.** Send 1 step for 1 output line (the key `floor.publish.refused`). The step names each refused row that `report` shows, so 1 step covers 2 refused rows. When the check of the step fails, send no second step for the same line. Name the line and the output of the check in your next `STATUS`. A new output line gets its own step.
-- **After the answer.** Read the row of each new key in `sofa-state report --json`.
-  - A renamed item: send 1 `TASK` to the session of the row (`items.session`): use the new id in each later `sofa-state` command. Why: until the owner reads the `TASK`, its writes of the old id exit 1 with `is a key that the operator took out`. Use the new id in your own next `queue set` too, because `queue set` writes the full queue again.
-  - A renamed session with a live process: do a fresh restart of it with the new store name (see "A fresh restart"): `claude stop` with the `sessions.id` of the row, then a start with the new name. Why: the hook writes each heartbeat with the name of the session start, so a `TASK` cannot change that name. A session of hitl, requests or monitoring waits until it is free, as for a reload, because a fresh restart loses its open work. For your own session, ask the person to restart you, because you never restart your own session. A renamed session keeps its `sessions.id`, so its writes with the new name pass the session guard and the owner guard. Its fresh session gets a new id, so `session upsert` marks its started work orders left over, as at each restart. Handle each `left over:` line of its `DONE · ready` as the status check says.
-  - A row with no live owner: send no `TASK` and do no restart.
-  - After a session rename: write `reload.pending` again without the old name (`sofa-state kv get reload.pending`, then `kv set reload.pending "<names>"`), because no session has that name now.
+A failed backup stops no work, because the Plan store of the factory is complete without it.
 
 ### Timer roles
 
@@ -140,7 +106,7 @@ Before you send a message to a session of the team:
 
 ### A fresh restart
 
-A fresh restart replaces a session with a new session that has the same store name (`docs/adlc.md` section 8, "Exception, a fresh restart"). Use it for each restart of a session. The restarts are the reload, a change of section 3, the colour, a failed identity check, and a session that Claude Code stopped. A session that the person renamed also gets a fresh restart, with its new name (see "A refused `items.id` or `sessions.name`"). Never use `--resume` with the dispatch script, because a resume with an option makes a copy with a new id. A copy can run in another permission mode. A resume gives the session no App env, because the dispatch script gives the `--settings` of the team only at a fresh start. The message `RESUME` and the command `/sofa:resume` mean: continue the work of the team or of an open item. They are not `--resume`, which continues the old conversation of a session.
+A fresh restart replaces a session with a new session that has the same store name (`docs/adlc.md` section 8, "Exception, a fresh restart"). Use it for each restart of a session. The restarts are the reload, a change of section 3, the colour, a failed identity check, and a session that Claude Code stopped. Never use `--resume` with the dispatch script, because a resume with an option makes a copy with a new id. A copy can run in another permission mode. A resume gives the session no App env, because the dispatch script gives the `--settings` of the team only at a fresh start. The message `RESUME` and the command `/sofa:resume` mean: continue the work of the team or of an open item. They are not `--resume`, which continues the old conversation of a session.
 
 Never restart your own session with this procedure, because its step 1 stops this session before steps 2 to 5.
 

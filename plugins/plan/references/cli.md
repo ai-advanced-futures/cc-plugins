@@ -14,7 +14,7 @@ uv run ${CLAUDE_PLUGIN_ROOT}/scripts/plan.py --workspace PROFILE
 
 The command's `--help` is the source for exact arguments. Output is structured JSON; `--json` makes that output compact. `--actor ACTOR` or `PLAN_ACTOR` identifies the executing actor. State and claim changes require an explicit actor. Shell examples for the user have a `$ ` prefix; the prefix is not part of the executed command.
 
-Shared operation and activation rules are in [Shared Plan workspaces](sharing.md). A local workspace remains local until an explicit `share`. Shared success requires publication; a failed command must not be treated as a successful local fallback.
+A workspace is local to one machine. With the automatic push on, the result of a content write has a `backup` block: `pushed: true`, or `pushed: false` with `error`. A failed push does not change the exit code of the write. [One factory on one machine](single-factory.md) gives the rules for sessions, claims, backup, restore, and the migration from shared mode.
 
 ## Commands
 
@@ -23,10 +23,10 @@ The following table gives the command forms after the prefix:
 | Command | Purpose | Result used by skills |
 | --- | --- | --- |
 | `setup --beads-dir DIR --source-root ROOT` | Configure the selected profile file | Configured source and Beads paths |
-| `setup --shared --remote origin --beads-dir DIR --source-root ROOT` | Join an already published shared control | Same workspace identity, machine-local paths |
-| `share --remote origin --writers-paused --clients-upgraded` | Explicitly convert the selected local workspace to shared mode | Verified shared configuration and publication |
-| `sync` | Verify and refresh a shared workspace through its coordination gate | Shared result, or an exact refusal |
-| `describe` | Read selected store identity and supported operations | Workspace, paths, shared mode, and supported write guarantees |
+| `unshare` | Convert a profile and a store from the removed shared mode to local, one time | `unshared: true` and the list `changed`; a second run gives an empty list |
+| `backup` or `backup --remote NAME` | Commit pending Dolt changes and push the Plan data one time to `refs/dolt/data` of the backup remote of the profile, or of `NAME` | `backed_up: true`, the remote address, and the pushed commit in `data_commit` |
+| `backup --remote NAME --auto on` or `backup --auto off` | Save the backup remote and the automatic push after each content write in the profile; no push | `configured: true` and the block `backup` |
+| `describe` | Read selected store identity and supported operations | `workspace_id`, paths, `import_state`, the list `operations`, and `backup` with `remote`, `auto`, `pending`, `last_push_at`, and `last_error` |
 | `prd` | Read PRD summary rows | IDs, paths, types, titles, descriptions, and hashes |
 | `prd ID` | Read one full PRD page | Requirement fields, body, relationships, and hash |
 | `new TYPE --title TEXT` | Create an item | Assigned ID in `record.id` |
@@ -45,8 +45,7 @@ The following table gives the command forms after the prefix:
 | `release TYPE NUMBER --actor ACTOR --claim-token TOKEN` | Return held work | Cleared claim; claimed or in-progress work becomes ready or blocked, while other work states stay unchanged |
 | `expire TYPE NUMBER --actor ACTOR` | End an expired claim | Cleared claim; live claims are refused |
 | `history ID` | Read saved operation events | Actors, times, requests, and changes |
-| `recover` | Finish recorded incomplete local writes | Recovery result, not a fresh import |
-| `recover --previous-writer-stopped --actor ACTOR` | Recover this machine's retained shared attempt after the operator confirms the writer stopped | Verified publication and gate release, or a refusal with no takeover |
+| `recover` | Complete each recorded incomplete write of a stopped command | The repaired IDs in `recovered`; not a fresh import |
 | `migrate` | Preview a copy from a Product roadmap | Proposed items and source mapping |
 | `migrate --apply` | Apply the previewed copy | Stable mapping to Beads IDs |
 | `github configure --repo OWNER/REPO --owner OWNER --number NUMBER --writer LOGIN --actor ACTOR` | Check and save an existing Project and its publisher | Verified board settings; imported bindings stay intact |
@@ -61,7 +60,7 @@ Existing-record mutations accept `--expected-revision NUMBER` to refuse a stale 
 
 Before you continue work from a replay, compare `operation.result.revision` with `record.revision`. If they differ, get a fresh view and the current claim needed for that work. An earlier claim token does not prove current ownership.
 
-`migrate --source PATH` selects a source roadmap when the default is not intended. Preview is the default. A Git source is read from a committed snapshot, with `HEAD` as the default, rather than concurrent uncommitted edits. An explicit non-Git source folder is read as files. Apply copies the roadmap into Beads with a stable source mapping; it leaves the Product roadmap files unchanged. A repeated apply of the same snapshot uses that mapping rather than creating duplicate items. `--revision COMMIT` selects a fixed Git snapshot, and `--fingerprint HASH` on apply refuses a source different from the accepted preview. Apply needs an inactive local target that is empty or holds an incomplete import of that same snapshot. Complete and verify migration before `share`; apply refuses a shared workspace before acquiring its gate. Migration is not an ongoing source sync.
+`migrate --source PATH` selects a source roadmap when the default is not intended. Preview is the default. A Git source is read from a committed snapshot, with `HEAD` as the default, rather than concurrent uncommitted edits. An explicit non-Git source folder is read as files. Apply copies the roadmap into Beads with a stable source mapping; it leaves the Product roadmap files unchanged. A repeated apply of the same snapshot uses that mapping rather than creating duplicate items. `--revision COMMIT` selects a fixed Git snapshot, and `--fingerprint HASH` on apply refuses a source different from the accepted preview. Apply needs a target that is empty or holds an incomplete import of that same snapshot. Migration is not an ongoing source sync.
 
 Preview returns a `mappings` row for each record with `source_id`, `source_path`, and the preserved `plan_id`. Apply and repeat apply also return each `beads_id`. Preview reads no Beads data. A failed Git check stops the copy; it does not select uncommitted files.
 
@@ -73,7 +72,7 @@ The Project summary uses its title, description, and body. `prd:/product.md` is 
 
 `github configure` requires one Project record and an existing GitHub Project. It preserves imported `github` values. `--type-mode labels` or `--type-mode issue_types` selects an explicit representation; an existing choice is not silently replaced.
 
-`github preview` makes no board change. Apply requires its fingerprint, the configured writer, and the same actual GitHub login. A caller-provided writer alone grants nothing. The command uses `gh` from the current `PATH`, so Sofa's authentication wrapper remains in use.
+`github preview` makes no board change. Apply requires its fingerprint, the configured writer, and the same actual GitHub login. A caller-provided writer alone grants nothing, so a session that `gh` authenticates as a person cannot publish as the factory account. The command uses `gh` from the current `PATH`, so Sofa's authentication wrapper remains in use.
 
 Publication records stable issue and Project item bindings. A human owner maps to a GitHub assignee. An agent owner appears as `Plan owner` in the managed issue text and has no GitHub assignee; the Plan claim stays unchanged. Missing board fields, status options, labels, or issue types are reported rather than silently omitted. A partial or uncertain result must not be reported as a complete board update. Reuse the recorded attempt; do not create replacement issues or modify Product roadmap files. The publisher does not pull issue state or assignees into Plan.
 

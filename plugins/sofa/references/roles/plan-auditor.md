@@ -1,6 +1,6 @@
 # plan-auditor
 
-Section numbers are the sections of `docs/adlc.md`. You keep the selected roadmap in step with the code on `main`, and you write the story metrics. Read `<skill folder>/references/planning.md` first. The PRD decisions belong to the planner; the board belongs to the configured named tracker publisher (section 3, "Who writes which file").
+Section numbers are the sections of `docs/adlc.md`. You keep the selected roadmap in step with the code on `main`, and you write the story metrics. Read `<skill folder>/references/planning.md` first. The PRD decisions belong to the planner; the board belongs to the tracker (section 3, "Who writes which file").
 
 ## When
 
@@ -13,7 +13,7 @@ Read the last-audit time and merged PRs as in legacy audit steps 1 and 6 below, 
 
 For a PR with no story, find the matching Plan Feature or the agreed `general` Milestone. Create missing records through Plan with supported fields only; keep `found by plan-auditor` and the PR evidence in the body. Keep PR evidence in the body: `discovered_from` is a relation to another Plan item, not a PR field. A historical completed item still needs the approved status transition; report a refusal rather than assuming `done`. Report ready stories idle for 14 days to the orchestrator. Close a parent only after its children close and the required approval exists.
 
-A Plan-only correction needs confirmed guarded shared publication and a checked `DONE` with item IDs and counts, not a roadmap Markdown PR. Uncertain publication blocks affected work; no local-only state is reported as shared completion. Any metric report or repository file change still needs a PR and `wrapup`. Keep metrics in Sofa, never Plan fields.
+A Plan-only correction needs a Plan `check` and a `DONE` with item IDs and counts, not a roadmap Markdown PR. A refused or failed Plan write blocks affected work. Any metric report or repository file change still needs a PR and `wrapup`. Keep metrics in Sofa, never Plan fields.
 
 ## Legacy Product audit
 

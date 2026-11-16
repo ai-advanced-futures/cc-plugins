@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["PyYAML>=6.0,<7"]
 # ///
-"""Plan: explicit Beads workspaces with Product-compatible planning rules."""
+"""Plan: one explicit local Beads workspace with Product-compatible planning rules."""
 from __future__ import annotations
 
 import argparse
@@ -28,7 +28,7 @@ def parser():
     root.add_argument("--bd", default=os.environ.get("PLAN_BD", "bd"), help="Beads executable")
     root.add_argument("--actor", default=os.environ.get("PLAN_ACTOR"), help="human:<name> or agent:<id>")
     root.add_argument("--json", action="store_true", help="emit compact JSON (all output is structured)")
-    root.add_argument("--version", action="version", version="plan 0.2.1")
+    root.add_argument("--version", action="version", version="plan 0.3.0")
     commands = root.add_subparsers(dest="command", required=True)
 
     def command(name, help_text, mutation=False):
@@ -43,13 +43,11 @@ def parser():
     setup = command("setup", "bind a profile to an explicitly initialized local Beads workspace")
     setup.add_argument("--beads-dir", type=Path, required=True)
     setup.add_argument("--source-root", type=Path, required=True)
-    setup.add_argument("--shared", action="store_true", help="join an existing shared control after Beads bootstrap")
-    setup.add_argument("--remote", default="origin", help="Git remote of the shared workspace")
-    share = command("share", "enable guarded shared writes after every writer stops and upgrades")
-    share.add_argument("--remote", default="origin")
-    share.add_argument("--writers-paused", action="store_true", help="confirm all existing writers are stopped")
-    share.add_argument("--clients-upgraded", action="store_true", help="confirm all clients support shared Plan")
-    command("sync", "verify and refresh the shared store through its coordination gate")
+    command("unshare", "convert a profile and a store from the removed shared mode to local, one time")
+    backup = command("backup", "push the Plan data to one Git remote, or save the automatic push setting")
+    backup.add_argument("--remote", help="name of the Git remote that receives refs/dolt/data; default: the profile's backup remote")
+    backup.add_argument("--auto", choices=("on", "off"),
+                        help="save the remote and the automatic push after each content write; no push now")
     command("describe", "show selected store identity and supported operations")
     prd = command("prd", "read Product requirements without running Product")
     prd.add_argument("id", nargs="?")
@@ -92,7 +90,7 @@ def parser():
     status.add_argument("--approved-by")
     status.add_argument("--claim-token")
     for name in ("claim", "heartbeat", "release", "expire"):
-        cmd = command(name, "manage a single-item local claim; release does not mark released", mutation=True)
+        cmd = command(name, "manage a single-item claim; release does not mark released", mutation=True)
         cmd.add_argument("target", nargs="+")
         cmd.add_argument("--lease", default="30m")
         cmd.add_argument("--claim-token")
@@ -100,9 +98,7 @@ def parser():
     ready.add_argument("--type")
     ready.add_argument("--milestone")
     command("check", "validate the work graph and its requirement traces")
-    recover = command("recover", "finish recorded incomplete writes; never take over another machine's gate")
-    recover.add_argument("--previous-writer-stopped", action="store_true",
-                         help="confirm the prior writer stopped before recovering this machine's saved shared attempt")
+    command("recover", "finish each recorded incomplete write of a stopped command")
     migrate = command("migrate", "preview or copy a fixed roadmap snapshot; never modify source")
     migrate.add_argument("--source", type=Path)
     migrate.add_argument("--revision", help="source Git commit/ref; defaults to HEAD for Git sources")
@@ -152,8 +148,9 @@ def require_profile(args):
 def execute(args):
     profile = require_profile(args)
     if args.command == "setup":
-        return Workspace.setup(profile, args.beads_dir, args.source_root, args.bd,
-                               shared=args.shared, remote=args.remote), 0
+        return Workspace.setup(profile, args.beads_dir, args.source_root, args.bd), 0
+    if args.command == "unshare":
+        return Workspace.unshare(profile, args.bd), 0
     if args.command == "migrate":
         # Preview reads only source files and local configuration, not Beads.
         source = args.source
@@ -165,21 +162,18 @@ def execute(args):
             return preview(data), 0
         workspace = Workspace(profile, binary=args.bd, actor=args.actor or "agent:plan-migrate",
                               operation="migrate", request_id=getattr(args, "request_id", None))
+        args.plan_workspace = workspace
         return import_snapshot(workspace, data, args.fingerprint), 0
     operation = args.command if args.command != "github" else "github-" + args.github_command
     workspace = Workspace(profile, binary=args.bd, actor=args.actor or "agent:plan",
                           operation=operation, request_id=getattr(args, "request_id", None))
+    args.plan_workspace = workspace
     service = Service(workspace, args.actor)
     command = args.command
-    if command == "share":
-        return workspace.share(remote=args.remote, paused=args.writers_paused,
-                               upgraded=args.clients_upgraded), 0
-    if command == "sync":
-        if not workspace.shared:
-            raise PlanError("sync requires a shared workspace; local work was not published")
-        with workspace.lock():
-            workspace.control()
-        return {"workspace_id": workspace.id, "synced": True, "saved": "shared"}, 0
+    if command == "backup":
+        if args.auto:
+            return workspace.configure_backup(args.remote, args.auto == "on"), 0
+        return workspace.backup(args.remote), 0
     if command == "github":
         from planlib import github
         if args.github_command in {"configure", "apply"} and not args.actor:
@@ -192,17 +186,16 @@ def execute(args):
                 result = github.preview(workspace)
             else:
                 result = github.apply(workspace, args.fingerprint, args.writer)
-        return {**result, "saved": "shared" if workspace.shared else "local"}, 0
+        return {**result, "saved": "local"}, 0
     if command == "describe":
         with workspace.lock():
             control = workspace.control()
         return {"provider": "plan", "contract_version": 2, "workspace_id": workspace.id,
                 "beads_dir": str(workspace.beads_dir), "source_root": str(workspace.source_root),
-                "import_state": control.get("import_state"), "shared": workspace.shared,
-                "writes": "guarded shared Plan callers" if workspace.shared else "single-machine Plan callers",
-                "operations": ["list", "show", "new", "set", "body", "link", "unlink", "assign", "status", "claim", "heartbeat", "release", "expire", "ready", "check", "migrate", "recover", "share", "sync", "github"],
-                "group_claims": False, "distributed_claims": workspace.shared,
-                "automatic_publish": workspace.shared, "factory_activated": False}, 0
+                "import_state": control.get("import_state"),
+                "writes": "single-machine Plan callers",
+                "operations": ["list", "show", "new", "set", "body", "link", "unlink", "assign", "status", "claim", "heartbeat", "release", "expire", "ready", "check", "migrate", "recover", "unshare", "backup", "github"],
+                "group_claims": False, "factory_activated": False, "backup": workspace.backup_status()}, 0
     if command == "prd":
         reader = PRD(workspace.source_root)
         if args.id:
@@ -222,13 +215,9 @@ def execute(args):
         result = service.check()
         return result, int(bool(result["errors"]))
     if command == "recover":
-        if args.previous_writer_stopped:
-            if not args.actor:
-                raise PlanError("shared attempt recovery requires --actor or PLAN_ACTOR")
-            return workspace.recover_shared(previous_writer_stopped=True), 0
         with workspace.lock():
             fixed = workspace.recover()
-        return {"recovered": fixed, "saved": "shared" if workspace.shared else "local"}, 0
+        return {"recovered": fixed, "saved": "local"}, 0
     if command == "new":
         links = {key: [getattr(args, key)] for key in ("parent", "milestone", "item") if getattr(args, key)}
         for item in args.link:
@@ -286,6 +275,13 @@ def main(argv=None):
     except (PlanError, BeadsError, OSError, ValueError) as exc:
         print(json.dumps({"error": str(exc), "success": False}, ensure_ascii=True), file=sys.stderr)
         return 1
+    pushed = getattr(getattr(args, "plan_workspace", None), "backup_result", None)
+    if pushed is not None and isinstance(result, dict):
+        # The write is saved. A failed backup push changes neither the result nor the exit code.
+        result = {**result, "backup": pushed}
+        if not pushed["pushed"]:
+            print(json.dumps({"warning": "backup push failed; the write is saved: " + pushed["error"]},
+                             ensure_ascii=True), file=sys.stderr)
     print(json.dumps(result, ensure_ascii=False, indent=None if args.json else 2, allow_nan=False))
     return code
 

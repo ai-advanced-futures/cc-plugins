@@ -29,7 +29,7 @@
     },
     {
       "name": "plan",
-      "description": "Plan product work in an explicit local or shared Beads store. Generate and develop work from a Product PRD, coordinate claims, and publish a GitHub Project without changing Product roadmap files or starting Sofa.",
+      "description": "Plan product work in an explicit local Beads store on one machine. Generate and develop work from a Product PRD, coordinate claims, and publish a GitHub Project without changing Product roadmap files or starting Sofa.",
       "source": "./plugins/plan",
       "strict": false
     },

@@ -11,7 +11,7 @@ TIER ?=
 # slacklive (live /sofa:setup sessions, step 5, with the fake Slack API),
 # skillslive (live /sofa:setup sessions, step 2.5, the factory skills; needs the network),
 # hitllive (live hitl sessions that post a card with sofa-slack post, with the fake Slack API),
-# snapshot (sofa-state snapshot publish and snapshot lines on fixture stores and a scratch bare origin, no paid session).
+# snapshot (sofa-state snapshot take and decision log on fixture stores with a scratch bare origin that gets no call, no paid session).
 PYTEST := SOFA_ITEST=1 python3 -m pytest tests/integration -m integration -rs
 
 .PHONY: itest

@@ -1,5 +1,37 @@
 # Changelog
 
+## 12.0.0
+
+A repository has 1 factory on 1 machine (operator decision, 2026-11-16). The text and the code for several machines and teams are removed.
+
+A major step: it stops runs that work today. A shared Plan profile is refused until `sofa-plan unshare`, and a team does not start on a machine that is not the factory.
+
+Removed:
+
+- The shared Plan: "Join a shared Plan", the activation on several machines, the gate, `recover --previous-writer-stopped`, and the readiness status "this machine has not joined the shared Plan". It needs plan 0.3.0, which has no shared mode.
+- `sofa-state snapshot publish`, `snapshot lines`, and the `refs/sofa-floor/*` refs. `snapshot take` stays. The orchestrator has no "Snapshot publish" step and no step for a refused row.
+- The blocks of decision ids (the tags `sofa-decision-block/<k>` on `origin`). `sofa-state decision log` takes each id from 1 counter of the store, with no network call.
+- The machine value `GitHub person`, the key `machine.instance`, and the instance in the header of `sofa-state report` and of the dashboard.
+- The rule "Mention the operator", and the board claims between teams of the legacy Product tracker.
+- The Plan actor form `agent:<instance>.<station>`.
+
+In their place:
+
+- Template 14: the row `Factory` in `docs/adlc.md` section 1 names the factory by its App slug, or `none`. The readiness item `factory-machine` blocks the start on a machine with another slug or with no slug.
+- The rule "Mention the human team": a post for a human mentions the owner of the card, else each person whose page has `escalates-to:none`.
+- The Plan actor is `agent:<station>`. The tracker is the only board publisher: a preview, then an apply after a `SYNC`.
+- The Plan backup: Plan pushes its data to `origin` after each content write, when `sofa-plan --repo <main folder> backup --remote origin --auto on` turned it on (`/sofa:setup`, step 2.4; `unshare` turns it on by itself). `/sofa:stop` pushes 1 time more. The orchestrator reads `describe` and raises a user step when a push stays pending across 2 checks ("Backup check").
+- `/sofa:handoff` moves the factory to a new machine: stop, backup, clone, `bd bootstrap`, Plan `setup`, the App values.
+- The default of `SOFA_PLAN_TIMEOUT` is in `references/planning.md`.
+
+Migration of an existing factory, in order:
+
+1. Stop the team (`/sofa:stop`).
+2. Update the plan plugin to 0.3.0 and the sofa plugin to 12.0.0, in each scope that has a copy. Restart Claude Code.
+3. When the Plan profile is shared: run `<skill folder>/scripts/sofa-plan --repo <main folder> unshare`.
+4. Run `/sofa:start`. It updates `docs/adlc.md` with the step 13 → 14 of `templates/MIGRATION.md`, which asks for the `Factory` row.
+5. When `describe --json` shows `backup.auto` as `false`, run `/sofa:setup` (step 2.4) to turn the automatic backup on.
+
 ## 11.4.2
 
 `/sofa:setup` step 2.4, "Join an activated shared Plan", joins a second machine to an activated shared Plan, and readiness names a machine that has not joined.

@@ -25,9 +25,11 @@ $ uv run ${CLAUDE_PLUGIN_ROOT}/scripts/plan.py --workspace PROFILE setup --beads
 
 Setup does not copy an existing roadmap. Use `/plan:migrate` to preview that copy.
 
-For multiple machines, use an explicitly shared workspace. Stop and upgrade all writers, migrate once, then publish through Plan's guarded `share` operation. Other machines obtain the existing Beads data before `setup --shared`. `/plan:sync` verifies shared synchronization. [Shared Plan workspaces](references/sharing.md) gives the activation, transport, and recovery rules.
+## One machine
 
-A shared operation holds a Git coordination gate through read, change, and publication. A local claim or a failed push is not permission to start work. Plan does not automatically take over an interrupted gate.
+A repository has one Plan workspace on one machine. Many sessions on that machine can use it at the same time: a file lock lets one command use the store at a time, and a claim gives one session the right to work on an item.
+
+`backup --remote NAME --auto on` makes Plan push its data to a Git remote after each content write. A failed push does not fail the write. To restore, run `bd bootstrap` and then Plan `setup`. Plan 0.3.0 removed shared mode: run `unshare` one time on a profile from shared mode. [One factory on one machine](references/single-factory.md) gives each procedure.
 
 ## Plan from requirements
 
@@ -54,7 +56,6 @@ The following table lists the skills:
 | `/plan:heartbeat` | Type, number, actor, and claim token | Renewed claim lease |
 | `/plan:release` | Type, number, actor, and claim token | Ended claim and stored work state |
 | `/plan:migrate` | Optional source and apply choice | Preview or stable copy of a Product roadmap |
-| `/plan:sync` | Explicit shared workspace | Verified synchronization and model check |
 | `/plan:publish` | Explicit workspace and preview or apply choice | GitHub Project preview or checked publication |
 
 The generation command is `/plan:generate`, not `/plan:plan`.

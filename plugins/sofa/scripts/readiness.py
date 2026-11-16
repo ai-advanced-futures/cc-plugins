@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from sofa_plan import Plan, PlanFailure, legacy_roadmap, selection, validation_environment
+from sofa_plan import STILL_SHARED, Plan, PlanFailure, legacy_roadmap, selection, still_shared, validation_environment
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 CODE_SUFFIXES = {".py", ".ts", ".tsx", ".js", ".go", ".rs", ".java", ".rb", ".sh"}
@@ -419,6 +419,7 @@ def check_team(repo):
                               "/sofa:setup"))
         else:
             items.append(item("adlc-placeholders", "team", "ok", "no placeholder in section 1"))
+        items.append(check_factory_machine(repo))
 
     rc, out = run([cmd_name("READINESS_CRONTAB", "crontab"), "-l"])
     if rc == 127:
@@ -455,6 +456,47 @@ def check_team(repo):
         except sqlite3.Error as e:
             items.append(item("state-store", "team", "wrong", f".sofa/state.db: {e}", "sofa-state init"))
     return items
+
+
+APP_SLUG = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,98}[A-Za-z0-9])?")
+
+
+def store_app_slug(repo):
+    """The key machine.github-app.slug of the state store of this machine, or None. A read with no write."""
+    db = Path(main_folder(repo.root) or repo.root) / ".sofa" / "state.db"
+    if not db.exists():
+        return None
+    try:
+        con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+        try:
+            row = con.execute("SELECT value FROM kv WHERE key = 'machine.github-app.slug'").fetchone()
+        finally:
+            con.close()
+    except sqlite3.Error:
+        return None
+    value = (row[0] or "") if row else ""
+    return value if isinstance(value, str) and APP_SLUG.fullmatch(value) else None
+
+
+def check_factory_machine(repo):
+    """A repository has 1 factory on 1 machine: the row Factory of docs/adlc.md section 1 names the slug of its
+    GitHub App. ok when the row is absent or `none` (a team with no App), or names the slug of this machine. wrong,
+    and it blocks the start, when the row names a slug and this machine has another slug or none. It is a check
+    and no lock: it makes no network call and writes nothing."""
+    values = repo.setup_values()
+    if "Factory" not in values:
+        return item("factory-machine", "team", "ok", "docs/adlc.md has no Factory row")
+    factory = first_token(values["Factory"])
+    if factory.startswith("<"):
+        return item("factory-machine", "team", "unknown", "the Factory row is a placeholder", "/sofa:setup")
+    if factory.casefold() == "none":
+        return item("factory-machine", "team", "ok", "the Factory row is none (a team with no App)")
+    mine = store_app_slug(repo)
+    if mine is not None and mine.casefold() == factory.casefold():
+        return item("factory-machine", "team", "ok", f"this machine is the factory {factory}")
+    return item("factory-machine", "team", "wrong",
+                f"this repository's factory is {factory}; this machine is {mine or 'not set up'}",
+                "start the factory only on its machine (/sofa:setup, step 2.4)", True)
 
 
 def check_github_app(repo):
@@ -763,49 +805,18 @@ def gh_person(out):
     return pick[0]["login"]
 
 
-def store_instance(repo):
-    """The key machine.instance of the state store: the GitHub person that /sofa:start step 3 wrote. None when there
-    is no store or no key, or when the value is no login."""
-    db = Path(main_folder(repo.root) or repo.root) / ".sofa" / "state.db"
-    if not db.exists():
-        return None
-    try:
-        con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
-        try:
-            row = con.execute("SELECT value FROM kv WHERE key = 'machine.instance'").fetchone()
-        finally:
-            con.close()
-    except sqlite3.Error:
-        return None
-    value = (row[0] or "") if row else ""
-    return value if GH_LOGIN.fullmatch(value) else None
-
-
-def github_person(repo):
-    """The GitHub person (docs/adlc.md section 1, machine values) and its source, or (None, None).
-
-    1st, the active account of gh auth status: the session of the person, where /sofa:start finds it. 2nd, the key
-    machine.instance of the state store: in a team session the shim gives gh no account (ADR-0007), and /sofa:start
-    step 3 wrote the key for the team."""
-    who = gh_person(repo.gh_status()[1])
-    if who:
-        return who, "the active account of gh auth status"
-    who = store_instance(repo)
-    if who:
-        return who, "machine.instance of the state store"
-    return None, None
-
-
 def operator_page(repo, path, pages):
-    """Rule "Mention the operator" of docs/adlc.md section 2: 1 person page on the default branch of origin has the
-    tag github:<GitHub person>. `pages` are the person pages of the working tree.
+    """The person who starts the team has a person page: 1 person page on the default branch of origin has the tag
+    github:<login>, where the login is the active account of gh auth status. `pages` are the person pages of the
+    working tree.
 
-    It blocks the start, because with no such page each card, issue, PR comment and Slack message for a human
-    becomes a BLOCKED · team. The case of the letters does not count, because GitHub does not use it in a login."""
-    who, source = github_person(repo)
+    It blocks the start, because the team mentions a person of the human team in each post for a human. A team
+    session has no account of a person (ADR-0007), so the item is unknown there and does not block. The case of the
+    letters does not count, because GitHub does not use it in a login."""
+    who, source = gh_person(repo.gh_status()[1]), "the active account of gh auth status"
     if who is None:
         return item("operator-page", "human", "unknown",
-                    "gh auth status names no active account of a person, and the state store has no machine.instance",
+                    "gh auth status names no active account of a person",
                     "gh auth login, in the session of the person")
     branch = default_branch(repo.root)
 
@@ -872,39 +883,18 @@ def check_human(repo):
     return items
 
 
-def unshared_profile(profile):
-    """True when the profile is missing or has no sharing block."""
-    try:
-        return "sharing" not in json.loads(profile.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        return True
-    except (OSError, ValueError, TypeError):
-        return False
-
-
-def remote_has_shared_plan(root):
-    """True when origin has the Plan gate branch. One read; no Plan call, no gate."""
-    env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_ASKPASS="",
-               GIT_SSH_COMMAND=os.environ.get("GIT_SSH_COMMAND", "ssh") + " -o BatchMode=yes")
-    try:
-        done = subprocess.run(["git", "-C", str(root), "ls-remote", "--heads", "origin", "refs/heads/plan-coordination"],
-                              capture_output=True, text=True, timeout=20, env=env)
-    except (OSError, subprocess.TimeoutExpired):
-        return False
-    return done.returncode == 0 and any(line.endswith("\trefs/heads/plan-coordination") for line in done.stdout.splitlines())
-
-
 def check_roadmap_backend(repo):
     try:
         root, backend, profile = selection(repo.root)
         if backend == "product":
             return [item("roadmap-backend", "brains", "ok", "Product roadmap selected (legacy default)")]
-        if unshared_profile(profile) and remote_has_shared_plan(root):
-            return [item("roadmap-backend", "brains", "missing", "this machine has not joined the shared Plan",
-                         "/sofa:setup (join the shared Plan)", True)]
+        # Before each Plan call: a profile of an earlier Plan can have a sharing block, and Plan refuses it.
+        if still_shared(profile):
+            return [item("roadmap-backend", "brains", "wrong", STILL_SHARED,
+                         "sofa-plan unshare (see references/planning.md)", True)]
         helper = cmd_name("READINESS_SOFA_GITHUB", str(PLUGIN_ROOT / "scripts/sofa-github"))
         environment = validation_environment(root, {}, helper=[helper, "--db", str(root / ".sofa/state.db")])
-        records = Plan(root, profile, env=environment).validate(require_records=legacy_roadmap(root), require_shared=True)
+        records = Plan(root, profile, env=environment).validate(require_records=legacy_roadmap(root))
         return [item("roadmap-backend", "brains", "ok", f"Plan checks passed; {len(records)} records")]
     except PlanFailure as exc:
         return [item("roadmap-backend", "brains", "wrong", str(exc),

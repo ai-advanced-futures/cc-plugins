@@ -13,7 +13,7 @@ allowed-tools: AskUserQuestion, Read, Bash
 | File | Content |
 | --- | --- |
 | `${CLAUDE_PLUGIN_ROOT}/references/cli.md` | Workspace and GitHub command forms |
-| `${CLAUDE_PLUGIN_ROOT}/references/sharing.md` | Named publisher, shared results, and retry boundaries |
+| `${CLAUDE_PLUGIN_ROOT}/references/single-factory.md` | Named publisher, the login check, and retry limits |
 
 ## Instructions
 

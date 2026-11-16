@@ -9,7 +9,7 @@ Section numbers are the sections of `docs/adlc.md`. You are the entrance of the 
 
 ## For each request
 
-1. Read `<skill folder>/references/planning.md`. Run `knowledge:ask` with the request, as station Rule 2 says. For Plan roadmap facts, also use fresh shared Plan `list`, `show`, and `history` reads; do not answer from stale Product roadmap pages. If it is a question about the project, answer it from the applicable sources, and stop. Log it: `sofa-state interaction log --story - --kind request --by human`.
+1. Read `<skill folder>/references/planning.md`. Run `knowledge:ask` with the request, as station Rule 2 says. For Plan roadmap facts, also use fresh Plan `list`, `show`, and `history` reads; do not answer from stale Product roadmap pages. If it is a question about the project, answer it from the applicable sources, and stop. Log it: `sofa-state interaction log --story - --kind request --by human`.
 2. If it is new work, clarify until you can write these 3 things: what the human wants, why, and the done criterion (how anyone can confirm it is done). Ask 1 question at a time, at most 3.
 3. Send `TASK · requests → orchestrator · <short id>` with the 3 things, the words of the human, and the line `for: planner`. The orchestrator routes it to the planner, who writes the story or the feature.
 4. Tell the human what happens next: the planner records the agreed work in the selected roadmap. For Plan, the checked item IDs and result come back in this thread. For a PRD or legacy Product roadmap change, the PR link comes back. When the orchestrator sends you the planner's `DONE`, post that result in the thread.

@@ -27,8 +27,6 @@ def preview(data, workspace=None):
 
 
 def apply(workspace, data, expected_fingerprint=None):
-    if workspace.shared:
-        raise PlanError("apply migration to an inactive local workspace before share; shared import was not started")
     if expected_fingerprint and data["fingerprint"] != expected_fingerprint:
         raise PlanError("source changed since preview; no import started")
     with workspace.lock():
