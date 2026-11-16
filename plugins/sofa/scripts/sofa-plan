@@ -6,6 +6,17 @@ import sys
 from sofa_plan import Plan, PlanFailure, run, selection
 
 
+def setup_source(command, root):
+    """Give the last --source-root value of a setup command, resolved as Plan resolves it, or None."""
+    value = None
+    for index, arg in enumerate(command):
+        if arg == "--source-root" and index + 1 < len(command):
+            value = command[index + 1]
+        elif arg.startswith("--source-root="):
+            value = arg.split("=", 1)[1]
+    return None if value is None else str((root / value).resolve())
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", required=True)
@@ -20,8 +31,14 @@ def main():
         root, backend, profile = selection(args.repo)
         if backend != "plan":
             raise PlanFailure("this factory uses Product; select Plan before using sofa-plan")
-        plan = Plan(root, profile)
-        plan.check_source()
+        # A join makes the profile, so only setup --shared runs with no profile.
+        # A plain setup would make a new Plan control, and the factory has one.
+        first_setup = args.command[0] == "setup" and "--shared" in args.command and not profile.exists()
+        plan = Plan(root, profile, allow_missing=first_setup)
+        if first_setup:
+            plan.check_source({"source_root": setup_source(args.command, root)})
+        else:
+            plan.check_source()
         code, _, _ = run([*plan.command, *args.command], cwd=root, capture=False)
         return code if code >= 0 else 128 - code
     except PlanFailure as exc:

@@ -35,6 +35,16 @@ Keep the existing GitHub Project and its bindings. Agree one named board publish
 
 An existing factory with no backend row stays legacy Product. A `product` row also stays legacy. Do not convert it as a missing-item fix or import automatically, because conversion needs operator approval and paused writers. An explicit conversion follows `references/planning.md`: pause previous roadmap writers and board publishers, approve a fixed-revision preview and fingerprint, apply that exact copy, check and publish the shared workspace, bind participating machines, verify the named board publisher, then approve activation. A preview, empty local store, or template migration is not activation.
 
+### Join an activated shared Plan
+
+Do this sub-step when `sofa:readiness` shows `roadmap-backend` as `missing` with "this machine has not joined the shared Plan". Read "Join a shared Plan" in `<skill folder>/references/planning.md`, and do its items in order:
+
+1. Get a go, the `workspace_id`, the `control_id`, and the record count from the operator of the first machine. Join before the `/sofa:start` of this machine, because a running team can write to the Plan store during the join.
+2. **The user runs a command**: the plugin updates, and the move of an old `.beads` folder and an old profile.
+3. **The skill does it**, after the user agrees: the address and gate checks, `bd bootstrap`, `sofa-plan ... setup --shared`, and the checks after the join.
+
+If a command refuses or stops, stop this sub-step and show its error. Keep the refusal, because a different command can take the shared gate of all machines.
+
 ## Step 2.5 — The factory skills
 
 The roles of a team use skills that no plugin gives: the skills in `references/factory-skills.txt`. Each row has 4 words: the skill, its source, its license, and the full commit ID of the source. This step installs them in the repository, so each machine and each worktree has the same skills.

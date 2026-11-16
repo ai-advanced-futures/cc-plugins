@@ -139,9 +139,9 @@ def shared_readiness(description):
 
 
 class Plan:
-    def __init__(self, root, profile, *, env=None):
+    def __init__(self, root, profile, *, env=None, allow_missing=False):
         self.root, self.profile, self.env = root, profile, env
-        if not profile.is_file():
+        if not allow_missing and not profile.is_file():
             raise PlanFailure("the Plan workspace profile is missing; no store was created")
         self.command = ["uv", "run", str(plan_script(root)), "--workspace", str(profile)]
 

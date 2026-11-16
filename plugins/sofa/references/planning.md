@@ -63,3 +63,44 @@ A Product factory stays legacy until the operator approves a separate change. Do
 For an approved conversion, pause previous roadmap writers and board publishers on every machine. Configure one selected Plan workspace, preview `migrate` from a fixed committed source with `--revision`, and obtain approval of its fingerprint. Apply only that snapshot with `migrate --apply --revision COMMIT --fingerprint HASH`; use `--source` when the accepted source is not the default. Migration leaves Product files unchanged and is not ongoing sync. Inspect mappings and claims without disclosing tokens, then run `check`.
 
 Before resume, verify shared publication and identity, bind every machine to that same published workspace and control, test guarded claim conflict and interrupted-write recovery, and verify a preview against the existing GitHub Project with its named publisher. Land the explicit backend/profile choice and review repository role overrides for Product writers. Resume only after these activation checks pass. A preview, empty local store, or unshared import is not activation. If a step fails, keep affected writers paused and report the partial result; do not run both roadmap backends or automatically take over another writer.
+
+## Join a shared Plan
+
+Use this section for a machine of a factory that already has an activated shared Plan: `docs/adlc.md` selects `plan`, `origin` has the branch `plan-coordination`, and the profile of this machine is missing or has no `sharing` block. `sofa:readiness` then shows `roadmap-backend` as `missing`. Do the items in order. `<main folder>` is the main checkout of this machine, `<profile>` is the `Plan workspace` row, `<skill folder>` is the folder of the sofa skill, and `<backup folder>` is a new folder outside the repository. Each shared Plan call takes 30 to 90 seconds on a store of some hundred records.
+
+1. **A go from the first machine.** The operator of the first machine gives a go, the `workspace_id`, the `control_id`, and the record count of `list`. If `docs/adlc.md` section 1 records an activation state, it holds the same values. Join before the `/sofa:start` of this machine. A team of this machine must not run during the join, because it can write to the store.
+2. **The plugin versions (the user runs a command).** Each machine needs plan 0.2.1 or later. The machine that joins also needs sofa 11.4.2 or later, because 11.4.2 lets `sofa-plan` run `setup --shared` when the profile is missing. `claude plugin list` shows each scope that has a copy of a plugin. A user copy and a project copy can both exist, so update each one. Show these commands:
+
+   ```text
+   $ claude plugin marketplace update cc-plugins
+   $ claude plugin update plan@cc-plugins --scope <scope>
+   $ claude plugin update sofa@cc-plugins --scope <scope>
+   ```
+
+   The user restarts Claude Code after the update.
+3. **The remote (the skill checks it).** `git -C <main folder> remote get-url --all origin` and `git -C <main folder> remote get-url --push --all origin` must each give 1 line, and the 2 lines must be the same. Plan refuses a different fetch and push address. Use the same address form as the first machine (for example the SSH form `git@github.com:<owner>/<repo>.git`).
+4. **A free gate (the skill checks it).** `git -C <main folder> ls-remote origin plan-coordination` must give 1 line. Ask the operator of the first machine to confirm that its Beads folder has no `plan-shared-attempt.json` file. A locked gate gives the refusal "shared workspace has no available published control".
+5. **An old store (the user runs a command).** `bd bootstrap` copies the published data (`refs/dolt/data`) only when no local Beads database exists. If `<main folder>/.beads/plan-shared-attempt.json` exists, stop: this machine holds a shared attempt, and it needs `recover` (see "Time limits" below), not a join. If `<main folder>/.beads` or `<profile>` exists (for example an empty store of Plan 0.1.x), the operator first checks that it holds no work that the team needs. Then the user moves each one to `<backup folder>`, and does not delete it. If `git -C <main folder> ls-files .beads` lists files, the user puts the tracked files back, because they hold the Beads settings of the repository:
+
+   ```text
+   $ mv <main folder>/.beads <backup folder>/beads
+   $ mv <profile> <backup folder>/profile.json
+   $ git -C <main folder> checkout -- .beads
+   ```
+
+6. **The copy of the published data (the skill does it, after the user agrees).** `bd bootstrap` is the join step of the Plan reference `references/sharing.md`. It is the only `bd` command of the join. In `<main folder>`, run `bd bootstrap --dry-run`. Its plan must say that it clones from the remote or from the git origin. Then run `bd bootstrap --yes`.
+7. **The join (the skill does it, after the user agrees).** Run this command. The wrapper binds `<profile>` from `docs/adlc.md`:
+
+   ```text
+   <skill folder>/scripts/sofa-plan --repo <main folder> setup --shared --remote origin --beads-dir <main folder>/.beads --source-root <main folder>
+   ```
+
+8. **The checks after the join (the skill does it).** Run each command with the `sofa-plan --repo <main folder>` prefix:
+   - `describe --json`: `workspace_id` is the value of item 1, and `shared`, `distributed_claims`, and `automatic_publish` are each `true`. `describe` gives no `control_id`, so read `control_id` from `<profile>`: it is the value of item 1.
+   - `sync`: it ends with exit code 0.
+   - `list`: the record count is the count of item 1.
+   - `check`: 0 errors.
+
+   Then run `sofa:readiness`. All items must be `ok`.
+
+Time limits. Keep `SOFA_PLAN_TIMEOUT` at its default of 1800 seconds or higher, because a call that stops at its time limit while it holds the gate keeps the gate locked for all machines. The machine that holds the journal then runs `recover --previous-writer-stopped --actor <actor>` with the `sofa-plan` prefix, after its operator confirms that the writer stopped. `recover` can take about 40 minutes, so give it a larger limit (for example `SOFA_PLAN_TIMEOUT=7200`). If an item refuses or stops, stop the join and show the error. Keep `<backup folder>` until the checks of item 8 pass, because it holds the only copy of the old store.

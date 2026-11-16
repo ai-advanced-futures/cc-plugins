@@ -872,11 +872,36 @@ def check_human(repo):
     return items
 
 
+def unshared_profile(profile):
+    """True when the profile is missing or has no sharing block."""
+    try:
+        return "sharing" not in json.loads(profile.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return True
+    except (OSError, ValueError, TypeError):
+        return False
+
+
+def remote_has_shared_plan(root):
+    """True when origin has the Plan gate branch. One read; no Plan call, no gate."""
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_ASKPASS="",
+               GIT_SSH_COMMAND=os.environ.get("GIT_SSH_COMMAND", "ssh") + " -o BatchMode=yes")
+    try:
+        done = subprocess.run(["git", "-C", str(root), "ls-remote", "--heads", "origin", "refs/heads/plan-coordination"],
+                              capture_output=True, text=True, timeout=20, env=env)
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return done.returncode == 0 and any(line.endswith("\trefs/heads/plan-coordination") for line in done.stdout.splitlines())
+
+
 def check_roadmap_backend(repo):
     try:
         root, backend, profile = selection(repo.root)
         if backend == "product":
             return [item("roadmap-backend", "brains", "ok", "Product roadmap selected (legacy default)")]
+        if unshared_profile(profile) and remote_has_shared_plan(root):
+            return [item("roadmap-backend", "brains", "missing", "this machine has not joined the shared Plan",
+                         "/sofa:setup (join the shared Plan)", True)]
         helper = cmd_name("READINESS_SOFA_GITHUB", str(PLUGIN_ROOT / "scripts/sofa-github"))
         environment = validation_environment(root, {}, helper=[helper, "--db", str(root / ".sofa/state.db")])
         records = Plan(root, profile, env=environment).validate(require_records=legacy_roadmap(root), require_shared=True)

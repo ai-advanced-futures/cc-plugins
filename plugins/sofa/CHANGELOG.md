@@ -1,5 +1,16 @@
 # Changelog
 
+## 11.4.2
+
+`/sofa:setup` step 2.4, "Join an activated shared Plan", joins a second machine to an activated shared Plan, and readiness names a machine that has not joined.
+
+A patch step: no command, key, or option goes away. The wrapper accepts 1 more case, and readiness gives a more exact status for 1 case that it refused before.
+
+- Before, setup said to bind each machine to the published Plan, but gave no steps, and the operator wrote them by hand. `references/planning.md`, "Join a shared Plan", now gives the steps in order: a go and the identity values from the first machine, the plugin updates in each scope, the remote and gate checks, the move of an old `.beads` folder and profile to a folder outside the repository, `bd bootstrap`, `sofa-plan ... setup --shared`, the checks after the join, and the time limits.
+- `sofa-plan` runs `setup --shared` when the profile is missing. Before, it refused each command with no profile, so a new machine could not join through the wrapper. The last `--source-root` of that `setup` must be the main folder. A plain `setup` with no profile stays refused, because it would make a new Plan control.
+- `readiness.py`: when `docs/adlc.md` selects `plan`, `origin` has the branch `plan-coordination`, and the profile is missing or has no `sharing` block, `roadmap-backend` is `missing` with "this machine has not joined the shared Plan" and the fix "/sofa:setup (join the shared Plan)". The check makes 1 `git ls-remote` call (20 seconds at most, no prompt) and no Plan call.
+- Tests: `test_plan_runtime.py` checks the new readiness status with a local bare `origin`, the old status with no gate branch or with a shared profile, the first `setup --shared` of the wrapper, and the refusals of another source root, a plain `setup`, or another command with no profile.
+
 ## 11.4.1
 
 `sofa_plan.py` stops each Plan call after 1800 seconds (30 minutes) by default, not 60. The `sofa-plan` wrapper and readiness use this limit.
