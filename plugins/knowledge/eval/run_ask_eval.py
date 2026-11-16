@@ -5,7 +5,7 @@
 
 It builds the fixture project, asks each question of ask-questions.yaml with
 `claude -p`, loads the five plugins with --plugin-dir, reads the walk state that
-knowledge:ask writes to KNOWLEDGE_WALK_STATE, and prints one line for each
+knowledge:ponder writes to KNOWLEDGE_WALK_STATE, and prints one line for each
 question. Exit 1 when a question fails. pytest covers score() and verdict()
 only, because a run needs live Haiku judgments.
 """
@@ -29,7 +29,7 @@ BRAINS = ("knowledge", "product", "business-domain", "architecture", "system-des
 def score(answer: str, state: dict | None, expect: list, total: int) -> bool:
     # A missing walk state is unmeasured, not efficient: the builder decides this does not count
     # as a PASS, because citations alone are not evidence of the efficiency claim (a shortcut
-    # answer, or a run that never loaded knowledge:ask, could otherwise pass for free). [inferred]
+    # answer, or a run that never loaded knowledge:ponder, could otherwise pass for free). [inferred]
     if state is None:
         return False
     cited = all(link in answer for link in expect)

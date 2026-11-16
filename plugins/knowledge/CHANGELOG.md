@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.0.0
+
+- Make `knowledge:ask` the bounded local search with one Sonnet reader, page citations, and relevant context.
+- Move the existing deep walk to `knowledge:ponder`. Remove the draft `knowledge:ask-fast` command.
+- Keep other brain callers unchanged. Use `ponder` for start nodes, neighbor filters, and remote graphs.
+- Keep only `find` and `near` in the local search code. Exclude remote registry entries explicitly and keep the read cache private.
+- Add synthetic 50-, 120-, and 340-page native evaluation datasets and an explicit benchmark runner with checked model IDs and separate answer and grading measurements.
+- Grade benchmark answers with three separate Claude sessions. Keep each raw reply and reject invalid grading records instead of treating them as wrong answers.
+
+## 1.8.0
+
+### Added
+- A new skill, `/knowledge:ask-fast <question>`: a fast ask for the local graphs. The script `scripts/kq.py` searches the graphs with the words of the question before the model starts (`find`). A Sonnet sub-agent (`knowledge:reader-s`, `context: fork`) searches again with the words of the graph, runs one walk from the answer page (`near`), and writes the answer with 8 to 10 context lines. `/knowledge:ask` does not change.
+- `scripts/kq.py` (standard library only) and its settings file `scripts/kq.json`. The skill uses the commands `find` and `near`. The script writes no file in the project: its page cache goes to the temporary folder, or to the folder that `KQ_CACHE` names, and `KQ_CACHE=off` stops it.
+- Limits of `ask-fast`: it reads only the local graphs of `.claude/knowledge.json` (not a graph in another repository), it takes no start nodes from the ask skill of a brain, it names no page path in the answer, and it offers no `knowledge:learn` step.
+- `eval/kq_fixture.py` builds a synthetic graph of 12 pages, and `eval/kq-questions.yaml` holds 6 questions for it. Each name, date and number in them is invented. `tests/test_kq.py` tests `kq.py`, the skill and the agent on that graph with no model call.
+
 ## 1.7.0
 
 ### Added

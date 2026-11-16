@@ -1,0 +1,781 @@
+{
+  "schema_version": 1,
+  "dataset": "smoke-1",
+  "content_pages": 50,
+  "provenance": {
+    "synthetic": true,
+    "organization": "Mossglass Gardens",
+    "generated_at": "2042-02-03T00:00:00Z",
+    "graph_version": "1.8.0",
+    "builder": "build_datasets.py",
+    "source": "Invented records; no real people, organizations, or source data."
+  },
+  "questions": [
+    {
+      "id": "smoke-1-q001",
+      "shape": "correction",
+      "question": "How often must Mossglass Gardens inspect the Amber seed dryer, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The inspection interval for the Amber seed dryer is 20 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/amber-seed-dryer-review-record.md",
+              "quote": "The inspection interval for the Amber seed dryer is 20 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the Amber seed dryer is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/amber-seed-dryer-review-record.md",
+              "quote": "The first service card for the Amber seed dryer is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the inspection interval for the Amber seed dryer as 29 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/amber-seed-dryer-operating-record.md",
+              "quote": "The first service card gives the inspection interval for the Amber seed dryer as 29 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the Amber seed dryer.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/amber-seed-dryer-review-record.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the Amber seed dryer."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 29-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/amber-seed-dryer-review-record.md",
+              "quote": "The 29-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Amber seed dryer is 29 days."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The inspection interval for the Amber seed dryer is 20 days. The first service card for the Amber seed dryer is no longer valid.\n\nContext:\nThe first service card gives the inspection interval for the Amber seed dryer as 29 days. The notice of 8 February 2041 replaces the first service card for the Amber seed dryer. The 29-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "smoke-1-q002",
+      "shape": "conflict",
+      "question": "How many spare seals does Mossglass Gardens hold for the Amber water cart, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 23 spare seals for the Amber water cart.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/amber-water-cart-operating-record.md",
+              "quote": "The day-shift ledger lists 23 spare seals for the Amber water cart."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 30 spare seals for the Amber water cart.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/amber-water-cart-review-record.md",
+              "quote": "The night-shift ledger lists 30 spare seals for the Amber water cart."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Amber water cart has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/amber-water-cart-operating-limits.md",
+              "quote": "Neither ledger for the Amber water cart has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the Amber water cart was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/amber-water-cart-operating-record.md",
+              "quote": "The day-shift count for the Amber water cart was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the Amber water cart was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/amber-water-cart-review-record.md",
+              "quote": "The night-shift count for the Amber water cart was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Amber water cart is 23.",
+        "The confirmed spare seal count for the Amber water cart is 30."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The day-shift ledger lists 23 spare seals for the Amber water cart. The night-shift ledger lists 30 spare seals for the Amber water cart. Neither ledger for the Amber water cart has been checked against the store.\n\nContext:\nThe day-shift count for the Amber water cart was made on 12 April 2041. The night-shift count for the Amber water cart was made on 12 April 2041."
+    },
+    {
+      "id": "smoke-1-q003",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Amber soil sieve, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Amber soil sieve.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/amber-soil-sieve-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Amber soil sieve."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the supplier decision for the Amber soil sieve until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/amber-soil-sieve-review-record.md",
+              "quote": "The committee deferred the supplier decision for the Amber soil sieve until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Amber soil sieve needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/amber-soil-sieve-operating-record.md",
+              "quote": "The Amber soil sieve needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The bed warden proposed a cover supplier for the Amber soil sieve.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/amber-soil-sieve-review-record.md",
+              "quote": "The bed warden proposed a cover supplier for the Amber soil sieve."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The bed warden's proposed supplier is approved for the Amber soil sieve."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "No supplier has been approved for the safety cover of the Amber soil sieve. The committee deferred the supplier decision for the Amber soil sieve until a load test is complete.\n\nContext:\nThe Amber soil sieve needs a replacement safety cover. The bed warden proposed a cover supplier for the Amber soil sieve."
+    },
+    {
+      "id": "smoke-1-q004",
+      "shape": "absent",
+      "question": "What did Mossglass Gardens pay to buy the Birch seed dryer? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Birch seed dryer is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/birch-seed-dryer-operating-limits.md",
+              "quote": "The purchase price of the Birch seed dryer is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The Birch seed dryer is stored in the north glasshouse.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/birch-seed-dryer-operating-record.md",
+              "quote": "The Birch seed dryer is stored in the north glasshouse."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no purchase price for the Birch seed dryer in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/birch-seed-dryer-review-record.md",
+              "quote": "The inventory review found no purchase price for the Birch seed dryer in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the Birch seed dryer covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/birch-seed-dryer-review-record.md",
+              "quote": "The inventory review for the Birch seed dryer covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Birch seed dryer was zero.",
+        "The purchase price of the Birch seed dryer can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The purchase price of the Birch seed dryer is not recorded in this graph. The Birch seed dryer is stored in the north glasshouse.\n\nContext:\nThe inventory review found no purchase price for the Birch seed dryer in these records. The inventory review for the Birch seed dryer covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "smoke-1-q005",
+      "shape": "paraphrase",
+      "question": "After we take the Birch water cart to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A return-to-service check is required after the Birch water cart is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/birch-water-cart-operating-record.md",
+              "quote": "A return-to-service check is required after the Birch water cart is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The return-to-service check for the Birch water cart takes 32 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/birch-water-cart-operating-record.md",
+              "quote": "The return-to-service check for the Birch water cart takes 32 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The water steward must sign the return-to-service check for the Birch water cart.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/birch-water-cart-review-record.md",
+              "quote": "The water steward must sign the return-to-service check for the Birch water cart."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Birch water cart cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/birch-water-cart-operating-limits.md",
+              "quote": "The Birch water cart cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the Birch water cart is kept in the tool porch.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/birch-water-cart-review-record.md",
+              "quote": "The movement log for the Birch water cart is kept in the tool porch."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Birch water cart can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "A return-to-service check is required after the Birch water cart is moved between buildings. The return-to-service check for the Birch water cart takes 32 minutes. The water steward must sign the return-to-service check for the Birch water cart.\n\nContext:\nThe Birch water cart cannot be used until its return-to-service check is signed. The movement log for the Birch water cart is kept in the tool porch."
+    },
+    {
+      "id": "smoke-1-q006",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Birch soil sieve, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before transporting the Birch soil sieve, fasten the two transit clips.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/birch-soil-sieve-operating-record.md",
+              "quote": "Before transporting the Birch soil sieve, fasten the two transit clips."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the transit clips from the Birch soil sieve before its alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/birch-soil-sieve-review-record.md",
+              "quote": "Remove the transit clips from the Birch soil sieve before its alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After transporting the Birch soil sieve, run the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/birch-soil-sieve-review-record.md",
+              "quote": "After transporting the Birch soil sieve, run the alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the bed warden can release the Birch soil sieve after the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/birch-soil-sieve-review-record.md",
+              "quote": "Only the bed warden can release the Birch soil sieve after the alignment check."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The transit clips for the Birch soil sieve are kept in the potting shed.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/birch-soil-sieve-operating-record.md",
+              "quote": "The transit clips for the Birch soil sieve are kept in the potting shed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Birch soil sieve must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/birch-soil-sieve-operating-limits.md",
+              "quote": "The transport record for the Birch soil sieve must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Birch soil sieve."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "Before transporting the Birch soil sieve, fasten the two transit clips. Remove the transit clips from the Birch soil sieve before its alignment check. After transporting the Birch soil sieve, run the alignment check. Only the bed warden can release the Birch soil sieve after the alignment check.\n\nContext:\nThe transit clips for the Birch soil sieve are kept in the potting shed. The transport record for the Birch soil sieve must include both the departure check and the arrival check."
+    },
+    {
+      "id": "smoke-1-q007",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Clover seed dryer change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal inspection interval for the Clover seed dryer is 38 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/clover-seed-dryer-operating-record.md",
+              "quote": "The normal inspection interval for the Clover seed dryer is 38 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 61 percent, inspect the Clover seed dryer every 32 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/clover-seed-dryer-review-record.md",
+              "quote": "If room humidity exceeds 61 percent, inspect the Clover seed dryer every 32 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the Clover seed dryer ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/clover-seed-dryer-review-record.md",
+              "quote": "The shorter interval for the Clover seed dryer ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the Clover seed dryer applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/clover-seed-dryer-operating-record.md",
+              "quote": "The normal interval for the Clover seed dryer applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The seed keeper records room humidity for the Clover seed dryer each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/clover-seed-dryer-operating-limits.md",
+              "quote": "The seed keeper records room humidity for the Clover seed dryer each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 38-day interval for the Clover seed dryer applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The normal inspection interval for the Clover seed dryer is 38 days. If room humidity exceeds 61 percent, inspect the Clover seed dryer every 32 days. The shorter interval for the Clover seed dryer ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the Clover seed dryer applies only in a dry room. The seed keeper records room humidity for the Clover seed dryer each morning."
+    },
+    {
+      "id": "smoke-1-q008",
+      "shape": "correction",
+      "question": "How often must Mossglass Gardens inspect the Clover water cart, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The inspection interval for the Clover water cart is 41 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/clover-water-cart-review-record.md",
+              "quote": "The inspection interval for the Clover water cart is 41 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the Clover water cart is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/clover-water-cart-review-record.md",
+              "quote": "The first service card for the Clover water cart is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the inspection interval for the Clover water cart as 50 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/clover-water-cart-operating-record.md",
+              "quote": "The first service card gives the inspection interval for the Clover water cart as 50 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the Clover water cart.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/clover-water-cart-review-record.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the Clover water cart."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 50-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/clover-water-cart-review-record.md",
+              "quote": "The 50-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Clover water cart is 50 days."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The inspection interval for the Clover water cart is 41 days. The first service card for the Clover water cart is no longer valid.\n\nContext:\nThe first service card gives the inspection interval for the Clover water cart as 50 days. The notice of 8 February 2041 replaces the first service card for the Clover water cart. The 50-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "smoke-1-q009",
+      "shape": "conflict",
+      "question": "How many spare seals does Mossglass Gardens hold for the Clover soil sieve, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 44 spare seals for the Clover soil sieve.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/clover-soil-sieve-operating-record.md",
+              "quote": "The day-shift ledger lists 44 spare seals for the Clover soil sieve."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 51 spare seals for the Clover soil sieve.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/clover-soil-sieve-review-record.md",
+              "quote": "The night-shift ledger lists 51 spare seals for the Clover soil sieve."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Clover soil sieve has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/clover-soil-sieve-operating-limits.md",
+              "quote": "Neither ledger for the Clover soil sieve has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the Clover soil sieve was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/clover-soil-sieve-operating-record.md",
+              "quote": "The day-shift count for the Clover soil sieve was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the Clover soil sieve was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/clover-soil-sieve-review-record.md",
+              "quote": "The night-shift count for the Clover soil sieve was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Clover soil sieve is 44.",
+        "The confirmed spare seal count for the Clover soil sieve is 51."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The day-shift ledger lists 44 spare seals for the Clover soil sieve. The night-shift ledger lists 51 spare seals for the Clover soil sieve. Neither ledger for the Clover soil sieve has been checked against the store.\n\nContext:\nThe day-shift count for the Clover soil sieve was made on 12 April 2041. The night-shift count for the Clover soil sieve was made on 12 April 2041."
+    },
+    {
+      "id": "smoke-1-q010",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Dew seed dryer, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Dew seed dryer.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/dew-seed-dryer-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Dew seed dryer."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the supplier decision for the Dew seed dryer until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/dew-seed-dryer-review-record.md",
+              "quote": "The committee deferred the supplier decision for the Dew seed dryer until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Dew seed dryer needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/dew-seed-dryer-operating-record.md",
+              "quote": "The Dew seed dryer needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The seed keeper proposed a cover supplier for the Dew seed dryer.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/dew-seed-dryer-review-record.md",
+              "quote": "The seed keeper proposed a cover supplier for the Dew seed dryer."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The seed keeper's proposed supplier is approved for the Dew seed dryer."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "No supplier has been approved for the safety cover of the Dew seed dryer. The committee deferred the supplier decision for the Dew seed dryer until a load test is complete.\n\nContext:\nThe Dew seed dryer needs a replacement safety cover. The seed keeper proposed a cover supplier for the Dew seed dryer."
+    },
+    {
+      "id": "smoke-1-q011",
+      "shape": "absent",
+      "question": "What did Mossglass Gardens pay to buy the Dew water cart? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Dew water cart is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/dew-water-cart-operating-limits.md",
+              "quote": "The purchase price of the Dew water cart is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The Dew water cart is stored in the tool porch.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/dew-water-cart-operating-record.md",
+              "quote": "The Dew water cart is stored in the tool porch."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no purchase price for the Dew water cart in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/dew-water-cart-review-record.md",
+              "quote": "The inventory review found no purchase price for the Dew water cart in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the Dew water cart covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/dew-water-cart-review-record.md",
+              "quote": "The inventory review for the Dew water cart covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Dew water cart was zero.",
+        "The purchase price of the Dew water cart can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The purchase price of the Dew water cart is not recorded in this graph. The Dew water cart is stored in the tool porch.\n\nContext:\nThe inventory review found no purchase price for the Dew water cart in these records. The inventory review for the Dew water cart covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "smoke-1-q012",
+      "shape": "paraphrase",
+      "question": "After we take the Dew soil sieve to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A return-to-service check is required after the Dew soil sieve is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/dew-soil-sieve-operating-record.md",
+              "quote": "A return-to-service check is required after the Dew soil sieve is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The return-to-service check for the Dew soil sieve takes 53 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/dew-soil-sieve-operating-record.md",
+              "quote": "The return-to-service check for the Dew soil sieve takes 53 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The bed warden must sign the return-to-service check for the Dew soil sieve.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/dew-soil-sieve-review-record.md",
+              "quote": "The bed warden must sign the return-to-service check for the Dew soil sieve."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Dew soil sieve cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/dew-soil-sieve-operating-limits.md",
+              "quote": "The Dew soil sieve cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the Dew soil sieve is kept in the potting shed.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/dew-soil-sieve-review-record.md",
+              "quote": "The movement log for the Dew soil sieve is kept in the potting shed."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Dew soil sieve can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "A return-to-service check is required after the Dew soil sieve is moved between buildings. The return-to-service check for the Dew soil sieve takes 53 minutes. The bed warden must sign the return-to-service check for the Dew soil sieve.\n\nContext:\nThe Dew soil sieve cannot be used until its return-to-service check is signed. The movement log for the Dew soil sieve is kept in the potting shed."
+    }
+  ]
+}

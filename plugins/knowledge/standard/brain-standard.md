@@ -40,7 +40,7 @@ never loads a full graph.
 
 - The OKF fields come first: `type`, `title`, `description`, `status`,
   `tags`.
-- `description` is one line, and each page must have it. The `ask` judge
+- `description` is one line, and each page must have it. The `ponder` neighbor judge
   reads the description before it opens the page. Write it in the words of
   the brain, and make it specific.
 - `status` has the OKF values only: `draft`, `stable`, `deprecated`. A brain

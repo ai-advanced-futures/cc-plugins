@@ -1,0 +1,7 @@
+{
+  "graphs": {
+    "knowledge": {
+      "path": "docs/knowledge/bundle"
+    }
+  }
+}

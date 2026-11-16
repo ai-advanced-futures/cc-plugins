@@ -59,7 +59,7 @@
     },
     {
       "name": "knowledge",
-      "description": "The base of every brain: the brain standard, the generic OKF knowledge graph, the registry of graphs, the general check, and the generic skills knowledge:setup, knowledge:learn, knowledge:ask, and knowledge:forget. It was the wiki plugin.",
+      "description": "The base of every brain: the brain standard, the generic OKF knowledge graph, the registry of graphs, the general check, and the generic skills knowledge:setup, knowledge:learn, knowledge:ask, knowledge:ponder, and knowledge:forget. It was the wiki plugin.",
       "source": "./plugins/knowledge",
       "strict": false
     },

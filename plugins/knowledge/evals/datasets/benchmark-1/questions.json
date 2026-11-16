@@ -1,0 +1,4373 @@
+{
+  "schema_version": 1,
+  "dataset": "benchmark-1",
+  "content_pages": 340,
+  "provenance": {
+    "synthetic": true,
+    "organization": "Velvet Horizon Observatory",
+    "generated_at": "2042-02-03T00:00:00Z",
+    "graph_version": "1.8.0",
+    "builder": "build_datasets.py",
+    "source": "Invented records; no real people, organizations, or source data."
+  },
+  "questions": [
+    {
+      "id": "benchmark-1-q001",
+      "shape": "correction",
+      "question": "How often must Velvet Horizon Observatory inspect the Aster lens carrier, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The time between checks for the VH-410 is 130 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-410-review-file.md",
+              "quote": "The time between checks for the VH-410 is 130 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the VH-410 is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-410-review-file.md",
+              "quote": "The first service card for the VH-410 is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the time between checks for the VH-410 as 139 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-410-service-ledger.md",
+              "quote": "The first service card gives the time between checks for the VH-410 as 139 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the VH-410.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-410-review-file.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the VH-410."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 139-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-410-review-file.md",
+              "quote": "The 139-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Aster lens carrier is 139 days."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Aster lens carrier",
+        "code": "VH-410",
+        "entry_node": "knowledge:/synthesis/aster-lens-carrier-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-410-service-ledger.md",
+          "knowledge:/sources/vh-410-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Aster lens carrier maps to internal equipment code VH-410."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/aster-lens-carrier-operating-limits.md",
+          "quote": "The public name Aster lens carrier maps to internal equipment code VH-410."
+        }
+      ],
+      "reference_answer": "The time between checks for the VH-410 is 130 days. The first service card for the VH-410 is no longer valid.\n\nContext:\nThe first service card gives the time between checks for the VH-410 as 139 days. The notice of 8 February 2041 replaces the first service card for the VH-410. The 139-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "benchmark-1-q002",
+      "shape": "conflict",
+      "question": "How many spare seals does Velvet Horizon Observatory hold for the Aster clock mount, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 133 spare seals for the Aster clock mount.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/aster-clock-mount-operating-record.md",
+              "quote": "The day-shift ledger lists 133 spare seals for the Aster clock mount."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 140 spare seals for the Aster clock mount.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/aster-clock-mount-review-record.md",
+              "quote": "The night-shift ledger lists 140 spare seals for the Aster clock mount."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Aster clock mount has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/aster-clock-mount-operating-limits.md",
+              "quote": "Neither ledger for the Aster clock mount has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the Aster clock mount was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/aster-clock-mount-operating-record.md",
+              "quote": "The day-shift count for the Aster clock mount was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the Aster clock mount was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/aster-clock-mount-review-record.md",
+              "quote": "The night-shift count for the Aster clock mount was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Aster clock mount is 133.",
+        "The confirmed spare seal count for the Aster clock mount is 140."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The day-shift ledger lists 133 spare seals for the Aster clock mount. The night-shift ledger lists 140 spare seals for the Aster clock mount. Neither ledger for the Aster clock mount has been checked against the store.\n\nContext:\nThe day-shift count for the Aster clock mount was made on 12 April 2041. The night-shift count for the Aster clock mount was made on 12 April 2041."
+    },
+    {
+      "id": "benchmark-1-q003",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Aster mirror frame, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Aster mirror frame.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/aster-mirror-frame-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Aster mirror frame."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the vendor decision for the VH-444 until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-444-review-file.md",
+              "quote": "The committee deferred the vendor decision for the VH-444 until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The VH-444 needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-444-service-ledger.md",
+              "quote": "The VH-444 needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The instrument checker proposed a cover vendor for the VH-444.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-444-review-file.md",
+              "quote": "The instrument checker proposed a cover vendor for the VH-444."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The instrument checker's proposed supplier is approved for the Aster mirror frame."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Aster mirror frame",
+        "code": "VH-444",
+        "entry_node": "knowledge:/open-questions/aster-mirror-frame-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-444-service-ledger.md",
+          "knowledge:/sources/vh-444-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Aster mirror frame maps to internal equipment code VH-444."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/aster-mirror-frame-operating-limits.md",
+          "quote": "The public name Aster mirror frame maps to internal equipment code VH-444."
+        }
+      ],
+      "reference_answer": "No supplier has been approved for the safety cover of the Aster mirror frame. The committee deferred the vendor decision for the VH-444 until a load test is complete.\n\nContext:\nThe VH-444 needs a replacement safety cover. The instrument checker proposed a cover vendor for the VH-444."
+    },
+    {
+      "id": "benchmark-1-q004",
+      "shape": "absent",
+      "question": "What did Velvet Horizon Observatory pay to buy the Aster shutter drive? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Aster shutter drive is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/aster-shutter-drive-operating-limits.md",
+              "quote": "The purchase price of the Aster shutter drive is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The Aster shutter drive is stored in the calibration room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/aster-shutter-drive-operating-record.md",
+              "quote": "The Aster shutter drive is stored in the calibration room."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no purchase price for the Aster shutter drive in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/aster-shutter-drive-review-record.md",
+              "quote": "The inventory review found no purchase price for the Aster shutter drive in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the Aster shutter drive covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/aster-shutter-drive-review-record.md",
+              "quote": "The inventory review for the Aster shutter drive covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Aster shutter drive was zero.",
+        "The purchase price of the Aster shutter drive can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The purchase price of the Aster shutter drive is not recorded in this graph. The Aster shutter drive is stored in the calibration room.\n\nContext:\nThe inventory review found no purchase price for the Aster shutter drive in these records. The inventory review for the Aster shutter drive covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "benchmark-1-q005",
+      "shape": "paraphrase",
+      "question": "After we take the Aster sensor tray to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A restart check is required after the VH-478 is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-478-service-ledger.md",
+              "quote": "A restart check is required after the VH-478 is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The restart check for the VH-478 takes 142 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-478-service-ledger.md",
+              "quote": "The restart check for the VH-478 takes 142 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The optics custodian must sign the restart check for the VH-478.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-478-review-file.md",
+              "quote": "The optics custodian must sign the restart check for the VH-478."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Aster sensor tray cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/aster-sensor-tray-operating-limits.md",
+              "quote": "The Aster sensor tray cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the VH-478 is kept in the east annex.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-478-review-file.md",
+              "quote": "The movement log for the VH-478 is kept in the east annex."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Aster sensor tray can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Aster sensor tray",
+        "code": "VH-478",
+        "entry_node": "knowledge:/concepts/aster-sensor-tray-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-478-service-ledger.md",
+          "knowledge:/sources/vh-478-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Aster sensor tray maps to internal equipment code VH-478."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/aster-sensor-tray-operating-limits.md",
+          "quote": "The public name Aster sensor tray maps to internal equipment code VH-478."
+        }
+      ],
+      "reference_answer": "A restart check is required after the VH-478 is moved between buildings. The restart check for the VH-478 takes 142 minutes. The optics custodian must sign the restart check for the VH-478.\n\nContext:\nThe Aster sensor tray cannot be used until its return-to-service check is signed. The movement log for the VH-478 is kept in the east annex."
+    },
+    {
+      "id": "benchmark-1-q006",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Aster filter drum, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before transporting the Aster filter drum, fasten the two transit clips.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/aster-filter-drum-operating-record.md",
+              "quote": "Before transporting the Aster filter drum, fasten the two transit clips."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the transit clips from the Aster filter drum before its alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/aster-filter-drum-review-record.md",
+              "quote": "Remove the transit clips from the Aster filter drum before its alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After transporting the Aster filter drum, run the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/aster-filter-drum-review-record.md",
+              "quote": "After transporting the Aster filter drum, run the alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the instrument checker can release the Aster filter drum after the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/aster-filter-drum-review-record.md",
+              "quote": "Only the instrument checker can release the Aster filter drum after the alignment check."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The transit clips for the Aster filter drum are kept in the dome store.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/aster-filter-drum-operating-record.md",
+              "quote": "The transit clips for the Aster filter drum are kept in the dome store."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Aster filter drum must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/aster-filter-drum-operating-limits.md",
+              "quote": "The transport record for the Aster filter drum must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Aster filter drum."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "Before transporting the Aster filter drum, fasten the two transit clips. Remove the transit clips from the Aster filter drum before its alignment check. After transporting the Aster filter drum, run the alignment check. Only the instrument checker can release the Aster filter drum after the alignment check.\n\nContext:\nThe transit clips for the Aster filter drum are kept in the dome store. The transport record for the Aster filter drum must include both the departure check and the arrival check."
+    },
+    {
+      "id": "benchmark-1-q007",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Beacon lens carrier change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal time between checks for the VH-512 is 148 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-512-service-ledger.md",
+              "quote": "The normal time between checks for the VH-512 is 148 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 61 percent, inspect the VH-512 every 142 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-512-review-file.md",
+              "quote": "If room humidity exceeds 61 percent, inspect the VH-512 every 142 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the VH-512 ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-512-review-file.md",
+              "quote": "The shorter interval for the VH-512 ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the VH-512 applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-512-service-ledger.md",
+              "quote": "The normal interval for the VH-512 applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night coordinator records room humidity for the Beacon lens carrier each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/beacon-lens-carrier-operating-limits.md",
+              "quote": "The night coordinator records room humidity for the Beacon lens carrier each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 148-day interval for the Beacon lens carrier applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Beacon lens carrier",
+        "code": "VH-512",
+        "entry_node": "knowledge:/concepts/beacon-lens-carrier-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-512-service-ledger.md",
+          "knowledge:/sources/vh-512-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Beacon lens carrier maps to internal equipment code VH-512."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/beacon-lens-carrier-operating-limits.md",
+          "quote": "The public name Beacon lens carrier maps to internal equipment code VH-512."
+        }
+      ],
+      "reference_answer": "The normal time between checks for the VH-512 is 148 days. If room humidity exceeds 61 percent, inspect the VH-512 every 142 days. The shorter interval for the VH-512 ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the VH-512 applies only in a dry room. The night coordinator records room humidity for the Beacon lens carrier each morning."
+    },
+    {
+      "id": "benchmark-1-q008",
+      "shape": "correction",
+      "question": "How often must Velvet Horizon Observatory inspect the Beacon clock mount, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The inspection interval for the Beacon clock mount is 151 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/beacon-clock-mount-review-record.md",
+              "quote": "The inspection interval for the Beacon clock mount is 151 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the Beacon clock mount is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/beacon-clock-mount-review-record.md",
+              "quote": "The first service card for the Beacon clock mount is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the inspection interval for the Beacon clock mount as 160 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/beacon-clock-mount-operating-record.md",
+              "quote": "The first service card gives the inspection interval for the Beacon clock mount as 160 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the Beacon clock mount.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/beacon-clock-mount-review-record.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the Beacon clock mount."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 160-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/beacon-clock-mount-review-record.md",
+              "quote": "The 160-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Beacon clock mount is 160 days."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The inspection interval for the Beacon clock mount is 151 days. The first service card for the Beacon clock mount is no longer valid.\n\nContext:\nThe first service card gives the inspection interval for the Beacon clock mount as 160 days. The notice of 8 February 2041 replaces the first service card for the Beacon clock mount. The 160-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "benchmark-1-q009",
+      "shape": "conflict",
+      "question": "How many spare seals does Velvet Horizon Observatory hold for the Beacon mirror frame, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 154 reserve gaskets for the VH-546.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-546-service-ledger.md",
+              "quote": "The day-shift ledger lists 154 reserve gaskets for the VH-546."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 161 reserve gaskets for the VH-546.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-546-review-file.md",
+              "quote": "The night-shift ledger lists 161 reserve gaskets for the VH-546."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Beacon mirror frame has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/beacon-mirror-frame-operating-limits.md",
+              "quote": "Neither ledger for the Beacon mirror frame has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the VH-546 was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-546-service-ledger.md",
+              "quote": "The day-shift count for the VH-546 was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the VH-546 was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-546-review-file.md",
+              "quote": "The night-shift count for the VH-546 was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Beacon mirror frame is 154.",
+        "The confirmed spare seal count for the Beacon mirror frame is 161."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Beacon mirror frame",
+        "code": "VH-546",
+        "entry_node": "knowledge:/open-questions/beacon-mirror-frame-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-546-service-ledger.md",
+          "knowledge:/sources/vh-546-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Beacon mirror frame maps to internal equipment code VH-546."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/beacon-mirror-frame-operating-limits.md",
+          "quote": "The public name Beacon mirror frame maps to internal equipment code VH-546."
+        }
+      ],
+      "reference_answer": "The day-shift ledger lists 154 reserve gaskets for the VH-546. The night-shift ledger lists 161 reserve gaskets for the VH-546. Neither ledger for the Beacon mirror frame has been checked against the store.\n\nContext:\nThe day-shift count for the VH-546 was made on 12 April 2041. The night-shift count for the VH-546 was made on 12 April 2041."
+    },
+    {
+      "id": "benchmark-1-q010",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Beacon shutter drive, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Beacon shutter drive.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/beacon-shutter-drive-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Beacon shutter drive."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the supplier decision for the Beacon shutter drive until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/beacon-shutter-drive-review-record.md",
+              "quote": "The committee deferred the supplier decision for the Beacon shutter drive until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Beacon shutter drive needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/beacon-shutter-drive-operating-record.md",
+              "quote": "The Beacon shutter drive needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night coordinator proposed a cover supplier for the Beacon shutter drive.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/beacon-shutter-drive-review-record.md",
+              "quote": "The night coordinator proposed a cover supplier for the Beacon shutter drive."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The night coordinator's proposed supplier is approved for the Beacon shutter drive."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "No supplier has been approved for the safety cover of the Beacon shutter drive. The committee deferred the supplier decision for the Beacon shutter drive until a load test is complete.\n\nContext:\nThe Beacon shutter drive needs a replacement safety cover. The night coordinator proposed a cover supplier for the Beacon shutter drive."
+    },
+    {
+      "id": "benchmark-1-q011",
+      "shape": "absent",
+      "question": "What did Velvet Horizon Observatory pay to buy the Beacon sensor tray? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Beacon sensor tray is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/beacon-sensor-tray-operating-limits.md",
+              "quote": "The purchase price of the Beacon sensor tray is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The VH-580 is stored in the east annex.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-580-service-ledger.md",
+              "quote": "The VH-580 is stored in the east annex."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no acquisition cost for the VH-580 in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-580-review-file.md",
+              "quote": "The inventory review found no acquisition cost for the VH-580 in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the VH-580 covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-580-review-file.md",
+              "quote": "The inventory review for the VH-580 covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Beacon sensor tray was zero.",
+        "The purchase price of the Beacon sensor tray can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Beacon sensor tray",
+        "code": "VH-580",
+        "entry_node": "knowledge:/open-questions/beacon-sensor-tray-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-580-service-ledger.md",
+          "knowledge:/sources/vh-580-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Beacon sensor tray maps to internal equipment code VH-580."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/beacon-sensor-tray-operating-limits.md",
+          "quote": "The public name Beacon sensor tray maps to internal equipment code VH-580."
+        }
+      ],
+      "reference_answer": "The purchase price of the Beacon sensor tray is not recorded in this graph. The VH-580 is stored in the east annex.\n\nContext:\nThe inventory review found no acquisition cost for the VH-580 in these records. The inventory review for the VH-580 covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "benchmark-1-q012",
+      "shape": "paraphrase",
+      "question": "After we take the Beacon filter drum to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A return-to-service check is required after the Beacon filter drum is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/beacon-filter-drum-operating-record.md",
+              "quote": "A return-to-service check is required after the Beacon filter drum is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The return-to-service check for the Beacon filter drum takes 163 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/beacon-filter-drum-operating-record.md",
+              "quote": "The return-to-service check for the Beacon filter drum takes 163 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The instrument checker must sign the return-to-service check for the Beacon filter drum.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/beacon-filter-drum-review-record.md",
+              "quote": "The instrument checker must sign the return-to-service check for the Beacon filter drum."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Beacon filter drum cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/beacon-filter-drum-operating-limits.md",
+              "quote": "The Beacon filter drum cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the Beacon filter drum is kept in the dome store.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/beacon-filter-drum-review-record.md",
+              "quote": "The movement log for the Beacon filter drum is kept in the dome store."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Beacon filter drum can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "A return-to-service check is required after the Beacon filter drum is moved between buildings. The return-to-service check for the Beacon filter drum takes 163 minutes. The instrument checker must sign the return-to-service check for the Beacon filter drum.\n\nContext:\nThe Beacon filter drum cannot be used until its return-to-service check is signed. The movement log for the Beacon filter drum is kept in the dome store."
+    },
+    {
+      "id": "benchmark-1-q013",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Comet lens carrier, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before moving the VH-614, fasten the two shipping locks.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-614-service-ledger.md",
+              "quote": "Before moving the VH-614, fasten the two shipping locks."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the shipping locks from the VH-614 before its position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-614-review-file.md",
+              "quote": "Remove the shipping locks from the VH-614 before its position test."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After moving the VH-614, run the position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-614-review-file.md",
+              "quote": "After moving the VH-614, run the position test."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the night coordinator can release the VH-614 after the position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-614-review-file.md",
+              "quote": "Only the night coordinator can release the VH-614 after the position test."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The shipping locks for the VH-614 are kept in the calibration room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-614-service-ledger.md",
+              "quote": "The shipping locks for the VH-614 are kept in the calibration room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Comet lens carrier must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/comet-lens-carrier-operating-limits.md",
+              "quote": "The transport record for the Comet lens carrier must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Comet lens carrier."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Comet lens carrier",
+        "code": "VH-614",
+        "entry_node": "knowledge:/synthesis/comet-lens-carrier-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-614-service-ledger.md",
+          "knowledge:/sources/vh-614-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Comet lens carrier maps to internal equipment code VH-614."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/comet-lens-carrier-operating-limits.md",
+          "quote": "The public name Comet lens carrier maps to internal equipment code VH-614."
+        }
+      ],
+      "reference_answer": "Before moving the VH-614, fasten the two shipping locks. Remove the shipping locks from the VH-614 before its position test. After moving the VH-614, run the position test. Only the night coordinator can release the VH-614 after the position test.\n\nContext:\nThe shipping locks for the VH-614 are kept in the calibration room. The transport record for the Comet lens carrier must include both the departure check and the arrival check."
+    },
+    {
+      "id": "benchmark-1-q014",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Comet clock mount change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal inspection interval for the Comet clock mount is 169 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/comet-clock-mount-operating-record.md",
+              "quote": "The normal inspection interval for the Comet clock mount is 169 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 68 percent, inspect the Comet clock mount every 163 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/comet-clock-mount-review-record.md",
+              "quote": "If room humidity exceeds 68 percent, inspect the Comet clock mount every 163 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the Comet clock mount ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/comet-clock-mount-review-record.md",
+              "quote": "The shorter interval for the Comet clock mount ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the Comet clock mount applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/comet-clock-mount-operating-record.md",
+              "quote": "The normal interval for the Comet clock mount applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The optics custodian records room humidity for the Comet clock mount each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/comet-clock-mount-operating-limits.md",
+              "quote": "The optics custodian records room humidity for the Comet clock mount each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 169-day interval for the Comet clock mount applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The normal inspection interval for the Comet clock mount is 169 days. If room humidity exceeds 68 percent, inspect the Comet clock mount every 163 days. The shorter interval for the Comet clock mount ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the Comet clock mount applies only in a dry room. The optics custodian records room humidity for the Comet clock mount each morning."
+    },
+    {
+      "id": "benchmark-1-q015",
+      "shape": "correction",
+      "question": "How often must Velvet Horizon Observatory inspect the Comet mirror frame, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The time between checks for the VH-648 is 172 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-648-review-file.md",
+              "quote": "The time between checks for the VH-648 is 172 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the VH-648 is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-648-review-file.md",
+              "quote": "The first service card for the VH-648 is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the time between checks for the VH-648 as 181 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-648-service-ledger.md",
+              "quote": "The first service card gives the time between checks for the VH-648 as 181 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the VH-648.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-648-review-file.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the VH-648."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 181-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-648-review-file.md",
+              "quote": "The 181-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Comet mirror frame is 181 days."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Comet mirror frame",
+        "code": "VH-648",
+        "entry_node": "knowledge:/synthesis/comet-mirror-frame-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-648-service-ledger.md",
+          "knowledge:/sources/vh-648-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Comet mirror frame maps to internal equipment code VH-648."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/comet-mirror-frame-operating-limits.md",
+          "quote": "The public name Comet mirror frame maps to internal equipment code VH-648."
+        }
+      ],
+      "reference_answer": "The time between checks for the VH-648 is 172 days. The first service card for the VH-648 is no longer valid.\n\nContext:\nThe first service card gives the time between checks for the VH-648 as 181 days. The notice of 8 February 2041 replaces the first service card for the VH-648. The 181-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "benchmark-1-q016",
+      "shape": "conflict",
+      "question": "How many spare seals does Velvet Horizon Observatory hold for the Comet shutter drive, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 175 spare seals for the Comet shutter drive.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/comet-shutter-drive-operating-record.md",
+              "quote": "The day-shift ledger lists 175 spare seals for the Comet shutter drive."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 182 spare seals for the Comet shutter drive.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/comet-shutter-drive-review-record.md",
+              "quote": "The night-shift ledger lists 182 spare seals for the Comet shutter drive."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Comet shutter drive has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/comet-shutter-drive-operating-limits.md",
+              "quote": "Neither ledger for the Comet shutter drive has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the Comet shutter drive was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/comet-shutter-drive-operating-record.md",
+              "quote": "The day-shift count for the Comet shutter drive was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the Comet shutter drive was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/comet-shutter-drive-review-record.md",
+              "quote": "The night-shift count for the Comet shutter drive was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Comet shutter drive is 175.",
+        "The confirmed spare seal count for the Comet shutter drive is 182."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The day-shift ledger lists 175 spare seals for the Comet shutter drive. The night-shift ledger lists 182 spare seals for the Comet shutter drive. Neither ledger for the Comet shutter drive has been checked against the store.\n\nContext:\nThe day-shift count for the Comet shutter drive was made on 12 April 2041. The night-shift count for the Comet shutter drive was made on 12 April 2041."
+    },
+    {
+      "id": "benchmark-1-q017",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Comet sensor tray, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Comet sensor tray.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/comet-sensor-tray-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Comet sensor tray."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the vendor decision for the VH-682 until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-682-review-file.md",
+              "quote": "The committee deferred the vendor decision for the VH-682 until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The VH-682 needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-682-service-ledger.md",
+              "quote": "The VH-682 needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The optics custodian proposed a cover vendor for the VH-682.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-682-review-file.md",
+              "quote": "The optics custodian proposed a cover vendor for the VH-682."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The optics custodian's proposed supplier is approved for the Comet sensor tray."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Comet sensor tray",
+        "code": "VH-682",
+        "entry_node": "knowledge:/open-questions/comet-sensor-tray-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-682-service-ledger.md",
+          "knowledge:/sources/vh-682-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Comet sensor tray maps to internal equipment code VH-682."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/comet-sensor-tray-operating-limits.md",
+          "quote": "The public name Comet sensor tray maps to internal equipment code VH-682."
+        }
+      ],
+      "reference_answer": "No supplier has been approved for the safety cover of the Comet sensor tray. The committee deferred the vendor decision for the VH-682 until a load test is complete.\n\nContext:\nThe VH-682 needs a replacement safety cover. The optics custodian proposed a cover vendor for the VH-682."
+    },
+    {
+      "id": "benchmark-1-q018",
+      "shape": "absent",
+      "question": "What did Velvet Horizon Observatory pay to buy the Comet filter drum? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Comet filter drum is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/comet-filter-drum-operating-limits.md",
+              "quote": "The purchase price of the Comet filter drum is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The Comet filter drum is stored in the dome store.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/comet-filter-drum-operating-record.md",
+              "quote": "The Comet filter drum is stored in the dome store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no purchase price for the Comet filter drum in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/comet-filter-drum-review-record.md",
+              "quote": "The inventory review found no purchase price for the Comet filter drum in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the Comet filter drum covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/comet-filter-drum-review-record.md",
+              "quote": "The inventory review for the Comet filter drum covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Comet filter drum was zero.",
+        "The purchase price of the Comet filter drum can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The purchase price of the Comet filter drum is not recorded in this graph. The Comet filter drum is stored in the dome store.\n\nContext:\nThe inventory review found no purchase price for the Comet filter drum in these records. The inventory review for the Comet filter drum covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "benchmark-1-q019",
+      "shape": "paraphrase",
+      "question": "After we take the Drift lens carrier to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A restart check is required after the VH-716 is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-716-service-ledger.md",
+              "quote": "A restart check is required after the VH-716 is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The restart check for the VH-716 takes 184 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-716-service-ledger.md",
+              "quote": "The restart check for the VH-716 takes 184 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The night coordinator must sign the restart check for the VH-716.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-716-review-file.md",
+              "quote": "The night coordinator must sign the restart check for the VH-716."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Drift lens carrier cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/drift-lens-carrier-operating-limits.md",
+              "quote": "The Drift lens carrier cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the VH-716 is kept in the calibration room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-716-review-file.md",
+              "quote": "The movement log for the VH-716 is kept in the calibration room."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Drift lens carrier can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Drift lens carrier",
+        "code": "VH-716",
+        "entry_node": "knowledge:/concepts/drift-lens-carrier-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-716-service-ledger.md",
+          "knowledge:/sources/vh-716-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Drift lens carrier maps to internal equipment code VH-716."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/drift-lens-carrier-operating-limits.md",
+          "quote": "The public name Drift lens carrier maps to internal equipment code VH-716."
+        }
+      ],
+      "reference_answer": "A restart check is required after the VH-716 is moved between buildings. The restart check for the VH-716 takes 184 minutes. The night coordinator must sign the restart check for the VH-716.\n\nContext:\nThe Drift lens carrier cannot be used until its return-to-service check is signed. The movement log for the VH-716 is kept in the calibration room."
+    },
+    {
+      "id": "benchmark-1-q020",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Drift clock mount, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before transporting the Drift clock mount, fasten the two transit clips.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/drift-clock-mount-operating-record.md",
+              "quote": "Before transporting the Drift clock mount, fasten the two transit clips."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the transit clips from the Drift clock mount before its alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/drift-clock-mount-review-record.md",
+              "quote": "Remove the transit clips from the Drift clock mount before its alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After transporting the Drift clock mount, run the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/drift-clock-mount-review-record.md",
+              "quote": "After transporting the Drift clock mount, run the alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the optics custodian can release the Drift clock mount after the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/drift-clock-mount-review-record.md",
+              "quote": "Only the optics custodian can release the Drift clock mount after the alignment check."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The transit clips for the Drift clock mount are kept in the east annex.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/drift-clock-mount-operating-record.md",
+              "quote": "The transit clips for the Drift clock mount are kept in the east annex."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Drift clock mount must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/drift-clock-mount-operating-limits.md",
+              "quote": "The transport record for the Drift clock mount must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Drift clock mount."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "Before transporting the Drift clock mount, fasten the two transit clips. Remove the transit clips from the Drift clock mount before its alignment check. After transporting the Drift clock mount, run the alignment check. Only the optics custodian can release the Drift clock mount after the alignment check.\n\nContext:\nThe transit clips for the Drift clock mount are kept in the east annex. The transport record for the Drift clock mount must include both the departure check and the arrival check."
+    },
+    {
+      "id": "benchmark-1-q021",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Drift mirror frame change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal time between checks for the VH-750 is 190 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-750-service-ledger.md",
+              "quote": "The normal time between checks for the VH-750 is 190 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 60 percent, inspect the VH-750 every 184 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-750-review-file.md",
+              "quote": "If room humidity exceeds 60 percent, inspect the VH-750 every 184 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the VH-750 ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-750-review-file.md",
+              "quote": "The shorter interval for the VH-750 ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the VH-750 applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-750-service-ledger.md",
+              "quote": "The normal interval for the VH-750 applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The instrument checker records room humidity for the Drift mirror frame each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/drift-mirror-frame-operating-limits.md",
+              "quote": "The instrument checker records room humidity for the Drift mirror frame each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 190-day interval for the Drift mirror frame applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Drift mirror frame",
+        "code": "VH-750",
+        "entry_node": "knowledge:/concepts/drift-mirror-frame-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-750-service-ledger.md",
+          "knowledge:/sources/vh-750-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Drift mirror frame maps to internal equipment code VH-750."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/drift-mirror-frame-operating-limits.md",
+          "quote": "The public name Drift mirror frame maps to internal equipment code VH-750."
+        }
+      ],
+      "reference_answer": "The normal time between checks for the VH-750 is 190 days. If room humidity exceeds 60 percent, inspect the VH-750 every 184 days. The shorter interval for the VH-750 ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the VH-750 applies only in a dry room. The instrument checker records room humidity for the Drift mirror frame each morning."
+    },
+    {
+      "id": "benchmark-1-q022",
+      "shape": "correction",
+      "question": "How often must Velvet Horizon Observatory inspect the Drift shutter drive, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The inspection interval for the Drift shutter drive is 193 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/drift-shutter-drive-review-record.md",
+              "quote": "The inspection interval for the Drift shutter drive is 193 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the Drift shutter drive is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/drift-shutter-drive-review-record.md",
+              "quote": "The first service card for the Drift shutter drive is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the inspection interval for the Drift shutter drive as 202 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/drift-shutter-drive-operating-record.md",
+              "quote": "The first service card gives the inspection interval for the Drift shutter drive as 202 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the Drift shutter drive.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/drift-shutter-drive-review-record.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the Drift shutter drive."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 202-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/drift-shutter-drive-review-record.md",
+              "quote": "The 202-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Drift shutter drive is 202 days."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The inspection interval for the Drift shutter drive is 193 days. The first service card for the Drift shutter drive is no longer valid.\n\nContext:\nThe first service card gives the inspection interval for the Drift shutter drive as 202 days. The notice of 8 February 2041 replaces the first service card for the Drift shutter drive. The 202-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "benchmark-1-q023",
+      "shape": "conflict",
+      "question": "How many spare seals does Velvet Horizon Observatory hold for the Drift sensor tray, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 196 reserve gaskets for the VH-784.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-784-service-ledger.md",
+              "quote": "The day-shift ledger lists 196 reserve gaskets for the VH-784."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 203 reserve gaskets for the VH-784.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-784-review-file.md",
+              "quote": "The night-shift ledger lists 203 reserve gaskets for the VH-784."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Drift sensor tray has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/drift-sensor-tray-operating-limits.md",
+              "quote": "Neither ledger for the Drift sensor tray has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the VH-784 was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-784-service-ledger.md",
+              "quote": "The day-shift count for the VH-784 was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the VH-784 was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-784-review-file.md",
+              "quote": "The night-shift count for the VH-784 was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Drift sensor tray is 196.",
+        "The confirmed spare seal count for the Drift sensor tray is 203."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Drift sensor tray",
+        "code": "VH-784",
+        "entry_node": "knowledge:/open-questions/drift-sensor-tray-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-784-service-ledger.md",
+          "knowledge:/sources/vh-784-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Drift sensor tray maps to internal equipment code VH-784."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/drift-sensor-tray-operating-limits.md",
+          "quote": "The public name Drift sensor tray maps to internal equipment code VH-784."
+        }
+      ],
+      "reference_answer": "The day-shift ledger lists 196 reserve gaskets for the VH-784. The night-shift ledger lists 203 reserve gaskets for the VH-784. Neither ledger for the Drift sensor tray has been checked against the store.\n\nContext:\nThe day-shift count for the VH-784 was made on 12 April 2041. The night-shift count for the VH-784 was made on 12 April 2041."
+    },
+    {
+      "id": "benchmark-1-q024",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Drift filter drum, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Drift filter drum.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/drift-filter-drum-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Drift filter drum."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the supplier decision for the Drift filter drum until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/drift-filter-drum-review-record.md",
+              "quote": "The committee deferred the supplier decision for the Drift filter drum until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Drift filter drum needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/drift-filter-drum-operating-record.md",
+              "quote": "The Drift filter drum needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The instrument checker proposed a cover supplier for the Drift filter drum.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/drift-filter-drum-review-record.md",
+              "quote": "The instrument checker proposed a cover supplier for the Drift filter drum."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The instrument checker's proposed supplier is approved for the Drift filter drum."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "No supplier has been approved for the safety cover of the Drift filter drum. The committee deferred the supplier decision for the Drift filter drum until a load test is complete.\n\nContext:\nThe Drift filter drum needs a replacement safety cover. The instrument checker proposed a cover supplier for the Drift filter drum."
+    },
+    {
+      "id": "benchmark-1-q025",
+      "shape": "absent",
+      "question": "What did Velvet Horizon Observatory pay to buy the Ember lens carrier? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Ember lens carrier is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/ember-lens-carrier-operating-limits.md",
+              "quote": "The purchase price of the Ember lens carrier is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The VH-818 is stored in the calibration room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-818-service-ledger.md",
+              "quote": "The VH-818 is stored in the calibration room."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no acquisition cost for the VH-818 in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-818-review-file.md",
+              "quote": "The inventory review found no acquisition cost for the VH-818 in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the VH-818 covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-818-review-file.md",
+              "quote": "The inventory review for the VH-818 covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Ember lens carrier was zero.",
+        "The purchase price of the Ember lens carrier can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Ember lens carrier",
+        "code": "VH-818",
+        "entry_node": "knowledge:/open-questions/ember-lens-carrier-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-818-service-ledger.md",
+          "knowledge:/sources/vh-818-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Ember lens carrier maps to internal equipment code VH-818."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/ember-lens-carrier-operating-limits.md",
+          "quote": "The public name Ember lens carrier maps to internal equipment code VH-818."
+        }
+      ],
+      "reference_answer": "The purchase price of the Ember lens carrier is not recorded in this graph. The VH-818 is stored in the calibration room.\n\nContext:\nThe inventory review found no acquisition cost for the VH-818 in these records. The inventory review for the VH-818 covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "benchmark-1-q026",
+      "shape": "paraphrase",
+      "question": "After we take the Ember clock mount to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A return-to-service check is required after the Ember clock mount is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/ember-clock-mount-operating-record.md",
+              "quote": "A return-to-service check is required after the Ember clock mount is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The return-to-service check for the Ember clock mount takes 205 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/ember-clock-mount-operating-record.md",
+              "quote": "The return-to-service check for the Ember clock mount takes 205 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The optics custodian must sign the return-to-service check for the Ember clock mount.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ember-clock-mount-review-record.md",
+              "quote": "The optics custodian must sign the return-to-service check for the Ember clock mount."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Ember clock mount cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/ember-clock-mount-operating-limits.md",
+              "quote": "The Ember clock mount cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the Ember clock mount is kept in the east annex.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ember-clock-mount-review-record.md",
+              "quote": "The movement log for the Ember clock mount is kept in the east annex."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Ember clock mount can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "A return-to-service check is required after the Ember clock mount is moved between buildings. The return-to-service check for the Ember clock mount takes 205 minutes. The optics custodian must sign the return-to-service check for the Ember clock mount.\n\nContext:\nThe Ember clock mount cannot be used until its return-to-service check is signed. The movement log for the Ember clock mount is kept in the east annex."
+    },
+    {
+      "id": "benchmark-1-q027",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Ember mirror frame, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before moving the VH-852, fasten the two shipping locks.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-852-service-ledger.md",
+              "quote": "Before moving the VH-852, fasten the two shipping locks."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the shipping locks from the VH-852 before its position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-852-review-file.md",
+              "quote": "Remove the shipping locks from the VH-852 before its position test."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After moving the VH-852, run the position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-852-review-file.md",
+              "quote": "After moving the VH-852, run the position test."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the instrument checker can release the VH-852 after the position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-852-review-file.md",
+              "quote": "Only the instrument checker can release the VH-852 after the position test."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The shipping locks for the VH-852 are kept in the dome store.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-852-service-ledger.md",
+              "quote": "The shipping locks for the VH-852 are kept in the dome store."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Ember mirror frame must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/ember-mirror-frame-operating-limits.md",
+              "quote": "The transport record for the Ember mirror frame must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Ember mirror frame."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Ember mirror frame",
+        "code": "VH-852",
+        "entry_node": "knowledge:/synthesis/ember-mirror-frame-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-852-service-ledger.md",
+          "knowledge:/sources/vh-852-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Ember mirror frame maps to internal equipment code VH-852."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/ember-mirror-frame-operating-limits.md",
+          "quote": "The public name Ember mirror frame maps to internal equipment code VH-852."
+        }
+      ],
+      "reference_answer": "Before moving the VH-852, fasten the two shipping locks. Remove the shipping locks from the VH-852 before its position test. After moving the VH-852, run the position test. Only the instrument checker can release the VH-852 after the position test.\n\nContext:\nThe shipping locks for the VH-852 are kept in the dome store. The transport record for the Ember mirror frame must include both the departure check and the arrival check."
+    },
+    {
+      "id": "benchmark-1-q028",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Ember shutter drive change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal inspection interval for the Ember shutter drive is 211 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/ember-shutter-drive-operating-record.md",
+              "quote": "The normal inspection interval for the Ember shutter drive is 211 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 67 percent, inspect the Ember shutter drive every 205 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ember-shutter-drive-review-record.md",
+              "quote": "If room humidity exceeds 67 percent, inspect the Ember shutter drive every 205 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the Ember shutter drive ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ember-shutter-drive-review-record.md",
+              "quote": "The shorter interval for the Ember shutter drive ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the Ember shutter drive applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/ember-shutter-drive-operating-record.md",
+              "quote": "The normal interval for the Ember shutter drive applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night coordinator records room humidity for the Ember shutter drive each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/ember-shutter-drive-operating-limits.md",
+              "quote": "The night coordinator records room humidity for the Ember shutter drive each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 211-day interval for the Ember shutter drive applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The normal inspection interval for the Ember shutter drive is 211 days. If room humidity exceeds 67 percent, inspect the Ember shutter drive every 205 days. The shorter interval for the Ember shutter drive ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the Ember shutter drive applies only in a dry room. The night coordinator records room humidity for the Ember shutter drive each morning."
+    },
+    {
+      "id": "benchmark-1-q029",
+      "shape": "correction",
+      "question": "How often must Velvet Horizon Observatory inspect the Ember sensor tray, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The time between checks for the VH-886 is 214 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-886-review-file.md",
+              "quote": "The time between checks for the VH-886 is 214 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the VH-886 is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-886-review-file.md",
+              "quote": "The first service card for the VH-886 is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the time between checks for the VH-886 as 223 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-886-service-ledger.md",
+              "quote": "The first service card gives the time between checks for the VH-886 as 223 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the VH-886.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-886-review-file.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the VH-886."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 223-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-886-review-file.md",
+              "quote": "The 223-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Ember sensor tray is 223 days."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Ember sensor tray",
+        "code": "VH-886",
+        "entry_node": "knowledge:/synthesis/ember-sensor-tray-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-886-service-ledger.md",
+          "knowledge:/sources/vh-886-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Ember sensor tray maps to internal equipment code VH-886."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/ember-sensor-tray-operating-limits.md",
+          "quote": "The public name Ember sensor tray maps to internal equipment code VH-886."
+        }
+      ],
+      "reference_answer": "The time between checks for the VH-886 is 214 days. The first service card for the VH-886 is no longer valid.\n\nContext:\nThe first service card gives the time between checks for the VH-886 as 223 days. The notice of 8 February 2041 replaces the first service card for the VH-886. The 223-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "benchmark-1-q030",
+      "shape": "conflict",
+      "question": "How many spare seals does Velvet Horizon Observatory hold for the Ember filter drum, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 217 spare seals for the Ember filter drum.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/ember-filter-drum-operating-record.md",
+              "quote": "The day-shift ledger lists 217 spare seals for the Ember filter drum."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 224 spare seals for the Ember filter drum.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ember-filter-drum-review-record.md",
+              "quote": "The night-shift ledger lists 224 spare seals for the Ember filter drum."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Ember filter drum has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/ember-filter-drum-operating-limits.md",
+              "quote": "Neither ledger for the Ember filter drum has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the Ember filter drum was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/ember-filter-drum-operating-record.md",
+              "quote": "The day-shift count for the Ember filter drum was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the Ember filter drum was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ember-filter-drum-review-record.md",
+              "quote": "The night-shift count for the Ember filter drum was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Ember filter drum is 217.",
+        "The confirmed spare seal count for the Ember filter drum is 224."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The day-shift ledger lists 217 spare seals for the Ember filter drum. The night-shift ledger lists 224 spare seals for the Ember filter drum. Neither ledger for the Ember filter drum has been checked against the store.\n\nContext:\nThe day-shift count for the Ember filter drum was made on 12 April 2041. The night-shift count for the Ember filter drum was made on 12 April 2041."
+    },
+    {
+      "id": "benchmark-1-q031",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Frost lens carrier, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Frost lens carrier.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/frost-lens-carrier-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Frost lens carrier."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the vendor decision for the VH-920 until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-920-review-file.md",
+              "quote": "The committee deferred the vendor decision for the VH-920 until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The VH-920 needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-920-service-ledger.md",
+              "quote": "The VH-920 needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night coordinator proposed a cover vendor for the VH-920.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-920-review-file.md",
+              "quote": "The night coordinator proposed a cover vendor for the VH-920."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The night coordinator's proposed supplier is approved for the Frost lens carrier."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Frost lens carrier",
+        "code": "VH-920",
+        "entry_node": "knowledge:/open-questions/frost-lens-carrier-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-920-service-ledger.md",
+          "knowledge:/sources/vh-920-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Frost lens carrier maps to internal equipment code VH-920."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/frost-lens-carrier-operating-limits.md",
+          "quote": "The public name Frost lens carrier maps to internal equipment code VH-920."
+        }
+      ],
+      "reference_answer": "No supplier has been approved for the safety cover of the Frost lens carrier. The committee deferred the vendor decision for the VH-920 until a load test is complete.\n\nContext:\nThe VH-920 needs a replacement safety cover. The night coordinator proposed a cover vendor for the VH-920."
+    },
+    {
+      "id": "benchmark-1-q032",
+      "shape": "absent",
+      "question": "What did Velvet Horizon Observatory pay to buy the Frost clock mount? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Frost clock mount is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/frost-clock-mount-operating-limits.md",
+              "quote": "The purchase price of the Frost clock mount is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The Frost clock mount is stored in the east annex.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/frost-clock-mount-operating-record.md",
+              "quote": "The Frost clock mount is stored in the east annex."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no purchase price for the Frost clock mount in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/frost-clock-mount-review-record.md",
+              "quote": "The inventory review found no purchase price for the Frost clock mount in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the Frost clock mount covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/frost-clock-mount-review-record.md",
+              "quote": "The inventory review for the Frost clock mount covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Frost clock mount was zero.",
+        "The purchase price of the Frost clock mount can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The purchase price of the Frost clock mount is not recorded in this graph. The Frost clock mount is stored in the east annex.\n\nContext:\nThe inventory review found no purchase price for the Frost clock mount in these records. The inventory review for the Frost clock mount covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "benchmark-1-q033",
+      "shape": "paraphrase",
+      "question": "After we take the Frost mirror frame to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A restart check is required after the VH-954 is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-954-service-ledger.md",
+              "quote": "A restart check is required after the VH-954 is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The restart check for the VH-954 takes 226 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-954-service-ledger.md",
+              "quote": "The restart check for the VH-954 takes 226 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The instrument checker must sign the restart check for the VH-954.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-954-review-file.md",
+              "quote": "The instrument checker must sign the restart check for the VH-954."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Frost mirror frame cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/frost-mirror-frame-operating-limits.md",
+              "quote": "The Frost mirror frame cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the VH-954 is kept in the dome store.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-954-review-file.md",
+              "quote": "The movement log for the VH-954 is kept in the dome store."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Frost mirror frame can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Frost mirror frame",
+        "code": "VH-954",
+        "entry_node": "knowledge:/concepts/frost-mirror-frame-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-954-service-ledger.md",
+          "knowledge:/sources/vh-954-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Frost mirror frame maps to internal equipment code VH-954."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/frost-mirror-frame-operating-limits.md",
+          "quote": "The public name Frost mirror frame maps to internal equipment code VH-954."
+        }
+      ],
+      "reference_answer": "A restart check is required after the VH-954 is moved between buildings. The restart check for the VH-954 takes 226 minutes. The instrument checker must sign the restart check for the VH-954.\n\nContext:\nThe Frost mirror frame cannot be used until its return-to-service check is signed. The movement log for the VH-954 is kept in the dome store."
+    },
+    {
+      "id": "benchmark-1-q034",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Frost shutter drive, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before transporting the Frost shutter drive, fasten the two transit clips.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/frost-shutter-drive-operating-record.md",
+              "quote": "Before transporting the Frost shutter drive, fasten the two transit clips."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the transit clips from the Frost shutter drive before its alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/frost-shutter-drive-review-record.md",
+              "quote": "Remove the transit clips from the Frost shutter drive before its alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After transporting the Frost shutter drive, run the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/frost-shutter-drive-review-record.md",
+              "quote": "After transporting the Frost shutter drive, run the alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the night coordinator can release the Frost shutter drive after the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/frost-shutter-drive-review-record.md",
+              "quote": "Only the night coordinator can release the Frost shutter drive after the alignment check."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The transit clips for the Frost shutter drive are kept in the calibration room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/frost-shutter-drive-operating-record.md",
+              "quote": "The transit clips for the Frost shutter drive are kept in the calibration room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Frost shutter drive must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/frost-shutter-drive-operating-limits.md",
+              "quote": "The transport record for the Frost shutter drive must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Frost shutter drive."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "Before transporting the Frost shutter drive, fasten the two transit clips. Remove the transit clips from the Frost shutter drive before its alignment check. After transporting the Frost shutter drive, run the alignment check. Only the night coordinator can release the Frost shutter drive after the alignment check.\n\nContext:\nThe transit clips for the Frost shutter drive are kept in the calibration room. The transport record for the Frost shutter drive must include both the departure check and the arrival check."
+    },
+    {
+      "id": "benchmark-1-q035",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Frost sensor tray change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal time between checks for the VH-988 is 232 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-988-service-ledger.md",
+              "quote": "The normal time between checks for the VH-988 is 232 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 59 percent, inspect the VH-988 every 226 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-988-review-file.md",
+              "quote": "If room humidity exceeds 59 percent, inspect the VH-988 every 226 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the VH-988 ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-988-review-file.md",
+              "quote": "The shorter interval for the VH-988 ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the VH-988 applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-988-service-ledger.md",
+              "quote": "The normal interval for the VH-988 applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The optics custodian records room humidity for the Frost sensor tray each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/frost-sensor-tray-operating-limits.md",
+              "quote": "The optics custodian records room humidity for the Frost sensor tray each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 232-day interval for the Frost sensor tray applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Frost sensor tray",
+        "code": "VH-988",
+        "entry_node": "knowledge:/concepts/frost-sensor-tray-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-988-service-ledger.md",
+          "knowledge:/sources/vh-988-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Frost sensor tray maps to internal equipment code VH-988."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/frost-sensor-tray-operating-limits.md",
+          "quote": "The public name Frost sensor tray maps to internal equipment code VH-988."
+        }
+      ],
+      "reference_answer": "The normal time between checks for the VH-988 is 232 days. If room humidity exceeds 59 percent, inspect the VH-988 every 226 days. The shorter interval for the VH-988 ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the VH-988 applies only in a dry room. The optics custodian records room humidity for the Frost sensor tray each morning."
+    },
+    {
+      "id": "benchmark-1-q036",
+      "shape": "correction",
+      "question": "How often must Velvet Horizon Observatory inspect the Frost filter drum, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The inspection interval for the Frost filter drum is 235 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/frost-filter-drum-review-record.md",
+              "quote": "The inspection interval for the Frost filter drum is 235 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the Frost filter drum is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/frost-filter-drum-review-record.md",
+              "quote": "The first service card for the Frost filter drum is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the inspection interval for the Frost filter drum as 244 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/frost-filter-drum-operating-record.md",
+              "quote": "The first service card gives the inspection interval for the Frost filter drum as 244 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the Frost filter drum.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/frost-filter-drum-review-record.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the Frost filter drum."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 244-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/frost-filter-drum-review-record.md",
+              "quote": "The 244-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Frost filter drum is 244 days."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The inspection interval for the Frost filter drum is 235 days. The first service card for the Frost filter drum is no longer valid.\n\nContext:\nThe first service card gives the inspection interval for the Frost filter drum as 244 days. The notice of 8 February 2041 replaces the first service card for the Frost filter drum. The 244-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "benchmark-1-q037",
+      "shape": "conflict",
+      "question": "How many spare seals does Velvet Horizon Observatory hold for the Halo lens carrier, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 238 reserve gaskets for the VH-1022.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1022-service-ledger.md",
+              "quote": "The day-shift ledger lists 238 reserve gaskets for the VH-1022."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 245 reserve gaskets for the VH-1022.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1022-review-file.md",
+              "quote": "The night-shift ledger lists 245 reserve gaskets for the VH-1022."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Halo lens carrier has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/halo-lens-carrier-operating-limits.md",
+              "quote": "Neither ledger for the Halo lens carrier has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the VH-1022 was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1022-service-ledger.md",
+              "quote": "The day-shift count for the VH-1022 was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the VH-1022 was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1022-review-file.md",
+              "quote": "The night-shift count for the VH-1022 was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Halo lens carrier is 238.",
+        "The confirmed spare seal count for the Halo lens carrier is 245."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Halo lens carrier",
+        "code": "VH-1022",
+        "entry_node": "knowledge:/open-questions/halo-lens-carrier-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-1022-service-ledger.md",
+          "knowledge:/sources/vh-1022-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Halo lens carrier maps to internal equipment code VH-1022."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/halo-lens-carrier-operating-limits.md",
+          "quote": "The public name Halo lens carrier maps to internal equipment code VH-1022."
+        }
+      ],
+      "reference_answer": "The day-shift ledger lists 238 reserve gaskets for the VH-1022. The night-shift ledger lists 245 reserve gaskets for the VH-1022. Neither ledger for the Halo lens carrier has been checked against the store.\n\nContext:\nThe day-shift count for the VH-1022 was made on 12 April 2041. The night-shift count for the VH-1022 was made on 12 April 2041."
+    },
+    {
+      "id": "benchmark-1-q038",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Halo clock mount, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Halo clock mount.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/halo-clock-mount-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Halo clock mount."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the supplier decision for the Halo clock mount until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/halo-clock-mount-review-record.md",
+              "quote": "The committee deferred the supplier decision for the Halo clock mount until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Halo clock mount needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/halo-clock-mount-operating-record.md",
+              "quote": "The Halo clock mount needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The optics custodian proposed a cover supplier for the Halo clock mount.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/halo-clock-mount-review-record.md",
+              "quote": "The optics custodian proposed a cover supplier for the Halo clock mount."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The optics custodian's proposed supplier is approved for the Halo clock mount."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "No supplier has been approved for the safety cover of the Halo clock mount. The committee deferred the supplier decision for the Halo clock mount until a load test is complete.\n\nContext:\nThe Halo clock mount needs a replacement safety cover. The optics custodian proposed a cover supplier for the Halo clock mount."
+    },
+    {
+      "id": "benchmark-1-q039",
+      "shape": "absent",
+      "question": "What did Velvet Horizon Observatory pay to buy the Halo mirror frame? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Halo mirror frame is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/halo-mirror-frame-operating-limits.md",
+              "quote": "The purchase price of the Halo mirror frame is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The VH-1056 is stored in the dome store.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1056-service-ledger.md",
+              "quote": "The VH-1056 is stored in the dome store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no acquisition cost for the VH-1056 in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1056-review-file.md",
+              "quote": "The inventory review found no acquisition cost for the VH-1056 in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the VH-1056 covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1056-review-file.md",
+              "quote": "The inventory review for the VH-1056 covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Halo mirror frame was zero.",
+        "The purchase price of the Halo mirror frame can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Halo mirror frame",
+        "code": "VH-1056",
+        "entry_node": "knowledge:/open-questions/halo-mirror-frame-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-1056-service-ledger.md",
+          "knowledge:/sources/vh-1056-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Halo mirror frame maps to internal equipment code VH-1056."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/halo-mirror-frame-operating-limits.md",
+          "quote": "The public name Halo mirror frame maps to internal equipment code VH-1056."
+        }
+      ],
+      "reference_answer": "The purchase price of the Halo mirror frame is not recorded in this graph. The VH-1056 is stored in the dome store.\n\nContext:\nThe inventory review found no acquisition cost for the VH-1056 in these records. The inventory review for the VH-1056 covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "benchmark-1-q040",
+      "shape": "paraphrase",
+      "question": "After we take the Halo shutter drive to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A return-to-service check is required after the Halo shutter drive is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/halo-shutter-drive-operating-record.md",
+              "quote": "A return-to-service check is required after the Halo shutter drive is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The return-to-service check for the Halo shutter drive takes 247 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/halo-shutter-drive-operating-record.md",
+              "quote": "The return-to-service check for the Halo shutter drive takes 247 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The night coordinator must sign the return-to-service check for the Halo shutter drive.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/halo-shutter-drive-review-record.md",
+              "quote": "The night coordinator must sign the return-to-service check for the Halo shutter drive."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Halo shutter drive cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/halo-shutter-drive-operating-limits.md",
+              "quote": "The Halo shutter drive cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the Halo shutter drive is kept in the calibration room.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/halo-shutter-drive-review-record.md",
+              "quote": "The movement log for the Halo shutter drive is kept in the calibration room."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Halo shutter drive can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "A return-to-service check is required after the Halo shutter drive is moved between buildings. The return-to-service check for the Halo shutter drive takes 247 minutes. The night coordinator must sign the return-to-service check for the Halo shutter drive.\n\nContext:\nThe Halo shutter drive cannot be used until its return-to-service check is signed. The movement log for the Halo shutter drive is kept in the calibration room."
+    },
+    {
+      "id": "benchmark-1-q041",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Halo sensor tray, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before moving the VH-1090, fasten the two shipping locks.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1090-service-ledger.md",
+              "quote": "Before moving the VH-1090, fasten the two shipping locks."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the shipping locks from the VH-1090 before its position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1090-review-file.md",
+              "quote": "Remove the shipping locks from the VH-1090 before its position test."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After moving the VH-1090, run the position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1090-review-file.md",
+              "quote": "After moving the VH-1090, run the position test."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the optics custodian can release the VH-1090 after the position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1090-review-file.md",
+              "quote": "Only the optics custodian can release the VH-1090 after the position test."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The shipping locks for the VH-1090 are kept in the east annex.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1090-service-ledger.md",
+              "quote": "The shipping locks for the VH-1090 are kept in the east annex."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Halo sensor tray must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/halo-sensor-tray-operating-limits.md",
+              "quote": "The transport record for the Halo sensor tray must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Halo sensor tray."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Halo sensor tray",
+        "code": "VH-1090",
+        "entry_node": "knowledge:/synthesis/halo-sensor-tray-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-1090-service-ledger.md",
+          "knowledge:/sources/vh-1090-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Halo sensor tray maps to internal equipment code VH-1090."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/halo-sensor-tray-operating-limits.md",
+          "quote": "The public name Halo sensor tray maps to internal equipment code VH-1090."
+        }
+      ],
+      "reference_answer": "Before moving the VH-1090, fasten the two shipping locks. Remove the shipping locks from the VH-1090 before its position test. After moving the VH-1090, run the position test. Only the optics custodian can release the VH-1090 after the position test.\n\nContext:\nThe shipping locks for the VH-1090 are kept in the east annex. The transport record for the Halo sensor tray must include both the departure check and the arrival check."
+    },
+    {
+      "id": "benchmark-1-q042",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Halo filter drum change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal inspection interval for the Halo filter drum is 253 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/halo-filter-drum-operating-record.md",
+              "quote": "The normal inspection interval for the Halo filter drum is 253 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 66 percent, inspect the Halo filter drum every 247 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/halo-filter-drum-review-record.md",
+              "quote": "If room humidity exceeds 66 percent, inspect the Halo filter drum every 247 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the Halo filter drum ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/halo-filter-drum-review-record.md",
+              "quote": "The shorter interval for the Halo filter drum ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the Halo filter drum applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/halo-filter-drum-operating-record.md",
+              "quote": "The normal interval for the Halo filter drum applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The instrument checker records room humidity for the Halo filter drum each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/halo-filter-drum-operating-limits.md",
+              "quote": "The instrument checker records room humidity for the Halo filter drum each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 253-day interval for the Halo filter drum applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The normal inspection interval for the Halo filter drum is 253 days. If room humidity exceeds 66 percent, inspect the Halo filter drum every 247 days. The shorter interval for the Halo filter drum ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the Halo filter drum applies only in a dry room. The instrument checker records room humidity for the Halo filter drum each morning."
+    },
+    {
+      "id": "benchmark-1-q043",
+      "shape": "correction",
+      "question": "How often must Velvet Horizon Observatory inspect the Lumen lens carrier, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The time between checks for the VH-1124 is 256 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1124-review-file.md",
+              "quote": "The time between checks for the VH-1124 is 256 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the VH-1124 is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1124-review-file.md",
+              "quote": "The first service card for the VH-1124 is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the time between checks for the VH-1124 as 265 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1124-service-ledger.md",
+              "quote": "The first service card gives the time between checks for the VH-1124 as 265 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the VH-1124.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1124-review-file.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the VH-1124."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 265-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1124-review-file.md",
+              "quote": "The 265-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Lumen lens carrier is 265 days."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Lumen lens carrier",
+        "code": "VH-1124",
+        "entry_node": "knowledge:/synthesis/lumen-lens-carrier-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-1124-service-ledger.md",
+          "knowledge:/sources/vh-1124-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Lumen lens carrier maps to internal equipment code VH-1124."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/lumen-lens-carrier-operating-limits.md",
+          "quote": "The public name Lumen lens carrier maps to internal equipment code VH-1124."
+        }
+      ],
+      "reference_answer": "The time between checks for the VH-1124 is 256 days. The first service card for the VH-1124 is no longer valid.\n\nContext:\nThe first service card gives the time between checks for the VH-1124 as 265 days. The notice of 8 February 2041 replaces the first service card for the VH-1124. The 265-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "benchmark-1-q044",
+      "shape": "conflict",
+      "question": "How many spare seals does Velvet Horizon Observatory hold for the Lumen clock mount, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 259 spare seals for the Lumen clock mount.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/lumen-clock-mount-operating-record.md",
+              "quote": "The day-shift ledger lists 259 spare seals for the Lumen clock mount."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 266 spare seals for the Lumen clock mount.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/lumen-clock-mount-review-record.md",
+              "quote": "The night-shift ledger lists 266 spare seals for the Lumen clock mount."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Lumen clock mount has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/lumen-clock-mount-operating-limits.md",
+              "quote": "Neither ledger for the Lumen clock mount has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the Lumen clock mount was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/lumen-clock-mount-operating-record.md",
+              "quote": "The day-shift count for the Lumen clock mount was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the Lumen clock mount was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/lumen-clock-mount-review-record.md",
+              "quote": "The night-shift count for the Lumen clock mount was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Lumen clock mount is 259.",
+        "The confirmed spare seal count for the Lumen clock mount is 266."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The day-shift ledger lists 259 spare seals for the Lumen clock mount. The night-shift ledger lists 266 spare seals for the Lumen clock mount. Neither ledger for the Lumen clock mount has been checked against the store.\n\nContext:\nThe day-shift count for the Lumen clock mount was made on 12 April 2041. The night-shift count for the Lumen clock mount was made on 12 April 2041."
+    },
+    {
+      "id": "benchmark-1-q045",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Lumen mirror frame, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Lumen mirror frame.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/lumen-mirror-frame-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Lumen mirror frame."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the vendor decision for the VH-1158 until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1158-review-file.md",
+              "quote": "The committee deferred the vendor decision for the VH-1158 until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The VH-1158 needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1158-service-ledger.md",
+              "quote": "The VH-1158 needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The instrument checker proposed a cover vendor for the VH-1158.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1158-review-file.md",
+              "quote": "The instrument checker proposed a cover vendor for the VH-1158."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The instrument checker's proposed supplier is approved for the Lumen mirror frame."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Lumen mirror frame",
+        "code": "VH-1158",
+        "entry_node": "knowledge:/open-questions/lumen-mirror-frame-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-1158-service-ledger.md",
+          "knowledge:/sources/vh-1158-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Lumen mirror frame maps to internal equipment code VH-1158."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/lumen-mirror-frame-operating-limits.md",
+          "quote": "The public name Lumen mirror frame maps to internal equipment code VH-1158."
+        }
+      ],
+      "reference_answer": "No supplier has been approved for the safety cover of the Lumen mirror frame. The committee deferred the vendor decision for the VH-1158 until a load test is complete.\n\nContext:\nThe VH-1158 needs a replacement safety cover. The instrument checker proposed a cover vendor for the VH-1158."
+    },
+    {
+      "id": "benchmark-1-q046",
+      "shape": "absent",
+      "question": "What did Velvet Horizon Observatory pay to buy the Lumen shutter drive? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Lumen shutter drive is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/lumen-shutter-drive-operating-limits.md",
+              "quote": "The purchase price of the Lumen shutter drive is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The Lumen shutter drive is stored in the calibration room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/lumen-shutter-drive-operating-record.md",
+              "quote": "The Lumen shutter drive is stored in the calibration room."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no purchase price for the Lumen shutter drive in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/lumen-shutter-drive-review-record.md",
+              "quote": "The inventory review found no purchase price for the Lumen shutter drive in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the Lumen shutter drive covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/lumen-shutter-drive-review-record.md",
+              "quote": "The inventory review for the Lumen shutter drive covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Lumen shutter drive was zero.",
+        "The purchase price of the Lumen shutter drive can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The purchase price of the Lumen shutter drive is not recorded in this graph. The Lumen shutter drive is stored in the calibration room.\n\nContext:\nThe inventory review found no purchase price for the Lumen shutter drive in these records. The inventory review for the Lumen shutter drive covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "benchmark-1-q047",
+      "shape": "paraphrase",
+      "question": "After we take the Lumen sensor tray to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A restart check is required after the VH-1192 is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1192-service-ledger.md",
+              "quote": "A restart check is required after the VH-1192 is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The restart check for the VH-1192 takes 268 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1192-service-ledger.md",
+              "quote": "The restart check for the VH-1192 takes 268 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The optics custodian must sign the restart check for the VH-1192.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1192-review-file.md",
+              "quote": "The optics custodian must sign the restart check for the VH-1192."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Lumen sensor tray cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/lumen-sensor-tray-operating-limits.md",
+              "quote": "The Lumen sensor tray cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the VH-1192 is kept in the east annex.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1192-review-file.md",
+              "quote": "The movement log for the VH-1192 is kept in the east annex."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Lumen sensor tray can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Lumen sensor tray",
+        "code": "VH-1192",
+        "entry_node": "knowledge:/concepts/lumen-sensor-tray-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-1192-service-ledger.md",
+          "knowledge:/sources/vh-1192-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Lumen sensor tray maps to internal equipment code VH-1192."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/lumen-sensor-tray-operating-limits.md",
+          "quote": "The public name Lumen sensor tray maps to internal equipment code VH-1192."
+        }
+      ],
+      "reference_answer": "A restart check is required after the VH-1192 is moved between buildings. The restart check for the VH-1192 takes 268 minutes. The optics custodian must sign the restart check for the VH-1192.\n\nContext:\nThe Lumen sensor tray cannot be used until its return-to-service check is signed. The movement log for the VH-1192 is kept in the east annex."
+    },
+    {
+      "id": "benchmark-1-q048",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Lumen filter drum, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before transporting the Lumen filter drum, fasten the two transit clips.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/lumen-filter-drum-operating-record.md",
+              "quote": "Before transporting the Lumen filter drum, fasten the two transit clips."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the transit clips from the Lumen filter drum before its alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/lumen-filter-drum-review-record.md",
+              "quote": "Remove the transit clips from the Lumen filter drum before its alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After transporting the Lumen filter drum, run the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/lumen-filter-drum-review-record.md",
+              "quote": "After transporting the Lumen filter drum, run the alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the instrument checker can release the Lumen filter drum after the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/lumen-filter-drum-review-record.md",
+              "quote": "Only the instrument checker can release the Lumen filter drum after the alignment check."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The transit clips for the Lumen filter drum are kept in the dome store.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/lumen-filter-drum-operating-record.md",
+              "quote": "The transit clips for the Lumen filter drum are kept in the dome store."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Lumen filter drum must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/lumen-filter-drum-operating-limits.md",
+              "quote": "The transport record for the Lumen filter drum must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Lumen filter drum."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "Before transporting the Lumen filter drum, fasten the two transit clips. Remove the transit clips from the Lumen filter drum before its alignment check. After transporting the Lumen filter drum, run the alignment check. Only the instrument checker can release the Lumen filter drum after the alignment check.\n\nContext:\nThe transit clips for the Lumen filter drum are kept in the dome store. The transport record for the Lumen filter drum must include both the departure check and the arrival check."
+    },
+    {
+      "id": "benchmark-1-q049",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Nova lens carrier change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal time between checks for the VH-1226 is 274 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1226-service-ledger.md",
+              "quote": "The normal time between checks for the VH-1226 is 274 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 58 percent, inspect the VH-1226 every 268 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1226-review-file.md",
+              "quote": "If room humidity exceeds 58 percent, inspect the VH-1226 every 268 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the VH-1226 ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1226-review-file.md",
+              "quote": "The shorter interval for the VH-1226 ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the VH-1226 applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1226-service-ledger.md",
+              "quote": "The normal interval for the VH-1226 applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night coordinator records room humidity for the Nova lens carrier each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/nova-lens-carrier-operating-limits.md",
+              "quote": "The night coordinator records room humidity for the Nova lens carrier each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 274-day interval for the Nova lens carrier applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Nova lens carrier",
+        "code": "VH-1226",
+        "entry_node": "knowledge:/concepts/nova-lens-carrier-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-1226-service-ledger.md",
+          "knowledge:/sources/vh-1226-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Nova lens carrier maps to internal equipment code VH-1226."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/nova-lens-carrier-operating-limits.md",
+          "quote": "The public name Nova lens carrier maps to internal equipment code VH-1226."
+        }
+      ],
+      "reference_answer": "The normal time between checks for the VH-1226 is 274 days. If room humidity exceeds 58 percent, inspect the VH-1226 every 268 days. The shorter interval for the VH-1226 ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the VH-1226 applies only in a dry room. The night coordinator records room humidity for the Nova lens carrier each morning."
+    },
+    {
+      "id": "benchmark-1-q050",
+      "shape": "correction",
+      "question": "How often must Velvet Horizon Observatory inspect the Nova clock mount, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The inspection interval for the Nova clock mount is 277 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/nova-clock-mount-review-record.md",
+              "quote": "The inspection interval for the Nova clock mount is 277 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the Nova clock mount is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/nova-clock-mount-review-record.md",
+              "quote": "The first service card for the Nova clock mount is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the inspection interval for the Nova clock mount as 286 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/nova-clock-mount-operating-record.md",
+              "quote": "The first service card gives the inspection interval for the Nova clock mount as 286 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the Nova clock mount.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/nova-clock-mount-review-record.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the Nova clock mount."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 286-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/nova-clock-mount-review-record.md",
+              "quote": "The 286-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Nova clock mount is 286 days."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The inspection interval for the Nova clock mount is 277 days. The first service card for the Nova clock mount is no longer valid.\n\nContext:\nThe first service card gives the inspection interval for the Nova clock mount as 286 days. The notice of 8 February 2041 replaces the first service card for the Nova clock mount. The 286-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "benchmark-1-q051",
+      "shape": "conflict",
+      "question": "How many spare seals does Velvet Horizon Observatory hold for the Nova mirror frame, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 280 reserve gaskets for the VH-1260.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1260-service-ledger.md",
+              "quote": "The day-shift ledger lists 280 reserve gaskets for the VH-1260."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 287 reserve gaskets for the VH-1260.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1260-review-file.md",
+              "quote": "The night-shift ledger lists 287 reserve gaskets for the VH-1260."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Nova mirror frame has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/nova-mirror-frame-operating-limits.md",
+              "quote": "Neither ledger for the Nova mirror frame has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the VH-1260 was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1260-service-ledger.md",
+              "quote": "The day-shift count for the VH-1260 was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the VH-1260 was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1260-review-file.md",
+              "quote": "The night-shift count for the VH-1260 was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Nova mirror frame is 280.",
+        "The confirmed spare seal count for the Nova mirror frame is 287."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Nova mirror frame",
+        "code": "VH-1260",
+        "entry_node": "knowledge:/open-questions/nova-mirror-frame-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-1260-service-ledger.md",
+          "knowledge:/sources/vh-1260-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Nova mirror frame maps to internal equipment code VH-1260."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/nova-mirror-frame-operating-limits.md",
+          "quote": "The public name Nova mirror frame maps to internal equipment code VH-1260."
+        }
+      ],
+      "reference_answer": "The day-shift ledger lists 280 reserve gaskets for the VH-1260. The night-shift ledger lists 287 reserve gaskets for the VH-1260. Neither ledger for the Nova mirror frame has been checked against the store.\n\nContext:\nThe day-shift count for the VH-1260 was made on 12 April 2041. The night-shift count for the VH-1260 was made on 12 April 2041."
+    },
+    {
+      "id": "benchmark-1-q052",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Nova shutter drive, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Nova shutter drive.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/nova-shutter-drive-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Nova shutter drive."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the supplier decision for the Nova shutter drive until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/nova-shutter-drive-review-record.md",
+              "quote": "The committee deferred the supplier decision for the Nova shutter drive until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Nova shutter drive needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/nova-shutter-drive-operating-record.md",
+              "quote": "The Nova shutter drive needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night coordinator proposed a cover supplier for the Nova shutter drive.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/nova-shutter-drive-review-record.md",
+              "quote": "The night coordinator proposed a cover supplier for the Nova shutter drive."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The night coordinator's proposed supplier is approved for the Nova shutter drive."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "No supplier has been approved for the safety cover of the Nova shutter drive. The committee deferred the supplier decision for the Nova shutter drive until a load test is complete.\n\nContext:\nThe Nova shutter drive needs a replacement safety cover. The night coordinator proposed a cover supplier for the Nova shutter drive."
+    },
+    {
+      "id": "benchmark-1-q053",
+      "shape": "absent",
+      "question": "What did Velvet Horizon Observatory pay to buy the Nova sensor tray? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Nova sensor tray is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/nova-sensor-tray-operating-limits.md",
+              "quote": "The purchase price of the Nova sensor tray is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The VH-1294 is stored in the east annex.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1294-service-ledger.md",
+              "quote": "The VH-1294 is stored in the east annex."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no acquisition cost for the VH-1294 in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1294-review-file.md",
+              "quote": "The inventory review found no acquisition cost for the VH-1294 in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the VH-1294 covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1294-review-file.md",
+              "quote": "The inventory review for the VH-1294 covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Nova sensor tray was zero.",
+        "The purchase price of the Nova sensor tray can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Nova sensor tray",
+        "code": "VH-1294",
+        "entry_node": "knowledge:/open-questions/nova-sensor-tray-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-1294-service-ledger.md",
+          "knowledge:/sources/vh-1294-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Nova sensor tray maps to internal equipment code VH-1294."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/nova-sensor-tray-operating-limits.md",
+          "quote": "The public name Nova sensor tray maps to internal equipment code VH-1294."
+        }
+      ],
+      "reference_answer": "The purchase price of the Nova sensor tray is not recorded in this graph. The VH-1294 is stored in the east annex.\n\nContext:\nThe inventory review found no acquisition cost for the VH-1294 in these records. The inventory review for the VH-1294 covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "benchmark-1-q054",
+      "shape": "paraphrase",
+      "question": "After we take the Nova filter drum to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A return-to-service check is required after the Nova filter drum is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/nova-filter-drum-operating-record.md",
+              "quote": "A return-to-service check is required after the Nova filter drum is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The return-to-service check for the Nova filter drum takes 289 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/nova-filter-drum-operating-record.md",
+              "quote": "The return-to-service check for the Nova filter drum takes 289 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The instrument checker must sign the return-to-service check for the Nova filter drum.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/nova-filter-drum-review-record.md",
+              "quote": "The instrument checker must sign the return-to-service check for the Nova filter drum."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Nova filter drum cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/nova-filter-drum-operating-limits.md",
+              "quote": "The Nova filter drum cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the Nova filter drum is kept in the dome store.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/nova-filter-drum-review-record.md",
+              "quote": "The movement log for the Nova filter drum is kept in the dome store."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Nova filter drum can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "A return-to-service check is required after the Nova filter drum is moved between buildings. The return-to-service check for the Nova filter drum takes 289 minutes. The instrument checker must sign the return-to-service check for the Nova filter drum.\n\nContext:\nThe Nova filter drum cannot be used until its return-to-service check is signed. The movement log for the Nova filter drum is kept in the dome store."
+    },
+    {
+      "id": "benchmark-1-q055",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Orbit lens carrier, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before moving the VH-1328, fasten the two shipping locks.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1328-service-ledger.md",
+              "quote": "Before moving the VH-1328, fasten the two shipping locks."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the shipping locks from the VH-1328 before its position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1328-review-file.md",
+              "quote": "Remove the shipping locks from the VH-1328 before its position test."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After moving the VH-1328, run the position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1328-review-file.md",
+              "quote": "After moving the VH-1328, run the position test."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the night coordinator can release the VH-1328 after the position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1328-review-file.md",
+              "quote": "Only the night coordinator can release the VH-1328 after the position test."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The shipping locks for the VH-1328 are kept in the calibration room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1328-service-ledger.md",
+              "quote": "The shipping locks for the VH-1328 are kept in the calibration room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Orbit lens carrier must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/orbit-lens-carrier-operating-limits.md",
+              "quote": "The transport record for the Orbit lens carrier must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Orbit lens carrier."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Orbit lens carrier",
+        "code": "VH-1328",
+        "entry_node": "knowledge:/synthesis/orbit-lens-carrier-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-1328-service-ledger.md",
+          "knowledge:/sources/vh-1328-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Orbit lens carrier maps to internal equipment code VH-1328."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/orbit-lens-carrier-operating-limits.md",
+          "quote": "The public name Orbit lens carrier maps to internal equipment code VH-1328."
+        }
+      ],
+      "reference_answer": "Before moving the VH-1328, fasten the two shipping locks. Remove the shipping locks from the VH-1328 before its position test. After moving the VH-1328, run the position test. Only the night coordinator can release the VH-1328 after the position test.\n\nContext:\nThe shipping locks for the VH-1328 are kept in the calibration room. The transport record for the Orbit lens carrier must include both the departure check and the arrival check."
+    },
+    {
+      "id": "benchmark-1-q056",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Orbit clock mount change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal inspection interval for the Orbit clock mount is 295 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/orbit-clock-mount-operating-record.md",
+              "quote": "The normal inspection interval for the Orbit clock mount is 295 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 65 percent, inspect the Orbit clock mount every 289 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/orbit-clock-mount-review-record.md",
+              "quote": "If room humidity exceeds 65 percent, inspect the Orbit clock mount every 289 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the Orbit clock mount ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/orbit-clock-mount-review-record.md",
+              "quote": "The shorter interval for the Orbit clock mount ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the Orbit clock mount applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/orbit-clock-mount-operating-record.md",
+              "quote": "The normal interval for the Orbit clock mount applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The optics custodian records room humidity for the Orbit clock mount each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/orbit-clock-mount-operating-limits.md",
+              "quote": "The optics custodian records room humidity for the Orbit clock mount each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 295-day interval for the Orbit clock mount applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The normal inspection interval for the Orbit clock mount is 295 days. If room humidity exceeds 65 percent, inspect the Orbit clock mount every 289 days. The shorter interval for the Orbit clock mount ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the Orbit clock mount applies only in a dry room. The optics custodian records room humidity for the Orbit clock mount each morning."
+    },
+    {
+      "id": "benchmark-1-q057",
+      "shape": "correction",
+      "question": "How often must Velvet Horizon Observatory inspect the Orbit mirror frame, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The time between checks for the VH-1362 is 298 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1362-review-file.md",
+              "quote": "The time between checks for the VH-1362 is 298 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the VH-1362 is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1362-review-file.md",
+              "quote": "The first service card for the VH-1362 is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the time between checks for the VH-1362 as 307 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1362-service-ledger.md",
+              "quote": "The first service card gives the time between checks for the VH-1362 as 307 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the VH-1362.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1362-review-file.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the VH-1362."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 307-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1362-review-file.md",
+              "quote": "The 307-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Orbit mirror frame is 307 days."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Orbit mirror frame",
+        "code": "VH-1362",
+        "entry_node": "knowledge:/synthesis/orbit-mirror-frame-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-1362-service-ledger.md",
+          "knowledge:/sources/vh-1362-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Orbit mirror frame maps to internal equipment code VH-1362."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/orbit-mirror-frame-operating-limits.md",
+          "quote": "The public name Orbit mirror frame maps to internal equipment code VH-1362."
+        }
+      ],
+      "reference_answer": "The time between checks for the VH-1362 is 298 days. The first service card for the VH-1362 is no longer valid.\n\nContext:\nThe first service card gives the time between checks for the VH-1362 as 307 days. The notice of 8 February 2041 replaces the first service card for the VH-1362. The 307-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "benchmark-1-q058",
+      "shape": "conflict",
+      "question": "How many spare seals does Velvet Horizon Observatory hold for the Orbit shutter drive, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 301 spare seals for the Orbit shutter drive.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/orbit-shutter-drive-operating-record.md",
+              "quote": "The day-shift ledger lists 301 spare seals for the Orbit shutter drive."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 308 spare seals for the Orbit shutter drive.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/orbit-shutter-drive-review-record.md",
+              "quote": "The night-shift ledger lists 308 spare seals for the Orbit shutter drive."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Orbit shutter drive has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/orbit-shutter-drive-operating-limits.md",
+              "quote": "Neither ledger for the Orbit shutter drive has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the Orbit shutter drive was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/orbit-shutter-drive-operating-record.md",
+              "quote": "The day-shift count for the Orbit shutter drive was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the Orbit shutter drive was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/orbit-shutter-drive-review-record.md",
+              "quote": "The night-shift count for the Orbit shutter drive was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Orbit shutter drive is 301.",
+        "The confirmed spare seal count for the Orbit shutter drive is 308."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The day-shift ledger lists 301 spare seals for the Orbit shutter drive. The night-shift ledger lists 308 spare seals for the Orbit shutter drive. Neither ledger for the Orbit shutter drive has been checked against the store.\n\nContext:\nThe day-shift count for the Orbit shutter drive was made on 12 April 2041. The night-shift count for the Orbit shutter drive was made on 12 April 2041."
+    },
+    {
+      "id": "benchmark-1-q059",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Orbit sensor tray, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Orbit sensor tray.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/orbit-sensor-tray-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Orbit sensor tray."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the vendor decision for the VH-1396 until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1396-review-file.md",
+              "quote": "The committee deferred the vendor decision for the VH-1396 until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The VH-1396 needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1396-service-ledger.md",
+              "quote": "The VH-1396 needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The optics custodian proposed a cover vendor for the VH-1396.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/vh-1396-review-file.md",
+              "quote": "The optics custodian proposed a cover vendor for the VH-1396."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The optics custodian's proposed supplier is approved for the Orbit sensor tray."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Orbit sensor tray",
+        "code": "VH-1396",
+        "entry_node": "knowledge:/open-questions/orbit-sensor-tray-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/vh-1396-service-ledger.md",
+          "knowledge:/sources/vh-1396-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Orbit sensor tray maps to internal equipment code VH-1396."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/orbit-sensor-tray-operating-limits.md",
+          "quote": "The public name Orbit sensor tray maps to internal equipment code VH-1396."
+        }
+      ],
+      "reference_answer": "No supplier has been approved for the safety cover of the Orbit sensor tray. The committee deferred the vendor decision for the VH-1396 until a load test is complete.\n\nContext:\nThe VH-1396 needs a replacement safety cover. The optics custodian proposed a cover vendor for the VH-1396."
+    },
+    {
+      "id": "benchmark-1-q060",
+      "shape": "absent",
+      "question": "What did Velvet Horizon Observatory pay to buy the Orbit filter drum? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Orbit filter drum is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/orbit-filter-drum-operating-limits.md",
+              "quote": "The purchase price of the Orbit filter drum is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The Orbit filter drum is stored in the dome store.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/orbit-filter-drum-operating-record.md",
+              "quote": "The Orbit filter drum is stored in the dome store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no purchase price for the Orbit filter drum in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/orbit-filter-drum-review-record.md",
+              "quote": "The inventory review found no purchase price for the Orbit filter drum in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the Orbit filter drum covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/orbit-filter-drum-review-record.md",
+              "quote": "The inventory review for the Orbit filter drum covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Orbit filter drum was zero.",
+        "The purchase price of the Orbit filter drum can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The purchase price of the Orbit filter drum is not recorded in this graph. The Orbit filter drum is stored in the dome store.\n\nContext:\nThe inventory review found no purchase price for the Orbit filter drum in these records. The inventory review for the Orbit filter drum covers the asset sheet and the receipt register."
+    }
+  ]
+}

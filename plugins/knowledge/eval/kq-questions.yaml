@@ -1,0 +1,66 @@
+# Questions for the synthetic graph of kq_fixture.py. Each name, date and number is invented.
+# `expect` is the page that holds the answer. `key` is the text that a right answer must state.
+# `context` is the text of other pages that changes how a reader uses the answer.
+# `find` holds text of the graph that the first search (the words of the question, no model) must print.
+# tests/test_kq.py reads `expect` and `find`. A live run (eval/README.md) reads `key` and `context`.
+questions:
+  - id: k01
+    shape: the question uses other words than the page
+    question: How much does a member pay to rent a bed for a season?
+    expect: knowledge:/concepts/plot-fee.md
+    find: [40 florins]
+    key: [40 florins]
+    context:
+      - The treasurer report of June gives 45 florins.
+      - A notice of 9 July 2031 says that 45 is wrong.
+      - A member who joins after 1 August pays half of the fee.
+      - The corrected fee income is not known.
+  - id: k02
+    shape: the question uses an alias of the page
+    question: What does the irrigation limit become when the reservoir is low?
+    expect: knowledge:/concepts/water-allowance.md
+    find: [150 litres]
+    key: [150 litres]
+    context:
+      - The usual allowance is 300 litres in one week.
+      - The cut applies when the level is below one third.
+      - The limit applies from May to September.
+  - id: k03
+    shape: the answer is that the thing is not decided
+    question: Who pays for the repair of the east fence?
+    expect: knowledge:/open-questions/who-repairs-the-east-fence.md
+    find: [It is not decided who repairs it]
+    key: [not decided]
+    context:
+      - The warden says that the landowner must pay.
+      - The lease of the land is not in the graph.
+      - The committee moved the item to the next meeting.
+  - id: k04
+    shape: two sources disagree and a later source corrects one of them
+    question: What was the income from fees in the first half of 2031?
+    expect: knowledge:/open-questions/what-the-true-fee-income-was.md
+    find: ["2,475 florins", No source gives the corrected income]
+    key: ["2,475 florins", not settled]
+    context:
+      - At 40 florins, 55 plots give 2,200 florins.
+      - The notice of 9 July says that the fee is 40 florins.
+      - A new report is due in September 2031.
+  - id: k05
+    shape: the source of the answer is weak
+    question: How many people wait for a plot?
+    expect: knowledge:/concepts/waiting-list.md
+    find: [18 names]
+    key: [18 names, 30 June 2031]
+    context:
+      - Only the warden counted them.
+      - A person who refuses two offers leaves the list.
+      - The time on the list is not recorded.
+  - id: k06
+    shape: the answer depends on a condition
+    question: Who can change the plot fee?
+    expect: knowledge:/entities/garden-committee.md
+    find: [A change needs 6 votes]
+    key: [the committee, 6 votes]
+    context:
+      - The warden cannot change the plot fee.
+      - The committee set the fee at 40 florins on 14 March 2031.

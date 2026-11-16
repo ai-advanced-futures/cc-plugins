@@ -1,0 +1,1170 @@
+#!/usr/bin/env python3
+"""kq.py: search, read and walk the knowledge graphs for knowledge:search and knowledge:ask. Standard library only.
+
+  kq.py search [--stdin] [-n 6] [--expand] [--open NODE ...] [QUERY ...]
+        rank the pages for each query; print passages and linked pages. --expand adds the neighbors of the
+        3 best pages with no word filter. --open prints those pages too.
+  kq.py open NODE [NODE ...] [--q TERMS]         print pages: text and linked pages
+  kq.py around NODE [NODE ...] --q WORDS         the context round: the neighbors of the pages that hold the answer,
+        best match with WORDS (the words of the answer) first, open questions before other pages
+  kq.py walk start [--stdin] [--frontier] [QUESTION]
+        search with the question, then open the 3 best pages (or only name them, with --frontier)
+  kq.py walk step --walk ID [--fact T ...] [--keep NODE ...] [--search WORDS ...] [--frontier]
+        record the facts, queue the kept pages and the pages of each search, then open the next 3 pages
+  kq.py walk step --walk ID [--fact T ...] --answer NODE [NODE ...]
+        record the facts, then print the context round for the pages that hold the answer. This ends the walk.
+  kq.py walk read --walk ID NODE                 print one page of the walk for a judge: question, facts, page
+  kq.py walk show --walk ID                      print the walk state
+
+  kq.py find [--stdin] [--links] [--skip NODE ...] [QUERY ...]
+        the landing: rank the passages for each query, merge the ranks, print the 8 best pages almost in full,
+        then the best passages of other pages. --links adds the linked pages of each full page.
+  kq.py near NODE [NODE ...] --q WORDS           the walk after the answer: the pages that a walk from the answer
+        pages comes to most (personalized PageRank), weighted by the match with WORDS, plus pages from a search
+  kq.py read NODE [NODE ...] [--q WORDS]         print pages for a model that follows links: text and linked pages
+
+A node is <graph>:/<path in the bundle>. The graphs come from .claude/knowledge.json (local graphs only).
+The ranking is BM25 on passages (k1 1.2, b 0.75), plus the title, aliases and description of the page.
+When KQ_LOG names a file, each call adds one JSON line to it, and the printed text to <that file>.out.
+The parsed pages are kept in a cache file: KQ_CACHE names the folder (default: a folder in the temporary
+directory; "off" stops the cache). The cache is made again when a file of a graph, .claude/knowledge.json or
+the text of this script changes. When KQ_RUN_ID is set, a command that reads the question from stdin prints it first.
+A file kq.json next to this script gives other defaults: {"find": {...}, "near": {...}, "inject": {...}}
+("inject" is a find that reads the question from stdin). With "norepeat", a command does not print a passage
+that an earlier command of the same session printed; a find that reads the question from stdin starts again.
+Exit 0 on success (also when no page matches, because a command in a skill must not fail), 2 on wrong input.
+"""
+import argparse, hashlib, json, math, os, re, sys, tempfile, time, uuid
+from collections import Counter
+from pathlib import Path
+
+STOP = set("""a an and are as at be been but by can could did do does for from had has have he her his how i if in
+into is it its of on or she so than that the their them then there these they this those to was were what when where
+which who whom whose why will with would you your""".split())
+SKIP_FILES = {"index.md", "log.md", "manifest.md"}
+PAGE_BUDGET, DRY_STEPS, STEP_PAGES = 12, 2, 3  # the stop rule of a walk, and the pages of one step
+PAGE_CHARS = 4000  # the text of one page in a walk
+LINKED_ROWS = 6  # the neighbors that one page of a walk lists
+AROUND_PAGES, AROUND_SEARCH, AROUND_CHARS, AROUND_ROWS = 8, 6, 1100, 6  # one context round: neighbors, pages from
+# a search with the words of the answer, the text of one page, and the rows after them
+FIND_MAX = 24000  # the text of one find or near command
+FIND_PAGES, FIND_PAGE_CHARS, NEAR_PAGE_CHARS = 8, 1800, 2500  # the full pages of a find; the text of one page
+READ_MAX, READ_PAGE_CHARS, READ_ROWS = 24000, 2500, 6  # one read command
+PPR_DAMP, PPR_STEPS = 0.5, 30
+CACHE_VERSION = "6.2"  # change it when the parse of a page changes
+OUT_MAX = 27000  # one command never prints more: a tool saves a longer output to a file, and that costs more calls
+
+
+def stem(w):
+    if len(w) > 3 and not w.isdigit():
+        if w.endswith("ies") and not w.endswith(("eies", "aies")):
+            return w[:-3] + "y"
+        if w.endswith("es") and not w.endswith(("aes", "ees", "oes")):
+            return w[:-1]
+        if w.endswith("s") and not w.endswith(("us", "ss")):
+            return w[:-1]
+    return w
+
+
+def tokens(text):
+    text = re.sub(r"(?<=\d),(?=\d)", "", text.lower())
+    return [stem(w) for w in re.findall(r"[a-z0-9]+", text) if w not in STOP and (len(w) > 1 or w.isdigit())]
+
+
+def clean(text):
+    text = re.sub(r"\[\^[^\]]+\]", "", text)                 # footnote marks
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)      # links: keep the words
+    return re.sub(r"\s+", " ", text).strip()
+
+
+LINK = r"\]\(([^)\s#]+\.md)(?:#[^)]*)?\)"
+
+
+def unquote(v):
+    v = v.strip()
+    return v[1:-1] if len(v) > 1 and v[0] == v[-1] and v[0] in "'\"" else v
+
+
+class Page:
+    __slots__ = ("node", "type", "title", "description", "status", "aliases", "passages", "out", "head", "plinks")
+
+
+def parse(node, text, here, bundle, graph):
+    p = Page()
+    p.node, p.type, p.title, p.description, p.status, p.aliases = node, "", "", "", "", []
+    head, body = "", text
+    if text.startswith("---\n"):
+        end = text.find("\n---", 4)
+        if end != -1:
+            head, body = text[4:end], text[end + 4:]
+    for key in ("type", "title", "description", "status"):
+        m = re.search(rf"^{key}:[ \t]*(.*)$", head, re.M)
+        if not m:
+            continue
+        value = m.group(1).strip()
+        if value in ("", ">", ">-", ">+", "|", "|-", "|+") or value[:1] in "'\"":
+            # a value that continues on indented lines
+            more = re.match(r"((?:\n[ \t]+.*|\n[ \t]*(?=\n[ \t]))*)", head[m.end():]).group(1)
+            value = " ".join(([] if value[:1] in ">|" else [value]) + [x.strip() for x in more.splitlines() if x.strip()])
+        setattr(p, key, unquote(value))
+    m = re.search(r"^aliases:[ \t]*\n((?:[ \t]*- .*\n?)+)", head, re.M)
+    if m:
+        p.aliases = [unquote(a) for a in re.findall(r"^[ \t]*- (.*)$", m.group(1), re.M)]
+    cut = body.find("<!-- LINKS:START")
+    prose = body if cut == -1 else body[:cut]
+    if not p.title:
+        m = re.search(r"^# (.+)$", prose, re.M)
+        p.title = m.group(1).strip() if m else node
+    # links out: markdown links and frontmatter resources
+    def to_node(target):
+        f = (bundle / target.lstrip("/")) if target.startswith("/") else (here / target)
+        try:
+            rel = os.path.normpath(f).replace(os.path.normpath(bundle) + os.sep, "", 1)
+        except ValueError:
+            return None
+        if rel.startswith("..") or os.path.isabs(rel) or os.path.basename(rel) in SKIP_FILES:
+            return None
+        n = f"{graph}:/{rel}"
+        return n if n != node else None
+
+    out = []
+    for target in re.findall(LINK, body) + re.findall(r"resource:[ \t]*(/\S+\.md)", head):
+        n = to_node(target)
+        if n and n not in out:
+            out.append(n)
+    p.out = out
+    # passages: one for each paragraph, list item or table row, with its heading
+    p.passages, p.plinks, heading, blocks, cur = [], [], "", [], []
+
+    def flush():
+        if cur:
+            blocks.append((heading, " ".join(cur)))
+            cur.clear()
+
+    for line in prose.splitlines():
+        line = line.strip()
+        if not line or set(line) <= set("|-: "):
+            flush()
+        elif re.match(r"\[\^[^\]]+\]:", line):
+            flush()
+            cur.append("")  # a footnote text: dropped, with its next lines
+        elif line.startswith("#"):
+            flush()
+            heading = line.lstrip("# ").strip()
+        elif re.match(r"([-*+>|]|\d+[.)])\s", line) or line.startswith("|"):
+            flush()
+            cur.append(line)
+        else:
+            cur.append(line)
+    flush()
+    for h, raw in blocks:
+        if not raw.strip():
+            continue
+        txt = clean(re.sub(r"^([-*+>]|\d+[.)])\s+", "", raw.strip()))
+        if len(txt) < 25:
+            continue
+        parts = [txt]
+        if len(txt) > 900:
+            parts, acc = [], ""
+            for sent in re.split(r"(?<=[.!?])\s+", txt):
+                if acc and len(acc) + len(sent) > 700:
+                    parts.append(acc)
+                    acc = sent
+                else:
+                    acc = (acc + " " + sent).strip()
+            parts.append(acc)
+        links = [n for n in dict.fromkeys(to_node(t) for t in re.findall(LINK, raw)) if n]
+        for part in parts:
+            p.passages.append((h, part, tokens(h + " " + part)))
+            p.plinks.append(links)  # the pages that the block of this passage links to
+    p.head = tokens(" ".join([p.title, p.description] + p.aliases))
+    return p
+
+
+def find_root(arg):
+    if arg:
+        return Path(arg).resolve()
+    here = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path.cwd()).resolve()
+    for d in [here, *here.parents]:
+        if (d / ".claude/knowledge.json").is_file():
+            return d
+    sys.exit("ERROR: no .claude/knowledge.json in this directory or above it. Run /knowledge:setup.")
+
+
+def graph_files(root):
+    """The files of the local graphs, in the order of the index: (graph, bundle, file)."""
+    try:
+        text = (root / ".claude/knowledge.json").read_text("utf-8")
+        graphs = json.loads(text).get("graphs", {})
+    except (OSError, ValueError) as e:
+        sys.exit(f"ERROR: cannot read .claude/knowledge.json: {e}")
+    files = []
+    for graph, spec in graphs.items():
+        if not isinstance(spec, dict) or not spec.get("path"):
+            continue  # a remote graph: not searched
+        bundle = (root / spec["path"]).resolve()
+        files += [(graph, bundle, f) for f in sorted(bundle.rglob("*.md")) if f.name not in SKIP_FILES]
+    return text, files
+
+
+def load(root, files=None):
+    pages = {}
+    for graph, bundle, f in files if files is not None else graph_files(root)[1]:
+        node = f"{graph}:/{f.relative_to(bundle).as_posix()}"
+        try:
+            pages[node] = parse(node, f.read_text("utf-8"), f.parent, bundle, graph)
+        except OSError:
+            continue
+    return pages
+
+
+FIELDS = ("node", "type", "title", "description", "status", "aliases", "passages", "out", "head", "plinks")
+
+
+def cache_path(root):
+    d = os.environ.get("KQ_CACHE")
+    if d == "off":
+        return None
+    base = Path(d) if d else Path(tempfile.gettempdir()) / f"kq-cache-{os.getuid()}"
+    try:  # one file for each project and each text of this script: a copy of the script uses the same file
+        me = Path(__file__).read_bytes()
+    except OSError:
+        return None
+    return base / (hashlib.sha256(str(root).encode() + b"\0" + me).hexdigest()[:16] + ".json")
+
+
+def cached_pages(root):
+    """The parsed pages, from the cache file when no file changed. Returns (pages, cache state)."""
+    path = cache_path(root)
+    if path is None:
+        return load(root), "off"
+    text, files = graph_files(root)
+    h = hashlib.sha256((CACHE_VERSION + text).encode())
+    try:
+        for _g, _b, f in files:
+            st = os.stat(f)
+            h.update(f"{f} {st.st_mtime_ns} {st.st_size}\n".encode())
+    except OSError:
+        return load(root, files), "no stat"
+    mark = h.hexdigest()
+    try:
+        data = json.loads(path.read_text("utf-8"))
+        if data.get("mark") == mark:
+            pages = {}
+            for row in data["pages"]:
+                p = Page()
+                for k, v in zip(FIELDS, row):
+                    setattr(p, k, v)
+                pages[p.node] = p
+            return pages, "read"
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    pages = load(root, files)
+    try:  # write to a new file, then move it: a second call never reads half of a file
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+        tmp.write_text(json.dumps({"mark": mark, "pages": [[getattr(p, k) for k in FIELDS] for p in pages.values()]}),
+                       "utf-8")
+        os.replace(tmp, path)
+    except OSError:
+        return pages, "not written"
+    return pages, "written"
+
+
+def load_xterms():
+    try:
+        return json.loads((Path(__file__).parent / "expansions.json").read_text("utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+XTERMS = load_xterms()
+XW = float(os.environ.get("KQ_XW", "2.0"))
+
+
+class Index:
+    def __init__(self, pages):
+        self.pages = pages
+        self.units = []  # (node, passage number or -1 for the head, tokens)
+        for node, p in pages.items():
+            self.units.append((node, -1, p.head))
+            if XTERMS.get(node):  # search terms that a model wrote one time for this page, when the index was built
+                self.units.append((node, -2, tokens(" ".join(XTERMS[node]))))
+            for i, (_h, _t, toks) in enumerate(p.passages):
+                self.units.append((node, i, toks))
+        self.n = len(self.units)
+        self.avg = (sum(len(u[2]) for u in self.units) / self.n) if self.n else 1.0
+        self.df = Counter()
+        for _n, _i, toks in self.units:
+            self.df.update(set(toks))
+        self.inlinks = {}
+        for node, p in pages.items():
+            for t in p.out:
+                self.inlinks.setdefault(t, []).append(node)
+        self.memo_nb, self.memo_score = {}, {}
+
+    def score_units(self, q):
+        """BM25 score of each unit that holds a query term."""
+        q = set(q)
+        memo = frozenset(q)
+        if memo in self.memo_score:
+            return self.memo_score[memo]
+        idf = {t: math.log(1 + (self.n - self.df[t] + 0.5) / (self.df[t] + 0.5)) for t in q if self.df.get(t)}
+        out = self.memo_score[memo] = {}
+        if not idf:
+            return out
+        for k, (_node, _i, toks) in enumerate(self.units):
+            tf = Counter(t for t in toks if t in idf)
+            if not tf:
+                continue
+            norm = 1.2 * (1 - 0.75 + 0.75 * len(toks) / self.avg)
+            out[k] = sum(idf[t] * f * 2.2 / (f + norm) for t, f in tf.items())
+        return out
+
+    def rank(self, q):
+        """Pages by score: the head, plus the 3 best passages with weights 1, 1/2, 1/4."""
+        per = {}
+        for k, s in self.score_units(q).items():
+            node, i, _ = self.units[k]
+            per.setdefault(node, []).append((s, i))
+        ranked = []
+        for node, hits in per.items():
+            head = sum(s for s, i in hits if i == -1) + XW * sum(s for s, i in hits if i == -2)
+            body = sorted(((s, i) for s, i in hits if i >= 0), reverse=True)
+            score = head + sum(s * w for (s, _i), w in zip(body, (1, 0.5, 0.25)))
+            ranked.append((score, node, body, head))
+        ranked.sort(key=lambda r: (-r[0], r[1]))
+        return ranked
+
+    def neighbors(self, node):
+        if node in self.memo_nb:
+            return self.memo_nb[node]
+        seen, out = set(), []
+        for n in self.pages[node].out + self.inlinks.get(node, []):
+            if n in self.pages and n not in seen and n != node:
+                seen.add(n)
+                out.append(n)
+        self.memo_nb[node] = out
+        return out
+
+
+def cut(text, n):
+    return text if len(text) <= n else text[: n - 3].rstrip() + "..."
+
+
+def head_line(p):
+    extra = f" | status: {p.status}" if p.status else ""
+    return f"== {p.node} | {p.type or '-'} | {p.title}{extra}"
+
+
+def linked_rows(ix, node, q, skip, limit):
+    """Neighbors of a page that match the query in their title, aliases or description."""
+    qs, rows = set(q), []
+    idf = {t: math.log(1 + (ix.n - ix.df[t] + 0.5) / (ix.df[t] + 0.5)) for t in qs if ix.df.get(t)}
+    for n in ix.neighbors(node):
+        if n in skip:
+            continue
+        s = sum(idf.get(t, 0) for t in set(ix.pages[n].head))
+        if s > 0:
+            rows.append((s, n))
+    rows.sort(key=lambda r: (-r[0], r[1]))
+    return [n for _s, n in rows[:limit]]
+
+
+def show_page(ix, node, q, body, n_pass, shown, n_linked, out):
+    p = ix.pages[node]
+    out.append(head_line(p))
+    if p.description:
+        out.append(f"   description: {cut(p.description, 400)}")
+    for _s, i in sorted(body[:n_pass], key=lambda b: b[1]):
+        h, t, _ = p.passages[i]
+        out.append(f"   > {('[' + h + '] ') if h else ''}{cut(t, 700)}")
+    for n in linked_rows(ix, node, q, shown, n_linked):
+        lp = ix.pages[n]
+        out.append(f"   linked: {n} | {lp.type or '-'} | {lp.title} | {cut(lp.description, 240)}")
+
+
+def context_rows(ix, node, q, skip, limit, out):
+    """Neighbors of a page with no word filter: the pages that are not sources first, best match first."""
+    idf = {t: math.log(1 + (ix.n - ix.df[t] + 0.5) / (ix.df[t] + 0.5)) for t in set(q) if ix.df.get(t)}
+    rows = []
+    for n in ix.neighbors(node):
+        if n not in skip:
+            p = ix.pages[n]
+            rows.append((p.type == "Source", -sum(idf.get(t, 0) for t in set(p.head)), n))
+    rows.sort()
+    for _src, _s, n in rows[:limit]:
+        p = ix.pages[n]
+        out.append(f"   linked: {n} | {p.type or '-'} | {p.title} | {cut(p.description, 200)}")
+    return [r[2] for r in rows[:limit]]
+
+
+def do_search(ix, queries, n, out, expand=False):
+    hits_all, shown = [], set()
+    for query in queries:
+        q = tokens(query)
+        ranked = ix.rank(q)[:n]
+        out.append(f"QUERY: {query}")
+        if not ranked:
+            out.append("   no page matches these words.")
+        for k, (_score, node, body, _head) in enumerate(ranked):
+            if node in shown:
+                out.append(f"== {node} (shown above)")
+                continue
+            shown.add(node)
+            if expand and k < 3:
+                show_page(ix, node, q, body, 2, shown, 0, out)
+                context_rows(ix, node, q, shown | {r[1] for r in ranked}, LINKED_ROWS, out)
+            else:
+                show_page(ix, node, q, body, 3 if k < 3 else 1, shown | {r[1] for r in ranked}, 3 if k < 3 else 0, out)
+        hits_all.append([r[1] for r in ranked])
+        out.append("")
+    return hits_all
+
+
+def do_open(ix, nodes, query, out, n_pass=8, n_linked=8, skip=()):
+    q = tokens(query or "")
+    for node in nodes:
+        if node not in ix.pages:
+            out.append(f"== {node}: no such page. Use a node from a search result.")
+            continue
+        p = ix.pages[node]
+        if q:
+            scores = ix.score_units(q)
+            body = sorted(((scores.get(k, 0), i) for k, (nd, i, _t) in enumerate(ix.units) if nd == node and i >= 0),
+                          reverse=True)
+            body = [b for b in body if b[0] > 0] or [(0, i) for i in range(len(p.passages))]
+        else:
+            body = [(0, i) for i in range(len(p.passages))]
+        show_page(ix, node, q or p.head, body, n_pass, set(skip) | {node}, n_linked, out)
+        out.append("")
+
+
+TYPE_WEIGHT = {"OpenQuestion": 1.5, "Source": 0.6}  # the context round: an open question first, a raw source last
+
+
+LOOSE_NODES = False  # kq.json {"nodes": "loose"}: also take a path with no .md, and a file name with no folder
+
+
+def fix_nodes(ix, nodes):
+    """A model can write a node with no graph name. Take the page with that path when one graph has it."""
+    out = []
+    for n in nodes:
+        if n not in ix.pages:
+            path = "/" + n.split(":/", 1)[-1].lstrip("/")
+            same = [k for k in ix.pages if k.split(":", 1)[1] == path]
+            if len(same) != 1 and LOOSE_NODES:
+                name = lambda k: k.rstrip("/").rsplit("/", 1)[-1].rsplit(":", 1)[-1].lower()
+                bare = lambda k: name(k)[:-3] if name(k).endswith(".md") else name(k)
+                same = [k for k in ix.pages if k.split(":", 1)[1] == path.rstrip("/") + ".md"]
+                if len(same) != 1:
+                    same = [k for k in ix.pages if bare(k) == bare(n)]
+            n = same[0] if len(same) == 1 else n
+        out.append(n)
+    return out
+
+
+def do_around(ix, nodes, q, out, limit=AROUND_PAGES):
+    """The context round. Neighbors of the pages that hold the answer, ranked by the words of the answer."""
+    bad = [n for n in nodes if n not in ix.pages]
+    nodes = [n for n in nodes if n in ix.pages]
+    if bad:
+        out.append("not a page, ignored: " + ", ".join(bad))
+    count = Counter(n for node in nodes for n in ix.neighbors(node) if n not in nodes)
+    ranked = {r[1]: r for r in ix.rank(q)}
+    rows = []
+    for n, c in count.items():
+        p = ix.pages[n]
+        weight = TYPE_WEIGHT.get(p.type, 1.0) * (1.25 if c > 1 else 1.0)
+        rows.append((-(ranked[n][0] if n in ranked else 0.0) * weight, p.type != "OpenQuestion", n))
+    rows.sort()
+    near = {n for _s, _t, n in rows[:limit]}
+    found = sorted((-r[0] * TYPE_WEIGHT.get(ix.pages[r[1]].type, 1.0), False, r[1]) for r in ranked.values()
+                   if r[1] not in nodes and r[1] not in near)[:AROUND_SEARCH]
+    first_found = found[0][2] if found else None
+    rest = [r for r in rows[limit:] if r[2] not in {f[2] for f in found}]
+    rows = rows[:limit] + found + rest
+    limit += len(found)
+    out.append("PAGES AROUND THE ANSWER (neighbors of " + ", ".join(nodes) + "; the best match with the answer first):")
+    shown = []
+    for _s, _t, n in rows[:limit]:
+        p = ix.pages[n]
+        if n == first_found:
+            out.append("MORE PAGES (not neighbors; from a search with the words of the answer):")
+        out.append(head_line(p))
+        if p.description:
+            out.append(f"   description: {cut(p.description, 300)}")
+        order = [i for _sc, i in (ranked[n][2] if n in ranked else [])]
+        order += [i for i in range(len(p.passages)) if i not in order]  # then the other passages, in page order
+        keep, used = [], 0
+        for i in order:
+            size = min(len(p.passages[i][1]), 700)
+            if keep and used + size > AROUND_CHARS:
+                break
+            keep.append(i)
+            used += size
+        for i in sorted(keep):
+            h, t, _ = p.passages[i]
+            out.append(f"   > {('[' + h + '] ') if h else ''}{cut(t, 700)}")
+        shown.append(n)
+    more = [n for _s, _t, n in rows[limit:limit + AROUND_ROWS]]
+    if more:
+        out.append("ALSO NEAR (not opened):")
+    for n in more:
+        p = ix.pages[n]
+        out.append(f"   linked: {n} | {p.type or '-'} | {p.title} | {cut(p.description, 180)}")
+    out.append("")
+    return shown + more
+
+
+# ---------------------------------------------------------------- round 5: find, near, read
+def fuse(ix, queries):
+    """Passages and pages by the sum of 1 / (10 + rank) over the queries."""
+    sc, pg = {}, {}
+    for query in queries:
+        q = tokens(query)
+        units = sorted(((s, k) for k, s in ix.score_units(q).items() if ix.units[k][1] >= 0), reverse=True)[:200]
+        for r, (_s, k) in enumerate(units):
+            key = ix.units[k][:2]
+            sc[key] = sc.get(key, 0.0) + 1.0 / (10 + r)
+        for r, x in enumerate(ix.rank(q)[:30]):
+            pg[x[1]] = pg.get(x[1], 0.0) + 1.0 / (10 + r)
+    return sc, pg
+
+
+SEEN = None  # with the no-repeat option: {node: [passage numbers that an earlier command printed]}
+
+
+def seen_path():
+    key = os.environ.get("KQ_SESSION") or os.environ.get("CLAUDE_CODE_SESSION_ID")
+    d = os.environ.get("KQ_CACHE")
+    if not key or d == "off":
+        return None
+    base = Path(d) if d else Path(tempfile.gettempdir()) / f"kq-cache-{os.getuid()}"
+    return base / ("seen-" + hashlib.sha256(key.encode()).hexdigest()[:16] + ".json")
+
+
+def seen_load(start):
+    """The passages that this session printed. A new question (start) has none."""
+    path = seen_path()
+    if path is None:
+        return None
+    if not start:
+        try:
+            data = json.loads(path.read_text())
+            if time.time() - data["at"] < 3600:
+                return data["seen"]
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
+        return {}
+    try:  # a new question: remove the state files of sessions that ended
+        for old in path.parent.glob("seen-*.json"):
+            if time.time() - old.stat().st_mtime > 3600:
+                old.unlink()
+    except OSError:
+        pass
+    return {}
+
+
+def seen_save():
+    path = seen_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+        tmp.write_text(json.dumps({"at": time.time(), "seen": SEEN}))
+        os.replace(tmp, path)
+    except OSError:
+        pass
+
+
+def mark(node, keep):
+    if SEEN is not None:
+        SEEN[node] = sorted(set(SEEN.get(node, [])) | set(keep))
+
+
+CUE = re.compile(r"refuted|unverified|trust|caveat|limit|open|unknown|not known|settle|changed|correct|update|supersed|"
+                 r"disput|contradict|disagree|risk|depend|decision|decided|consequence|impact|matters|left out|later", re.I)
+
+
+def fill(ix, node, best, cap, cue=""):
+    """Passage numbers of one page up to cap characters: the best match first, then the page order.
+    cue "a": after the best matches, the passages under a heading of claims, doubts, changes or decisions, then the
+    first passage, then the page from its end. cue "b": the best matches get 75% of cap; then the same order, and a
+    passage that does not fit is skipped."""
+    p, keep, used = ix.pages[node], [], 0
+    old = SEEN.get(node, ()) if SEEN is not None else ()
+    size = lambda i: min(len(p.passages[i][1]), 700) + 20
+    every = range(len(p.passages))
+    if not cue:
+        order, first_cap, tail = list(best) + [i for i in every if i not in best], cap, []
+    else:
+        cued = [i for i in every if p.passages[i][0] and CUE.search(p.passages[i][0])]
+        tail = [i for i in cued if i in best] + cued + list(best) + ([0] if p.passages else []) + list(reversed(every))
+        order, first_cap = (list(best) + tail, cap) if cue == "a" else (list(best), 0.75 * cap)
+        tail = tail if cue == "b" else []
+    for i in dict.fromkeys(order):
+        if i in old:
+            continue
+        if keep and used + size(i) > first_cap:
+            break
+        keep.append(i)
+        used += size(i)
+    for i in dict.fromkeys(tail):  # cue "b": fill the remainder, skip what does not fit
+        if i in old or i in keep or (keep and used + size(i) > cap):
+            continue
+        keep.append(i)
+        used += size(i)
+    return sorted(keep)
+
+
+DESC_CHARS = 300  # the description line of a page in a find or near result; --desc changes it, 0 removes the line
+
+
+def page_lines(ix, node, keep, rows=()):
+    p = ix.pages[node]
+    again = SEEN is not None and node in SEEN
+    lines = [head_line(p) + (" | more of a page above" if again else "")]
+    if p.description and DESC_CHARS and not again:
+        lines.append(f"   description: {cut(p.description, DESC_CHARS)}")
+    for i in keep:
+        h, t, _ = p.passages[i]
+        lines.append(f"   > {('[' + h + '] ') if h else ''}{cut(t, 700)}")
+    for n in rows:
+        lp = ix.pages[n]
+        lines.append(f"   linked: {n} | {lp.type or '-'} | {lp.title} | {cut(lp.description, 120)}")
+    return lines
+
+
+def link_rows(ix, node, q, skip, limit):
+    """Neighbors of a page with no word filter: the pages that are not sources first, best match first."""
+    idf = {t: math.log(1 + (ix.n - ix.df[t] + 0.5) / (ix.df[t] + 0.5)) for t in set(q) if ix.df.get(t)}
+    rows = sorted((ix.pages[n].type == "Source", -sum(idf.get(t, 0) for t in set(ix.pages[n].head)), n)
+                  for n in ix.neighbors(node) if n not in skip)
+    return [r[2] for r in rows[:limit]]
+
+
+def add_block(out, lines, used, budget):
+    size = sum(len(x) + 1 for x in lines)
+    if used + size > budget:
+        return used, False
+    out.extend(lines)
+    return used + size, True
+
+
+def do_find(ix, queries, out, skip=(), links=False, max_chars=FIND_MAX, n_pages=FIND_PAGES, page_chars=FIND_PAGE_CHARS):
+    sc, pg = fuse(ix, queries)
+    best = {}
+    for (n, i), _s in sorted(sc.items(), key=lambda kv: (-kv[1], kv[0])):
+        best.setdefault(n, []).append(i)
+    q = [t for query in queries for t in tokens(query)]
+    out.append("SEARCHES: " + " | ".join(queries))
+    top = [n for n in sorted(pg, key=lambda n: (-pg[n], n)) if n not in skip]
+    if not top:
+        out.append("   no page matches these words.")
+    used, full = 0, []
+    for n in top[:n_pages]:
+        rows = link_rows(ix, n, q, set(skip) | set(top[:n_pages]), READ_ROWS) if links else ()
+        keep = fill(ix, n, best.get(n, []), page_chars)
+        used, ok = add_block(out, page_lines(ix, n, keep, rows), used, max_chars)
+        if not ok:
+            break
+        mark(n, keep)
+        full.append(n)
+    rest, count = {}, {}
+    for (n, i), _s in sorted(sc.items(), key=lambda kv: (-kv[1], kv[0])):
+        if n in full or n in skip or count.get(n, 0) >= 2 or (SEEN is not None and i in SEEN.get(n, ())):
+            continue
+        count[n] = count.get(n, 0) + 1
+        rest.setdefault(n, []).append(i)
+    first = True
+    for n, keep in rest.items():
+        lines = (["MORE PASSAGES (the best passages of other pages):"] if first else []) + page_lines(ix, n, sorted(keep))
+        used, ok = add_block(out, lines, used, max_chars)
+        if not ok:
+            break
+        mark(n, keep)
+        first = False
+    out.append("")
+    return full
+
+
+def page_rank(ix, seeds, weights=None):
+    """Personalized PageRank: a walk that starts again from the seed pages. Links count in both directions."""
+    total = sum(weights[n] for n in seeds) if weights else len(seeds)
+    start = {n: (weights[n] if weights else 1.0) / total for n in seeds}
+    r = dict(start)
+    for _ in range(PPR_STEPS):
+        nxt = {}
+        for n, v in r.items():
+            nb = ix.neighbors(n)
+            for m in nb:
+                nxt[m] = nxt.get(m, 0.0) + PPR_DAMP * v / len(nb)
+        for n, v in start.items():
+            nxt[n] = nxt.get(n, 0.0) + (1 - PPR_DAMP) * v
+        r = nxt
+    return r
+
+
+MARKERS = """contradict conflict disagree dispute differ inconsistent correct correction superseded supersede revised
+retracted outdated stale unverified unconfirmed uncorroborated secondhand hearsay inferred assumption assumed caveat risk
+open unresolved undecided pending unknown tbd depends dependent contingent blocked requires prerequisite condition unless
+consequence implies impact affects therefore however but although""".split()
+
+
+def do_near(ix, nodes, q, out, max_chars=FIND_MAX, page_chars=NEAR_PAGE_CHARS, linkfirst=False, markers=0.0, skip=(),
+            weights=None, head=None, cue="", rest=0):
+    bad = [n for n in nodes if n not in ix.pages]
+    nodes = [n for n in nodes if n in ix.pages]
+    if bad:
+        out.append("not a page, ignored: " + ", ".join(bad))
+    if not nodes:
+        out.append("Give the node of a page from a find result.")
+        return []
+    ranked = {r[1]: r for r in ix.rank(q)}
+    weight = lambda n: TYPE_WEIGHT.get(ix.pages[n].type, 1.0)
+    marked = {r[1]: r for r in ix.rank([stem(w) for w in MARKERS])} if markers else {}
+    match = lambda n: (ranked[n][0] if n in ranked else 0.0) + markers * (marked[n][0] if n in marked else 0.0)
+    r = page_rank(ix, nodes, weights)
+    walk = [n for n in sorted(r, key=lambda n: (-r[n] * (1 + match(n)) * weight(n), n)) if n not in nodes]
+    found = [n for n in sorted(ranked, key=lambda n: (-match(n) * weight(n), n)) if n not in nodes]
+    order = list(dict.fromkeys(x for trio in zip(walk[0::2], walk[1::2], found) for x in trio)) or walk
+    out.append(head or "PAGES NEAR THE ANSWER (a walk along the links from " + ", ".join(nodes) + "; 2 of 3 pages are "
+               "from the walk, 1 of 3 is from a search with the words of the answer):")
+    used, shown = 0, []
+    if rest:  # first the passages of the start pages that match the words of the answer: `find` cuts a long page
+        scores = ix.score_units(q)
+        for n in nodes:
+            best = [i for _s, i in sorted(((scores.get(k, 0), i) for k, (nd, i, _t) in enumerate(ix.units)
+                                           if nd == n and i >= 0 and scores.get(k, 0) > 0), reverse=True)]
+            keep = fill(ix, n, best, rest, cue) if best else []
+            if keep:
+                used, ok = add_block(out, ["MORE OF A START PAGE (the passages that match your words):"] + page_lines(ix, n, keep),
+                                     used, max_chars)
+                mark(n, keep)
+    for n in order:
+        if n in skip:
+            continue
+        best = [i for _s, i in (ranked[n][2] if n in ranked else [])]
+        if markers:  # then the passages with a word that marks a dispute, a correction, a condition
+            best += [i for _s, i in (marked[n][2] if n in marked else []) if i not in best]
+        if linkfirst:  # first the passages that link to a start page: they state the relation with the answer
+            to_start = [i for i, links in enumerate(ix.pages[n].plinks) if set(links) & set(nodes)]
+            best = to_start + [i for i in best if i not in to_start]
+        keep = fill(ix, n, best, page_chars, cue)
+        if SEEN is not None and not keep:
+            continue  # each passage of this page is above
+        used, ok = add_block(out, page_lines(ix, n, keep), used, max_chars)
+        if not ok:
+            break
+        mark(n, keep)
+        shown.append(n)
+    out.append("")
+    return shown
+
+
+CHECK = """CHECK THE START OF THIS WALK, BEFORE YOU ANSWER.
+The walk started from: {start}
+Your searches rank another page first: {top}
+Read the `find` result of this message. Find the first page in it that states the answer in plain words.
+- That page is not {start}: run the walk from it one time, then answer:
+      {k} near <the node of that page> --q "<the names, the dates and the terms of the answer>"
+- That page is {start}: do not run `near`. Answer now.
+"""
+
+
+def do_read(ix, nodes, q, out):
+    good = [n for n in nodes if n in ix.pages]
+    for n in nodes:
+        if n not in ix.pages:
+            out.append(f"== {n}: no such page. Use a node from a result.")
+    cap = min(READ_PAGE_CHARS, READ_MAX // max(1, len(good)) - 900)
+    ranked = {r[1]: r for r in ix.rank(q)} if q else {}
+    used, shown = 0, []
+    for n in good:
+        best = [i for _s, i in (ranked[n][2] if n in ranked else [])]
+        rows = link_rows(ix, n, q or ix.pages[n].head, set(good), READ_ROWS)
+        used, ok = add_block(out, page_lines(ix, n, fill(ix, n, best, max(cap, 400)), rows), used, READ_MAX)
+        if not ok:
+            out.append(f"(one read command prints {READ_MAX} characters: the other pages were not printed)")
+            break
+        shown.append(n)
+    out.append("")
+    return shown
+
+
+# ---------------------------------------------------------------- the walk
+def state_path(walk_id):
+    env = os.environ.get("KNOWLEDGE_WALK_STATE")
+    return Path(env) if env else Path(tempfile.gettempdir()) / f"knowledge-walk-{walk_id}.json"
+
+
+def load_state(walk_id):
+    path = state_path(walk_id)
+    try:
+        return json.loads(path.read_text())
+    except (OSError, ValueError) as e:
+        sys.exit(f"ERROR: cannot read the walk state {path}: {e}")
+
+
+def page_block(ix, st, node, out):
+    """One page of a walk: all its text when it is short, its best passages when it is long, and its neighbors."""
+    p = ix.pages[node]
+    q = tokens(" ".join([st["question"]] + st.get("searches", []) + st.get("facts", [])))
+    out.append(head_line(p))
+    if p.description:
+        out.append(f"   description: {cut(p.description, 400)}")
+    total = sum(len(t) for _h, t, _k in p.passages)
+    keep = set(range(len(p.passages)))
+    if total > PAGE_CHARS:
+        scores = ix.score_units(q)
+        ranked = sorted(((scores.get(k, 0), -i, i) for k, (nd, i, _t) in enumerate(ix.units) if nd == node and i >= 0),
+                        reverse=True)
+        keep, used = set(), 0
+        for _s, _neg, i in ranked:
+            if used + len(p.passages[i][1]) > PAGE_CHARS and keep:
+                break
+            keep.add(i)
+            used += len(p.passages[i][1])
+        out.append(f"   (a long page: {len(keep)} of {len(p.passages)} passages are shown, those nearest to the question)")
+    last = None
+    for i, (h, t, _k) in enumerate(p.passages):
+        if i in keep:
+            if h != last:
+                out.append(f"   [{h}]")
+                last = h
+            out.append(f"   > {t}")
+    context_rows(ix, node, q, set(st["done"]) | set(st["waiting"]), LINKED_ROWS, out)
+    out.append("")
+
+
+def next_pages(ix, st, frontier, out):
+    """Stop, or take the next pages from the queue. With frontier, only name them (a judge reads each one)."""
+    if len(st["done"]) >= PAGE_BUDGET:
+        out.append(f"STOP: the page budget ({PAGE_BUDGET}) is used. Answer now from the facts.")
+        return True
+    if st["dry"] >= DRY_STEPS:
+        out.append(f"STOP: {DRY_STEPS} steps in a row gave no new fact. Answer now from the facts, or give the no-answer line.")
+        return True
+    if not st["waiting"]:
+        out.append("STOP: no page is waiting. Answer now from the facts. When a fact is still missing, you can "
+                   "run one more step with --search and other words.")
+        return True
+    take = st["waiting"][:min(STEP_PAGES, PAGE_BUDGET - len(st["done"]))]
+    st["waiting"] = st["waiting"][len(take):]
+    st["done"] += take
+    st["current"] = take
+    if frontier:
+        out.append("PAGES TO READ (one judge for each page):")
+        for node in take:
+            p = ix.pages[node]
+            out.append(f"- {node} | {p.type or '-'} | {p.title}")
+    else:
+        for node in take:
+            page_block(ix, st, node, out)
+    out.append(f"pages read: {len(st['done'])} of {PAGE_BUDGET} | waiting: {len(st['waiting'])} | facts: {len(st['facts'])}")
+    return False
+
+
+def walk_start(ix, question, frontier, out):
+    ranked = ix.rank(tokens(question))[:6]
+    walk_id = uuid.uuid4().hex[:8]
+    st = {"id": walk_id, "question": question, "searches": [], "waiting": [r[1] for r in ranked[:STEP_PAGES]],
+          "done": [], "facts": [], "dry": 0, "steps": 0, "current": []}
+    out.append(f"walk: {walk_id}")
+    if not ranked:
+        out.append("No page matches the words of the question. Run one step with --search and other words.")
+    else:
+        out.append("START PAGES (from a search with the words of the question):")
+        for _s, node, _b, _h in ranked:
+            p = ix.pages[node]
+            out.append(f"- {node} | {p.type or '-'} | {p.title} | {cut(p.description, 200)}")
+        out.append("")
+        next_pages(ix, st, frontier, out)
+    state_path(walk_id).write_text(json.dumps(st, indent=1))
+    return st
+
+
+def walk_step(ix, walk_id, facts, keeps, searches, frontier, out, answers=()):
+    st = load_state(walk_id)
+    for f in facts:
+        st["facts"].append(" ".join(f.split()))
+    st["steps"] += 1
+    if answers:
+        q = tokens(" ".join([st["question"]] + st["searches"] + st["facts"] + list(searches)))
+        st["around"] = do_around(ix, list(answers), q, out)
+        out.append("The walk is done. Write the answer now.")
+        state_path(walk_id).write_text(json.dumps(st, indent=1))
+        return st, True
+    st["dry"] = 0 if facts else st["dry"] + 1
+    seen = set(st["done"]) | set(st["waiting"])
+    new = []
+    for k in keeps:
+        if k in ix.pages and k not in seen:
+            seen.add(k)
+            new.append(k)
+    bad = [k for k in keeps if k not in ix.pages]
+    for words in searches:
+        st["searches"].append(words)
+        found = [r[1] for r in ix.rank(tokens(words))[:6]]
+        fresh = [n for n in found if n not in seen][:STEP_PAGES]
+        out.append(f"SEARCH: {words} -> " + (", ".join(fresh) if fresh else "no new page"))
+        for n in fresh:
+            seen.add(n)
+            new.append(n)
+    st["waiting"] = (new + st["waiting"])[:PAGE_BUDGET]  # a kept or searched page goes before an older one
+    if bad:
+        out.append("not a page, ignored: " + ", ".join(bad))
+    if searches and st["dry"]:
+        st["dry"] -= 1  # a step that searches with new words is not a dry step
+    stopped = next_pages(ix, st, frontier, out)
+    state_path(walk_id).write_text(json.dumps(st, indent=1))
+    return st, stopped
+
+
+def walk_read(ix, walk_id, node, out):
+    st = load_state(walk_id)
+    if node not in ix.pages:
+        out.append(f"== {node}: no such page.")
+        return st
+    out.append(f"QUESTION: {st['question']}")
+    out.append("FACTS SO FAR:" + ("" if st["facts"] else " none"))
+    out += [f"- {f}" for f in st["facts"]]
+    out.append("")
+    out.append("THE PAGE:")
+    page_block(ix, st, node, out)
+    return st
+
+
+def log(rec):
+    path = os.environ.get("KQ_LOG")
+    if path:
+        try:
+            with open(path, "a") as f:
+                f.write(json.dumps(rec) + "\n")
+        except OSError:
+            pass
+
+
+def main():
+    global DESC_CHARS, SEEN, LOOSE_NODES
+    try:
+        conf = json.loads(Path(__file__).with_name("kq.json").read_text())
+    except (OSError, ValueError):
+        conf = {}
+    LOOSE_NODES = conf.get("nodes") == "loose"
+    ap = argparse.ArgumentParser(prog="kq.py", description=__doc__.split("\n\n")[0])
+    ap.add_argument("--root")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    s = sub.add_parser("search")
+    s.add_argument("queries", nargs="*")
+    s.add_argument("--stdin", action="store_true")
+    s.add_argument("-n", type=int, default=6)
+    s.add_argument("--expand", action="store_true")
+    s.add_argument("--open", nargs="+", default=[])
+    o = sub.add_parser("open")
+    o.add_argument("nodes", nargs="+")
+    o.add_argument("--q", default="")
+    ar = sub.add_parser("around")
+    ar.add_argument("nodes", nargs="+")
+    ar.add_argument("--q", default="")
+    fd = sub.add_parser("find")
+    fd.add_argument("queries", nargs="*")
+    fd.add_argument("--stdin", action="store_true")
+    fd.add_argument("--links", action="store_true")
+    fd.add_argument("--skip", nargs="+", default=[])
+    fd.add_argument("--pages", type=int, default=FIND_PAGES)
+    fd.add_argument("--walk", type=int, default=0, help="then walk from this many of the best pages")
+    fd.add_argument("--walk-max", type=int, default=12000)
+    fd.add_argument("--walk-chars", type=int, default=NEAR_PAGE_CHARS)
+    fd.add_argument("--walk-skip", action="store_true", help="the walk does not print a page that the search printed in full")
+    nr = sub.add_parser("near")
+    nr.add_argument("nodes", nargs="+")
+    nr.add_argument("--q", default="")
+    cx = sub.add_parser("ctx", help="the pages near the best pages of the same searches: send it with find")
+    cx.add_argument("queries", nargs="+")
+    cx.add_argument("--from", dest="start", nargs="+", default=[], help="start the walk from these pages")
+    cx.add_argument("--starts", type=int, default=3)
+    cx.add_argument("--weighted", action="store_true")
+    cx.add_argument("--tie", type=float, default=0.0, help="a start page must have this share of the best page score")
+    cx.add_argument("--rich", type=int, default=0, help="add the titles of the start pages and this many rare terms "
+                                                        "of their best passages to the words of the walk")
+    cx.add_argument("--check", type=int, default=0, help="1: when the reader gives the start page and the searches "
+                                                         "rank another page first, the result ends with a check")
+    for x in (nr, cx):
+        x.add_argument("--cue", default="", choices=["", "a", "b"])
+    for x in (fd, nr, cx):
+        x.add_argument("--max", type=int, default=FIND_MAX)
+        x.add_argument("--page-chars", type=int)
+        x.add_argument("--desc", type=int, default=DESC_CHARS)
+        x.add_argument("--norepeat", action="store_true")
+    fd.set_defaults(**conf.get("find", {}))
+    nr.set_defaults(**conf.get("near", {}))
+    cx.set_defaults(**conf.get("ctx", {}))
+    nr.add_argument("--linkfirst", action="store_true")
+    nr.add_argument("--markers", type=float, default=0.0)
+    nr.add_argument("--find", type=int, default=0, help="characters for a search with the words of --q, printed first")
+    nr.add_argument("--rest", type=int, default=0, help="characters of each start page to print first")
+    rd = sub.add_parser("read")
+    rd.add_argument("nodes", nargs="+")
+    rd.add_argument("--q", default="")
+    w = sub.add_parser("walk")
+    wsub = w.add_subparsers(dest="wcmd", required=True)
+    ws = wsub.add_parser("start")
+    ws.add_argument("question", nargs="?")
+    ws.add_argument("--stdin", action="store_true")
+    ws.add_argument("--frontier", action="store_true")
+    wt = wsub.add_parser("step")
+    wt.add_argument("--walk", required=True)
+    wt.add_argument("--fact", action="append", default=[])
+    wt.add_argument("--keep", action="append", default=[], nargs="+")
+    wt.add_argument("--search", action="append", default=[])
+    wt.add_argument("--frontier", action="store_true")
+    wt.add_argument("--answer", nargs="+", default=[])
+    wr = wsub.add_parser("read")
+    wr.add_argument("--walk", required=True)
+    wr.add_argument("node")
+    wh = wsub.add_parser("show")
+    wh.add_argument("--walk", required=True)
+    a = ap.parse_args()
+    if a.cmd == "find" and a.stdin:
+        for k, v in conf.get("inject", {}).items():
+            setattr(a, k, v)
+    t0 = time.time()
+    if a.cmd == "walk" and a.wcmd == "show":
+        print(state_path(a.walk).read_text())
+        return 0
+    pages, cache = cached_pages(find_root(a.root))
+    ix = Index(pages)
+    if getattr(a, "desc", None) is not None:
+        DESC_CHARS = a.desc
+    if getattr(a, "norepeat", False):
+        SEEN = seen_load(start=getattr(a, "stdin", False))
+    for name in ("open", "nodes", "answer", "node", "skip", "start"):
+        if isinstance(getattr(a, name, None), list):
+            setattr(a, name, fix_nodes(ix, getattr(a, name)))
+        elif isinstance(getattr(a, name, None), str) and name == "node":
+            a.node = fix_nodes(ix, [a.node])[0]
+    if getattr(a, "keep", None):
+        a.keep = [fix_nodes(ix, group) for group in a.keep]
+    out, rec = [], {"cmd": a.cmd, "pages": len(ix.pages), "cache": cache}
+    if a.cmd == "search":
+        queries = [q for q in a.queries if q.strip()]
+        if a.stdin:
+            text = " ".join(sys.stdin.read().split())
+            queries += [text] if text else []
+        if not queries and not a.open:
+            print("Give me a question. Run `/knowledge:ask <your question>`.")
+            return 0
+        if a.expand and a.open:
+            do_open(ix, a.open[:3], " ".join(queries), out, n_pass=3, n_linked=5)
+            if len(queries) > 2 or len(a.open) > 3:
+                out.append("(one command takes 2 searches and 3 pages: the others were ignored)\n")
+            hits = do_search(ix, queries[:2], 5 if len(queries) > 1 else a.n, out, True)
+        else:
+            hits = do_search(ix, queries, a.n, out, a.expand)
+            if a.open:
+                do_open(ix, a.open, " ".join(queries), out)
+        rec.update(queries=queries, hits=hits, stdin=a.stdin, expand=a.expand, nodes=a.open)
+    elif a.cmd == "find":
+        queries = [q for q in a.queries if q.strip()][:6]
+        if a.stdin:
+            text = " ".join(sys.stdin.read().split())
+            queries += [text] if text else []
+        if not queries:
+            print("Give me a question. Run `/knowledge:ask <your question>`.")
+            return 0
+        rec.update(queries=queries, stdin=a.stdin, links=a.links, nodes=a.skip,
+                   full=do_find(ix, queries, out, a.skip, a.links, a.max, a.pages, a.page_chars or FIND_PAGE_CHARS))
+        if a.walk and rec["full"]:
+            rec["around"] = do_near(ix, rec["full"][:a.walk], [t for x in queries for t in tokens(x)], out, a.walk_max,
+                                    a.walk_chars, skip=rec["full"] if a.walk_skip else ())
+    elif a.cmd == "near":
+        found = []
+        if a.find and a.q.strip():  # a search with the words of the answer, in the same command: it brings the detail
+            found = do_find(ix, [a.q], out, (), False, a.find, 4, 1500) or []   # that the first search did not print
+        rec.update(answers=a.nodes, q=a.q, found=found,
+                   around=do_near(ix, a.nodes, tokens(a.q), out, a.max - sum(len(x) + 1 for x in out),
+                                  a.page_chars or NEAR_PAGE_CHARS, a.linkfirst, a.markers, cue=a.cue, rest=a.rest,
+                                  skip=[n for n in found if n not in a.nodes]))
+    elif a.cmd == "ctx":
+        queries = [q for q in a.queries if q.strip()][:6]
+        # the pages that `find` prints in full for the same searches are not printed again.
+        # This dry run does not read or write the no-repeat state: `find` can run before, after or with this command.
+        DESC_CHARS, state, SEEN = fd.get_default("desc"), SEEN, None
+        full = do_find(ix, queries, [], (), False, fd.get_default("max"), fd.get_default("pages"),
+                       fd.get_default("page_chars") or FIND_PAGE_CHARS)
+        DESC_CHARS, SEEN = a.desc, state
+        sc, pg = fuse(ix, queries)
+        starts = a.start or sorted(pg, key=lambda n: (-pg[n], n))[:a.starts]
+        if a.tie and not a.start and starts:
+            starts = [n for n in starts if pg[n] >= a.tie * pg[starts[0]]]
+        words = [t for x in queries for t in tokens(x)]
+        if a.rich and starts:  # the script's copy of `near --q`: the words of the answer pages
+            top = [k for k, _s in sorted(sc.items(), key=lambda kv: (-kv[1], kv[0])) if k[0] in starts][:3]
+            rare = sorted({t for n, i in top for t in tokens(ix.pages[n].passages[i][1]) if ix.df.get(t)},
+                          key=lambda t: (ix.df[t], t))[:a.rich]
+            words += [t for n in starts for t in tokens(ix.pages[n].title)] + rare
+        if not starts:
+            out.append("   no page matches these words.")
+        else:
+            head = (("PAGES NEAR THE ANSWER" if a.start else "PAGES NEAR THE BEST PAGES OF THE SEARCHES") +
+                    " (a walk along the links from " + ", ".join(starts) +
+                    "; 2 of 3 pages are from the walk, 1 of 3 is from a search with the words of the searches):")
+            # the reader chose the start page before it saw the results of these searches. When they rank another
+            # page first, the choice is in doubt: the result ends with a check, and the walk gives its space to it.
+            top = min(pg, key=lambda n: (-pg[n], n)) if pg else None
+            check = CHECK.format(start=", ".join(starts), top=top, k="python3 " + sys.argv[0]) if (
+                a.check and a.start and top and top not in starts) else ""
+            rec.update(queries=queries, answers=starts, full=full, check=top if check else None,
+                       around=do_near(ix, starts, words, out, a.max - len(check),
+                                      a.page_chars or NEAR_PAGE_CHARS, skip=full, head=head, cue=a.cue,
+                                      weights={n: pg.get(n, min(pg.values())) for n in starts} if a.weighted and not a.start
+                                      else None))
+            if check:
+                out.append(check)
+    elif a.cmd == "read":
+        rec.update(nodes=a.nodes, q=a.q, read=do_read(ix, a.nodes, tokens(a.q), out))
+    elif a.cmd == "open":
+        do_open(ix, a.nodes, a.q, out)
+        rec.update(nodes=a.nodes, q=a.q)
+    elif a.cmd == "around":
+        rec.update(answers=a.nodes, q=a.q, around=do_around(ix, a.nodes, tokens(a.q), out))
+    elif a.wcmd == "start":
+        question = " ".join(sys.stdin.read().split()) if a.stdin else (a.question or "")
+        if not question:
+            print("Give me a question. Run `/knowledge:ask <your question>`.")
+            return 0
+        st = walk_start(ix, question, a.frontier, out)
+        rec.update(cmd="walk start", stdin=a.stdin, question=question, walk=st["id"], done=st["done"])
+    elif a.wcmd == "read":
+        st = walk_read(ix, a.walk, a.node, out)
+        rec.update(cmd="walk read", walk=a.walk, nodes=[a.node])
+    else:
+        st, stopped = walk_step(ix, a.walk, a.fact, [k for group in a.keep for k in group], a.search, a.frontier, out,
+                                a.answer)
+        rec.update(cmd="walk step", walk=a.walk, facts=len(a.fact), keeps=a.keep, searches=a.search, done=st["done"],
+                   stopped=stopped, answers=a.answer, around=st.get("around", []) if a.answer else [])
+    rec["norepeat"], rec["session"] = SEEN is not None, seen_path() is not None
+    rec["ms"] = round((time.time() - t0) * 1000)
+    rec["chars"] = sum(len(x) + 1 for x in out)
+    text = "\n".join(out)
+    if len(text) > OUT_MAX:
+        text = text[:OUT_MAX] + f"\n(the output is cut at {OUT_MAX} characters. Ask for fewer pages in one command.)"
+    rec["printed"] = list(dict.fromkeys(re.findall(r"^== (\S+?):? ", text, re.M)))  # the pages that the caller saw
+    if getattr(a, "stdin", False) and os.environ.get("KQ_RUN_ID"):
+        text = f"Run id: {os.environ['KQ_RUN_ID']}\n" + text  # each run is a new text for a prompt cache
+    if SEEN is not None:
+        seen_save()
+    log(rec)
+    if os.environ.get("KQ_LOG"):
+        try:
+            with open(os.environ["KQ_LOG"] + ".out", "a") as f:
+                f.write(text + "\n")
+        except OSError:
+            pass
+    print(text)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

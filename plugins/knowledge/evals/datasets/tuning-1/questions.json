@@ -1,0 +1,2639 @@
+{
+  "schema_version": 1,
+  "dataset": "tuning-1",
+  "content_pages": 120,
+  "provenance": {
+    "synthetic": true,
+    "organization": "Copperfin Repair House",
+    "generated_at": "2042-02-03T00:00:00Z",
+    "graph_version": "1.8.0",
+    "builder": "build_datasets.py",
+    "source": "Invented records; no real people, organizations, or source data."
+  },
+  "questions": [
+    {
+      "id": "tuning-1-q001",
+      "shape": "correction",
+      "question": "How often must Copperfin Repair House inspect the Brass wheel stand, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The time between checks for the CF-410 is 70 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-410-review-file.md",
+              "quote": "The time between checks for the CF-410 is 70 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the CF-410 is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-410-review-file.md",
+              "quote": "The first service card for the CF-410 is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the time between checks for the CF-410 as 79 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-410-service-ledger.md",
+              "quote": "The first service card gives the time between checks for the CF-410 as 79 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the CF-410.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-410-review-file.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the CF-410."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 79-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-410-review-file.md",
+              "quote": "The 79-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Brass wheel stand is 79 days."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Brass wheel stand",
+        "code": "CF-410",
+        "entry_node": "knowledge:/synthesis/brass-wheel-stand-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-410-service-ledger.md",
+          "knowledge:/sources/cf-410-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Brass wheel stand maps to internal equipment code CF-410."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/brass-wheel-stand-operating-limits.md",
+          "quote": "The public name Brass wheel stand maps to internal equipment code CF-410."
+        }
+      ],
+      "reference_answer": "The time between checks for the CF-410 is 70 days. The first service card for the CF-410 is no longer valid.\n\nContext:\nThe first service card gives the time between checks for the CF-410 as 79 days. The notice of 8 February 2041 replaces the first service card for the CF-410. The 79-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "tuning-1-q002",
+      "shape": "conflict",
+      "question": "How many spare seals does Copperfin Repair House hold for the Brass pump bench, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 73 spare seals for the Brass pump bench.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/brass-pump-bench-operating-record.md",
+              "quote": "The day-shift ledger lists 73 spare seals for the Brass pump bench."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 80 spare seals for the Brass pump bench.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/brass-pump-bench-review-record.md",
+              "quote": "The night-shift ledger lists 80 spare seals for the Brass pump bench."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Brass pump bench has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/brass-pump-bench-operating-limits.md",
+              "quote": "Neither ledger for the Brass pump bench has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the Brass pump bench was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/brass-pump-bench-operating-record.md",
+              "quote": "The day-shift count for the Brass pump bench was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the Brass pump bench was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/brass-pump-bench-review-record.md",
+              "quote": "The night-shift count for the Brass pump bench was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Brass pump bench is 73.",
+        "The confirmed spare seal count for the Brass pump bench is 80."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The day-shift ledger lists 73 spare seals for the Brass pump bench. The night-shift ledger lists 80 spare seals for the Brass pump bench. Neither ledger for the Brass pump bench has been checked against the store.\n\nContext:\nThe day-shift count for the Brass pump bench was made on 12 April 2041. The night-shift count for the Brass pump bench was made on 12 April 2041."
+    },
+    {
+      "id": "tuning-1-q003",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Brass lamp cradle, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Brass lamp cradle.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/brass-lamp-cradle-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Brass lamp cradle."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the vendor decision for the CF-444 until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-444-review-file.md",
+              "quote": "The committee deferred the vendor decision for the CF-444 until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The CF-444 needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-444-service-ledger.md",
+              "quote": "The CF-444 needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The safety checker proposed a cover vendor for the CF-444.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-444-review-file.md",
+              "quote": "The safety checker proposed a cover vendor for the CF-444."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The safety checker's proposed supplier is approved for the Brass lamp cradle."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Brass lamp cradle",
+        "code": "CF-444",
+        "entry_node": "knowledge:/open-questions/brass-lamp-cradle-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-444-service-ledger.md",
+          "knowledge:/sources/cf-444-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Brass lamp cradle maps to internal equipment code CF-444."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/brass-lamp-cradle-operating-limits.md",
+          "quote": "The public name Brass lamp cradle maps to internal equipment code CF-444."
+        }
+      ],
+      "reference_answer": "No supplier has been approved for the safety cover of the Brass lamp cradle. The committee deferred the vendor decision for the CF-444 until a load test is complete.\n\nContext:\nThe CF-444 needs a replacement safety cover. The safety checker proposed a cover vendor for the CF-444."
+    },
+    {
+      "id": "tuning-1-q004",
+      "shape": "absent",
+      "question": "What did Copperfin Repair House pay to buy the Brass gear press? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Brass gear press is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/brass-gear-press-operating-limits.md",
+              "quote": "The purchase price of the Brass gear press is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The Brass gear press is stored in the repair hall.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/brass-gear-press-operating-record.md",
+              "quote": "The Brass gear press is stored in the repair hall."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no purchase price for the Brass gear press in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/brass-gear-press-review-record.md",
+              "quote": "The inventory review found no purchase price for the Brass gear press in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the Brass gear press covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/brass-gear-press-review-record.md",
+              "quote": "The inventory review for the Brass gear press covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Brass gear press was zero.",
+        "The purchase price of the Brass gear press can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The purchase price of the Brass gear press is not recorded in this graph. The Brass gear press is stored in the repair hall.\n\nContext:\nThe inventory review found no purchase price for the Brass gear press in these records. The inventory review for the Brass gear press covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "tuning-1-q005",
+      "shape": "paraphrase",
+      "question": "After we take the Brass valve rack to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A restart check is required after the CF-478 is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-478-service-ledger.md",
+              "quote": "A restart check is required after the CF-478 is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The restart check for the CF-478 takes 82 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-478-service-ledger.md",
+              "quote": "The restart check for the CF-478 takes 82 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The parts custodian must sign the restart check for the CF-478.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-478-review-file.md",
+              "quote": "The parts custodian must sign the restart check for the CF-478."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Brass valve rack cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/brass-valve-rack-operating-limits.md",
+              "quote": "The Brass valve rack cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the CF-478 is kept in the loading room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-478-review-file.md",
+              "quote": "The movement log for the CF-478 is kept in the loading room."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Brass valve rack can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Brass valve rack",
+        "code": "CF-478",
+        "entry_node": "knowledge:/concepts/brass-valve-rack-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-478-service-ledger.md",
+          "knowledge:/sources/cf-478-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Brass valve rack maps to internal equipment code CF-478."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/brass-valve-rack-operating-limits.md",
+          "quote": "The public name Brass valve rack maps to internal equipment code CF-478."
+        }
+      ],
+      "reference_answer": "A restart check is required after the CF-478 is moved between buildings. The restart check for the CF-478 takes 82 minutes. The parts custodian must sign the restart check for the CF-478.\n\nContext:\nThe Brass valve rack cannot be used until its return-to-service check is signed. The movement log for the CF-478 is kept in the loading room."
+    },
+    {
+      "id": "tuning-1-q006",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Brass cable jig, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before transporting the Brass cable jig, fasten the two transit clips.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/brass-cable-jig-operating-record.md",
+              "quote": "Before transporting the Brass cable jig, fasten the two transit clips."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the transit clips from the Brass cable jig before its alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/brass-cable-jig-review-record.md",
+              "quote": "Remove the transit clips from the Brass cable jig before its alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After transporting the Brass cable jig, run the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/brass-cable-jig-review-record.md",
+              "quote": "After transporting the Brass cable jig, run the alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the safety checker can release the Brass cable jig after the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/brass-cable-jig-review-record.md",
+              "quote": "Only the safety checker can release the Brass cable jig after the alignment check."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The transit clips for the Brass cable jig are kept in the parts loft.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/brass-cable-jig-operating-record.md",
+              "quote": "The transit clips for the Brass cable jig are kept in the parts loft."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Brass cable jig must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/brass-cable-jig-operating-limits.md",
+              "quote": "The transport record for the Brass cable jig must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Brass cable jig."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "Before transporting the Brass cable jig, fasten the two transit clips. Remove the transit clips from the Brass cable jig before its alignment check. After transporting the Brass cable jig, run the alignment check. Only the safety checker can release the Brass cable jig after the alignment check.\n\nContext:\nThe transit clips for the Brass cable jig are kept in the parts loft. The transport record for the Brass cable jig must include both the departure check and the arrival check."
+    },
+    {
+      "id": "tuning-1-q007",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Cobalt wheel stand change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal time between checks for the CF-512 is 88 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-512-service-ledger.md",
+              "quote": "The normal time between checks for the CF-512 is 88 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 61 percent, inspect the CF-512 every 82 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-512-review-file.md",
+              "quote": "If room humidity exceeds 61 percent, inspect the CF-512 every 82 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the CF-512 ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-512-review-file.md",
+              "quote": "The shorter interval for the CF-512 ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the CF-512 applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-512-service-ledger.md",
+              "quote": "The normal interval for the CF-512 applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The bench coordinator records room humidity for the Cobalt wheel stand each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/cobalt-wheel-stand-operating-limits.md",
+              "quote": "The bench coordinator records room humidity for the Cobalt wheel stand each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 88-day interval for the Cobalt wheel stand applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Cobalt wheel stand",
+        "code": "CF-512",
+        "entry_node": "knowledge:/concepts/cobalt-wheel-stand-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-512-service-ledger.md",
+          "knowledge:/sources/cf-512-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Cobalt wheel stand maps to internal equipment code CF-512."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/cobalt-wheel-stand-operating-limits.md",
+          "quote": "The public name Cobalt wheel stand maps to internal equipment code CF-512."
+        }
+      ],
+      "reference_answer": "The normal time between checks for the CF-512 is 88 days. If room humidity exceeds 61 percent, inspect the CF-512 every 82 days. The shorter interval for the CF-512 ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the CF-512 applies only in a dry room. The bench coordinator records room humidity for the Cobalt wheel stand each morning."
+    },
+    {
+      "id": "tuning-1-q008",
+      "shape": "correction",
+      "question": "How often must Copperfin Repair House inspect the Cobalt pump bench, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The inspection interval for the Cobalt pump bench is 91 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/cobalt-pump-bench-review-record.md",
+              "quote": "The inspection interval for the Cobalt pump bench is 91 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the Cobalt pump bench is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/cobalt-pump-bench-review-record.md",
+              "quote": "The first service card for the Cobalt pump bench is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the inspection interval for the Cobalt pump bench as 100 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cobalt-pump-bench-operating-record.md",
+              "quote": "The first service card gives the inspection interval for the Cobalt pump bench as 100 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the Cobalt pump bench.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/cobalt-pump-bench-review-record.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the Cobalt pump bench."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 100-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/cobalt-pump-bench-review-record.md",
+              "quote": "The 100-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Cobalt pump bench is 100 days."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The inspection interval for the Cobalt pump bench is 91 days. The first service card for the Cobalt pump bench is no longer valid.\n\nContext:\nThe first service card gives the inspection interval for the Cobalt pump bench as 100 days. The notice of 8 February 2041 replaces the first service card for the Cobalt pump bench. The 100-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "tuning-1-q009",
+      "shape": "conflict",
+      "question": "How many spare seals does Copperfin Repair House hold for the Cobalt lamp cradle, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 94 reserve gaskets for the CF-546.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-546-service-ledger.md",
+              "quote": "The day-shift ledger lists 94 reserve gaskets for the CF-546."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 101 reserve gaskets for the CF-546.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-546-review-file.md",
+              "quote": "The night-shift ledger lists 101 reserve gaskets for the CF-546."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Cobalt lamp cradle has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/cobalt-lamp-cradle-operating-limits.md",
+              "quote": "Neither ledger for the Cobalt lamp cradle has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the CF-546 was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-546-service-ledger.md",
+              "quote": "The day-shift count for the CF-546 was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the CF-546 was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-546-review-file.md",
+              "quote": "The night-shift count for the CF-546 was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Cobalt lamp cradle is 94.",
+        "The confirmed spare seal count for the Cobalt lamp cradle is 101."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Cobalt lamp cradle",
+        "code": "CF-546",
+        "entry_node": "knowledge:/open-questions/cobalt-lamp-cradle-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-546-service-ledger.md",
+          "knowledge:/sources/cf-546-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Cobalt lamp cradle maps to internal equipment code CF-546."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/cobalt-lamp-cradle-operating-limits.md",
+          "quote": "The public name Cobalt lamp cradle maps to internal equipment code CF-546."
+        }
+      ],
+      "reference_answer": "The day-shift ledger lists 94 reserve gaskets for the CF-546. The night-shift ledger lists 101 reserve gaskets for the CF-546. Neither ledger for the Cobalt lamp cradle has been checked against the store.\n\nContext:\nThe day-shift count for the CF-546 was made on 12 April 2041. The night-shift count for the CF-546 was made on 12 April 2041."
+    },
+    {
+      "id": "tuning-1-q010",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Cobalt gear press, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Cobalt gear press.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/cobalt-gear-press-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Cobalt gear press."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the supplier decision for the Cobalt gear press until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/cobalt-gear-press-review-record.md",
+              "quote": "The committee deferred the supplier decision for the Cobalt gear press until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Cobalt gear press needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cobalt-gear-press-operating-record.md",
+              "quote": "The Cobalt gear press needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The bench coordinator proposed a cover supplier for the Cobalt gear press.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/cobalt-gear-press-review-record.md",
+              "quote": "The bench coordinator proposed a cover supplier for the Cobalt gear press."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The bench coordinator's proposed supplier is approved for the Cobalt gear press."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "No supplier has been approved for the safety cover of the Cobalt gear press. The committee deferred the supplier decision for the Cobalt gear press until a load test is complete.\n\nContext:\nThe Cobalt gear press needs a replacement safety cover. The bench coordinator proposed a cover supplier for the Cobalt gear press."
+    },
+    {
+      "id": "tuning-1-q011",
+      "shape": "absent",
+      "question": "What did Copperfin Repair House pay to buy the Cobalt valve rack? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Cobalt valve rack is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/cobalt-valve-rack-operating-limits.md",
+              "quote": "The purchase price of the Cobalt valve rack is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The CF-580 is stored in the loading room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-580-service-ledger.md",
+              "quote": "The CF-580 is stored in the loading room."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no acquisition cost for the CF-580 in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-580-review-file.md",
+              "quote": "The inventory review found no acquisition cost for the CF-580 in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the CF-580 covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-580-review-file.md",
+              "quote": "The inventory review for the CF-580 covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Cobalt valve rack was zero.",
+        "The purchase price of the Cobalt valve rack can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Cobalt valve rack",
+        "code": "CF-580",
+        "entry_node": "knowledge:/open-questions/cobalt-valve-rack-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-580-service-ledger.md",
+          "knowledge:/sources/cf-580-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Cobalt valve rack maps to internal equipment code CF-580."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/cobalt-valve-rack-operating-limits.md",
+          "quote": "The public name Cobalt valve rack maps to internal equipment code CF-580."
+        }
+      ],
+      "reference_answer": "The purchase price of the Cobalt valve rack is not recorded in this graph. The CF-580 is stored in the loading room.\n\nContext:\nThe inventory review found no acquisition cost for the CF-580 in these records. The inventory review for the CF-580 covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "tuning-1-q012",
+      "shape": "paraphrase",
+      "question": "After we take the Cobalt cable jig to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A return-to-service check is required after the Cobalt cable jig is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cobalt-cable-jig-operating-record.md",
+              "quote": "A return-to-service check is required after the Cobalt cable jig is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The return-to-service check for the Cobalt cable jig takes 103 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cobalt-cable-jig-operating-record.md",
+              "quote": "The return-to-service check for the Cobalt cable jig takes 103 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The safety checker must sign the return-to-service check for the Cobalt cable jig.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/cobalt-cable-jig-review-record.md",
+              "quote": "The safety checker must sign the return-to-service check for the Cobalt cable jig."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Cobalt cable jig cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/cobalt-cable-jig-operating-limits.md",
+              "quote": "The Cobalt cable jig cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the Cobalt cable jig is kept in the parts loft.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/cobalt-cable-jig-review-record.md",
+              "quote": "The movement log for the Cobalt cable jig is kept in the parts loft."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Cobalt cable jig can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "A return-to-service check is required after the Cobalt cable jig is moved between buildings. The return-to-service check for the Cobalt cable jig takes 103 minutes. The safety checker must sign the return-to-service check for the Cobalt cable jig.\n\nContext:\nThe Cobalt cable jig cannot be used until its return-to-service check is signed. The movement log for the Cobalt cable jig is kept in the parts loft."
+    },
+    {
+      "id": "tuning-1-q013",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Flint wheel stand, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before moving the CF-614, fasten the two shipping locks.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-614-service-ledger.md",
+              "quote": "Before moving the CF-614, fasten the two shipping locks."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the shipping locks from the CF-614 before its position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-614-review-file.md",
+              "quote": "Remove the shipping locks from the CF-614 before its position test."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After moving the CF-614, run the position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-614-review-file.md",
+              "quote": "After moving the CF-614, run the position test."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the bench coordinator can release the CF-614 after the position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-614-review-file.md",
+              "quote": "Only the bench coordinator can release the CF-614 after the position test."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The shipping locks for the CF-614 are kept in the repair hall.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-614-service-ledger.md",
+              "quote": "The shipping locks for the CF-614 are kept in the repair hall."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Flint wheel stand must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/flint-wheel-stand-operating-limits.md",
+              "quote": "The transport record for the Flint wheel stand must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Flint wheel stand."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Flint wheel stand",
+        "code": "CF-614",
+        "entry_node": "knowledge:/synthesis/flint-wheel-stand-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-614-service-ledger.md",
+          "knowledge:/sources/cf-614-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Flint wheel stand maps to internal equipment code CF-614."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/flint-wheel-stand-operating-limits.md",
+          "quote": "The public name Flint wheel stand maps to internal equipment code CF-614."
+        }
+      ],
+      "reference_answer": "Before moving the CF-614, fasten the two shipping locks. Remove the shipping locks from the CF-614 before its position test. After moving the CF-614, run the position test. Only the bench coordinator can release the CF-614 after the position test.\n\nContext:\nThe shipping locks for the CF-614 are kept in the repair hall. The transport record for the Flint wheel stand must include both the departure check and the arrival check."
+    },
+    {
+      "id": "tuning-1-q014",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Flint pump bench change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal inspection interval for the Flint pump bench is 109 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/flint-pump-bench-operating-record.md",
+              "quote": "The normal inspection interval for the Flint pump bench is 109 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 68 percent, inspect the Flint pump bench every 103 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/flint-pump-bench-review-record.md",
+              "quote": "If room humidity exceeds 68 percent, inspect the Flint pump bench every 103 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the Flint pump bench ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/flint-pump-bench-review-record.md",
+              "quote": "The shorter interval for the Flint pump bench ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the Flint pump bench applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/flint-pump-bench-operating-record.md",
+              "quote": "The normal interval for the Flint pump bench applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The parts custodian records room humidity for the Flint pump bench each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/flint-pump-bench-operating-limits.md",
+              "quote": "The parts custodian records room humidity for the Flint pump bench each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 109-day interval for the Flint pump bench applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The normal inspection interval for the Flint pump bench is 109 days. If room humidity exceeds 68 percent, inspect the Flint pump bench every 103 days. The shorter interval for the Flint pump bench ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the Flint pump bench applies only in a dry room. The parts custodian records room humidity for the Flint pump bench each morning."
+    },
+    {
+      "id": "tuning-1-q015",
+      "shape": "correction",
+      "question": "How often must Copperfin Repair House inspect the Flint lamp cradle, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The time between checks for the CF-648 is 112 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-648-review-file.md",
+              "quote": "The time between checks for the CF-648 is 112 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the CF-648 is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-648-review-file.md",
+              "quote": "The first service card for the CF-648 is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the time between checks for the CF-648 as 121 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-648-service-ledger.md",
+              "quote": "The first service card gives the time between checks for the CF-648 as 121 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the CF-648.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-648-review-file.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the CF-648."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 121-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-648-review-file.md",
+              "quote": "The 121-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Flint lamp cradle is 121 days."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Flint lamp cradle",
+        "code": "CF-648",
+        "entry_node": "knowledge:/synthesis/flint-lamp-cradle-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-648-service-ledger.md",
+          "knowledge:/sources/cf-648-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Flint lamp cradle maps to internal equipment code CF-648."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/flint-lamp-cradle-operating-limits.md",
+          "quote": "The public name Flint lamp cradle maps to internal equipment code CF-648."
+        }
+      ],
+      "reference_answer": "The time between checks for the CF-648 is 112 days. The first service card for the CF-648 is no longer valid.\n\nContext:\nThe first service card gives the time between checks for the CF-648 as 121 days. The notice of 8 February 2041 replaces the first service card for the CF-648. The 121-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "tuning-1-q016",
+      "shape": "conflict",
+      "question": "How many spare seals does Copperfin Repair House hold for the Flint gear press, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 115 spare seals for the Flint gear press.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/flint-gear-press-operating-record.md",
+              "quote": "The day-shift ledger lists 115 spare seals for the Flint gear press."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 122 spare seals for the Flint gear press.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/flint-gear-press-review-record.md",
+              "quote": "The night-shift ledger lists 122 spare seals for the Flint gear press."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Flint gear press has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/flint-gear-press-operating-limits.md",
+              "quote": "Neither ledger for the Flint gear press has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the Flint gear press was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/flint-gear-press-operating-record.md",
+              "quote": "The day-shift count for the Flint gear press was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the Flint gear press was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/flint-gear-press-review-record.md",
+              "quote": "The night-shift count for the Flint gear press was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Flint gear press is 115.",
+        "The confirmed spare seal count for the Flint gear press is 122."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The day-shift ledger lists 115 spare seals for the Flint gear press. The night-shift ledger lists 122 spare seals for the Flint gear press. Neither ledger for the Flint gear press has been checked against the store.\n\nContext:\nThe day-shift count for the Flint gear press was made on 12 April 2041. The night-shift count for the Flint gear press was made on 12 April 2041."
+    },
+    {
+      "id": "tuning-1-q017",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Flint valve rack, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Flint valve rack.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/flint-valve-rack-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Flint valve rack."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the vendor decision for the CF-682 until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-682-review-file.md",
+              "quote": "The committee deferred the vendor decision for the CF-682 until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The CF-682 needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-682-service-ledger.md",
+              "quote": "The CF-682 needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The parts custodian proposed a cover vendor for the CF-682.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-682-review-file.md",
+              "quote": "The parts custodian proposed a cover vendor for the CF-682."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The parts custodian's proposed supplier is approved for the Flint valve rack."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Flint valve rack",
+        "code": "CF-682",
+        "entry_node": "knowledge:/open-questions/flint-valve-rack-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-682-service-ledger.md",
+          "knowledge:/sources/cf-682-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Flint valve rack maps to internal equipment code CF-682."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/flint-valve-rack-operating-limits.md",
+          "quote": "The public name Flint valve rack maps to internal equipment code CF-682."
+        }
+      ],
+      "reference_answer": "No supplier has been approved for the safety cover of the Flint valve rack. The committee deferred the vendor decision for the CF-682 until a load test is complete.\n\nContext:\nThe CF-682 needs a replacement safety cover. The parts custodian proposed a cover vendor for the CF-682."
+    },
+    {
+      "id": "tuning-1-q018",
+      "shape": "absent",
+      "question": "What did Copperfin Repair House pay to buy the Flint cable jig? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Flint cable jig is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/flint-cable-jig-operating-limits.md",
+              "quote": "The purchase price of the Flint cable jig is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The Flint cable jig is stored in the parts loft.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/flint-cable-jig-operating-record.md",
+              "quote": "The Flint cable jig is stored in the parts loft."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no purchase price for the Flint cable jig in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/flint-cable-jig-review-record.md",
+              "quote": "The inventory review found no purchase price for the Flint cable jig in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the Flint cable jig covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/flint-cable-jig-review-record.md",
+              "quote": "The inventory review for the Flint cable jig covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Flint cable jig was zero.",
+        "The purchase price of the Flint cable jig can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The purchase price of the Flint cable jig is not recorded in this graph. The Flint cable jig is stored in the parts loft.\n\nContext:\nThe inventory review found no purchase price for the Flint cable jig in these records. The inventory review for the Flint cable jig covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "tuning-1-q019",
+      "shape": "paraphrase",
+      "question": "After we take the Ivory wheel stand to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A restart check is required after the CF-716 is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-716-service-ledger.md",
+              "quote": "A restart check is required after the CF-716 is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The restart check for the CF-716 takes 124 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-716-service-ledger.md",
+              "quote": "The restart check for the CF-716 takes 124 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The bench coordinator must sign the restart check for the CF-716.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-716-review-file.md",
+              "quote": "The bench coordinator must sign the restart check for the CF-716."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Ivory wheel stand cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/ivory-wheel-stand-operating-limits.md",
+              "quote": "The Ivory wheel stand cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the CF-716 is kept in the repair hall.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-716-review-file.md",
+              "quote": "The movement log for the CF-716 is kept in the repair hall."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Ivory wheel stand can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Ivory wheel stand",
+        "code": "CF-716",
+        "entry_node": "knowledge:/concepts/ivory-wheel-stand-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-716-service-ledger.md",
+          "knowledge:/sources/cf-716-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Ivory wheel stand maps to internal equipment code CF-716."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/ivory-wheel-stand-operating-limits.md",
+          "quote": "The public name Ivory wheel stand maps to internal equipment code CF-716."
+        }
+      ],
+      "reference_answer": "A restart check is required after the CF-716 is moved between buildings. The restart check for the CF-716 takes 124 minutes. The bench coordinator must sign the restart check for the CF-716.\n\nContext:\nThe Ivory wheel stand cannot be used until its return-to-service check is signed. The movement log for the CF-716 is kept in the repair hall."
+    },
+    {
+      "id": "tuning-1-q020",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Ivory pump bench, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before transporting the Ivory pump bench, fasten the two transit clips.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/ivory-pump-bench-operating-record.md",
+              "quote": "Before transporting the Ivory pump bench, fasten the two transit clips."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the transit clips from the Ivory pump bench before its alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ivory-pump-bench-review-record.md",
+              "quote": "Remove the transit clips from the Ivory pump bench before its alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After transporting the Ivory pump bench, run the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ivory-pump-bench-review-record.md",
+              "quote": "After transporting the Ivory pump bench, run the alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the parts custodian can release the Ivory pump bench after the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ivory-pump-bench-review-record.md",
+              "quote": "Only the parts custodian can release the Ivory pump bench after the alignment check."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The transit clips for the Ivory pump bench are kept in the loading room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/ivory-pump-bench-operating-record.md",
+              "quote": "The transit clips for the Ivory pump bench are kept in the loading room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Ivory pump bench must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/ivory-pump-bench-operating-limits.md",
+              "quote": "The transport record for the Ivory pump bench must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Ivory pump bench."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "Before transporting the Ivory pump bench, fasten the two transit clips. Remove the transit clips from the Ivory pump bench before its alignment check. After transporting the Ivory pump bench, run the alignment check. Only the parts custodian can release the Ivory pump bench after the alignment check.\n\nContext:\nThe transit clips for the Ivory pump bench are kept in the loading room. The transport record for the Ivory pump bench must include both the departure check and the arrival check."
+    },
+    {
+      "id": "tuning-1-q021",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Ivory lamp cradle change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal time between checks for the CF-750 is 130 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-750-service-ledger.md",
+              "quote": "The normal time between checks for the CF-750 is 130 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 60 percent, inspect the CF-750 every 124 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-750-review-file.md",
+              "quote": "If room humidity exceeds 60 percent, inspect the CF-750 every 124 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the CF-750 ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-750-review-file.md",
+              "quote": "The shorter interval for the CF-750 ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the CF-750 applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-750-service-ledger.md",
+              "quote": "The normal interval for the CF-750 applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The safety checker records room humidity for the Ivory lamp cradle each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/ivory-lamp-cradle-operating-limits.md",
+              "quote": "The safety checker records room humidity for the Ivory lamp cradle each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 130-day interval for the Ivory lamp cradle applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Ivory lamp cradle",
+        "code": "CF-750",
+        "entry_node": "knowledge:/concepts/ivory-lamp-cradle-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-750-service-ledger.md",
+          "knowledge:/sources/cf-750-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Ivory lamp cradle maps to internal equipment code CF-750."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/ivory-lamp-cradle-operating-limits.md",
+          "quote": "The public name Ivory lamp cradle maps to internal equipment code CF-750."
+        }
+      ],
+      "reference_answer": "The normal time between checks for the CF-750 is 130 days. If room humidity exceeds 60 percent, inspect the CF-750 every 124 days. The shorter interval for the CF-750 ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the CF-750 applies only in a dry room. The safety checker records room humidity for the Ivory lamp cradle each morning."
+    },
+    {
+      "id": "tuning-1-q022",
+      "shape": "correction",
+      "question": "How often must Copperfin Repair House inspect the Ivory gear press, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The inspection interval for the Ivory gear press is 133 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ivory-gear-press-review-record.md",
+              "quote": "The inspection interval for the Ivory gear press is 133 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the Ivory gear press is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ivory-gear-press-review-record.md",
+              "quote": "The first service card for the Ivory gear press is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the inspection interval for the Ivory gear press as 142 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/ivory-gear-press-operating-record.md",
+              "quote": "The first service card gives the inspection interval for the Ivory gear press as 142 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the Ivory gear press.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ivory-gear-press-review-record.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the Ivory gear press."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 142-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ivory-gear-press-review-record.md",
+              "quote": "The 142-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Ivory gear press is 142 days."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The inspection interval for the Ivory gear press is 133 days. The first service card for the Ivory gear press is no longer valid.\n\nContext:\nThe first service card gives the inspection interval for the Ivory gear press as 142 days. The notice of 8 February 2041 replaces the first service card for the Ivory gear press. The 142-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "tuning-1-q023",
+      "shape": "conflict",
+      "question": "How many spare seals does Copperfin Repair House hold for the Ivory valve rack, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 136 reserve gaskets for the CF-784.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-784-service-ledger.md",
+              "quote": "The day-shift ledger lists 136 reserve gaskets for the CF-784."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 143 reserve gaskets for the CF-784.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-784-review-file.md",
+              "quote": "The night-shift ledger lists 143 reserve gaskets for the CF-784."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Ivory valve rack has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/ivory-valve-rack-operating-limits.md",
+              "quote": "Neither ledger for the Ivory valve rack has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the CF-784 was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-784-service-ledger.md",
+              "quote": "The day-shift count for the CF-784 was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the CF-784 was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-784-review-file.md",
+              "quote": "The night-shift count for the CF-784 was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Ivory valve rack is 136.",
+        "The confirmed spare seal count for the Ivory valve rack is 143."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Ivory valve rack",
+        "code": "CF-784",
+        "entry_node": "knowledge:/open-questions/ivory-valve-rack-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-784-service-ledger.md",
+          "knowledge:/sources/cf-784-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Ivory valve rack maps to internal equipment code CF-784."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/ivory-valve-rack-operating-limits.md",
+          "quote": "The public name Ivory valve rack maps to internal equipment code CF-784."
+        }
+      ],
+      "reference_answer": "The day-shift ledger lists 136 reserve gaskets for the CF-784. The night-shift ledger lists 143 reserve gaskets for the CF-784. Neither ledger for the Ivory valve rack has been checked against the store.\n\nContext:\nThe day-shift count for the CF-784 was made on 12 April 2041. The night-shift count for the CF-784 was made on 12 April 2041."
+    },
+    {
+      "id": "tuning-1-q024",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Ivory cable jig, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Ivory cable jig.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/ivory-cable-jig-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Ivory cable jig."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the supplier decision for the Ivory cable jig until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ivory-cable-jig-review-record.md",
+              "quote": "The committee deferred the supplier decision for the Ivory cable jig until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Ivory cable jig needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/ivory-cable-jig-operating-record.md",
+              "quote": "The Ivory cable jig needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The safety checker proposed a cover supplier for the Ivory cable jig.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/ivory-cable-jig-review-record.md",
+              "quote": "The safety checker proposed a cover supplier for the Ivory cable jig."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The safety checker's proposed supplier is approved for the Ivory cable jig."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "No supplier has been approved for the safety cover of the Ivory cable jig. The committee deferred the supplier decision for the Ivory cable jig until a load test is complete.\n\nContext:\nThe Ivory cable jig needs a replacement safety cover. The safety checker proposed a cover supplier for the Ivory cable jig."
+    },
+    {
+      "id": "tuning-1-q025",
+      "shape": "absent",
+      "question": "What did Copperfin Repair House pay to buy the Slate wheel stand? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Slate wheel stand is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/slate-wheel-stand-operating-limits.md",
+              "quote": "The purchase price of the Slate wheel stand is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The CF-818 is stored in the repair hall.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-818-service-ledger.md",
+              "quote": "The CF-818 is stored in the repair hall."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no acquisition cost for the CF-818 in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-818-review-file.md",
+              "quote": "The inventory review found no acquisition cost for the CF-818 in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the CF-818 covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-818-review-file.md",
+              "quote": "The inventory review for the CF-818 covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Slate wheel stand was zero.",
+        "The purchase price of the Slate wheel stand can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Slate wheel stand",
+        "code": "CF-818",
+        "entry_node": "knowledge:/open-questions/slate-wheel-stand-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-818-service-ledger.md",
+          "knowledge:/sources/cf-818-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Slate wheel stand maps to internal equipment code CF-818."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/slate-wheel-stand-operating-limits.md",
+          "quote": "The public name Slate wheel stand maps to internal equipment code CF-818."
+        }
+      ],
+      "reference_answer": "The purchase price of the Slate wheel stand is not recorded in this graph. The CF-818 is stored in the repair hall.\n\nContext:\nThe inventory review found no acquisition cost for the CF-818 in these records. The inventory review for the CF-818 covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "tuning-1-q026",
+      "shape": "paraphrase",
+      "question": "After we take the Slate pump bench to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A return-to-service check is required after the Slate pump bench is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/slate-pump-bench-operating-record.md",
+              "quote": "A return-to-service check is required after the Slate pump bench is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The return-to-service check for the Slate pump bench takes 145 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/slate-pump-bench-operating-record.md",
+              "quote": "The return-to-service check for the Slate pump bench takes 145 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The parts custodian must sign the return-to-service check for the Slate pump bench.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/slate-pump-bench-review-record.md",
+              "quote": "The parts custodian must sign the return-to-service check for the Slate pump bench."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Slate pump bench cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/slate-pump-bench-operating-limits.md",
+              "quote": "The Slate pump bench cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the Slate pump bench is kept in the loading room.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/slate-pump-bench-review-record.md",
+              "quote": "The movement log for the Slate pump bench is kept in the loading room."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Slate pump bench can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "A return-to-service check is required after the Slate pump bench is moved between buildings. The return-to-service check for the Slate pump bench takes 145 minutes. The parts custodian must sign the return-to-service check for the Slate pump bench.\n\nContext:\nThe Slate pump bench cannot be used until its return-to-service check is signed. The movement log for the Slate pump bench is kept in the loading room."
+    },
+    {
+      "id": "tuning-1-q027",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Slate lamp cradle, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before moving the CF-852, fasten the two shipping locks.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-852-service-ledger.md",
+              "quote": "Before moving the CF-852, fasten the two shipping locks."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the shipping locks from the CF-852 before its position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-852-review-file.md",
+              "quote": "Remove the shipping locks from the CF-852 before its position test."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After moving the CF-852, run the position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-852-review-file.md",
+              "quote": "After moving the CF-852, run the position test."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the safety checker can release the CF-852 after the position test.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-852-review-file.md",
+              "quote": "Only the safety checker can release the CF-852 after the position test."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The shipping locks for the CF-852 are kept in the parts loft.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-852-service-ledger.md",
+              "quote": "The shipping locks for the CF-852 are kept in the parts loft."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Slate lamp cradle must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/slate-lamp-cradle-operating-limits.md",
+              "quote": "The transport record for the Slate lamp cradle must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Slate lamp cradle."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Slate lamp cradle",
+        "code": "CF-852",
+        "entry_node": "knowledge:/synthesis/slate-lamp-cradle-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-852-service-ledger.md",
+          "knowledge:/sources/cf-852-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Slate lamp cradle maps to internal equipment code CF-852."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/slate-lamp-cradle-operating-limits.md",
+          "quote": "The public name Slate lamp cradle maps to internal equipment code CF-852."
+        }
+      ],
+      "reference_answer": "Before moving the CF-852, fasten the two shipping locks. Remove the shipping locks from the CF-852 before its position test. After moving the CF-852, run the position test. Only the safety checker can release the CF-852 after the position test.\n\nContext:\nThe shipping locks for the CF-852 are kept in the parts loft. The transport record for the Slate lamp cradle must include both the departure check and the arrival check."
+    },
+    {
+      "id": "tuning-1-q028",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Slate gear press change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal inspection interval for the Slate gear press is 151 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/slate-gear-press-operating-record.md",
+              "quote": "The normal inspection interval for the Slate gear press is 151 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 67 percent, inspect the Slate gear press every 145 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/slate-gear-press-review-record.md",
+              "quote": "If room humidity exceeds 67 percent, inspect the Slate gear press every 145 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the Slate gear press ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/slate-gear-press-review-record.md",
+              "quote": "The shorter interval for the Slate gear press ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the Slate gear press applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/slate-gear-press-operating-record.md",
+              "quote": "The normal interval for the Slate gear press applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The bench coordinator records room humidity for the Slate gear press each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/slate-gear-press-operating-limits.md",
+              "quote": "The bench coordinator records room humidity for the Slate gear press each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 151-day interval for the Slate gear press applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The normal inspection interval for the Slate gear press is 151 days. If room humidity exceeds 67 percent, inspect the Slate gear press every 145 days. The shorter interval for the Slate gear press ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the Slate gear press applies only in a dry room. The bench coordinator records room humidity for the Slate gear press each morning."
+    },
+    {
+      "id": "tuning-1-q029",
+      "shape": "correction",
+      "question": "How often must Copperfin Repair House inspect the Slate valve rack, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The time between checks for the CF-886 is 154 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-886-review-file.md",
+              "quote": "The time between checks for the CF-886 is 154 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the CF-886 is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-886-review-file.md",
+              "quote": "The first service card for the CF-886 is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the time between checks for the CF-886 as 163 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-886-service-ledger.md",
+              "quote": "The first service card gives the time between checks for the CF-886 as 163 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the CF-886.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-886-review-file.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the CF-886."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 163-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-886-review-file.md",
+              "quote": "The 163-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Slate valve rack is 163 days."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Slate valve rack",
+        "code": "CF-886",
+        "entry_node": "knowledge:/synthesis/slate-valve-rack-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-886-service-ledger.md",
+          "knowledge:/sources/cf-886-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Slate valve rack maps to internal equipment code CF-886."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/synthesis/slate-valve-rack-operating-limits.md",
+          "quote": "The public name Slate valve rack maps to internal equipment code CF-886."
+        }
+      ],
+      "reference_answer": "The time between checks for the CF-886 is 154 days. The first service card for the CF-886 is no longer valid.\n\nContext:\nThe first service card gives the time between checks for the CF-886 as 163 days. The notice of 8 February 2041 replaces the first service card for the CF-886. The 163-day interval on the first service card is a copying error."
+    },
+    {
+      "id": "tuning-1-q030",
+      "shape": "conflict",
+      "question": "How many spare seals does Copperfin Repair House hold for the Slate cable jig, and can we use one confirmed count?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The day-shift ledger lists 157 spare seals for the Slate cable jig.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/slate-cable-jig-operating-record.md",
+              "quote": "The day-shift ledger lists 157 spare seals for the Slate cable jig."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The night-shift ledger lists 164 spare seals for the Slate cable jig.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/slate-cable-jig-review-record.md",
+              "quote": "The night-shift ledger lists 164 spare seals for the Slate cable jig."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "Neither ledger for the Slate cable jig has been checked against the store.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/slate-cable-jig-operating-limits.md",
+              "quote": "Neither ledger for the Slate cable jig has been checked against the store."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The day-shift count for the Slate cable jig was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/slate-cable-jig-operating-record.md",
+              "quote": "The day-shift count for the Slate cable jig was made on 12 April 2041."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The night-shift count for the Slate cable jig was made on 12 April 2041.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/slate-cable-jig-review-record.md",
+              "quote": "The night-shift count for the Slate cable jig was made on 12 April 2041."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The confirmed spare seal count for the Slate cable jig is 157.",
+        "The confirmed spare seal count for the Slate cable jig is 164."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The day-shift ledger lists 157 spare seals for the Slate cable jig. The night-shift ledger lists 164 spare seals for the Slate cable jig. Neither ledger for the Slate cable jig has been checked against the store.\n\nContext:\nThe day-shift count for the Slate cable jig was made on 12 April 2041. The night-shift count for the Slate cable jig was made on 12 April 2041."
+    },
+    {
+      "id": "tuning-1-q031",
+      "shape": "open",
+      "question": "Who has been approved to supply the safety cover for the Tin wheel stand, and what is blocking the choice?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "No supplier has been approved for the safety cover of the Tin wheel stand.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/tin-wheel-stand-operating-limits.md",
+              "quote": "No supplier has been approved for the safety cover of the Tin wheel stand."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The committee deferred the vendor decision for the CF-920 until a load test is complete.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-920-review-file.md",
+              "quote": "The committee deferred the vendor decision for the CF-920 until a load test is complete."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The CF-920 needs a replacement safety cover.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-920-service-ledger.md",
+              "quote": "The CF-920 needs a replacement safety cover."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The bench coordinator proposed a cover vendor for the CF-920.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-920-review-file.md",
+              "quote": "The bench coordinator proposed a cover vendor for the CF-920."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The bench coordinator's proposed supplier is approved for the Tin wheel stand."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Tin wheel stand",
+        "code": "CF-920",
+        "entry_node": "knowledge:/open-questions/tin-wheel-stand-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-920-service-ledger.md",
+          "knowledge:/sources/cf-920-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Tin wheel stand maps to internal equipment code CF-920."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/open-questions/tin-wheel-stand-operating-limits.md",
+          "quote": "The public name Tin wheel stand maps to internal equipment code CF-920."
+        }
+      ],
+      "reference_answer": "No supplier has been approved for the safety cover of the Tin wheel stand. The committee deferred the vendor decision for the CF-920 until a load test is complete.\n\nContext:\nThe CF-920 needs a replacement safety cover. The bench coordinator proposed a cover vendor for the CF-920."
+    },
+    {
+      "id": "tuning-1-q032",
+      "shape": "absent",
+      "question": "What did Copperfin Repair House pay to buy the Tin pump bench? What information is actually available?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The purchase price of the Tin pump bench is not recorded in this graph.",
+          "evidence": [
+            {
+              "node": "knowledge:/open-questions/tin-pump-bench-operating-limits.md",
+              "quote": "The purchase price of the Tin pump bench is not recorded in this graph."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The Tin pump bench is stored in the loading room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/tin-pump-bench-operating-record.md",
+              "quote": "The Tin pump bench is stored in the loading room."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The inventory review found no purchase price for the Tin pump bench in these records.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/tin-pump-bench-review-record.md",
+              "quote": "The inventory review found no purchase price for the Tin pump bench in these records."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The inventory review for the Tin pump bench covers the asset sheet and the receipt register.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/tin-pump-bench-review-record.md",
+              "quote": "The inventory review for the Tin pump bench covers the asset sheet and the receipt register."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The purchase price of the Tin pump bench was zero.",
+        "The purchase price of the Tin pump bench can be calculated from its storage location."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The purchase price of the Tin pump bench is not recorded in this graph. The Tin pump bench is stored in the loading room.\n\nContext:\nThe inventory review found no purchase price for the Tin pump bench in these records. The inventory review for the Tin pump bench covers the asset sheet and the receipt register."
+    },
+    {
+      "id": "tuning-1-q033",
+      "shape": "paraphrase",
+      "question": "After we take the Tin lamp cradle to another building, what must happen before we use it, how long does it take, and who signs?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "A restart check is required after the CF-954 is moved between buildings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-954-service-ledger.md",
+              "quote": "A restart check is required after the CF-954 is moved between buildings."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The restart check for the CF-954 takes 166 minutes.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-954-service-ledger.md",
+              "quote": "The restart check for the CF-954 takes 166 minutes."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The safety checker must sign the restart check for the CF-954.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-954-review-file.md",
+              "quote": "The safety checker must sign the restart check for the CF-954."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The Tin lamp cradle cannot be used until its return-to-service check is signed.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/tin-lamp-cradle-operating-limits.md",
+              "quote": "The Tin lamp cradle cannot be used until its return-to-service check is signed."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The movement log for the CF-954 is kept in the parts loft.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-954-review-file.md",
+              "quote": "The movement log for the CF-954 is kept in the parts loft."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The Tin lamp cradle can be used immediately after it is moved."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Tin lamp cradle",
+        "code": "CF-954",
+        "entry_node": "knowledge:/concepts/tin-lamp-cradle-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-954-service-ledger.md",
+          "knowledge:/sources/cf-954-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Tin lamp cradle maps to internal equipment code CF-954."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/tin-lamp-cradle-operating-limits.md",
+          "quote": "The public name Tin lamp cradle maps to internal equipment code CF-954."
+        }
+      ],
+      "reference_answer": "A restart check is required after the CF-954 is moved between buildings. The restart check for the CF-954 takes 166 minutes. The safety checker must sign the restart check for the CF-954.\n\nContext:\nThe Tin lamp cradle cannot be used until its return-to-service check is signed. The movement log for the CF-954 is kept in the parts loft."
+    },
+    {
+      "id": "tuning-1-q034",
+      "shape": "multi-page",
+      "question": "Give the steps before and after transporting the Tin gear press, including who can release it.",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "Before transporting the Tin gear press, fasten the two transit clips.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/tin-gear-press-operating-record.md",
+              "quote": "Before transporting the Tin gear press, fasten the two transit clips."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "Remove the transit clips from the Tin gear press before its alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/tin-gear-press-review-record.md",
+              "quote": "Remove the transit clips from the Tin gear press before its alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "After transporting the Tin gear press, run the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/tin-gear-press-review-record.md",
+              "quote": "After transporting the Tin gear press, run the alignment check."
+            }
+          ]
+        },
+        {
+          "id": "key-4",
+          "text": "Only the bench coordinator can release the Tin gear press after the alignment check.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/tin-gear-press-review-record.md",
+              "quote": "Only the bench coordinator can release the Tin gear press after the alignment check."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The transit clips for the Tin gear press are kept in the repair hall.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/tin-gear-press-operating-record.md",
+              "quote": "The transit clips for the Tin gear press are kept in the repair hall."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The transport record for the Tin gear press must include both the departure check and the arrival check.",
+          "evidence": [
+            {
+              "node": "knowledge:/synthesis/tin-gear-press-operating-limits.md",
+              "quote": "The transport record for the Tin gear press must include both the departure check and the arrival check."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "Leave the transit clips attached when using the Tin gear press."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "Before transporting the Tin gear press, fasten the two transit clips. Remove the transit clips from the Tin gear press before its alignment check. After transporting the Tin gear press, run the alignment check. Only the bench coordinator can release the Tin gear press after the alignment check.\n\nContext:\nThe transit clips for the Tin gear press are kept in the repair hall. The transport record for the Tin gear press must include both the departure check and the arrival check."
+    },
+    {
+      "id": "tuning-1-q035",
+      "shape": "conditional",
+      "question": "How does the inspection interval for the Tin valve rack change in high humidity, and when can the normal interval resume?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The normal time between checks for the CF-988 is 172 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-988-service-ledger.md",
+              "quote": "The normal time between checks for the CF-988 is 172 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "If room humidity exceeds 59 percent, inspect the CF-988 every 166 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-988-review-file.md",
+              "quote": "If room humidity exceeds 59 percent, inspect the CF-988 every 166 days."
+            }
+          ]
+        },
+        {
+          "id": "key-3",
+          "text": "The shorter interval for the CF-988 ends after two consecutive dry readings.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-988-review-file.md",
+              "quote": "The shorter interval for the CF-988 ends after two consecutive dry readings."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The normal interval for the CF-988 applies only in a dry room.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/cf-988-service-ledger.md",
+              "quote": "The normal interval for the CF-988 applies only in a dry room."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The parts custodian records room humidity for the Tin valve rack each morning.",
+          "evidence": [
+            {
+              "node": "knowledge:/concepts/tin-valve-rack-operating-limits.md",
+              "quote": "The parts custodian records room humidity for the Tin valve rack each morning."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The 172-day interval for the Tin valve rack applies at all humidity levels."
+      ],
+      "retrieval_case": {
+        "kind": "alias-link",
+        "public_name": "Tin valve rack",
+        "code": "CF-988",
+        "entry_node": "knowledge:/concepts/tin-valve-rack-operating-limits.md",
+        "record_nodes": [
+          "knowledge:/sources/cf-988-service-ledger.md",
+          "knowledge:/sources/cf-988-review-file.md"
+        ]
+      },
+      "equivalences": [
+        "The public name Tin valve rack maps to internal equipment code CF-988."
+      ],
+      "equivalence_evidence": [
+        {
+          "node": "knowledge:/concepts/tin-valve-rack-operating-limits.md",
+          "quote": "The public name Tin valve rack maps to internal equipment code CF-988."
+        }
+      ],
+      "reference_answer": "The normal time between checks for the CF-988 is 172 days. If room humidity exceeds 59 percent, inspect the CF-988 every 166 days. The shorter interval for the CF-988 ends after two consecutive dry readings.\n\nContext:\nThe normal interval for the CF-988 applies only in a dry room. The parts custodian records room humidity for the Tin valve rack each morning."
+    },
+    {
+      "id": "tuning-1-q036",
+      "shape": "correction",
+      "question": "How often must Copperfin Repair House inspect the Tin cable jig, and is the first service card still valid?",
+      "key": [
+        {
+          "id": "key-1",
+          "text": "The inspection interval for the Tin cable jig is 175 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/tin-cable-jig-review-record.md",
+              "quote": "The inspection interval for the Tin cable jig is 175 days."
+            }
+          ]
+        },
+        {
+          "id": "key-2",
+          "text": "The first service card for the Tin cable jig is no longer valid.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/tin-cable-jig-review-record.md",
+              "quote": "The first service card for the Tin cable jig is no longer valid."
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "id": "context-1",
+          "text": "The first service card gives the inspection interval for the Tin cable jig as 184 days.",
+          "evidence": [
+            {
+              "node": "knowledge:/sources/tin-cable-jig-operating-record.md",
+              "quote": "The first service card gives the inspection interval for the Tin cable jig as 184 days."
+            }
+          ]
+        },
+        {
+          "id": "context-2",
+          "text": "The notice of 8 February 2041 replaces the first service card for the Tin cable jig.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/tin-cable-jig-review-record.md",
+              "quote": "The notice of 8 February 2041 replaces the first service card for the Tin cable jig."
+            }
+          ]
+        },
+        {
+          "id": "context-3",
+          "text": "The 184-day interval on the first service card is a copying error.",
+          "evidence": [
+            {
+              "node": "knowledge:/entities/tin-cable-jig-review-record.md",
+              "quote": "The 184-day interval on the first service card is a copying error."
+            }
+          ]
+        }
+      ],
+      "forbidden_claims": [
+        "The inspection interval for the Tin cable jig is 184 days."
+      ],
+      "retrieval_case": {
+        "kind": "direct"
+      },
+      "reference_answer": "The inspection interval for the Tin cable jig is 175 days. The first service card for the Tin cable jig is no longer valid.\n\nContext:\nThe first service card gives the inspection interval for the Tin cable jig as 184 days. The notice of 8 February 2041 replaces the first service card for the Tin cable jig. The 184-day interval on the first service card is a copying error."
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+---
+description: Answers a question from the local knowledge graphs of the project in one sub-agent, with the context of the answer - a script searches the graphs, a Sonnet reader searches again with the words of the graph, walks from the answer and writes the answer with 8 to 10 context lines. It reads only the local graphs in .claude/knowledge.json, takes no start nodes from a brain and names no page path. Use for "/knowledge:ask-fast". For a graph in another repository, for the ask of a brain and for an answer with page paths, use knowledge:ask.
+argument-hint: "<question>"
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/kq.py *)
+context: fork
+agent: knowledge:reader-s
+---
+
+# Ask the knowledge graphs
+
+The question is: **$ARGUMENTS**
+
+Answer from the graphs only. Never write a page, because an ask only reads.
+
+`<K>` is `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/kq.py`. Write it in full in each
+Bash call. Do not add `| head`, `2>&1` or a second command to it: the output
+of each command is short. Do not read the files of the graph with Read, Grep,
+`cat` or `grep`.
+
+## Step 1: the first search
+
+The script searched the graphs with the words of the question before you read
+this. These are the results.
+
+```!
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/kq.py find --stdin <<'KQ_END_OF_QUESTION'
+$ARGUMENTS
+KQ_END_OF_QUESTION
+```
+
+For each page, the result gives one `==` line with its node, type, title and
+status, then its description and its text (`>` lines). The 8 best pages are
+printed almost in full. After them come the best passages of other pages.
+
+## Step 2: search with the words of the graph
+
+The first search uses the words of the question as they are. The pages can use
+other words for the same thing. Do this step unless the results above state
+each part of the answer in plain words. Run:
+
+    <K> find "<words>" "<words>" "<words>" "<words>"
+
+Give 3 or 4 searches of 3 to 8 words each. Use the words that a page would
+use: a name, a title, a role, a term that you saw in the results, a synonym.
+Make the searches different from each other.
+
+You have the answer only when a page states each part of it in plain words. A
+page that is only near the subject is not the answer. A page that says the
+thing is not known, not decided or still open is an answer: report what it
+says. When the answer is not
+there, run the command one more time with other words. Stop rule: run 2 `find`
+commands or fewer in this step.
+
+## Step 3: the walk from the answer
+
+When you have the answer, run this command one time. Do not skip this step:
+the answer alone is not enough.
+
+    <K> near <node> <node> --q "<the words of the answer>"
+
+- `<node>`: the page that holds the answer, and a page that led you to it.
+  Give 3 pages or fewer.
+- `--q`: the names, the dates and the terms of the answer.
+
+The script walks along the links from those pages and prints the pages that
+the walk comes to most. The context of an answer is on those pages. When you
+have no answer after step 2, run the command with the 2 nearest pages.
+
+## Step 4: answer
+
+Write the answer for your user. Use only the text that the tool gave you. Do
+not add a fact from another place. When the text does not hold the answer, say
+so and do not guess.
+
+Use this form. Plain text only: no heading, no bold text, no table, no page
+path. Do not write a sentence before the answer or a summary after the last
+line.
+
+1. The answer, in 2 to 5 sentences. State each thing that the question asks
+   for, with its name, date or number. When the text says that a thing is
+   not defined, not decided, not known or in dispute, say that in the first
+   sentence, with the words of the text. Do not state as settled a thing
+   that the text leaves open. When the text says that a thing is absent or
+   was left out, say that it is absent; do not say only that it is open. Then give the sentence of the page that
+   states the answer, with the words and the numbers of the page. Do not
+   rewrite it. When the answer is that a thing is not known or not recorded,
+   give also the sentence that says what is known in its place.
+2. The line `Context:`.
+3. 8 to 10 lines that start with `- `. Each line is one sentence of 16 words
+   or fewer. Each line states one fact that changes how a reader uses the
+   answer. Most of these facts are on pages other than the page of the
+   answer. Look for these six kinds of fact:
+
+   - a source that disagrees with the answer;
+   - a later correction of the answer, or a newer value;
+   - a weak point of the source of the answer: one source only, not
+     confirmed, partial;
+   - a related question that is still open;
+   - a decision or a condition that the answer depends on;
+   - a consequence of the answer for another thing.
+
+State the fact itself, with its name, date or number. A line that only says
+that a page exists, or what a page is about, is of no use. When a line gives
+a value that is different from the answer, name the source of that value. Say
+which value is the current one only when the text says so. Do not write a
+line for a kind that the text does not hold.

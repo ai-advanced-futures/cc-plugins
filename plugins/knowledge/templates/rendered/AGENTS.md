@@ -40,8 +40,10 @@ the base name of its raw file: `raw/2026-11-02-x.md` gives
 
 ## Operation: Ask
 
-Run `/knowledge:ask <question>`. It walks the graphs one step at a time with
-`knowledge.py walk`, and cites each page that it used. It never writes.
+Run `/knowledge:ask <question>`. It searches local graphs with `kq.py` and
+cites each page that it used. For a deeper page-by-page walk, caller start nodes,
+or remote graphs, run `/knowledge:ponder <question>`. Both procedures leave
+graph files unchanged.
 
 ## Operation: Forget
 

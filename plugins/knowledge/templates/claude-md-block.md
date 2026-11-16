@@ -3,8 +3,10 @@
 The generic knowledge graph of this repository is `{{CONTAINER}}bundle/`.
 [AGENTS.md](./{{CONTAINER}}AGENTS.md) holds its rules.
 
-- Run `/knowledge:ask <question>` to ask a question. It reads each graph in
-  `.claude/knowledge.json`, one step at a time.
+- Run `/knowledge:ask <question>` to ask a question. It searches the local graphs in
+  `.claude/knowledge.json` and cites its sources.
+- Run `/knowledge:ponder <question>` for a deeper page-by-page search or a
+  graph in another repository.
 - Run `/knowledge:learn <path or URL>` to add a source or an answer.
 - Run `/knowledge:forget <graph>:/<path>` to remove a page and each reference
   to it.

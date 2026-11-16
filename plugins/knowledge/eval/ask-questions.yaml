@@ -15,6 +15,6 @@ questions:
   - skill: system-design:ask
     question: Which component realizes the capability to take card payments?
     expect: [system-design:/components/COMPONENT-01.md]
-  - skill: knowledge:ask
+  - skill: knowledge:ponder
     question: How does billing work across the product and the design?
     expect: [knowledge:/synthesis/how-billing-works.md]
