@@ -54,7 +54,10 @@ def summarize(config, rows):
 
 
 def readme_table(summary):
-    names = {"search-then-walk-2": "ask", "page-by-page-1": "ponder"}
+    historical = "search-then-walk-3" not in summary["variants"]
+    ponder = "page-by-page-1" if historical else "search-then-walk-3"
+    names = {"search-then-walk-2": "ask",
+             ponder: "ponder (historical page-by-page-1)" if historical else "ponder"}
     if summary["dataset"] != "benchmark-1" or not set(names) <= set(summary["variants"]):
         raise ValueError("The README needs a full benchmark-1 run of ask and ponder")
     lines = ["| Command | Mean seconds | Accuracy | Facts | Context | Tool calls | Model turns | Agents | Tokens | Cost |",
@@ -77,6 +80,8 @@ def readme_table(summary):
               "all required facts and no conflicting answer. Tool calls exclude the scripted search",
               "before the model starts. Model turns include subagents. Tokens include cache reads and writes.",
               "Cost is the CLI estimate for the answer, excluding grading. These are synthetic-data results."]
+    if historical:
+        lines += ["", "The historical ponder row measures page-by-page-1, not the search-then-walk-3 reader."]
     for name, label in names.items():
         row = summary["variants"][name]
         lines.append(f"Served models for `{label}`: {', '.join(row['served_models'])}.")

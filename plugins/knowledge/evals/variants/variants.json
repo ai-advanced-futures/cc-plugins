@@ -18,12 +18,12 @@
       "pre_model_searches": 1
     },
     {
-      "id": "page-by-page-1",
+      "id": "search-then-walk-3",
       "source": "working-tree",
       "skill": "knowledge:ponder",
-      "description": "The page-by-page retrieval procedure and its neighbor judge.",
-      "requires_fork": false,
-      "pre_model_searches": 0
+      "description": "The ponder search-then-walk reader, based on the frozen reference, with safe search and source citations.",
+      "requires_fork": true,
+      "pre_model_searches": 1
     }
   ]
 }

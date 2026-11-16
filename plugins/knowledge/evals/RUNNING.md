@@ -28,15 +28,28 @@ facts in the first search. All 15 recovered those facts through the visible entr
 The benchmark set has not been searched or scored during tuning. These remain controlled,
 synthetic templates, not a sample of real user traffic.
 
-The variants are:
+The active variants are:
 
-- `search-then-walk-1`: the draft's four-file reference. Hashes protect the snapshot.
-- `search-then-walk-2`: the revised fast `knowledge:ask` in the working tree.
-- `page-by-page-1`: `knowledge:ponder` in the working tree.
+- `search-then-walk-1`: the draft's unchanged four-file reference. Hashes protect the snapshot.
+- `search-then-walk-2`: the unchanged `knowledge:ask` retrieval in the working tree.
+- `search-then-walk-3`: the replacement local `knowledge:ponder` in the working tree.
+  It uses the reference-style search and linked-page walk with safe search inputs
+  and citations. Its prompt asks for 8-10 short relevant context facts when
+  available and quotes for unknown or disputed facts. It does not raise the
+  `find` or `near` budgets.
 
 The runner checks each variant before starting it. The snapshot files have `.txt`
 suffixes because they are reference data, not registered skills or executable runtime code.
 The runner copies them to their runtime paths in an isolated plugin copy.
+
+The 14 November 2026 results used `page-by-page-1` for the former `ponder`.
+That variant is historical, not the working-tree `ponder` or an active runner
+choice. Retain its saved results under its original ID. The
+[15-16 November 2026 (UTC) report](BENCHMARK.md) measures `search-then-walk-3`
+in a full 540-answer run; the [historical report](BENCHMARK-2026-11-14.md) retains
+the earlier comparison. Both working-tree commands support local graphs only. Remote graphs,
+caller-supplied start nodes, and neighbor filters are unsupported, with no fallback
+to the former walker.
 
 ## Plan without model calls
 
@@ -172,10 +185,11 @@ Run this command only after the checked controls pass. Only this command starts 
 $ python3 plugins/knowledge/evals/benchmark.py refresh-benchmarks --expected-model SERVED_MODEL_ID --output .benchmark-runs/benchmark-01
 ```
 
-The default is all three variants. Pass `--variant` more than once to select variants.
-The README comparison requires at least `search-then-walk-2` and `page-by-page-1`.
-The reference is useful for detecting a loss after code or prompt changes; it is not shown
-as a third shipped command in the README table.
+The default is all three active variants. Pass `--variant` more than once to select
+variants. A refreshed comparison of the shipped commands requires at least
+`search-then-walk-2` and `search-then-walk-3`. The reference helps detect a loss after
+code or prompt changes; it is not a third shipped command. Keep the dated
+`page-by-page-1` results as history, not as measurements of the replacement.
 
 The output folder must be outside the source plugin. This keeps generated case files out
 of ordinary native case discovery. Each output folder gets a `.gitignore` that excludes
@@ -218,11 +232,18 @@ A deep walk can produce several result events in one session. Their token and co
 are cumulative: the reader takes one checked final total, not their sum. It counts shell
 tasks separately from agents. A sandbox failure has no accuracy score.
 
-For CLI 2.1.323, the reader checks the saved session duration against session identity,
-cost, model totals, and log timestamps. This saved `cost-state` format is internal, not a
-stable public interface. A different CLI version or an inconsistent saved state stops
-measurement. A single result with no saved state can use its public duration field; a
-multi-result run cannot. These times come from CLI records, not an independent process timer.
+For CLI 2.1.323 and 2.1.325, the reader checks each saved session duration against
+session identity, cost, model totals, and log timestamps. The timing-source label includes
+the actual CLI version. The 2.1.325 check used a retained native answer whose session
+duration was 8.035 seconds; its start and end matched the log within the existing
+two-second tolerance. This observation supports that record, not every possible run:
+each later record must pass the same checks.
+
+This saved `cost-state` format is internal, not a stable public interface. An unverified
+CLI version or an inconsistent saved state stops measurement. A single result with no
+saved state can use its public duration field; a multi-result run cannot. These times
+come from CLI records, not an independent process timer. Supporting a record format
+does not pin the CLI executable or change the user's installed default.
 
 Every judge checks facts, not exact wording or answer length. Each expected fact has source
 evidence in the dataset. Source-path formatting is not part of the quality score. That lets

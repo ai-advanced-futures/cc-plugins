@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Search local knowledge graphs for knowledge:ask. Standard library only.
+"""Search local knowledge graphs for knowledge:ask and knowledge:ponder. Standard library only.
 
   kq.py find [--stdin] [QUERY ...]      print matching pages and passages
   kq.py near NODE [NODE ...] --q WORDS  print pages near the answer
 
-A node is <graph>:/<path in the bundle>. Remote graphs require knowledge:ponder.
+A node is <graph>:/<path in the bundle>. Both readers exclude remote graphs.
 The private page cache is outside the project. KQ_CACHE selects its folder;
 KQ_CACHE=off stops it. No command writes to a graph.
 """
@@ -181,7 +181,7 @@ def graph_files(root):
         if not isinstance(spec, dict):
             continue
         if "repo" in spec:
-            print(f"SKIP: remote graph {graph}. Use /knowledge:ponder to search remote graphs.", file=sys.stderr)
+            print(f"SKIP: remote graph {graph}. Remote graphs are unsupported by ask and ponder.", file=sys.stderr)
             continue
         if not isinstance(spec.get("path"), str) or not spec["path"]:
             continue
@@ -551,8 +551,8 @@ def main():
         return 0
     ix = Index(cached_pages(root)[0])
     if not ix.pages:
-        print("No local knowledge pages are available. Use /knowledge:setup for a local graph, "
-              "or /knowledge:ponder for remote graphs.")
+        print("No local knowledge pages are available. Use /knowledge:setup to register a local graph. "
+              "Remote graphs are unsupported by ask and ponder.")
         return 0
     out = []
     if a.cmd == "find":

@@ -114,6 +114,13 @@ its flat form, an incorrect answer, and an answer with one required fact. All th
 `ask` run with checked grading then passed all six criteria. These are grading checks,
 not final benchmark results.
 
+Before the 15-16 November 2026 (UTC) benchmark, the same four controls passed
+again with unanimous Opus 5.5 votes on CLI 2.1.325. Native smoke answers from
+all three active variants passed all six criteria on one question. The first
+ponder smoke measurement exposed the timing extractor's version check; its saved
+answer was graded after validating 2.1.325, without rerunning the answer. The
+full report separates these preliminary checks from the 540 measured answers.
+
 ## Datasets
 
 The committed graph fixtures and source-backed question sets have these sizes and uses:
@@ -129,10 +136,24 @@ of questions from the model workspace. It uses only the Python standard library 
 nothing. Builds use the graph's save code and a fixed clock. See [Run knowledge benchmarks](RUNNING.md)
 for planning, diagnostic runs, variant selection, and the explicit benchmark command.
 
-The variant names are `search-then-walk-1` for the draft reference,
-`search-then-walk-2` for the revised `ask`, and `page-by-page-1` for `ponder`.
-The [README comparison](../README.md#benchmark-results) shows the two shipped commands,
-`ask` and `ponder`. The [full benchmark report](BENCHMARK.md) also includes the frozen reference.
+The active variant names are `search-then-walk-1` for the unchanged draft
+reference, `search-then-walk-2` for the unchanged `ask`, and `search-then-walk-3`
+for the replacement local `ponder`. The replacement uses the reference-style
+search and linked-page walk with safe search inputs and source citations. It asks
+for more relevant context and stronger evidence for unknown or disputed facts,
+not a larger search budget.
+
+The [README comparison](../README.md#benchmark-results) and
+[full benchmark report](BENCHMARK.md) publish the 15-16 November 2026 (UTC) run:
+540 valid results for the frozen reference, ask, and replacement ponder. The audit
+re-extracted every measurement and found exact matches. All answer sessions served
+Sonnet 5.5; each had three distinct Opus 5.5 judges. The run used CLI 2.1.325.
+Ponder returned modestly more expected context than ask, not higher accuracy.
+
+The [14 November report](BENCHMARK-2026-11-14.md) preserves the former
+`page-by-page-1` measurements. Do not assign those scores, or the reference's
+scores, to the replacement. The rerun used the same questions; its variant choice
+was informed by earlier aggregate results, so it is not fresh held-out validation.
 
 The report separates accuracy, required-fact retrieval, and relevant-context retrieval.
 It also shows mean time per question, tool calls, model turns, subagent starts, input and

@@ -6,9 +6,9 @@ The general check (`knowledge.py check`) checks each rule that code can check.
 A brain is a plugin that keeps one kind of project knowledge as a graph:
 `product` (PRD and roadmap), `business-domain` (domain), `architecture`
 (decisions), `system-design` (system design), and `knowledge` (the generic
-graph). An agent that can read
-one brain can read every brain. An agent finds facts one step at a time. It
-never loads a full graph.
+graph). An agent that can read one brain can read every brain. The generic
+`knowledge:ask` and `knowledge:ponder` commands use one reader to search local
+graphs and inspect linked pages. They do not load a full graph into the reader.
 
 ## 1. A brain
 
@@ -40,9 +40,9 @@ never loads a full graph.
 
 - The OKF fields come first: `type`, `title`, `description`, `status`,
   `tags`.
-- `description` is one line, and each page must have it. The `ponder` neighbor judge
-  reads the description before it opens the page. Write it in the words of
-  the brain, and make it specific.
+- `description` is one line, and each page must have it. Local search results
+  include the description so the reader can select relevant evidence. Write it
+  in the words of the brain, and make it specific.
 - `status` has the OKF values only: `draft`, `stable`, `deprecated`. A brain
   keeps its own lifecycle in a different field: `product` uses `state`, and
   `architecture` uses `lifecycle`.
@@ -143,6 +143,12 @@ its copy of `claude_md_router.py`.
 
 - Each brain has `setup`, `learn`, and `ask`. The plugin form is
   `<brain>:<skill>`.
+- The generic `knowledge:ask` and `knowledge:ponder` readers support local graphs
+  only. Both use `kq.py find` and `kq.py near` with the same search limits.
+  `ponder` asks for fuller context and quotes for unknown or disputed facts.
+  Remote graphs, caller-supplied start nodes, and neighbor filters are unsupported.
+  Neither reader falls back to the shared page-by-page walk API. Other brain
+  callers remain subject to a separate audit.
 - A brain can have more skills. A skill that makes knowledge ends with the
   question "Learn these results?" and calls `learn` on yes.
 - `check` is not a command. The hook of the brain runs the checks, and

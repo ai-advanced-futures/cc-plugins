@@ -48,7 +48,7 @@ def quality(run, expected_graders):
 
 USAGE_TOTAL_FIELDS = (*TOKEN_FIELDS, "costUSD", "thinkingTokens", "webSearchRequests",
                       "cacheCreationEphemeral5mInputTokens", "cacheCreationEphemeral1hInputTokens")
-SESSION_TIME_VERSION = "2.1.323"
+SESSION_TIME_VERSIONS = ("2.1.323", "2.1.325")
 # Allow up to two seconds for startup and final record writes, not for model work.
 SESSION_TIME_TOLERANCE_MS = 2000
 
@@ -118,7 +118,7 @@ def answer_time(results, result, events, cli_version, main_rows, costs_valid):
     """Read elapsed session time, including waits, without adding turn durations.
 
     The final cost-state is an internal CLI record, not a stable public interface.
-    Accept its schema only for the verified CLI version and after checks against
+    Accept its schema only for verified CLI versions and after checks against
     the result totals and main-log timestamps. A bad present state has no fallback.
     Without a state, only a single result can use the public duration_ms field.
     """
@@ -128,7 +128,7 @@ def answer_time(results, result, events, cli_version, main_rows, costs_valid):
     if not states:
         duration = number(result.get("duration_ms")) if len(results) == 1 else None
         return (duration, "cli_single_result_duration") if duration else (None, None)
-    if (cli_version != SESSION_TIME_VERSION or main_rows[-1].get("type") != "cost-state"
+    if (cli_version not in SESSION_TIME_VERSIONS or main_rows[-1].get("type") != "cost-state"
             or any(event.get("type") == "system" and event.get("subtype") == "init"
                    and event.get("claude_code_version") != cli_version for event in events)):
         return None, None
@@ -152,7 +152,7 @@ def answer_time(results, result, events, cli_version, main_rows, costs_valid):
     if (abs(min(timestamps) - start) > SESSION_TIME_TOLERANCE_MS
             or abs(max(timestamps) - (start + duration)) > SESSION_TIME_TOLERANCE_MS):
         return None, None
-    return duration, "cli_session_cost_state_2.1.323"
+    return duration, f"cli_session_cost_state_{cli_version}"
 
 
 def summarize_run(run, expected_graders, events, expected_models, full_counts=None, blocked=False,

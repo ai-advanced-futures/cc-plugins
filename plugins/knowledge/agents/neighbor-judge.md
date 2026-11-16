@@ -1,6 +1,6 @@
 ---
 name: neighbor-judge
-description: Judges one step of a graph walk for knowledge:ponder - which neighbors of one page can help answer the question, and which facts the page gives. Read-only. Dispatch it once for each node of the walk.
+description: Judges one step of a caller-managed page-by-page graph walk - which neighbors can help answer the question, and which facts the page gives. Read-only. The local knowledge:ask and knowledge:ponder readers do not use this agent.
 model: haiku
 tools: Read
 ---

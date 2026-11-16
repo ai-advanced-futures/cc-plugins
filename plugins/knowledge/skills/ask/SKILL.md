@@ -1,5 +1,5 @@
 ---
-description: Answers a question from the local graphs in .claude/knowledge.json with one Sonnet reader, source paths, and relevant context. Use for "/knowledge:ask", "what do we know about X", "ask the wiki", and questions that cross local brains. For remote graphs, start nodes, neighbor filters, or a deeper page-by-page search, use knowledge:ponder.
+description: Answers a question from the local graphs in .claude/knowledge.json with one Sonnet reader, source paths, and relevant context. Use for "/knowledge:ask", "what do we know about X", "ask the wiki", and questions that cross local brains. Use knowledge:ponder for fuller local context. Neither reader supports remote graphs, supplied start nodes, or neighbor filters.
 argument-hint: "<question>"
 allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/kq.py *)
 context: fork
@@ -31,8 +31,8 @@ KQ_END_OF_QUESTION
 Each `==` line gives a node, type, title, and status. The result includes the
 best pages and passages. When the question is empty, request a question instead
 of answering. When no local graph is available, report the script's notice.
-When remote graphs were excluded, name that gap and direct the user to
-`/knowledge:ponder`, because the local search cannot answer for those graphs.
+When remote graphs were excluded, name that gap. Neither `ask` nor `ponder`
+can answer for those graphs.
 
 ## Step 2: search with the words of the graph
 
@@ -43,7 +43,7 @@ When the first result does not state each part of the answer, search again:
 Give 3 or 4 different searches of 3 to 8 words each. Use names, codes, titles,
 and terms from the results, or synonyms, because the pages can use different
 words from the question. Run at most 2 more `find` commands, because this is
-the bounded search; `knowledge:ponder` is the deeper procedure.
+the bounded search; `knowledge:ponder` asks for fuller context within the same limits.
 
 A page near the subject is not an answer. A page that explicitly says a fact is
 unknown, absent, disputed, or undecided is an answer: report that state.
@@ -74,6 +74,6 @@ current only when the text establishes that order.
 
 Cite each answer and context claim with its source node, `(<graph>:/<path>)`,
 because the reader must be able to check it. Mark a draft source with `(draft)`.
-When the search leaves a gap, suggest `/knowledge:ponder <question>` for the
-deep walk. Report that this answer covers local graphs only when remote graphs
-were excluded, because a local gap is not proof of an empty remote graph.
+For fuller local context, suggest `/knowledge:ponder <question>` without promising
+that it will close a gap. Report that this answer covers local graphs only when
+remote graphs were excluded, because a local gap is not proof of an empty remote graph.

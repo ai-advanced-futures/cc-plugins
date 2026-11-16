@@ -3,8 +3,10 @@
 ## 2.0.0
 
 - Make `knowledge:ask` the bounded local search with one Sonnet reader, page citations, and relevant context.
-- Move the existing deep walk to `knowledge:ponder`. Remove the draft `knowledge:ask-fast` command.
-- Keep other brain callers unchanged. Use `ponder` for start nodes, neighbor filters, and remote graphs.
+- Replace `knowledge:ponder` with a local search and link walk based on the saved `search-then-walk-1` prompt, with citations and fuller context. Remove the draft `knowledge:ask-fast` command.
+- Keep other brain callers unchanged. Both readers exclude remote graphs and do not apply supplied start nodes or neighbor filters. Ponder reports requests that require these features as unsupported, with no page-by-page fallback.
+- Register the adapted ponder as `search-then-walk-3`. Preserve the earlier page-by-page benchmark as historical results; the replacement needs its own measurements.
+- Retire the legacy walk-state evaluator before it starts model sessions. Keep the shared walk API and neighbor judge for direct callers.
 - Keep only `find` and `near` in the local search code. Exclude remote registry entries explicitly and keep the read cache private.
 - Add synthetic 50-, 120-, and 340-page native evaluation datasets and an explicit benchmark runner with checked model IDs and separate answer and grading measurements.
 - Grade benchmark answers with three separate Claude sessions. Keep each raw reply and reject invalid grading records instead of treating them as wrong answers.

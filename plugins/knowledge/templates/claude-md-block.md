@@ -5,8 +5,8 @@ The generic knowledge graph of this repository is `{{CONTAINER}}bundle/`.
 
 - Run `/knowledge:ask <question>` to ask a question. It searches the local graphs in
   `.claude/knowledge.json` and cites its sources.
-- Run `/knowledge:ponder <question>` for a deeper page-by-page search or a
-  graph in another repository.
+- Run `/knowledge:ponder <question>` for fuller context from local graph links.
+  Both readers exclude remote graphs and do not apply start nodes or neighbor filters.
 - Run `/knowledge:learn <path or URL>` to add a source or an answer.
 - Run `/knowledge:forget <graph>:/<path>` to remove a page and each reference
   to it.
