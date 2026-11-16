@@ -51,7 +51,7 @@ After a failed push, Plan makes no automatic push for 60 seconds. `PLAN_BACKUP_R
 
 The next push, automatic after the pause or manual, sends all the data and clears `pending`. Thus no retry is necessary for the failed push. `describe` shows the state in `backup`: `remote`, `auto`, `pending`, `last_push_at`, and `last_error`.
 
-One push has a time limit of 15 seconds, which is below the 120-second wait of another session for the store lock. `PLAN_BACKUP_TIMEOUT` sets another limit in seconds. Keep it below the value of `PLAN_LOCK_TIMEOUT`. A push that reaches the limit is a failed push. The store lock is held during the push.
+One push has a time limit of 45 seconds, which is below the 120-second wait of another session for the store lock. `PLAN_BACKUP_TIMEOUT` sets another limit in seconds. Keep it below the value of `PLAN_LOCK_TIMEOUT`. A push that reaches the limit is a failed push. The store lock is held during the push.
 
 ### Manual push
 

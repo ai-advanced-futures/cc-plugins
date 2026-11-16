@@ -31,12 +31,12 @@ CONTENT_OPERATIONS = frozenset({"new", "set", "body", "link", "unlink", "assign"
 
 
 def backup_timeout() -> float:
-    """Give the time limit of one backup push in seconds: PLAN_BACKUP_TIMEOUT, default 15 (below the 120-second wait for the store lock)."""
+    """Give the time limit of one backup push in seconds: PLAN_BACKUP_TIMEOUT, default 45 (below the 120-second wait for the store lock)."""
     try:
         value = float(os.environ.get("PLAN_BACKUP_TIMEOUT", ""))
     except ValueError:
-        return 15.0
-    return value if 0 < value <= 3600 else 15.0
+        return 45.0
+    return value if 0 < value <= 3600 else 45.0
 
 
 def backup_retry() -> float:

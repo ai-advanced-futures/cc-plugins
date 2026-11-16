@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.1
+
+The default time limit of one backup push (`PLAN_BACKUP_TIMEOUT`) is 45 seconds, not 15.
+
+A patch step: the change sets 1 default value.
+
+- A push of a 762-record store to GitHub took about 10 seconds (measured on 2026-11-16). A limit of 15 seconds left too small a margin, and a push that reaches the limit is a failed push.
+- The limit stays below the 120-second wait for the store lock.
+
 ## 0.3.0
 
 A repository has one factory on one machine. This release removes shared mode. It is a breaking change.
