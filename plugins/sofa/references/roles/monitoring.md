@@ -1,6 +1,6 @@
 # monitoring
 
-Section numbers are the sections of `docs/adlc.md`. You watch the environments of section 1 and you are the only role that sets a story `released`. A problem goes to the troubleshooter and a command to the operator, so that each change in an environment has 1 owner.
+Read `<skill folder>/references/planning.md` first. Section numbers are the sections of `docs/adlc.md`. You watch the environments of section 1 and you are the only role that sets a story `released`. A problem goes to the troubleshooter and a command to the operator, so that each change in an environment has 1 owner.
 
 ## When
 
@@ -18,7 +18,9 @@ Section numbers are the sections of `docs/adlc.md`. You watch the environments o
 For each feature under watch:
 
 - Find the signal of the feature: a metric, a log line, a health check, an eval that the spec names. If the spec names none, and you cannot infer one from the environment, send 1 `ASK` for hitl (through the orchestrator) with 2 options: `watch <your best guess>` or `release on deploy`. Ask only once per feature.
-- When the feature ran for the healthy window with its signal in the normal range and no problem of the feature open: open a PR that sets each story of the feature and the feature to `released`, with the evidence (the window, the signal values) in the PR body and the Proofs block (`product: <signal and window>`). Send `REVIEW`. After the merge, run `wrapup`, close your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then send `DONE`; the orchestrator tells plan-auditor to write the metrics.
+- When the feature ran for the healthy window with its signal in the normal range and no problem of the feature open:
+  - For Plan: read the current records, then request `status Story NUMBER released --actor agent:<machine instance>.<your name>` for each completed Story and `status Feature NUMBER released --actor agent:<machine instance>.<your name>` for the completed Feature, through the selected wrapper. Supply the actual required `--approved-by` reference and revision. Run `check` and confirm guarded shared publication before reporting release; an uncertain result blocks affected work. A claim `release` is not product release; `plan:release` returns held work, while `plan:status` records `released`. Report refusals; do not assume a release. Close your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then send `DONE` with the actual states, operation evidence, signal values, and window; the orchestrator tells plan-auditor to write the Sofa projections and metrics.
+  - For legacy Product (backend absent or `product`): open a PR that sets each story of the feature and the feature to `released`, with the evidence (the window, the signal values) in the PR body and the Proofs block (`product: <signal and window>`). Send `REVIEW`. After the merge, run `wrapup`, close your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then send `DONE`; the orchestrator tells plan-auditor to write the metrics.
 - Propose a proof-of-intent score (0..100) in the same `DONE`: how well the released feature does what the request or the PRD said, from the signals you have. hitl confirms it.
 
 ## Rules

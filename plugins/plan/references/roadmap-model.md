@@ -46,7 +46,7 @@ A parent's state is stored separately from its children's states. Closing all ch
 
 The actor forms are `human:LOGIN` and `agent:ID`. The executing agent uses its own `agent:ID`. A human actor identifies a command that a person runs. An actor is evidence about the executor, not a way to obtain broader permission.
 
-These 5 agent transitions need no approval reference:
+These five agent transitions need no approval reference:
 
 | From | To | Meaning |
 | --- | --- | --- |
@@ -62,7 +62,7 @@ The CLI records state changes and manages actual dates. Page lifecycle (`draft`,
 
 ## Claims
 
-A claim holds `by`, `at`, `lease_expires_at`, and `heartbeat_at`. The lease limits how long a claim lasts without renewal. Claims coordinate work in the selected local store. A claim does not prove that another machine cannot change the work. `claim` takes ready work, `heartbeat` renews the current holder's lease, and `release` gives work back. The requested lease is checked by code. Claim returns a token for the current work attempt. Heartbeat, release, and changes to held work need that exact token; a token from an earlier claim is refused.
+A claim holds `by`, `at`, `lease_expires_at`, and `heartbeat_at`. The lease limits how long a claim lasts without renewal. Local claims coordinate one machine only. In shared mode, the coordination gate protects the checked claim through publication. A failed or uncertain publication gives no permission to start work. [Shared Plan workspaces](sharing.md) defines activation and recovery limits. `claim` takes ready work, `heartbeat` renews the current holder's lease, and `release` gives work back. The requested lease is checked by code. Claim returns a token for the current work attempt. Heartbeat, release, and changes to held work need that exact token; a token from an earlier claim is refused.
 
 Releasing a claim returns `claimed` or `in_progress` work to the computed ready or blocked state. Work in another state keeps that state. Claim release does not mark the work `released`. Product release status uses `status ... released` with the required approval.
 

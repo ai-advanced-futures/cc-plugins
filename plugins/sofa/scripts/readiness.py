@@ -26,6 +26,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from sofa_plan import Plan, PlanFailure, legacy_roadmap, selection, validation_environment
+
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 CODE_SUFFIXES = {".py", ".ts", ".tsx", ".js", ".go", ".rs", ".java", ".rb", ".sh"}
 SKIP_FOLDERS = {"node_modules", "vendor", "dist", "build"}
@@ -376,7 +379,13 @@ def check_brains(repo):
     graphs = {}
     if registry.exists():
         graphs = read_json(registry).get("graphs", {})
+    try:
+        _, backend, _ = selection(repo.root)
+    except PlanFailure:
+        backend = "invalid"
     for name, fix in BRAIN_FIX.items():
+        if name == "roadmap" and backend != "product":
+            continue
         blocks = name in BRAINS_THAT_BLOCK
         entry = graphs.get(name)
         if entry is None:
@@ -508,7 +517,10 @@ def check_tools(repo):
             items.append(item(f"tool-{role}", "tools", "ok", f"{role}: {value or 'none'}"))
             continue
         name = value.split()[0].lower()
-        if name not in CLI_TOOLS:
+        if name == "plan":
+            items.append(item(f"tool-{role}", "tools", "ok",
+                              f"{role}: Plan uses sofa-plan; roadmap-backend checks the selected workspace"))
+        elif name not in CLI_TOOLS:
             items.append(item(f"tool-{role}", "tools", "unknown", f"{role}: {value} is not a command this script knows", ""))
         elif shutil.which(name):
             items.append(item(f"tool-{role}", "tools", "ok", f"{role}: {name} is on the PATH"))
@@ -860,8 +872,22 @@ def check_human(repo):
     return items
 
 
-CHECKS = [check_claude, check_repo, check_brains, check_team, check_tools, check_skills, check_factory_skills, check_human]
-AREAS = {"check_claude": "claude", "check_repo": "repo", "check_brains": "brains", "check_team": "team",
+def check_roadmap_backend(repo):
+    try:
+        root, backend, profile = selection(repo.root)
+        if backend == "product":
+            return [item("roadmap-backend", "brains", "ok", "Product roadmap selected (legacy default)")]
+        helper = cmd_name("READINESS_SOFA_GITHUB", str(PLUGIN_ROOT / "scripts/sofa-github"))
+        environment = validation_environment(root, {}, helper=[helper, "--db", str(root / ".sofa/state.db")])
+        records = Plan(root, profile, env=environment).validate(require_records=legacy_roadmap(root), require_shared=True)
+        return [item("roadmap-backend", "brains", "ok", f"Plan checks passed; {len(records)} records")]
+    except PlanFailure as exc:
+        return [item("roadmap-backend", "brains", "wrong", str(exc),
+                     "correct the selected Plan workspace; do not initialize or import during readiness", True)]
+
+
+CHECKS = [check_claude, check_repo, check_brains, check_roadmap_backend, check_team, check_tools, check_skills, check_factory_skills, check_human]
+AREAS = {"check_claude": "claude", "check_repo": "repo", "check_brains": "brains", "check_roadmap_backend": "brains", "check_team": "team",
          "check_tools": "tools", "check_skills": "skills", "check_factory_skills": "skills", "check_human": "human"}
 
 
@@ -872,7 +898,8 @@ def run_checks(repo):
             items.extend(check(repo))
         except Exception as e:  # a check must never stop the others
             area = AREAS[check.__name__]
-            items.append(item(area, area, "unknown", f"{type(e).__name__}: {e}", ""))
+            items.append(item(area, area, "unknown", f"{type(e).__name__}: {e}", "",
+                              check is check_roadmap_backend))
     return items
 
 

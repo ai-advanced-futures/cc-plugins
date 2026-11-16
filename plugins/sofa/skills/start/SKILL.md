@@ -17,6 +17,8 @@ The skill folder is the root of the `sofa` plugin: two folders up from this file
 - `templates/ADLC.md` — the current team definition. Each repository has its own copy in `docs/adlc.md`.
 - `templates/MIGRATION.md` — how an older `docs/adlc.md` maps to the current template.
 - `references/roles/<role>.md` — the work of each role. Sessions read these files from the installed plugin, so a fix here reaches each repository.
+- `references/planning.md` — backend selection, shared Plan writes and claims, the named board publisher, and explicit legacy conversion.
+- `scripts/sofa-plan` — selects the configured profile, resolves installed Plan, and binds the absolute profile for commands.
 - `references/assessor.md` — the assessor of decision-judge.
 - `references/colours.md` — the session colour of each role. The mod sets it, and the orchestrator checks it.
 - `skills/station/` — the base behavior of every session.
@@ -50,6 +52,8 @@ Find the machine values of this start. They go in the start prompts and not in `
 
 When the state store has the GitHub App values, `dispatch.sh` gives each new session the App identity (`sofa-github settings`): each `gh` and each `git` of the session acts as `<slug>[bot]`. Only a fresh start with `dispatch.sh` gives a session these settings: a `--resume` copy does not keep the settings of its first start. So after the App setup (`sofa:setup`, step 5.5), stop the team and start it again.
 
+Read `<skill folder>/references/planning.md` and section 1 of `docs/adlc.md`. An absent backend row or explicit `product` means legacy Product; `plan` uses a profile relative to this machine's main checkout, bound to the same published workspace/control and approved Git remote as the other machines. Verify installed support for guarded shared writes/claims, recovery, and the named publisher of the retained GitHub Project before starting affected work. Missing support blocks that operation. Use the installed reference for exact interfaces; do not invent a sync or board command, because unsupported interfaces cannot verify publication. Do not import, change backend, or infer activation from an empty local store or preview, because shared writers need explicit approved activation. A Product writer in a repository role override needs correction before Plan work.
+
 If the `CLAUDE.md` of the repository names a different process or harness for product work, ask the user which one wins before step 2.
 
 ## Step 2 — Make `docs/adlc.md` meet the current template
@@ -57,7 +61,7 @@ If the `CLAUDE.md` of the repository names a different process or harness for pr
 The result: `docs/adlc.md` and `docs/adlc/roles/` on `main` meet the current `templates/ADLC.md` and role files, and hold the values of this repository.
 
 - If `docs/adlc.md` does not exist: tell the user to run `/sofa:setup`, which asks the setup questions and writes it. Stop.
-- If its `sofa-template-version` is lower than the template: migrate it with `templates/MIGRATION.md`. The file already holds the answers of the setup questions; ask only for the new values that the migration lists (for example, risk appetite and tools per role). Before you land the migration, tell the user what it changes, and continue only after the user agrees, because each machine that runs the team shares this file. Land it on `main` with a worktree, a PR and a squash merge. If live sessions of an older team exist (`ListAgents`), stop them before step 3.
+- If its `sofa-template-version` is lower than the template: update it with `templates/MIGRATION.md`. This preserves the selected backend; version 12 → 13 makes an absent backend explicitly `product`, not `plan`. The file already holds the setup answers; ask only for values marked `ask`. Tell the user what changes, and continue only after agreement, because each machine shares the file. Land it on `main` with a worktree, a PR and a squash merge. If live sessions of an older team exist (`ListAgents`), stop them before step 3. Do not run a Plan import or activation as part of this template update, because a template update preserves the selected backend.
 - If it meets the template: go to step 3.
 
 ## Step 3 — Start the orchestrator

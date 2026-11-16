@@ -92,16 +92,8 @@ IFS=$'\037' read -r model effort compact style <<<"$row"
 name="$prefix-$role"
 [ -z "$n" ] || name="$name-$n"
 
-if [ -n "$resume" ]; then
-  # A background session keeps its own saved options. Any other option with
-  # --resume makes Claude Code start a copy under a new id ("Without flags,
-  # the same command continues <id> itself"), so a resume passes none.
-  cmd=(claude --bg --resume "$resume" "$prompt")
-else
-  cmd=(claude --bg -n "$name" --model "$model")
-  if [ -n "$effort" ] && [ "$effort" != "—" ]; then cmd+=(--effort "$effort"); fi
-  cmd+=(--autocompact "$compact")
-  settings=""
+settings=""
+if [ -z "$resume" ]; then
   [ -z "$style" ] || settings="{\"outputStyle\":\"$style\"}"
   github_cmd="${DISPATCH_SOFA_GITHUB:-$(cd "$(dirname "$0")" && pwd)/sofa-github}"
   github_err="$(mktemp)"
@@ -113,6 +105,32 @@ else
     *) github_msg="$(cat "$github_err")"; rm -f "$github_err"; fail "the GitHub App setup of the team is broken (sofa-github exit $github_rc): ${github_msg:-no message}" ;;
   esac
   rm -f "$github_err"
+fi
+
+# App settings apply to Plan validation, not to the inherited identity of a resume.
+plan_helper="$(cd "$(dirname "$0")" && pwd)/sofa_plan.py"
+plan_options=(--repo "$cwd" --adlc "$adlc" --settings "$settings")
+if [ -n "$resume" ]; then
+  github_cmd="${DISPATCH_SOFA_GITHUB:-$(cd "$(dirname "$0")" && pwd)/sofa-github}"
+  plan_options+=(--validation-helper "$github_cmd" --output-style "$style")
+fi
+plan_settings="$(python3 "$plan_helper" "${plan_options[@]}")" || fail "the roadmap selection is not ready"
+unset PLAN_WORKSPACE
+plan_workspace="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1]).get("env", {}).get("PLAN_WORKSPACE", ""))' "$plan_settings")"
+[ -z "$plan_workspace" ] || export PLAN_WORKSPACE="$plan_workspace"
+
+if [ -n "$resume" ]; then
+  # A background session keeps its own saved options. Any other option with
+  # --resume makes Claude Code start a copy under a new id ("Without flags,
+  # the same command continues <id> itself"), so a resume passes none.
+  cmd=(claude --bg --resume "$resume" "$prompt")
+else
+  cmd=(claude --bg -n "$name" --model "$model")
+  if [ -n "$effort" ] && [ "$effort" != "—" ]; then cmd+=(--effort "$effort"); fi
+  cmd+=(--autocompact "$compact")
+  if [ -n "$plan_workspace" ]; then
+    settings="$plan_settings"
+  fi
   [ -z "$settings" ] || cmd+=(--settings "$settings")
   cmd+=(--permission-mode bypassPermissions)
   cmd+=("$prompt")

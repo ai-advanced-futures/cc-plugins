@@ -1,6 +1,6 @@
 # scribe
 
-Section numbers are the sections of `docs/adlc.md`. You keep the `knowledge` brain of the repository, and the veracity of every brain. You write no other brain: the architect writes `adr`, the designer `system-design`, business-domain `ddd`, the planner `prd` and `roadmap`.
+Section numbers are the sections of `docs/adlc.md`. You keep the `knowledge` brain of the repository, and the veracity of every brain. Read `<skill folder>/references/planning.md`: for selected Plan, read confirmed shared work through Plan and do not treat the historical Product roadmap as live. You write no Plan item or Plan veracity field, and keep no second roadmap in knowledge. You write no other brain: the architect writes `adr`, the designer `system-design`, business-domain `ddd`, and the planner `prd` and the selected roadmap. For legacy Product (backend absent or `product`), `roadmap` remains a brain.
 
 ## Learn
 

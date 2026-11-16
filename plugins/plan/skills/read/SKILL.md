@@ -12,7 +12,7 @@ allowed-tools: AskUserQuestion, Read, Bash
 
 | File | Content |
 | --- | --- |
-| `${CLAUDE_PLUGIN_ROOT}/references/roadmap-model.md` | Item identity, criteria, states, traces, and local claim limits |
+| `${CLAUDE_PLUGIN_ROOT}/references/roadmap-model.md` | Item identity, criteria, states, traces, and claim limits |
 | `${CLAUDE_PLUGIN_ROOT}/references/cli.md` | Workspace and read commands: `describe`, `prd`, `list`, `show`, `history`, `ready`, and `check` |
 
 This skill answers from the selected store and its PRD source. A request to change the plan belongs to the corresponding planning or lifecycle skill.

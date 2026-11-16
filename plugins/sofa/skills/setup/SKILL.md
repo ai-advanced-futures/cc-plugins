@@ -27,6 +27,14 @@ There are 4 kinds of fix:
 
 Factory skills (the `skill-<name>` items of the names in `references/factory-skills.txt`): fix all of them together with step 2.5. Other missing skills: show `npx skills add '<owner>/<repo>#<commit>' --skill <name> -a claude-code -a codex -y`, with a full commit ID, so the team of every machine has the same skills. Missing plugins: show `claude plugin install` commands.
 
+## Step 2.4 — Roadmap backend and workspace
+
+Read `<skill folder>/references/planning.md`. For a repository with no factory, offer `Roadmap backend | plan` and `Plan workspace | .claude/plan/local.json`, relative to each machine's main checkout. Agree the shared Git remote, the one published workspace/control identity, and the PRD source. Use only the installed Plan's supported setup and shared operations to bind each machine to that identity; do not initialize unrelated workspaces, because every machine must use the same shared plan. Verify `describe`, PRD reads, `check`, guarded publication, claim conflict handling, and recovery before activation. Missing shared support blocks setup completion; a local-only profile is not sufficient.
+
+Keep the existing GitHub Project and its bindings. Agree one named board publisher and its App identity; other trackers only check and report. Verify the installed Plan-native preview/publication interface through the Sofa `gh` shim. Do not use Product writers on reconstructed files or raw `bd github` sync, because these routes bypass Plan's state and publication checks. Product `explore` and `review` remain PRD tools. Exact shared and board command forms come from the installed Plan reference, not an assumed interface.
+
+An existing factory with no backend row stays legacy Product. A `product` row also stays legacy. Do not convert it as a missing-item fix or import automatically, because conversion needs operator approval and paused writers. An explicit conversion follows `references/planning.md`: pause previous roadmap writers and board publishers, approve a fixed-revision preview and fingerprint, apply that exact copy, check and publish the shared workspace, bind participating machines, verify the named board publisher, then approve activation. A preview, empty local store, or template migration is not activation.
+
 ## Step 2.5 — The factory skills
 
 The roles of a team use skills that no plugin gives: the skills in `references/factory-skills.txt`. Each row has 4 words: the skill, its source, its license, and the full commit ID of the source. This step installs them in the repository, so each machine and each worktree has the same skills.
@@ -53,7 +61,7 @@ Ask with `AskUserQuestion`, at most 4 questions at a time. Skip a question that 
 
 1. Team prefix for session names.
 2. Risk appetite: `mvp` (pre-release, move fast), `early customers`, `established` (many customers).
-3. Board tool: GitHub Projects, Linear, Jira, files, none.
+3. Roadmap backend and workspace from step 2.4. For Plan, confirm the shared remote/workspace identity, each machine's profile, the retained GitHub Project, and one named publisher. For legacy Product: board tool (GitHub Projects, Linear, Jira, files, none).
 4. Environments: for each one (dev, staging, prod), how to reach it, how to deploy, where the logs and metrics are. `none` is a valid answer.
 5. Tools per role: security (`built-in`, semgrep, snyk, ...), code quality (`built-in`, sonarqube, ...), monitoring, feedback source, ux tool (`none`, sentry, posthog).
 6. Healthy window (default `24h`).
@@ -61,7 +69,7 @@ Ask with `AskUserQuestion`, at most 4 questions at a time. Skip a question that 
 8. Changes to the roles, models, efforts, output styles or counts in the template.
 9. Repository rules: secrets, private data, who approves destructive actions.
 
-Copy `<skill folder>/templates/ADLC.md` to `docs/adlc.md`, fill section 1 and the first row of section 9 from the answers. No machine value and no `<...>` placeholder stays. Land it on `main` with a worktree, a PR and a squash merge.
+For a repository with no factory, copy `<skill folder>/templates/ADLC.md` to `docs/adlc.md`, then fill section 1 and the first row of section 9 from the answers. The template's Plan rows need the confirmed workspace from step 2.4; they are not permission to import a legacy roadmap. For an existing factory, preserve its backend, values, role rows, and rules; use `templates/MIGRATION.md` for its template update, not a fresh copy of the Plan-default template. No machine value and no `<...>` placeholder stays. Land changes on `main` with a worktree, a PR and a squash merge.
 
 ## Step 4 — The scheduler
 

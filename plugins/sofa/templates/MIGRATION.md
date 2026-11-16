@@ -2,6 +2,19 @@
 
 The `sofa:start` skill reads this file when `docs/adlc.md` has a lower `sofa-template-version` than `templates/ADLC.md`. Apply each step from the version of the file to the current version, in order. Keep each value and each repository rule of the file. Ask the user only for the values that a step marks `ask`.
 
+## 12 → 13
+
+This is a template update, not a roadmap import or Plan activation. Do not run `migrate --apply`, create a store, change the selected backend, or start Plan writers as part of this step.
+
+1. Section 1: if `Roadmap backend` is absent, add `| Roadmap backend | product |`. This preserves the existing factory as explicitly legacy Product. Keep an existing `product` or `plan` choice. An unknown value needs a setup decision; do not infer a choice from installed plugins or profile files.
+2. Section 1: if `Plan workspace` is absent, add `| Plan workspace | .claude/plan/local.json |`. This is an inactive path for a legacy Product factory, not permission to create or import a store. Keep an existing profile choice. Its path is relative to the main checkout, never a worktree.
+3. Add the template's "Plan workspace and activation" subsection if absent. Keep the existing board, Product docs, tools, role skill rows, and legacy Product flows when the selected backend is `product`. Do not replace these rows with the Plan-default rows. Add a note before the flows that the selected backend's instructions in `<skill folder>/references/planning.md` and the shipped role files apply. For an already explicit Plan choice, check the workspace and repository role overrides before a start; the template update itself supplies no activation evidence.
+4. Keep each repository rule and ownership boundary. Add the planning-contract source distinction: code, specs, and PRD come from `main`; selected Plan work comes from the confirmed shared workspace/control; legacy Product work comes from roadmap pages on `main`. Retain the GitHub Project, its bindings, and one named publisher. Product Proofs lines still mean that the verifier ran the product as a user. Metrics remain in Sofa.
+5. Section 9: add `Migrated to sofa template version 13; roadmap backend preserved`.
+6. Set `<!-- sofa-template-version: 13 -->`.
+
+A later request to use Plan is a separate, explicit operator-approved change. Follow `references/planning.md`, "Explicit activation of an existing factory": pause previous writers and board publishers, approve and apply a fixed-revision snapshot with its fingerprint, then verify shared publication and the same workspace/control on each participating machine. Verify guarded claims, recovery, and the retained GitHub Project's named publisher before resume. Use the installed Plan reference for exact supported shared/board commands; missing support blocks activation. A preview, empty local store, or unshared import is not activation. Do not resume both roadmap backends or use raw Beads sync.
+
 ## 11 → 12
 
 1. Section 3, the paragraph that starts with `Tier:`: if it has the words `, and it resumes a session that Claude Code stopped`, replace them with `. It gives a session that Claude Code stopped a fresh restart`. Skip it if the paragraph does not have these words.

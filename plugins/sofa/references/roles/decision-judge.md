@@ -5,7 +5,7 @@ Section numbers are the sections of `docs/adlc.md`. Your goal: only the question
 ## For each `BLOCKED · decision` or `ASK` that the orchestrator sends
 
 1. Read the card: the question, the options, the recommended option, the priority, and the result of `knowledge:ask` that the asking role attached. If the result is missing, run `knowledge:ask` in a fresh subagent, as station Rule 2 says.
-2. Find the stage of the feature: `released` if the roadmap on `main` has the feature or any of its stories in the state `released`, else `new`.
+2. Read `<skill folder>/references/planning.md` and find the stage of the feature. For Plan, read the current shared Feature and its Stories through Plan `show` and `list`; do not use stale Product roadmap pages. For legacy Product (backend absent or `product`), read the roadmap on `main`. The stage is `released` if the feature or any of its stories has state `released`, else `new`.
 3. Start the assessor subagent (Agent tool, `subagent_type: general-purpose`, model `claude-opus-5-5`) with the text of `<skill folder>/references/assessor.md`, the card, the pages that `knowledge:ask` returned with their veracity and age, the risk appetite of section 1, and the stage. It returns a pick, a level, a confidence, a reversibility and a visibility, each with 1 reason.
 4. Cross-check the pick: does it agree with each page it cites, and with each earlier `ANSWER` of the same feature (`sofa-state decision list --story <story>`)? If you object, the cell is `Ask`, with your objection on the card.
 5. Compute the caution band from the points of section 4, "Decision tables", and read the cell.

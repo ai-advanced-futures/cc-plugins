@@ -25,6 +25,10 @@ $ uv run ${CLAUDE_PLUGIN_ROOT}/scripts/plan.py --workspace PROFILE setup --beads
 
 Setup does not copy an existing roadmap. Use `/plan:migrate` to preview that copy.
 
+For multiple machines, use an explicitly shared workspace. Stop and upgrade all writers, migrate once, then publish through Plan's guarded `share` operation. Other machines obtain the existing Beads data before `setup --shared`. `/plan:sync` verifies shared synchronization. [Shared Plan workspaces](references/sharing.md) gives the activation, transport, and recovery rules.
+
+A shared operation holds a Git coordination gate through read, change, and publication. A local claim or a failed push is not permission to start work. Plan does not automatically take over an interrupted gate.
+
 ## Plan from requirements
 
 Use `/plan:generate` to choose the MVP, one phase, or the full product. Each agreed phase gets a Milestone, including future phases that have no work items yet. Only the selected slice gets Epics, Features, and Stories.
@@ -50,12 +54,20 @@ The following table lists the skills:
 | `/plan:heartbeat` | Type, number, actor, and claim token | Renewed claim lease |
 | `/plan:release` | Type, number, actor, and claim token | Ended claim and stored work state |
 | `/plan:migrate` | Optional source and apply choice | Preview or stable copy of a Product roadmap |
+| `/plan:sync` | Explicit shared workspace | Verified synchronization and model check |
+| `/plan:publish` | Explicit workspace and preview or apply choice | GitHub Project preview or checked publication |
 
 The generation command is `/plan:generate`, not `/plan:plan`.
 
+## Publish a GitHub Project
+
+Configure one existing board and one named publisher through `github configure`. `/plan:publish` previews the Plan-to-board changes before an approved apply. Imported issue bindings stay attached to their Plan items. Publication uses the current `gh` authentication, including Sofa's wrapper when present.
+
+The board is a view of Plan, not another work store. Publication does not pull issue state or assignees into Plan. A partial result remains visible and must complete through a checked retry. See the [command reference](references/cli.md) for configuration, fingerprints, and refusals.
+
 ## Requirements and completion evidence
 
-Milestones, Epics, and Features trace existing PRD pages. Plan code records source hashes so a changed requirement can be detected. A Story gets its own trace only when it narrows the Feature's requirement coverage.
+Milestones, Epics, and Features trace existing PRD pages. Plan code records source hashes to detect changed requirements. A Story gets its own trace only when it narrows the Feature's requirement coverage.
 
 The final summary names all milestones, the selected slice, item and criterion counts, blockers, trace gaps, uncovered scope, warnings, and the Plan check result. A failed check or a refused promotion is a partial result, not success.
 

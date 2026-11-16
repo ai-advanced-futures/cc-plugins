@@ -1,5 +1,15 @@
 # Changelog
 
+## 11.4.0
+
+Factories can explicitly select Plan instead of Product roadmap files. Product remains the PRD source. Existing factories retain Product until an approved migration and activation.
+
+- Template 13 gives each factory a roadmap backend and an explicit Plan profile. Migration from template 12 retains Product.
+- Roadmap stations use Plan reads, planning skills, state changes, and actual-worker claims. Tracker publication reads Plan rather than roadmap files.
+- `sofa-plan` resolves the main checkout's selected profile. Readiness and dispatch refuse missing or unsupported shared coordination.
+- Plan snapshots name their source and read time, keep Git provenance null, and support imported and `PLAN-` IDs. The Product snapshot path stays unchanged.
+- Specs and code retain their review flow. A specification is attached to Plan only after its merge. Activation does not follow from a plugin install.
+
 ## 11.3.1
 
 STORY-584: `sofa-people draft` reads `git log` with `--no-show-signature`, so a signed commit gives 1 person (FEATURE-68).

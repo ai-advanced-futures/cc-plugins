@@ -1,6 +1,6 @@
 # ADLC — Agent Development Life Cycle
 
-<!-- sofa-template-version: 12 -->
+<!-- sofa-template-version: 13 -->
 
 This file defines the agent team for this repository.
 The `sofa:start` skill reads this file to start the team.
@@ -14,11 +14,14 @@ The `sofa:setup` skill fills these values. They are the same on each machine tha
 | Key | Value |
 |---|---|
 | Repository | `<owner>/<repo>` |
-| Board tool | `<GitHub Projects \| Linear \| Jira \| none>` |
+| Roadmap backend | plan |
+| Plan workspace | .claude/plan/local.json |
+| Board tool | GitHub Projects |
+| Board publisher | `<one named tracker publisher and its GitHub account>` |
 | Team prefix | `<prefix>` (session names are `<prefix>-<role>[-n]`) |
 | Orchestrator name | `<prefix>-orchestrator` |
 | Risk appetite | `<mvp \| early customers \| established>` (section 4, "Decision tables") |
-| Product docs | `docs/product/prd`, `docs/product/roadmap` |
+| Product docs | `docs/product/prd` (requirements; Plan holds the roadmap) |
 | System design | `docs/product/system-design`, or `none` |
 | ADR folder | `docs/adr`. The list of ADRs and their status is in `docs/adr/README.md` |
 | Domain model | `docs/domain`, or `none` (the `ddd` brain) |
@@ -31,11 +34,21 @@ The `sofa:setup` skill fills these values. They are the same on each machine tha
 | Reference program | `<a program whose behavior is a source for inferred rows, with its pinned version, or none>` |
 | Slack | `<channel name, or none>` (the token is in the environment, never in this file, because this file is in the repository) |
 
+### Plan workspace and activation
+
+Follow `<skill folder>/references/planning.md` for the selected backend and each Plan operation. Each machine resolves its profile from its main checkout, never a worktree, and binds to the same published Plan workspace/control through the approved Git remote. Shared writes and claims need guarded publication and fresh holder verification before work starts or continues. A local claim is not success. A conflict or interrupted publication blocks affected work; no automatic takeover or raw `bd` sync is allowed. Run Plan through `<skill folder>/scripts/sofa-plan --repo <main folder> <Plan command args>`; it resolves installed Plan and binds the absolute profile.
+
+Keep the GitHub Project and its bindings. Only the named board publisher writes confirmed shared Plan data through the supported Plan-native preview/publication interface and Sofa `gh` shim. Other trackers check and report. Exact shared and board command forms come from the installed Plan reference. Until that support and its checks exist, affected work stays blocked; a local-only CLI is not sufficient.
+
+This template prefers Plan for an explicitly configured factory. An existing factory with no backend row stays legacy Product; explicit `product` also selects legacy Product. Conversion is separate: pause previous writers and publishers, approve and apply a fixed-revision migration with its fingerprint, then verify shared identity, guarded claims, recovery, and board publication before resume. Product roadmap files then remain historical input, not a second live plan. A template update does not import or activate Plan.
+
+The approved Beads transport exception permits only supported guarded replacement of `refs/dolt/data` and its `refs/heads/__dolt_remote_info__` information branch. Source branches remain protected: no forced push or rebase of `main` or a PR branch. Stations use Plan's transport, not manual data-ref replacement commands.
+
 Tools per role. `built-in` means the role uses only the skills of its row.
 
 | Tool of | Tool |
 |---|---|
-| tracker | `<gh \| jira \| linear \| files>` |
+| tracker | gh |
 | security | `<built-in \| semgrep \| snyk \| ...>` |
 | code-quality | `<built-in \| sonarqube \| ...>` |
 | monitoring | `<built-in \| datadog \| grafana \| sentry \| ...>` |
@@ -46,7 +59,7 @@ Machine values are not in this file, because they are different on each machine.
 - Main folder: the absolute path of the main checkout on this machine.
 - Skill folder: the absolute path of the installed `sofa` plugin on this machine.
 - GitHub account: the account that the team acts as on GitHub. With a team App (`sofa-github check` exits 0), it is `<slug>[bot]`. Without an App, it is the active `gh` account on this machine. Sessions commit, push and open PRs as this account.
-- GitHub person: the active `gh` account of the person who runs `sofa:start`. The claim on the board is this account.
+- GitHub person: the active `gh` account of the person who runs `sofa:start`. Legacy Product board claims use this account. Shared Plan uses `agent:<machine instance>.<station name>`, with the validated `machine.instance`/GitHub person machine value and the actual executing station. Confirm distinct machine instances; a bare station name can repeat across machines. Never substitute a human actor or use another actor's token.
 
 Repository rules:
 - `<rules for this repository only: secrets folders, data that must not leave the repo, who approves destructive actions, which source wins when sources differ>`
@@ -61,10 +74,9 @@ The rules that are the same for all roles are in the `sofa:station` skill, which
     - Its feature is not blocked: each feature in its `blocked_by` list has the state `done` or `released`.
     - No open `ASK` blocks the story.
 
-    If one of these is false, the story stays in `backlog`. A role that changes the state of a story or a feature checks this rule in the same PR.
-    Exception: an `ANSWER` can set the stories of a blocked feature to `ready` (for example, "start now"). The `blocked_by` list stays. The `Plan` line in `log.md` names the `ANSWER`.
-    When a feature gets the state `done`, the same PR sets to `ready` each story that waited only for this feature and has a merged spec.
-2. States of a story: `backlog` → `ready` → `in progress` → `done` → `released`. `monitoring` sets `released` (section 4, "Release flow"). A feature is `released` when each of its stories is.
+    For Plan, attach the spec only after its merge, then request promotion with the real actor and actual `--approved-by` evidence. Plan returns `ready` or `blocked` from its blocker rules; report that state. A missing spec, proof, approval, or open decision keeps unpromoted work in `backlog`. Do not override blockers with a Product helper or a raw-store write. A blocker that closes needs a fresh Plan read and a supported transition, not a Markdown state change.
+    For legacy Product, if a condition is false, the story stays in `backlog`. A role checks the rule in the same PR as its state change. An `ANSWER` can allow stories of a blocked feature to become `ready`; keep `blocked_by` and name the `ANSWER` in `log.md`. When a feature becomes `done`, the same PR promotes stories that waited only for it and have a merged spec.
+2. Work states use the selected backend. Plan supports `backlog`, `ready`, `claimed`, `in_progress`, `in_review`, `blocked`, `done`, `released`, and `cancelled`; Sofa projections map these as the planning contract states. Legacy Product uses its page states. Only monitoring requests `released` (section 4, "Release flow"). A parent needs its own approved transition after its children close.
 3. Each role writes only the files of its row in section 3, "Who writes which file".
 4. Mention the operator. Each team mentions the person who runs it, because 2 teams on 2 machines can work on 1 repository. The operator is the person of the human team whose page has the tag `github:<GitHub person>` (section 1, machine values). `sofa-people list --json` gives the `github` value of each page. A session whose start prompt has no GitHub person (it started before this rule) uses the GitHub person that the `RELOAD` or `TASK` of the orchestrator names. Each card, issue, PR comment and Slack message that the team posts for a human mentions the operator: in Slack `<@slack-id>` with the `slack-id:` tag of that page, on GitHub `@<GitHub person>`. Also mention the owner of the decision when the `owner:` line of the card names a person who is not the operator, and no `owns:` tag of the operator names the decision area of the card (`<skill folder>/references/decision-areas.md`). Do not mention any other person of the human team. Mention another person only when a human of the team asks for it for that message. The `owner:` line of a card still names the owner of the decision. If no GitHub person is known, or no page has its tag, send `BLOCKED · team` to the orchestrator and post no mention.
 5. The App identity for git and gh. This rule applies when the GitHub account of the machine values is a team App account (`<slug>[bot]`, the login that `sofa-github check` prints). That account is the bot. A team with no App acts as the `gh` account of the person, and this rule does not apply to it.
@@ -87,17 +99,17 @@ Tier: `always` sessions start with the team. `on demand` sessions start at the f
 | requests | `always` | `claude-sonnet-5-5` | `medium` | `300k` | `Explanatory` | 1 | Always running | station, loop, knowledge:ask, slack:* | A request from a human | `TASK` to the orchestrator, answers to humans |
 | decision-judge | `on demand` | `claude-opus-5-5` | `high` | `400k` | `Concise` | 1 | A `BLOCKED · decision`, or an `ASK` for hitl | station, knowledge:ask | `BLOCKED · decision` cards | `ANSWER`, or `ASK` to hitl |
 | scribe | `on demand` | `claude-sonnet-5-5` | `medium` | `300k` | `Concise` | 1 | A `learn:`, `validate` or `lower` task | station, knowledge:learn, knowledge:validate | Facts, answers, results | Pages in the `knowledge` brain, veracity updates |
-| tracker | `on demand` | `claude-haiku-5-5` | `medium` | `200k` | `Concise` | 1 | A PR that changes `docs/product` merges, or the orchestrator asks for a claim | station, product:roadmap-sync | Merged roadmap, or claim request | Board that matches `main`, and claims |
-| plan-auditor | `on demand` | `claude-sonnet-5-5` | `high` | `300k` | `Concise` | 1 | Each merge on `main`, and every 30 minutes | station, loop, product:plan, wrapup | Merges, state store | PR with roadmap fixes and story metrics |
+| tracker | `on demand` | `claude-haiku-5-5` | `medium` | `200k` | `Concise` | 1 | The orchestrator asks for assignment, claim coordination, or board publication | station, plan:read, plan:assign, plan:sync, plan:publish | Shared Plan item, actual working station, existing Project | Responsibility, confirmed claim result, board publication only by named publisher |
+| plan-auditor | `on demand` | `claude-sonnet-5-5` | `high` | `300k` | `Concise` | 1 | Each merge on `main`, and every 30 minutes | station, loop, plan:read, plan:status, wrapup | Merges, selected Plan, state store | Checked Plan corrections, Sofa projections and metrics |
 | merger | `on demand` | `claude-haiku-5-5` | `medium` | `200k` | `Concise` | 1 | All reviews of a PR are in | station | PR number and verdicts | Merged PR, or `BLOCKED` |
-| monitoring | `on demand` | `claude-sonnet-5-5` | `medium` | `300k` | `Concise` | 1 | An environment with logs or metrics exists, or a feature is `done` | station, loop | Logs, metrics, traces, evals | `released` PRs, problem reports |
+| monitoring | `on demand` | `claude-sonnet-5-5` | `medium` | `300k` | `Concise` | 1 | An environment with logs or metrics exists, or a feature is `done` | station, loop, plan:read, plan:status | Logs, metrics, traces, evals | Checked `released` states, problem reports |
 | scheduler | `cron` | `claude-haiku-5-5` | `low` | — | — | — | Every 5 minutes (system cron) | bg-watch | Session states | Restarted sessions |
 | retro | `on demand` | `claude-opus-5-5` | `medium` | `400k` | `Concise` | 1 | The user changes or adds a role | station, wrapup | `RETRO` signal | Updated `docs/adlc.md` on `main` |
-| planner | `on demand` | `claude-opus-5-5` | `medium` | `400k` | `Concise` | 1 | Scope change, gap in PRD or roadmap, new request, milestone done | station, product:plan, product:review, product:explore, wrapup | Gap, change or request | PR that updates PRD or roadmap |
+| planner | `on demand` | `claude-opus-5-5` | `medium` | `400k` | `Concise` | 1 | Scope change, gap in PRD or roadmap, new request, milestone done | station, plan:generate, plan:develop, plan:read, product:review, product:explore, wrapup | Gap, change or request | Checked Plan items, or PR that updates PRD |
 | architect | `on demand` | `claude-opus-5-5` | `high` | `400k` | `Concise` | 1 | On request, or when a reviewer reports an ADR finding | station, architecture:*, wrapup | Design question or ADR finding | Answer, ADR verdict, or PR with new or changed ADR |
 | designer | `on demand` | `claude-opus-5-5` | `high` | `400k` | `Concise` | 1 | A system design question, a new module, or a PR that adds or removes a folder | station, system-design:*, wrapup | Design question, folder change | PR with system design, `CLAUDE.md` routers, `.claude/rules` |
 | business-domain | `on demand` | `claude-opus-5-5` | `high` | `400k` | `Concise` | 1 | A domain question, or a spec PR is open | station, business-domain:*, wrapup | Domain question, spec PR | Answer, domain review, PR with domain pages |
-| specifier | `on demand` | `claude-opus-5-5` | `xhigh` | `400k` | `Concise` | 1–2 | The orchestrator assigns a feature | station, product:specifying-stories, wrapup | Feature id | PR with the spec in the feature folder |
+| specifier | `on demand` | `claude-opus-5-5` | `xhigh` | `400k` | `Concise` | 1–2 | The orchestrator assigns a feature | station, plan:read, plan:status, wrapup | Feature id | Spec PR, then checked post-merge attachment and promotion |
 | implementer | `on demand` | `claude-sonnet-5-5` | `high` | `300k` | `Concise` | 1–4 | The orchestrator assigns a merged spec | station, relay (non-interactive), wrapup | Spec on `main` | PR, then `wrapup` after the merge |
 | reviewer | `on demand` | `claude-opus-5-5` | `high` | `400k` | `Concise` | 1–4 | A PR is open | station, code-review:reviewing-prs, architecture:reviewing-adr-adherence | PR number | Approve or request changes |
 | verifier | `on demand` | `claude-opus-5-5` | `high` | `400k` | `Concise` | 1–4 | An implementer opens a code PR | station, verify, playwright | PR number and spec | Approve or request changes, the `product` proof line, and test scenarios |
@@ -128,10 +140,13 @@ The work of each role is in `<skill folder>/references/roles/<role>.md` and, if 
 
 | File or brain | Writer |
 |---|---|
-| PRD, roadmap stories and features | planner |
-| Specs | specifier |
-| Story and feature metrics (`docs/adlc/metrics/` until the `product` plugin takes them), missing roadmap stories | plan-auditor |
-| Board | tracker |
+| PRD, planned roadmap stories and features | planner |
+| Specs, post-merge Plan spec attachment and approved promotion | specifier |
+| Roadmap completion reconciliation, Sofa roadmap projections, and metrics (`docs/adlc/metrics/` reports) | plan-auditor |
+| Plan responsibility and claim coordination | tracker |
+| GitHub Project publication from confirmed shared Plan; board from `main` for legacy Product | the configured named tracker publisher |
+| Plan claims and heartbeats | the actual working station |
+| Roadmap release state | monitoring |
 | `adr` brain (`docs/adr`) | architect |
 | `system-design` brain, nested `CLAUDE.md` routers, `.claude/rules` | designer |
 | `ddd` brain | business-domain |
@@ -145,24 +160,27 @@ The work of each role is in `<skill folder>/references/roles/<role>.md` and, if 
 
 ### Feature flow
 
+This flow uses confirmed shared Plan state and the retained GitHub Project. Legacy Product keeps its roadmap-file and board-sync instructions in the role files.
+
 ```
-roadmap (main)
-  → orchestrator picks next ready feature
-  → tracker claims it on the board (if another team claimed it, the orchestrator picks the next one)
+shared Plan workspace/control through the approved Git remote
+  → orchestrator reads fresh shared readiness and order
+  → tracker assigns responsibility; the actual working station claims eligible work as itself
+  → guarded shared publication and fresh holder check; uncertain outcome blocks work
   → specifier: spec PR (business-domain reviews the domain language) → merge
        a spec with an unknown → specifier asks researcher for existing proofs
        no proof exists → orchestrator coordinates a proof of concept (research or a prototype in docs/proofs/)
        architect, designer or researcher learn the result into their brain
-  → stories get the state ready (rule 1)
-  → orchestrator at once assigns the spec to a free implementer (or starts one)
+  → specifier attaches the merged spec through Plan, then requests approved promotion (rule 1)
+  → orchestrator assigns a ready Story to a free implementer (or starts one); that station takes its own claim
   → implementer: code PR with the Proofs block → REVIEW
   → reviewer (code, Proofs block, autonomous decisions), verifier (functions, product line), security and code-quality, at the same time
        request changes → implementer fixes → the same roles again (max 3 rounds)
        after 3 rounds  → decision-judge → hitl ASK
   → merger: squash merge, also when the PR is behind main (no rebase by the merger; a conflict goes back to the author) → author runs `wrapup`
   → tester: e2e tests from the verifier scenarios → test PR → reviewer → merger
-  → plan-auditor: story done, metrics in the state store
-  → orchestrator: send SYNC to tracker if roadmap changed
+  → plan-auditor: approved Plan completion after code and required tests merge; Sofa projections and metrics
+  → Plan check and confirmed shared publication → SYNC to the named GitHub Project publisher
 ```
 
 ### Release flow
@@ -171,7 +189,7 @@ roadmap (main)
 feature done on main
   → operator deploys (or CI deploys), reports the environment and the time
   → monitoring watches the feature for the healthy window
-       healthy → PR that sets the stories and the feature to released → plan-auditor writes the metrics in the frontmatter
+       healthy → monitoring requests approved Plan status released for stories and feature → Plan check → plan-auditor writes Sofa projections and metrics
        not healthy → troubleshooter → root cause → TASK to the orchestrator (implementer or operator)
        no metric to watch → 1 ASK to hitl
   → feedback and ux-quality propose a proof-of-intent score and improvements → hitl confirms → planner writes stories
@@ -239,7 +257,7 @@ A question with `priority: blocks later` at level `direction` is always `Ask`.
 - Domain question → business-domain.
 - ADR finding from a reviewer → architect → decision flow (section 4, "ADR finding flow").
 - Rule question from the specifier → decision flow. A `revisit:` → planner or architect (section 4, "Ask the Rule").
-- Gap in PRD or roadmap, or a new request → planner → PR → tracker `SYNC`.
+- Gap in PRD or roadmap, or a new request → planner → confirmed shared Plan result, or PR for PRD files → named tracker publisher updates the Project from Plan. Legacy Product uses roadmap files for its tracker `SYNC`.
 - Manual step → chores.
 - Study, bench, spike, measurement, or a search for existing proofs → researcher.
 - Problem in an environment → troubleshooter.
@@ -283,7 +301,7 @@ The specifier asks for the rule, not for the value. A spec meets these condition
 6. The body of the spec PR lists the inferred rows with their sources, the stories that need no build, and the spec groups.
 7. The owner of the page decides a change to an accepted ADR or a PRD decision that no card named. Send a `BLOCKED · decision` with the line `revisit: <page>`, the row, and the change that you recommend. A `revisit:` of an ADR goes to the architect; a `revisit:` of a PRD decision goes to the planner.
 
-The ADR of a rule: `product:specifying-stories` writes 1 ADR with `status: proposed` for each rule row that binds code outside the stories of the feature, and no ADR for a derived row. The `ANSWER` of the rule card is the card that accepts that ADR (see the architect).
+The ADR of a rule: for selected Plan, send the architect the rule and its `ANSWER` when it binds code outside the feature. The architect owns the ADR; no Plan specification helper writes it. For legacy Product, `product:specifying-stories` writes 1 ADR with `status: proposed` for each such rule row, and none for a derived row. The rule card's `ANSWER` is the acceptance evidence (see the architect).
 
 ## 5. Message format
 
@@ -304,7 +322,7 @@ Types:
 | `ANSWER` | The answer to an `ASK` or to a `BLOCKED · decision`. From decision-judge it has the line `decided by:` |
 | `BLOCKED` | Cannot continue. Give the cause, where the work is, and 1 tag: `user step`, `decision` or `team` |
 | `STATUS` | From the orchestrator: give your state. As a reply: 1 line with what you do now and the next step |
-| `SYNC` | Copy `main` to the board |
+| `SYNC` | Named publisher updates the existing Project from confirmed shared Plan; legacy Product copies roadmap files on `main` to the board. |
 | `RETRO` | User wants a team change |
 | `RELOAD` | `docs/adlc.md` or a role file changed. Read them again |
 | `PAUSE` | From the orchestrator: finish the turn, push the branch, send `STATUS`, then idle. With `now`: stop at once |
@@ -398,4 +416,4 @@ The orchestrator start prompt is in the `sofa:start` skill. It gives the machine
 
 | Date | Change | Why |
 |---|---|---|
-| `<date>` | Created from the sofa template version 12 | Team setup for `<repo>` |
+| `<date>` | Created from the sofa template version 13 | Team setup for `<repo>` |

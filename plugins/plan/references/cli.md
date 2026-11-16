@@ -14,6 +14,8 @@ uv run ${CLAUDE_PLUGIN_ROOT}/scripts/plan.py --workspace PROFILE
 
 The command's `--help` is the source for exact arguments. Output is structured JSON; `--json` makes that output compact. `--actor ACTOR` or `PLAN_ACTOR` identifies the executing actor. State and claim changes require an explicit actor. Shell examples for the user have a `$ ` prefix; the prefix is not part of the executed command.
 
+Shared operation and activation rules are in [Shared Plan workspaces](sharing.md). A local workspace remains local until an explicit `share`. Shared success requires publication; a failed command must not be treated as a successful local fallback.
+
 ## Commands
 
 The following table gives the command forms after the prefix:
@@ -21,7 +23,10 @@ The following table gives the command forms after the prefix:
 | Command | Purpose | Result used by skills |
 | --- | --- | --- |
 | `setup --beads-dir DIR --source-root ROOT` | Configure the selected profile file | Configured source and Beads paths |
-| `describe` | Read selected store identity and supported operations | Workspace, paths, and local-write limits |
+| `setup --shared --remote origin --beads-dir DIR --source-root ROOT` | Join an already published shared control | Same workspace identity, machine-local paths |
+| `share --remote origin --writers-paused --clients-upgraded` | Explicitly convert the selected local workspace to shared mode | Verified shared configuration and publication |
+| `sync` | Verify and refresh a shared workspace through its coordination gate | Shared result, or an exact refusal |
+| `describe` | Read selected store identity and supported operations | Workspace, paths, shared mode, and supported write guarantees |
 | `prd` | Read PRD summary rows | IDs, paths, types, titles, descriptions, and hashes |
 | `prd ID` | Read one full PRD page | Requirement fields, body, relationships, and hash |
 | `new TYPE --title TEXT` | Create an item | Assigned ID in `record.id` |
@@ -41,8 +46,12 @@ The following table gives the command forms after the prefix:
 | `expire TYPE NUMBER --actor ACTOR` | End an expired claim | Cleared claim; live claims are refused |
 | `history ID` | Read saved operation events | Actors, times, requests, and changes |
 | `recover` | Finish recorded incomplete local writes | Recovery result, not a fresh import |
+| `recover --previous-writer-stopped --actor ACTOR` | Recover this machine's retained shared attempt after the operator confirms the writer stopped | Verified publication and gate release, or a refusal with no takeover |
 | `migrate` | Preview a copy from a Product roadmap | Proposed items and source mapping |
 | `migrate --apply` | Apply the previewed copy | Stable mapping to Beads IDs |
+| `github configure --repo OWNER/REPO --owner OWNER --number NUMBER --writer LOGIN --actor ACTOR` | Check and save an existing Project and its publisher | Verified board settings; imported bindings stay intact |
+| `github preview` | Compare a fixed Plan view with its GitHub Project | Fingerprint, source revision, intended changes, and warnings |
+| `github apply --fingerprint HASH --writer LOGIN --actor ACTOR` | Publish the accepted preview as the configured writer | Verified bindings and publication result, or an exact refusal |
 
 The creation options are `--description TEXT`, `--body-file PATH`, `--parent ID`, `--milestone ID`, repeatable `--trace PRD_REF`, `--item ID`, `--target-date DATE`, `--spec PATH`, and `--size SIZE`. Repeatable `--set FIELD=YAML` sets accepted fields, and `--link FIELD=TARGET` adds accepted relationships. Each option is used only for a type that accepts it. Parent, Milestone, and Criterion item references use IDs returned by Plan, not Product roadmap paths. `Criterion` and `AcceptanceCriterion` both name the criterion type. New execution Run records are outside planning; migration preserves existing Run evidence.
 
@@ -52,13 +61,21 @@ Existing-record mutations accept `--expected-revision NUMBER` to refuse a stale 
 
 Before you continue work from a replay, compare `operation.result.revision` with `record.revision`. If they differ, get a fresh view and the current claim needed for that work. An earlier claim token does not prove current ownership.
 
-`migrate --source PATH` selects a source roadmap when the default is not intended. Preview is the default. A Git source is read from a committed snapshot, with `HEAD` as the default, rather than concurrent uncommitted edits. An explicit non-Git source folder is read as files. Apply copies the roadmap into Beads with a stable source mapping; it leaves the Product roadmap files unchanged. A repeated apply of the same snapshot uses that mapping rather than creating duplicate items. `--revision COMMIT` selects a fixed Git snapshot, and `--fingerprint HASH` on apply refuses a source different from the accepted preview. Apply needs an empty target or an incomplete import of that same snapshot; it is not an ongoing source sync.
+`migrate --source PATH` selects a source roadmap when the default is not intended. Preview is the default. A Git source is read from a committed snapshot, with `HEAD` as the default, rather than concurrent uncommitted edits. An explicit non-Git source folder is read as files. Apply copies the roadmap into Beads with a stable source mapping; it leaves the Product roadmap files unchanged. A repeated apply of the same snapshot uses that mapping rather than creating duplicate items. `--revision COMMIT` selects a fixed Git snapshot, and `--fingerprint HASH` on apply refuses a source different from the accepted preview. Apply needs an inactive local target that is empty or holds an incomplete import of that same snapshot. Complete and verify migration before `share`; apply refuses a shared workspace before acquiring its gate. Migration is not an ongoing source sync.
 
 Preview returns a `mappings` row for each record with `source_id`, `source_path`, and the preserved `plan_id`. Apply and repeat apply also return each `beads_id`. Preview reads no Beads data. A failed Git check stops the copy; it does not select uncommitted files.
 
 Import keeps each Product claim and gives it a Plan `claim_token`. A resumed copy keeps the token already saved in Beads. The holder reads that token through `show ID` before a change or heartbeat. A tokenless claim from an older import permits no held-work changes or renewal; after its lease ends, use `expire`, then claim eligible work again.
 
 The Project summary uses its title, description, and body. `prd:/product.md` is a summary, not a trace target. Traces name typed requirement pages, such as a Capability or Scope. A full PRD path must match that exact path. Bare IDs and aliases can find a page at its current path. Moving a page leaves a broken stored trace until you remove that trace and add its current target.
+
+## GitHub Project publication
+
+`github configure` requires one Project record and an existing GitHub Project. It preserves imported `github` values. `--type-mode labels` or `--type-mode issue_types` selects an explicit representation; an existing choice is not silently replaced.
+
+`github preview` makes no board change. Apply requires its fingerprint, the configured writer, and the same actual GitHub login. A caller-provided writer alone grants nothing. The command uses `gh` from the current `PATH`, so Sofa's authentication wrapper remains in use.
+
+Publication records stable issue and Project item bindings. A human owner maps to a GitHub assignee. An agent owner appears as `Plan owner` in the managed issue text and has no GitHub assignee; the Plan claim stays unchanged. Missing board fields, status options, labels, or issue types are reported rather than silently omitted. A partial or uncertain result must not be reported as a complete board update. Reuse the recorded attempt; do not create replacement issues or modify Product roadmap files. The publisher does not pull issue state or assignees into Plan.
 
 ## Creation examples
 
@@ -94,7 +111,7 @@ Create a separate Criterion for the Story:
 $ uv run ${CLAUDE_PLUGIN_ROOT}/scripts/plan.py --workspace PROFILE new Criterion --title "A full day has no available slots" --description "The day view states that no slot is available when every slot is taken." --item STORY_ID
 ```
 
-The analogous Feature criterion uses `--item FEATURE_ID`. Every criterion gets its own returned ID.
+A Feature criterion uses `--item FEATURE_ID` in the same way. Every criterion gets its own returned ID.
 
 ## Result handling
 
