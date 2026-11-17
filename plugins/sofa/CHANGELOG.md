@@ -1,5 +1,22 @@
 # Changelog
 
+## 13.0.1
+
+PLAN-STORY-657: `sofa-publish` closes a `SYNC` also when its `published` line is not written (issue 2880; D-9139 to D-9143).
+
+- `sofa-publish step` now exits 2 after a `published` whose log line was not written (a full disk, a torn line). Before, it
+  made a second apply for 1 `SYNC`. To pass: run `sofa-publish base --sync <subject>` when the next `SYNC` comes, as after
+  each `published`.
+- A `published` now removes `.sofa/publish/sync-preview.json` before it writes its line. A missing file with a closed log
+  gives `no open SYNC` (exit 2, no `BLOCKED`). A missing file with an open log gives `no SYNC preview` (exit 2, `BLOCKED · team`).
+- A file error (for example a full disk) now gives exit 1 and 1 fixed line with the `errno` name and no path, in place of a
+  traceback. The exit code is the same as before. If a JSON line is above it, that line is the outcome of the call, and the
+  log can miss it.
+- When the removal of the `SYNC` preview file fails, `sofa-publish` prints 1 warning line on stderr and keeps the exit
+  code of the word, because the log line closes the `SYNC`.
+- A log that does not end with a newline (a torn line) now gets one before the next line, so a torn line no longer takes
+  the next line (for example a `base-saved` line).
+
 ## 13.0.0
 
 PLAN-STORY-651 and PLAN-STORY-652: `sofa-publish` closes a `SYNC` at `published`, and a failed `recover` counts in the

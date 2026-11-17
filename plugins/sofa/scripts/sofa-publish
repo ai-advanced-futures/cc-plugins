@@ -13,6 +13,7 @@ A recover runs 1 time for each stop: recovered and recover-failed both count.
 import argparse
 from collections import Counter
 from datetime import datetime, timezone
+import errno
 import json
 import os
 from pathlib import Path
@@ -232,8 +233,24 @@ class Files:
 
     def append(self, line):
         self.folder.mkdir(parents=True, exist_ok=True)
-        with open(self.log, "a", encoding="utf-8") as handle:
-            handle.write(json.dumps(line, sort_keys=True) + "\n")
+        text = json.dumps(line, sort_keys=True) + "\n"
+        with open(self.log, "a+b") as handle:
+            handle.seek(0, os.SEEK_END)
+            if handle.tell():
+                handle.seek(-1, os.SEEK_END)
+                if handle.read(1) != b"\n":
+                    text = "\n" + text
+            handle.write(text.encode("utf-8"))
+
+    def close_sync(self):
+        """PLAN-STORY-657: a published removes the SYNC preview before its line is written. Give the error or None."""
+        try:
+            os.unlink(self.sync)
+        except FileNotFoundError:
+            return None
+        except OSError as exc:
+            return exc
+        return None
 
     def save_sync(self, document):
         self.folder.mkdir(parents=True, exist_ok=True)
@@ -254,9 +271,18 @@ class Files:
         return preview
 
 
+def errno_name(error):
+    """The name of the errno of an OSError, for a fixed line. `str(error)` is never used: it holds a path."""
+    return errno.errorcode.get(error.errno, "no errno")
+
+
 def finish(files, line):
     """Write the line to stdout and to the log. Give the exit code of its outcome word."""
     line = {"at": now(), **line}
+    unclosed = files.close_sync() if line["outcome"] == "published" else None
+    if unclosed is not None:
+        print(f"sofa-publish: the SYNC preview file was not removed ({errno_name(unclosed)}); "
+              "only the log line closes this SYNC", file=sys.stderr)
     print(json.dumps(line, sort_keys=True))
     files.append(line)
     return 0 if line["outcome"] in GOOD else 1
@@ -278,6 +304,14 @@ def sync_open(files):
             return False
         if line.get("outcome") == "base-saved":
             return True
+    return False
+
+
+def closed_by_log(files):
+    """True when a `published` line comes after the last `base-saved` line, or a `published` line and no `base-saved` line."""
+    for line in reversed(files.lines()):
+        if line.get("outcome") in ("published", "base-saved"):
+            return line["outcome"] == "published"
     return False
 
 
@@ -315,11 +349,16 @@ def command_base(plan, files, args):
                           "seconds_preview": seconds})
 
 
+NO_OPEN_SYNC = ("no open SYNC: the round of the SYNC preview gave published, or the log has no base-saved line; "
+                "run base --sync SUBJECT after a new SYNC")
+
+
 def command_step(plan, files, args):
+    if not files.sync.exists() and closed_by_log(files):
+        raise Usage(NO_OPEN_SYNC)
     sync = files.load_sync()
     if not sync_open(files):
-        raise Usage("no open SYNC: the round of the SYNC preview gave published, or the log has no base-saved line; "
-                    "run base --sync SUBJECT after a new SYNC")
+        raise Usage(NO_OPEN_SYNC)
     before = previous_fingerprint(files, sync)
     writes = args.max_writes if args.max_writes is not None else PART_WRITES
     if not 1 <= writes <= 400:
@@ -445,6 +484,10 @@ def main(argv=None):
     except (Usage, PlanFailure) as exc:
         print(f"sofa-publish: {exc}", file=sys.stderr)
         return 2
+    except OSError as exc:
+        print(f"sofa-publish: a file operation failed ({errno_name(exc)}); if a JSON line is above, it is the outcome of "
+              "this call, and the log can miss it", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
