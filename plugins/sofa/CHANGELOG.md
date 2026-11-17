@@ -1,5 +1,9 @@
 # Changelog
 
+## 13.1.1
+
+PLAN-STORY-660: when the removal of the `SYNC` preview file and the `published` log line both fail, `sofa-publish` gives 1 fixed line, `the SYNC stays open after its apply`, in place of the removal warning and the line of a file error, and the tracker runs no `step` until a new `base` (issue 2908; D-9158 to D-9162).
+
 ## 13.1.0
 
 PLAN-STORY-659: after `unknown-create` the tracker runs 1 more step at least 30 seconds later (D-9152 to D-9155).

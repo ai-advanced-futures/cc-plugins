@@ -296,11 +296,19 @@ def finish(files, line):
     """Write the line to stdout and to the log. Give the exit code of its outcome word."""
     line = {"at": now(), **line}
     unclosed = files.close_sync() if line["outcome"] == "published" else None
+    print(json.dumps(line, sort_keys=True))
+    try:
+        files.append(line)
+    except OSError as exc:
+        if unclosed is None:
+            raise
+        print(f"sofa-publish: the SYNC stays open after its apply (the removal of the SYNC preview file gave "
+              f"{errno_name(unclosed)}, and the write of the published line gave {errno_name(exc)}); "
+              "run no step until base saves a new SYNC", file=sys.stderr)
+        return 1
     if unclosed is not None:
         print(f"sofa-publish: the SYNC preview file was not removed ({errno_name(unclosed)}); "
               "only the log line closes this SYNC", file=sys.stderr)
-    print(json.dumps(line, sort_keys=True))
-    files.append(line)
     return 0 if line["outcome"] in GOOD else 1
 
 
