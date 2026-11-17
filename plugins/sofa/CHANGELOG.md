@@ -1,5 +1,23 @@
 # Changelog
 
+## 13.0.0
+
+PLAN-STORY-651 and PLAN-STORY-652: `sofa-publish` closes a `SYNC` at `published`, and a failed `recover` counts in the
+recover limit (D-9115, D-9116, D-9117). This is a major version because 2 runs that work on 12.2.0 now stop.
+
+- `sofa-publish step` exits 2 when the `SYNC` is closed: the log has no `base-saved` line, or a `published` came after
+  the last `base-saved` line. It writes no log line and makes no Plan call. Before, a second `step` after `published`
+  made a second apply for 1 `SYNC`. To pass: run `sofa-publish base --sync <subject>` when the next `SYNC` comes. The
+  tracker sends no `BLOCKED` for this stop.
+- `sofa-publish recover` exits 2 after a `recover-failed`, until a `part-done`, a `published` or a new `base-saved`
+  comes. Before, only `recovered` counted, so a loop of `incomplete` and `recover-failed` could run Plan `recover`
+  with no end. To pass: send `BLOCKED · team` and wait for a `TASK`.
+- `scripts/sofa-publish`: the help text and the text of the `clean` function say the same. A preview file holds free
+  text (title, body, description) only as the digest that Plan made.
+- `references/planning.md`, `references/roles/tracker.md` and `scripts/CLAUDE.md`: the same rules, and the meaning of an
+  open `SYNC`.
+- Tests: `tests/test_publish_parts.py` has the cases for both rules.
+
 ## 12.2.0
 
 PLAN-STORY-619: the tracker publishes Plan to the GitHub Project in parts, and recovers a stopped write (D-9079, D-9100).

@@ -7,6 +7,8 @@ Each call makes 1 Plan step and writes 1 JSON line to stdout and to <main folder
                            preview, compare with the SYNC preview, publish at most 1 part
   recover --actor ACTOR    finish the incomplete write of a stopped part, then check Plan
 The line holds an outcome word. The role file of the tracker gives the action for each word.
+A step needs an open SYNC: a published closes it, and only base opens a new one.
+A recover runs 1 time for each stop: recovered and recover-failed both count.
 """
 import argparse
 from collections import Counter
@@ -130,7 +132,7 @@ def readable(preview):
 
 
 def clean(preview):
-    """The preview with the keys that Plan 0.4.0 gives and no other key. The file holds no claim token and no record text."""
+    """The preview with the keys that Plan 0.4.0 gives and no other key. The file holds no claim token, and free text (title, body, description) only as the digest that Plan made."""
     kept = {key: preview[key] for key in ("mode", "fingerprint", "source_revision", "source", "writer") if key in preview}
     kept["items"] = [{"id": x["id"], "action": x["action"], "number": x.get("number"), "changes": x["changes"]}
                      for x in preview["items"]]
@@ -269,6 +271,16 @@ def previous_fingerprint(files, sync_preview):
     return sync_preview["fingerprint"]
 
 
+def sync_open(files):
+    """True when the log has a `base-saved` line and no `published` line after the last one (PLAN-STORY-651)."""
+    for line in reversed(files.lines()):
+        if line.get("outcome") == "published":
+            return False
+        if line.get("outcome") == "base-saved":
+            return True
+    return False
+
+
 # ---- the commands ----
 
 def read_preview(plan):
@@ -305,6 +317,9 @@ def command_base(plan, files, args):
 
 def command_step(plan, files, args):
     sync = files.load_sync()
+    if not sync_open(files):
+        raise Usage("no open SYNC: the round of the SYNC preview gave published, or the log has no base-saved line; "
+                    "run base --sync SUBJECT after a new SYNC")
     before = previous_fingerprint(files, sync)
     writes = args.max_writes if args.max_writes is not None else PART_WRITES
     if not 1 <= writes <= 400:
@@ -365,14 +380,15 @@ def recover_permitted(files):
     for word in reversed(outcomes[:-1]):
         if word in ("part-done", "published"):
             return True
-        if word == "recovered":
+        if word in ("recovered", "recover-failed"):
             return False
     return True
 
 
 def command_recover(plan, files, args):
     if not recover_permitted(files):
-        raise Usage("recover is not permitted: the last outcome of this SYNC is not a new stop")
+        raise Usage("recover is not permitted: the last outcome of this SYNC is not a stop, "
+                    "or a recover (recovered or recover-failed) came after its last part")
     started = time.monotonic()
     line = {"command": "recover", "recovered": [], "check_errors": None}
     detail = None

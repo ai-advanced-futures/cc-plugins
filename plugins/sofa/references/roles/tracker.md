@@ -24,14 +24,14 @@ The parts and the new `SYNC` preview of 1 round are not new rounds. A partial pu
 | `base-saved` | Run `step`. |
 | `part-done` | Run `step` again. |
 | `wait` | End the turn with the `STATUS`. Go on at `next_at` or later, or at the next tick when `next_at` is empty. |
-| `published` | Verify as the tracker override says, save `tracker.plan.published`, close the work order, and report. |
+| `published` | Verify as the tracker override says, save `tracker.plan.published`, close the work order, and report. The round ends. `step` exits 2 until `base` saves the preview of a new `SYNC`. |
 | `difference` | Send a `STATUS` with both fingerprints and the pairs `(item, key, cause)`. Wait for a `SYNC` that comes after it, run `base` with it, and go on with the same round. |
 | `fingerprint-changed` | Run `step` again. After 3 in a row, end the turn with a `STATUS`. |
 | `busy`, `read-stopped` | Go on at the next tick. After 3 in a row, send a `STATUS`. |
-| `stopped`, `incomplete` | Run `sofa-publish recover --actor agent:<your name>` 1 time. After `recovered`, send a `STATUS` with the IDs and run `step` again (run `base` again when the stop came at `base`). After `recover-failed`, send `BLOCKED · team`. |
+| `stopped`, `incomplete` | Run `sofa-publish recover --actor agent:<your name>` 1 time. After `recovered`, send a `STATUS` with the IDs and run `step` again (run `base` again when the stop came at `base`). After `recover-failed`, send `BLOCKED · team`. `recover` stays refused until a `part-done`, a `published` or a new `base-saved`, and `base` cannot save a preview while the write is incomplete. Wait for a `TASK`. |
 | `unknown-create`, `refused` | Send `BLOCKED · team` with the ID or the error text. Do not run `recover`. |
 
-`sofa-publish` exits 0 for `base-saved`, `part-done`, `wait`, `published` and `recovered`, and 1 for each other word. It exits 2 when it did not start: there is no first preview, or the log does not permit `recover`. Then send `BLOCKED · team` with its text and run no more `step` in this round. Do not type a fingerprint: the script takes it from its own preview. If parts of 10 writes stay above 120 seconds (`seconds_apply` in the log), send a `STATUS` that says so, because the next step is a Plan story about the lock time, not a smaller part.
+`sofa-publish` exits 0 for `base-saved`, `part-done`, `wait`, `published` and `recovered`, and 1 for each other word. It exits 2 when it did not start: there is no first preview, the `SYNC` is closed (the log has no `base-saved` line, or a `published` came after the last one), or the log does not permit `recover` (1 `recover` for each stop; `recovered` and `recover-failed` both count). For a closed `SYNC`, send no `BLOCKED`: run `base` when the next `SYNC` comes. For each other cause, send `BLOCKED · team` with its text and run no more `step` in this round. Do not type a fingerprint: the script takes it from its own preview. If parts of 10 writes stay above 120 seconds (`seconds_apply` in the log), send a `STATUS` that says so, because the next step is a Plan story about the lock time, not a smaller part.
 
 Close your own work order (`sofa-state item set --id <work order> --state done --session <your name>`) before `DONE`; only plan-auditor writes the Sofa roadmap row.
 
