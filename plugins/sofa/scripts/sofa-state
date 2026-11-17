@@ -13,8 +13,10 @@ the work order of another session with no `--take-over`, `--take-over` with no `
 with no holder), when
 SOFA_GIT_TIMEOUT is not a number greater than 0 (read at the first git call, so a command
 that makes no git call does not read it; the 4 leaves `item remove`, `item rename`, `session remove`
-and `session rename` read it before the lock), and when a `--to` of `item rename` or `session rename`
-does not have the form of its key; 1 on all other errors, also when
+and `session rename` read it before the lock), when a `--to` of `item rename` or `session rename`
+does not have the form of its key, and when `interaction void` gets an empty `--reason`, a `--by` that is not the role
+of the session of the caller, or a `--by` that is not the logger of the row and not plan-auditor (STORY-525); 1 on
+`interaction void` for an id that no row has and for a row that has a void row already; 1 on all other errors, also when
 a leaf of `item remove`, `item rename`, `session remove` or `session rename` refuses a change of a row (STORY-503); also on
 `snapshot take` when the floor configuration is missing or wrong, and when the snapshot or a rule set of the
 file would hold a known private value (a session id, a path, a person login or a machine value).
@@ -59,6 +61,10 @@ CREATE TABLE IF NOT EXISTS decisions (
     visibility TEXT, decided_by TEXT, summary TEXT, at TEXT, vetoed_at TEXT);
 CREATE TABLE IF NOT EXISTS interactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT, story TEXT, kind TEXT, by_whom TEXT, at TEXT);
+-- 1 void row at most for 1 interaction (STORY-525). Each reader of interactions that counts rows skips a row that
+-- interaction_voids names.
+CREATE TABLE IF NOT EXISTS interaction_voids (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, interaction INTEGER NOT NULL UNIQUE, by_whom TEXT, reason TEXT, at TEXT);
 CREATE TABLE IF NOT EXISTS asks (
     id TEXT PRIMARY KEY, story TEXT, priority TEXT, opened_at TEXT, closed_at TEXT);
 CREATE TABLE IF NOT EXISTS usage (
@@ -69,6 +75,11 @@ CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
 """
 
 INTERACTION_KINDS = ["ask", "answer", "veto", "request", "defect"]
+# STORY-525: the role that can void a row of any logger, the largest row id (SQLite INTEGER), and the SQL text that
+# each reader of `interactions` that counts rows adds, so that it skips a voided row.
+VOID_AUDITOR = "plan-auditor"
+ROW_ID_MAX = 2 ** 63 - 1
+NOT_VOIDED = " AND id NOT IN (SELECT interaction FROM interaction_voids)"
 # The states of an item row (a work order or a roadmap row). STORY-502, D-7200, D-7212.
 OPEN_STATES = ["backlog", "ready", "in progress", "in review", "fix round", "waiting", "blocked"]
 STARTED_STATES = ["in progress", "in review", "fix round", "waiting", "blocked"]
@@ -104,6 +115,14 @@ class UsageError(Exception):
 
 class Quiet(UsageError):
     """An exit code with no message on stderr: the command printed its report on stdout."""
+
+
+def row_id(text):
+    """argparse type: a row id is ASCII digits only, from 1 to ROW_ID_MAX (STORY-525). int() alone would take "1_0",
+    " 7" and non-ASCII digits, and a value above the SQLite integer range would raise an OverflowError."""
+    if text.isascii() and text.isdigit() and 1 <= int(text) <= ROW_ID_MAX:
+        return int(text)
+    raise argparse.ArgumentTypeError(f"not a whole number from 1 to {ROW_ID_MAX}")
 
 
 def now_iso():
@@ -868,6 +887,44 @@ def cmd_interaction_log(con, a):
     con.commit()
 
 
+def cmd_interaction_list(con, a):
+    """Print the interactions of one story with the void row of each (STORY-525). It writes nothing."""
+    rows = con.execute(
+        "SELECT i.id, i.story, i.kind, i.by_whom, i.at, v.at AS void_at, v.by_whom AS void_by, v.reason AS void_reason "
+        "FROM interactions i LEFT JOIN interaction_voids v ON v.interaction = i.id WHERE i.story = ? ORDER BY i.id",
+        (a.story,)).fetchall()
+    emit(rows, a.json, ["id", "kind", "by_whom", "at", "void_at", "void_by", "void_reason"])
+
+
+def cmd_interaction_void(con, a):
+    """Add 1 void row for 1 interaction (STORY-525). The first row is not changed. The checks run in this order:
+    the reason (2), the caller (2), the row (1), the logger (2), an earlier void (1). The checks and the write run
+    under 1 write lock, so 2 voids of the same row cannot both pass check 5. A consistency guard, not a security
+    boundary: a call with no known caller is not stopped."""
+    reason = a.reason.strip()
+    if not reason:
+        raise UsageError("interaction void: --reason is empty; no change", 2)
+    names = caller_names(con)
+    if names:
+        roles = {r["role"] for r in con.execute(
+            f"SELECT role FROM sessions WHERE name IN ({','.join('?' * len(names))})", sorted(names))}
+        if a.by not in roles:
+            raise UsageError("interaction void: --by is not the role of your session; a station voids only its own rows; "
+                             "no change", 2)
+    con.execute("BEGIN IMMEDIATE")  # T1: the checks and the write under 1 write lock
+    row = con.execute("SELECT by_whom FROM interactions WHERE id = ?", (a.id,)).fetchone()
+    if row is None:
+        raise UsageError(f"interaction void: no interaction has the id {a.id}; no change")
+    if a.by != row["by_whom"] and a.by != VOID_AUDITOR:
+        raise UsageError(f"interaction void: --by is not the logger of interaction {a.id} and not {VOID_AUDITOR}; "
+                         "a station voids only its own rows; no change", 2)
+    if con.execute("SELECT 1 FROM interaction_voids WHERE interaction = ?", (a.id,)).fetchone():
+        raise UsageError(f"interaction void: interaction {a.id} already has a void row; no change")
+    con.execute("INSERT INTO interaction_voids (interaction, by_whom, reason, at) VALUES (?, ?, ?, ?)",
+                (a.id, a.by, reason, a.at))
+    con.commit()
+
+
 def cmd_usage_set(con, a):
     """Set the token count of a session on an item."""
     con.execute("INSERT INTO usage (session, item, tokens, at) VALUES (?, ?, ?, ?) "
@@ -925,7 +982,7 @@ def story_metrics(con, story):
     `released_at` is the one of the roadmap row. `trips` counts the trips of the story and of its work orders."""
     one = lambda sql, *args: con.execute(sql, args).fetchone()[0]
     closed_asks = one("SELECT COUNT(*) FROM asks WHERE story = ? AND closed_at IS NOT NULL", story)
-    ask_inter = one("SELECT COUNT(*) FROM interactions WHERE story = ? AND kind = 'ask'", story)
+    ask_inter = one("SELECT COUNT(*) FROM interactions WHERE story = ? AND kind = 'ask'" + NOT_VOIDED, story)
     item = con.execute("SELECT picked_up_at, released_at FROM items WHERE id = ?", (story,)).fetchone()
     prefix = story + "-"
     work_picked = one("SELECT MIN(picked_up_at) FROM items WHERE substr(id, 1, length(?)) = ?", prefix, prefix)
@@ -940,7 +997,7 @@ def story_metrics(con, story):
         "hitl_questions": closed_asks + ask_inter,
         "autonomous_decisions": one("SELECT COUNT(*) FROM decisions WHERE story = ? "
                                     "AND decided_by != 'hitl' AND vetoed_at IS NULL", story),
-        "review_defects": one("SELECT COUNT(*) FROM interactions WHERE story = ? AND kind = 'defect'", story),
+        "review_defects": one("SELECT COUNT(*) FROM interactions WHERE story = ? AND kind = 'defect'" + NOT_VOIDED, story),
         "trips": one("SELECT COUNT(*) FROM trips WHERE item = ? OR substr(item, 1, length(?)) = ?",
                      story, prefix, prefix),
         "picked_up_at": picked,
@@ -2079,6 +2136,15 @@ def build_parser():
     sp.add_argument("--story", required=True)
     sp.add_argument("--kind", required=True, choices=INTERACTION_KINDS)
     sp.add_argument("--by", required=True)
+    sp = leaf(n, "list", cmd_interaction_list, "print the interactions of one story with their void rows")
+    sp.add_argument("--story", required=True)
+    sp.add_argument("--json", action="store_true")
+    sp = leaf(n, "void", cmd_interaction_void,
+              "add a void row for one interaction; the metrics skip it (a consistency guard, not a security boundary: "
+              "a station voids its own rows, and plan-auditor voids any row; a call with no known caller is not stopped)")
+    sp.add_argument("--id", required=True, type=row_id)
+    sp.add_argument("--by", required=True)
+    sp.add_argument("--reason", required=True)
 
     u = group("usage", "tokens per session per item")
     sp = leaf(u, "set", cmd_usage_set, "set the token count")

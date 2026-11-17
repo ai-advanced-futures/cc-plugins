@@ -1,5 +1,14 @@
 # Changelog
 
+## 12.1.0
+
+New commands: `sofa-state interaction list` and `interaction void` (STORY-525).
+
+- `interaction void --id <n> --by <role> --reason <text>` voids 1 wrong row of `interaction log`. It adds 1 row to the new table `interaction_voids` and changes no row of `interactions`. A station voids only its own rows, and `plan-auditor` voids any row. It is a consistency guard, not a security boundary.
+- `interaction list --story <id> [--json]` prints the rows of a story with their void rows.
+- `sofa-state metrics` skips a voided row in `hitl_questions` and in `review_defects`.
+- The store has 1 more table. `init` and each command make it, so an older store needs no step.
+
 ## 12.0.0
 
 A repository has 1 factory on 1 machine (operator decision, 2026-11-16). The text and the code for several machines and teams are removed.
