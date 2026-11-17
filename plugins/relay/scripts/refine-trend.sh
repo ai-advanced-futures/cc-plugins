@@ -39,7 +39,15 @@
 # It calls `refine-verdict.sh --single` and nothing else of relay, so the two
 # scripts never call each other in a circle.
 #
-# EXIT CODE: 0, always.
+# EXIT CODE: 0 or 1.
+#   0: the output above, also the line with rounds=0.
+#   1: an awk step failed. The script prints 1 line on stderr and nothing on
+#      stdout: `[relay] error: refine-trend.sh: the awk step <step> failed (exit
+#      <code>)`. <step> is `lookback`, `section-stream` or `section-pivot`. The
+#      caller refine-verdict.sh then gives `reason=no-trend`.
+#
+# The script runs on bash 3.2 and BSD awk (the stock macOS shell and awk). It gives
+# awk no `-v` value with a new line, because BSD awk refuses one.
 set -u
 
 _here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -50,6 +58,13 @@ _FLOOR=5
 _zero() {
   printf 'REFINE_TREND=ok rounds=0 low=0 low_round=0 since=0 words_first=0 words_last=0\n'
   exit 0
+}
+
+# An awk step failed: say which one, and stop with no stdout, because the output
+# prints only after the last awk step. <step> <exit code of awk>.
+_awk_failed() {
+  printf '[relay] error: refine-trend.sh: the awk step %s failed (exit %s)\n' "$1" "$2" >&2
+  exit 1
 }
 
 # The word count of one file, or `-` when the file is absent. BSD `wc` pads its
@@ -148,7 +163,7 @@ while [ "$_r" -le "$_round" ]; do
   _total=$((_c + _i))
   _snap="${_pick%.findings.md}.subject.md"
   _w="$(_words "$_snap")"
-  _lb="$(_lookback "$_pick")"
+  _lb="$(_lookback "$_pick")" || _awk_failed lookback "$?"
   _rows="${_rows}$(printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' \
     "$_r" "$_total" "$_c" "$_i" "$_m" "$_w" "$_lb" "$_pick" "$_snap")
 "
@@ -171,14 +186,12 @@ done
 
 [ "$_low" -ge 0 ] || _low=0
 
-# --- the table -------------------------------------------------------------
-printf '# round\ttotal\tcritical\timportant\tminor\twords\tlookback\tfindings\tsnapshot\n'
-printf '%s' "$_rows"
-
+# --- the `now` word count --------------------------------------------------
+# The output prints after the last awk step (below), so a failed step prints
+# nothing on stdout. The count is made here because words_last reads it.
 _now_words=''
 if [ -n "$_subject" ] && [ -f "$_subject" ]; then
   _now_words="$(_words "$_subject")"
-  printf 'now\t-\t-\t-\t-\t%s\t-\t-\t-\n' "$_now_words"
 fi
 
 # The `now` row, when there is one, is the last word count.
@@ -198,6 +211,7 @@ fi
 # fence flag; a `#` line inside a fence is body text of the enclosing section,
 # never a new heading, since the subjects this script measures are specs and
 # plans full of fenced bash. [inferred]
+_sections=''
 _present=()
 for _s in ${_snaps[@]+"${_snaps[@]}"}; do
   [ "$_s" = '-' ] || _present+=("$_s")
@@ -274,16 +288,21 @@ if [ "${#_present[@]}" -ge 2 ]; then
           printf "%s\t%s\t%d\n", part[1], part[2], count[k]
         }
       }
-    ' "${_files[@]}")
+    ' "${_files[@]}")" || _awk_failed section-stream "$?"
+    _stream="${_stream}
 "
   fi
 
   # The stream is keyed by path, so the pivot maps each column to its file.
+  # The paths go to awk in the environment variable _RELAY_TREND_COLPATHS, 1 path
+  # for each line. A `-v` value with a new line is an error in BSD awk, and a `-v`
+  # value changes each backslash of a path. ENVIRON does neither.
   # `sort` compares whole lines when the first key ties, so the row order does
-  # not depend on the order awk walked its arrays in.
-  _sections="$(printf '%s' "$_stream" | awk -F'\t' -v ncol="${#_cols[@]}" \
-    -v colpaths="$(printf '%s\n' "${_cols[@]}")" '
-    BEGIN { split(colpaths, colpath, "\n") }
+  # not depend on the order awk walked its arrays in. The awk is the last command
+  # of its own command substitution, so `$?` is its exit.
+  _pivot="$(printf '%s' "$_stream" | _RELAY_TREND_COLPATHS="$(printf '%s\n' "${_cols[@]}")" \
+    awk -F'\t' -v ncol="${#_cols[@]}" '
+    BEGIN { split(ENVIRON["_RELAY_TREND_COLPATHS"], colpath, "\n") }
     $2 == "__PRESENT__" { present[$1] = 1; next }
     {
       v[$1 SUBSEP $2] = $3 + 0
@@ -303,12 +322,19 @@ if [ "${#_present[@]}" -ge 2 ]; then
         printf "%d\t%s\n", b - a, line
       }
     }
-  ' | sort -k1,1nr | head -15 | cut -f2-)"
+  ')" || _awk_failed section-pivot "$?"
+  _sections="$(printf '%s\n' "$_pivot" | sort -k1,1nr | head -15 | cut -f2-)"
+fi
 
-  if [ -n "$_sections" ]; then
-    printf '# section\twords\n'
-    printf '%s\n' "$_sections"
-  fi
+# --- the output, after the last awk step ------------------------------------
+printf '# round\ttotal\tcritical\timportant\tminor\twords\tlookback\tfindings\tsnapshot\n'
+printf '%s' "$_rows"
+if [ -n "$_now_words" ]; then
+  printf 'now\t-\t-\t-\t-\t%s\t-\t-\t-\n' "$_now_words"
+fi
+if [ -n "$_sections" ]; then
+  printf '# section\twords\n'
+  printf '%s\n' "$_sections"
 fi
 
 _base_round="$_low_round"

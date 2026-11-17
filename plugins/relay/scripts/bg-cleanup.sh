@@ -153,12 +153,27 @@ fi
 
 # --- Step 2: stop each session, then confirm. ----------------------------------------
 _bgc_live_ids=()
-declare -A _bgc_verdict_of=()
+# _bgc_verdicts[i] is the verdict of _bgc_ids[i]. An indexed array, because bash 3.2
+# (the stock macOS shell) has no associative array.
+_bgc_verdicts=()
+
+# _bgc_set_verdict <short id> <verdict>: set the verdict at the index of the short id.
+# A short id that the registries did not record is ignored. _bgc_add keeps each short
+# id once, so its index is unique.
+_bgc_set_verdict() {
+  local sid="$1" verdict="$2" i
+  for i in "${!_bgc_ids[@]}"; do
+    if [ "${_bgc_ids[$i]}" = "$sid" ]; then
+      _bgc_verdicts[$i]="$verdict"
+      return
+    fi
+  done
+}
 
 for _bgc_i in "${!_bgc_ids[@]}"; do
   _bgc_sid="${_bgc_ids[$_bgc_i]}"
   if [ ! -d "${_bgc_jobs_dir}/${_bgc_sid}" ]; then
-    _bgc_verdict_of["$_bgc_sid"]="no-job-directory"
+    _bgc_verdicts[$_bgc_i]="no-job-directory"
     continue
   fi
   _bgc_live_ids+=("$_bgc_sid")
@@ -177,12 +192,14 @@ if [ "${#_bgc_live_ids[@]}" -gt 0 ]; then
   while IFS= read -r _bgc_line; do
     case "$_bgc_line" in
       RELAY_BG_SHORT_ID=*) _bgc_pending_sid="${_bgc_line#RELAY_BG_SHORT_ID=}" ;;
-      RELAY_BG_VERDICT=*)  _bgc_verdict_of["$_bgc_pending_sid"]="${_bgc_line#RELAY_BG_VERDICT=}" ;;
+      RELAY_BG_VERDICT=*)  _bgc_set_verdict "$_bgc_pending_sid" "${_bgc_line#RELAY_BG_VERDICT=}" ;;
     esac
   done <<< "$_bgc_liveness_out"
-  for _bgc_sid in "${_bgc_live_ids[@]}"; do
-    if [ -z "${_bgc_verdict_of[$_bgc_sid]:-}" ]; then
-      printf '[relay] error: bg-liveness.sh did not report a verdict for %s\n' "$_bgc_sid" >&2
+  # Each index has "no-job-directory" (set above) or its short id went to the liveness
+  # call, so a missing verdict here is a live session that bg-liveness.sh did not report.
+  for _bgc_i in "${!_bgc_ids[@]}"; do
+    if [ -z "${_bgc_verdicts[$_bgc_i]:-}" ]; then
+      printf '[relay] error: bg-liveness.sh did not report a verdict for %s\n' "${_bgc_ids[$_bgc_i]}" >&2
       exit 2
     fi
   done
@@ -192,7 +209,7 @@ _bgc_stop_required=0
 for _bgc_i in "${!_bgc_ids[@]}"; do
   _bgc_sid="${_bgc_ids[$_bgc_i]}"
   _bgc_name="${_bgc_names[$_bgc_i]}"
-  _bgc_v="${_bgc_verdict_of[$_bgc_sid]}"
+  _bgc_v="${_bgc_verdicts[$_bgc_i]}"
   if [ "$_bgc_v" != "stopped" ] && [ "$_bgc_v" != "no-job-directory" ]; then
     printf 'RELAY_BG_STOP_REQUIRED=%s %s\n' "$_bgc_name" "$_bgc_sid"
     _bgc_stop_required=1

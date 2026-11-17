@@ -3,6 +3,15 @@
 All notable changes to relay are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 5.5.5 — 2026-11-17
+
+### Fixed
+- `bg-cleanup.sh` and `refine-trend.sh` run on the stock macOS shell (bash 3.2) and its awk (BSD awk). `bg-cleanup.sh` keeps the verdict of each session in an indexed array, not an associative array, so it no longer stops before it deletes, keeps or reports a session. `refine-trend.sh` gives the column paths to awk in the environment variable `_RELAY_TREND_COLPATHS`, not in a `-v` value with a new line, so the `# section` table prints on macOS (STORY-537).
+- `refine-trend.sh` exits 1 when an awk step fails. It prints 1 line on stderr, `[relay] error: refine-trend.sh: the awk step <step> failed (exit <code>)`, and nothing on stdout. Before, it printed a report with no `# section` table and exited 0. `<step>` is `lookback`, `section-stream` or `section-pivot`. The caller `refine-verdict.sh` gives `reason=no-trend` for such a pass (STORY-537).
+
+### Added
+- A test, `test_shell_portability.py`, reads each shell script of relay (not `tests/`) and fails on a bash 4 form (an associative array, `mapfile`, a nameref, `${x,,}` and others), on a GNU awk function, and on an `awk -v` value with a command substitution, so CI on Ubuntu finds a script that stock macOS cannot run (STORY-537).
+
 ## 5.5.4 — 2026-11-12
 
 ### Fixed
