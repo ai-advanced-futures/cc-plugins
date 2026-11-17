@@ -7,6 +7,8 @@ Each call makes 1 Plan step and writes 1 JSON line to stdout and to <main folder
                            preview, compare with the SYNC preview, publish at most 1 part
   recover --actor ACTOR    finish the incomplete write of a stopped part, then check Plan
 The line holds an outcome word. The role file of the tracker gives the action for each word.
+After an unknown-create of the apply, the line says if 1 more step is permitted (`retry`). That step waits until 31 seconds
+after the unknown-create line.
 A step needs an open SYNC: a published closes it, and only base opens a new one.
 A recover runs 1 time for each stop: recovered and recover-failed both count.
 """
@@ -28,6 +30,11 @@ PART_WRITES = 10
 # The time limit of 1 preview in seconds. The apply keeps the default limit of `run`.
 PREVIEW_LIMIT = 240
 MAX_PAIRS = 50
+# PLAN-STORY-659: a step after an unknown-create line starts at least 30 seconds after it. The `at` of a line has whole
+# seconds, so the wait is 31 seconds after it, and never more than 31 seconds.
+RETRY_WAIT = 31
+# The words that end the 1 retry after an unknown-create. A published needs a new base-saved before the next step.
+PROGRESS = ("base-saved", "part-done")
 DETAIL_LIMIT = 300
 FINGERPRINT = re.compile(r"[0-9a-f]{64}")
 IDENTIFIER = re.compile(r"[A-Za-z0-9._:-]{1,80}")
@@ -50,8 +57,17 @@ class Usage(Exception):
     """An error of use: exit 2, no line in the log, no Plan call."""
 
 
+def wall():
+    """The wall clock in seconds. A test gives a fake clock here and in `pause`."""
+    return time.time()
+
+
+def pause(seconds):
+    time.sleep(seconds)
+
+
 def now():
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.fromtimestamp(wall(), timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def number(value):
@@ -353,6 +369,26 @@ NO_OPEN_SYNC = ("no open SYNC: the round of the SYNC preview gave published, or 
                 "run base --sync SUBJECT after a new SYNC")
 
 
+def open_unknown(files):
+    """PLAN-STORY-659: the last unknown-create line after the last line of progress (PROGRESS), or None."""
+    for line in reversed(files.lines()):
+        if line.get("outcome") in PROGRESS:
+            return None
+        if line.get("outcome") == "unknown-create":
+            return line
+    return None
+
+
+def retry_wait(line):
+    """The seconds to wait before the step after the unknown-create `line`: until RETRY_WAIT seconds after its `at`, at
+    most RETRY_WAIT. An `at` that cannot be read gives RETRY_WAIT."""
+    try:
+        at = datetime.strptime(line["at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
+    except (KeyError, TypeError, ValueError):
+        return RETRY_WAIT
+    return min(RETRY_WAIT, max(0.0, at + RETRY_WAIT - wall()))
+
+
 def command_step(plan, files, args):
     if not files.sync.exists() and closed_by_log(files):
         raise Usage(NO_OPEN_SYNC)
@@ -365,7 +401,13 @@ def command_step(plan, files, args):
         raise Usage("--max-writes is a number from 1 to 400")
     line = {"command": "step", "fingerprint_before": before, "fingerprint": None, "same": None, "difference": None,
             "writes": None, "items_left": None, "stopped": None, "next_at": None, "max_writes": writes,
-            "seconds_preview": None, "seconds_apply": None}
+            "seconds_preview": None, "seconds_apply": None, "seconds_wait": None}
+    earlier = open_unknown(files)
+    if earlier is not None:
+        seconds = retry_wait(earlier)
+        if seconds > 0:
+            pause(seconds)
+        line["seconds_wait"] = round(seconds, 1)
     started = time.monotonic()
     preview, failure = read_preview(plan)
     line["seconds_preview"] = round(time.monotonic() - started, 1)
@@ -390,6 +432,8 @@ def command_step(plan, files, args):
     line["seconds_apply"] = round(time.monotonic() - started, 1)
     if error is not None:
         line["outcome"], line["detail"] = classify(error), error
+        if line["outcome"] == "unknown-create":
+            line["retry"] = earlier is None
         return finish(files, line)
     line["writes"] = number(result.get("writes"))
     line["items_left"] = number(result.get("items_left"))

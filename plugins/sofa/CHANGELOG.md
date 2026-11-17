@@ -1,5 +1,19 @@
 # Changelog
 
+## 13.1.0
+
+PLAN-STORY-659: after `unknown-create` the tracker runs 1 more step at least 30 seconds later (D-9152 to D-9155).
+
+- `sofa-publish step`: an `unknown-create` of the apply has the new key `retry`. It is `true` for the first
+  `unknown-create` after a `base-saved` or a `part-done`, else `false`. The word and its exit code 1 do not change.
+  The key `retry` is not the retry of a checked create in Plan.
+- A `step` after an `unknown-create` line waits up to 31 seconds before its preview, so it starts at least 30 seconds
+  after that line. Each step line has the new key `seconds_wait`. It is a number of seconds, not the outcome word `wait`.
+- `references/roles/tracker.md`: run `step` again when `retry` is `true`; send `BLOCKED · team` in each other case.
+  Plan 0.6.1 or later resolves the create on that step when the text is "create outcome is unknown". The text "a prior
+  create has an unknown outcome" can give the same stop again, and then `retry` is `false`. No run that works on 13.0.1
+  gets a new stop.
+
 ## 13.0.1
 
 PLAN-STORY-657: `sofa-publish` closes a `SYNC` also when its `published` line is not written (issue 2880; D-9139 to D-9143).
