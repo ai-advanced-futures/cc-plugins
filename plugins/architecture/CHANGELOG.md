@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1
+
+- Use the Sofa HITL question format in Architecture Explore, with source context, one question, options, pros and cons, and one recommended option.
+- Ask for additional information sources at intake. Query registered local graphs through `knowledge:ask` and review supplied documents or code before each exploration question. Reuse context when it still answers the same point and report retrieval limits without inventing evidence.
+
 ## 1.2.0
 
 - Add `/architecture:explore` to review evidence and discover architecture choices one question at a time, with or without an existing application or product requirements.

@@ -1,7 +1,7 @@
 {
   "name": "architecture",
   "displayName": "architecture",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Discover architecture choices with architecture:explore, record accepted decisions with architecture:learn, check required-area coverage, and return when requirements change. Setup, recall, and review use the same ADR graph.",
   "author": {
     "name": "Yassel Piloto",

@@ -21,6 +21,8 @@ Read [the evidence review](resources/evidence.md) at intake. Read the request, a
 accepted ADRs, PRD, organization guidance, supplied sources, and an existing assessment.
 With application code but no assessment, inspect code with the relevant area checklist.
 Name missing or unreadable sources without inventing evidence, then continue discovery.
+Ask which additional information sources the person wants considered, unless already
+answered. Gather context before each question as described in the evidence review.
 
 Replace `ROOT` in each command with the literal absolute target repository path. Use the
 expanded plugin path too, because the permission and read-only hook checks need literal
@@ -106,9 +108,10 @@ choose another area, defer, stop, or build with areas still open. Ask which buil
 must change if a choice changes. Keep choices confined to one building block outside this
 interview, because this discovery covers system-wide choices.
 
-Ask one question at a time. Give context, two or three options with advantages and
-disadvantages, and one recommendation. Include a way to defer. Keep checklist topics
-reviewed in session context only. Reading a checklist does not accept a decision.
+Ask one question at a time, using [the question card](resources/questions.md).
+Give context, two or three options with advantages and disadvantages, and one recommendation.
+Include a way to defer. Keep checklist topics reviewed in session context only.
+Reading a checklist does not accept a decision.
 
 ## Save the person's choices
 
