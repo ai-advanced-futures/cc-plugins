@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0
+
+`plan github apply` paces its writes, reads the board once, and reports the real GitHub error.
+
+A minor step: a run with no `--part` now exits 1 when it stops at the hour budget (400 writes in 60 minutes), at a second rate-limit refusal, or at a rate-limit wait of more than 60 seconds. It prints the result JSON with `complete: false`. Run apply again with the same fingerprint, or pass `--part`.
+
+- Each GitHub error now has a kind: `rate-limit`, `secondary-rate-limit`, `timeout`, `http`, `graphql`, `network` or `other`. The message holds the kind, the HTTP status and the `retry-after` seconds. It holds no text of GitHub.
+- Apply keeps 1 second between 2 writes and sends at most 400 writes in 3,600 seconds. The start times are saved in the workspace between calls.
+- A rate-limit refusal waits up to 60 seconds and runs the call 1 more time. A create that is refused is checked by its marker before apply creates it again.
+- A paged GraphQL read gives the cards of the board. It replaces `gh project item-list`, so the date values now match the board and the cap of 1,000 cards is gone.
+- A new card is filled with the item ID that the add returns. Apply reads the full board at most 4 times in 1 call, and 1 more time when a create fails and apply checks for the issue.
+- New options `--part` and `--max-writes N` (1 to 400, default 40) send 1 part of the writes and save a checkpoint. The result has `complete`, `items_left`, `stopped` and `next_at`.
+
 ## 0.3.1
 
 The default time limit of one backup push (`PLAN_BACKUP_TIMEOUT`) is 45 seconds, not 15.

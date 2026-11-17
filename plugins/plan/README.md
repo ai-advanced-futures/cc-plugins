@@ -62,7 +62,7 @@ The generation command is `/plan:generate`, not `/plan:plan`.
 
 ## Publish a GitHub Project
 
-Configure one existing board and one named publisher through `github configure`. `/plan:publish` previews the Plan-to-board changes before an approved apply. Imported issue bindings stay attached to their Plan items. Publication uses the current `gh` authentication, including Sofa's wrapper when present.
+Configure one existing board and one named publisher through `github configure`. `/plan:publish` previews the Plan-to-board changes before an approved apply. Imported issue bindings stay attached to their Plan items. Publication uses the current `gh` authentication, including Sofa's wrapper when present. Apply paces its writes (1 second apart, 400 an hour) and can run in parts with `--part`.
 
 The board is a view of Plan, not another work store. Publication does not pull issue state or assignees into Plan. A partial result remains visible and must complete through a checked retry. See the [command reference](references/cli.md) for configuration, fingerprints, and refusals.
 

@@ -7,12 +7,29 @@ from __future__ import annotations
 import copy
 import json
 import re
+import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from . import PlanError, model
 from .proc import CommandError, capture
 
 MAX_PAGES = 100
+HOUR = 3600
+WRITE_GAP = 1.0        # seconds between the starts of 2 writes
+WRITES_PER_HOUR = 400  # writes in each 3,600 seconds; GitHub allows 500 content writes an hour
+BATCH = 10             # writes between 2 checkpoints
+PART_WRITES = 40       # default writes of 1 part
+MAX_WAIT = 60          # the longest wait for a rate limit, in seconds
+MARKER_MARGIN = 120    # seconds that a marker read looks before the time of its pending mark
+RATE_KINDS = {"secondary-rate-limit", "rate-limit"}
+SECONDARY = re.compile(r"secondary rate limit|abuse detection|submitted too quickly", re.IGNORECASE)
+PRIMARY = re.compile(r"API rate limit (?:already )?exceeded", re.IGNORECASE)
+GITHUB_TIMEOUT = re.compile(r"couldn't respond to your request in time", re.IGNORECASE)
+NETWORK = re.compile(r"dial tcp|connection (?:reset|refused)|no such host|TLS handshake|i/o timeout|unexpected EOF", re.IGNORECASE)
+HTTP_SUFFIX = re.compile(r"\(HTTP (\d{3})\)")
+STATUS_LINE = re.compile(r"HTTP/\S+ (\d{3})")
+NEXT_PAGE = re.compile(r'<https://api\.github\.com/([^>]+)>;\s*rel="next"')
 WORK = set(model.WORK_TYPES)
 DATES = {"planned_start_date": "Planned start", "planned_end_date": "Planned end",
          "actual_start_date": "Actual start", "actual_end_date": "Actual end"}
@@ -30,6 +47,18 @@ RIGHTS = '''query PlanRights($owner:String!, $name:String!, $board:String!, $num
    ... on ProjectV2IterationField { id name dataType }
   } } }
  } }
+}'''
+CARDS = '''query PlanCards($board:String!, $number:Int!, $after:String) {
+ repositoryOwner(login:$board) { ... on ProjectV2Owner { projectV2(number:$number) {
+  items(first:100, after:$after) { totalCount pageInfo { hasNextPage endCursor } nodes {
+   id
+   content { ... on Issue { number repository { nameWithOwner } } }
+   fieldValues(first:100) { totalCount nodes {
+    ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2FieldCommon { name } } }
+    ... on ProjectV2ItemFieldDateValue { date field { ... on ProjectV2FieldCommon { name } } }
+   } }
+  } }
+ } } }
 }'''
 ISSUES = '''query PlanIssues($owner:String!, $name:String!, $after:String, $firstPage:Boolean!) {
  repository(owner:$owner,name:$name) {
@@ -64,7 +93,7 @@ def _run(args, payload=None):
         if isinstance(exc.__cause__, OSError):
             raise PlanError("GitHub CLI could not start; no result was confirmed") from None
         raise PlanError("GitHub CLI did not end before the time limit; inspect the publication before retry") from None
-    return Completed(result.returncode, result.stdout)
+    return Completed(result.returncode, result.stdout, result.stderr)
 
 
 def _nodes(connection, name):
@@ -76,37 +105,284 @@ def _nodes(connection, name):
     return nodes
 
 
+class GhFailure(PlanError):
+    """A failed gh call. It holds only parsed values, never the text of gh or of GitHub."""
+    def __init__(self, prefix, kind, status=None, retry_after=None, reset=None):
+        self.kind, self.status, self.retry_after, self.reset = kind, status, retry_after, reset
+        parts = [kind] + ([f"HTTP {status}"] if status else []) + ([f"retry-after {retry_after} s"] if retry_after is not None else [])
+        super().__init__(f"{prefix} ({', '.join(parts)}); its outcome is not confirmed")
+
+    def wait(self, now):
+        """Seconds to wait before the call runs again."""
+        if self.retry_after is not None:
+            return self.retry_after
+        if self.reset is not None:
+            return max(self.reset - now + 30, 0)
+        return 60
+
+    def summary(self):
+        return {"kind": self.kind, "status": self.status, "retry_after": self.retry_after}
+
+
+def _created(item):
+    try:
+        return datetime.strptime(item["created_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+class RefusedCreate(Exception):
+    """A create ends with a proven rate-limit refusal. It is not a PlanError, so the unknown-outcome path does not catch it."""
+    def __init__(self, failure):
+        super().__init__(failure.kind)
+        self.failure = failure
+
+
+class PartEnd(Exception):
+    """The pace ends a call before a write. It is not a PlanError, so no handler of a failed call catches it."""
+    def __init__(self, stopped, next_at):
+        super().__init__(stopped)
+        self.stopped, self.next_at = stopped, next_at
+
+
+def _utc(epoch):
+    return datetime.fromtimestamp(epoch, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+class Pacer:
+    """At least WRITE_GAP seconds between 2 writes, at most WRITES_PER_HOUR writes in 3,600 seconds."""
+    def __init__(self, clock=None, sleep=None):
+        self.clock = clock or time.time
+        self.sleep = sleep or time.sleep
+        self.history, self.limit, self.sent, self.on_batch = [], None, 0, None
+
+    def load(self, times):
+        floor = self.clock() - HOUR
+        self.history = sorted(x for x in times if type(x) in (int, float) and x > floor)
+
+    def times(self):
+        floor = self.clock() - HOUR
+        return [x for x in self.history if x > floor]
+
+    def before_write(self):
+        if self.limit is not None and self.sent >= self.limit:
+            raise PartEnd("part-limit", None)
+        self.history = self.times()
+        if len(self.history) >= WRITES_PER_HOUR:
+            raise PartEnd("hour-budget", _utc(self.history[0] + HOUR))
+        if self.history:
+            wait = self.history[-1] + WRITE_GAP - self.clock()
+            if wait > 0:
+                self.sleep(wait)
+        self.history.append(self.clock())
+
+    def after_write(self):
+        self.sent += 1
+        if self.sent % BATCH == 0 and self.on_batch:
+            self.on_batch()
+
+
+def _split(stdout):
+    """Split the output of `gh api --include` into (status, headers, body)."""
+    start = STATUS_LINE.match(stdout)
+    if not start:
+        return None, {}, stdout
+    blank = re.search(r"\r?\n\r?\n", stdout)
+    head, body = (stdout[:blank.start()], stdout[blank.end():]) if blank else (stdout, "")
+    headers = {}
+    for line in head.splitlines()[1:]:
+        name, _, value = line.partition(":")
+        headers[name.strip().lower()] = value.strip()
+    return int(start.group(1)), headers, body
+
+
+def _digits(value):
+    """The number of a header value of 1 to 10 ASCII digits, else none. A header comes from GitHub, so it is not trusted."""
+    return int(value) if isinstance(value, str) and re.fullmatch(r"[0-9]{1,10}", value) else None
+
+
+def _classify(prefix, result):
+    """Give the kind of a failed call from its head, its body and its stderr. Keep no text of them."""
+    status, headers, body = _split(result.stdout)
+    try:
+        parsed = json.loads(body) if body.strip() else None
+    except ValueError:
+        parsed = None
+    errors = [x for x in (parsed.get("errors") if isinstance(parsed, dict) else None) or [] if isinstance(x, dict)]
+    messages = [str(x.get("message", "")) for x in errors]
+    if isinstance(parsed, dict) and isinstance(parsed.get("message"), str):
+        messages.append(parsed["message"])
+    types = [str(x.get("type", "")) for x in errors]
+    text = "\n".join([result.stderr or "", *messages])
+    if status is None:
+        suffix = HTTP_SUFFIX.search(result.stderr or "")
+        status = int(suffix.group(1)) if suffix else None
+    retry_after, reset = _digits(headers.get("retry-after")), _digits(headers.get("x-ratelimit-reset"))
+    if headers.get("x-ratelimit-remaining") == "0" or "RATE_LIMITED" in types:
+        kind = "rate-limit"
+    elif (status in (403, 429) and "retry-after" in headers) or SECONDARY.search(text):
+        kind = "secondary-rate-limit"
+    elif PRIMARY.search(text):
+        kind = "rate-limit"
+    elif GITHUB_TIMEOUT.search(text):
+        kind = "timeout"
+    elif status and status >= 400:
+        kind = "http"
+    elif status == 200 and errors:
+        kind = "graphql"
+    elif status is None and NETWORK.search(result.stderr or ""):
+        kind = "network"
+    else:
+        kind = "other"
+    return GhFailure(prefix, kind, status, retry_after, reset)
+
+
 class Gh:
     """Run the gh on PATH, including the Sofa App shim. Never print its errors."""
-    def __init__(self, runner=None):
+    def __init__(self, runner=None, pacer=None):
         self.runner = runner or _run
+        self.pacer = pacer or Pacer()
+        self.repository_ids = {}
 
-    def request(self, path, method="GET", data=None):
-        args = ["api", path, "--method", method]
+    def _repository_id(self, repo):
+        """The numeric ID of the repository, read 1 time for each repository."""
+        if repo not in self.repository_ids:
+            value = self._call(f"repos/{repo}")[1]
+            if not isinstance(value, dict) or type(value.get("id")) is not int:
+                raise PlanError("GitHub returned an invalid repository")
+            self.repository_ids[repo] = value["id"]
+        return self.repository_ids[repo]
+
+    def _next_page(self, repo, endpoint, link):
+        """The path of the next page. GitHub sends `repositories/<id>/<endpoint>?...`. The path must stay in the repository and in the same list, because the path goes to `gh api` and a path that starts with "-" reads as an option."""
+        path = link.group(1)
+        if path.startswith(f"repos/{repo}/{endpoint}?"):
+            return path
+        numbered = re.match(rf"repositories/([0-9]{{1,20}})/{endpoint}\?", path)
+        if numbered and int(numbered.group(1)) == self._repository_id(repo):
+            return path
+        raise PlanError("GitHub returned an unexpected next page link")
+
+    def _exchange(self, path, method, data, graphql):
+        prefix = "GitHub GraphQL request failed" if graphql else "GitHub request failed"
+        args = ["api", path, "--method", method, "--include"]
         if data is not None:
             args += ["--input", "-"]
         result = self.runner(args, data)
         if result.returncode:
-            raise PlanError("GitHub request failed; its outcome is not confirmed")
+            raise _classify(prefix, result)
+        status, headers, body = _split(result.stdout)
+        if status is None:
+            raise GhFailure(prefix, "other")
         try:
-            return json.loads(result.stdout) if result.stdout.strip() else None
+            parsed = json.loads(body) if body.strip() else None
         except (ValueError, TypeError):
             raise PlanError("GitHub returned invalid JSON; its outcome is not confirmed") from None
+        if graphql and (not isinstance(parsed, dict) or parsed.get("errors") or not isinstance(parsed.get("data"), dict)):
+            raise _classify(prefix, result)
+        return headers, parsed
 
-    def graphql(self, query, **variables):
-        reply = self.request("graphql", "POST", {"query": query, "variables": variables})
-        if not isinstance(reply, dict) or reply.get("errors") or not isinstance(reply.get("data"), dict):
-            raise PlanError("GitHub GraphQL request failed; its outcome is not confirmed")
-        return reply["data"]
+    def _call(self, path, method="GET", data=None, retry=True, graphql=False):
+        write = method != "GET" and not (graphql and not data["query"].lstrip().startswith("mutation"))
 
-    def cli_json(self, args):
-        result = self.runner(args, None)
-        if result.returncode:
-            raise PlanError("GitHub Project read failed")
+        def once():
+            if write:
+                self.pacer.before_write()
+            reply = self._exchange(path, method, data, graphql)
+            if write:
+                self.pacer.after_write()
+            return reply
         try:
-            return json.loads(result.stdout)
-        except (ValueError, TypeError):
-            raise PlanError("GitHub Project read returned invalid JSON") from None
+            return once()
+        except GhFailure as failure:
+            if not retry or failure.kind not in RATE_KINDS:
+                raise
+            wait = failure.wait(self.pacer.clock())
+            if wait > MAX_WAIT:
+                raise
+            self.pacer.sleep(wait)
+            return once()
+
+    def request(self, path, method="GET", data=None, retry=True):
+        return self._call(path, method, data, retry)[1]
+
+    def graphql(self, query, retry=True, **variables):
+        return self._call("graphql", "POST", {"query": query, "variables": variables}, retry, graphql=True)[1]["data"]
+
+    def marker_issue(self, config, marker, since, milestone=False):
+        """Find the 1 issue (or milestone) that holds the exact marker. Read the newest issues back to the time of `since`."""
+        repo = config["repo"]
+        path = (f"repos/{repo}/milestones?state=all&per_page=100" if milestone
+                else f"repos/{repo}/issues?state=all&sort=created&direction=desc&per_page=100")
+        found = []
+        for _ in range(MAX_PAGES):
+            headers, items = self._call(path)
+            if not isinstance(items, list):
+                raise PlanError("GitHub returned an invalid issue list")
+            for item in items:
+                created = None if milestone else _created(item)
+                if created is not None and created < since - MARKER_MARGIN:
+                    path = None
+                    break
+                if "pull_request" in item:
+                    continue
+                if marker in ((item.get("description" if milestone else "body")) or ""):
+                    found.append(item)
+            if path is None:
+                break
+            following = NEXT_PAGE.search(headers.get("link", ""))
+            if not following:
+                break
+            path = self._next_page(repo, "milestones" if milestone else "issues", following)
+        else:
+            raise PlanError("GitHub issue list exceeds the supported page limit")
+        if len({x.get("number") for x in found}) > 1:
+            raise PlanError("issue binding and markers are ambiguous")
+        return found[0] if found else None
+
+    def _cards(self, config):
+        """Read each card of the Project, 100 at a time, with the exact field names. Give {issue number: card}."""
+        cards, seen, cursor, total = [], set(), None, None
+        for _ in range(MAX_PAGES):
+            data = self.graphql(CARDS, board=config["owner"], number=config["number"], after=cursor)
+            connection = ((data.get("repositoryOwner") or {}).get("projectV2") or {}).get("items") or {}
+            page = connection.get("nodes")
+            if not isinstance(page, list) or type(connection.get("totalCount")) is not int:
+                raise PlanError("GitHub returned an invalid Project items page")
+            if total is not None and total != connection["totalCount"]:
+                raise PlanError("GitHub Project items changed during pagination; read again")
+            total = connection["totalCount"]
+            cards.extend(page)
+            info = connection.get("pageInfo") or {}
+            if info.get("hasNextPage") is False:
+                break
+            cursor = info.get("endCursor")
+            if not isinstance(cursor, str) or not cursor or cursor in seen:
+                raise PlanError("GitHub Project pagination did not advance")
+            seen.add(cursor)
+        else:
+            raise PlanError("GitHub Project pagination exceeds the supported page limit")
+        if len(cards) != total:
+            raise PlanError("GitHub Project items read is incomplete")
+        by_issue = {}
+        for card in cards:
+            values = card.get("fieldValues") or {}
+            if not isinstance(values.get("nodes"), list) or values.get("totalCount") != len(values["nodes"]):
+                raise PlanError("GitHub Project item field values are incomplete")
+            content = card.get("content") or {}
+            number = content.get("number")
+            if type(number) is not int or (content.get("repository") or {}).get("nameWithOwner") != config["repo"]:
+                continue
+            if number in by_issue:
+                raise PlanError("GitHub Project has duplicate cards for one issue")
+            value = {"id": card["id"], "Status": None}
+            for node in values["nodes"]:
+                field = (node.get("field") or {}).get("name")
+                if field is None:
+                    continue
+                value[field] = node.get("name") if "name" in node else node.get("date")
+            by_issue[number] = value
+        return by_issue
 
     def snapshot(self, config):
         owner, name = config["repo"].split("/")
@@ -151,19 +427,7 @@ class Gh:
                 raise PlanError("GitHub Project has duplicate field names")
             field_map[field["name"]] = {"id": field["id"], "type": field["dataType"],
                                         "options": {x["name"]: x["id"] for x in field.get("options") or []}}
-        cards_reply = self.cli_json(["project", "item-list", str(config["number"]), "--owner", config["owner"], "--format", "json", "--limit", "1000"])
-        cards = cards_reply.get("items") or []
-        if type(cards_reply.get("totalCount")) is not int or cards_reply["totalCount"] != len(cards):
-            raise PlanError("GitHub Project items read is incomplete; at most 1000 items are supported")
-        by_issue = {}
-        for card in cards:
-            content = card.get("content") or {}
-            if content.get("type") != "Issue" or content.get("repository") != config["repo"]:
-                continue
-            number = content["number"]
-            if number in by_issue:
-                raise PlanError("GitHub Project has duplicate cards for one issue")
-            by_issue[number] = {**card, "Status": card.get("status")}
+        by_issue = self._cards(config)
         normalized = []
         for issue in issues:
             normalized.append({**issue, "labels": [x["name"] for x in _nodes(issue.get("labels"), "issue labels")],
@@ -189,10 +453,10 @@ class Gh:
     def create(self, config, snapshot, record, body):
         fields = record["fields"]
         if fields["type"] == "Milestone":
-            return self.request(f"repos/{config['repo']}/milestones", "POST", {"title": _title(record), "description": body})
+            return self.request(f"repos/{config['repo']}/milestones", "POST", {"title": _title(record), "description": body}, retry=False)
         result = self.graphql('''mutation PlanCreate($repositoryId:ID!,$title:String!,$body:String!){
           createIssue(input:{repositoryId:$repositoryId,title:$title,body:$body}){issue{id number url}}
-        }''', repositoryId=snapshot["repo_id"], title=_title(record), body=body)
+        }''', retry=False, repositoryId=snapshot["repo_id"], title=_title(record), body=body)
         return result["createIssue"]["issue"]
 
     def update(self, config, issue, payload, milestone=False):
@@ -568,10 +832,12 @@ def preview(workspace, client=None):
             "warnings": ["GitHub changes cannot be atomic with the Plan store; incomplete publication blocks success"]}
 
 
-def _checkpoint(workspace, publication, active):
+def _checkpoint(workspace, publication, active, pace=None):
     publication["active"] = copy.deepcopy(active)
     control = workspace.control()
     control["github_publication"] = copy.deepcopy(publication)
+    if pace is not None:
+        control["github_pace"] = list(pace)
     workspace.save_control(control)
 
 
@@ -639,7 +905,7 @@ def _active_records(records, active):
     return active
 
 
-def _binding(workspace, records, record, github, publication, active):
+def _binding(workspace, records, record, github, publication, active, pace=None):
     event = {"operation": "github-binding", "publication": active["fingerprint"],
              "actor": workspace.actor, "at": model.timestamp()}
     expected = copy.deepcopy(record)
@@ -655,11 +921,11 @@ def _binding(workspace, records, record, github, publication, active):
                                             "after_events": model.digest(expected["events"]),
                                             "before_binding": model.digest(record["fields"].get("github")),
                                             "after_binding": model.digest(github)}}
-    _checkpoint(workspace, publication, active)
+    _checkpoint(workspace, publication, active, pace)
     _save(workspace, records, record, github, event)
     active["revisions"] = {r["id"]: r.get("revision", 0) for r in records}
     active.pop("binding_intent")
-    _checkpoint(workspace, publication, active)
+    _checkpoint(workspace, publication, active, pace)
 
 
 def _identity(issue):
@@ -670,13 +936,51 @@ def _identity(issue):
     return {"number": number, "node_id": node, "url": issue.get("url") or issue.get("html_url")}
 
 
-def apply(workspace, fingerprint, writer, client=None):
+def _create(client, workspace, config, snapshot, record, body, active):
+    """Create 1 issue or milestone. After a rate-limit refusal, wait, look for the marker, then create 1 more time."""
+    pacer = client.pacer
+    try:
+        return client.create(config, snapshot, record, body)
+    except GhFailure as failure:
+        if failure.kind not in RATE_KINDS:
+            raise
+        first = failure
+    wait = first.wait(pacer.clock())
+    if wait > MAX_WAIT:
+        raise RefusedCreate(first)
+    pacer.sleep(wait)
+    try:
+        found = client.marker_issue(config, _marker(workspace, record), active["pending_at"][record["id"]],
+                                    record["fields"]["type"] == "Milestone")
+        return found if found else client.create(config, snapshot, record, body)
+    except PartEnd:
+        raise RefusedCreate(first) from None  # the first create was sent, so its outcome stays unknown
+    except GhFailure as failure:
+        if failure.kind in RATE_KINDS:
+            raise RefusedCreate(failure) from None
+        raise
+
+
+def _board(client, snapshot, card, wanted, new):
+    """Write the board values of 1 card. A new card gets each value that is not null; an old card gets each difference."""
+    for name, value in wanted["board"].items():
+        if (value is None) if new else (card.get(name) == value):
+            continue
+        field = snapshot["fields"][name]
+        typed = ({"singleSelectOptionId": field["options"][value]} if name == "Status" else {"date": value}) if value is not None else None
+        client.field(snapshot["project_id"], card["id"], field["id"], typed)
+
+
+def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=None):
     """Publish one preview. The caller holds the workspace lock until the checkpoints are saved."""
     client = client or Gh()
+    pacer = client.pacer
     records, config, snapshot, selected, found, desired, publication, active = _read(workspace, client)
     records = list(records)  # Binding commits replace records; keep the read index immutable.
     if writer != config["writer"] or snapshot["login"] != config["writer"]:
         raise PlanError("only the configured writer authenticated as the actual GitHub viewer can publish")
+    pacer.load(workspace.control().get("github_pace") or [])
+    pacer.sent, pacer.limit = 0, ((max_writes or PART_WRITES) if part else None)
     source = _source(records)
     revisions = {r["id"]: r.get("revision", 0) for r in records}
     if active:
@@ -689,9 +993,9 @@ def apply(workspace, fingerprint, writer, client=None):
         intent = active.get("binding_intent")
         if intent:
             current = model.resolve(records, intent["id"])
-            _binding(workspace, records, current, intent["github"], publication, active)
+            _binding(workspace, records, current, intent["github"], publication, active, pacer.times())
         elif active != publication["active"]:
-            _checkpoint(workspace, publication, active)
+            _checkpoint(workspace, publication, active, pacer.times())
     else:
         expected = model.digest({"source": source, "revisions": revisions, "live": snapshot, "desired": desired})
         last = publication.get("last") or {}
@@ -702,143 +1006,214 @@ def apply(workspace, fingerprint, writer, client=None):
             raise PlanError("GitHub changed after publication; preview again before writing")
         active = {"fingerprint": fingerprint, "source": source, "revisions": revisions, "pending_creates": [],
                   "source_revision": last["source_revision"] if replay else model.digest(revisions)}
-        _checkpoint(workspace, publication, active)
-    for record in selected:
-        identifier = record["id"]
-        issue = found[identifier]
-        if not issue:
-            if identifier in active["pending_creates"]:
-                raise PlanError(f"{identifier}: a prior create has an unknown outcome; inspect GitHub before recovery")
-            active["pending_creates"].append(identifier)
-            _checkpoint(workspace, publication, active)
-            try:
-                created = client.create(config, snapshot, record, desired[identifier].get("description") or desired[identifier]["issue"]["body"])
-            except PlanError:
-                # A failed reply is not proof that GitHub did not create the issue.
-                refreshed = client.snapshot(config)
-                issue = _find(workspace, record, refreshed)
-                if issue is None:
-                    raise PlanError(f"{identifier}: create outcome is unknown; no duplicate create will be retried") from None
-            else:
-                # Persist a confirmed identity before any further GitHub operation.
-                current = model.resolve(records, identifier)
-                binding = {**(current["fields"].get("github") or {}), **_identity(created)}
-                _binding(workspace, records, current, binding, publication, active)
-                issue = created
-            found[identifier] = issue
-        current = model.resolve(records, identifier)
-        binding = {**(current["fields"].get("github") or {}), **_identity(issue)}
-        if binding != current["fields"].get("github"):
-            _binding(workspace, records, current, binding, publication, active)
-        if identifier in active["pending_creates"]:
-            active["pending_creates"].remove(identifier)
-            _checkpoint(workspace, publication, active)
-    # All identities are durable before any relationship or Project write.
-    snapshot = client.snapshot(config)
-    selected, found = _selection(workspace, records, snapshot, config)
-    if any(found[r["id"]] is None for r in selected):
-        raise PlanError("a created identity cannot be read back; inspect before retry")
-    desired = _desired(workspace, records, selected, found, snapshot, config)
-    # Free every obsolete placement before any insertion, including a swap at the child limit.
-    for record in selected:
-        if record["fields"]["type"] == "Milestone":
-            continue
-        identifier = record["id"]
-        issue, wanted = found[identifier], desired[identifier]
-        parent = found[wanted["parent"]]["id"] if wanted["parent"] else None
-        if issue.get("parent") and issue["parent"] != parent:
-            client.relation("removeSubIssue", issue["parent"], issue["id"])
-            issue["parent"] = None
-        blockers = {found[x]["id"] for x in wanted["blockers"]}
-        for blocker in sorted(set(issue.get("blocked_by") or []) - blockers):
-            client.relation("removeBlockedBy", issue["id"], blocker)
-            issue["blocked_by"].remove(blocker)
-    for record in selected:
-        identifier = record["id"]
-        issue = found[identifier]
-        wanted = desired[identifier]
-        milestone = record["fields"]["type"] == "Milestone"
-        if milestone:
-            patch = {key: value for key, value in wanted.items() if (issue.get(key) or None) != (value or None)}
+        _checkpoint(workspace, publication, active, pacer.times())
+    active.setdefault("refused_creates", [])
+    active.setdefault("pending_at", {})
+    before = active.get("progress") or {}
+    changed = {r["id"] for r in selected if not found[r["id"]] or _changes(r, found[r["id"]], desired[r["id"]], found, snapshot, config)}
+    finished, deferred, made = set(), [], False
+
+    def progress():
+        return {"writes": before.get("writes", 0) + pacer.sent, "calls": before.get("calls", 0) + 1, "at": model.timestamp()}
+
+    def save():
+        active["progress"] = progress()
+        _checkpoint(workspace, publication, active, pacer.times())
+
+    def save_stored():
+        # After an error the stored checkpoint is the proof; change only its progress and the pace.
+        control = workspace.control()
+        stored = (control.get("github_publication") or {}).get("active")
+        if stored is not None:
+            stored["progress"] = progress()
+        control["github_pace"] = pacer.times()
+        workspace.save_control(control)
+
+    def left(stopped, next_at, failure=None):
+        result = {"published": False, "complete": False, "fingerprint": fingerprint, "source_revision": active["source_revision"],
+                  "writes": pacer.sent, "items_left": len(changed - finished), "stopped": stopped, "next_at": next_at}
+        if failure:
+            result["github_error"] = failure.summary()
+        return result
+
+    pacer.on_batch = save
+    error, succeeded = None, False
+    try:
+        for record in selected:
+            identifier = record["id"]
+            issue = found[identifier]
+            if not issue:
+                if identifier in active["pending_creates"]:
+                    raise PlanError(f"{identifier}: a prior create has an unknown outcome; inspect GitHub before recovery")
+                if identifier in active["refused_creates"]:
+                    active["refused_creates"].remove(identifier)
+                active["pending_creates"].append(identifier)
+                active["pending_at"][identifier] = pacer.clock()
+                _checkpoint(workspace, publication, active, pacer.times())
+                try:
+                    created = _create(client, workspace, config, snapshot, record,
+                                      desired[identifier].get("description") or desired[identifier]["issue"]["body"], active)
+                except (PartEnd, RefusedCreate) as stop:
+                    active["pending_creates"].remove(identifier)
+                    active["pending_at"].pop(identifier, None)
+                    if isinstance(stop, RefusedCreate):
+                        active["refused_creates"].append(identifier)
+                        raise stop.failure from None
+                    raise
+                except PlanError:
+                    # A failed reply is not proof that GitHub did not create the issue.
+                    refreshed = client.snapshot(config)
+                    issue = _find(workspace, record, refreshed)
+                    if issue is None:
+                        raise PlanError(f"{identifier}: create outcome is unknown; no duplicate create will be retried") from None
+                else:
+                    # Persist a confirmed identity before any further GitHub operation.
+                    current = model.resolve(records, identifier)
+                    binding = {**(current["fields"].get("github") or {}), **_identity(created)}
+                    _binding(workspace, records, current, binding, publication, active, pacer.times())
+                    issue = created
+                made = True
+                found[identifier] = issue
+            current = model.resolve(records, identifier)
+            binding = {**(current["fields"].get("github") or {}), **_identity(issue)}
+            if binding != current["fields"].get("github"):
+                _binding(workspace, records, current, binding, publication, active, pacer.times())
+            leaving = [name for name in ("pending_creates", "refused_creates") if identifier in active[name]]
+            if leaving:
+                for name in leaving:
+                    active[name].remove(identifier)
+                active["pending_at"].pop(identifier, None)
+                _checkpoint(workspace, publication, active, pacer.times())
+        # All identities are durable before any relationship or Project write.
+        if made:
+            snapshot = client.snapshot(config)
+        selected, found = _selection(workspace, records, snapshot, config)
+        if any(found[r["id"]] is None for r in selected):
+            raise PlanError("a created identity cannot be read back; inspect before retry")
+        desired = _desired(workspace, records, selected, found, snapshot, config)
+        # Free every obsolete placement before any insertion, including a swap at the child limit.
+        for record in selected:
+            if record["fields"]["type"] == "Milestone":
+                continue
+            identifier = record["id"]
+            issue, wanted = found[identifier], desired[identifier]
+            parent = found[wanted["parent"]]["id"] if wanted["parent"] else None
+            if issue.get("parent") and issue["parent"] != parent:
+                client.relation("removeSubIssue", issue["parent"], issue["id"])
+                issue["parent"] = None
+            blockers = {found[x]["id"] for x in wanted["blockers"]}
+            for blocker in sorted(set(issue.get("blocked_by") or []) - blockers):
+                client.relation("removeBlockedBy", issue["id"], blocker)
+                issue["blocked_by"].remove(blocker)
+        for record in selected:
+            identifier = record["id"]
+            issue = found[identifier]
+            wanted = desired[identifier]
+            milestone = record["fields"]["type"] == "Milestone"
+            if milestone:
+                patch = {key: value for key, value in wanted.items() if (issue.get(key) or None) != (value or None)}
+                if patch:
+                    client.update(config, issue, patch, milestone=True)
+                finished.add(identifier)
+                continue
+            payload = copy.deepcopy(wanted["issue"])
+            payload["milestone"] = found[wanted["milestone"]]["number"] if wanted["milestone"] else None
+            patch = {}
+            for key, value in payload.items():
+                if key == "state_reason":
+                    continue
+                if _comparable(key, issue.get(key)) != _comparable(key, value):
+                    patch[key] = value
+            if payload["state"] == "closed" and str(issue.get("stateReason", "")).lower() != payload["state_reason"]:
+                patch["state"] = "closed"
+            if "state" in patch:
+                patch["state_reason"] = payload["state_reason"]
             if patch:
-                client.update(config, issue, patch, milestone=True)
-            continue
-        payload = copy.deepcopy(wanted["issue"])
-        payload["milestone"] = found[wanted["milestone"]]["number"] if wanted["milestone"] else None
-        patch = {}
-        for key, value in payload.items():
-            if key == "state_reason":
-                continue
-            if _comparable(key, issue.get(key)) != _comparable(key, value):
-                patch[key] = value
-        if payload["state"] == "closed" and str(issue.get("stateReason", "")).lower() != payload["state_reason"]:
-            patch["state"] = "closed"
-        if "state" in patch:
-            patch["state_reason"] = payload["state_reason"]
-        if patch:
-            client.update(config, issue, patch)
-        if config["type_mode"] == "issue_types" and (issue.get("issueType") or {}).get("id") != snapshot["issue_types"][wanted["type"]]:
-            client.issue_type(config, issue, wanted["type"])
-        parent = found[wanted["parent"]]["id"] if wanted["parent"] else None
-        if parent and issue.get("parent") != parent:
-            client.relation("addSubIssue", parent, issue["id"])
-        blockers = {found[x]["id"] for x in wanted["blockers"]}
-        for blocker in sorted(blockers - set(issue.get("blocked_by") or [])):
-            client.relation("addBlockedBy", issue["id"], blocker)
-        fresh = snapshot
-        card = issue.get("card")
-        if not card:
-            try:
-                client.card(snapshot["project_id"], issue["id"])
-            except PlanError:
-                pass  # A board workflow can add it before this mutation.
-            fresh = client.snapshot(config)
-            card = (_find(workspace, record, fresh) or {}).get("card")
+                client.update(config, issue, patch)
+            if config["type_mode"] == "issue_types" and (issue.get("issueType") or {}).get("id") != snapshot["issue_types"][wanted["type"]]:
+                client.issue_type(config, issue, wanted["type"])
+            parent = found[wanted["parent"]]["id"] if wanted["parent"] else None
+            if parent and issue.get("parent") != parent:
+                client.relation("addSubIssue", parent, issue["id"])
+            blockers = {found[x]["id"] for x in wanted["blockers"]}
+            for blocker in sorted(blockers - set(issue.get("blocked_by") or [])):
+                client.relation("addBlockedBy", issue["id"], blocker)
+            card, new = issue.get("card"), False
             if not card:
-                raise PlanError(f"{identifier}: Project membership could not be confirmed")
-        for name, value in wanted["board"].items():
-            if card.get(name) == value:
+                try:
+                    card, new = {"id": client.card(snapshot["project_id"], issue["id"])}, True
+                except PlanError as failure:
+                    if isinstance(failure, GhFailure) and failure.kind in RATE_KINDS:
+                        raise
+                    deferred.append(identifier)  # A board workflow can add it before this mutation.
+                    continue
+            _board(client, snapshot, card, wanted, new)
+            finished.add(identifier)
+        if deferred:
+            fresh = client.snapshot(config)
+            for record in selected:
+                if record["id"] in deferred:
+                    card = (_find(workspace, record, fresh) or {}).get("card")
+                    if not card:
+                        raise PlanError(f"{record['id']}: Project membership could not be confirmed")
+                    _board(client, snapshot, card, desired[record["id"]], True)
+                    finished.add(record["id"])
+        # A checkpoint is a success only after the affected values are read back.
+        verified = client.snapshot(config)
+        for record in selected:
+            identifier, wanted = record["id"], desired[record["id"]]
+            issue = _find(workspace, record, verified)
+            if not issue:
+                raise PlanError(f"{identifier}: issue is missing at verification")
+            milestone = record["fields"]["type"] == "Milestone"
+            if milestone:
+                if any((issue.get(key) or None) != (value or None) for key, value in wanted.items()):
+                    raise PlanError(f"{identifier}: milestone verification failed; no publication success checkpoint")
                 continue
-            field = fresh["fields"][name]
-            typed = ({"singleSelectOptionId": field["options"][value]} if name == "Status" else {"date": value}) if value is not None else None
-            client.field(snapshot["project_id"], card["id"], field["id"], typed)
-    # A checkpoint is a success only after the affected values are read back.
-    verified = client.snapshot(config)
-    for record in selected:
-        identifier, wanted = record["id"], desired[record["id"]]
-        issue = _find(workspace, record, verified)
-        if not issue:
-            raise PlanError(f"{identifier}: issue is missing at verification")
-        milestone = record["fields"]["type"] == "Milestone"
-        if milestone:
-            if any((issue.get(key) or None) != (value or None) for key, value in wanted.items()):
-                raise PlanError(f"{identifier}: milestone verification failed; no publication success checkpoint")
-            continue
-        payload = wanted["issue"]
-        for key in ("title", "body", "state", "assignees", "labels"):
-            if _comparable(key, issue.get(key)) != _comparable(key, payload[key]):
-                raise PlanError(f"{identifier}: GitHub {key} verification failed; no publication success checkpoint")
-        if payload["state"] == "closed" and str(issue.get("stateReason", "")).lower() != payload["state_reason"]:
-            raise PlanError(f"{identifier}: close reason verification failed")
-        if issue.get("milestone") != (found[wanted["milestone"]]["number"] if wanted["milestone"] else None):
-            raise PlanError(f"{identifier}: milestone membership verification failed")
-        if issue.get("parent") != (found[wanted["parent"]]["id"] if wanted["parent"] else None):
-            raise PlanError(f"{identifier}: parent verification failed")
-        if set(issue.get("blocked_by") or []) != {found[x]["id"] for x in wanted["blockers"]}:
-            raise PlanError(f"{identifier}: blocker verification failed")
-        if config["type_mode"] == "issue_types" and (issue.get("issueType") or {}).get("id") != verified["issue_types"][wanted["type"]]:
-            raise PlanError(f"{identifier}: native issue type verification failed")
-        if not issue.get("card") or any(issue["card"].get(key) != value for key, value in wanted["board"].items()):
-            raise PlanError(f"{identifier}: Project field verification failed")
-        current = model.resolve(records, identifier)
-        binding = {**(current["fields"].get("github") or {}), "project_item_id": issue["card"]["id"],
-                   "plan_labels": wanted["managed_labels"], "plan_dates": [x for x in wanted["board"] if x != "Status"],
-                   "pushed_hash": model.digest(wanted)}
-        if binding != current["fields"].get("github"):
-            _binding(workspace, records, current, binding, publication, active)
-    publication["last"] = {"fingerprint": fingerprint, "source": source,
-                           "source_revision": active["source_revision"],
-                           "revisions": {r["id"]: r.get("revision", 0) for r in records},
-                           "at": model.timestamp(), "items": len(selected)}
-    _checkpoint(workspace, publication, None)
-    return {"published": True, "fingerprint": fingerprint, "source_revision": active["source_revision"], "items": len(selected)}
+            payload = wanted["issue"]
+            for key in ("title", "body", "state", "assignees", "labels"):
+                if _comparable(key, issue.get(key)) != _comparable(key, payload[key]):
+                    raise PlanError(f"{identifier}: GitHub {key} verification failed; no publication success checkpoint")
+            if payload["state"] == "closed" and str(issue.get("stateReason", "")).lower() != payload["state_reason"]:
+                raise PlanError(f"{identifier}: close reason verification failed")
+            if issue.get("milestone") != (found[wanted["milestone"]]["number"] if wanted["milestone"] else None):
+                raise PlanError(f"{identifier}: milestone membership verification failed")
+            if issue.get("parent") != (found[wanted["parent"]]["id"] if wanted["parent"] else None):
+                raise PlanError(f"{identifier}: parent verification failed")
+            if set(issue.get("blocked_by") or []) != {found[x]["id"] for x in wanted["blockers"]}:
+                raise PlanError(f"{identifier}: blocker verification failed")
+            if config["type_mode"] == "issue_types" and (issue.get("issueType") or {}).get("id") != verified["issue_types"][wanted["type"]]:
+                raise PlanError(f"{identifier}: native issue type verification failed")
+            if not issue.get("card") or any(issue["card"].get(key) != value for key, value in wanted["board"].items()):
+                raise PlanError(f"{identifier}: Project field verification failed")
+            current = model.resolve(records, identifier)
+            binding = {**(current["fields"].get("github") or {}), "project_item_id": issue["card"]["id"],
+                       "plan_labels": wanted["managed_labels"], "plan_dates": [x for x in wanted["board"] if x != "Status"],
+                       "pushed_hash": model.digest(wanted)}
+            if binding != current["fields"].get("github"):
+                _binding(workspace, records, current, binding, publication, active, pacer.times())
+        publication["last"] = {"fingerprint": fingerprint, "source": source,
+                               "source_revision": active["source_revision"],
+                               "revisions": {r["id"]: r.get("revision", 0) for r in records},
+                               "at": model.timestamp(), "items": len(selected)}
+        _checkpoint(workspace, publication, None, pacer.times())
+        succeeded = True
+        return {"published": True, "complete": True, "fingerprint": fingerprint, "source_revision": active["source_revision"],
+                "items": len(selected), "writes": pacer.sent}
+    except PartEnd as end:
+        return left(end.stopped, end.next_at)
+    except GhFailure as failure:
+        if failure.kind in RATE_KINDS:
+            return left("rate-limit", _utc(pacer.clock() + failure.wait(pacer.clock())), failure)
+        error = failure
+        raise
+    except BaseException as exc:
+        error = exc
+        raise
+    finally:
+        if not succeeded:
+            try:
+                save() if error is None else save_stored()
+            except Exception:
+                if error is None:
+                    raise

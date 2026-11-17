@@ -28,7 +28,7 @@ def parser():
     root.add_argument("--bd", default=os.environ.get("PLAN_BD", "bd"), help="Beads executable")
     root.add_argument("--actor", default=os.environ.get("PLAN_ACTOR"), help="human:<name> or agent:<id>")
     root.add_argument("--json", action="store_true", help="emit compact JSON (all output is structured)")
-    root.add_argument("--version", action="version", version="plan 0.3.1")
+    root.add_argument("--version", action="version", version="plan 0.4.0")
     commands = root.add_subparsers(dest="command", required=True)
 
     def command(name, help_text, mutation=False):
@@ -116,6 +116,10 @@ def parser():
     board_apply = board_commands.add_parser("apply", help="apply the accepted preview as the configured publisher")
     board_apply.add_argument("--fingerprint", required=True)
     board_apply.add_argument("--writer", required=True)
+    board_apply.add_argument("--part", action="store_true",
+                             help="send at most --max-writes writes, save a checkpoint, and exit 0 with complete: false when work is left")
+    board_apply.add_argument("--max-writes", type=int, default=None,
+                             help="the write limit of 1 part, 1 to 400, default 40; only with --part")
     for leaf in (configure, board_preview, board_apply):
         for flag, extra in (("--workspace", {"type": Path}), ("--bd", {}), ("--actor", {}),
                             ("--json", {"action": "store_true"})):
@@ -178,6 +182,8 @@ def execute(args):
         from planlib import github
         if args.github_command in {"configure", "apply"} and not args.actor:
             raise PlanError("GitHub configuration and publication require --actor or PLAN_ACTOR")
+        if args.github_command == "apply" and args.max_writes is not None and (not args.part or not 1 <= args.max_writes <= github.WRITES_PER_HOUR):
+            raise PlanError(f"--max-writes needs --part and a value from 1 to {github.WRITES_PER_HOUR}")
         with workspace.lock():
             if args.github_command == "configure":
                 result = github.configure(workspace, args.repo, args.owner, args.number,
@@ -185,7 +191,10 @@ def execute(args):
             elif args.github_command == "preview":
                 result = github.preview(workspace)
             else:
-                result = github.apply(workspace, args.fingerprint, args.writer)
+                result = github.apply(workspace, args.fingerprint, args.writer, part=args.part, max_writes=args.max_writes)
+                if result.get("complete") is False and not args.part:
+                    return {**result, "error": "publication is partial; run apply again with the same fingerprint",
+                            "saved": "local"}, 1
         return {**result, "saved": "local"}, 0
     if command == "describe":
         with workspace.lock():
