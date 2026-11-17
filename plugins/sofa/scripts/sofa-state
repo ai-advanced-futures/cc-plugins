@@ -1185,12 +1185,29 @@ ROADMAP_NAMES = {"roadmap", "source", "read_at", "commit", "committed_at", "mile
 
 # The names that may go into the place (WHERE) of a guard message: each key that build_snapshot writes. A key of a
 # dict that is not here comes from data (the store or the file), so it never goes into a message (STORY-485). A story
-# that adds a section, a key or a field adds its name here, in the same change. Each name is a word of the script:
-# a key that comes from data (a login, a path, a work order) is never added here.
+# that adds a section, a key or a field adds its name here, and its place to SNAPSHOT_LAYOUT, in the same change.
+# Each name is a word of the script: a key that comes from data (a login, a path, a work order) is never added here.
 WHERE_NAMES = frozenset({
     "schema_version", "taken_at", "line", "store", "label", "queue", "rules", "rules_digest", "nulled",
     *SNAPSHOT_FIELDS, *(f for _, fields in SNAPSHOT_FIELDS.values() for f in fields),
     *FLOOR_SETS, *(f for fields in RULE_FIELDS.values() for f in fields), *ROADMAP_NAMES,
+})
+
+# The place of each key that build_snapshot writes, as a tuple of names (a list adds no name): ("items", "id"),
+# ("rules", "streams", "milestones"), ("roadmap", "stories", "planned_start_date"). The guard skips a key of the
+# snapshot only at such a place (STORY-579, D-7676): a key with the same text at another place comes from data, so the
+# guard searches it. A story that adds a key to build_snapshot adds its place here. A place that is missing only makes
+# the guard search that key.
+SNAPSHOT_LAYOUT = frozenset({
+    *((k,) for k in ("schema_version", "taken_at", "line", "queue", "rules", "rules_digest", "nulled", "roadmap",
+                     "defects", *SNAPSHOT_FIELDS)),
+    ("line", "store"), ("line", "label"), ("roadmap", "commit"), ("roadmap", "committed_at"),
+    ("roadmap", "source"), ("roadmap", "read_at"),
+    *((s, f) for s, (_, fields) in SNAPSHOT_FIELDS.items() for f in fields),
+    *(("rules", n) for n in FLOOR_SETS), *(("rules", n, f) for n, fields in RULE_FIELDS.items() for f in fields),
+    *(("roadmap", k) for k in ROADMAP_FIELDS),
+    *(("roadmap", k, f) for k, fields in ROADMAP_FIELDS.items() for f in fields),
+    *(("defects", k) for k in DEFECT_KINDS), *(("defects", k, f) for k in DEFECT_KINDS for f in ("count", "ids")),
 })
 
 GUARD_MIN_CHARS = 4
@@ -1334,11 +1351,19 @@ def read_roadmap(db_path):
         raise git.failure("rev-parse", rc, err)
     if os.path.realpath(top.strip()) != repo:
         return None
-    commit = git.must("for-each-ref", "--format=%(objectname)", ROADMAP_REF, extra=NO_LAZY_FETCH).strip()
-    if not commit:
+    # A for-each-ref pattern also gives each ref under it (refs/remotes/origin/main/x), so only the line of the exact
+    # name counts (STORY-579). `rev-parse --verify refs/remotes/origin/main` is not exact either: with no such ref, it
+    # gives the commit of a branch refs/heads/refs/remotes/origin/main.
+    lines = git.must("for-each-ref", "--format=%(refname) %(objecttype) %(objectname)", ROADMAP_REF,
+                     extra=NO_LAZY_FETCH).split("\n")
+    exact = [line.split(" ") for line in lines if line.split(" ", 1)[0] == ROADMAP_REF]
+    if not exact:
         return None
-    if not _COMMIT.fullmatch(commit):
+    if len(exact[0]) != 3 or not _COMMIT.fullmatch(exact[0][2]):
         raise git.failure("for-each-ref", 0, "the ref names no object id")
+    if exact[0][1] != "commit":
+        raise git.failure("for-each-ref", 0, "the ref names no commit")
+    commit = exact[0][2]
     # --no-show-signature: with `log.showSignature=true` git prints the lines of gpg on stdout before the format, and
     # GitHub signs the merge commits of main (fix round 1).
     stamp = git.must("show", "-s", "--no-show-signature", "--format=%ct", commit, extra=NO_LAZY_FETCH).strip()
@@ -1546,9 +1571,14 @@ def private_values(con, db_path_arg, limit=None):
     return found
 
 
-def _texts(obj, where, found, extend):
-    """Add each text of OBJ (a parsed JSON value) to FOUND as (where, text): each key of a dict, each string, and the
-    text of each number. A boolean and null have no text of a value, so they are left out.
+def _texts(obj, where, found, extend, place=None):
+    """Add each text of OBJ (a parsed JSON value) to FOUND as (where, text): each key of a dict that is not at a place
+    of SNAPSHOT_LAYOUT (such a key is a key that build_snapshot writes, STORY-579), each string, and the text of each
+    number. A boolean and null have no text of a value, so they are left out.
+
+    PLACE is the place of OBJ in SNAPSHOT_LAYOUT: () for the snapshot, None for data and for a rule set of the file,
+    so each key of the file is a text. A key at a place of SNAPSHOT_LAYOUT keeps its place. Each other key is a text,
+    and no key below it has a place, so only the place decides, never the text of the key.
 
     WHERE of a key is the path of its dict, and WHERE of a value is its own path (a list adds nothing). A key adds a
     part to the path of its value only when the path is still open and the text of the key is in WHERE_NAMES. Below
@@ -1556,19 +1586,25 @@ def _texts(obj, where, found, extend):
     or of the file goes into a message (STORY-485). When EXTEND is false, the path is closed from the start, because
     the keys of that OBJ come from the file.
     """
-    stack = [(where, obj, extend)]
+    stack = [(where, obj, extend, place)]
     while stack:
-        path, node, grows = stack.pop()
+        path, node, grows, at = stack.pop()
         if isinstance(node, dict):
-            found.extend((path, str(k)) for k in node)
             for k, v in node.items():
                 name = str(k)
+                # A key at a place of SNAPSHOT_LAYOUT is a key that build_snapshot writes, not data, so it is no text of
+                # the guard (STORY-579, D-7676). Each other key comes from data: it is searched, also when its text is
+                # a name of the script, and no key below it has a place.
+                spot = at + (name,) if at is not None else None
+                if spot not in SNAPSHOT_LAYOUT:
+                    found.append((path, name))
+                    spot = None
                 if grows and name in WHERE_NAMES:
-                    stack.append((f"{path}.{name}" if path else name, v, True))
+                    stack.append((f"{path}.{name}" if path else name, v, True, spot))
                 else:
-                    stack.append((path, v, False))
+                    stack.append((path, v, False, spot))
         elif isinstance(node, list):
-            stack.extend((path, v, grows) for v in node)
+            stack.extend((path, v, grows, at) for v in node)
         elif isinstance(node, str):
             found.append((path, node))
         elif isinstance(node, (int, float)) and not isinstance(node, bool):
@@ -1579,13 +1615,14 @@ def snapshot_strings(snap, sets):
     """Each text that goes into the snapshot, or that the file holds in a rule set, as (where, text).
 
     This is the full JSON text of spec row 10: the keys, the strings and the numbers of the snapshot and of the rule
-    sets. WHERE is a path of names of `WHERE_NAMES` (`items.id`; a key adds its dict), or `the snapshot`, or `the
-    floor configuration set <name>`. WHERE holds only names of `WHERE_NAMES`: a key of the store or of the file adds a
-    part only when its text is such a name, and below any other key the path stops, so no other text of the store or
-    of the file goes into WHERE.
+    sets, but not a key of the snapshot at a place of `SNAPSHOT_LAYOUT` (STORY-579). Each key of a rule set of the
+    file is a text. WHERE is a path of names of `WHERE_NAMES` (`items.id`; a key adds its dict), or `the snapshot`, or
+    `the floor configuration set <name>`. WHERE holds only names of `WHERE_NAMES`: a key of the store or of the file
+    adds a part only when its text is such a name, and below any other key the path stops, so no other text of the
+    store or of the file goes into WHERE.
     """
     found = []
-    _texts(snap, "", found, True)
+    _texts(snap, "", found, True, ())
     for name in FLOOR_SETS:
         _texts(sets[name], f"the floor configuration set {name}", found, False)
     return [(where or "the snapshot", text) for where, text in found]

@@ -1,5 +1,26 @@
 # Changelog
 
+## 12.1.1
+
+STORY-579: the snapshot reads only the exact ref `origin/main`, and its guard skips only the key names that the snapshot
+writes (FEATURE-47, D-7676).
+
+A patch step: no key or field of the snapshot changes, and no command gets a new exit code. `schema_version` stays 1.
+
+- `scripts/sofa-state`, `read_roadmap`: only the line of the exact name `refs/remotes/origin/main` of `for-each-ref`
+  counts. A repository with only refs under that name (`refs/remotes/origin/main/x`) gives `roadmap: null`, as a
+  repository with no `origin/main`. A ref that names no commit exits 1 with `cannot read the roadmap: for-each-ref: the
+  ref names no commit; no snapshot written`.
+- `scripts/sofa-state`, the guard of `snapshot take`: the new constant `SNAPSHOT_LAYOUT` holds the
+  place of each key that `build_snapshot` writes (also `roadmap.source` and `roadmap.read_at` of a Plan snapshot). The guard skips a key of the snapshot only at such a place, never by
+  its text. So a person login that is a part of a key name of the snapshot (`anne` in `planned_start_date`, `tori` in
+  `stories`) no longer stops each snapshot. Each value, each key of data, and each key of the rule sets of
+  `.claude/sofa-floor.json` is searched as before: a login in the word of a roadmap id (`miles` in `MILESTONE-1`), in a
+  key of the file, or in a word that the script writes as a value (`line` in the default label `line-<6 hex digits>`)
+  still stops the snapshot. The 4 row leaves (`holds_private`) do not change.
+- Tests: the new section `STORY-579` of `tests/sofa-state.test.sh` (the fixture `rmteam` and the cases `roadmapexact`,
+  `guardkeys`, `guardplace`, `guardlayout`, `guardopen` and `guardtext`).
+
 ## 12.1.0
 
 New commands: `sofa-state interaction list` and `interaction void` (STORY-525).
