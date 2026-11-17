@@ -1,5 +1,5 @@
-# Live tests of the sofa plugin (ADR-0001). Local, on demand. Not run by CI.
-# Sets SOFA_ITEST=1, the money gate that tests/integration/conftest.py requires.
+# Live tests of the sofa plugin (ADR-0001). Local, on demand. CI runs only the tiers slack, readiness and snapshot,
+# with -m unbilled (ADR-0001 item 9). SOFA_ITEST=1 opens the money gate of each other tier (tests/integration/conftest.py).
 SHELL := /bin/bash
 
 TIER ?=
