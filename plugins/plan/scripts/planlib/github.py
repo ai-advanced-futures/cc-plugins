@@ -21,7 +21,7 @@ WRITES_PER_HOUR = 400  # writes in each 3,600 seconds; GitHub allows 500 content
 BATCH = 10             # writes between 2 checkpoints
 PART_WRITES = 40       # default writes of 1 part
 MAX_WAIT = 60          # the longest wait for a rate limit, in seconds
-MARKER_MARGIN = 120    # seconds that a marker read looks before the time of its pending mark
+MARKER_MARGIN = 120    # seconds that a marker read looks before the pending mark, in GitHub time
 RATE_KINDS = {"secondary-rate-limit", "rate-limit"}
 SECONDARY = re.compile(r"secondary rate limit|abuse detection|submitted too quickly", re.IGNORECASE)
 PRIMARY = re.compile(r"API rate limit (?:already )?exceeded", re.IGNORECASE)
@@ -29,6 +29,10 @@ GITHUB_TIMEOUT = re.compile(r"couldn't respond to your request in time", re.IGNO
 NETWORK = re.compile(r"dial tcp|connection (?:reset|refused)|no such host|TLS handshake|i/o timeout|unexpected EOF", re.IGNORECASE)
 HTTP_SUFFIX = re.compile(r"\(HTTP (\d{3})\)")
 STATUS_LINE = re.compile(r"HTTP/\S+ (\d{3})")
+# The IMF-fixdate form of a `Date` header (RFC 9110 section 5.6.7), for example `Tue, 17 Nov 2026 13:06:08 GMT`.
+HTTP_DATE = re.compile(r"(Mon|Tue|Wed|Thu|Fri|Sat|Sun), ([0-9]{2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) "
+                       r"([0-9]{4}) ([0-9]{2}):([0-9]{2}):([0-9]{2}) GMT", re.ASCII)
+MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 NEXT_PAGE = re.compile(r'<https://api\.github\.com/([^>]+)>;\s*rel="next"')
 WORK = set(model.WORK_TYPES)
 DATES = {"planned_start_date": "Planned start", "planned_end_date": "Planned end",
@@ -201,6 +205,22 @@ def _digits(value):
     return int(value) if isinstance(value, str) and re.fullmatch(r"[0-9]{1,10}", value) else None
 
 
+def _github_time(value):
+    """The epoch seconds of a `Date` header in the IMF-fixdate form, else none. A header comes from GitHub, so it is not trusted.
+
+    The day and month names come from fixed tables, not from the locale, and the date must be a real calendar date.
+    """
+    found = HTTP_DATE.fullmatch(value) if isinstance(value, str) else None
+    if not found:
+        return None
+    _day_name, day, month, year, hour, minute, second = found.groups()
+    try:
+        moment = datetime(int(year), MONTHS.index(month) + 1, int(day), int(hour), int(minute), int(second), tzinfo=timezone.utc)
+    except ValueError:
+        return None
+    return int(moment.timestamp())
+
+
 def _classify(prefix, result):
     """Give the kind of a failed call from its head, its body and its stderr. Keep no text of them."""
     status, headers, body = _split(result.stdout)
@@ -243,6 +263,7 @@ class Gh:
         self.runner = runner or _run
         self.pacer = pacer or Pacer()
         self.repository_ids = {}
+        self.seen = None  # (GitHub epoch seconds, clock of the pacer) of the newest reply with a valid `Date`
 
     def _repository_id(self, repo):
         """The numeric ID of the repository, read 1 time for each repository."""
@@ -269,9 +290,12 @@ class Gh:
         if data is not None:
             args += ["--input", "-"]
         result = self.runner(args, data)
+        status, headers, body = _split(result.stdout)
+        stamp = _github_time(headers.get("date")) if status is not None else None
+        if stamp is not None:  # a failed reply has a head too
+            self.seen = (stamp, self.pacer.clock())
         if result.returncode:
             raise _classify(prefix, result)
-        status, headers, body = _split(result.stdout)
         if status is None:
             raise GhFailure(prefix, "other")
         try:
@@ -303,6 +327,12 @@ class Gh:
             self.pacer.sleep(wait)
             return once()
 
+    def github_now(self):
+        """The time of GitHub now, in epoch seconds: the newest valid `Date` plus the seconds that passed on this machine since that reply. None when no reply had one."""
+        if self.seen is None:
+            return None
+        return self.seen[0] + self.pacer.clock() - self.seen[1]
+
     def request(self, path, method="GET", data=None, retry=True):
         return self._call(path, method, data, retry)[1]
 
@@ -310,7 +340,7 @@ class Gh:
         return self._call("graphql", "POST", {"query": query, "variables": variables}, retry, graphql=True)[1]["data"]
 
     def marker_issue(self, config, marker, since, milestone=False):
-        """Find the 1 issue (or milestone) that holds the exact marker. Read the newest issues back to the time of `since`."""
+        """Find the 1 issue (or milestone) that holds the exact marker. Read the newest issues back to the time of `since`, in GitHub time. With `since` None, read each page."""
         repo = config["repo"]
         path = (f"repos/{repo}/milestones?state=all&per_page=100" if milestone
                 else f"repos/{repo}/issues?state=all&sort=created&direction=desc&per_page=100")
@@ -321,7 +351,7 @@ class Gh:
                 raise PlanError("GitHub returned an invalid issue list")
             for item in items:
                 created = None if milestone else _created(item)
-                if created is not None and created < since - MARKER_MARGIN:
+                if created is not None and since is not None and created < since - MARKER_MARGIN:
                     path = None
                     break
                 if "pull_request" in item:
@@ -1048,7 +1078,7 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
                 if identifier in active["refused_creates"]:
                     active["refused_creates"].remove(identifier)
                 active["pending_creates"].append(identifier)
-                active["pending_at"][identifier] = pacer.clock()
+                active["pending_at"][identifier] = client.github_now()  # GitHub time, or None when no reply of this call had a valid Date
                 _checkpoint(workspace, publication, active, pacer.times())
                 try:
                     created = _create(client, workspace, config, snapshot, record,

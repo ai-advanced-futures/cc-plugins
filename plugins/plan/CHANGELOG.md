@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0
+
+A refused issue create finds the issue that GitHub made when the machine clock differs from GitHub time.
+
+A minor step: in a call with no valid `Date`, a repository with more than 10,000 issues and pull requests makes the marker read reach the limit of 100 pages. The create then stops with "create outcome is unknown; no duplicate create will be retried" where 0.4.0 created it again.
+
+- The pending mark of a create now uses the `Date` header of the GitHub replies, plus the seconds that passed on this machine since that reply. A machine clock that is more than 120 seconds ahead of GitHub time or behind it no longer gives a second issue and the stop "issue binding and markers are ambiguous".
+- With no valid `Date` in the call, the marker read has no time stop. It reads the whole issue list, at most 100 pages.
+- The saved field `pending_at` keeps its name. It holds GitHub epoch seconds, or `null`.
+
 ## 0.4.0
 
 `plan github apply` paces its writes, reads the board once, and reports the real GitHub error.
