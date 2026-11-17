@@ -14,7 +14,7 @@ uv run ${CLAUDE_PLUGIN_ROOT}/scripts/plan.py --workspace PROFILE
 
 The command's `--help` is the source for exact arguments. Output is structured JSON; `--json` makes that output compact. `--actor ACTOR` or `PLAN_ACTOR` identifies the executing actor. State and claim changes require an explicit actor. Shell examples for the user have a `$ ` prefix; the prefix is not part of the executed command.
 
-A workspace is local to one machine. With the automatic push on, the result of a content write has a `backup` block: `pushed: true`, or `pushed: false` with `error`. A failed push does not change the exit code of the write. [One factory on one machine](single-factory.md) gives the rules for sessions, claims, backup, restore, and the migration from shared mode.
+A workspace is local to one machine. With the automatic push on, the result of a content write has a `backup` block: `pushed: true`, or `pushed: false` with `error`. A failed push does not change the exit code of the write. A command that cannot get the store lock in `PLAN_LOCK_TIMEOUT` seconds (120 by default) stops with `workspace is busy; no operation started`, then a fixed hint: run `lsof` on the file `plan.lock` in the Beads directory to find the holder. [One factory on one machine](single-factory.md) gives the rules for sessions, claims, backup, restore, and the migration from shared mode.
 
 ## Commands
 

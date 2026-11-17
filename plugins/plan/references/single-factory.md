@@ -4,7 +4,7 @@ A repository has one Plan workspace on one machine. Many sessions on that machin
 
 ## Sessions and claims
 
-Each Plan command takes the file lock `plan.lock` in the Beads directory. The lock lets one command read or write the store at a time. A command waits for the lock for 120 seconds at most. `PLAN_LOCK_TIMEOUT` sets another wait in seconds. A command that cannot get the lock in that time stops with `workspace is busy` and changes nothing. Run the command again.
+Each Plan command takes the file lock `plan.lock` in the Beads directory. The lock lets one command read or write the store at a time. A command waits for the lock for 120 seconds at most. `PLAN_LOCK_TIMEOUT` sets another wait in seconds. A command that cannot get the lock in that time stops with `workspace is busy` and changes nothing. Run the command again. Each `bd` child of a command holds the lock too. When a caller stops a command with no time to end it (for example, `SIGKILL` to its process group), the lock stays held until each `bd` and `git` process of that command ends. `lsof <Beads directory>/plan.lock` names those processes. The error `workspace is busy` also says this in a fixed sentence.
 
 On a store of some hundred records, one command holds the lock for 3 to 5 seconds. Thus parallel commands of 8 sessions wait in a line for about 30 seconds.
 

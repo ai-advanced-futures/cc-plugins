@@ -117,15 +117,16 @@ def _reap(child):
                 stream.close()
 
 
-def capture(command, *, cwd, env, timeout=60, stdin=None, own_group=True):
+def capture(command, *, cwd, env, timeout=60, stdin=None, own_group=True, pass_fds=()):
     """Bound the command and its children, including a pipe held by a child.
 
     `own_group=False` keeps the child in the process group of the caller, so a stop of that group (or a Ctrl-C) also stops it.
-    The limit then stops the child and each process below it by pid."""
+    The limit then stops the child and each process below it by pid. `pass_fds` keeps these descriptors open in the child (the
+    store lock): the child and each process that it starts hold the lock until they end."""
     try:
         child = subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                                 encoding="utf-8", errors="replace", start_new_session=own_group)
+                                 encoding="utf-8", errors="replace", start_new_session=own_group, pass_fds=pass_fds)
     except OSError as exc:
         raise CommandError("cannot start a command") from exc
     try:

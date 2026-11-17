@@ -88,10 +88,13 @@ def store_lock(beads_dir: Path, timeout: float | None = None):
                 break
             except BlockingIOError:
                 if time.monotonic() - started >= timeout:
-                    raise PlanError("workspace is busy; no operation started")
+                    # The first sentence is matched by `sofa-publish` (its word `busy`): keep it as it is.
+                    raise PlanError("workspace is busy; no operation started. The store lock is held by another process;"
+                                    " run lsof on the file plan.lock in the Beads directory to find it")
                 time.sleep(0.05)
-        yield
+        yield descriptor
     finally:
+        # Unlock first: it frees the lock for each process that holds the descriptor, so a normal end leaves no holder.
         fcntl.flock(descriptor, fcntl.LOCK_UN)
         os.close(descriptor)
 
@@ -408,11 +411,13 @@ class Workspace:
     def lock(self):
         """Serialize the sessions of this machine on one store."""
         self.backend.validate_local()
-        with store_lock(self.beads_dir):
+        with store_lock(self.beads_dir) as descriptor:
             leftover = self.beads_dir / LEFTOVERS[0]
             if leftover.exists() or leftover.is_symlink():
                 raise PlanError(UNSHARE)
             self._locked, self._control, self._wrote = True, None, False
+            # Each bd child holds the lock: it stays held until the last process of a stopped command ends.
+            self.backend.lock_fd = descriptor
             try:
                 yield
             except BaseException:
@@ -423,6 +428,7 @@ class Workspace:
                 self._after_write(failed=False)
             finally:
                 self._locked, self._control, self._wrote = False, None, False
+                self.backend.lock_fd = None
 
     def control(self) -> dict:
         # Each Plan writer holds the store lock, so one read is valid until the lock ends.

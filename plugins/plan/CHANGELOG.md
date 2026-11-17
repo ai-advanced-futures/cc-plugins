@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.0
+
+A Plan call that its caller stops leaves no `bd` write that can run beside a `recover`.
+
+A minor step: after a stopped backup push, the next Plan call can be refused with `workspace is busy` where 0.5.1 ran it. A `git` process that `bd` started in flight at the stop holds the store lock until it ends. A call that waits `PLAN_LOCK_TIMEOUT` (120 seconds) for the lock is refused with `workspace is busy; no operation started` and changes nothing. Run it again. `lsof <Beads directory>/plan.lock` names the holder.
+
+- The error `workspace is busy; no operation started` now ends with a fixed hint: the store lock is held by another process; run `lsof` on the file `plan.lock` in the Beads directory to find it. The first sentence is the same as before. The hint holds no path and no pid (issue 2890).
+- The `bd` commands of the backup push (`dolt remote list`, `dolt remote add`, `diff`, `dolt commit` and `dolt push`) now stay in the process group of Plan. A stop of that group (the time limit of `sofa_plan.run`, or a Ctrl-C in a terminal) now also stops `bd`. The own time limit of these commands also stops each process below `bd`, also a `git` process that has its own session.
+- Each `bd` child of a command that holds the store lock now holds the lock too. A `SIGKILL` to the group of Plan, or to the Plan process alone, no longer frees the lock while a `bd` or a `git` of that command still runs. A `recover` can then not write beside a push that was stopped.
+- A normal end, and each unwind, still free the lock at once for each holder.
+- A stopped backup push leaves no incomplete Plan write, because the push changes no record. The `recover` after it has nothing to finish.
+
 ## 0.5.1
 
 A Plan call that its caller stops leaves no `gh` process that can still write to the board.

@@ -24,6 +24,12 @@ class Beads:
         self.binary = str(binary)
         self.actor = actor
         self.timeout = timeout
+        # The store lock descriptor, set by `Workspace.lock()` for the time that it holds the lock. Each bd child gets it, so
+        # the lock stays held until the last process of a stopped command ends.
+        self.lock_fd = None
+
+    def _lock_fds(self) -> tuple[int, ...]:
+        return () if self.lock_fd is None else (self.lock_fd,)
 
     def _environment(self) -> dict[str, str]:
         # Do not let another workspace or session redirect this store.
@@ -79,7 +85,8 @@ class Beads:
         try:
             result = subprocess.run(command, input=stdin, capture_output=True, text=True,
                                     encoding="utf-8", errors="replace", timeout=self.timeout,
-                                    cwd=self.beads_dir.parent, env=self._environment(), check=False)
+                                    cwd=self.beads_dir.parent, env=self._environment(), check=False,
+                                    pass_fds=self._lock_fds())
         except subprocess.TimeoutExpired as exc:
             raise BeadsError(f"bd {args[0]} exceeded {self.timeout:g} seconds; check the store before retrying") from exc
         except OSError as exc:
@@ -121,12 +128,16 @@ class Beads:
         return self._object(self._run("info", "--schema"), "info")
 
     def _network(self, *args, json_result=True, timeout=None):
-        """Run one Beads command that can reach a Git remote; stop its children at the time limit."""
+        """Run one Beads command that can reach a Git remote; stop its children at the time limit.
+
+        bd stays in the group of its caller, so a stop of that group stops it. It starts its `git` children in their own
+        session, so the lock descriptor keeps the store locked until each of them ends."""
         self._check_layout()
         command = [self.binary, "--sandbox", "--json", "--actor", self.actor,
                    "--dolt-auto-commit=on", *args]
         result = capture(command, cwd=self.beads_dir.parent, env=self._environment(),
-                         timeout=self.timeout if timeout is None else timeout)
+                         timeout=self.timeout if timeout is None else timeout,
+                         own_group=False, pass_fds=self._lock_fds())
         if result.returncode:
             detail = (result.stderr or result.stdout).strip()[:1200]
             raise BeadsError(f"bd {' '.join(args[:2])} failed (exit {result.returncode}): {detail}")
