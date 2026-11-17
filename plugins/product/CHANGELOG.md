@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.11.1
+
+### Fixed
+- `prd.py drift --show` gives only the format lines of `git log` on a machine with `log.showSignature=true`. Before, git printed the lines of the signature check before the format line of each signed commit: the `BASE:` line held them, and each one was a `CHANGE:` line. `drift --show` and the `created` date of `prd.py migrate` also made git start the check program (`gpg.program`) 1 time for each signed commit (STORY-591).
+- `prdlib/git.py` gives each `git log` and each `git show` the option `--no-show-signature` when the command word is the first argument, so each new `log` or `show` call through it gets the option too.
+
 ## 6.11.0
 
 - Use `knowledge:ask` as the normal evidence reader before domain page reads. Requires knowledge 2.0.0 or later; the manifest dependency remains `knowledge` because it has no version floor field. The shared reader takes a question only and searches local registered graphs. No plugin-specific ponder is added.
