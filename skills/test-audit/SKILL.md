@@ -1,57 +1,36 @@
 ---
 name: test-audit
-description: "Writing/changing/reviewing/sweeping tests: reject duplicate or implementation-coupled proof; remove test-only production seams."
+description: "Evaluate test value when writing, changing, reviewing, or removing tests. Find duplicate tests, weak assertions, and production interfaces used only by tests."
 ---
 
-# Test Audit
+# Test audit
 
-- Authoring gates every new/changed test.
-- Audits: remove low-value proof in coherent owner batches; never chase deletion counts.
-- Whole-subsystem campaign: read [CAMPAIGN.md](CAMPAIGN.md) first.
+A useful test detects a distinct fault in observable behavior or an independent
+contract. Test removal reduces repeated proof while preserving those contracts;
+the number of deleted tests is not a success measure.
 
-## Authoring gate
+## Required results
 
-Before adding test, answer:
-
-1. Protected observable behavior, invariant, or independent contract?
-2. Credible regression that makes it fail?
-3. Why existing proof misses it? Each contract: one primary owner at strongest
-   boundary. Another layer needs distinct transport/lifecycle risk. Extend
-   tables/shared fixtures; consolidate repeated setup.
-4. Export, flag, wrapper, injection hook with no production caller needed?
-   Move proof to real boundary instead.
-
-- Use [boundary and cost guide](../../../docs/help/testing/writing-tests.md).
-- Regressions must fail pre-fix for intended reason, pass after repair; report
-  unavailable baseline proof.
-- One owner regression covers bug; never replay at every crossed layer.
-- Behavior-preserving refactors should not break test.
-
-## Junk patterns
-
-- Reject self-comparisons, copied inventories, source greps,
-  implementation/call-shape assertions, duplicate contracts, test-only seams,
-  subject-generated expected values, mocks supplying asserted behavior.
-- Fixtures must not fabricate owner receipts/order or claim persistence path
-  never writes.
-- Negative controls must fail at intended guard; names must match exercised behavior.
-- Auditing candidates: use [full checklist](references/audit.md#junk-patterns).
-
-## Retention bar
-
-- Keep independent API, SDK, protocol, config, migration, storage, security,
-  platform, default, prompt-byte, generated-language, package, release,
-  architecture, observable-ordering contracts. Static/slow ≠ disposable.
-- Source inspection must survive identifier-only refactors and guard independent
-  user-facing contract.
-- Baseline failures may be bugs to repair, not tests to delete.
-
-## Audit and validation
-
-- Before audit edit: read [candidate evidence and workflow](references/audit.md#candidate-evidence);
-  inspect full owners/callers/history; record remaining proof before deletion.
-- Delete obsolete production seams with tests; never optimize for deletion counts.
-- Follow [proof policy](../openclaw-testing/SKILL.md#proof-policy); preserve active
-  Vitest checkouts; run owner/sibling proof + changed checks; then autoreview.
-- Report causes, retained contracts, proof/cost, production versus test LOC,
-  follow-ups. Commit/push/land only with task authority.
+- For each new or changed test, identify its protected behavior, a fault that
+  makes it fail, and the gap in existing tests. Each contract has one primary
+  test owner; another layer needs a distinct transport or lifecycle risk.
+- Use the [audit criteria](references/audit.md) for test selection and validation.
+  A candidate report precedes edits and includes every field in
+  [candidate evidence](references/audit.md#candidate-evidence). Missing evidence
+  blocks deletion because the test may be the only proof of a contract.
+- Preserve the [retained contracts](references/audit.md#retention-bar), including
+  independent source checks. A test that fails at baseline is a possible product
+  defect, not evidence for removal.
+- A regression test fails before the fix at the intended guard and passes after
+  it. Report an unavailable baseline. Changes that preserve behavior leave tests
+  passing; negative controls fail for the stated reason.
+- An audit removes obsolete production interfaces used only by retired tests and
+  places retained regressions at their production owner's boundary. Tables and
+  shared fixtures replace repeated setup without adding test-only interfaces.
+- For a whole subsystem, produce the evidence in [CAMPAIGN.md](CAMPAIGN.md).
+  The [source-specific requirements](README.md#source-specific-requirements)
+  identify the OpenClaw guides and tools that this skill uses.
+- Report causes, removed categories and interfaces, retained contracts, test
+  results and cost, production versus test/support line counts, PR state, and
+  follow-ups. Commit, push, or merge only with task authority, because these
+  actions change shared state.

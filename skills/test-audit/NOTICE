@@ -1,8 +1,10 @@
 test-audit
 
-The files SKILL.md, CAMPAIGN.md, and references/audit.md are verbatim copies
-of .agents/skills/test-audit/ from https://github.com/openclaw/openclaw
-at commit 4cbd215af463775faa6807aea90621292b28af15.
+The files SKILL.md, CAMPAIGN.md, and references/audit.md derive from
+.agents/skills/test-audit/ at https://github.com/openclaw/openclaw,
+commit 4cbd215af463775faa6807aea90621292b28af15, with changes.
+The revision removes repeated instructions, states required results, and
+keeps source-specific guide links in README.md.
 
 The MIT notice of the source:
 
