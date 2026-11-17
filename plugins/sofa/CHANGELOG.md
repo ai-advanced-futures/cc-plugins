@@ -1,5 +1,28 @@
 # Changelog
 
+## 12.2.0
+
+PLAN-STORY-619: the tracker publishes Plan to the GitHub Project in parts, and recovers a stopped write (D-9079, D-9100).
+
+New script `scripts/sofa-publish`. No command that works today gets a new stop. Plan does not change.
+
+- `sofa-publish base --sync <subject>` saves the first preview of a `SYNC` in `.sofa/publish/sync-preview.json`.
+- `sofa-publish step --writer <login> --actor <actor> [--max-writes N]` makes a new preview, compares it with the first
+  preview (same items, same changed keys, same values; a `plan:<ID>` target that a part created counts as the same),
+  and sends at most 1 part with `github apply --part --max-writes 10`. The fingerprint comes only from the preview of the
+  same call (64 lower-case hexadecimal characters). A difference makes no apply.
+- `sofa-publish recover --actor <actor>` runs Plan `recover`, then `check`, 1 time for each stop of the log.
+- Each call prints 1 JSON line with an outcome word (`base-saved`, `part-done`, `wait`, `published`, `difference`,
+  `fingerprint-changed`, `busy`, `read-stopped`, `stopped`, `incomplete`, `unknown-create`, `refused`, `recovered`,
+  `recover-failed`) and adds it to `.sofa/publish/log.jsonl`. The line has no claim token and no record text. Exit code
+  0 for a word of progress, 1 for another word, 2 when the call did not start.
+- `scripts/sofa_plan.py`: `run()` takes an optional keyword `limit` (seconds). With no `limit`, the rule is the same:
+  `SOFA_PLAN_TIMEOUT`, else 300 seconds. The new class `PlanTimeout` (a kind of `PlanFailure`, so each caller works as
+  before) is the error of a time-limit stop.
+- `references/planning.md` and `references/roles/tracker.md`: the tracker publishes in rounds of parts with
+  `sofa-publish`, and the role file gives the action for each outcome word.
+- Tests: the new file `tests/test_publish_parts.py` and the fixtures in `tests/fixtures/publish/`.
+
 ## 12.1.1
 
 STORY-579: the snapshot reads only the exact ref `origin/main`, and its guard skips only the key names that the snapshot

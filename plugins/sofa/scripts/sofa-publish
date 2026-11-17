@@ -1,0 +1,435 @@
+#!/usr/bin/env python3
+"""Publish Plan to the GitHub Project in parts, and recover a stopped write (PLAN-STORY-619).
+
+Each call makes 1 Plan step and writes 1 JSON line to stdout and to <main folder>/.sofa/publish/log.jsonl.
+  base --sync SUBJECT      save the first preview of a SYNC
+  step --writer LOGIN --actor ACTOR [--max-writes N]
+                           preview, compare with the SYNC preview, publish at most 1 part
+  recover --actor ACTOR    finish the incomplete write of a stopped part, then check Plan
+The line holds an outcome word. The role file of the tracker gives the action for each word.
+"""
+import argparse
+from collections import Counter
+from datetime import datetime, timezone
+import json
+import os
+from pathlib import Path
+import re
+import sys
+import time
+
+from sofa_plan import Plan, PlanFailure, PlanTimeout, run, selection
+
+# A part is 1 `github apply --part` call of at most this many writes (D-9100, amends D-9080).
+PART_WRITES = 10
+# The time limit of 1 preview in seconds. The apply keeps the default limit of `run`.
+PREVIEW_LIMIT = 240
+MAX_PAIRS = 50
+DETAIL_LIMIT = 300
+FINGERPRINT = re.compile(r"[0-9a-f]{64}")
+IDENTIFIER = re.compile(r"[A-Za-z0-9._:-]{1,80}")
+NEXT_AT = re.compile(r"[0-9TZ:.+-]{1,40}")
+ACTIONS = {"create", "update", "check"}
+GOOD = {"base-saved", "part-done", "wait", "published", "recovered"}
+# The Plan texts of the words, in the order of the outcome table. The first row that matches gives the word.
+KNOWN_TEXTS = (
+    ("fingerprint-changed", ("publication fingerprint changed; preview again before writing",
+                             "GitHub changed after publication; preview again before writing")),
+    ("busy", ("workspace is busy; no operation started",)),
+    ("incomplete", ("a write is incomplete; run recover before further work",)),
+    ("unknown-create", ("a prior create has an unknown outcome; inspect GitHub before recovery",
+                        "create outcome is unknown; no duplicate create will be retried")),
+)
+PREVIEW_ARGS = ["github", "preview", "--json"]
+
+
+class Usage(Exception):
+    """An error of use: exit 2, no line in the log, no Plan call."""
+
+
+def now():
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def number(value):
+    return value if isinstance(value, int) and not isinstance(value, bool) else None
+
+
+def one_line(text):
+    return " ".join(str(text).split())[:DETAIL_LIMIT]
+
+
+def classify(text):
+    for word, texts in KNOWN_TEXTS:
+        if any(known in text for known in texts):
+            return word
+    return "refused"
+
+
+def parse(text):
+    try:
+        return json.loads(text)
+    except (TypeError, ValueError):
+        for line in reversed((text or "").splitlines()):
+            try:
+                return json.loads(line)
+            except ValueError:
+                continue
+    return None
+
+
+def error_of(found):
+    """The `error` text of a parsed Plan reply, or None."""
+    if isinstance(found, dict) and isinstance(found.get("error"), str):
+        return one_line(found["error"])
+    return None
+
+
+def error_text(out, err):
+    for source in [*(err or "").splitlines(), out]:
+        if (found := error_of(parse(source))) is not None:
+            return found
+    for text in ((err or ""), (out or "")):
+        for line in text.splitlines():
+            if line.strip():
+                return one_line(line)
+    return "Plan printed no result"
+
+
+def ask(plan, args, limit=None):
+    """Run 1 Plan command. Give (exit code, result, error text). Raise PlanTimeout at the time limit."""
+    try:
+        code, out, err = run([*plan.command, *args], cwd=plan.root, limit=limit)
+    except PlanTimeout:
+        raise
+    except PlanFailure as exc:
+        return None, None, one_line(exc)
+    result = parse(out)
+    if isinstance(result, dict) and "error" not in result:
+        return code, result, None
+    return code, None, error_text(out, err)
+
+
+# ---- the preview and the compare ----
+
+def readable(preview):
+    """True when the preview has the form that Plan 0.4.0 gives."""
+    if not isinstance(preview, dict) or not isinstance(preview.get("items"), list):
+        return False
+    if not isinstance(preview.get("warnings", []), list):
+        return False
+    seen = set()
+    for item in preview["items"]:
+        if not (isinstance(item, dict) and isinstance(item.get("id"), str) and item["id"] not in seen
+                and item.get("action") in ACTIONS and isinstance(item.get("changes"), dict)):
+            return False
+        if any(not isinstance(change, dict) or "after" not in change for change in item["changes"].values()):
+            return False
+        seen.add(item["id"])
+    return True
+
+
+def clean(preview):
+    """The preview with the keys that Plan 0.4.0 gives and no other key. The file holds no claim token and no record text."""
+    kept = {key: preview[key] for key in ("mode", "fingerprint", "source_revision", "source", "writer") if key in preview}
+    kept["items"] = [{"id": x["id"], "action": x["action"], "number": x.get("number"), "changes": x["changes"]}
+                     for x in preview["items"]]
+    kept["warnings"] = [x for x in preview.get("warnings", []) if isinstance(x, str)]
+    return kept
+
+
+def fingerprint_of(preview):
+    value = preview.get("fingerprint")
+    return value if isinstance(value, str) and FINGERPRINT.fullmatch(value) else None
+
+
+def is_planned(old, new, sync, current):
+    """The `plan:<ID>` rule (Design 3). `old` is a value of the SYNC preview and `new` the value of the new preview."""
+    if not (isinstance(old, str) and old.startswith("plan:")) or new is None:
+        return False
+    if isinstance(new, str) and new.startswith("plan:"):
+        return False
+    target = old[len("plan:"):]
+    return sync.get(target, {}).get("action") == "create" and current.get(target, {}).get("action") not in (None, "create")
+
+
+def same_value(key, old, new, sync, current):
+    if old == new:
+        return True
+    if key in ("parent", "milestone"):
+        return is_planned(old, new, sync, current)
+    if key == "blockers":
+        if not isinstance(old, list) or not isinstance(new, list) or len(old) != len(new):
+            return False
+        unused = list(old)
+        rest = []
+        for element in new:
+            if element in unused:
+                unused.remove(element)
+            else:
+                rest.append(element)
+        for element in rest:
+            match = next((x for x in unused if is_planned(x, element, sync, current)), None)
+            if match is None:
+                return False
+            unused.remove(match)
+        return True
+    return False
+
+
+def compare(sync_preview, new_preview):
+    """Give the pairs (item, key, cause) where the new preview is not the same changes as the SYNC preview. Row 4."""
+    sync = {x["id"]: x for x in sync_preview["items"]}
+    current = {x["id"]: x for x in new_preview["items"]}
+    found = []
+    for item in sync:
+        if item not in current:
+            found.append((item, "-", "gone-item"))
+    for item, entry in current.items():
+        before = sync.get(item)
+        if before is None:
+            if entry["action"] != "check" or entry["changes"]:
+                found.append((item, "-", "new-item"))
+            continue
+        if before["action"] == "update" and entry["action"] == "create":
+            found.append((item, "-", "update-to-create"))
+        for key, change in entry["changes"].items():
+            if key not in before["changes"]:
+                found.append((item, key, "new-key"))
+            elif not same_value(key, before["changes"][key]["after"], change["after"], sync, current):
+                found.append((item, key, "changed-after"))
+    known = set(sync_preview.get("warnings", []))
+    for warning in new_preview.get("warnings", []):
+        if warning not in known:
+            found.append(("-", "-", "new-warning"))
+    return found
+
+
+# ---- the files ----
+
+class Files:
+    def __init__(self, root):
+        self.folder = Path(root) / ".sofa" / "publish"
+        self.log = self.folder / "log.jsonl"
+        self.sync = self.folder / "sync-preview.json"
+
+    def lines(self):
+        try:
+            text = self.log.read_text(encoding="utf-8")
+        except OSError:
+            return []
+        found = []
+        for line in text.splitlines():
+            try:
+                value = json.loads(line)
+            except ValueError:
+                continue
+            if isinstance(value, dict):
+                found.append(value)
+        return found
+
+    def append(self, line):
+        self.folder.mkdir(parents=True, exist_ok=True)
+        with open(self.log, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps(line, sort_keys=True) + "\n")
+
+    def save_sync(self, document):
+        self.folder.mkdir(parents=True, exist_ok=True)
+        temporary = self.sync.with_name(self.sync.name + ".tmp")
+        temporary.write_text(json.dumps(document), encoding="utf-8")
+        os.replace(temporary, self.sync)
+
+    def load_sync(self):
+        try:
+            document = json.loads(self.sync.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            raise Usage("no SYNC preview; run base --sync SUBJECT first") from None
+        except (OSError, ValueError):
+            raise Usage("the SYNC preview file cannot be read; run base --sync SUBJECT again") from None
+        preview = document.get("preview") if isinstance(document, dict) else None
+        if not readable(preview) or fingerprint_of(preview) is None:
+            raise Usage("the SYNC preview file has a form that this script cannot read; run base --sync SUBJECT again")
+        return preview
+
+
+def finish(files, line):
+    """Write the line to stdout and to the log. Give the exit code of its outcome word."""
+    line = {"at": now(), **line}
+    print(json.dumps(line, sort_keys=True))
+    files.append(line)
+    return 0 if line["outcome"] in GOOD else 1
+
+
+def previous_fingerprint(files, sync_preview):
+    for line in reversed(files.lines()):
+        if line.get("outcome") == "base-saved":
+            break
+        if line.get("command") == "step" and isinstance(line.get("fingerprint"), str):
+            return line["fingerprint"]
+    return sync_preview["fingerprint"]
+
+
+# ---- the commands ----
+
+def read_preview(plan):
+    """Run the preview. Give (preview, None) or (None, (outcome word, detail))."""
+    try:
+        _, result, error = ask(plan, PREVIEW_ARGS, limit=PREVIEW_LIMIT)
+    except PlanTimeout as exc:
+        return None, ("read-stopped", one_line(exc))
+    if error is not None:
+        return None, (classify(error), error)
+    if not readable(result):
+        return None, ("refused", "the preview has a form that this script cannot read")
+    if fingerprint_of(result) is None:
+        return None, ("refused", "the preview fingerprint is not 64 lower-case hexadecimal characters")
+    return result, None
+
+
+def command_base(plan, files, args):
+    subject = " ".join(args.sync.split())[:80]
+    if not subject:
+        raise Usage("give a SYNC subject")
+    started = time.monotonic()
+    preview, failure = read_preview(plan)
+    seconds = round(time.monotonic() - started, 1)
+    if failure:
+        word, detail = failure
+        return finish(files, {"command": "base", "outcome": word, "sync": subject, "detail": detail, "seconds_preview": seconds})
+    files.save_sync({"sync": subject, "at": now(), "preview": clean(preview)})
+    counts = Counter(x["action"] for x in preview["items"])
+    return finish(files, {"command": "base", "outcome": "base-saved", "sync": subject, "fingerprint": preview["fingerprint"],
+                          "counts": {key: counts.get(key, 0) for key in ("create", "update", "check")},
+                          "seconds_preview": seconds})
+
+
+def command_step(plan, files, args):
+    sync = files.load_sync()
+    before = previous_fingerprint(files, sync)
+    writes = args.max_writes if args.max_writes is not None else PART_WRITES
+    if not 1 <= writes <= 400:
+        raise Usage("--max-writes is a number from 1 to 400")
+    line = {"command": "step", "fingerprint_before": before, "fingerprint": None, "same": None, "difference": None,
+            "writes": None, "items_left": None, "stopped": None, "next_at": None, "max_writes": writes,
+            "seconds_preview": None, "seconds_apply": None}
+    started = time.monotonic()
+    preview, failure = read_preview(plan)
+    line["seconds_preview"] = round(time.monotonic() - started, 1)
+    if failure:
+        line["outcome"], line["detail"] = failure
+        return finish(files, line)
+    line["fingerprint"] = preview["fingerprint"]
+    found = compare(sync, preview)
+    line["same"] = not found
+    if found:
+        line["difference"] = {"pairs": [list(x) for x in found[:MAX_PAIRS]], "count": len(found)}
+        line["outcome"] = "difference"
+        return finish(files, line)
+    started = time.monotonic()
+    try:
+        _, result, error = ask(plan, ["github", "apply", "--fingerprint", preview["fingerprint"], "--writer", args.writer,
+                                      "--actor", args.actor, "--part", "--max-writes", str(writes), "--json"])
+    except PlanTimeout as exc:
+        line["seconds_apply"] = round(time.monotonic() - started, 1)
+        line["outcome"], line["detail"] = "stopped", one_line(exc)
+        return finish(files, line)
+    line["seconds_apply"] = round(time.monotonic() - started, 1)
+    if error is not None:
+        line["outcome"], line["detail"] = classify(error), error
+        return finish(files, line)
+    line["writes"] = number(result.get("writes"))
+    line["items_left"] = number(result.get("items_left"))
+    stop = result.get("stopped")
+    next_at = result.get("next_at")
+    line["next_at"] = next_at if isinstance(next_at, str) and NEXT_AT.fullmatch(next_at) else None
+    if result.get("published") is True and result.get("complete") is True:
+        line["outcome"] = "published"
+    elif result.get("complete") is False and stop == "part-limit":
+        line["stopped"], line["outcome"] = stop, "part-done"
+    elif result.get("complete") is False and stop in ("hour-budget", "rate-limit"):
+        line["stopped"], line["outcome"] = stop, "wait"
+    else:
+        line["outcome"], line["detail"] = "refused", "the apply gave a result that this script does not know"
+    return finish(files, line)
+
+
+def recover_permitted(files):
+    """Row 6: the last outcome is a stop, and no recover came before it in this SYNC with no part between."""
+    outcomes = [x["outcome"] for x in files.lines() if isinstance(x.get("outcome"), str)]
+    for index in range(len(outcomes) - 1, -1, -1):
+        if outcomes[index] == "base-saved":
+            outcomes = outcomes[index + 1:]
+            break
+    if not outcomes or outcomes[-1] not in ("stopped", "incomplete"):
+        return False
+    for word in reversed(outcomes[:-1]):
+        if word in ("part-done", "published"):
+            return True
+        if word == "recovered":
+            return False
+    return True
+
+
+def command_recover(plan, files, args):
+    if not recover_permitted(files):
+        raise Usage("recover is not permitted: the last outcome of this SYNC is not a new stop")
+    started = time.monotonic()
+    line = {"command": "recover", "recovered": [], "check_errors": None}
+    detail = None
+    try:
+        code, result, error = ask(plan, ["recover", "--actor", args.actor, "--json"])
+        if error is not None or code != 0:
+            detail = error or "recover exited with an error"
+        else:
+            ids = result.get("recovered")
+            line["recovered"] = [x for x in ids if isinstance(x, str) and IDENTIFIER.fullmatch(x)] if isinstance(ids, list) else []
+            code, result, error = ask(plan, ["check", "--json"])
+            errors = result.get("errors") if result else None
+            if error is not None:
+                detail = error
+            elif not isinstance(errors, list):
+                detail = "check gave no list of errors"
+            else:
+                line["check_errors"] = len(errors)
+                if errors or code != 0:
+                    detail = "check found errors after recover"
+    except PlanTimeout as exc:
+        detail = one_line(exc)
+    line["seconds"] = round(time.monotonic() - started, 1)
+    line["outcome"] = "recover-failed" if detail else "recovered"
+    if detail:
+        line["detail"] = detail
+    return finish(files, line)
+
+
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else list(argv)
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--repo", required=True)
+    commands = parser.add_subparsers(dest="command", required=True)
+    base = commands.add_parser("base")
+    base.add_argument("--sync", required=True)
+    step = commands.add_parser("step")
+    step.add_argument("--writer", required=True)
+    step.add_argument("--actor", required=True)
+    step.add_argument("--max-writes", type=int)
+    recover = commands.add_parser("recover")
+    recover.add_argument("--actor", required=True)
+    args = parser.parse_args(argv)
+    try:
+        if any(arg.startswith("--workspace") for arg in argv):
+            raise Usage("the factory selects the workspace; do not pass --workspace")
+        root, backend, profile = selection(args.repo)
+        if backend != "plan":
+            raise Usage("this factory uses Product; select Plan before using sofa-publish")
+        plan = Plan(root, profile)
+        plan.check_source()
+        files = Files(root)
+        return {"base": command_base, "step": command_step, "recover": command_recover}[args.command](plan, files, args)
+    except (Usage, PlanFailure) as exc:
+        print(f"sofa-publish: {exc}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

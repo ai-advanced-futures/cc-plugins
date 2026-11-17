@@ -20,14 +20,22 @@ class PlanFailure(Exception):
     pass
 
 
-def run(args, *, cwd=None, capture=True, env=None):
-    """Run without a shell. Stop the process group at the time limit."""
-    try:
-        limit = float(os.environ.get("SOFA_PLAN_TIMEOUT", str(DEFAULT_TIMEOUT)))
-        if not math.isfinite(limit) or limit <= 0:
-            raise ValueError
-    except ValueError:
-        raise PlanFailure("SOFA_PLAN_TIMEOUT must be a number greater than zero") from None
+class PlanTimeout(PlanFailure):
+    """A Plan command did not end before its time limit."""
+
+
+def run(args, *, cwd=None, capture=True, env=None, limit=None):
+    """Run without a shell. Stop the process group at the time limit.
+
+    With no `limit`, the time limit is SOFA_PLAN_TIMEOUT, else DEFAULT_TIMEOUT seconds.
+    """
+    if limit is None:
+        try:
+            limit = float(os.environ.get("SOFA_PLAN_TIMEOUT", str(DEFAULT_TIMEOUT)))
+            if not math.isfinite(limit) or limit <= 0:
+                raise ValueError
+        except ValueError:
+            raise PlanFailure("SOFA_PLAN_TIMEOUT must be a number greater than zero") from None
     if args[0] == "git":
         keys = {"GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG", "GIT_OBJECT_DIRECTORY", "GIT_DIR",
                 "GIT_WORK_TREE", "GIT_IMPLICIT_WORK_TREE", "GIT_GRAFT_FILE", "GIT_INDEX_FILE",
@@ -55,7 +63,7 @@ def run(args, *, cwd=None, capture=True, env=None):
                 child.stdout.close()
             if child.stderr:
                 child.stderr.close()
-        raise PlanFailure("the selected command did not end before the time limit") from None
+        raise PlanTimeout("the selected command did not end before the time limit") from None
     return child.returncode, out, err
 
 
