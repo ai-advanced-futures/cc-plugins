@@ -46,11 +46,23 @@ def body_for(prefix: str, title: str) -> str:
 
 
 def main() -> int:
+    try:
+        return create()
+    except (adr_lib.CorpusError, adr_lib.FrontmatterError) as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        return 2
+    except (OSError, UnicodeDecodeError) as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        return 1
+
+
+def create() -> int:
     parser = argparse.ArgumentParser(description="Create one ADR")
     parser.add_argument("--title", required=True)
     parser.add_argument("--description",
                         help="one line of 30 words or fewer, in the words of the task")
     parser.add_argument("--area", required=True)
+    parser.add_argument("--map-area", choices=adr_lib.MAP_AREAS)
     parser.add_argument("--lifecycle", "--status", dest="lifecycle", default="accepted",
                         choices=list(adr_lib.LIFECYCLES))
     parser.add_argument("--date")
@@ -81,6 +93,11 @@ def main() -> int:
         if refusal:
             print(refusal, file=sys.stderr)
             return 2
+    if args.map_area is not None:
+        refusal = adr_lib.map_area_guard(corpus, args.map_area)
+        if refusal:
+            print(refusal, file=sys.stderr)
+            return 2
     today = args.date or _dt.date.today().isoformat()
     paths = list(adr_lib.discover(corpus)) + list(adr_lib.discover_archived(corpus))
     prefix = args.id or next_id(corpus, today=today, paths=paths)
@@ -108,6 +125,8 @@ def main() -> int:
         "generated": {"by": "process:adr-new",
                       "at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")},
     }
+    if args.map_area is not None:
+        meta["map_area"] = args.map_area
     if args.description:
         meta["description"] = args.description
     if args.parent_spec:
@@ -119,7 +138,16 @@ def main() -> int:
             "status": args.model_status, "element": args.model_element,
             "reason": args.model_reason,
         }.items() if value is not None}
-    path.write_text("---\n" + adr_lib.dump_frontmatter(meta) + "---\n\n"
+    if args.map_area is not None:
+        refusal = adr_lib.candidate_guard(corpus, path, meta)
+        if refusal:
+            print(f"ERROR: {refusal}", file=sys.stderr)
+            return 2
+    frontmatter = adr_lib.dump_frontmatter(meta)
+    if args.map_area is not None and adr_lib.load_frontmatter(frontmatter) != meta:
+        print("ERROR: cannot preserve supplied metadata as ADR frontmatter", file=sys.stderr)
+        return 2
+    path.write_text("---\n" + frontmatter + "---\n\n"
                     + body_for(prefix, args.title), encoding="utf-8")
     print(path.relative_to(corpus.root).as_posix())
     return 0

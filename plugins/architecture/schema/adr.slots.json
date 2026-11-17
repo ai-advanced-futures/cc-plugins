@@ -4,6 +4,7 @@
     "title",
     "description",
     "area",
+    "map_area",
     "status",
     "lifecycle",
     "date",
@@ -64,6 +65,14 @@
       "walk_order": null
     },
     "area": {
+      "multivalued": false,
+      "inlined": false,
+      "inverse": null,
+      "stored_inverse": null,
+      "target_kind": null,
+      "walk_order": null
+    },
+    "map_area": {
       "multivalued": false,
       "inlined": false,
       "inverse": null,

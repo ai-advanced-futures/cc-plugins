@@ -12,6 +12,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+MAP_AREAS = ("quality", "context", "strategy", "building-blocks", "data", "contracts",
+             "conventions", "deployment")
 LIFECYCLES = ("proposed", "accepted", "deprecated", "superseded")
 # Adr.status holds the ADR lifecycle (the `lifecycle` key). The name stays for
 # the callers of this module. The OKF `status` value is Adr.okf_status (A13).
@@ -27,7 +29,7 @@ LIST_KEYS = RELATIONSHIP_KEYS + ("related", "evidence")
 OBJECT_KEYS = ("model", "generated")  # frontmatter keys whose block is a mapping, not a list
 MAPPING_LIST_KEYS = ("verified",)  # frontmatter keys whose block is a list of mappings
 KEY_ORDER = (
-    "type", "title", "description", "area", "status", "lifecycle", "date", "amended",
+    "type", "title", "description", "area", "map_area", "status", "lifecycle", "date", "amended",
     "supersedes", "superseded_by", "amends", "amended_by", "refines",
     "deviates_from", "related", "parent_spec", "evidence", "model",
     "generated", "verified", "protected",
@@ -79,7 +81,12 @@ def _scalar(value: str):
         inner = v[1:-1]
         # YAML's single-quoted form escapes a quote by doubling it. Dropping the
         # wrapper without undoing that renders a title as `environment''s`.
-        return inner.replace("''", "'") if v[0] == "'" else inner
+        if v[0] == "'":
+            return inner.replace("''", "'")
+        try:
+            return json.loads(v)
+        except json.JSONDecodeError:
+            return inner
     if v in ("null", "~", ""):
         return None
     if v in ("true", "false"):
@@ -635,6 +642,20 @@ def is_generated_index(path) -> bool:
         return False
 
 
+def validate_map_area(value) -> None:
+    if value is not None and (not isinstance(value, str) or value not in MAP_AREAS):
+        raise CorpusError(f"map_area must be null or one of: {', '.join(MAP_AREAS)}")
+
+
+def normalize_required_areas(value) -> list[str]:
+    if (not isinstance(value, list)
+            or any(not isinstance(item, str) or item not in MAP_AREAS for item in value)):
+        raise CorpusError(f"required_areas must be a list of these areas: {', '.join(MAP_AREAS)}")
+    if len(value) != len(set(value)):
+        raise CorpusError("required_areas must not contain duplicate areas")
+    return [area for area in MAP_AREAS if area in value]
+
+
 def _normalize_config(raw: dict) -> dict:
     if not isinstance(raw, dict):
         raise CorpusError("ADR config must be an object")
@@ -654,6 +675,8 @@ def _normalize_config(raw: dict) -> dict:
                    if key not in {"version", "gate", "register"}})
     config["register"] = {"path": register["path"], "exclude": exclude}
     config["gate"] = {**config["gate"], **raw_gate}
+    if "required_areas" in raw:
+        config["required_areas"] = normalize_required_areas(raw["required_areas"])
     return config
 
 
@@ -829,6 +852,48 @@ def descriptions_guard(corpus) -> str:
     return ""
 
 
+def map_area_guard(corpus, value) -> str:
+    """Refuse a mapping that the shared area list or active schema rejects."""
+    import adr_lint
+
+    try:
+        validate_map_area(value)
+    except CorpusError as error:
+        return f"ERROR: {error}"
+    try:
+        schema = load_schema(corpus)
+    except CorpusError as error:
+        return f"ERROR: {error}; run /architecture:setup --refresh or update your custom schema"
+    properties = schema.get("properties")
+    definition = properties.get("map_area") if isinstance(properties, dict) else None
+    # The flat schema and lint treat null as an absent optional value.
+    permitted = (value is None and "map_area" not in schema.get("required", [])
+                 or value is not None and isinstance(definition, dict)
+                 and adr_lint._matches_definition(value, definition))
+    if not isinstance(definition, dict) or not permitted:
+        return ("ERROR: the active schema does not permit this map_area value; "
+                "run /architecture:setup --refresh or update map_area in your custom schema")
+    return ""
+
+
+def candidate_guard(corpus, path, meta) -> str:
+    """Validate all candidate fields before a confirmed mapping write."""
+    import adr_lint
+
+    lifecycle = meta.get("lifecycle")
+    legacy = lifecycle is None and meta.get("status") in LIFECYCLES
+    record = Adr(path=path, filename=path.name,
+                 relative_path=path.relative_to(corpus.root).as_posix(),
+                 source="frontmatter", meta=meta, body="", title=meta.get("title"),
+                 status=lifecycle if lifecycle is not None else meta.get("status"),
+                 okf_status=None if legacy else meta.get("status"), legacy_status=legacy,
+                 area=meta.get("area"), date=meta.get("date"))
+    issues = adr_lint.check_schema(record, load_schema(corpus), corpus.id_scheme)
+    if not issues:
+        adr_lint.check_required(record, issues)
+    return "; ".join(issue.message for issue in issues if issue.level == adr_lint.ERROR)
+
+
 def find_repo_root(start=None) -> Path:
     start = Path(start or Path.cwd()).resolve()
     for parent in (start, *start.parents):
@@ -851,16 +916,23 @@ def load_corpus(repo_root=None, config_path=None) -> Corpus:
     return Corpus(root=root, config=_normalize_config(raw))
 
 
-def discover(corpus: Corpus):
-    """{{DIR}}/*.md, non-recursive. The register, CLAUDE.md, and every
-    subdirectory (archive/, and the vendored trees, which are not .md files at
-    the top level) stay out."""
+def discover_active(corpus: Corpus):
+    """Read top-level ADRs, without archives, fixed pages, or generated indexes.
+
+    register.exclude hides a register row, not a record in the active graph.
+    """
     if not corpus.dir.is_dir():
         return []
-    skip = NON_ADR_BASENAMES | {corpus.register.name} | set(corpus.config["register"]["exclude"])
     return sorted((p for p in corpus.dir.glob("*.md")
-                   if p.name not in skip and not is_generated_index(p)),
+                   if p.name not in NON_ADR_BASENAMES and p.resolve() != corpus.register
+                   and not is_generated_index(p)),
                   key=lambda p: p.name)
+
+
+def discover(corpus: Corpus):
+    """The active ADRs whose rows appear in the register."""
+    excluded = set(corpus.config["register"]["exclude"])
+    return [path for path in discover_active(corpus) if path.name not in excluded]
 
 
 def discover_archived(corpus: Corpus):

@@ -1,7 +1,8 @@
 # Architecture
 
-Scaffolds an architecture-decision-record (ADR) corpus into any repository, captures a decision
-the moment it is made, and answers questions about past decisions from it. An ADR corpus here is a
+Discover architecture choices, record accepted decisions, and return when requirements change.
+The plugin also creates an architecture-decision-record (ADR) corpus and answers questions about
+past decisions. An ADR corpus here is a
 flat directory of frontmatter files plus a generated register, kept structurally consistent by a
 standard-library-only vendored toolchain and a pytest suite.
 
@@ -25,8 +26,9 @@ This one test governs capture, recall, grooming, and review alike.
 
 ## Commands and skills
 
-Seven skills, four commands. Capture and recall fire on their own, mid-session; setup is typed but
-never fires on its own either; the rest are invoked by a human.
+Nine skills, four commands. Capture and recall can start during a session. Setup is user-invoked.
+Explorer guides discovery; its `saving-deferred` helper runs only after approval to save a group
+of open findings.
 
 - **`/architecture:setup`** — bootstrap. Detects any prior corpus, offers greenfield, adopt, or migrate,
   confirms once, then writes the corpus, `.claude/adr.json`, and both CLAUDE.md rule blocks.
@@ -37,6 +39,10 @@ never fires on its own either; the rest are invoked by a human.
   adopt, and a corpus that is already configured. A migrate mode moves the lifecycle, re-copies
   the CI scripts, and deletes `docs/adr/CLAUDE.md`, each only after a yes. Backed by the `setup`
   skill (`disable-model-invocation: true`) and `scripts/scaffold.py`.
+- **`/architecture:explore`** — guided discovery. Review evidence, choose architecture areas,
+  record confirmed choices, check required-area coverage, and continue when requirements change.
+- `saving-deferred` — internal forked skill. Saves only an approved group through `knowledge:learn`
+  and reports saved paths or unsaved findings. It has no user command.
 - **`/architecture:learn`** — capture. Writes one ADR with `lifecycle: accepted` and `status: stable` for a
   decision that is expensive to undo. Backed by the `architecture:learn` skill, which also fires on its own during a
   session, mid-flow, without stopping to ask. Applies the distillation standard from
@@ -77,6 +83,57 @@ Commands are what a human types. Most skills are what a session reaches for on i
 split is the mechanism that makes the plugin engage without being asked. `setup` is user-typed
 only, so it carries `disable-model-invocation: true` too, even though it has no command of its own.
 
+## Architecture discovery
+
+Use `/architecture:explore` to start from scratch, organization guidance, or an existing
+application. No prior architecture or product requirements document (PRD) is required.
+Explorer reviews available sources first, then asks one question at a time with options,
+advantages, disadvantages, and a recommendation. You choose the next area. Ask for an
+explanation or an example when you need one.
+
+Explorer covers eight areas: `quality`, `context`, `strategy`, `building-blocks`, `data`,
+`contracts`, `conventions`, and `deployment`. It uses an existing assessment report or
+examines application code. It asks you to confirm each inferred choice. Permission to
+adopt external ADRs without individual questions applies only to those ADRs, not to
+choices inferred from code or documents.
+
+Accepted choices go to `architecture:learn`. Rejected choices create no ADR. Deferred
+or uncertain choices stay open, and existing proposed ADRs stay unchanged. Explorer
+shows grouped deferred findings before it asks to save them through `knowledge:learn`.
+Without that support, it continues and lists unsaved findings; it writes no substitute
+file.
+
+Select the areas required for the first build. Coverage counts only accepted ADRs with
+an explicit `map_area`; the free-text `area` remains unchanged. Proposed, deprecated,
+superseded, and deferred decisions do not count. Accepted decisions in every required
+area establish the stopping point, not a claim that the entire architecture or every
+checklist topic is complete. You can build or continue discovery while other areas stay
+open.
+
+The map refuses an unfinished accepted record instead of reporting coverage. A mapped
+record needs written Decision content. Each other standard section present must also
+contain content. Older records need not add missing standard headings. Comments and
+empty headings or code blocks do not complete a section. The error names the record
+and sections to complete; the map changes no file.
+
+When a schema requires model facts or evidence, supply them in the same `new` call.
+Use `--model-status`, optional `--model-element` and `--model-reason`, and repeated
+`--evidence` options for dated measurements. Model details require a model status.
+The complete candidate is checked before a mapped record is written.
+
+The knowledge plugin is required to load Architecture. A missing knowledge graph or failed
+save support does not stop the interview; Explorer reports setup steps and unsaved findings.
+A missing knowledge plugin prevents the host from loading Architecture.
+
+With a PRD, Explorer compares decisions with functional requirements after source review
+and again at the end. Conflicts and unsupported requirements become questions; the PRD
+stays unchanged. Without a PRD, Explorer says that this comparison did not run.
+
+On return, Explorer uses accepted coverage and open choices. It reviews only accepted
+decisions affected by changed evidence or requirements and asks before replacing them.
+Unrelated decisions stay unchanged. If open choices were not saved, supply them again;
+Explorer does not claim to recover missing session history.
+
 ## The optional gate
 
 `templates/gate/adr-gate.yml` is a GitHub Actions workflow, offered at `/architecture:setup` and written by
@@ -101,6 +158,7 @@ type: adr
 title: Order state machine
 description: Orders move through a fixed state machine, not free-form flags.
 area: orders
+map_area: data             # optional shared coverage area
 status: stable             # the OKF value: draft | stable | deprecated
 lifecycle: accepted        # proposed | accepted | deprecated | superseded
 date: 2026-08-13
@@ -140,7 +198,8 @@ their ordering, and inline comments.
 ## The save code and the hook
 
 `scripts/adr.py` is the one script that writes a change to the corpus: `init`, `upgrade`, `new`,
-`set`, `link`, `unlink`, `remove`, `resolve`, `regen`, `check`, and `log`. It imports `adr_lib.py`,
+`set`, `link`, `unlink`, `remove`, `resolve`, `regen`, `check`, and `log`.
+`map` reads coverage without writing files; `required-areas` saves an explicit required-area selection. It imports `adr_lib.py`,
 `adr_index.py`, `adr_lint.py`, and `adr_migrate.py` from `templates/verbatim/scripts`, so it runs
 the same code as the CI copy and the hook below. `upgrade` brings an old corpus to the brain
 standard: it moves `status` to `lifecycle`, adds a `generated` stamp to each ADR that has none,
@@ -179,6 +238,30 @@ form of `register` remains accepted, but canonical config uses `register.path` a
 `register.exclude`. Excluded basenames stay in the graph but do not receive register rows.
 `schema` can point to a repository-relative adopter schema; `rules` points to optional corpus
 instructions; `extra_corpora` lists additional read-only decision corpora.
+
+The optional `required_areas` list stores the areas selected for the first build. An absent
+key means no selection has been made; `[]` means the person explicitly selected no required
+areas. The list accepts only the eight area names, without duplicates. Coverage is computed,
+not stored. No checklist state or deferred-choice pointers are added to this configuration.
+
+The save-code commands use the plugin-owned script. Replace `PLUGIN_ROOT` and `REPO` with
+the plugin and target repository folders:
+
+```bash
+$ uv run PLUGIN_ROOT/scripts/adr.py --root REPO map
+$ uv run PLUGIN_ROOT/scripts/adr.py --root REPO required-areas --set quality data
+$ uv run PLUGIN_ROOT/scripts/adr.py --root REPO required-areas --none
+$ uv run PLUGIN_ROOT/scripts/adr.py --root REPO required-areas --clear
+```
+
+`map` returns JSON with `version`, `required_areas`, `ready`, `areas`, and `unmapped`.
+`ready` means only that the selected required-area rule is met. It is false before selection
+and true for an explicit empty selection. Each area lists the accepted ADRs that cover it.
+
+Use `new --map-area AREA` for a confirmed new mapping, or `set ADR_FILE map_area=AREA`
+for an existing frontmatter ADR. `map_area=null` clears a mapping. These writes refuse a
+schema that does not support the field. Update a custom schema explicitly, or refresh an
+opted-in shipped schema with `/architecture:setup --refresh`; no map read upgrades a corpus.
 
 ## Register contract
 
@@ -308,6 +391,30 @@ The vendored suite also runs, unmodified, inside a repo after `/architecture:set
 ```bash
 pip install -r scripts/adr/requirements.txt && python3 -m pytest tests/adr
 ```
+
+### Live Explorer checks
+
+Ordinary pytest runs exclude the `integration` marker. Live checks use separate fixture
+projects and require an explicit opt-in.
+
+Before you run the live commands, you must set `CLAUDE_JOB_DIR` to a fresh absolute local
+directory. The fixture writes logs under `CLAUDE_JOB_DIR/tmp`. Keep these logs local; do not
+commit them. Create the directory and run the checks in the same shell.
+
+```bash
+$ export CLAUDE_JOB_DIR="$(mktemp -d /tmp/architecture-explore.XXXXXX)"
+$ ARCHITECTURE_ITEST=1 make -C plugins/architecture itest TIER=registration
+$ ARCHITECTURE_ITEST=1 make -C plugins/architecture itest TIER=acceptance
+$ ARCHITECTURE_ITEST=1 ARCHITECTURE_INTERACTIVE_BASH=1 make -C plugins/architecture itest TIER=interactive
+```
+
+Use `TIER=all` for all three groups, with both opt-ins. Registration runs before a behavior
+series. Test sessions exclude inherited settings and refuse API-key use and overage.
+Headless runs require actual rate events. The interactive group requires separate permission
+to preapprove Bash in its synthetic fixture, while retaining `acceptEdits`. It uses its own
+tmux server and checks the subscription and disabled extra usage before and after the save.
+A missing or unclear billing observation stops the run. No user settings or shipped skill
+permissions change. Offline helper tests check the harness without starting Claude.
 
 ## Invariants
 

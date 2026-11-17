@@ -22,15 +22,23 @@ fewer in the words of the task, and pass it with `--description`. On a rewrite i
 line in the front matter. The line tells a reader when to open the ADR, so it adds to the title
 and does not repeat it.
 
+When Explorer requests a replacement, require its explicit replacement confirmation
+for the affected record and proposed change. Confirmation of a concern is not replacement approval.
+Other callers keep independent amendment without an extra approval step.
+Pass Explorer's confirmed `map_area: AREA` to Learn when writing the replacement.
+
 ## Eight forms
+
+`lifecycle` records the decision state; `status` holds the OKF value. The following table
+lists the changes for each form.
 
 | Form | Textual frontmatter changes |
 |---|---|
-| Rewrite in place | Rewrite the body; set `amended: <today>`; keep status. |
-| Deprecate | Set `status: deprecated`; set `amended: <today>`. |
-| Full supersede | Old: `status: superseded`, append new filename to `superseded_by`; new: append old filename to `supersedes`. |
-| Partial supersede | Keep both statuses; append the reciprocal items with `# partial — <scope>` on both sides. |
-| Amend by sibling | New: append old filename to `amends`; old: append new filename to `amended_by`; statuses stay. |
+| Rewrite in place | Rewrite the body; set `amended: <today>`; keep lifecycle and status. |
+| Deprecate | Set `lifecycle: deprecated` and `status: deprecated`; set `amended: <today>`. |
+| Full supersede | Old: set `lifecycle: superseded` and `status: deprecated`, set `amended: <today>`, and append new filename to `superseded_by`; new: append old filename to `supersedes`. |
+| Partial supersede | Keep lifecycle and status on both records; append the reciprocal items with `# partial — <scope>` on both sides. |
+| Amend by sibling | New: append old filename to `amends`; old: append new filename to `amended_by`; keep lifecycle and status on both records. |
 | Refine | Append the target filename to `refines`; no reciprocal field. |
 | Deviate | Append the target filename to `deviates_from`; no reciprocal field. |
 | Archive | Move only deprecated or superseded ADRs to `archive/` through the grooming procedure. |
@@ -39,8 +47,36 @@ For a full or partial supersede, write the new ADR first with `architecture:lear
 one-sided supersession is a lint error. Cross-references hold filenames, never a number, because
 the filename is the identity.
 
-Change only the frontmatter lines for the named keys. Keep every other key, the key order, the
-scalar spelling, and each inline comment, because a full re-serialization of the block loses them.
+If a record has a partial relationship comment, do not run `adr.py set` or `adr.py link` on that record.
+Those commands replace frontmatter and remove partial markers. Instead, use targeted frontmatter edits
+for the named lifecycle, status, amended, and reference fields. Use `adr_lib.set_scalar` for scalar fields.
+Keep each existing reference and inline comment, including every `# partial` marker.
+
+For a retirement without partial relationship comments, use `adr.py set`: status follows lifecycle,
+so the save code writes `status: deprecated` for either retired lifecycle. Set the old record's
+lifecycle rather than status alone, because only accepted records count as coverage.
+
+Run `git rev-parse --show-toplevel` separately. Replace `ROOT` with that absolute repository
+path, `OLD_ADR` with the old filename, and `DATE` with today's date in `YYYY-MM-DD` form.
+Use the expanded plugin path. For deprecation, save the state change:
+
+```bash
+$ uv run ${CLAUDE_PLUGIN_ROOT}/scripts/adr.py --root ROOT set OLD_ADR lifecycle=deprecated amended=DATE
+```
+
+For full supersession, save the old record's state change after writing the replacement
+and both reference fields:
+
+```bash
+$ uv run ${CLAUDE_PLUGIN_ROOT}/scripts/adr.py --root ROOT set OLD_ADR lifecycle=superseded amended=DATE
+```
+
+Keep the replacement's lifecycle and status. On records without partial relationship comments,
+append reference filenames through `adr.py link` without removing existing references.
+For a direct edit that the save code does not support,
+change only the frontmatter lines for the named keys. Keep every other key, the key order,
+the scalar spelling, and each inline comment. The save code can reformat frontmatter;
+preserve the body and reference values. Stop and report a failed save.
 
 ## Close every amend
 

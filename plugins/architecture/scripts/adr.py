@@ -14,7 +14,11 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import os
+import re
+import shlex
 import sys
+import tempfile
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime, timezone
 from pathlib import Path
@@ -165,7 +169,14 @@ def find(root, key) -> Path:
 def load(path):
     front, body = adr_lib.split_frontmatter(path.read_text(encoding="utf-8"))
     if front is None:
-        raise UsageError(f"{path.name} has no frontmatter. Run /architecture:migrate first.")
+        record = adr_lib.parse_adr(path)
+        lifecycle = record.status if record.status in adr_lib.LIFECYCLES else "unknown"
+        migration = shlex.quote(str(PLUGIN_ROOT / "templates/verbatim/scripts/adr_migrate.py"))
+        raise UsageError(f"{path.name} has legacy body-only metadata (lifecycle: {lifecycle}). "
+                         f"Preview body-header conversion with python3 {migration} "
+                         "--repo-root ROOT --frontmatter --dry-run. Replace ROOT with the repository path. "
+                         "After you approve the preview, run the same command without --dry-run, "
+                         "then retry this change.")
     return adr_lib.load_frontmatter(front), body
 
 
@@ -181,6 +192,46 @@ def _unresolved_bundle_link(c, value) -> bool:
 
 def _delink(c, value):
     return value[1:] if _unresolved_bundle_link(c, value) else value
+
+
+def save_mapping(root, path, meta, original) -> None:
+    """Write mapping and plain single-line scalar changes in place.
+
+    Keep generated metadata and all unchanged fields, including relationship
+    comments. Refuse changed relationships, lists, objects, block scalars, or
+    scalar forms that set_scalar cannot keep intact, before any file write.
+    """
+    text = path.read_bytes().decode("utf-8")
+    front, _body = adr_lib.split_frontmatter(text)
+    nodes = yaml.compose(front)
+    lines = front.splitlines()
+    batch_limit = ("Mapping batches support plain single-line scalar edits and unchanged relationships only. "
+                   "Keep all relationship comments in any separately reviewed edit.")
+    for key, value in meta.items():
+        if key in original and value == original[key]:
+            continue
+        refusal = f"set with map_area cannot safely change {key} without losing comments. " + batch_limit
+        fields = [(name, node) for name, node in nodes.value if name.value.strip().lower() == key]
+        if len(fields) > 1 or fields and not lines[fields[0][0].start_mark.line].startswith(f"{key}:"):
+            raise UsageError(refusal)
+        node = fields[0][1] if fields else None
+        # Relationship comments carry meaning even when the field is a scalar.
+        # Keep unchanged relationships, but do not transfer a partial mark to a new target.
+        if (key in adr_lib.RELATIONS or isinstance(value, (dict, list))
+                or isinstance(value, str) and ("\n" in value or "\r" in value)):
+            raise UsageError(refusal)
+        if node is not None:
+            if (not isinstance(node, yaml.ScalarNode) or node.style in ("|", ">")
+                    or node.start_mark.line != node.end_mark.line
+                    or " #" in front[node.start_mark.index:node.end_mark.index]):
+                raise UsageError(refusal)
+        rendered = "null" if value is None else str(value).lower() if isinstance(value, bool) else str(value)
+        text = adr_lib.set_scalar(text, key, rendered)
+    candidate, _body = adr_lib.split_frontmatter(text)
+    if adr_lib.load_frontmatter(candidate) != meta:
+        raise UsageError("set with map_area cannot preserve this metadata. " + batch_limit)
+    path.write_bytes(text.encode("utf-8"))
+    regen_write(root)
 
 
 def save(root, path, meta, body, who) -> None:
@@ -283,12 +334,16 @@ def cmd_upgrade(args) -> int:
 
 
 def cmd_new(args) -> int:
+    if args.model_status is None and (args.model_element is not None or args.model_reason is not None):
+        raise UsageError("--model-element and --model-reason require --model-status")
     argv = ["--title", args.title, "--area", args.area, "--repo-root", str(args.root)]
     if args.description:
         argv += ["--description", args.description]
-    for key in ("lifecycle", "parent_spec"):
-        if getattr(args, key):
+    for key in ("lifecycle", "parent_spec", "map_area", "model_status", "model_element", "model_reason"):
+        if getattr(args, key) is not None:
             argv += [f"--{key.replace('_', '-')}", getattr(args, key)]
+    for evidence in args.evidence:
+        argv += ["--evidence", evidence]
     with redirect_stdout(io.StringIO()) as out:
         code = _run_main(adr_new, argv)
     if code:
@@ -303,12 +358,30 @@ def cmd_new(args) -> int:
 def cmd_set(args) -> int:
     path = find(args.root, args.key)
     meta, body = load(path)
+    original = dict(meta)
+    c = corpus(args.root)
+    mapping_requested = False
     for item in args.pairs:
         key, value = parse_pair(item)
         if key in ("type", "generated", "protected", "status"):
             raise UsageError(f"set does not change {key}. Only a person changes protected; status follows lifecycle.")
+        if key == "map_area":
+            mapping_requested = True
+            refusal = adr_lib.map_area_guard(c, value)
+            if refusal:
+                raise UsageError(refusal.removeprefix("ERROR: "))
         meta[key] = value
-    save(args.root, path, meta, body, actor(args))
+    if mapping_requested:
+        # Validate the complete candidate, including the status that save writes,
+        # before the first file change. Keep prior non-map callers unchanged.
+        if isinstance(meta.get("lifecycle"), str) and meta["lifecycle"] in adr_lib.OKF_STATUS_OF:
+            meta["status"] = adr_lib.OKF_STATUS_OF[meta["lifecycle"]]
+        refusal = adr_lib.candidate_guard(c, path, meta)
+        if refusal:
+            raise UsageError(refusal)
+        save_mapping(args.root, path, meta, original)
+    else:
+        save(args.root, path, meta, body, actor(args))
     print(rel(args.root, path))
     return 0
 
@@ -352,6 +425,147 @@ def cmd_remove(args) -> int:
     return 0
 
 
+def configured_corpus(root):
+    """Read an existing setup without adding defaults to its saved object."""
+    path = root / ".claude" / "adr.json"
+    if not path.is_file():
+        raise UsageError(".claude/adr.json does not exist. Run /architecture:setup first.")
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as error:
+        raise UsageError("invalid ADR config: .claude/adr.json") from error
+    c = adr_lib.Corpus(root=root, config=adr_lib._normalize_config(raw))
+    # Apply the existing path checks even when a read needs no archive or schema.
+    _ = c.dir, c.register, c.archive, c.schema, c.rules, c.extra_corpora
+    if not isinstance(c.id_scheme, str) or c.id_scheme not in ID_PATTERNS:
+        raise UsageError("id_scheme must be sequential or date")
+    return c, path, raw
+
+
+def unfinished_body_sections(body):
+    """Require a written decision and content in each standard section present.
+
+    Older ADRs need not adopt all five headings. Comments, headings, and empty
+    code fences cannot make a new or partly filled skeleton count as a save.
+    """
+    expected = {heading[3:].casefold(): heading[3:] for heading in adr_new.BODY_HEADINGS}
+    sections = {}
+    current = None
+    fence = None
+    body = re.sub(r"<!--.*?(?:-->|\Z)", "", body, flags=re.DOTALL)
+    for line in body.splitlines():
+        text = line.strip()
+        if fence:
+            if re.fullmatch(re.escape(fence[0]) + "{" + str(len(fence)) + r",}\s*", text):
+                fence = None
+            elif current and text:
+                sections[current] = True
+            continue
+        opened = re.match(r"(`{3,}|~{3,})", text)
+        if opened:
+            fence = opened[1]
+            continue
+        heading = re.match(r"^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$", line)
+        if heading:
+            if len(heading[1]) <= 2:
+                name = heading[2].casefold()
+                current = name if len(heading[1]) == 2 and name in expected else None
+                if current:
+                    sections[current] = False
+            continue
+        if current and text and not re.fullmatch(r"(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,}", text):
+            sections[current] = True
+    return [label for name, label in expected.items()
+            if (name in sections or name == "decision") and not sections.get(name)]
+
+
+def cmd_map(args) -> int:
+    c, _path, _raw = configured_corpus(args.root)
+    if not c.dir.is_dir():
+        raise DataError(f"{rel(args.root, c.dir)} does not exist. Run /architecture:setup first.")
+    selected = c.config.get("required_areas")
+    rows = {area: {"area": area, "required": selected is not None and area in selected,
+                   "covered": False, "adrs": []} for area in adr_lib.MAP_AREAS}
+    unmapped = []
+    for path in adr_lib.discover_active(c):
+        record = adr_lib.parse_adr(path, c.id_scheme, root=c.dir)
+        name = rel(args.root, path)
+        if record.raw_frontmatter is not None:
+            try:
+                raw = yaml.safe_load(record.raw_frontmatter)
+            except yaml.YAMLError as error:
+                raise DataError(f"{name}: invalid frontmatter: {error}") from error
+            if not isinstance(raw, dict):
+                raise DataError(f"{name}: frontmatter must be an object")
+            if "type" in raw:
+                page_type = raw["type"]
+                if not isinstance(page_type, str) or not page_type.strip():
+                    raise DataError(f"{name}: type must be a nonempty string")
+                if page_type != "adr":
+                    continue
+            # The tolerant parser turns some empty collections into null. Validate
+            # the supplied value first, so an invalid mapping cannot disappear.
+            mapping = raw.get("map_area")
+        else:
+            if record.body.startswith("---"):
+                raise DataError(f"{name}: frontmatter is not closed")
+            mapping = record.meta.get("map_area")
+        try:
+            adr_lib.validate_map_area(mapping)
+        except adr_lib.CorpusError as error:
+            raise UsageError(f"{name}: {error}") from error
+        if record.frontmatter_error:
+            raise DataError(f"{name}: {record.frontmatter_error}")
+        lifecycle = record.status if record.status in adr_lib.LIFECYCLES else None
+        if mapping is None:
+            unmapped.append({"path": name, "lifecycle": lifecycle})
+        elif lifecycle == "accepted":
+            unfinished = unfinished_body_sections(record.body)
+            if unfinished:
+                raise DataError(f"{name}: unfinished accepted ADR; complete these sections before using coverage: "
+                                + ", ".join(unfinished))
+            rows[mapping]["adrs"].append(name)
+    for row in rows.values():
+        row["adrs"].sort()
+        row["covered"] = bool(row["adrs"])
+    result = {"version": 1, "required_areas": selected,
+              "ready": selected is not None and all(rows[area]["covered"] for area in selected),
+              "areas": list(rows.values()), "unmapped": sorted(unmapped, key=lambda item: item["path"])}
+    print(json.dumps(result, ensure_ascii=False))
+    return 0
+
+
+def cmd_required_areas(args) -> int:
+    c, path, raw = configured_corpus(args.root)
+    if not c.dir.is_dir():
+        raise UsageError("the ADR folder does not exist. Run /architecture:setup first.")
+    selected = None if args.clear else adr_lib.normalize_required_areas(args.set or [])
+    if args.clear:
+        changed = "required_areas" in raw
+        raw.pop("required_areas", None)
+    else:
+        changed = "required_areas" not in raw or c.config["required_areas"] != selected
+        raw["required_areas"] = selected
+    if changed:
+        # Stage in the same folder, then replace the complete file. A failed
+        # write leaves the old configuration in place and removes the stage.
+        staged = None
+        try:
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                             prefix=".adr-", suffix=".tmp", delete=False) as stream:
+                staged = Path(stream.name)
+                stream.write(json.dumps(raw, indent=2, ensure_ascii=False) + "\n")
+                stream.flush()
+                os.fsync(stream.fileno())
+            staged.chmod(path.stat().st_mode & 0o777)
+            os.replace(staged, path)
+        finally:
+            if staged is not None:
+                staged.unlink(missing_ok=True)
+    print(rel(args.root, path))
+    return 0
+
+
 def cmd_resolve(args) -> int:
     print(rel(args.root, find(args.root, args.key)))
     return 0
@@ -390,9 +604,14 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("new")
     p.add_argument("--title", required=True)
     p.add_argument("--area", required=True)
+    p.add_argument("--map-area", choices=adr_lib.MAP_AREAS)
     p.add_argument("--description")
     p.add_argument("--lifecycle", choices=list(adr_lib.LIFECYCLES))
     p.add_argument("--parent-spec", dest="parent_spec")
+    p.add_argument("--model-status", choices=adr_lib.MODEL_STATUSES)
+    p.add_argument("--model-element")
+    p.add_argument("--model-reason")
+    p.add_argument("--evidence", action="append", default=[])
     p.add_argument("--by")
     p.set_defaults(run=cmd_new)
     p = sub.add_parser("set")
@@ -412,6 +631,14 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument("key")
         p.add_argument("--by")
         p.set_defaults(run=run)
+    p = sub.add_parser("map")
+    p.set_defaults(run=cmd_map)
+    p = sub.add_parser("required-areas")
+    selection = p.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--set", nargs="+", choices=adr_lib.MAP_AREAS)
+    selection.add_argument("--none", action="store_true")
+    selection.add_argument("--clear", action="store_true")
+    p.set_defaults(run=cmd_required_areas)
     p = sub.add_parser("regen")
     p.add_argument("--check", action="store_true")
     p.set_defaults(run=cmd_regen)
@@ -431,10 +658,10 @@ def main(argv=None) -> int:
     args.root = args.root.resolve()
     try:
         return args.run(args)
-    except UsageError as error:
+    except (UsageError, adr_lib.CorpusError, adr_lib.FrontmatterError, yaml.YAMLError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 2
-    except DataError as error:
+    except (DataError, OSError, UnicodeDecodeError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 1
 

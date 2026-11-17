@@ -93,6 +93,19 @@
       ],
       "type": "string"
     },
+    "map_area": {
+      "enum": [
+        "quality",
+        "context",
+        "strategy",
+        "building-blocks",
+        "data",
+        "contracts",
+        "conventions",
+        "deployment"
+      ],
+      "type": "string"
+    },
     "model": {
       "additionalProperties": false,
       "properties": {

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0
+
+- Add `/architecture:explore` to review evidence and discover architecture choices one question at a time, with or without an existing application or product requirements.
+- Record accepted choices through `architecture:learn`. Keep rejected and deferred choices outside the ADR set. Review external decisions before adoption and request approval before saving deferred findings as knowledge.
+- Add accepted-decision coverage across eight architecture areas. Keep `area` unchanged, use optional `map_area` for coverage, and let the person select the areas required for the first build. Refuse unfinished accepted records instead of counting them as coverage.
+- Compare decisions with product requirements after source review and at the end. Report conflicts and gaps without changing the requirements.
+- Continue from accepted decisions and open choices when evidence changes. Confirm replacements and leave unrelated decisions unchanged.
+- Supply required model facts and dated evidence during mapped creation. Keep independent amendment behavior, and retire records with the correct lifecycle and OKF status.
+
 ## 1.1.0
 
 - Use `knowledge:ask` as the normal evidence reader before domain page reads. Requires knowledge 2.0.0 or later; the manifest dependency remains `knowledge` because it has no version floor field. The shared reader takes a question only and searches local registered graphs. No plugin-specific ponder is added.

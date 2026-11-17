@@ -5,3 +5,4 @@ linkml==1.11.1
 pytest
 jsonschema
 pyyaml
+markdown-it-py==4.0.0

@@ -41,6 +41,16 @@ types:
     pattern: '^[a-z][a-z0-9-]*$'
 
 enums:
+  MapArea:
+    permissible_values:
+      quality:
+      context:
+      strategy:
+      building-blocks:
+      data:
+      contracts:
+      conventions:
+      deployment:
   AdrLifecycle:
     permissible_values:
       proposed:
@@ -56,6 +66,9 @@ enums:
 slots:
   area:
     range: AreaSlug
+  map_area:
+    description: The confirmed area used by the architecture coverage map.
+    range: MapArea
   lifecycle:
     description: The ADR lifecycle. status holds the OKF value of the lifecycle (A13).
     range: AdrLifecycle
@@ -169,7 +182,7 @@ classes:
     class_uri: linkml:Any
   Adr:
     tree_root: true
-    slots: [type, title, description, area, status, lifecycle, date, amended, supersedes,
+    slots: [type, title, description, area, map_area, status, lifecycle, date, amended, supersedes,
             superseded_by, amends, amended_by, refines, deviates_from, related,
             parent_spec, evidence, model, generated, verified, protected]
     slot_usage:

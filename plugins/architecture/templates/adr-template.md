@@ -3,6 +3,7 @@ type: adr
 title: {{TITLE}}
 description: {{DESCRIPTION}}
 area: {{AREA}}
+map_area: {{MAP_AREA}}
 status: {{STATUS}}
 lifecycle: {{LIFECYCLE}}
 date: {{DATE}}
