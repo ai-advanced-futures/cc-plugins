@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.2
+
+The board read and the marker read count a marker only in an item that the configured writer made (issue 2901).
+
+A patch step: it adds no stop to a run that works on 0.6.1, and it removes 3 stops that an item of another account gave.
+
+- The 2 reads that match a marker are the board read (at the start of `preview` and `apply`) and the marker read (the read back after a failed reply, the retry after a rate limit, and the resolve of a prior create). Each now knows the account that made each issue and milestone: GraphQL `author { login __typename }` and REST `user.login` for an issue, and REST `creator.login` for a milestone. GraphQL gives the login of a GitHub App with no `[bot]` and the type `Bot`, so the code adds `[bot]` for a `Bot`. The compare with the configured writer is exact, as the viewer check of `apply`.
+- An item of another account that holds the marker is skipped: apply does not bind it, does not count it for the 1-match rule, and does not stop for it. The check also covers the legacy marker `<!-- okf: <path> -->`. An account that GitHub does not give (a deleted account) is not the writer.
+- A bound issue keeps its binding with no author check, because a binding is a saved Plan decision. So an imported issue that a person made keeps its binding.
+- The 3 stops that go: "issue binding and markers are ambiguous" for a bound record and a foreign issue with its marker, "duplicate issue markers" for a foreign issue with the marker 2 times, and "a prior create has an unknown outcome" for a foreign issue and the own issue in the wait.
+- Limit: a migration that changes the writer must bind each issue of the old writer first. The marker in an issue of the old writer with no binding no longer counts, so apply creates a new issue.
+- A marker in an issue that a person made, with no binding, is no longer adopted. Apply creates an issue of the writer.
+- Each issue and milestone of the snapshot has the new key `author`, so a preview of 0.6.1 has a fingerprint that 0.6.2 does not give. Apply of that fingerprint ends with "publication fingerprint changed; preview again before writing". `sofa-publish step` makes a new preview before each part, so it is not affected.
+
 ## 0.6.1
 
 After a stopped create, the next apply resolves the unknown outcome with the marker read, so a stop by the caller does not need a person.

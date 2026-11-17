@@ -71,7 +71,7 @@ ISSUES = '''query PlanIssues($owner:String!, $name:String!, $after:String, $firs
   issueTypes(first:20) @include(if:$firstPage) { totalCount nodes { id name } }
   issues(first:100,after:$after,states:[OPEN,CLOSED]) {
    totalCount pageInfo { hasNextPage endCursor } nodes {
-    id number url title body state stateReason viewerCanUpdate viewerCanType
+    id number url title body state stateReason viewerCanUpdate viewerCanType author { login __typename }
     issueType { id name } milestone { number } parent { id }
     labels(first:100) { totalCount nodes { name } }
     assignees(first:100) { totalCount nodes { login } }
@@ -134,6 +134,23 @@ def _created(item):
         return datetime.strptime(item["created_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp()
     except (KeyError, TypeError, ValueError):
         return None
+
+
+def _author(item):
+    """The login of the account that made an issue (REST `user`, GraphQL `author`) or a milestone (REST `creator`), in the form of
+    the configured writer. None when GitHub gives no account (a deleted account)."""
+    actor = item.get("user") or item.get("creator") or item.get("author")
+    if not isinstance(actor, dict) or not isinstance(actor.get("login"), str):
+        return None
+    login = actor["login"]
+    if actor.get("__typename") == "Bot" and not login.endswith("[bot]"):
+        login += "[bot]"  # GraphQL gives the login of an App with no [bot]; REST and the viewer give it with [bot]
+    return login
+
+
+def _by_writer(login, writer):
+    """True when the login is the configured writer, with the exact compare that apply uses for the viewer."""
+    return isinstance(login, str) and isinstance(writer, str) and login == writer
 
 
 class RefusedCreate(Exception):
@@ -344,7 +361,7 @@ class Gh:
         return self._call("graphql", "POST", {"query": query, "variables": variables}, retry, graphql=True)[1]["data"]
 
     def marker_issue(self, config, marker, since, milestone=False):
-        """Find the 1 issue (or milestone) that holds the exact marker. Read the newest issues back to the time of `since`, in GitHub time. With `since` None, read each page."""
+        """Find the 1 issue (or milestone) of the configured writer that holds the exact marker. Skip an item of another account. Read the newest issues back to the time of `since`, in GitHub time. With `since` None, read each page."""
         repo = config["repo"]
         path = (f"repos/{repo}/milestones?state=all&per_page=100" if milestone
                 else f"repos/{repo}/issues?state=all&sort=created&direction=desc&per_page=100")
@@ -360,7 +377,7 @@ class Gh:
                     break
                 if "pull_request" in item:
                     continue
-                if marker in ((item.get("description" if milestone else "body")) or ""):
+                if marker in ((item.get("description" if milestone else "body")) or "") and _by_writer(_author(item), config["writer"]):
                     found.append(item)
             if path is None:
                 break
@@ -470,13 +487,13 @@ class Gh:
                                "sub_issues": [x["id"] for x in _nodes(issue.get("subIssues"), "sub-issues")],
                                "parent": (issue.get("parent") or {}).get("id"),
                                "milestone": (issue.get("milestone") or {}).get("number"),
-                               "card": by_issue.get(issue["number"])})
+                               "card": by_issue.get(issue["number"]), "author": _author(issue)})
         milestones = []
         for page_number in range(1, MAX_PAGES + 1):
             page = self.request(f"repos/{config['repo']}/milestones?state=all&per_page=100&page={page_number}")
             if not isinstance(page, list):
                 raise PlanError("GitHub returned an invalid milestones list")
-            milestones.extend(page)
+            milestones.extend({**x, "author": _author(x)} if isinstance(x, dict) else x for x in page)
             if len(page) < 100:
                 break
         else:
@@ -633,7 +650,7 @@ def _body(workspace, record, current="", criteria=()):
     return current.rstrip() + ("\n\n" if current.strip() else "") + managed + "\n"
 
 
-def _find(workspace, record, snapshot):
+def _find(workspace, record, snapshot, writer):
     milestone = record["fields"]["type"] == "Milestone"
     collection = snapshot["milestones"] if milestone else snapshot["issues"]
     marker = _marker(workspace, record)
@@ -643,6 +660,8 @@ def _find(workspace, record, snapshot):
         markers += [f"<!-- okf: {legacy} -->"]
     matches = []
     for issue in collection:
+        if not _by_writer(issue.get("author"), writer):
+            continue  # a marker counts only in an item that the writer made (PLAN-STORY-658)
         body = issue.get("description" if milestone else "body") or ""
         hits = sum(body.count(m) for m in markers)
         if hits > 1 and not (body.count(marker) == 1 and len(markers) > 1 and body.count(markers[1]) == 1):
@@ -679,7 +698,7 @@ def _selection(workspace, records, snapshot, config):
         binding = record["fields"].get("github") or {}
         if binding.get("repo") and binding["repo"] != config["repo"]:
             raise PlanError(f"{record['id']}: issue binding belongs to another repository")
-        issue = _find(workspace, record, snapshot)
+        issue = _find(workspace, record, snapshot, config["writer"])
         if issue:
             key = (record["fields"]["type"] == "Milestone", issue["number"])
             if key in by_number:
@@ -997,7 +1016,7 @@ def _create(client, workspace, config, snapshot, record, body, active):
 
 def _prior_create(client, workspace, config, record, active, started):
     """Settle a create that an earlier call sent and did not confirm. Wait until SETTLE seconds of this call passed, then read the
-    marker. Give the 1 issue (or milestone) that holds it, or None. Each other result ends the call and keeps the create pending."""
+    marker. Give the 1 issue (or milestone) of the writer that holds it, or None. Each other result ends the call and keeps the create pending."""
     pacer = client.pacer
     wait = started + SETTLE - pacer.monotonic()
     if wait > 0:
@@ -1119,7 +1138,7 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
                 except PlanError:
                     # A failed reply is not proof that GitHub did not create the issue.
                     refreshed = client.snapshot(config)
-                    issue = _find(workspace, record, refreshed)
+                    issue = _find(workspace, record, refreshed, config["writer"])
                     if issue is None:
                         raise PlanError(f"{identifier}: create outcome is unknown; no duplicate create will be retried") from None
                 else:
@@ -1209,7 +1228,7 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
             fresh = client.snapshot(config)
             for record in selected:
                 if record["id"] in deferred:
-                    card = (_find(workspace, record, fresh) or {}).get("card")
+                    card = (_find(workspace, record, fresh, config["writer"]) or {}).get("card")
                     if not card:
                         raise PlanError(f"{record['id']}: Project membership could not be confirmed")
                     _board(client, snapshot, card, desired[record["id"]], True)
@@ -1218,7 +1237,7 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
         verified = client.snapshot(config)
         for record in selected:
             identifier, wanted = record["id"], desired[record["id"]]
-            issue = _find(workspace, record, verified)
+            issue = _find(workspace, record, verified, config["writer"])
             if not issue:
                 raise PlanError(f"{identifier}: issue is missing at verification")
             milestone = record["fields"]["type"] == "Milestone"
