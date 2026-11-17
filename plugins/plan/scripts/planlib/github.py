@@ -22,6 +22,7 @@ BATCH = 10             # writes between 2 checkpoints
 PART_WRITES = 40       # default writes of 1 part
 MAX_WAIT = 60          # the longest wait for a rate limit, in seconds
 MARKER_MARGIN = 120    # seconds that a marker read looks before the pending mark, in GitHub time
+SETTLE = 30            # seconds from the start of an apply to the marker read of a prior create; GitHub ends a request after 10 seconds
 RATE_KINDS = {"secondary-rate-limit", "rate-limit"}
 SECONDARY = re.compile(r"secondary rate limit|abuse detection|submitted too quickly", re.IGNORECASE)
 PRIMARY = re.compile(r"API rate limit (?:already )?exceeded", re.IGNORECASE)
@@ -155,9 +156,12 @@ def _utc(epoch):
 
 class Pacer:
     """At least WRITE_GAP seconds between 2 writes, at most WRITES_PER_HOUR writes in 3,600 seconds."""
-    def __init__(self, clock=None, sleep=None):
+    def __init__(self, clock=None, sleep=None, monotonic=None):
         self.clock = clock or time.time
         self.sleep = sleep or time.sleep
+        # Waits are measured with a clock that a change of the machine time cannot move (issue 2900). A caller that gives its own
+        # `clock` and no `monotonic` (a test) gets that clock for both.
+        self.monotonic = monotonic or (self.clock if clock else time.monotonic)
         self.history, self.limit, self.sent, self.on_batch = [], None, 0, None
 
     def load(self, times):
@@ -991,6 +995,22 @@ def _create(client, workspace, config, snapshot, record, body, active):
         raise
 
 
+def _prior_create(client, workspace, config, record, active, started):
+    """Settle a create that an earlier call sent and did not confirm. Wait until SETTLE seconds of this call passed, then read the
+    marker. Give the 1 issue (or milestone) that holds it, or None. Each other result ends the call and keeps the create pending."""
+    pacer = client.pacer
+    wait = started + SETTLE - pacer.monotonic()
+    if wait > 0:
+        pacer.sleep(wait)
+    try:
+        return client.marker_issue(config, _marker(workspace, record), active["pending_at"].get(record["id"]),
+                                   record["fields"]["type"] == "Milestone")
+    except GhFailure:
+        raise  # a rate limit ends the call with `rate-limit`; another failure names its kind
+    except PlanError as failure:
+        raise PlanError(f"{record['id']}: a prior create has an unknown outcome; inspect GitHub before recovery ({failure})") from None
+
+
 def _board(client, snapshot, card, wanted, new):
     """Write the board values of 1 card. A new card gets each value that is not null; an old card gets each difference."""
     for name, value in wanted["board"].items():
@@ -1005,6 +1025,7 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
     """Publish one preview. The caller holds the workspace lock until the checkpoints are saved."""
     client = client or Gh()
     pacer = client.pacer
+    started = pacer.monotonic()
     records, config, snapshot, selected, found, desired, publication, active = _read(workspace, client)
     records = list(records)  # Binding commits replace records; keep the read index immutable.
     if writer != config["writer"] or snapshot["login"] != config["writer"]:
@@ -1072,12 +1093,17 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
         for record in selected:
             identifier = record["id"]
             issue = found[identifier]
+            if not issue and identifier in active["pending_creates"]:
+                # An earlier call sent this create and got no reply: settle it with the marker read.
+                issue = _prior_create(client, workspace, config, record, active, started)
+                if issue:
+                    made = True
+                    found[identifier] = issue
             if not issue:
-                if identifier in active["pending_creates"]:
-                    raise PlanError(f"{identifier}: a prior create has an unknown outcome; inspect GitHub before recovery")
                 if identifier in active["refused_creates"]:
                     active["refused_creates"].remove(identifier)
-                active["pending_creates"].append(identifier)
+                if identifier not in active["pending_creates"]:
+                    active["pending_creates"].append(identifier)
                 active["pending_at"][identifier] = client.github_now()  # GitHub time, or None when no reply of this call had a valid Date
                 _checkpoint(workspace, publication, active, pacer.times())
                 try:

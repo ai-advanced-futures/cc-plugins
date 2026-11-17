@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.1
+
+After a stopped create, the next apply resolves the unknown outcome with the marker read, so a stop by the caller does not need a person.
+
+A patch step: it removes a case that ended the call, and adds none to a run that works on 0.6.0. A resolving apply waits at most 30 seconds, inside the time limit of the caller.
+
+- A create can end with no reply: the caller stops Plan during the create, or GitHub gives a failed reply and the read back finds no issue. The next apply used to end with "a prior create has an unknown outcome; inspect GitHub before recovery". Now it settles the create. When the board read at the start of the call finds the issue with the marker, apply binds it. Else apply waits until 30 seconds have passed since the start of the call (GitHub ends each request after 10 seconds), and then makes the marker read. It binds the 1 issue (or milestone) that holds the marker, or it creates the issue 1 time when no issue holds it. The wait uses a clock that a change of the machine time does not move, so a machine clock that is set back does not make the wait longer (issue 2900).
+- The cases that still end the call keep the old text, with the cause in parentheses after it: more than 1 issue holds the marker, the issue list has more than 100 pages, or the list is invalid. In these cases apply creates nothing, and a person must act. A rate limit of the marker read ends the call with `stopped: rate-limit` and `next_at`, and the next call reads again.
+- A failed reply from GitHub still ends its own call with "create outcome is unknown; no duplicate create will be retried". A caller such as `sofa-publish` still sees `unknown-create` for that call, and a person is still told. The next apply then resolves the create. Only a stop by the caller needs no person.
+- `recover` does not change: it does not read GitHub. After a stop, run `recover`, and then the next apply.
+
 ## 0.6.0
 
 A Plan call that its caller stops leaves no `bd` write that can run beside a `recover`.
