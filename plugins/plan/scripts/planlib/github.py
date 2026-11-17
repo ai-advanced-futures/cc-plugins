@@ -91,7 +91,7 @@ class Completed:
 
 def _run(args, payload=None):
     try:
-        result = capture(["gh", *args], cwd=None, env=None,
+        result = capture(["gh", *args], cwd=None, env=None, own_group=False,  # stays in the group of Plan: a stop of it stops gh
                          stdin=json.dumps(payload) if payload is not None else None)
     except CommandError as exc:
         if isinstance(exc.__cause__, OSError):

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1
+
+A Plan call that its caller stops leaves no `gh` process that can still write to the board.
+
+- The `gh` child of a GitHub call now stays in the process group of Plan. A stop of that group (the time limit of `sofa_plan.run`, or a Ctrl-C in a terminal) now also stops `gh`. A `SIGINT` to the Plan process alone also stops `gh`. A `SIGTERM` or a `SIGKILL` to the Plan process alone does not: this is a stated limit.
+- The own time limit of a `gh` call now also stops a process below `gh` that left the group.
+- `bd` and `git` do not change: they keep their own session.
+
 ## 0.5.0
 
 A refused issue create finds the issue that GitHub made when the machine clock differs from GitHub time.

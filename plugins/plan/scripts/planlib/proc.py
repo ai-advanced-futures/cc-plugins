@@ -20,6 +20,8 @@ REPO_ENV_KEYS = {
     "GIT_COMMON_DIR", "GIT_NAMESPACE",
 }
 
+MAX_BELOW = 4096  # the most pids that a stop reads below a child
+
 _URL_REWRITE = re.compile(r"url\..*\.(?:push)?insteadof", re.IGNORECASE | re.DOTALL)
 
 
@@ -52,28 +54,97 @@ def git_environment():
     return env
 
 
-def capture(command, *, cwd, env, timeout=60, stdin=None):
-    """Bound the command and its children, including a pipe held by a child."""
+def _below(pid):
+    """The pids below `pid`, from 1 read of the process table (the parent of each process). No table gives `[]`.
+
+    The table is read row by row while processes start and end, so the walk keeps a set of seen pids and a cap, and it never
+    lists the pid of this process or of its parent."""
+    try:
+        table = subprocess.run(["ps", "-A", "-o", "pid=,ppid="], capture_output=True, text=True, timeout=10,
+                               env={"PATH": "/bin:/usr/bin"}, start_new_session=True)  # a leaf: no process below it
+    except (OSError, subprocess.SubprocessError):
+        return []
+    children = {}
+    for line in table.stdout.splitlines():
+        parts = line.split()
+        if len(parts) == 2 and all(part.isdigit() for part in parts):
+            children.setdefault(int(parts[1]), []).append(int(parts[0]))
+    skip = {os.getpid(), os.getppid()}
+    found, seen, queue = [], {pid}, [pid]
+    while queue:
+        for child in children.get(queue.pop(), []):
+            if child in seen or child in skip or len(found) >= MAX_BELOW:
+                continue
+            seen.add(child)
+            found.append(child)
+            queue.append(child)
+    return found
+
+
+def _stop_tree(child):
+    """Stop the child and each process below it by pid, and never the group of the caller.
+
+    A child that stays in the group of its caller leads no group. `SIGSTOP` first, so it starts no new child while the table is
+    read. Accepted: a process that double-forked before the limit has no parent that leads to the child."""
+    if child.returncode is not None:  # reaped already (the wait of `communicate` at a Ctrl-C can do it): its pid may be another process
+        return
+    try:
+        os.kill(child.pid, signal.SIGSTOP)
+    except (ProcessLookupError, PermissionError):
+        pass
+    below = []
+    try:
+        below = _below(child.pid)  # no table: the child still gets its kill below
+    finally:
+        try:
+            os.kill(child.pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+    for pid in below:
+        if pid > 1:  # a bad row of the table must not reach init
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                pass  # gone, or (macOS: EPERM) a zombie
+
+
+def _reap(child):
+    try:
+        child.communicate(timeout=2)
+    except subprocess.TimeoutExpired:
+        for stream in (child.stdin, child.stdout, child.stderr):
+            if stream:
+                stream.close()
+
+
+def capture(command, *, cwd, env, timeout=60, stdin=None, own_group=True):
+    """Bound the command and its children, including a pipe held by a child.
+
+    `own_group=False` keeps the child in the process group of the caller, so a stop of that group (or a Ctrl-C) also stops it.
+    The limit then stops the child and each process below it by pid."""
     try:
         child = subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                                 encoding="utf-8", errors="replace", start_new_session=True)
+                                 encoding="utf-8", errors="replace", start_new_session=own_group)
     except OSError as exc:
         raise CommandError("cannot start a command") from exc
     try:
         out, err = child.communicate(stdin, timeout=timeout)
     except subprocess.TimeoutExpired as exc:
-        try:
-            os.killpg(child.pid, signal.SIGKILL)
-        except (ProcessLookupError, PermissionError):
-            pass
-        try:
-            child.communicate(timeout=2)
-        except subprocess.TimeoutExpired:
-            for stream in (child.stdin, child.stdout, child.stderr):
-                if stream:
-                    stream.close()
+        if own_group:
+            try:
+                os.killpg(child.pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                pass
+        else:
+            _stop_tree(child)
+        _reap(child)
         raise CommandError("command timed out; its effect is unknown") from exc
+    except KeyboardInterrupt:
+        if not own_group:  # a SIGINT to this process alone: the child is not in a group that gets it
+            _stop_tree(child)
+            _reap(child)
+        raise
     return subprocess.CompletedProcess(command, child.returncode, out, err)
 
 
