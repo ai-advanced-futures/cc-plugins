@@ -29,6 +29,39 @@ class CommandError(PlanError):
     """A child command has an unknown effect, not a validation refusal."""
 
 
+class CommandTimeout(CommandError):
+    """A child command reached its time limit (PLAN-STORY-675)."""
+
+
+# The user part ends at the last @ before the first / (issue 2997). The scheme starts only where no scheme character
+# comes before it, so a long run of such characters is read 1 time and not at each word boundary (issue 2996).
+_USERINFO = re.compile(r"(?i)(?<![a-z0-9+.-])([a-z][a-z0-9+.-]*://)[^/\s]*@")
+_TOKEN = re.compile(r"\b(?:gh[opusr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})")
+_FILE_URL = re.compile(r"(?i)\bfile://[^\s'\"(),;]*")
+_PATH = re.compile(r"(?<![\w.~/:-])/[^\s'\"(),;]+")
+
+
+def scrub(text: str, paths: bool = True) -> str:
+    """Remove from the text of a child: the user and password of a URL, a GitHub token, and each absolute path.
+
+    The home path becomes `~`. With `paths`, each other absolute path, also of a `file://` URL, becomes `<path>`
+    (PLAN-STORY-675, D-9251). The error line of plan.py keeps the other paths, because they name the file to fix."""
+    text = _TOKEN.sub("<token>", _USERINFO.sub(r"\1<credentials>@", text))
+    home = os.path.expanduser("~").rstrip("/")
+    if len(home) > 1:
+        text = re.sub(re.escape(home) + r"(?=/|\b|$)", "~", text)
+    return _PATH.sub("<path>", _FILE_URL.sub("file://<path>", text)) if paths else text
+
+
+_SSH_USER = re.compile(r"(?i)(?:git\+)?ssh://[^/\s:@]+@[^/\s@]*(?:/|$)")
+
+
+def scrub_url(url: str) -> str:
+    """Scrub the address of a remote for a result (issue 2995). An ssh address with a user and no password keeps its
+    user (`git@host`): it is no secret. A password, a token and the home path never stay."""
+    return _TOKEN.sub("<token>", url) if _SSH_USER.match(url) else scrub(url, paths=False)
+
+
 def git_environment():
     """Keep session credentials and identity; remove only repository routing."""
     env = {key: value for key, value in os.environ.items() if key not in REPO_ENV_KEYS}
@@ -140,7 +173,7 @@ def capture(command, *, cwd, env, timeout=60, stdin=None, own_group=True, pass_f
         else:
             _stop_tree(child)
         _reap(child)
-        raise CommandError("command timed out; its effect is unknown") from exc
+        raise CommandTimeout("command timed out; its effect is unknown") from exc
     except KeyboardInterrupt:
         if not own_group:  # a SIGINT to this process alone: the child is not in a group that gets it
             _stop_tree(child)

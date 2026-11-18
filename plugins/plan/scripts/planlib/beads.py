@@ -9,7 +9,7 @@ import re
 import subprocess
 import tempfile
 
-from .proc import capture, git_environment
+from .proc import scrub, capture, git_environment
 
 
 class BeadsError(RuntimeError):
@@ -142,7 +142,8 @@ class Beads:
                          timeout=self.timeout if timeout is None else timeout,
                          own_group=False, pass_fds=self._lock_fds())
         if result.returncode:
-            detail = (result.stderr or result.stdout).strip()[:1200]
+            # The text of a failed push can hold the credentials of a URL, a token, or the home path (PLAN-STORY-675).
+            detail = scrub((result.stderr or result.stdout).strip())[:1200]
             raise BeadsError(f"bd {' '.join(args[:2])} failed (exit {result.returncode}): {detail}")
         if not json_result:
             return result.stdout

@@ -16,7 +16,7 @@ from pathlib import Path
 from . import PlanError
 from . import model
 from .beads import Beads, BeadsError
-from .proc import DATA_REF, CommandError, atomic_json, capture, dolt_url, git_environment
+from .proc import DATA_REF, CommandTimeout, atomic_json, capture, dolt_url, git_environment, scrub, scrub_url
 
 UNSHARE = ("this workspace is from Plan shared mode, which Plan 0.3.0 removed; "
            "run `plan.py unshare --workspace PROFILE` one time")
@@ -55,8 +55,34 @@ def backup_retry() -> float:
     return value if 0 <= value <= 3600 else 60.0
 
 
-def one_line(error: BaseException) -> str:
-    return " ".join(str(error).split())[:300]
+LOCK_MARGIN = 20.0  # the lock budget of a content write is this much below the lock wait of another session
+MIN_PUSH_SECONDS = 10.0  # an automatic push with less time left in the lock budget is skipped
+MAX_PAUSE = 3600.0  # the longest pause after failed pushes in a row
+MAX_DOUBLINGS = 12  # the pause stops doubling here: 60 s * 2 ** 12 is above MAX_PAUSE, and `2 **` of a huge count would raise
+MAX_FAILURES = 64  # the count of failed pushes in a row stops here, so a state file with a huge value stays safe (issue 3010)
+SKIP_PREFIX = "push skipped: "  # the error of a skipped push starts with this; plan.py reads it to word its warning
+
+
+def pause_after(failures: int) -> float:
+    """The pause after `failures` failed pushes in a row: doubles from PLAN_BACKUP_RETRY, up to MAX_PAUSE (D-9251)."""
+    if failures <= 0:
+        return 0.0
+    # The exponent is capped: `2 **` of 1024 or more makes a float that raises OverflowError (issue 3010).
+    return min(backup_retry() * 2 ** min(failures - 1, MAX_DOUBLINGS), MAX_PAUSE)
+
+
+def whole_seconds(value: float) -> str:
+    """A time limit as whole seconds for the cause of a push, so the text has no 4 decimals."""
+    return str(max(round(value), 1))
+
+
+def lock_budget() -> float:
+    """The longest time that a content write and its automatic push hold the store lock (PLAN-STORY-675, D-9251)."""
+    return max(lock_timeout() - LOCK_MARGIN, 0.0)
+
+
+def one_line(error: BaseException | str) -> str:
+    return " ".join(scrub(str(error)).split())[:300]
 
 
 def lock_timeout() -> float:
@@ -277,25 +303,39 @@ class Workspace:
             return state
         if isinstance(saved, dict):
             state.update({key: saved[key] for key in state if key in saved})
+        if isinstance(state["last_error"], str):
+            # A state file of an older push can hold a secret: scrub at read too (issue 2994).
+            state["last_error"] = one_line(state["last_error"])
         return state
 
-    def _failed_at(self):
-        """Give the time of the last failed push, or None. The state file holds it; `describe` does not show it."""
+    def _hidden(self) -> dict:
+        """The 2 keys of the state file that `describe` does not show: `failed_at` and `failures`."""
         try:
             saved = json.loads(self._state_path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
-            return None
-        return model.parse_time(saved.get("failed_at")) if isinstance(saved, dict) else None
+            return {}
+        return {key: saved[key] for key in ("failed_at", "failures") if isinstance(saved, dict) and saved.get(key)}
+
+    def _failed_at(self):
+        """Give the time of the last failed push, or None."""
+        return model.parse_time(self._hidden().get("failed_at"))
+
+    def _failures(self) -> int:
+        """Give the count of failed pushes in a row. A state file of 0.6.2 has `failed_at` and no count: 1 failure."""
+        hidden = self._hidden()
+        count = hidden.get("failures")
+        if isinstance(count, int) and not isinstance(count, bool) and count > 0:
+            return min(count, MAX_FAILURES)
+        return 1 if hidden.get("failed_at") else 0
 
     def backup_status(self) -> dict:
         block = self.config.get("backup") or {}
         return {"remote": block.get("remote"), "auto": bool(block.get("auto")), **self.backup_state()}
 
     def _save_state(self, **changes) -> None:
-        failed = self._failed_at()
-        kept = {"failed_at": model.timestamp(failed)} if failed else {}
-        state = {**self.backup_state(), **kept, **changes}
-        atomic_json(self._state_path, {key: value for key, value in state.items() if key != "failed_at" or value})
+        state = {**self.backup_state(), **self._hidden(), **changes}
+        atomic_json(self._state_path, {key: value for key, value in state.items()
+                                       if key not in {"failed_at", "failures"} or value})
 
     def _remote_url(self, remote: str, env: dict, timeout: float) -> tuple[str, bool]:
         """Give the address that Beads saved for the remote. Add the remote when Beads has none."""
@@ -316,14 +356,15 @@ class Workspace:
             raise PlanError("backup needs a Git remote; nothing was pushed")
         return url, added
 
-    def _push(self, remote: str, *, confirm: bool) -> dict:
+    def _push(self, remote: str, *, confirm: bool, limit: float | None = None) -> dict:
         """Commit and push one time, inside the time limit. The caller holds the lock."""
-        deadline = time.monotonic() + backup_timeout()
+        limit = backup_timeout() if limit is None else limit
+        deadline = time.monotonic() + limit
 
         def left() -> float:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
-                raise CommandError("backup reached its time limit; the push is not confirmed")
+                raise CommandTimeout("backup reached its time limit; the push is not confirmed")
             return remaining
         tracked = (self.config.get("backup") or {}).get("remote") == remote
         try:
@@ -345,17 +386,29 @@ class Workspace:
                     raise PlanError("backup push was not confirmed; the remote has no readable " + DATA_REF)
                 commit = rows[0][0]
         except (PlanError, BeadsError, OSError, ValueError) as exc:
+            error = exc
+            if isinstance(exc, CommandTimeout):
+                # bd writes no error text before the stop, so Plan writes the cause (PLAN-STORY-675, E3).
+                last = self.backup_state()["last_push_at"] or "none"
+                error = PlanError(f"push reached its time limit of {whole_seconds(limit)} seconds; the last good push: {last}; "
+                                  "a push of all the pending data can need more time: run backup --timeout SECONDS")
             if tracked:
                 try:
-                    self._save_state(pending=True, last_error=one_line(exc), failed_at=model.timestamp())
+                    self._save_state(pending=True, last_error=one_line(error), failed_at=model.timestamp(),
+                                     failures=min(self._failures() + 1, MAX_FAILURES))
                 except (PlanError, OSError):
                     pass
-            raise
+            if error is exc:
+                raise
+            raise error from exc
         if tracked:
-            self._save_state(pending=False, last_push_at=model.timestamp(), last_error=None, failed_at=None)
-        return {"remote": remote, "url": url, "remote_added": added, "committed": committed, "data_commit": commit}
+            self._save_state(pending=False, last_push_at=model.timestamp(), last_error=None, failed_at=None,
+                             failures=None)
+        # The address of a remote can hold a user and a password (issue 2995). The user's own path stays.
+        return {"remote": remote, "url": scrub_url(url), "remote_added": added, "committed": committed,
+                "data_commit": commit}
 
-    def backup(self, remote: str | None = None) -> dict:
+    def backup(self, remote: str | None = None, timeout: float | None = None) -> dict:
         """Commit pending Dolt changes and push the data to one Git remote, one time."""
         remote = remote or (self.config.get("backup") or {}).get("remote")
         if not remote:
@@ -364,7 +417,8 @@ class Workspace:
             raise PlanError("backup remote name is invalid")
         with self.lock():
             self.control()
-            done = self._push(remote, confirm=True)
+            # A manual push has its own limit (`--timeout`), and no lock budget: it is a step of a person.
+            done = self._push(remote, confirm=True, limit=timeout)
         return {"workspace_id": self.id, "backed_up": True, "remote": remote, "url": done["url"],
                 "remote_added": done["remote_added"], "committed": done["committed"], "data_ref": DATA_REF,
                 "data_commit": done["data_commit"], "saved": "local"}
@@ -400,17 +454,41 @@ class Workspace:
             except (PlanError, OSError):
                 pass
             return
-        failed, pause = self._failed_at(), backup_retry()
+        failed, failures = self._failed_at(), self._failures()
+        pause = pause_after(failures)
         if failed is not None and 0 <= (model.utcnow() - failed).total_seconds() < pause:
-            # The last push failed a short time ago. Do not hold the lock for a second failure; a later push sends all the data.
-            self.backup_result = {"pushed": False, "remote": block["remote"],
-                                  "error": f"push skipped: the last push failed less than {pause:g} seconds ago; a later push sends the data"}
+            # Do not hold the lock for 1 more failure; a later push sends all the data.
+            self._skipped(block, f"{failures} failed push(es) in a row, the last one less than "
+                                 f"{pause:g} seconds ago; a later push sends the data")
+            return
+        budget = lock_budget()
+        held = time.monotonic() - self._locked_at
+        if budget - held < MIN_PUSH_SECONDS:
+            # The write and its push must free the lock inside the wait of another session (PLAN-STORY-675).
+            self._skipped(block, f"the write held the store lock for {held:.0f} seconds, and less than "
+                                 f"{MIN_PUSH_SECONDS:g} seconds of the lock budget ({budget:g} seconds) are left; "
+                                 "a later push sends the data")
             return
         try:
-            self._push(block["remote"], confirm=False)
+            self._push(block["remote"], confirm=False, limit=min(backup_timeout(), budget - held))
             self.backup_result = {"pushed": True, "remote": block["remote"]}
         except (PlanError, BeadsError, OSError, ValueError) as exc:
-            self.backup_result = {"pushed": False, "remote": block["remote"], "error": one_line(exc)}
+            self.backup_result = {"pushed": False, "remote": block["remote"], "error": one_line(exc),
+                                  **self._stale()}
+
+    def _stale(self) -> dict:
+        """The 2 keys that make a stale backup visible in a write result (D-9251)."""
+        state = self.backup_state()
+        return {"pending": state["pending"], "last_push_at": state["last_push_at"]}
+
+    def _skipped(self, block: dict, detail: str) -> None:
+        """A skip is not a failed push: it saves `pending` only, and its error starts with SKIP_PREFIX."""
+        try:
+            self._save_state(pending=True)
+        except (PlanError, OSError):
+            pass
+        self.backup_result = {"pushed": False, "remote": block["remote"], "error": SKIP_PREFIX + detail,
+                              **self._stale()}
 
     @contextmanager
     def lock(self):
@@ -421,6 +499,7 @@ class Workspace:
             if leftover.exists() or leftover.is_symlink():
                 raise PlanError(UNSHARE)
             self._locked, self._control, self._wrote = True, None, False
+            self._locked_at = time.monotonic()  # the start of the lock budget (PLAN-STORY-675)
             # Each bd child holds the lock: it stays held until the last process of a stopped command ends.
             self.backend.lock_fd = descriptor
             deferred = self.operation in DEFERRED_COMMIT_OPERATIONS
@@ -438,7 +517,8 @@ class Workspace:
             else:
                 if deferred:
                     self._commit_deferred()
-                # The push runs inside the lock, so the pushes of parallel sessions go in order.
+                # The push runs inside the lock: bd lets 1 process use the store at a time, so a push outside the lock
+                # would make the next call wait in bd, past its own limit (PLAN-STORY-675, E1 and E2).
                 self._after_write(failed=False)
             finally:
                 self._locked, self._control, self._wrote = False, None, False

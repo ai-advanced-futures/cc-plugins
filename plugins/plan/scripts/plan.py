@@ -15,11 +15,12 @@ from pathlib import Path
 import yaml
 
 from planlib import PlanError, model
+from planlib.proc import scrub
 from planlib.beads import BeadsError
 from planlib.migration import apply as import_snapshot, preview
 from planlib.service import Service
 from planlib.sources import PRD, _json_value, snapshot
-from planlib.workspace import Workspace
+from planlib.workspace import SKIP_PREFIX, Workspace
 
 
 def parser():
@@ -28,7 +29,7 @@ def parser():
     root.add_argument("--bd", default=os.environ.get("PLAN_BD", "bd"), help="Beads executable")
     root.add_argument("--actor", default=os.environ.get("PLAN_ACTOR"), help="human:<name> or agent:<id>")
     root.add_argument("--json", action="store_true", help="emit compact JSON (all output is structured)")
-    root.add_argument("--version", action="version", version="plan 0.7.0")
+    root.add_argument("--version", action="version", version="plan 0.8.0")
     commands = root.add_subparsers(dest="command", required=True)
 
     def command(name, help_text, mutation=False):
@@ -46,6 +47,7 @@ def parser():
     command("unshare", "convert a profile and a store from the removed shared mode to local, one time")
     backup = command("backup", "push the Plan data to one Git remote, or save the automatic push setting")
     backup.add_argument("--remote", help="name of the Git remote that receives refs/dolt/data; default: the profile's backup remote")
+    backup.add_argument("--timeout", help="time limit of this push in seconds, from 1 to 3600; default: PLAN_BACKUP_TIMEOUT")
     backup.add_argument("--auto", choices=("on", "off"),
                         help="save the remote and the automatic push after each content write; no push now")
     command("describe", "show selected store identity and supported operations")
@@ -176,8 +178,10 @@ def execute(args):
     command = args.command
     if command == "backup":
         if args.auto:
+            if args.timeout is not None:
+                raise PlanError("backup --timeout is for a push; --auto saves a setting and makes no push")
             return workspace.configure_backup(args.remote, args.auto == "on"), 0
-        return workspace.backup(args.remote), 0
+        return workspace.backup(args.remote, push_seconds(args.timeout)), 0
     if command == "github":
         from planlib import github
         if args.github_command in {"configure", "apply"} and not args.actor:
@@ -260,7 +264,11 @@ def execute(args):
     if command == "status":
         if len(args.target) == 1 or (len(args.target) == 2 and args.target[0].lower() in {name.lower() for name in model.TYPES}):
             identifier, kind = target(args.target)
-            return service.show(identifier, kind), 0
+            shown = service.show(identifier, kind)
+            if workspace.config.get("backup"):
+                # A stale backup is visible in a status read (D-9251).
+                shown = {**shown, "backup": workspace.backup_status()}
+            return shown, 0
         identifier, kind = target(args.target[:-1])
         if not args.actor:
             raise PlanError("a state change requires --actor or PLAN_ACTOR")
@@ -277,20 +285,37 @@ def execute(args):
     raise PlanError("unsupported operation")
 
 
+def push_seconds(raw):
+    """Read the value of backup --timeout: None, or seconds from 1 to 3600."""
+    if raw is None:
+        return None
+    try:
+        value = float(raw)
+    except ValueError:
+        value = 0.0
+    if not 1 <= value <= 3600:
+        raise PlanError("backup --timeout needs a number of seconds from 1 to 3600")
+    return value
+
+
 def main(argv=None):
     args = parser().parse_args(argv)
     try:
         result, code = execute(args)
     except (PlanError, BeadsError, OSError, ValueError) as exc:
-        print(json.dumps({"error": str(exc), "success": False}, ensure_ascii=True), file=sys.stderr)
+        # The text of an error can hold the credentials of a URL, a token, or the home path (PLAN-STORY-675, issue 2860).
+        print(json.dumps({"error": scrub(str(exc), paths=False), "success": False}, ensure_ascii=True), file=sys.stderr)
         return 1
     pushed = getattr(getattr(args, "plan_workspace", None), "backup_result", None)
     if pushed is not None and isinstance(result, dict):
         # The write is saved. A failed backup push changes neither the result nor the exit code.
         result = {**result, "backup": pushed}
         if not pushed["pushed"]:
-            print(json.dumps({"warning": "backup push failed; the write is saved: " + pushed["error"]},
-                             ensure_ascii=True), file=sys.stderr)
+            error = pushed["error"]
+            # A skip is no failed push: its warning says so (PLAN-STORY-675, verifier finding).
+            warning = ("backup push skipped; the write is saved: " + error[len(SKIP_PREFIX):] if error.startswith(SKIP_PREFIX)
+                       else "backup push failed; the write is saved: " + error)
+            print(json.dumps({"warning": warning}, ensure_ascii=True), file=sys.stderr)
     committed = getattr(getattr(args, "plan_workspace", None), "commit_result", None)
     if committed is not None and committed.get("error") and isinstance(result, dict):
         # The writes are durable in the working set. A failed commit changes neither the result nor the exit code.

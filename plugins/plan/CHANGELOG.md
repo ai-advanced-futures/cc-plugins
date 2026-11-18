@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.0
+
+The automatic backup push holds the store lock for at most the lock budget, backs off after failed pushes, and keeps a scrubbed error (PLAN-STORY-675, D-9251).
+
+A minor step: an automatic push can be skipped where 0.7.0 ran it, a status read has 1 more key, and `backup` has 1 more option.
+
+- The lock budget: a content write and its automatic push hold the store lock for at most `PLAN_LOCK_TIMEOUT` minus 20 seconds (100 seconds by default). The push gets the time that is left, at most `PLAN_BACKUP_TIMEOUT`. With less than 10 seconds left, Plan makes no Dolt commit and no push, and the data stays pending. A skip is not a failed push: it starts no pause, and its warning on stderr starts with `backup push skipped` (a failed push gives `backup push failed`). The error in the result starts with `push skipped:` as before.
+- The pause after failed pushes in a row doubles: 60, 120, 240, 480, 960, 1920, then 3600 seconds. `PLAN_BACKUP_RETRY` sets the first pause, and `0` sets no pause. A good push ends the series. A state file of 0.7.0 with a failed push counts as 1 failure. The count stops at 64 (and the doubling at 12 steps), so a long outage or a state file with a huge count never makes a write raise an error (issue 3010).
+- A push that reaches its time limit gives the cause from Plan: `push reached its time limit of N seconds` (whole seconds), the time of the last good push, and the hint `backup --timeout SECONDS`. `bd` writes no text before the stop, so no `bd` text is lost.
+- The error text of a push, in `last_error`, in the result of a write and in the error line of `plan.py`, has no user and password of a URL, no GitHub token, and no home path. The 2 places that keep a text (`last_error` and the result of a write) also remove each other absolute path. The error line of `plan.py` keeps a path outside the home folder, because it can name the file to fix.
+- Security (issues 2994 to 2997 and 3010): a `last_error` that an older push saved is scrubbed at read; the `url` of a good manual `backup` has no password (a plain ssh user such as `git@host` stays); the scrub takes linear time on a long text; the user part of a URL ends at the last `@` before the first `/`, so a password with a raw `@` is hidden. A password with a raw `/` or a space stays a known limit.
+- `status ID` has the `backup` block of `describe` when the profile has a `backup` block. The result of a write whose push failed or was skipped has `pending` and `last_push_at`.
+- `backup --timeout SECONDS` (1 to 3600) sets the limit of 1 manual push, with no lock budget. Use it to send a backlog that an automatic push cannot send, because a push that stops at its limit sends nothing. `--timeout` with `--auto` is refused.
+
 ## 0.7.0
 
 The final part of `github apply` ends in a time budget, makes 1 Dolt commit, and frees the lock (PLAN-STORY-674).

@@ -39,7 +39,7 @@ With `auto` on, Plan commits and pushes after each successful write of one of th
 - `github configure` and `github apply`
 - `recover`, when it repairs a record
 
-No push follows `claim`, `heartbeat`, `release`, `expire`, a read command, or a replay of an earlier request. The push runs inside the store lock, so the pushes of parallel sessions go in order. The result of the write gets `"backup": {"pushed": true, "remote": "NAME"}`.
+No push follows `claim`, `heartbeat`, `release`, `expire`, a read command, or a replay of an earlier request. The push runs inside the store lock, because `bd` lets only 1 process use the store at a time: a push outside the lock makes the next command wait inside `bd`, past its own limit. A write and its push hold the lock for at most the lock budget, `PLAN_LOCK_TIMEOUT` minus 20 seconds (100 by default). The push gets the time that is left, at most the limit below. With less than 10 seconds left, Plan skips the push, the data stays pending, and the error starts with `push skipped: the write held the store lock`. The result of the write gets `"backup": {"pushed": true, "remote": "NAME"}`.
 
 With `auto` off, or with no backup remote, Plan makes no push and gives no warning.
 
@@ -47,15 +47,17 @@ With `auto` off, or with no backup remote, Plan makes no push and gives no warni
 
 A failed push does not fail, block, or undo the write. The exit code and the result are those of the write. Plan adds `"backup": {"pushed": false, "remote": "NAME", "error": "TEXT"}` to the result and prints one warning line on stderr. The state file beside the profile (`local.backup.json` for the profile `local.json`) records `pending: true` and `last_error`.
 
-After a failed push, Plan makes no automatic push for 60 seconds. `PLAN_BACKUP_RETRY` sets another pause in seconds, and `0` sets no pause. A content write in the pause is saved and gets `pushed: false` with an error that starts with `push skipped`. The pause is necessary because the store lock is held during a push: without the pause, a remote that does not answer makes each write wait for the full time limit, and the sessions behind it stop with `workspace is busy`. A manual push has no pause.
+The error text has no user and password of a URL, no token, and no absolute path: the home path becomes `~`, another path becomes `<path>`. At the time limit, `bd` gives no text, so the error is the cause from Plan: `push reached its time limit of N seconds` (whole seconds), the time of the last good push, and the hint `backup --timeout SECONDS`.
 
-The next push, automatic after the pause or manual, sends all the data and clears `pending`. Thus no retry is necessary for the failed push. `describe` shows the state in `backup`: `remote`, `auto`, `pending`, `last_push_at`, and `last_error`.
+After a failed push, Plan makes no automatic push for a pause. The pause is 60 seconds after 1 failure, and it doubles after each failure in a row, up to 1 hour (60, 120, 240, 480, 960, 1920, 3600 seconds). `PLAN_BACKUP_RETRY` sets the first pause in seconds, and `0` sets no pause. The count of failures stops at 64, so the pause stays at 1 hour and no write fails for a long outage. A good push, automatic or manual, ends the series. A content write in the pause is saved and gets `pushed: false` with an error that starts with `push skipped`, and its warning on stderr says `backup push skipped` (a failed push says `backup push failed`). The pause is necessary because the store lock is held during a push: without the pause, a remote that does not answer makes each write wait for the full time limit, and the sessions behind it stop with `workspace is busy`. A manual push has no pause.
 
-One push has a time limit of 45 seconds, which is below the 120-second wait of another session for the store lock. `PLAN_BACKUP_TIMEOUT` sets another limit in seconds. Keep it below the value of `PLAN_LOCK_TIMEOUT`. A push that reaches the limit is a failed push. The store lock is held during the push.
+The next push, automatic after the pause or manual, sends all the data and clears `pending`. Thus no retry is necessary for the failed push. `describe` shows the state in `backup`: `remote`, `auto`, `pending`, `last_push_at`, and `last_error`. `status ID` also shows the `backup` block when the profile has one, so a stale backup is visible: `pending: true` and an old `last_push_at`.
+
+One push has a time limit of 45 seconds, which is below the 120-second wait of another session for the store lock. `PLAN_BACKUP_TIMEOUT` sets another limit in seconds. The lock budget limits it more for a long write. A push that reaches the limit is a failed push. The store lock is held during the push.
 
 ### Manual push
 
-`backup` pushes one time to the backup remote of the profile. `backup --remote NAME` pushes one time to that remote and does not change the profile. The manual push also reads `refs/dolt/data` from the remote and returns that commit in `data_commit`. A failed manual push gives exit code 1.
+`backup` pushes one time to the backup remote of the profile. `backup --remote NAME` pushes one time to that remote and does not change the profile. The manual push also reads `refs/dolt/data` from the remote and returns that commit in `data_commit`. A failed manual push gives exit code 1. `backup --timeout SECONDS` sets the limit of this 1 push (1 to 3600 seconds), with no lock budget. Use it to send a backlog that an automatic push cannot send in its limit, because a push that stops at its limit sends nothing. Run it when the other sessions can wait: they wait up to `PLAN_LOCK_TIMEOUT`, then stop with `workspace is busy; no operation started`. A wrapper with its own time limit (for example `sofa-plan`, with `SOFA_PLAN_TIMEOUT`, 300 seconds by default) must get a limit above `SECONDS`, because a stop of the wrapper ends the push with no data sent.
 
 ### Transport
 
