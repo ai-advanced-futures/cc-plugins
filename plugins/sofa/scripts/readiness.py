@@ -901,9 +901,27 @@ def check_roadmap_backend(repo):
                      "correct the selected Plan workspace; do not initialize or import during readiness", True)]
 
 
-CHECKS = [check_claude, check_repo, check_brains, check_roadmap_backend, check_team, check_tools, check_skills, check_factory_skills, check_human]
+def check_publication(repo):
+    """Publication is optional. Its failure does not stop local factory work."""
+    from sofa_publication import read_state, status
+    fix = "/sofa:setup (optional GitHub publication)"
+    try:
+        root, backend, profile = selection(repo.root)
+        if backend != "plan":
+            return [item("github-publication", "tools", "ok", "not selected; legacy board rules apply")]
+        if not read_state(root)["enabled"]:
+            return [item("github-publication", "tools", "ok", "disabled; local Plan work is available", fix)]
+        result = status(Plan(root, profile))
+        label = result["status"]
+        return [item("github-publication", "tools", "ok" if label in {"ready", "verified"} else "wrong",
+                     result.get("reason", "publication " + label + "; live access is checked before each publish"), fix)]
+    except PlanFailure as exc:
+        return [item("github-publication", "tools", "wrong", str(exc), fix)]
+
+
+CHECKS = [check_claude, check_repo, check_brains, check_roadmap_backend, check_publication, check_team, check_tools, check_skills, check_factory_skills, check_human]
 AREAS = {"check_claude": "claude", "check_repo": "repo", "check_brains": "brains", "check_roadmap_backend": "brains", "check_team": "team",
-         "check_tools": "tools", "check_skills": "skills", "check_factory_skills": "skills", "check_human": "human"}
+         "check_tools": "tools", "check_publication": "tools", "check_skills": "skills", "check_factory_skills": "skills", "check_human": "human"}
 
 
 def run_checks(repo):

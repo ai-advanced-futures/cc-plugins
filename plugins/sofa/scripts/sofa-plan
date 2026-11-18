@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Run Plan with the selected main repository profile, without a shell."""
 import argparse
+import json
 import sys
 
 from sofa_plan import Plan, PlanFailure, run, selection
+from sofa_publication import command_words, configure_publication, disable, github_command
 
 
 def main():
@@ -20,8 +22,19 @@ def main():
         root, backend, profile = selection(args.repo)
         if backend != "plan":
             raise PlanFailure("this factory uses Product; select Plan before using sofa-plan")
+        if args.command == ["publication", "disable"]:
+            print(json.dumps(disable(root)))
+            return 0
         plan = Plan(root, profile)
         plan.check_source()
+        words = command_words(args.command)
+        if words and words[0] == "publication":
+            if args.command[0] != "publication":
+                raise PlanFailure("put publication before its options")
+            print(json.dumps(configure_publication(plan, args.command[1:])))
+            return 0
+        if len(words) == 2 and words[0] == "github":
+            return github_command(plan, args.command, words[1])
         code, _, _ = run([*plan.command, *args.command], cwd=root, capture=False)
         return code if code >= 0 else 128 - code
     except PlanFailure as exc:

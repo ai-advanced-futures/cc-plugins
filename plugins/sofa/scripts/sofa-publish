@@ -24,6 +24,7 @@ import sys
 import time
 
 from sofa_plan import Plan, PlanFailure, PlanTimeout, run, selection
+from sofa_publication import guarded_run
 
 # A part is 1 `github apply --part` call of at most this many writes (D-9100, amends D-9080).
 PART_WRITES = 10
@@ -118,7 +119,10 @@ def error_text(out, err):
 def ask(plan, args, limit=None):
     """Run 1 Plan command. Give (exit code, result, error text). Raise PlanTimeout at the time limit."""
     try:
-        code, out, err = run([*plan.command, *args], cwd=plan.root, limit=limit)
+        if args[0] == "github":
+            code, out, err = guarded_run(plan, args, limit=limit, runner=run)
+        else:
+            code, out, err = run([*plan.command, *args], cwd=plan.root, limit=limit)
     except PlanTimeout:
         raise
     except PlanFailure as exc:

@@ -161,9 +161,17 @@ class Plan:
             raise PlanFailure("the Plan workspace profile is missing; no store was created")
         self.command = ["uv", "run", str(plan_script(root)), "--workspace", str(profile)]
 
-    def read(self, command):
-        rc, out, _ = run([*self.command, command, "--json"], cwd=self.root, env=self.env)
+    def read(self, command, *arguments, error_details=False):
+        rc, out, err = run([*self.command, command, *arguments, "--json"], cwd=self.root, env=self.env)
         if rc:
+            if error_details:
+                for text in [*reversed((err or "").splitlines()), out]:
+                    try:
+                        failure = json.loads(text)
+                    except (ValueError, TypeError):
+                        continue
+                    if isinstance(failure, dict) and failure.get("success") is False and isinstance(failure.get("error"), str):
+                        raise PlanFailure(failure["error"])
             raise PlanFailure(f"Plan {command} failed; no Product fallback")
         try:
             return json.loads(out)
@@ -181,8 +189,8 @@ class Plan:
         if not isinstance(source, str) or not Path(source).is_absolute() or Path(source).resolve() != self.root:
             raise PlanFailure("Plan source_root must be the selected main repository")
 
-    def describe(self):
-        description = self.read("describe")
+    def describe(self, *, error_details=False):
+        description = self.read("describe", error_details=error_details)
         if not isinstance(description, dict) or description.get("provider") != "plan" or type(description.get("contract_version")) is not int or description.get("contract_version") not in {1, 2}:
             raise PlanFailure("Plan describe returned an unsupported contract")
         self.check_source(description)

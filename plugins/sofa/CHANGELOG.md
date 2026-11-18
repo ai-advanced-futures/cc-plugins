@@ -1,5 +1,19 @@
 # Changelog
 
+## 14.0.0
+
+Optional GitHub publication for Plan factories, configured through `/sofa:setup`.
+
+A major step: both `sofa-plan github apply` and the batch publisher `sofa-publish step` require local setup approval and the factory GitHub App. After upgrading, restart the tracker and run setup before the next publication. Existing Plan and GitHub links stay unchanged. Installation activates no connection and makes no remote write.
+
+- Setup offers publication even when readiness passes. It reuses the existing organization Project, checks App access, and asks for approval of a fresh preview. It never applies the preview itself.
+- `sofa-plan publication status|preview|enable|disable` manages local approval. Enable takes `--fingerprint` from the checked setup preview. Approval binds the workspace, Project, repository, writer, type mode, and App installation.
+- Both publication entry points use the same approval and App checks. Raw Plan errors, partial results, time limits, retry details, and exit codes remain available to the batch publisher. Its comparison, recovery, delayed retry, and closed-SYNC rules remain in effect.
+- Readiness reports publication separately. Failures leave local work available. Only complete, verified publication advances the saved success result.
+- Disable preserves remote work and saved links, even with an unavailable profile or App. Legacy Product behavior is unchanged. Jira and Linear are outside this release.
+
+See `references/publication.md` for setup, upgrade, and recovery. Local checks are consistency controls, not a security boundary against other programs or machines.
+
 ## 13.1.1
 
 PLAN-STORY-660: when the removal of the `SYNC` preview file and the `published` log line both fail, `sofa-publish` gives 1 fixed line, `the SYNC stays open after its apply`, in place of the removal warning and the line of a file error, and the tracker runs no `step` until a new `base` (issue 2908; D-9158 to D-9162).

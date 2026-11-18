@@ -41,7 +41,7 @@ A repository has 1 factory on 1 machine. The `Factory` row names it: the slug of
 
 Follow `<skill folder>/references/planning.md` for the selected backend and each Plan operation. The Plan profile and its store are in the main checkout of the factory machine, never in a worktree. Run Plan through `<skill folder>/scripts/sofa-plan --repo <main folder> <Plan command args>`, because the wrapper resolves the installed Plan and binds the absolute profile. A Plan claim tells the sessions of the team which station holds an item. A claim of another station blocks the affected work: do not take it over, and run no raw `bd` command.
 
-Keep the GitHub Project and its bindings. Only the tracker writes the board, as the board publisher of this section: it previews, then it applies that preview after a `SYNC` of the orchestrator.
+Keep the GitHub Project and its bindings. Publication is optional: `/sofa:setup` verifies the target and records local approval as `references/publication.md` specifies. The board rows alone do not enable writes. Only the tracker writes the board, as the factory App: it previews, then it applies that preview after a `SYNC` of the orchestrator. Disabled or failed publication does not stop local Plan work.
 
 This template prefers Plan for a new factory. An existing factory with no backend row stays legacy Product; explicit `product` also selects legacy Product. A template update does not import or activate Plan, because the conversion is a separate change that the user approves (`references/planning.md`, "Conversion of a legacy Product factory"). After a conversion, the Product roadmap files are historical input, not a second live plan.
 

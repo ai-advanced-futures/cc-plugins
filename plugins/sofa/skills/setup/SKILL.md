@@ -8,11 +8,11 @@ metadata:
 
 # setup — make the repository ready for sofa
 
-Run it any time. It only fixes what `sofa:readiness` reports as `missing` or `wrong`, so a second run on a ready repository changes nothing.
+Run it any time. Fix missing or wrong readiness items after agreement. Also offer the optional GitHub publication setting (step 5.6), even on a ready repository. Keeping the current setting changes nothing.
 
 ## Step 1 — Check
 
-Run the `sofa:readiness` skill. Keep its table. If all items are `ok`, tell the user and stop.
+Run the `sofa:readiness` skill. Keep its table. If all items are `ok`, tell the user and go to step 5.6. For a publication-only request, limit the work to its prerequisites, step 5.6, and the report.
 
 ## Step 2 — Fix 1 item at a time
 
@@ -31,7 +31,7 @@ Factory skills (the `skill-<name>` items of the names in `references/factory-ski
 
 Read `<skill folder>/references/planning.md`. For a repository with no factory, offer `Roadmap backend | plan` and `Plan workspace | .claude/plan/local.json`, relative to the main checkout. Agree the PRD source. Configure the workspace with `plan:setup`. Do not initialize a second store, because the team then has 2 plans. Check `describe`, the PRD reads, and `check` before the first start. Then turn the automatic backup on, after the user agrees: `<skill folder>/scripts/sofa-plan --repo <main folder> backup --remote origin --auto on`. Run `describe --json` with the same prefix: `backup.auto` must be `true`. Do the same for a factory whose `describe` shows `backup.auto` as `false`.
 
-Keep the existing GitHub Project and its bindings. The board publisher is the GitHub account of the factory (step 5.5). Save the Project and that account with `github configure`, then read a `github preview`, each with the prefix `<skill folder>/scripts/sofa-plan --repo <main folder>`. Do not use Product writers on reconstructed files or a raw `bd` command, because these routes bypass the checks of Plan. Product `explore` and `review` remain PRD tools.
+Keep any existing GitHub Project and its bindings. Publication is optional and configured in step 5.6, after App setup; it is not a prerequisite for local Plan work. Do not use Product writers on reconstructed files or a raw `bd` command, because these routes bypass the checks of Plan. Product `explore` and `review` remain PRD tools.
 
 An existing factory with no backend row stays legacy Product. A `product` row also stays legacy. Do not convert it as a missing-item fix, because a conversion needs the approval of the user and a stopped team (`references/planning.md`, "Conversion of a legacy Product factory").
 
@@ -125,7 +125,11 @@ With a GitHub App, the sessions of the team act on GitHub as `<slug>[bot]` and n
 7. Write the slug into the `Factory` row of `docs/adlc.md` section 1 through a PR, when the row holds another value. The row names the 1 machine that runs the team, and the readiness item `factory-machine` blocks a start on a machine whose slug differs. The team uses the App from the next `sofa:start`. A session that runs now keeps its old settings. No `git config` change is necessary: `sofa-github settings` gives each team session the git helper and the commit identity in its environment.
 8. Run `git config --global --get-regexp '^url\..*insteadof$'`. A global rule that changes `https://github.com/` to `git@github.com:` makes git push over SSH with the key of the person, and not with the App. If the output has such a rule, tell the user, and ask the user to remove it for the team sessions.
 
-Setup reads no key file and prints no key path, because transcripts and PRs are not private. Only `sofa-github settings` (run by the start skill) prints the key path, in a Read deny rule of the session settings. Do not show that output in a message or a PR.
+Setup reads no key file and prints no key path, because transcripts and PRs are not private. Only `sofa-github settings` (run by the start skill) prints the key path, in a Read deny rule of the session settings. Keep that output out of messages and PRs because it contains the private key location.
+
+## Step 5.6 — GitHub publication (optional, any time)
+
+For selected Plan, follow `<skill folder>/references/publication.md`, one question at a time with `AskUserQuestion`. The outcome is an agreed setting (keep, configure, or disable), checked project details, and local approval before routine publication. Setup ends after the checked preview and approval, because only the tracker publishes on `SYNC`. Local Plan work remains available if the connection fails. Legacy Product keeps its existing board rules.
 
 ## Step 6 — The human team
 
@@ -137,4 +141,4 @@ The person who starts the team needs a person page with the tag `github:<login>`
 
 ## Step 7 — Report
 
-Run `sofa:readiness` again and show the table. List the items the user skipped.
+Run `sofa:readiness` again and show the table. List the items the user skipped. Report publication separately as disabled, ready, verified, partial, failed, or blocked, using the command evidence. Ready means configured, not a verified live publication.
