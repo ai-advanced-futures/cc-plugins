@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.0
+
+The final part of `github apply` ends in a time budget, makes 1 Dolt commit, and frees the lock (PLAN-STORY-674).
+
+A new stop of a run that works today: a `--part` call that ended with `complete: true` on 0.6.2 can now end with `complete: false` and `stopped: part-limit`. So this is a minor step.
+
+- The part budget: with `--part`, `apply` starts no write and no binding after 90 seconds from its start (`PART_SECONDS`). A binding starts only when the longest binding of the call can still end inside the budget. The first write or the first binding of a call always starts, so each part makes progress. The stop word is `part-limit`, so `sofa-publish` needs no change.
+- The check read is not made again in a call with no GitHub write: that call uses its start read as the check read. A part that has only bindings left reads the board 1 time, not 2 times.
+- On a large board, a part that sends a GitHub write leaves the check read to the next part, because the check read does not fit in the budget. Such a part returns `bindings_left: null`.
+- 1 checkpoint for each binding of the check read, not 2. The recovery of a stopped binding is the same.
+- 1 Dolt commit for each apply, not 1 commit for each store write. The writes stay in the Dolt working set until the lock ends. A call that ends with an error also commits. A stop (an interrupt) makes no commit, and the next commit of any Plan command records the writes. A failed commit is a warning: the output gets `store_commit` and stderr gets a warning, and the exit code does not change.
+- The record `last` of a part that ends with `complete: false` has the key `complete: false`. The replay check reads only a complete record, so a record of 0.6.2 with no `complete` key replays as before.
+- The result gets the new key `bindings_left`, and `progress` gets the key `bindings`. `items_left` now also counts the bindings that the check read found.
+- Limit: on a large board, a part that sends a GitHub write makes no check read, so a write that GitHub takes and does not keep gives no verification error (issue 2971). The sign is `items_left` that does not fall across parts with writes.
+
 ## 0.6.2
 
 The board read and the marker read count a marker only in an item that the configured writer made (issue 2901).

@@ -27,6 +27,9 @@ class Beads:
         # The store lock descriptor, set by `Workspace.lock()` for the time that it holds the lock. Each bd child gets it, so
         # the lock stays held until the last process of a stopped command ends.
         self.lock_fd = None
+        # The Dolt commit policy of each bd child: "on" commits after each write. "off" keeps each write in the working set
+        # (durable, and each later bd child reads it) until `commit_pending` makes 1 commit (PLAN-STORY-674).
+        self.auto_commit = "on"
 
     def _lock_fds(self) -> tuple[int, ...]:
         return () if self.lock_fd is None else (self.lock_fd,)
@@ -81,7 +84,7 @@ class Beads:
     def _run(self, *args: str, stdin: str | None = None, jsonl: bool = False):
         self._check_layout()
         command = [self.binary, "--sandbox", "--json", "--actor", self.actor,
-                   "--dolt-auto-commit=on", *args]
+                   "--dolt-auto-commit=" + self.auto_commit, *args]
         try:
             result = subprocess.run(command, input=stdin, capture_output=True, text=True,
                                     encoding="utf-8", errors="replace", timeout=self.timeout,
@@ -134,7 +137,7 @@ class Beads:
         session, so the lock descriptor keeps the store locked until each of them ends."""
         self._check_layout()
         command = [self.binary, "--sandbox", "--json", "--actor", self.actor,
-                   "--dolt-auto-commit=on", *args]
+                   "--dolt-auto-commit=" + self.auto_commit, *args]
         result = capture(command, cwd=self.beads_dir.parent, env=self._environment(),
                          timeout=self.timeout if timeout is None else timeout,
                          own_group=False, pass_fds=self._lock_fds())
@@ -158,13 +161,13 @@ class Beads:
         if self.remotes().get(name) != url:
             raise BeadsError("Beads did not save the backup remote")
 
-    def commit_pending(self, timeout=None) -> bool:
+    def commit_pending(self, timeout=None, message="Plan backup") -> bool:
         """Commit a pending working set. Return False when there is nothing to commit."""
         raw = self._network("diff", "HEAD", "WORKING", json_result=False, timeout=timeout)
         # Pinned bd prints this text instead of JSON for an empty diff.
         if raw.strip() == "No changes between HEAD and WORKING":
             return False
-        self._network("dolt", "commit", "-m", "Plan backup", json_result=False, timeout=timeout)
+        self._network("dolt", "commit", "-m", message, json_result=False, timeout=timeout)
         return True
 
     def push(self, remote: str, timeout=None) -> None:

@@ -28,7 +28,7 @@ def parser():
     root.add_argument("--bd", default=os.environ.get("PLAN_BD", "bd"), help="Beads executable")
     root.add_argument("--actor", default=os.environ.get("PLAN_ACTOR"), help="human:<name> or agent:<id>")
     root.add_argument("--json", action="store_true", help="emit compact JSON (all output is structured)")
-    root.add_argument("--version", action="version", version="plan 0.6.2")
+    root.add_argument("--version", action="version", version="plan 0.7.0")
     commands = root.add_subparsers(dest="command", required=True)
 
     def command(name, help_text, mutation=False):
@@ -291,6 +291,12 @@ def main(argv=None):
         if not pushed["pushed"]:
             print(json.dumps({"warning": "backup push failed; the write is saved: " + pushed["error"]},
                              ensure_ascii=True), file=sys.stderr)
+    committed = getattr(getattr(args, "plan_workspace", None), "commit_result", None)
+    if committed is not None and committed.get("error") and isinstance(result, dict):
+        # The writes are durable in the working set. A failed commit changes neither the result nor the exit code.
+        result = {**result, "store_commit": committed}
+        print(json.dumps({"warning": "the Dolt commit of this apply failed; the writes are saved, and the next commit "
+                                     "records them: " + committed["error"]}, ensure_ascii=True), file=sys.stderr)
     print(json.dumps(result, ensure_ascii=False, indent=None if args.json else 2, allow_nan=False))
     return code
 

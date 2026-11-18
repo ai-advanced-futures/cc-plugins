@@ -20,6 +20,7 @@ WRITE_GAP = 1.0        # seconds between the starts of 2 writes
 WRITES_PER_HOUR = 400  # writes in each 3,600 seconds; GitHub allows 500 content writes an hour
 BATCH = 10             # writes between 2 checkpoints
 PART_WRITES = 40       # default writes of 1 part
+PART_SECONDS = 90      # the time budget of 1 part, from the start of apply (PLAN-STORY-674)
 MAX_WAIT = 60          # the longest wait for a rate limit, in seconds
 MARKER_MARGIN = 120    # seconds that a marker read looks before the pending mark, in GitHub time
 SETTLE = 30            # seconds from the start of an apply to the marker read of a prior create; GitHub ends a request after 10 seconds
@@ -180,6 +181,9 @@ class Pacer:
         # `clock` and no `monotonic` (a test) gets that clock for both.
         self.monotonic = monotonic or (self.clock if clock else time.monotonic)
         self.history, self.limit, self.sent, self.on_batch = [], None, 0, None
+        # The end of the part budget on the monotonic clock, or None (no `--part`). A write starts after it only when it is the
+        # first write of the call, so each part makes progress.
+        self.deadline = None
 
     def load(self, times):
         floor = self.clock() - HOUR
@@ -191,6 +195,8 @@ class Pacer:
 
     def before_write(self):
         if self.limit is not None and self.sent >= self.limit:
+            raise PartEnd("part-limit", None)
+        if self.deadline is not None and self.sent and self.monotonic() >= self.deadline:
             raise PartEnd("part-limit", None)
         self.history = self.times()
         if len(self.history) >= WRITES_PER_HOUR:
@@ -958,7 +964,9 @@ def _active_records(records, active):
     return active
 
 
-def _binding(workspace, records, record, github, publication, active, pace=None):
+def _binding(workspace, records, record, github, publication, active, pace=None, final=True):
+    """Save 1 binding between 2 checkpoints. With final=False the second checkpoint is left to the next checkpoint of the call:
+    the stored intent then names this binding, and the recovery of `_active_records` accepts its record before or after it."""
     event = {"operation": "github-binding", "publication": active["fingerprint"],
              "actor": workspace.actor, "at": model.timestamp()}
     expected = copy.deepcopy(record)
@@ -978,7 +986,8 @@ def _binding(workspace, records, record, github, publication, active, pace=None)
     _save(workspace, records, record, github, event)
     active["revisions"] = {r["id"]: r.get("revision", 0) for r in records}
     active.pop("binding_intent")
-    _checkpoint(workspace, publication, active, pace)
+    if final:
+        _checkpoint(workspace, publication, active, pace)
 
 
 def _identity(issue):
@@ -1046,11 +1055,13 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
     pacer = client.pacer
     started = pacer.monotonic()
     records, config, snapshot, selected, found, desired, publication, active = _read(workspace, client)
+    read_time = pacer.monotonic() - started  # the check read starts only when a read of this length ends inside the budget
     records = list(records)  # Binding commits replace records; keep the read index immutable.
     if writer != config["writer"] or snapshot["login"] != config["writer"]:
         raise PlanError("only the configured writer authenticated as the actual GitHub viewer can publish")
     pacer.load(workspace.control().get("github_pace") or [])
     pacer.sent, pacer.limit = 0, ((max_writes or PART_WRITES) if part else None)
+    pacer.deadline = started + PART_SECONDS if part else None
     source = _source(records)
     revisions = {r["id"]: r.get("revision", 0) for r in records}
     if active:
@@ -1069,7 +1080,9 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
     else:
         expected = model.digest({"source": source, "revisions": revisions, "live": snapshot, "desired": desired})
         last = publication.get("last") or {}
-        replay = (last.get("fingerprint") == fingerprint and last.get("source") == source and last.get("revisions") == revisions)
+        # A record of a part that ended with complete: false is no proof; a record of 0.6.2 with no `complete` key is complete.
+        replay = (last.get("complete", True) is True and last.get("fingerprint") == fingerprint and last.get("source") == source
+                  and last.get("revisions") == revisions)
         if fingerprint != expected and not replay:
             raise PlanError("publication fingerprint changed; preview again before writing")
         if replay and any(_changes(r, found[r["id"]], desired[r["id"]], found, snapshot, config) for r in selected):
@@ -1082,12 +1095,18 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
     before = active.get("progress") or {}
     changed = {r["id"] for r in selected if not found[r["id"]] or _changes(r, found[r["id"]], desired[r["id"]], found, snapshot, config)}
     finished, deferred, made = set(), [], False
+    due, bound = None, 0  # the bindings that the check found due (None before it), and the bindings of this call
 
     def progress():
-        return {"writes": before.get("writes", 0) + pacer.sent, "calls": before.get("calls", 0) + 1, "at": model.timestamp()}
+        return {"writes": before.get("writes", 0) + pacer.sent, "bindings": before.get("bindings", 0) + bound,
+                "calls": before.get("calls", 0) + 1, "at": model.timestamp()}
 
-    def save():
+    def save(ended=False):
         active["progress"] = progress()
+        if ended:
+            # A call that ends normally with complete: false records it (D-9221). Only a complete record can replay.
+            publication["last"] = {"complete": False, "fingerprint": fingerprint, "source_revision": active["source_revision"],
+                                   "progress": active["progress"], "at": active["progress"]["at"]}
         _checkpoint(workspace, publication, active, pacer.times())
 
     def save_stored():
@@ -1100,8 +1119,10 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
         workspace.save_control(control)
 
     def left(stopped, next_at, failure=None):
+        bindings_left = None if due is None else len(due) - bound
         result = {"published": False, "complete": False, "fingerprint": fingerprint, "source_revision": active["source_revision"],
-                  "writes": pacer.sent, "items_left": len(changed - finished), "stopped": stopped, "next_at": next_at}
+                  "writes": pacer.sent, "items_left": len(changed - finished) + (bindings_left or 0), "bindings_left": bindings_left,
+                  "stopped": stopped, "next_at": next_at}
         if failure:
             result["github_error"] = failure.summary()
         return result
@@ -1233,8 +1254,13 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
                         raise PlanError(f"{record['id']}: Project membership could not be confirmed")
                     _board(client, snapshot, card, desired[record["id"]], True)
                     finished.add(record["id"])
-        # A checkpoint is a success only after the affected values are read back.
-        verified = client.snapshot(config)
+        # A checkpoint is a success only after the affected values are read back. A call that wrote nothing to GitHub uses its
+        # start read: no write of the call changed the board since then.
+        wrote = bool(pacer.sent or deferred)
+        if pacer.sent and pacer.deadline is not None and pacer.monotonic() + read_time > pacer.deadline:
+            raise PartEnd("part-limit", None)  # the next part reads the board at its start and uses that read
+        verified = client.snapshot(config) if wrote else snapshot
+        due = []
         for record in selected:
             identifier, wanted = record["id"], desired[record["id"]]
             issue = _find(workspace, record, verified, config["writer"])
@@ -1266,8 +1292,18 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
                        "plan_labels": wanted["managed_labels"], "plan_dates": [x for x in wanted["board"] if x != "Status"],
                        "pushed_hash": model.digest(wanted)}
             if binding != current["fields"].get("github"):
-                _binding(workspace, records, current, binding, publication, active, pacer.times())
-        publication["last"] = {"fingerprint": fingerprint, "source": source,
+                due.append((identifier, binding))
+        longest = 0.0
+        for identifier, binding in due:
+            # In a part, a binding starts only when the longest binding of this call still ends inside the budget. The first unit
+            # of progress of a call (its first GitHub write or its first binding) always starts, so each part makes progress.
+            begun = pacer.monotonic()
+            if pacer.deadline is not None and (pacer.sent or bound) and begun + longest > pacer.deadline:
+                raise PartEnd("part-limit", None)
+            _binding(workspace, records, model.resolve(records, identifier), binding, publication, active, pacer.times(), final=False)
+            longest = max(longest, pacer.monotonic() - begun)
+            bound += 1
+        publication["last"] = {"complete": True, "fingerprint": fingerprint, "source": source,
                                "source_revision": active["source_revision"],
                                "revisions": {r["id"]: r.get("revision", 0) for r in records},
                                "at": model.timestamp(), "items": len(selected)}
@@ -1288,7 +1324,7 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
     finally:
         if not succeeded:
             try:
-                save() if error is None else save_stored()
+                save(ended=True) if error is None else save_stored()
             except Exception:
                 if error is None:
                     raise

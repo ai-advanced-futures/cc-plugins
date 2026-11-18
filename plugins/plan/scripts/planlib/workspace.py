@@ -28,6 +28,9 @@ _REMOTE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 # Claim, heartbeat, release, and expire change only the claim, so no push follows them.
 CONTENT_OPERATIONS = frozenset({"new", "set", "body", "link", "unlink", "assign", "status", "recover",
                                 "migrate", "github-configure", "github-apply"})
+# The commands whose store writes make 1 Dolt commit at the end of the lock, not 1 commit for each write (PLAN-STORY-674).
+DEFERRED_COMMIT_OPERATIONS = frozenset({"github-apply"})
+PART_COMMIT_MESSAGE = "Plan github apply"
 
 
 def backup_timeout() -> float:
@@ -148,6 +151,8 @@ class Workspace:
         self._wrote = False
         # The result of the automatic push of the last lock, or None when no push was due.
         self.backup_result = None
+        # The result of the 1 Dolt commit at the end of a lock of a deferred-commit operation, or None when none was due.
+        self.commit_result: dict | None = None
 
     @staticmethod
     def _read_profile(profile: Path) -> tuple[Path, dict]:
@@ -418,17 +423,39 @@ class Workspace:
             self._locked, self._control, self._wrote = True, None, False
             # Each bd child holds the lock: it stays held until the last process of a stopped command ends.
             self.backend.lock_fd = descriptor
+            deferred = self.operation in DEFERRED_COMMIT_OPERATIONS
+            if deferred:
+                self.backend.auto_commit = "off"
             try:
                 yield
-            except BaseException:
+            except BaseException as exc:
+                # An error commits the writes that the call made. A stop (an interrupt, an exit) ends at once: its writes
+                # stay in the working set, and the next commit of any Plan command records them.
+                if deferred and isinstance(exc, Exception):
+                    self._commit_deferred()
                 self._after_write(failed=True)
                 raise
             else:
+                if deferred:
+                    self._commit_deferred()
                 # The push runs inside the lock, so the pushes of parallel sessions go in order.
                 self._after_write(failed=False)
             finally:
                 self._locked, self._control, self._wrote = False, None, False
                 self.backend.lock_fd = None
+                self.backend.auto_commit = "on"
+
+    def _commit_deferred(self) -> None:
+        """Make the 1 Dolt commit of a deferred-commit lock. A failed commit never fails the operation: each write is
+        durable in the working set, and the next commit of any Plan command (or the backup push) records it."""
+        self.commit_result = None
+        self.backend.auto_commit = "on"  # the backup push after it runs as in each other command
+        if not self._wrote:
+            return
+        try:
+            self.commit_result = {"committed": self.backend.commit_pending(message=PART_COMMIT_MESSAGE)}
+        except (PlanError, BeadsError, OSError, ValueError) as exc:
+            self.commit_result = {"committed": False, "error": one_line(exc)}
 
     def control(self) -> dict:
         # Each Plan writer holds the store lock, so one read is valid until the lock ends.
