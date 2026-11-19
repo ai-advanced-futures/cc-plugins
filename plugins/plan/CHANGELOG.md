@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.11.0
+
+`github apply` takes a `Date` header only when it is within 1 day of the machine clock, so a far-future `Date` cannot make a duplicate issue (PLAN-STORY-650, issue 2852).
+
+A minor step: a machine clock that is more than 1 day off GitHub time now gets the marker read with no time stop, which can reach the stop of 100 pages where 0.10.0 read 1 page.
+
+- The bound and the bad `Date`: a `Date` that is more than 86,400 seconds (1 day) ahead of the machine wall clock or behind it is a bad `Date`. The newest earlier `Date` of the call in the bound gives the mark. When there is none, the mark is null, and the marker read has no time stop (at most 100 pages).
+- The saved mark: the marker read treats a pending mark that is more than 1 day ahead of the machine clock as null. Plan 0.10.0 and earlier can have saved such a mark from a far `Date`.
+- The limit: a `Date` that does not come from the clock of GitHub (a proxy, a wrong `GH_HOST` server) and is more than 120 seconds ahead of it, but within the bound, still makes the mark late. Apply can then make a second issue, and the call ends with "issue binding and markers are ambiguous". `references/cli.md` names this limit.
+
 ## 0.10.0
 
 A part of `github apply` checks the writes of the earlier part (PLAN-STORY-676, issue 2971).

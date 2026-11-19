@@ -23,6 +23,7 @@ PART_WRITES = 40       # default writes of 1 part
 PART_SECONDS = 90      # the time budget of 1 part, from the start of apply (PLAN-STORY-674)
 MAX_WAIT = 60          # the longest wait for a rate limit, in seconds
 MARKER_MARGIN = 120    # seconds that a marker read looks before the pending mark, in GitHub time
+DATE_BOUND = 86_400    # seconds: a `Date` further than this from the machine clock is not GitHub time (PLAN-STORY-650)
 SETTLE = 30            # seconds from the start of an apply to the marker read of a prior create; GitHub ends a request after 10 seconds
 RATE_KINDS = {"secondary-rate-limit", "rate-limit"}
 SECONDARY = re.compile(r"secondary rate limit|abuse detection|submitted too quickly", re.IGNORECASE)
@@ -248,6 +249,17 @@ def _github_time(value):
     return int(moment.timestamp())
 
 
+def _checked_time(value, now):
+    """The epoch seconds of a `Date` header (`_github_time`) when they are within DATE_BOUND seconds of `now`, else none.
+
+    `now` is the machine clock (the wall clock, not the monotonic clock). GitHub sends `Date` and `created_at` from 1 clock, so
+    a `Date` far from the machine clock comes from a reply that is not from GitHub (a proxy, a wrong host), and it can hide an
+    issue from the marker read (PLAN-STORY-650, issue 2852).
+    """
+    stamp = _github_time(value)
+    return stamp if stamp is not None and abs(stamp - now) <= DATE_BOUND else None
+
+
 def _classify(prefix, result):
     """Give the kind of a failed call from its head, its body and its stderr. Keep no text of them."""
     status, headers, body = _split(result.stdout)
@@ -318,9 +330,10 @@ class Gh:
             args += ["--input", "-"]
         result = self.runner(args, data)
         status, headers, body = _split(result.stdout)
-        stamp = _github_time(headers.get("date")) if status is not None else None
-        if stamp is not None:  # a failed reply has a head too
-            self.seen = (stamp, self.pacer.clock())
+        now = self.pacer.clock()
+        stamp = _checked_time(headers.get("date"), now) if status is not None else None
+        if stamp is not None:  # a failed reply has a head too; a `Date` out of the bound keeps the older value, as a bad `Date` does
+            self.seen = (stamp, now)
         if result.returncode:
             raise _classify(prefix, result)
         if status is None:
@@ -371,6 +384,8 @@ class Gh:
         repo = config["repo"]
         path = (f"repos/{repo}/milestones?state=all&per_page=100" if milestone
                 else f"repos/{repo}/issues?state=all&sort=created&direction=desc&per_page=100")
+        if since is not None and since > self.pacer.clock() + DATE_BOUND:
+            since = None  # a mark that an earlier apply saved from a far `Date` (plan 0.10.0 and earlier) is not GitHub time
         found = []
         for _ in range(MAX_PAGES):
             headers, items = self._call(path)
