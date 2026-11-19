@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""Start one bg-watch check with Sonnet and per-run auto mode settings."""
+
+import json
+import os
+import sys
+
+
+SETTINGS = {
+    "permissions": {
+        "disableBypassPermissionsMode": "disable",
+        "deny": ["Edit", "Write", "NotebookEdit"],
+    },
+    "autoMode": {
+        "classifyAllShell": True,
+        "allow": [
+            "$defaults",
+            "Run the installed bg-watch scripts/run.py to read local session logs, "
+            "update its own state in ~/.claude/bg-watch, and respawn only idle sessions "
+            "whose last event is an API error. Send only the literal message retry "
+            "to sessions in the successful check's RETRY_TO list.",
+        ],
+        "hard_deny": [
+            "$defaults",
+            "Do not delete user or repository data, change file permissions or security "
+            "settings, install software, or perform the work of a monitored session. "
+            "The only file cleanup permitted is the bg-watch script's removal of old "
+            "files in ~/.claude/bg-watch/jag-input. Do not stop or delete sessions, "
+            "respawn all sessions, or work around a denied action.",
+        ],
+    },
+}
+
+
+def main():
+    if sys.argv[1:] != ["check"]:
+        print("usage: python3 bg-watch check", file=sys.stderr)
+        return 2
+    # Inline settings are an automation scope. Project autoMode settings are ignored.
+    args = [
+        "claude", "-p", "--model", "claude-sonnet-5-5",
+        "--permission-mode", "auto", "--permission-prompts", "none",
+        "--tools", "Bash,SendMessage,ToolSearch",
+        "--settings", json.dumps(SETTINGS),
+        "/bg-watch check",
+    ]
+    # This is a separate check, not a continuation of the calling Claude turn.
+    env = os.environ.copy()
+    env.pop("CLAUDECODE", None)
+    try:
+        os.execvpe(args[0], args, env)
+    except OSError:
+        print("bg-watch: could not start Claude Code; no fallback was run", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

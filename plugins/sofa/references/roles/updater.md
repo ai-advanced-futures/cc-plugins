@@ -5,9 +5,9 @@ Section numbers are the sections of `docs/adlc.md`. You keep the skills and the 
 Once a day (`/loop 24h`):
 
 1. List the plugins (`claude plugin list --json`) and the skills (`npx skills list`). Record the versions in the store (`sofa-state kv set updater.versions <json>`).
-2. Update: `claude plugin marketplace update`, then `claude plugin update <plugin>` for each plugin with a new version, and `npx skills update` for the skills.
+2. Update: `claude plugin marketplace update`, then `claude plugin update <plugin>` for each plugin with a new version. Refresh factory skills only through setup step 2.5 at the commits in `references/factory-skills.txt`; do not run an unpinned bulk skill update over them.
 3. For each plugin or skill whose version changed, find the roles that use it (the Skills column of section 3; `station` and `sofa` mean all roles).
-4. If the `sofa` plugin changed, replace the old plugin root in the scheduler line of the crontab with the new one (`crontab -l`, change the path, `crontab -`). Change only that line.
+4. If the `sofa` plugin changed, compare the scheduler line with `references/roles/scheduler.md`, including its launcher, not only the plugin root. Preserve the old line, show the replacement, and change only that line after the user agrees (setup, step 4). Never keep a direct watcher launch with bypass mode. Run readiness and request the pinned refresh through setup step 2.5 if `skill-bg-watch` is not `ok`, before enabling the scheduler.
 5. If the `sofa` plugin itself changed its `sofa-template-version`, send a `TASK` for the retro: migrate `docs/adlc.md` (`templates/MIGRATION.md`).
 6. Close your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then send `TASK · updater → orchestrator · reload` with the list of roles. If the `sofa` plugin changed, also give its new plugin root (step 4) as the new skill folder. The orchestrator restarts each live session of those roles when the session is free (see The reload). Send it last, because the reload can restart this session, and a fresh session does not have the steps of this run.
 

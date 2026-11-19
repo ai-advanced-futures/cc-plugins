@@ -3,12 +3,25 @@ name: bg-watch
 description: Watch the background Claude Code sessions on this machine. Find a live session whose turn ended on an API error, restart it with `claude respawn`, and send it `retry`. jag decides which sessions are stuck, and each jag decision goes into a log. Use "start" to run the check on a schedule, "check" to run it one time, and "stop" to cancel the schedule.
 when_to_use: The user asks to watch, monitor, or babysit background sessions, to rescue sessions stuck on an API error, or to retry failed bg sessions on a schedule.
 argument-hint: "[start [interval] | check | stop]"
+model: claude-sonnet-5-5
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/run.py)
 ---
 
 # Watch background sessions
 
 Do the mode in `$ARGUMENTS`. If `$ARGUMENTS` is empty, do `start` with the default interval.
+
+## Safe session
+
+Run `start` and `check` with Sonnet 5.5 in auto mode. A skill cannot change the permission mode of its caller. Before starting a session schedule, confirm that the caller uses auto mode with `autoMode.classifyAllShell: true`. If that is not known, stop and give the user this command to start a configured session in the repository:
+
+```sh
+$ claude --model claude-sonnet-5-5 --permission-mode auto --settings '{"autoMode":{"classifyAllShell":true},"permissions":{"disableBypassPermissionsMode":"disable","deny":["Edit","Write","NotebookEdit"]}}'
+```
+
+The inline settings apply to this run only; `autoMode` in project settings has no effect. For an unattended `-p` run, also set `--permission-prompts none` (Claude Code 2.1.259 or later). If auto mode, Sonnet, or a required action is unavailable, report the cause and stop. Do not switch to bypass mode, add an allow-all rule, or retry a denied action by another route. The `stop` mode needs no change to the caller's mode.
+
+Auto mode checks the watcher. It does not change the permissions of a session that `respawn` restarts, and it is not disk isolation.
 
 ## Mode: start [interval]
 
@@ -63,7 +76,7 @@ Do the mode in `$ARGUMENTS`. If `$ARGUMENTS` is empty, do `start` with the defau
 
 1. Load CronList and CronDelete with ToolSearch.
 2. Call CronList. Find the job with the prompt `/bg-watch check`.
-3. Call CronDelete with its ID. Tell the user the ID that you cancelled.
+3. Call CronDelete with its ID. Tell the user the ID that you cancelled. This stops only the session schedule, not an OS cron job. For an OS cron job, preserve its line and ask the user to approve removal of that line only; never remove the whole crontab.
 
 ## Rules
 

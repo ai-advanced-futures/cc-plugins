@@ -1,5 +1,14 @@
 # Changelog
 
+## 15.0.0
+
+The scheduler uses Sonnet 5.5 and configured auto mode, not Haiku with bypass permissions. This is a major version because a machine without auto mode or Sonnet access can no longer run the unattended check.
+
+- `scripts/bg-watch check` starts the watcher with per-run settings: all shell commands go through the safety classifier, the built-in rules stay, and a request that needs a human answer is denied. Only the check tools are offered. There is no bypass or model fallback, and no user settings file changes.
+- The factory pin for `bg-watch` moves to the published version with a check lock, call time limits, and idle-only respawn. Setup refreshes an old pin even when the skill exists.
+- To migrate, refresh the pinned skill through setup step 2.5, then approve replacement of only the watcher cron line through step 4. The launcher needs Claude Code 2.1.259 or later and account access to auto mode and Sonnet 5.5. Preserve unrelated cron entries. A plugin update alone does not change an existing cron command.
+- Auto mode protects the watcher turn. It does not change a resumed session's permissions or provide disk isolation. Read `.sofa/scheduler.log` for denied actions; a heartbeat does not prove that a check succeeded.
+
 ## 14.0.0
 
 Optional GitHub publication for Plan factories, configured through `/sofa:setup`.

@@ -649,13 +649,26 @@ def check_factory_skills(repo):
     branch = default_branch(root)
     on_branch = branch_paths(root, branch)
     fix = "/sofa:setup (step 2.5)"
-    for name, source, _, _ in rows:
+    for name, source, _, commit in rows:
         id_ = f"skill-{name}"
         link = f".claude/skills/{name}"
         target = f".agents/skills/{name}/SKILL.md"
         copy_there = f"{link}/SKILL.md" in on_branch
         link_there = link in on_branch or any(path.startswith(f"{link}/") for path in on_branch)
         if copy_there or (link_there and target in on_branch):
+            # The watcher needs the pinned restart protections, not only a skill file.
+            # Read the same branch as the skill; an unmerged lockfile proves nothing.
+            if name == "bg-watch":
+                rc, out = run(["git", "-C", str(root), "show", "--no-show-signature", f"{branch}:skills-lock.json"])
+                try:
+                    locked = json.loads(out).get("skills", {}).get(name, {})
+                except (ValueError, AttributeError):
+                    locked = {}
+                if (rc != 0 or not isinstance(locked, dict)
+                        or locked.get("ref") != commit or locked.get("source") != source):
+                    items.append(item(id_, "skills", "wrong",
+                                      f"bg-watch on {branch} does not match the factory-skills.txt pin", fix))
+                    continue
             items.append(item(id_, "skills", "ok", f"{branch} has {link}"))
         elif on_branch.get(link) == "120000":
             items.append(item(id_, "skills", "wrong", f"the link {link} has no target on {branch}", fix))
