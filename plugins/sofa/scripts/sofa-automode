@@ -1,0 +1,376 @@
+#!/usr/bin/env python3
+"""sofa-automode: the auto mode rules of a sofa factory, in the user settings.
+
+  render  Print the autoMode block of this factory as JSON. It writes nothing.
+  check   Compare the user settings with the rendered rules. Print 1 line for each
+          result. It writes nothing.
+  apply   Copy the settings file, then write the rendered rules into its autoMode
+          block. Each other key of the file stays as it is.
+  remove  Copy the settings file, then take the rules of this factory out of it.
+
+The rules are the prose entries of ../references/auto-mode.json, with the values of
+the factory in the place of <repo>, <prefix>, <bot>, <channel> and <main folder>.
+The values come from docs/adlc.md (Repository, Team prefix, Slack) and from 2 keys
+of the state store: machine.github-app.slug (the bot) and automode.repo-alias (a
+second name of the repository on GitHub, after a rename).
+Each written entry starts with the mark `[sofa <repo>] `, so a second apply replaces
+the entries of this factory and keeps each other entry of the file. Each list that
+the script writes holds "$defaults", so the built-in rules of Claude Code stay.
+
+The auto mode classifier reads autoMode only from the user settings, the managed
+settings and an inline --settings value. It does not read the settings files of a
+repository. So the default file is ~/.claude/settings.json, and the rules apply to
+each auto mode session of this user, not only to the factory.
+
+Exit code: 0 on success (check: the rules are applied and current), 1 when check
+finds a difference or a file cannot be read or written, 2 on a usage error.
+"""
+
+import argparse
+import json
+import os
+import re
+import signal
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+LISTS = ("environment", "allow", "soft_deny", "hard_deny")
+DEFAULTS = "$defaults"
+HERE = Path(__file__).resolve().parent
+TEMPLATE = HERE.parent / "references" / "auto-mode.json"
+# A shell allow rule of these forms answers before the classifier, so the rules of
+# this script never see the command (unless autoMode.classifyAllShell is true).
+BROAD = re.compile(r"^Bash\((git|gh|curl|claude|crontab|tmux|ssh|npx|uvx|uv|cargo|sqlite3|bd)\b[^)]*[:* ]\*\)$")
+REPO_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9_.-]+$")
+PREFIX_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,31}$")
+CHANNEL_RE = re.compile(r"^#[a-z0-9][a-z0-9._-]{0,79}$")
+ALIAS_KEY = "automode.repo-alias"
+SLUG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]{0,99}$")
+
+
+class Fail(Exception):
+    def __init__(self, message, code=1):
+        super().__init__(message)
+        self.code = code
+
+
+def adlc_value(text, key):
+    """The first `code` value of a row of the section 1 table, or ''."""
+    m = re.search(r"^\| *" + re.escape(key) + r" *\| *`([^`]*)`", text, re.M)
+    return m.group(1).strip() if m else ""
+
+
+def run_quiet(args, limit=20):
+    """Run a short local command in its own process group. Return (code, stdout).
+
+    At the limit it kills the group (also a child that holds the pipe) and returns 124."""
+    try:
+        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                             text=True, start_new_session=True)
+    except OSError:
+        return 127, ""
+    try:
+        out, _ = p.communicate(timeout=limit)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+        try:
+            p.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
+        return 124, ""
+    return p.returncode, out
+
+
+def store_value(repo, key):
+    """Read 1 key of the state store of the main folder, or '' (no store: no call)."""
+    db = repo / ".sofa" / "state.db"
+    if not db.is_file():
+        return ""
+    rc, out = run_quiet([str(HERE / "sofa-state"), "--db", str(db), "kv", "get", key])
+    return out.strip() if rc == 0 else ""
+
+
+def adlc_text(repo):
+    adlc = repo / "docs" / "adlc.md"
+    if not adlc.is_file():
+        raise Fail(f"no docs/adlc.md in {repo}; run /sofa:setup first")
+    return adlc.read_text(encoding="utf-8")
+
+
+def factory_mark(repo):
+    """The mark of the entries of this factory. It needs only the Repository row."""
+    name = adlc_value(adlc_text(repo), "Repository")
+    if not REPO_RE.match(name):
+        raise Fail("the Repository row of docs/adlc.md is not <owner>/<name>")
+    return f"[sofa {name}] "
+
+
+def factory_values(repo, bot, alias=None):
+    """Read the values of the factory from docs/adlc.md and the state store."""
+    text = adlc_text(repo)
+    name = adlc_value(text, "Repository")
+    prefix = adlc_value(text, "Team prefix")
+    channel = adlc_value(text, "Slack")
+    if not REPO_RE.match(name):
+        raise Fail("the Repository row of docs/adlc.md is not <owner>/<name>")
+    if not PREFIX_RE.match(prefix):
+        raise Fail("the Team prefix row of docs/adlc.md has no valid prefix")
+    if not CHANNEL_RE.match(channel):
+        channel = ""
+    if bot is None:
+        bot = store_value(repo, "machine.github-app.slug")
+    if bot and bot != "none":
+        if not SLUG_RE.match(bot):
+            raise Fail("the slug of the GitHub App is not valid", 2)
+        bot_text = f"the GitHub App account {bot}[bot]"
+    else:
+        bot_text = "the gh account of the person who starts the team"
+    # The remote can hold another name of the same repository (after a rename).
+    names = [name]
+    rc, out = run_quiet(["git", "-C", str(repo), "remote", "get-url", "origin"])
+    m = re.search(r"github\.com[:/]([^/\s]+/[^/\s]+?)(?:\.git)?\s*$", out) if rc == 0 else None
+    if m and REPO_RE.match(m.group(1)) and m.group(1).lower() != name.lower():
+        names.append(m.group(1))
+    if alias is None:
+        alias = store_value(repo, ALIAS_KEY)
+        if alias and not REPO_RE.match(alias):
+            raise Fail(f"the store key {ALIAS_KEY} is not <owner>/<name>")
+    if alias and alias != "none":
+        if not REPO_RE.match(alias):
+            raise Fail("--repo-alias is not <owner>/<name>", 2)
+        if alias.lower() not in [n.lower() for n in names]:
+            names.append(alias)
+    repo_text = names[0] if len(names) == 1 else f"{names[0]} (also with the name {' or '.join(names[1:])})"
+    return {"<repo>": repo_text, "<prefix>": prefix, "<bot>": bot_text, "<channel>": channel,
+            "<main folder>": str(repo)}, name
+
+
+def render(repo, bot, alias=None):
+    """Return (mark, {list name: [entry, ...]}) for this factory."""
+    try:
+        template = json.loads(TEMPLATE.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise Fail(f"cannot read {TEMPLATE.name}: {type(e).__name__}")
+    values, name = factory_values(repo, bot, alias)
+    mark = factory_mark(repo)
+    lists = {}
+    for key in LISTS:
+        entries = []
+        for entry in template.get(key, []):
+            if any(token in entry and not value for token, value in values.items()):
+                continue  # a team with no Slack channel gets no Slack rule
+            for token, value in values.items():
+                entry = entry.replace(token, value)
+            entries.append(mark + entry)
+        lists[key] = entries
+    return mark, lists
+
+
+def read_settings(path):
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise Fail(f"cannot read the settings file: {type(e).__name__}")
+    if not isinstance(data, dict):
+        raise Fail("the settings file is not a JSON object")
+    return data
+
+
+def merged(settings, mark, lists, notes):
+    """Return the autoMode block with the entries of this factory replaced by `lists`.
+
+    A value that it drops (an autoMode value that is not an object, a list that is not a
+    list, an entry that is not text) adds a line to `notes`."""
+    block = settings.get("autoMode")
+    if block is not None and not isinstance(block, dict):
+        notes.append("autoMode is not an object: it is replaced")
+    block = dict(block) if isinstance(block, dict) else {}
+    for key in LISTS:
+        old = block.get(key)
+        if old is not None and not isinstance(old, list):
+            notes.append(f"autoMode.{key} is not a list: it is replaced")
+        elif isinstance(old, list) and not all(isinstance(e, str) for e in old):
+            notes.append(f"autoMode.{key} holds an entry that is not text: it is dropped")
+        old = [e for e in old if isinstance(e, str)] if isinstance(old, list) else None
+        kept = [e for e in (old or []) if not e.startswith(mark)]
+        new = lists.get(key, [])
+        if old is None and not new:
+            continue  # a list that is not set keeps its defaults
+        if not new and kept in ([], [DEFAULTS]):
+            block.pop(key, None)  # only our entries were there: back to the defaults
+            continue
+        if DEFAULTS not in kept:
+            kept.insert(0, DEFAULTS)
+        block[key] = kept + new
+    return block
+
+
+def write_settings(path, settings, stamp):
+    """Copy the file, then replace it through a temporary file. Return the copy path."""
+    copy = None
+    mode = 0o600
+    path = path.resolve()  # a symbolic link stays a link: the file that it names changes
+    try:
+        if path.exists():
+            mode = stat.S_IMODE(path.stat().st_mode)
+            copy = path.with_name(f"{path.name}.sofa-copy-{stamp}")
+            n = 1
+            while True:
+                try:
+                    fd = os.open(copy, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                    break
+                except FileExistsError:
+                    n += 1
+                    if n > 99:
+                        raise Fail("a copy of the settings file is there already; no change")
+                    copy = path.with_name(f"{path.name}.sofa-copy-{stamp}-{n}")
+            with os.fdopen(fd, "wb") as f:
+                f.write(path.read_bytes())
+        else:
+            path.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=".settings-", suffix=".tmp")
+    except OSError as e:
+        raise Fail(f"cannot copy or make the settings file ({type(e).__name__}); no change")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(settings, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+        os.chmod(tmp, mode)
+        os.replace(tmp, path)
+    except OSError as e:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise Fail(f"cannot write the settings file ({type(e).__name__}); no change")
+    return copy
+
+
+def broad_rules(settings):
+    perms = settings.get("permissions")
+    allow = perms.get("allow") if isinstance(perms, dict) else None
+    return [r for r in (allow or []) if isinstance(r, str) and BROAD.match(r)]
+
+
+def cmd_render(args):
+    _, lists = render(args.repo, args.bot, args.repo_alias)
+    block = {k: [DEFAULTS] + v for k, v in lists.items() if v}
+    if args.classify_all_shell:
+        block["classifyAllShell"] = True
+    print(json.dumps({"autoMode": block}, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_check(args):
+    mark, lists = render(args.repo, args.bot, args.repo_alias)
+    settings = read_settings(args.settings)
+    block = settings.get("autoMode") if isinstance(settings.get("autoMode"), dict) else {}
+    bad = 0
+    for key in LISTS:
+        have = block.get(key) if isinstance(block.get(key), list) else []
+        ours = [e for e in have if isinstance(e, str) and e.startswith(mark)]
+        want = lists[key]
+        if ours == want:
+            state = "ok" if want else "ok (no rule of the factory)"
+        elif not ours:
+            state, bad = "missing", bad + 1
+        else:
+            state, bad = "not current", bad + 1
+        if have and DEFAULTS not in have:
+            state, bad = state + ', no "$defaults"', bad + 1
+        print(f"{key}: {state} ({len(ours)} of {len(want)} entries)")
+    every = block.get("classifyAllShell") is True
+    broad = broad_rules(settings)
+    print(f"classifyAllShell: {'true' if every else 'false'}")
+    if broad and not every:
+        print(f"warning: {len(broad)} allow rules answer before the classifier: {', '.join(broad)}")
+    perms = settings.get("permissions")
+    mode = perms.get("defaultMode") if isinstance(perms, dict) else None
+    print(f"defaultMode: {mode if isinstance(mode, str) else 'not set'}")
+    print("result: " + ("the rules are applied" if not bad else "the rules are not applied"))
+    return 0 if not bad else 1
+
+
+def cmd_apply(args):
+    mark, lists = render(args.repo, args.bot, args.repo_alias)
+    settings = read_settings(args.settings)
+    notes = []
+    block = merged(settings, mark, lists, notes)
+    if args.classify_all_shell:
+        block["classifyAllShell"] = True
+    if settings.get("autoMode") == block:
+        print("no change: the rules are applied and current")
+        return 0
+    settings["autoMode"] = block
+    copy = write_settings(args.settings, settings, args.at)
+    for note in notes:
+        print(f"note: {note}")
+    if copy:
+        print(f"copy {copy}")
+    print(f"applied {sum(len(v) for v in lists.values())} entries with the mark {mark.strip()}")
+    return 0
+
+
+def cmd_remove(args):
+    mark = factory_mark(args.repo)
+    settings = read_settings(args.settings)
+    if not isinstance(settings.get("autoMode"), dict):
+        print("no change: the settings file has no autoMode block")
+        return 0
+    block = merged(settings, mark, {}, [])
+    if settings["autoMode"] == block:
+        print("no change: the settings file has no entry of this factory")
+        return 0
+    if block:
+        settings["autoMode"] = block
+    else:
+        del settings["autoMode"]
+    copy = write_settings(args.settings, settings, args.at)
+    if copy:
+        print(f"copy {copy}")
+    print(f"removed the entries with the mark {mark.strip()}")
+    if "classifyAllShell" in block:
+        print("kept autoMode.classifyAllShell: it is a choice of the person; remove it by hand")
+    return 0
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="sofa-automode", description="The auto mode rules of a sofa factory.")
+    ap.add_argument("--repo", required=True, type=Path, help="the main folder of the factory")
+    ap.add_argument("--settings", type=Path, default=Path.home() / ".claude" / "settings.json",
+                    help="the settings file (default: the user settings)")
+    ap.add_argument("--bot", help="the slug of the GitHub App, or none (default: the state store)")
+    ap.add_argument("--repo-alias", help="another name of the same GitHub repository, as <owner>/<name>, or none "
+                    "(default: the key automode.repo-alias of the state store)")
+    ap.add_argument("--at", default=time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()),
+                    help="the time in the name of the copy")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    for name, fn in (("render", cmd_render), ("check", cmd_check), ("apply", cmd_apply), ("remove", cmd_remove)):
+        p = sub.add_parser(name)
+        p.set_defaults(fn=fn)
+        if name in ("render", "apply"):
+            p.add_argument("--classify-all-shell", action="store_true",
+                           help="also set autoMode.classifyAllShell to true")
+    args = ap.parse_args(argv)
+    if not re.fullmatch(r"[0-9A-Za-z]{1,32}", args.at):
+        print("sofa-automode: --at takes only letters and digits", file=sys.stderr)
+        return 2
+    try:
+        args.repo = args.repo.resolve()
+        return args.fn(args)
+    except Fail as e:
+        print(f"sofa-automode: {e}", file=sys.stderr)
+        return e.code
+
+
+if __name__ == "__main__":
+    sys.exit(main())

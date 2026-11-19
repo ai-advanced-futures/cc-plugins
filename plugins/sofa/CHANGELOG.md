@@ -1,5 +1,17 @@
 # Changelog
 
+## 15.2.0
+
+Setup configures the auto mode classifier of Claude Code for the factory.
+
+- `references/auto-mode.md` is the inventory of the operations of the team: the operations that each role does, the operations that stay blocked, and the operations that need a person, each with the built-in rule and the added rule.
+- `references/auto-mode.json` holds the rule text: 4 `environment` entries, 8 `allow` entries and 7 `soft_deny` entries, with the values of the factory as placeholders.
+- `scripts/sofa-automode render|check|apply|remove` fills the values from `docs/adlc.md` and the state store, and writes the entries into the `autoMode` block of the user settings. It copies the file first, keeps each other key and entry, and puts `"$defaults"` in each list, so each built-in rule stays.
+- `/sofa:setup` has the new step 4.5. It shows the entries, asks, applies them, and checks the result with `claude auto-mode config` and `claude auto-mode critique`.
+- Each `allow` entry names its scope. Only `<prefix>-merger` merges, and not a pull request that changes `.github/workflows`. Only the review roles write a `VERDICT:` comment. Only `<prefix>-orchestrator` and `<prefix>-updater` run `dispatch.sh`, with `--prompt-file` and never `--prompt` or `--resume`. `npx` runs only `skills` and `ctx7` at the version that a tracked file of the repository names. The inventory says that a role scope is no security boundary.
+- `sofa-automode` writes the file that a symbolic link names, says when it drops a value that is not a list or not an object, stops with a line when it cannot copy the file, takes an empty `autoMode` block and a list that holds only `"$defaults"` out on `remove`, and says that `remove` keeps `classifyAllShell`.
+- The rules act only on a session in the permission mode `auto`. `dispatch.sh` does not change: it starts each role session as before.
+
 ## 15.1.0
 
 The roles table of the ADLC template gives the merger `claude-sonnet-5-5` with a `300k` context, in place of `claude-haiku-5-5` with `200k`. The effort stays `medium`.

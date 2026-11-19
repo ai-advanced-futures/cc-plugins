@@ -8,7 +8,7 @@ metadata:
 
 # setup — make the repository ready for sofa
 
-Run it any time. Fix missing or wrong readiness items after agreement. Also offer the optional GitHub publication setting (step 5.6), even on a ready repository. Keeping the current setting changes nothing.
+Run it any time. Fix missing or wrong readiness items after agreement. Also offer the optional GitHub publication setting (step 5.6), even on a ready repository. Keeping the current setting changes nothing. Do step 4.5 (the auto mode rules) in each run, because no readiness item reports it.
 
 ## Step 1 — Check
 
@@ -97,6 +97,23 @@ For a repository with no factory, copy `<skill folder>/templates/ADLC.md` to `do
 2. Show the cron line of `references/roles/scheduler.md` with the machine values filled in (that file lists them, with `<jag folder>` from item 1, and the rule for a folder that is not safe to write into the line). Make sure that Claude Code trusts the main folder, that Python 3 is on the cron PATH, and that `bg-watch` has the pinned version from step 2.5. Check `claude --version`: the launcher needs 2.1.259 or later and account access to Sonnet 5.5 and auto mode. Report a missing prerequisite; do not use bypass mode as a fallback.
 3. Read `crontab -l` and preserve its text. If no `bg-watch check` line exists, show the new line. Otherwise, compare the existing line with the launcher line: an old direct Claude call, a different plugin root, or a missing jag folder needs replacement. Show the old line and the new line. Ask before any change.
 4. After the user agrees, write the approved crontab as literal text to a temporary file, preserving every unrelated line, then install that file with `crontab <file>`. Do not place the line inside an `echo` command or run `crontab -r`, because shell expansion can change the command and `crontab -r` deletes unrelated jobs. Read `crontab -l` again to confirm the change. Report the path `.sofa/scheduler.log` for denied actions and failed checks.
+
+## Step 4.5 — The auto mode rules (any time)
+
+The outcome: the user settings of the machine hold the auto mode rules of this factory, so a session of the team in the permission mode `auto` does its normal operations with no block, and the operations that the ADLC forbids stay blocked. `<skill folder>/references/auto-mode.md` holds the inventory of the operations and the reason for each rule. Do this step after `docs/adlc.md` is on `main`, and again after a change of the repository name, the team prefix, the Slack channel or the App, and after an update of the plugin.
+
+1. Run `<skill folder>/scripts/sofa-automode --repo <main folder> check`. If it exits 0 and prints no `warning:` line, this step is done. Run each command of this step in the main folder, because a worktree has no state store.
+2. Run `<skill folder>/scripts/sofa-automode --repo <main folder> render` and show the entries. If GitHub knows the repository by a second name (a rename), first save that name with `<skill folder>/scripts/sofa-state --db <main folder>/.sofa/state.db kv set automode.repo-alias <owner>/<name>`, because each command of this step reads it from the store. Tell the user these 3 facts:
+   - The file is `~/.claude/settings.json`, because the classifier does not read the settings files of a repository. The rules apply to each auto mode session of this user on this machine.
+   - `apply` first makes a copy of the file and prints its path. It changes only the `autoMode` entries with the mark of this factory, and it keeps each built-in rule.
+   - The rules act only on a session in the permission mode `auto`.
+3. If `check` printed a `warning:` line, show the allow rules that it names. Each of them answers before the classifier, so the rules of this step do not see its commands. Offer `--classify-all-shell`: it sends each shell command to the classifier. It also applies to the other auto mode sessions of the user, and each shell command then takes a classifier call. Keep each allow rule of the user, because the user owns that list.
+4. After the user agrees, run `<skill folder>/scripts/sofa-automode --repo <main folder> apply`, with `--classify-all-shell` when the user chose it. Show the path of the copy.
+5. Run `check` again: it must exit 0. Run `claude auto-mode config` and make sure that the output holds an entry with the mark `[sofa <owner>/<name>]` and the built-in rule `Git Destructive`. If an entry is missing, show the output of `check` and stop this step.
+6. Run `claude auto-mode critique` and show its result. If it prints "No feedback came back", say so and go on, because the check of item 5 is the proof of this step. Change no rule here: a rule change is a pull request for `references/auto-mode.json`.
+7. Tell the user that only a restart makes sure that a session uses the new rules. On a running team, send the orchestrator a `TASK`: give each session a fresh restart when it has no work.
+
+In this step, only the command `sofa-automode` writes the `autoMode` block, because a hand edit can drop `"$defaults"` and then the built-in rules are gone. `permissions.defaultMode` and the allow rules stay as they are, and each added entry names 1 kind of operation, because an entry that permits each command turns the classifier off. If the user does not agree, skip the step and name it in the report of step 7.
 
 ## Step 5 — Slack (optional, any time)
 
