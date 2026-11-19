@@ -839,6 +839,67 @@ def _comparable(key, value):
     return value
 
 
+def _view(record, issue, wanted, found, snapshot, config):
+    """The (key, board value, wanted value) rows of the check read of 1 item, in the order of the check of 0.6.2. The check read,
+    the saved writes of a part and the check of the earlier part use this view (PLAN-STORY-676)."""
+    if record["fields"]["type"] == "Milestone":
+        return [(key, issue.get(key) or None, value or None) for key, value in wanted.items()]
+
+    def target(name, attribute):
+        return ((found[name] or {}).get(attribute) or "plan:" + name) if name else None
+    payload, card = wanted["issue"], issue.get("card")
+    rows = [(key, _comparable(key, issue.get(key)), _comparable(key, payload[key]))
+            for key in ("title", "body", "state", "assignees", "labels")]
+    if payload["state"] == "closed":
+        rows.append(("state_reason", str(issue.get("stateReason", "")).lower(), payload["state_reason"]))
+    rows += [("milestone", issue.get("milestone"), target(wanted["milestone"], "number")),
+             ("parent", issue.get("parent"), target(wanted["parent"], "id")),
+             ("blockers", sorted(set(issue.get("blocked_by") or [])), sorted({target(x, "id") for x in wanted["blockers"]}))]
+    if config["type_mode"] == "issue_types":
+        rows.append(("type", (issue.get("issueType") or {}).get("id"), snapshot["issue_types"][wanted["type"]]))
+    rows.append(("Project", bool(card), True))
+    return rows + [(key, (card or {}).get(key), value) for key, value in wanted["board"].items()]
+
+
+def _failure(record, key):
+    """The error text of the check read of 0.6.2 for 1 key of `_view`."""
+    if record["fields"]["type"] == "Milestone":
+        return "milestone verification failed; no publication success checkpoint"
+    if key in ("title", "body", "state", "assignees", "labels"):
+        return f"GitHub {key} verification failed; no publication success checkpoint"
+    return {"state_reason": "close reason verification failed", "milestone": "milestone membership verification failed",
+            "parent": "parent verification failed", "blockers": "blocker verification failed",
+            "type": "native issue type verification failed"}.get(key, "Project field verification failed")
+
+
+def _written(record, issue, wanted, found, snapshot, config):
+    """The keys that the writes of 1 item change: the digest of the board value before the writes and of the written value."""
+    return {key: {"before": model.digest(seen), "after": model.digest(want)}
+            for key, seen, want in _view(record, issue, wanted, found, snapshot, config) if seen != want}
+
+
+def _check_earlier(workspace, publication, active, selected, found, desired, snapshot, config, pacer):
+    """The check of the earlier part (PLAN-STORY-676). A call that ended before its check read saved, in `unverified`, the keys
+    that it wrote. Each saved key is checked once with the start read, and its entry is removed:
+    - a new Plan value (the wanted value is not the written value), or the written value on the board: no error;
+    - the board value from before the write: GitHub took the write and did not keep it. Save the checkpoint without the entry,
+      then raise the error of the check read of 0.6.2. This call writes nothing. The next call writes the item again;
+    - another value (a person's edit, or a value that GitHub changed): no error. This call writes the key again and saves it.
+    """
+    unverified = active.get("unverified") or {}
+    for record in selected:
+        identifier = record["id"]
+        keys, issue = unverified.pop(identifier, None), found[identifier]
+        if not keys or not issue:
+            continue
+        for key, seen, want in _view(record, issue, desired[identifier], found, snapshot, config):
+            saved = keys.get(key)
+            if saved and seen != want and model.digest(want) == saved["after"] and model.digest(seen) == saved["before"]:
+                _checkpoint(workspace, publication, active, pacer.times())
+                raise PlanError(f"{identifier}: {_failure(record, key)}")
+    active.pop("unverified", None)
+
+
 def _changes(record, issue, wanted, found, snapshot, config):
     """Public field differences. Hash free text rather than print record content."""
     changes = {}
@@ -1092,6 +1153,7 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
         _checkpoint(workspace, publication, active, pacer.times())
     active.setdefault("refused_creates", [])
     active.setdefault("pending_at", {})
+    _check_earlier(workspace, publication, active, selected, found, desired, snapshot, config, pacer)
     before = active.get("progress") or {}
     changed = {r["id"] for r in selected if not found[r["id"]] or _changes(r, found[r["id"]], desired[r["id"]], found, snapshot, config)}
     finished, deferred, made = set(), [], False
@@ -1187,6 +1249,13 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
         if any(found[r["id"]] is None for r in selected):
             raise PlanError("a created identity cannot be read back; inspect before retry")
         desired = _desired(workspace, records, selected, found, snapshot, config)
+        # The values before the writes. An item is saved in `unverified` only when all its writes were sent (PLAN-STORY-676).
+        written = {r["id"]: _written(r, found[r["id"]], desired[r["id"]], found, snapshot, config) for r in selected}
+
+        def sent(identifier):
+            finished.add(identifier)
+            if written[identifier]:
+                active.setdefault("unverified", {})[identifier] = written[identifier]
         # Free every obsolete placement before any insertion, including a swap at the child limit.
         for record in selected:
             if record["fields"]["type"] == "Milestone":
@@ -1210,7 +1279,7 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
                 patch = {key: value for key, value in wanted.items() if (issue.get(key) or None) != (value or None)}
                 if patch:
                     client.update(config, issue, patch, milestone=True)
-                finished.add(identifier)
+                sent(identifier)
                 continue
             payload = copy.deepcopy(wanted["issue"])
             payload["milestone"] = found[wanted["milestone"]]["number"] if wanted["milestone"] else None
@@ -1244,7 +1313,7 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
                     deferred.append(identifier)  # A board workflow can add it before this mutation.
                     continue
             _board(client, snapshot, card, wanted, new)
-            finished.add(identifier)
+            sent(identifier)
         if deferred:
             fresh = client.snapshot(config)
             for record in selected:
@@ -1253,12 +1322,14 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
                     if not card:
                         raise PlanError(f"{record['id']}: Project membership could not be confirmed")
                     _board(client, snapshot, card, desired[record["id"]], True)
-                    finished.add(record["id"])
+                    sent(record["id"])
         # A checkpoint is a success only after the affected values are read back. A call that wrote nothing to GitHub uses its
         # start read: no write of the call changed the board since then.
         wrote = bool(pacer.sent or deferred)
         if pacer.sent and pacer.deadline is not None and pacer.monotonic() + read_time > pacer.deadline:
             raise PartEnd("part-limit", None)  # the next part reads the board at its start and uses that read
+        if active.pop("unverified", None) is not None:
+            _checkpoint(workspace, publication, active, pacer.times())  # the check read below checks these writes
         verified = client.snapshot(config) if wrote else snapshot
         due = []
         for record in selected:
@@ -1266,27 +1337,11 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
             issue = _find(workspace, record, verified, config["writer"])
             if not issue:
                 raise PlanError(f"{identifier}: issue is missing at verification")
-            milestone = record["fields"]["type"] == "Milestone"
-            if milestone:
-                if any((issue.get(key) or None) != (value or None) for key, value in wanted.items()):
-                    raise PlanError(f"{identifier}: milestone verification failed; no publication success checkpoint")
+            for key, seen, want in _view(record, issue, wanted, found, verified, config):
+                if seen != want:
+                    raise PlanError(f"{identifier}: {_failure(record, key)}")
+            if record["fields"]["type"] == "Milestone":
                 continue
-            payload = wanted["issue"]
-            for key in ("title", "body", "state", "assignees", "labels"):
-                if _comparable(key, issue.get(key)) != _comparable(key, payload[key]):
-                    raise PlanError(f"{identifier}: GitHub {key} verification failed; no publication success checkpoint")
-            if payload["state"] == "closed" and str(issue.get("stateReason", "")).lower() != payload["state_reason"]:
-                raise PlanError(f"{identifier}: close reason verification failed")
-            if issue.get("milestone") != (found[wanted["milestone"]]["number"] if wanted["milestone"] else None):
-                raise PlanError(f"{identifier}: milestone membership verification failed")
-            if issue.get("parent") != (found[wanted["parent"]]["id"] if wanted["parent"] else None):
-                raise PlanError(f"{identifier}: parent verification failed")
-            if set(issue.get("blocked_by") or []) != {found[x]["id"] for x in wanted["blockers"]}:
-                raise PlanError(f"{identifier}: blocker verification failed")
-            if config["type_mode"] == "issue_types" and (issue.get("issueType") or {}).get("id") != verified["issue_types"][wanted["type"]]:
-                raise PlanError(f"{identifier}: native issue type verification failed")
-            if not issue.get("card") or any(issue["card"].get(key) != value for key, value in wanted["board"].items()):
-                raise PlanError(f"{identifier}: Project field verification failed")
             current = model.resolve(records, identifier)
             binding = {**(current["fields"].get("github") or {}), "project_item_id": issue["card"]["id"],
                        "plan_labels": wanted["managed_labels"], "plan_dates": [x for x in wanted["board"] if x != "Status"],

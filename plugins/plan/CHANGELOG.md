@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.10.0
+
+A part of `github apply` checks the writes of the earlier part (PLAN-STORY-676, issue 2971).
+
+A new stop of a run that works today: a part that returned `complete: false` with `stopped: part-limit` can now end with a verification error. So this is a minor step.
+
+- A call that ends before its check read saves, under `unverified` in its checkpoint, the digests of the keys of each item whose writes it sent completely.
+- The start read of the next call checks each saved key 1 time. When the board shows the value from before the write, the call ends with the verification error of 0.6.2 and sends no write. When the board shows another value (a person's edit, or a value that GitHub changed), the call writes the Plan value again and saves the key again. A call that starts its own check read removes the saved keys.
+- The check read, the saved keys and the check of the earlier part use 1 view of the values (`_view`), with the texts and the order of 0.6.2.
+- 2 more tests keep the close reason compare of the check read (issue 3021).
+
 ## 0.9.0
 
 `check` gives no false milestone warning, and `accept-drift` records the accept of a reviewed requirement drift (PLAN-STORY-620, D-9107, D-9239).
