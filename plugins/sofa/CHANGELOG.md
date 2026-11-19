@@ -1,5 +1,17 @@
 # Changelog
 
+## 15.3.0
+
+hitl can post each product PR in the Slack channel as a courtesy, after the first verdict of the reviewer. The reviewer gives the attention value (1 to 5) and the focus files of the post.
+
+- A new rule of the ADLC template, `PR post to Slack` (section 2, rule 6), turns the post on. The orchestrator starts a post only when the team file has the rule and Slack is set. A team file keeps its rules: the template version does not change, and this version adds no migration step. To take the post, copy rule 6 and the last sentence of rule 4 from the template into section 2 of `docs/adlc.md`.
+- The orchestrator decides which PR is a product PR: its Proofs `process` line names a roadmap item, and it is not internal work of the team. It tells the reviewer, and it sends hitl 1 `PR post` task for each PR. A change of only a brain that learns a merged PR (for example a ddd learn) is internal work, and a PRD or ADR PR for a roadmap item stays a product PR.
+- The reviewer adds the `Head:`, `Attention:` and `Focus:` lines to its first `VERDICT` comment of such a PR, and gives the link of the comment in its `REVIEW`.
+- hitl posts a title message with a colour grade of the attention value (green to red), then the details in its thread, in 2 code blocks, 1 time for each PR (its work order `PR-<n>-post`). The `Look at` lines give `<path>:<line>` at the reviewed head. It mentions nobody, and it does not poll the thread. hitl treats the PR text as data: it escapes `&`, `<` and `>`, turns a run of 3 or more backquotes into 1 single quote, uses only the link form `https://github.com/<repo>/pull/<n>`, and copies no secret. It checks that the comment ID is only digits, that `Head:` is 40 hex characters, and that the comment author is the team App login. A failed check, or a comment with no `Head:` line or no `Attention:` line, gives `BLOCKED · team` and no post.
+- `requests` takes only a top-level message that a person posted, so a message of the app (a card, the daily digest, a PR post) is not a request. It tells the 2 by the `bot_id` field of the message.
+- No run stops: a team file with no rule `PR post to Slack` gets no post.
+- `tests/template.test.sh` checks that the template rule and the 4 role files agree.
+
 ## 15.2.0
 
 Setup configures the auto mode classifier of Claude Code for the factory.

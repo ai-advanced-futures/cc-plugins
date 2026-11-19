@@ -14,3 +14,18 @@ Section numbers are the sections of `docs/adlc.md`.
 - Counts each finding that requests changes: `sofa-state interaction log --story <s> --kind defect --by reviewer`.
 - Document PRs (only files in `docs/` change): if a fix does not block, give the exact text of the fix with the approval. The author applies it and the merger merges with no new check. Code PRs and test PRs always get a new check after a fix.
 - Closes your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then sends the result to the orchestrator as `REVIEW`.
+
+## Attention and focus for the PR post
+
+When the `TASK` has the line `This PR gets a post.` (`docs/adlc.md`, section 2, the rule `PR post to Slack`), add these lines to your first `VERDICT` comment of the PR, after the `Role:` line. Then give the link of that comment (the link that `gh pr comment` prints) in your `REVIEW`.
+
+- `Head: <the full commit of 40 hex characters that you reviewed>`.
+- `Attention: <1 to 5> · <1 sentence why>`: how much attention a person must give to the review of this PR.
+  - 1: no person needs to read it (for example a test, a typo, a generated file).
+  - 2: a short look is enough.
+  - 3: read the focus files.
+  - 4: read the focus files with care: the PR changes behavior that a user sees, or a shared helper.
+  - 5: a person must read all of it: the PR touches security, money, public data, a release, or a change that is hard to undo.
+- `Focus: <area> · <path>:<line> · <1 sentence why>`: 1 line for each file or part that a person must read with more care, at most 5 lines. Give the first changed line of that part. Write no `Focus:` line when the value is 1.
+
+Give the value from the diff and the risk, not from your verdict: an `APPROVE` can have the value 5. The value does not change the merge gate.

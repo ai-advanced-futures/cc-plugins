@@ -35,6 +35,17 @@ The `scheduler` is a system cron job, not a session. If `crontab -l` has no `bg-
 - After each merge on `main`, send a `TASK` to plan-auditor. For Plan, also send a `TASK` after a Plan lifecycle change so the auditor updates Sofa projections, and send a `SYNC` to tracker for the existing GitHub Project. For legacy Product, after a PR that changes `docs/product` merges, send a `SYNC` to tracker.
 - When a feature is `done`, send a `TASK` to the operator (deploy, if the environments need a step) and to monitoring (watch it for the healthy window).
 
+## PR post to Slack
+
+Do this only when section 2 of `docs/adlc.md` has the rule `PR post to Slack` and section 1 `Slack` is not `none`. Else no PR gets a post, because a team file from an earlier template does not have the rule.
+
+- When an author sends the first `REVIEW` of a PR, decide if it is a product PR. A product PR is the direct result of the work of the team: its Proofs `process` line names a roadmap item ID (a `STORY-`, `FEATURE-` or `MILESTONE-` ID, or an ID that Plan returned). Examples: a spec PR, a build PR, a test PR, and a PRD or ADR PR for a roadmap item.
+- A PR about the internal work of the team is not a product PR, also when it names a roadmap item: a change of only `docs/adlc.md` or `docs/adlc/` (the retro), a change of only a brain that learns a merged PR (scribe, for example a `knowledge` or a ddd learn), a roadmap or board sync (tracker, plan-auditor), and a chores PR. A PRD or ADR PR for a roadmap item stays a product PR. A PR with no roadmap item is not a product PR. A product PR is not the `product` line of the Proofs block.
+- For a product PR, write the line `This PR gets a post.` in the first `TASK` to the reviewer, so that its first `VERDICT` comment has the `Head:`, `Attention:` and `Focus:` lines, and its `REVIEW` gives the link of that comment (`references/roles/reviewer.md`, "Attention and focus for the PR post").
+- When that reviewer sends its first `REVIEW` with a verdict, send hitl 1 `TASK · orchestrator → hitl · PR post <n>` in the same turn. Give the PR number, the title, the link, the roadmap item ID, the author role, and the link of the `VERDICT` comment.
+- Send this `TASK` 1 time for each PR: not for a fix round, a new head, another reviewer or a `RELOAD`. Send it again only after a `BLOCKED` of hitl for that post, when its cause is gone. hitl also posts only 1 time for each PR (`references/roles/hitl.md`, "PR post").
+- The post is a courtesy. Do not wait for it or for a reply. A reply in Slack is not a verdict and not an approval. The review, the merge gate and the merge do not change.
+
 ## Status check
 
 Every 10 minutes (`/loop 10m`). The result: the store matches the live sessions, each stuck session gets 1 `STATUS` message, each timer role whose time is due is started (see "Timer roles"), and each live session has the colour of its role (see "Colour check"). A session is stuck if 1 of these is true:
