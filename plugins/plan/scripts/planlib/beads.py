@@ -95,7 +95,9 @@ class Beads:
         except OSError as exc:
             raise BeadsError(f"Cannot run Beads: {str(exc)[:600]}") from exc
         if result.returncode:
-            detail = (result.stderr or result.stdout).strip()[:1200]
+            # The text of a failed bd command can hold a secret (PLAN-STORY-691). The scrub comes before the cut, so that the
+            # cut cannot split a secret from the form that the scrub finds. Other paths stay, as in the error line (D-9276).
+            detail = scrub((result.stderr or result.stdout).strip(), paths=False)[:1200]
             raise BeadsError(f"bd {args[0]} failed (exit {result.returncode}): {detail}")
         try:
             if jsonl:
@@ -155,7 +157,7 @@ class Beads:
     def remotes(self, timeout=None) -> dict[str, str]:
         """Give the address that Beads saved for each remote name."""
         rows = self._list(self._network("dolt", "remote", "list", timeout=timeout), "remote list")
-        return {row.get("name"): row.get("url") for row in rows}
+        return {row.get("name"): row.get("url") for row in rows}  # type: ignore[misc]  # a row can lack a key: as before
 
     def add_remote(self, name: str, url: str) -> None:
         self._network("dolt", "remote", "add", name, url)

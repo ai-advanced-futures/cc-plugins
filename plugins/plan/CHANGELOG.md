@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.1
+
+The error scrub removes a secret pair and a user and password with no scheme (PLAN-STORY-691, issue 3026).
+
+- The scrub replaces the value of a `NAME=value` pair whose name holds `pass`, `pwd`, `secret`, `token`, `key`, `cred`, `auth`, `cookie` or `session` (any case) with `<secret>`, and keeps the name. A name with no such word stays.
+- The scrub replaces the user and password of an address with no scheme (`root:pw@tcp(host)/db`) with `<credentials>@`.
+- The text of a failed `bd` command is scrubbed before its cut at 1200 characters, so the cut cannot split a secret from the form that the scrub finds. Other paths stay in the error line.
+- Forms that stay out: a pair with a space around `=`, a `name: value` pair, a JSON pair, an option with a space, a header, a password with `/` or a space, and a user with no colon.
+
 ## 0.11.0
 
 `github apply` takes a `Date` header only when it is within 1 day of the machine clock, so a far-future `Date` cannot make a duplicate issue (PLAN-STORY-650, issue 2852).

@@ -39,14 +39,35 @@ _USERINFO = re.compile(r"(?i)(?<![a-z0-9+.-])([a-z][a-z0-9+.-]*://)[^/\s]*@")
 _TOKEN = re.compile(r"\b(?:gh[opusr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})")
 _FILE_URL = re.compile(r"(?i)\bfile://[^\s'\"(),;]*")
 _PATH = re.compile(r"(?<![\w.~/:-])/[^\s'\"(),;]+")
+# PLAN-STORY-691 (issue 3026). A run of text with no space and no / that ends at its last @: the part before the first : of
+# the run can be a user, and the part after it a password, also with no scheme (`root:pw@tcp(host)/db`). The run starts only
+# where no run character comes before it, so each character is read 1 time (issue 2996).
+_AT_RUN = re.compile(r"(?<![^\s/])[^\s/]*@")
+_USER_STOPS = "'\"(<[{,;="
+# A NAME=value pair whose name holds a secret word, in any case. The value is a quoted text to its closing quote (a quote
+# after a backslash does not close it, and the text can hold a line break) or to the end of the text, or the text to the
+# next space.
+_PAIR = re.compile(r"(?is)(?<![\w.-])(?=[\w.-]*?(?:pass|pwd|secret|token|key|cred|auth|cookie|session))([\w.-]+)="
+                   r"(?:\"(?:[^\"\\]|\\.)*\"?|'(?:[^'\\]|\\.)*'?|\S+)")
+
+
+def _bare_userinfo(match) -> str:
+    run = match.group(0)
+    colon = run.find(":")
+    if colon < 0:
+        return run
+    start = max(run.rfind(stop, 0, colon) for stop in _USER_STOPS) + 1
+    return run[:start] + "<credentials>@"
 
 
 def scrub(text: str, paths: bool = True) -> str:
-    """Remove from the text of a child: the user and password of a URL, a GitHub token, and each absolute path.
+    """Remove from the text of a child: the user and password of a URL or of an address with no scheme, the value of a
+    NAME=value pair whose name holds a secret word, a GitHub token, and each absolute path (PLAN-STORY-691).
 
     The home path becomes `~`. With `paths`, each other absolute path, also of a `file://` URL, becomes `<path>`
     (PLAN-STORY-675, D-9251). The error line of plan.py keeps the other paths, because they name the file to fix."""
-    text = _TOKEN.sub("<token>", _USERINFO.sub(r"\1<credentials>@", text))
+    text = _USERINFO.sub(r"\1<credentials>@", text)
+    text = _TOKEN.sub("<token>", _AT_RUN.sub(_bare_userinfo, _PAIR.sub(r"\1=<secret>", text)))
     home = os.path.expanduser("~").rstrip("/")
     if len(home) > 1:
         text = re.sub(re.escape(home) + r"(?=/|\b|$)", "~", text)
