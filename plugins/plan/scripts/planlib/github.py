@@ -120,7 +120,7 @@ class GhFailure(PlanError):
         super().__init__(f"{prefix} ({', '.join(parts)}); its outcome is not confirmed")
 
     def wait(self, now):
-        """Seconds to wait before the call runs again."""
+        """Seconds to wait before the call runs again. `now` is GitHub time (`Gh.rate_wait`), as `x-ratelimit-reset` is."""
         if self.retry_after is not None:
             return self.retry_after
         if self.reset is not None:
@@ -361,7 +361,7 @@ class Gh:
         except GhFailure as failure:
             if not retry or failure.kind not in RATE_KINDS:
                 raise
-            wait = failure.wait(self.pacer.clock())
+            wait = self.rate_wait(failure)
             if wait > MAX_WAIT:
                 raise
             self.pacer.sleep(wait)
@@ -372,6 +372,12 @@ class Gh:
         if self.seen is None:
             return None
         return self.seen[0] + self.pacer.clock() - self.seen[1]
+
+    def rate_wait(self, failure):
+        """Seconds to wait after the rate-limit refusal `failure`, now. `x-ratelimit-reset` is GitHub time, so the wait counts from
+        GitHub time (PLAN-STORY-648), and from the machine clock only when no reply of this call had a valid `Date`."""
+        now = self.github_now()
+        return failure.wait(self.pacer.clock() if now is None else now)
 
     def request(self, path, method="GET", data=None, retry=True):
         return self._call(path, method, data, retry)[1]
@@ -1083,7 +1089,7 @@ def _create(client, workspace, config, snapshot, record, body, active):
         if failure.kind not in RATE_KINDS:
             raise
         first = failure
-    wait = first.wait(pacer.clock())
+    wait = client.rate_wait(first)
     if wait > MAX_WAIT:
         raise RefusedCreate(first)
     pacer.sleep(wait)
@@ -1385,7 +1391,7 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
         return left(end.stopped, end.next_at)
     except GhFailure as failure:
         if failure.kind in RATE_KINDS:
-            return left("rate-limit", _utc(pacer.clock() + failure.wait(pacer.clock())), failure)
+            return left("rate-limit", _utc(pacer.clock() + client.rate_wait(failure)), failure)
         error = failure
         raise
     except BaseException as exc:

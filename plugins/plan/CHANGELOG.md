@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.12.0
+
+The wait after a rate limit of `github apply` is in GitHub time (PLAN-STORY-648).
+
+A minor step: a new stop of a run that works today. With a machine clock less than 30 seconds ahead of GitHub, a GitHub wait a little more than 60 seconds was shorter on the machine clock, so apply waited and ran the call again. Now the call ends with `rate-limit`.
+
+- The wait: the `retry-after` seconds, else `x-ratelimit-reset` minus GitHub time now, plus 30 seconds, else 60 seconds. GitHub time now is the newest valid `Date` of the call plus the seconds that passed on this machine since that reply. The machine clock is used only when no reply of the call has a valid `Date`.
+- 1 method, `Gh.rate_wait`, computes the wait when the retry of a call, the retry of a refused create, and `next_at` use it.
+- `next_at` of a call that ends with `rate-limit` is a UTC time on the clock of this machine: the machine time at the end of the call plus the wait. `references/cli.md` says that a caller on the same machine compares it with its own clock.
+
 ## 0.11.1
 
 The error scrub removes a secret pair and a user and password with no scheme (PLAN-STORY-691, issue 3026).
