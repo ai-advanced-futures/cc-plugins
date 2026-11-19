@@ -52,6 +52,8 @@ KNOWN_TEXTS = (
                         "create outcome is unknown; no duplicate create will be retried")),
 )
 PREVIEW_ARGS = ["github", "preview", "--json"]
+# PLAN-STORY-653 (issue 2860): the first line of a Python crash. Only this exact line gives the kind "a Python traceback".
+TRACEBACK = "Traceback (most recent call last):"
 
 
 class Usage(Exception):
@@ -105,14 +107,38 @@ def error_of(found):
     return None
 
 
-def error_text(out, err):
+def known_text(text):
+    """The first Plan text of KNOWN_TEXTS that is in the text, in the order of `classify`, or None."""
+    for _word, texts in KNOWN_TEXTS:
+        for known in texts:
+            if known in text:
+                return known
+    return None
+
+
+def plan_call(args):
+    """The words of a Plan command before its first option (`github apply`, `recover`). This script gives them."""
+    words = []
+    for arg in args:
+        if arg.startswith("-"):
+            break
+        words.append(arg)
+    return " ".join(words)
+
+
+def error_text(out, err, call, code):
+    """The detail of a Plan error. A line that is not a Plan JSON error can hold a path, a NAME=value pair or a token
+    (PLAN-STORY-653), so it gives only text of this script: the matched Plan text of KNOWN_TEXTS, or a fixed sentence with
+    the Plan call, the exit code and the kind of the text. `known_text` reads `one_line` of the line, as `classify` did in 13.1.1,
+    so the word stays the same for each input."""
     for source in [*(err or "").splitlines(), out]:
         if (found := error_of(parse(source))) is not None:
             return found
     for text in ((err or ""), (out or "")):
         for line in text.splitlines():
             if line.strip():
-                return one_line(line)
+                kind = "a Python traceback" if line.strip() == TRACEBACK else "a text that is not a Plan error"
+                return known_text(one_line(line)) or f"Plan {call} exited {code} with {kind}; sofa-publish does not show its text"
     return "Plan printed no result"
 
 
@@ -130,7 +156,7 @@ def ask(plan, args, limit=None):
     result = parse(out)
     if isinstance(result, dict) and "error" not in result:
         return code, result, None
-    return code, None, error_text(out, err)
+    return code, None, error_text(out, err, plan_call(args), code)
 
 
 # ---- the preview and the compare ----

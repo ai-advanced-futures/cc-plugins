@@ -1,5 +1,13 @@
 # Changelog
 
+## 15.0.1
+
+`sofa-publish` no longer shows the text of a Plan error that is not JSON.
+
+- For a Plan line that is not a Plan JSON `error`, the `detail` of the line of `sofa-publish`, and of its log, is now the fixed sentence `Plan <call> exited <code> with <kind>; sofa-publish does not show its text`. Such a line can hold a `NAME=value` pair, a path or a token. When the line holds a Plan text that the script knows, the `detail` is only that text. A Plan JSON `error` keeps its text, and the outcome word does not change for any input (issue 2860).
+- The tracker role says to send that sentence as the error text, and not to run Plan again to read the text.
+- A person finds the cause in their own terminal: run the Plan call again there. The call name and the exit code in the sentence show where to start.
+
 ## 15.0.0
 
 The scheduler uses Sonnet 5.5 and configured auto mode, not Haiku with bypass permissions. This is a major version because a machine without auto mode or Sonnet access can no longer run the unattended check.
