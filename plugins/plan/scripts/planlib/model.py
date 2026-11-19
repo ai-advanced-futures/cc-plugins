@@ -421,6 +421,9 @@ def validate(records: list[dict], retired: list[str] = ()) -> tuple[list[str], l
             warnings.append(f"{record['id']}: delivered parent has open children")
         if record_type(record) == "Story" and fields.get("parent"):
             parent = resolve(records, fields["parent"])
-            if parent["fields"].get("milestone") and parent["fields"].get("milestone") != fields.get("milestone"):
+            wanted = parent["fields"].get("milestone")
+            # A bare ID and a /milestones/ path name 1 milestone, so compare the resolved records (PLAN-STORY-620).
+            if wanted and (not fields.get("milestone")
+                           or resolve(records, wanted)["id"] != resolve(records, fields["milestone"])["id"]):
                 warnings.append(f"{record['id']}: milestone differs from its parent")
     return errors, warnings

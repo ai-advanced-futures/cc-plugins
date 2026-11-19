@@ -26,7 +26,7 @@ _PROFILE = {"schema_version", "workspace_id", "control_id", "beads_dir", "source
 _REMOTE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 # The commands that change content. An automatic backup push follows only these.
 # Claim, heartbeat, release, and expire change only the claim, so no push follows them.
-CONTENT_OPERATIONS = frozenset({"new", "set", "body", "link", "unlink", "assign", "status", "recover",
+CONTENT_OPERATIONS = frozenset({"new", "set", "body", "link", "unlink", "accept-drift", "assign", "status", "recover",
                                 "migrate", "github-configure", "github-apply"})
 # The commands whose store writes make 1 Dolt commit at the end of the lock, not 1 commit for each write (PLAN-STORY-674).
 DEFERRED_COMMIT_OPERATIONS = frozenset({"github-apply"})

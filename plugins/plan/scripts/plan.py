@@ -29,7 +29,7 @@ def parser():
     root.add_argument("--bd", default=os.environ.get("PLAN_BD", "bd"), help="Beads executable")
     root.add_argument("--actor", default=os.environ.get("PLAN_ACTOR"), help="human:<name> or agent:<id>")
     root.add_argument("--json", action="store_true", help="emit compact JSON (all output is structured)")
-    root.add_argument("--version", action="version", version="plan 0.8.0")
+    root.add_argument("--version", action="version", version="plan 0.9.0")
     commands = root.add_subparsers(dest="command", required=True)
 
     def command(name, help_text, mutation=False):
@@ -85,6 +85,11 @@ def parser():
         cmd.add_argument("relation", choices=sorted(model.RELATIONS))
         cmd.add_argument("target")
         cmd.add_argument("--claim-token")
+    accept = command("accept-drift", "accept a reviewed change of 1 traced PRD page", mutation=True)
+    accept.add_argument("id")
+    accept.add_argument("target")
+    accept.add_argument("--approved-by")
+    accept.add_argument("--claim-token")
     assign = command("assign", "assign work: TYPE NUMBER OWNER or ID OWNER", mutation=True)
     assign.add_argument("target", nargs="+")
     status = command("status", "read or change work state: TYPE NUMBER [STATE]", mutation=True)
@@ -207,7 +212,7 @@ def execute(args):
                 "beads_dir": str(workspace.beads_dir), "source_root": str(workspace.source_root),
                 "import_state": control.get("import_state"),
                 "writes": "single-machine Plan callers",
-                "operations": ["list", "show", "new", "set", "body", "link", "unlink", "assign", "status", "claim", "heartbeat", "release", "expire", "ready", "check", "migrate", "recover", "unshare", "backup", "github"],
+                "operations": ["list", "show", "new", "set", "body", "link", "unlink", "accept-drift", "assign", "status", "claim", "heartbeat", "release", "expire", "ready", "check", "migrate", "recover", "unshare", "backup", "github"],
                 "group_claims": False, "factory_activated": False, "backup": workspace.backup_status()}, 0
     if command == "prd":
         reader = PRD(workspace.source_root)
@@ -256,6 +261,10 @@ def execute(args):
         return service.edit(args.id, field, data, claim_token=args.claim_token, **common), 0
     if command in {"link", "unlink"}:
         return service.link(args.id, args.relation, args.target, remove=command == "unlink", claim_token=args.claim_token, **common), 0
+    if command == "accept-drift":
+        if not args.actor:
+            raise PlanError("accept-drift requires --actor or PLAN_ACTOR")
+        return service.accept_drift(args.id, args.target, args.approved_by, claim_token=args.claim_token, **common), 0
     if command == "assign":
         if len(args.target) < 2:
             raise PlanError("assign requires ID OWNER or TYPE NUMBER OWNER")

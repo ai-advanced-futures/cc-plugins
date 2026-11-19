@@ -68,4 +68,4 @@ Releasing a claim returns `claimed` or `in_progress` work to the computed ready 
 
 ## Check and report
 
-Plan's check command reports invalid relationships, missing references, drift, and model problems that it supports. A report keeps each warning visible and separates errors from successful writes. The PRD remains unchanged by planning, status changes, claims, and migration.
+Plan's check command reports invalid relationships, missing references, drift, and model problems that it supports. A report keeps each warning visible and separates errors from successful writes. The PRD remains unchanged by planning, status changes, claims, and migration. An accepted drift is an event in the history of the item, with its actor, its approval and both hashes.

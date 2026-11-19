@@ -78,7 +78,9 @@ class Service:
                 for trace in record["fields"].get("traces") or []:
                     try:
                         page = self.prd.trace(trace["to"])
-                        if page["hash"] != trace["hash"]:
+                        # A cancelled item gives no drift warning. The state is read at each check, so a reopened item
+                        # shows its drift again (D-9107). A missing page stays an error.
+                        if page["hash"] != trace["hash"] and record["fields"].get("state") != "cancelled":
                             warnings.append(f"{record['id']}: requirement drift at {trace['to']}")
                     except PlanError as exc:
                         errors.append(f"{record['id']}: {exc}")
@@ -240,6 +242,10 @@ class Service:
             else:
                 previous = fields.get(relation) or []
                 if relation == "traces":
+                    if not remove and any(entry["to"] == value["to"] and entry["hash"] != value["hash"] for entry in previous):
+                        # A re-link would clear a drift with no approval (PLAN-STORY-620, D-9239).
+                        raise PlanError("the item already traces this page with another hash; "
+                                        "review the change, then run accept-drift")
                     previous = [entry for entry in previous if entry["to"] != value["to"]]
                 else:
                     previous = [entry for entry in previous if model.resolve(records, entry)["id"] != value]
@@ -252,6 +258,34 @@ class Service:
             if fields.get("state") in {"ready", "blocked"}:
                 fields["state"] = model.effective_state(candidate, records)
             return self._save(candidate, records, "link", payload, request_id, fingerprint)
+
+    def accept_drift(self, identifier, target, approved_by=None, expected=None, request_id=None, claim_token=None):
+        """Store the hash of now in 1 trace whose PRD page changed, after a review (PLAN-STORY-620, D-9239)."""
+        given = model.approval_kind(approved_by)
+        if self.actor.startswith("agent:") and given not in {"card", "decision"}:
+            raise PlanError("an agent drift accept needs --approved-by with a card link or a D-id")
+        with self.workspace.lock():
+            records = self._records()
+            record = model.resolve(records, identifier)
+            payload = {"id": record["id"], "target": target, "approved_by": approved_by, "claim_token": claim_token}
+            request_id, fingerprint, replay = self._request(records, "accept-drift", payload, request_id)
+            if replay:
+                return replay
+            self._revision(record, expected)
+            self._holder(record, claim_token)
+            traces = record["fields"].get("traces") or []
+            matches = [index for index, entry in enumerate(traces)
+                       if target == entry["to"] or ("/" not in target and model.reference_id(entry["to"]) == target)]
+            if len(matches) != 1:
+                raise PlanError("stored trace is missing or ambiguous; use its exact prd:/ path")
+            before = traces[matches[0]]
+            page = self.prd.trace(before["to"])
+            if page["hash"] == before["hash"]:
+                raise PlanError("the trace has no drift; nothing to accept")
+            candidate = copy.deepcopy(record)
+            candidate["fields"]["traces"][matches[0]] = page
+            event = {**payload, "to": before["to"], "hash_before": before["hash"], "hash_after": page["hash"]}
+            return self._save(candidate, records, "accept-drift", event, request_id, fingerprint)
 
     def assign(self, identifier, owner, kind=None, expected=None, request_id=None):
         wanted = model.owner_name(owner)

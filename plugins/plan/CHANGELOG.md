@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0
+
+`check` gives no false milestone warning, and `accept-drift` records the accept of a reviewed requirement drift (PLAN-STORY-620, D-9107, D-9239).
+
+A minor step: `link` refuses a call that works on the version before, and `accept-drift` is a new command.
+
+- The milestone compare of `check`: a bare ID (`MILESTONE-03`) and a `/milestones/` path of the same milestone are 1 milestone, so a Story under a parent with the same milestone gives no "milestone differs from its parent" warning. A Story with another milestone, or with none, still gives it. The stored values do not change.
+- `accept-drift ID TARGET --actor ACTOR [--approved-by REF]` stores the hash of now in the trace whose PRD page changed. The history event `accept-drift` keeps the actor, the approval, the page and both hashes. A `human:` actor needs no approval. An `agent:` actor needs `--approved-by` with a hitl card link or a D-id. The automatic backup push follows it, as it follows `link`.
+- `link ID traces TARGET` refuses a page that the item already traces with another hash, and its message names `accept-drift`. A re-link with the same hash works. Unlink, then link, still replaces a trace with no approval: this 2-call path stays (D-9293, D-9300), and `references/cli.md` says so.
+- `check` gives no drift warning for an item whose state is `cancelled`. The state is read at each run, so an item that leaves `cancelled` shows its drift again. `done` and `released` keep the warning, and a missing page is an error in each state.
+
 ## 0.8.0
 
 The automatic backup push holds the store lock for at most the lock budget, backs off after failed pushes, and keeps a scrubbed error (PLAN-STORY-675, D-9251).
