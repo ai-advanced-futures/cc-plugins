@@ -19,4 +19,4 @@ The `released` work state is a separate `plan:status` request. This skill gives 
 
 ## Instructions
 
-Return 1 verified claim release from Plan's `release` and `show` commands, using the 2 references, selected workspace, executing actor, and exact current claim token: item ID, cleared claim, stored state, and blockers, or the exact CLI refusal.
+Return 1 verified claim release from Plan's `release` and `show` commands, using the 2 references, selected workspace, executing actor, and exact current claim token: item and blockers presented under the command reference's user-facing text rule, cleared claim, and stored state, or the CLI refusal.

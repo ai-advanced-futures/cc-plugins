@@ -17,4 +17,4 @@ allowed-tools: Read, Bash
 
 ## Instructions
 
-Return 1 verified renewal from Plan's `heartbeat` and `show` commands, using the 2 references, selected workspace, executing actor, exact current claim token, and requested or default lease: item ID, holder, heartbeat time, and lease expiry, or the exact CLI refusal.
+Return 1 verified renewal from Plan's `heartbeat` and `show` commands, using the 2 references, selected workspace, executing actor, exact current claim token, and requested or default lease: item presented under the command reference's user-facing text rule, holder, heartbeat time, and lease expiry, or the CLI refusal.

@@ -22,8 +22,6 @@ A Feature can belong directly to a Milestone with no Epic parent. Existing Featu
 
 ## Instructions
 
-1. Read the 3 references and resolve 1 Epic or Milestone with its existing Features, Criteria, and relevant PRD capabilities; ask for a parent when neither the caller nor argument supplies one.
-2. Agree the Feature set, dependencies, priority, and acceptance text through the reference's discovery, challenge, and set-confirmation questions, keeping each criterion to 1 observable completion sentence.
-3. Store 1 Feature per confirmed missing outcome through Plan, with the chosen parent when present, Milestone, and at least 1 PRD trace.
-4. Store 1 distinct Criterion item per agreed missing Feature criterion and link it to that Feature, leaving execution checks for separate work.
-5. Return every Feature ID, parent, Milestone, trace, criterion ID and count, and uncovered capability; run 1 Plan check for a standalone run or return these fields to develop for its final check.
+Return a confirmed Feature set for 1 Epic or Milestone through Plan CLI writes under the 3 reference contracts: dependencies, priority, at least 1 PRD trace per Feature, and 1 distinct Criterion per agreed acceptance result. Existing Features and Criteria remain the starting point; ask for a missing parent. Execution checks remain separate work.
+
+The develop handoff contains the saved Features, parents, Milestones, traces, Criteria, criterion counts, and uncovered capabilities with their source identities. Develop owns the final check; a standalone run includes 1 Plan check and presents its result under the command reference's user-facing text rule.

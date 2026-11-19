@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["PyYAML>=6.0,<7"]
+# dependencies = ["PyYAML>=6.0,<7", "mistune>=3.4,<4"]
 # ///
 """Plan: one explicit local Beads workspace with Product-compatible planning rules."""
 from __future__ import annotations
@@ -29,7 +29,7 @@ def parser():
     root.add_argument("--bd", default=os.environ.get("PLAN_BD", "bd"), help="Beads executable")
     root.add_argument("--actor", default=os.environ.get("PLAN_ACTOR"), help="human:<name> or agent:<id>")
     root.add_argument("--json", action="store_true", help="emit compact JSON (all output is structured)")
-    root.add_argument("--version", action="version", version="plan 0.12.0")
+    root.add_argument("--version", action="version", version="plan 0.13.0")
     commands = root.add_subparsers(dest="command", required=True)
 
     def command(name, help_text, mutation=False):

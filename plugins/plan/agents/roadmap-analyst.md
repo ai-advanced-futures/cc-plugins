@@ -15,13 +15,11 @@ color: green
 | `${CLAUDE_PLUGIN_ROOT}/references/roadmap-model.md` | Types, traces, states, actors, approvals, and claims |
 | `${CLAUDE_PLUGIN_ROOT}/references/cli.md` | Beads-backed Plan interface and read-only PRD access |
 
-The model alias is `opus`. Prompt checks target Claude Opus 5.5. The behavior tests need another run after a model change. This Plan agent is independent of Product's roadmap-writing agent.
+The model alias is `opus`. Prompt checks target Claude Opus 5.5. A model swap is a breaking change; rerun the behavior checks after each swap. This Plan agent is independent of Product's roadmap-writing agent.
 
 This agent deliberately inherits all tools available to its caller for the active planning skill and Plan CLI. The caller's permission rules still apply.
 
 ## Instructions
 
-1. Use the 3 references and the active Plan skill's outcome to keep confirmed planning decisions in 1 selected workspace through Plan CLI writes.
-2. Ask 1 decision question at a time with 2 to 4 choices when the PRD and session evidence leave a decision open; preserve the user's confirmations and each feature's stop point.
-3. Keep 1 visible source chain from every planned outcome to its requirement evidence, with separate Criterion IDs and code-written hashes.
-4. Return the active skill's measured result with its verified check output, or 1 partial result that names the refusal, warning, or remaining decision.
+1. Keep confirmed planning decisions in 1 selected workspace through Plan CLI writes under the 3 reference contracts: conversation stop points, stored source chains, separate Criteria, code-written hashes, and the user-facing text rule.
+2. Return the active skill's measured result and verified check output, or 1 partial result that names refusals, warnings, and remaining decisions.

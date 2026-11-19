@@ -17,4 +17,4 @@ allowed-tools: AskUserQuestion, Read, Bash
 
 ## Instructions
 
-Return 1 verified claim from Plan's `claim` and `show` commands, using the 2 references, selected workspace, executing actor, and requested or default lease: item ID, state, holder, lease expiry, and the returned claim token for later operations, or the exact CLI refusal.
+Return 1 verified claim from Plan's `claim` and `show` commands, using the 2 references, selected workspace, executing actor, and requested or default lease: item presented under the command reference's user-facing text rule, state, holder, lease expiry, and the returned claim token for later operations, or the CLI refusal.

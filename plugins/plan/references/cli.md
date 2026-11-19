@@ -2,6 +2,16 @@
 
 The Plan skills use the Python command line that ships with Plan. The Beads store is the write backend. Product PRD files are read-only input.
 
+## User-facing text
+
+This rule covers all Plan questions, replies, reports, item views, saved prose, and published GitHub issue and board text.
+
+Only Milestones, Features, and Stories appear with IDs. Each mention includes both its exact returned ID and its English title. Unsaved proposals have titles but no invented IDs.
+
+Describe all PRD concepts and other Plan types in plain English: the relevant behavior, need, or constraint. Their IDs, aliases, and source paths stay out of visible text, source links, and quoted output so the explanation makes sense without a lookup. External links keep their destinations; their visible labels follow this rule. Code examples with commands or other literal content keep their text and arguments. A standalone source reference in inline code follows the display rule. Explain the code's purpose in nearby prose; do not use code blocks for reference lists. A missing source that Plan data or the PRD names (a trace, a link, a path with a PRD prefix) is a reported gap, not an invented description: publication stops and the error names the record and the reference. An ID or a path that no Plan record, PRD page or alias holds (a made-up example) stays as written.
+
+Stored references, command arguments, and internal helper handoffs keep the actual source IDs, canonical paths, relationships, and code-written hashes. Resolve aliases to the source identity, such as `CAPABILITY-10`, rather than shortening IDs or changing stored references. Full helper records and CLI JSON are internal evidence; present their meaning under this rule. Reports retain each refusal's cause and each warning. Operational values, such as actors, claim tokens, and publication fingerprints, retain their exact form.
+
 ## Invocation and workspace
 
 Every command runs from the target repository. The command prefix is:
@@ -51,7 +61,7 @@ The following table gives the command forms after the prefix:
 | `migrate --apply` | Apply the previewed copy | Stable mapping to Beads IDs |
 | `github configure --repo OWNER/REPO --owner OWNER --number NUMBER --writer LOGIN --actor ACTOR` | Check and save an existing Project and its publisher | Verified board settings; imported bindings stay intact |
 | `github preview` | Compare a fixed Plan view with its GitHub Project | Fingerprint, source revision, intended changes, and warnings |
-| `github apply --fingerprint HASH --writer LOGIN --actor ACTOR [--part [--max-writes N]]` | Publish the accepted preview as the configured writer, all at once or in parts | Verified bindings and publication result (`complete`), a partial result with `next_at`, or an exact refusal |
+| `github apply --fingerprint HASH --writer LOGIN --actor ACTOR [--part [--max-writes N]]` | Publish the accepted preview as the configured writer, all at once or in parts | Verified bindings and publication result (`complete`), a partial result with `next_at`, or a refusal with its cause |
 
 The creation options are `--description TEXT`, `--body-file PATH`, `--parent ID`, `--milestone ID`, repeatable `--trace PRD_REF`, `--item ID`, `--target-date DATE`, `--spec PATH`, and `--size SIZE`. Repeatable `--set FIELD=YAML` sets accepted fields, and `--link FIELD=TARGET` adds accepted relationships. Each option is used only for a type that accepts it. Parent, Milestone, and Criterion item references use IDs returned by Plan, not Product roadmap paths. `Criterion` and `AcceptanceCriterion` both name the criterion type. New execution Run records are outside planning; migration preserves existing Run evidence.
 
@@ -76,6 +86,8 @@ The Project summary uses its title, description, and body. `prd:/product.md` is 
 `github configure` requires one Project record and an existing GitHub Project. It preserves imported `github` values. `--type-mode labels` or `--type-mode issue_types` selects an explicit representation; an existing choice is not silently replaced.
 
 `github preview` makes no board change. Apply requires its fingerprint, the configured writer, and the same actual GitHub login. A caller-provided writer alone grants nothing, so a session that `gh` authenticates as a person cannot publish as the factory account. The command uses `gh` from the current `PATH`, so Sofa's authentication wrapper remains in use. The `gh` child stays in the process group of Plan, so a caller that stops the Plan group also stops `gh`. At its own time limit, Plan stops `gh` and each process below it.
+
+Publication reads Markdown and the PRD to turn source references into English titles. Paths that start with `../` and enter a PRD folder identify PRD sources. Use repository paths for other files. A bare source filename must match one page. Markdown formatting can change. Code commands and external link destinations stay unchanged. A missing bundle, missing or ambiguous reference, or a title that cannot be resolved without a cycle stops publication rather than exposing an ID. The preview fingerprint includes the PRD evidence, so a source change needs a fresh accepted preview even after a partial publication. Hidden identity markers and existing user-written text outside the managed section stay unchanged.
 
 Publication records stable issue and Project item bindings. A marker counts only in an issue or milestone that the configured writer made: REST `user.login` (an issue) or `creator.login` (a milestone), or GraphQL `author.login`, where GraphQL names an App with no `[bot]`. The board read and the marker read skip an item of another account: they do not bind it, do not count it for the 1-match rule, and do not stop. A bound issue keeps its binding with no author check. Limit: a migration that changes the writer must bind each issue of the old writer first, because the marker in an issue of the old writer with no binding no longer counts, and apply then creates a new issue. A human owner maps to a GitHub assignee. An agent owner appears as `Plan owner` in the managed issue text and has no GitHub assignee; the Plan claim stays unchanged. Missing board fields, status options, labels, or issue types are reported rather than silently omitted. A partial or uncertain result must not be reported as a complete board update. Reuse the recorded attempt; do not create replacement issues or modify Product roadmap files. The publisher does not pull issue state or assignees into Plan.
 

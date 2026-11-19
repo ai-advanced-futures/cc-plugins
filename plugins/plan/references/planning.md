@@ -57,7 +57,7 @@ A theme groups capabilities that give value together. It becomes 1 Epic attached
 
 Three to 6 theme proposals name their capabilities and scope entries and explain why each group belongs together. Challenges test whether an epic is too large, its smallest useful scope, the effect of delay, and outside constraints. A theme describes user value rather than a system component.
 
-The result names every Epic ID, its Milestone, its PRD traces, untraced epics, and milestone capabilities outside the set. The next Plan helper is `features-identify`.
+The result describes every Epic, its Milestone, its PRD evidence, untraced epics, and milestone capabilities outside the set under the user-facing text rule in `cli.md`. Internal helper results retain the IDs and trace paths. The next Plan helper is `features-identify`.
 
 ## Features: epics or milestones to features
 
@@ -76,7 +76,7 @@ A Feature can belong to an Epic or directly to a Milestone. A milestone with no 
 
 One acceptance criterion is 1 sentence that states an observable completion result. Each confirmed criterion becomes a distinct Criterion item linked to exactly 1 Feature. Criterion text describes the result for the user. Check commands and declarations are separate work, not invented during feature discovery.
 
-The result names every Feature ID, parent if any, Milestone, criterion count, PRD traces, and uncovered capabilities. The next Plan helper is `stories-identify`, after the user's stop point for that feature.
+The result names every Feature with its ID and English title, parent if any, Milestone with its ID and English title, criterion count, PRD evidence, and uncovered capabilities under the user-facing text rule in `cli.md`. The next Plan helper is `stories-identify`, after the user's stop point for that feature.
 
 ## Stories: features to stories
 
@@ -84,7 +84,7 @@ Story discovery follows the user's first action, later actions, failure cases, a
 
     As a PERSONA, I want to ACTION, so that BENEFIT.
 
-`PERSONA` names the PRD Persona and its ID when one exists. `ACTION` is the user's action. `BENEFIT` is the value of that action.
+`PERSONA` describes the PRD Persona in plain English without its ID. The source identity stays in supported reference fields or internal helper context, not in the story text. `ACTION` is the user's action. `BENEFIT` is the value of that action.
 
 | Test | Question the story answers |
 | --- | --- |
@@ -99,9 +99,9 @@ A story that fails a test needs a smaller scope or a missing fact. Useful split 
 
 Each Story has its Feature as parent. A new Story inherits the parent's Milestone unless the user chooses another. If the Feature has no Milestone, the user can choose one or leave it absent. A later milestone change on a Feature does not silently move its Stories.
 
-Each agreed Story criterion becomes a distinct Criterion item linked to exactly 1 Story. Feature criteria stay separate from Story criteria. Their IDs remain visible in reports and item views rather than becoming body checkboxes.
+Each agreed Story criterion becomes a distinct Criterion item linked to exactly 1 Story. Feature criteria stay separate from Story criteria. Their IDs stay in stored records and internal helper results. Reports and item views describe the criteria in plain English without their IDs; criteria do not become body checkboxes.
 
-A Story carries a direct PRD trace only when it narrows its Feature's traces, such as one step of a journey. Otherwise, the Feature supplies the requirement link. The result names every Story ID, parent, Milestone, criterion count, and the reason for each narrower trace.
+A Story carries a direct PRD trace only when it narrows its Feature's traces, such as one step of a journey. Otherwise, the Feature supplies the requirement link. The result names every Story, Feature parent, and Milestone with its ID and English title, plus the criterion count and the reason for each narrower trace under the user-facing text rule in `cli.md`.
 
 ## Product-level text
 
@@ -109,7 +109,7 @@ Milestone, Epic, Feature, Story, and Criterion text describes user value and pro
 
 Tasks, execution records, and an attached spec can hold engineering detail. Planning does not imply that implementation has started.
 
-Titles and headings use sentence case. Text uses active voice, present tense, and short sentences. Literal IDs, links, hashes, and field values retain their exact form.
+Titles and headings use sentence case. Text uses active voice, present tense, and short sentences. Stored IDs, links, hashes, and field values retain their exact form. User-facing text follows the display rule in `cli.md`, including questions, saved prose, and summaries.
 
 ## Trace and slice completion
 

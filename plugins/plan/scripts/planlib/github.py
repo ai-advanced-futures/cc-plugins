@@ -1,18 +1,32 @@
 """Publish a fixed Plan source to GitHub. The caller holds the workspace lock.
 
-No Product files are read or written. GitHub is a view, never a work-state source.
+PRD sources are read-only. Product roadmap files stay unchanged.
+GitHub is a view, never a work-state source.
 """
 from __future__ import annotations
 
 import copy
 import json
+import posixpath
 import re
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass
+from bisect import bisect_left, bisect_right
 from datetime import datetime, timezone
+from html import escape
+from html.parser import HTMLParser
+from urllib.parse import unquote, urlsplit
+
+import mistune
+from mistune.block_parser import BLOCK_TAGS
+from mistune.renderers.markdown import MarkdownRenderer
+from mistune.plugins.math import math_in_list, math_in_quote
+from mistune.util import unescape
 
 from . import PlanError, model
 from .proc import CommandError, capture
+from .sources import PRD, TRACE_TYPES
 
 MAX_PAGES = 100
 HOUR = 3600
@@ -41,6 +55,24 @@ WORK = set(model.WORK_TYPES)
 DATES = {"planned_start_date": "Planned start", "planned_end_date": "Planned end",
          "actual_start_date": "Actual start", "actual_end_date": "Actual end"}
 CLOSED = {"done", "released", "cancelled"}
+REFERENCE_KINDS = "|".join(sorted({*model.PREFIXES.values(), *(kind.upper() for kind in TRACE_TYPES),
+                                 "CAP", "REQUIREMENT", "AC"}, key=len, reverse=True))
+REFERENCE_ID = re.compile(r"(?i:(?:RUN-\d{8}-\d{6}-[0-9a-f]{4}|(?:PLAN-)?(?:" + REFERENCE_KINDS + r")-\d+))")
+REFERENCE_NAME = re.compile(r"(?:[A-Z][A-Z0-9]*(?:-[A-Za-z0-9]+)+|(?i:(?:PLAN-)?(?:" + REFERENCE_KINDS + r")-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*))\Z")
+# The local part and the scheme have a length limit (RFC 5321: 64 characters; a scheme of 31 characters or less),
+# so a long run of such characters costs 1 scan per start, not 1 scan to the end of the run (issue 3088).
+EMAIL = (r"[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]{1,64}@"
+         r"[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?"
+         r"(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*")
+URL = re.compile(r"[A-Za-z][A-Za-z0-9+.-]{0,30}://[^\s<>]+|(?i:mailto):[^\s<>]+|(?<!\w)(?i:www\.)[^\s<>]+|" + EMAIL)
+MARKDOWN_LITERAL = re.compile(r"([\\`*_{}\[\]<>!|~&$])")
+LITERAL_HTML = r'''(?i:<(?P<publication_literal_tag>code|pre|script|style)(?=[\s/>])(?:[^>"']|"[^"]*"|'[^']*')*>)'''
+HTML_PROSE_STYLES = frozenset({"abbr", "b", "bdi", "bdo", "big", "cite", "data", "del", "dfn", "em", "font", "i",
+                               "ins", "kbd", "label", "mark", "q", "rp", "rt", "ruby", "s", "samp", "small", "span",
+                               "strike", "strong", "sub", "sup", "time", "tt", "u", "var", "wbr"})
+HTML_PROSE_TAGS = HTML_PROSE_STYLES | {"a"}
+STYLE_HTML = re.compile(r'''(?i:</?(?:''' + "|".join(sorted(HTML_PROSE_STYLES)) + r''')(?=[\s/>])(?:[^>"']|"[^"]*"|'[^']*')*>)''')
+LITERAL_CLOSE = {tag: re.compile(r"</" + tag + r"\s*>", re.I) for tag in ("code", "pre", "script", "style")}
 LOGIN = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]*(?:\[bot\])?")
 REPO = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
 
@@ -528,13 +560,13 @@ class Gh:
         return {"login": login, "repo_id": repository["id"], "project_id": project["id"], "fields": field_map,
                 "labels": labels, "issue_types": types, "issues": normalized, "milestones": milestones}
 
-    def create(self, config, snapshot, record, body):
+    def create(self, config, snapshot, record, body, title):
         fields = record["fields"]
         if fields["type"] == "Milestone":
-            return self.request(f"repos/{config['repo']}/milestones", "POST", {"title": _title(record), "description": body}, retry=False)
+            return self.request(f"repos/{config['repo']}/milestones", "POST", {"title": title, "description": body}, retry=False)
         result = self.graphql('''mutation PlanCreate($repositoryId:ID!,$title:String!,$body:String!){
           createIssue(input:{repositoryId:$repositoryId,title:$title,body:$body}){issue{id number url}}
-        }''', retry=False, repositoryId=snapshot["repo_id"], title=_title(record), body=body)
+        }''', retry=False, repositoryId=snapshot["repo_id"], title=title, body=body)
         return result["createIssue"]["issue"]
 
     def update(self, config, issue, payload, milestone=False):
@@ -624,57 +656,831 @@ def configure(workspace, repo, owner, number, writer, client=None, type_mode=Non
     return {"configured": True, "project": project["id"], "repo": repo, "owner": owner, "number": number, "writer": writer}
 
 
-def _source(records):
+def _source(records, prd_hash):
     # Publication checkpoints change revisions and bindings, not planning content.
-    return model.digest([{ "id": r["id"], "path": r.get("path"), "body": r.get("body", ""),
-                          "fields": {k: v for k, v in r["fields"].items() if k != "github"},
-                          "board": ({k: v for k, v in (r["fields"].get("github") or {}).items()
-                                     if k in {"repo", "owner", "number", "writer", "type_mode"}}
-                                    if r["fields"]["type"] == "Project" else None)}
-                         for r in sorted(records, key=lambda x: x["id"])])
+    return model.digest({"prd": prd_hash, "plan": [
+        {"id": r["id"], "path": r.get("path"), "body": r.get("body", ""),
+         "fields": {k: v for k, v in r["fields"].items() if k != "github"},
+         "board": ({k: v for k, v in (r["fields"].get("github") or {}).items()
+                    if k in {"repo", "owner", "number", "writer", "type_mode"}}
+                   if r["fields"]["type"] == "Project" else None)}
+        for r in sorted(records, key=lambda x: x["id"])]})
 
 
-def _title(record):
-    return f"{record['id']}: {record['fields'].get('title', record['id'])}"
+def _title(record, title=None):
+    title = record["fields"]["title"] if title is None else title
+    return f"{record['id']}: {title}" if record["fields"]["type"] in {"Milestone", "Feature", "Story"} else title
+
+
+class _PublicationFootnotes:
+    """Assign distinct keys across the parts of one issue."""
+
+    def __init__(self):
+        self.used, self.next = set(), {}
+
+    def key(self, base):
+        unique, number = base, self.next.get(base, 1)
+        while unique in self.used:
+            unique = f"PLAN-{number}-{base}"
+            number += 1
+        self.next[base] = number
+        self.used.add(unique)
+        return unique
+
+
+def _shown(text):
+    """Show a reference in an error: short, with no control character."""
+    return ascii(text if len(text) <= 80 else text[:77] + "...")
+
+
+@contextmanager
+def _naming(record):
+    """Name the record in a publication error that does not name it yet."""
+    try:
+        yield
+    except PlanError as exc:
+        if str(exc).startswith(record["id"] + ":"):
+            raise
+        raise PlanError(f"{record['id']}: {exc}") from None
+
+
+class _PublicationText:
+    """Render known references without changing their stored identity."""
+
+    def __init__(self, workspace, records):
+        prd = PRD(workspace.source_root)
+        pages = list({page["path"]: page for page in [*prd.pages(), *prd.indexes()]}.values())
+        self.prd_hash = model.digest(pages)
+        self.prd_dirs = {"problems", "personas", "needs", "journeys", "capabilities", "experiences",
+                         "scope", "metrics", "business", "gtm", "risks", "constraints", "decisions", "questions"}
+        self.prd_dirs.update(page["path"][5:].split("/", 1)[0] for page in pages if "/" in page["path"][5:])
+        self.filenames = {}
+        self.destination_references = {}
+        for page in pages:
+            if page["fields"].get("type") in TRACE_TYPES:
+                for name in [page["id"], *(page["fields"].get("aliases") or [])]:
+                    self.filenames.setdefault(name + ".md", set()).add(page["path"])
+        self.references = {}
+        self.ambiguous_references = set()
+        canonical = {}
+        self._labels = {}
+        for record in [*records, *pages]:
+            source = (record.get("path") or "").startswith("prd:/")
+            if record.get("path"):
+                canonical[record["path"]] = record
+            if not source:
+                canonical[record["id"]] = record
+            keys = [] if source else [record["id"]]
+            identities = [record["id"], *(record["fields"].get("aliases") or [])]
+            for name in identities:
+                if "/" not in name:
+                    self.destination_references.setdefault(name, set()).add(record.get("path") or record["id"])
+            names = [name for name in identities if REFERENCE_NAME.fullmatch(name)]
+            keys += names
+            keys += [name + ".md" for name in names]
+            if record.get("path"):
+                keys.append(record["path"])
+                if not source:
+                    keys.append(record["path"].lstrip("/"))
+                if source:
+                    relative = record["path"][5:]
+                    keys.extend(["/" + relative, relative, "docs/product/prd/" + relative,
+                                 "./docs/product/prd/" + relative])
+            for key in filter(None, keys):
+                if key in self.references and self.references[key] != record:
+                    self.ambiguous_references.add(key)
+                self.references[key] = record
+        self.references.update(canonical)
+        self.canonical = canonical
+        self.ambiguous_references.difference_update(canonical)
+        known = "|".join(re.escape(key) for key in sorted(self.references, key=len, reverse=True))
+        path_dirs = self.prd_dirs | {key.lstrip("/").split("/", 1)[0] for key in self.references if key.startswith("/") and "/" in key[1:]}
+        roots = "|".join(re.escape(name) for name in sorted(path_dirs))
+        # At most 16 `../` steps: a longer run would cost 1 scan to its end from each start (issue 3088).
+        prefixes = r"prd:/|(?:\.\.?/){0,16}/?(?:docs/product/)?prd/" + (r"|(?:\.\.?/){0,16}/?(?:" + roots + r")/" if roots else "")
+        next_source = r"[,;](?:" + prefixes + "|" + REFERENCE_ID.pattern + ")"
+        source_path = r"(?:" + prefixes + r")(?:(?!" + next_source + r")[^\s`<>()\[\]\"'])+"
+        source_names = "|".join(re.escape(name[:-3]) for name in sorted(self.filenames, key=len, reverse=True))
+        filename = "(?:" + REFERENCE_ID.pattern + ("|" + source_names if source_names else "") + r")\.md(?:[A-Za-z0-9_.-]*[A-Za-z0-9_-])?"
+        self.pattern = re.compile(r"(?<![A-Za-z0-9/])(?:" + source_path + "|" + filename + "|" + known + "|" + REFERENCE_ID.pattern + r")(?![A-Za-z0-9])")
+        plugins = ["table", "strikethrough", "task_lists", "footnotes", "math", math_in_quote, math_in_list]
+        self.markdown = mistune.create_markdown(renderer=_PublicationMarkdown(self), plugins=plugins)
+        self.title_markdown = mistune.create_markdown(renderer="ast", plugins=plugins)
+        for parser in (self.markdown, self.title_markdown):
+            parser.inline.register("publication_literal_html", LITERAL_HTML, self.literal_html, before="inline_html")
+            parser.inline.register("publication_url", URL.pattern, self.literal_url, before="emphasis")
+
+    def literal_url(self, inline, match, state):
+        state.append_token({"type": "publication_url", "raw": match[0]})
+        return match.end()
+
+    def literal_html(self, inline, match, state):
+        closing = LITERAL_CLOSE[match["publication_literal_tag"].lower()].search(state.src, match.end())
+        end = closing.end() if closing else len(state.src)
+        state.append_token({"type": "inline_html", "raw": state.src[match.start():end]})
+        return end
+
+    def title_text(self, record):
+        title = record["fields"]["title"]
+        for prefix in [record["id"], *(record["fields"].get("aliases") or [])]:
+            if title.startswith(prefix + ":"):
+                return title[len(prefix) + 1:].strip()
+        return title
+
+    def label(self, key, trail=frozenset()):
+        record = self.references[key]
+        identity = record.get("path") or record["id"]
+        if identity in trail:
+            raise PlanError("a reference title needs a plain-English description before publication")
+        if identity in self._labels:
+            return self._labels[identity]
+        reader = _PublicationPlain(self, trail | {identity})
+        reader.read(self.title_markdown(self.render(self.title_text(record), trail | {identity})))
+        reader.close()
+        title = " ".join("".join(reader.parts).split())
+        if not title:
+            raise PlanError("a reference needs an English title before publication")
+        self._labels[identity] = _title(record, title)
+        return self._labels[identity]
+
+    def reference_key(self, value):
+        if value in self.ambiguous_references:
+            raise PlanError(f"a published reference is ambiguous; give it a unique source identity (reference: {_shown(value)})")
+        key = value if value in self.references else None
+        if "/" not in value:
+            upper = value.removesuffix(".md").upper() + (".md" if value.endswith(".md") else "")
+            if upper in self.ambiguous_references:
+                raise PlanError(f"a published reference is ambiguous; give it a unique source identity (reference: {_shown(value)})")
+            record = self.references.get(upper)
+            if record is not None and not (record.get("path") or "").startswith("prd:/"):
+                if key is not None and self.references[key] != record:
+                    raise PlanError(f"a published reference is ambiguous; give it a unique source identity (reference: {_shown(value)})")
+                key = upper
+        return key
+
+    @staticmethod
+    def reference_path(value):
+        scheme = re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", value)
+        if value.startswith("//") or scheme and scheme[0].lower() != "prd:":
+            return None
+        try:
+            parts = urlsplit(value)
+        except ValueError:
+            raise PlanError("a source destination is invalid; correct it before publication") from None
+        if parts.scheme not in {"", "prd"}:
+            return None
+        if parts.netloc:
+            raise PlanError("a source destination is invalid; correct it before publication")
+        path = unquote(parts.path)
+        encoded_namespace = re.match(r"(?i:prd):", path) if not parts.scheme else None
+        if encoded_namespace:
+            path = path[encoded_namespace.end():]
+            if path.startswith("//"):
+                raise PlanError("a source destination is invalid; correct it before publication")
+        explicit = None
+        for match in re.finditer(r"(?:^|/)prd/", path):
+            prefix = posixpath.normpath(path[:match.end()])
+            if re.fullmatch(r"/?(?:\.\./)*(?:docs/product/)?prd", prefix):
+                explicit = path[match.end():]
+                break
+        if parts.scheme == "prd" or encoded_namespace or explicit is not None:
+            relative = path.lstrip("/") if parts.scheme == "prd" or encoded_namespace else explicit.lstrip("/")
+            normalized = posixpath.normpath(relative)
+            if normalized == ".." or normalized.startswith("../"):
+                raise PlanError("a source destination is invalid; correct it before publication")
+            return "prd:/" + normalized
+        return posixpath.normpath(path)
+
+    def path_key(self, target, prose=False):
+        """Look up an already normalized local path.
+
+        A bare path in prose or in code (`prose=True`) that names a missing page in a PRD folder
+        stays text, because another bundle (the domain model) has folders with the same names.
+        A link destination, a path with `../` and a path with an explicit PRD prefix still name the PRD.
+        """
+        if target is None:
+            return None
+        if target.startswith("prd:/"):
+            return target
+        explicit = re.fullmatch(r"/?(?:\.\.?/)*(?:docs/product/)?prd/(.+)", target)
+        if explicit:
+            return "prd:/" + explicit[1]
+        relative = re.sub(r"^(?:\.\.?/)+", "", target).removeprefix("/")
+        key = self.reference_key(relative) if "/" in relative or relative.endswith(".md") else None
+        if key is not None:
+            record = self.references[key]
+            return record.get("path") or record["id"]
+        if relative in self.filenames:
+            paths = self.filenames[relative]
+            if len(paths) != 1:
+                raise PlanError(f"a source filename is ambiguous; use its full PRD path (reference: {_shown(relative)})")
+            return next(iter(paths))
+        if (relative.endswith(".md") and relative.split("/", 1)[0] in self.prd_dirs
+                and (target.startswith("../") or relative.endswith("/index.md")
+                     or not prose and REFERENCE_ID.fullmatch(posixpath.basename(relative)[:-3]))):
+            return "prd:/" + relative
+        return None
+
+    def resolved_parts(self, parts, trail, anchors=None):
+        if len(parts) < 2:
+            return None
+        ends, offset = [], 0
+        for part in parts:
+            offset += len(part)
+            ends.append(offset)
+        edits, offset = [], 0
+        for value, url in self.segments("".join(parts)):
+            if not url:
+                edits.extend((start + offset, end + offset, label) for start, end, label in self.reference_edits(value, trail))
+            offset += len(value)
+        if not edits:
+            return None
+        result, positions = [[] for _part in parts], [0] * len(parts)
+        for start, end, label in edits:
+            first, last = bisect_right(ends, start), bisect_left(ends, end)
+            left = start - (ends[first - 1] if first else 0)
+            right = end - (ends[last - 1] if last else 0)
+            result[first].append(parts[first][positions[first]:left])
+            anchor = next((index for index in range(first, last + 1) if anchors[index] is not None), first) if anchors else first
+            result[anchor].append(label)
+            for index in range(first, last):
+                positions[index] = len(parts[index])
+            positions[last] = right
+        return ["".join(chunks) + part[position:] for chunks, part, position in zip(result, parts, positions)]
+
+    @staticmethod
+    def segments(text):
+        position = 0
+        for match in URL.finditer(text):
+            yield text[position:match.start()], False
+            yield match[0], True
+            position = match.end()
+        yield text[position:], False
+
+    @classmethod
+    def decode_text(cls, text):
+        return "".join(value if url else unescape(value) for value, url in cls.segments(text))
+
+    def plain(self, text, trail):
+        return "".join(value for value, _url in self.pieces(text, trail))
+
+    def pieces(self, text, trail):
+        for value, url in self.segments(text):
+            yield value if url else self.replace_references(value, trail), url
+
+    def replace_references(self, text, trail):
+        parts, position = [], 0
+        for start, end, replacement in self.reference_edits(text, trail):
+            parts.extend([text[position:start], replacement])
+            position = end
+        parts.append(text[position:])
+        return "".join(parts)
+
+    def reference_edits(self, text, trail):
+        position = 0
+        for match in self.pattern.finditer(text):
+            if match.start() < position:
+                continue
+            token, end = match[0], match.end()
+            path = token.rstrip(".,;:!?*_}")
+            source = self.path_key(self.reference_path(path), prose=True)
+            if source is not None:
+                replacement = self.trace(source, trail) + token[len(path):]
+            elif "/" in token and token not in self.references:
+                replacement = token
+            else:
+                key = self.reference_key(token)
+                # No Plan record, PRD page or alias holds the token (for example a made-up RUN-01): it stays text.
+                replacement = token if key is None else self.label(key, trail)
+                # Product headings already have the title after the ID.
+                if key is not None and text.startswith(":", end):
+                    rest = text[end:].split("\n", 1)[0]
+                    record = self.references[key]
+                    if rest[1:].strip() in {record["fields"]["title"], self.title_text(record),
+                                            replacement.removeprefix(record["id"] + ": ")}:
+                        end += len(rest)
+            yield match.start(), end, replacement
+            position = end
+
+    def cached_destination(self, address, trail, destinations):
+        if address not in destinations:
+            destinations[address] = self.destination(address, trail)
+        return destinations[address]
+
+    def destination(self, address, trail):
+        path = self.reference_path(address)
+        if path is None:
+            return None
+        if path in self.canonical:
+            return self.label(path, trail)
+        source = self.path_key(path)
+        key = self.reference_key(path)
+        targets = set(self.destination_references.get(path, ()))
+        if source is not None:
+            targets.add(source)
+        if key is not None:
+            record = self.references[key]
+            targets.add(record.get("path") or record["id"])
+        alias = path.removesuffix(".md")
+        for name in {alias, alias.upper()}:
+            targets.update(target for target in self.destination_references.get(name, ())
+                           if not target.startswith("prd:/"))
+        if len(targets) > 1:
+            raise PlanError(f"a published reference is ambiguous; give it a unique source identity (reference: {_shown(address)})")
+        if targets:
+            return self.trace(next(iter(targets)), trail)
+        if REFERENCE_ID.fullmatch(path.removesuffix(".md")):
+            raise PlanError(f"a referenced source or item is missing; restore it before publication (reference: {_shown(address)})")
+        return None
+
+    def retained_references(self, human, references):
+        """Keep definitions that human text still uses outside the managed section."""
+        if not references or "[" not in human:
+            return ""
+        _tokens, human_state = self.title_markdown.parse(human)
+        human_definitions = human_state.env.get("ref_links", {})
+        state = self.title_markdown.block.state_cls()
+        state.env["ref_links"] = references | human_definitions
+        tokens, _state = self.title_markdown.parse(human, state)
+        needed, pending = set(), list(tokens)
+        while pending:
+            token = pending.pop()
+            if token.get("ref"):
+                needed.add(token["ref"])
+            pending.extend(token.get("children", []))
+        renderer = self.markdown.renderer
+        definitions = {}
+        for key in references:
+            if key in needed and key not in human_definitions:
+                if self.destination(references[key]["url"], frozenset()) is not None:
+                    raise PlanError("a source link outside the managed section needs an external destination before publication")
+                attrs = renderer.external_attrs(references[key], frozenset())
+                attrs["url"] = "<" + attrs["url"] + ">"
+                definitions[key] = attrs
+        state.env["ref_links"] = definitions
+        return "\n".join(MarkdownRenderer.render_referrences(renderer, state))
+
+    def render(self, text, trail=frozenset(), footnotes=None, references=None):
+        state = self.markdown.block.state_cls()
+        state.env["publication_footnotes"] = footnotes if footnotes is not None else _PublicationFootnotes()
+        state.env["publication_footnote_names"] = {}
+        state.env["publication_trail"] = trail
+        state.env["publication_destinations"] = {}
+        state.env["publication_html"] = _PublicationHTML(self, trail, state.env["publication_destinations"])
+        rendered, _state = self.markdown.parse(text, state)
+        if references is not None:
+            for key, attrs in state.env.get("ref_links", {}).items():
+                references.setdefault(key, attrs)
+        state.env["publication_html"].close()
+        if state.env["publication_html"].suppress:
+            raise PlanError("an HTML source link is not closed; close it before publication")
+        return (rendered + state.env["publication_html"].take()).strip()
+
+    def title(self, record):
+        return self.label(record["id"])
+
+    def trace(self, target, trail=frozenset()):
+        if target not in self.references:
+            raise PlanError(f"a requirement source is missing; restore it before publication (reference: {_shown(target)})")
+        return self.label(target, trail)
+
+
+class _PublicationPlain(HTMLParser):
+    """Read visible title text after reference resolution."""
+
+    tags = HTML_PROSE_STYLES | frozenset(BLOCK_TAGS) | {"a", "img", "br", "code", "pre", "script", "style"}
+
+    def __init__(self, display, trail):
+        super().__init__(convert_charrefs=True)
+        self.display, self.trail = display, trail
+        self.parts, self.links = [], []
+
+    def handle_data(self, data):
+        self.parts.append(data)
+
+    def handle_starttag(self, tag, attrs):
+        values = dict(attrs)
+        if tag == "a":
+            self.links.append(values.get("href"))
+        elif tag == "img":
+            self.parts.append(values.get("alt") or "")
+            if values.get("src"):
+                self.parts.append(" (" + values["src"] + ")")
+        elif tag == "br":
+            self.parts.append(" ")
+        elif tag not in self.tags:
+            self.parts.append(self.display.plain(self.get_starttag_text(), self.trail))
+
+    def handle_endtag(self, tag):
+        if tag == "a" and self.links:
+            address = self.links.pop()
+            if address:
+                self.parts.append(" (" + address + ")")
+        elif tag in {"div", "p", "pre"}:
+            self.parts.append(" ")
+        elif tag not in self.tags:
+            self.parts.append(self.display.plain("</" + tag + ">", self.trail))
+
+    def read(self, tokens):
+        for token in tokens:
+            kind = token["type"]
+            if kind == "text":
+                self.parts.append(unescape(token["raw"]))
+            elif kind in {"inline_html", "block_html"}:
+                self.feed(token["raw"])
+            elif kind in {"codespan", "block_code", "publication_url", "inline_math", "block_math"}:
+                self.parts.append(token["raw"])
+            elif "children" in token:
+                self.read(token["children"])
+            if kind in {"link", "image"} and token["attrs"].get("url"):
+                self.parts.append(" (" + token["attrs"]["url"] + ")")
+            if kind in {"paragraph", "heading", "block_code", "softbreak", "linebreak", "table_cell", "list_item"}:
+                self.parts.append(" ")
+
+
+class _PublicationHTML(HTMLParser):
+    """Resolve HTML text and source links without changing literal code."""
+
+    def __init__(self, display, trail, destinations):
+        super().__init__(convert_charrefs=True)
+        self.display, self.trail, self.destinations = display, trail, destinations
+        self.parts, self.literal, self.prose = [], [], []
+        self.anchor = None
+        self.suppress = False
+        self.markdown = False
+
+    def escape_text(self, text):
+        return _PublicationMarkdown.prose_literal(text) if self.markdown else escape(text, quote=False)
+
+    def flush(self):
+        data = [(value, anchor) for kind, value, anchor in self.prose if kind == "data"]
+        resolved = self.display.resolved_parts([value for value, _anchor in data], self.trail,
+                                               [anchor for _value, anchor in data])
+        values = iter(resolved) if resolved is not None else None
+        for kind, value, anchor in self.prose:
+            if kind == "data":
+                original = value
+                value = next(values) if values is not None else self.display.plain(value, self.trail)
+                if anchor is not None:
+                    anchor["text"] |= bool(original.strip())
+                    anchor["visible"] |= bool(value.strip())
+                value = self.escape_text(value)
+            elif kind == "anchor_end" and anchor["text"] and not anchor["visible"]:
+                value = " reference " + value
+            self.parts.append(value)
+        self.prose = []
+
+    def take(self):
+        self.flush()
+        result = "".join(self.parts)
+        self.parts = []
+        return result
+
+    def fragment(self, text, markdown=False):
+        self.markdown = markdown
+        self.feed(text)
+        return self.take()
+
+    def start(self, tag, attrs, closed=False):
+        if self.suppress:
+            return
+        if tag not in HTML_PROSE_TAGS or self.literal:
+            self.flush()
+        values = dict(attrs)
+        address = values.get("href" if tag == "a" else "src") if tag in {"a", "img"} else None
+        replacement = self.display.cached_destination(address, self.trail, self.destinations) if address and not self.literal else None
+        if replacement is not None:
+            self.flush()
+            self.parts.append(self.escape_text(replacement))
+            self.suppress = tag == "a" and not closed
+            return
+        rendered = [(key, self.display.plain(value, self.trail) if value is not None
+                     and key in {"alt", "title", "aria-label"} and not self.literal else value) for key, value in attrs]
+        if rendered == attrs:
+            raw = self.get_starttag_text()
+        else:
+            attributes = "".join(" " + key + ('="' + escape(value, quote=True) + '"' if value is not None else "")
+                                 for key, value in rendered)
+            raw = "<" + tag + attributes + ("/>" if closed else ">")
+        if tag in HTML_PROSE_TAGS and not self.literal:
+            self.prose.append(("style", raw, None))
+            if tag == "a" and not closed:
+                self.anchor = {"text": False, "visible": False}
+        else:
+            self.parts.append(raw)
+            if tag == "img" and self.anchor is not None:
+                self.anchor["visible"] = True
+        if tag in {"pre", "code", "script", "style"} and not closed:
+            self.literal.append(tag)
+
+    def handle_starttag(self, tag, attrs):
+        self.start(tag, attrs)
+
+    def handle_startendtag(self, tag, attrs):
+        self.start(tag, attrs, closed=True)
+
+    def handle_endtag(self, tag):
+        if self.suppress:
+            if tag == "a":
+                self.suppress = False
+            return
+        if tag in HTML_PROSE_TAGS and not self.literal:
+            kind = "anchor_end" if tag == "a" and self.anchor is not None else "style"
+            self.prose.append((kind, "</" + tag + ">", self.anchor))
+            if tag == "a":
+                self.anchor = None
+            return
+        self.flush()
+        if tag in self.literal:
+            del self.literal[len(self.literal) - 1 - self.literal[::-1].index(tag):]
+        self.parts.append("</" + tag + ">")
+
+    def handle_data(self, data):
+        if self.suppress:
+            return
+        if self.literal and self.anchor is not None and data.strip():
+            self.anchor["visible"] = True
+        if self.literal and self.literal[-1] in {"script", "style"}:
+            self.parts.append(data)
+        elif self.literal:
+            self.parts.append(escape(data, quote=False))
+        else:
+            self.prose.append(("data", data, self.anchor))
+
+    def handle_comment(self, data):
+        if not self.suppress:
+            comment = "<!--" + data + "-->"
+            if self.literal:
+                self.parts.append(comment)
+            else:
+                self.prose.append(("comment", comment, None))
+
+    def handle_decl(self, decl):
+        if not self.suppress:
+            self.flush()
+            self.parts.append("<!" + decl + ">")
+
+
+class _PublicationHTMLAnchor(HTMLParser):
+    """Track external anchors while Markdown text is collected."""
+
+    def __init__(self, display, trail, destinations):
+        super().__init__(convert_charrefs=True)
+        self.display, self.trail, self.destinations = display, trail, destinations
+        self.anchor, self.parts = None, []
+
+    def read(self, token):
+        if not re.fullmatch(r'''(?i:</?a(?=[\s/>])(?:[^>"']|"[^"]*"|'[^']*')*>)''', token["raw"]):
+            return False
+        self.token, self.external = token, False
+        self.feed(token["raw"])
+        return self.external
+
+    def handle_starttag(self, tag, attrs):
+        address = dict(attrs).get("href")
+        self.external = not address or self.display.cached_destination(address, self.trail, self.destinations) is None
+        self.anchor = id(self.token) if self.external else None
+        self.parts = []
+
+    def handle_endtag(self, tag):
+        self.external = self.anchor is not None
+        if self.external:
+            self.token["publication_anchor_parts"] = self.parts
+        self.anchor, self.parts = None, []
+
+
+class _PublicationMarkdown(MarkdownRenderer):
+    """Change visible references, not Markdown structure or literal code."""
+
+    def __init__(self, display):
+        super().__init__()
+        self.display = display
+
+    @staticmethod
+    def literal(text):
+        return MARKDOWN_LITERAL.sub(r"\\\1", text)
+
+    def destination(self, token, state):
+        return self.display.cached_destination(token["attrs"]["url"], state.env["publication_trail"],
+                                               state.env["publication_destinations"])
+
+    def text_parts(self, token, state, anchor=None, html_anchors=None):
+        if token["type"] == "text":
+            if html_anchors is not None and html_anchors.anchor is not None:
+                html_anchors.parts.append(token)
+                anchor = html_anchors.anchor
+            return [(token, _PublicationText.decode_text(token["raw"]), anchor)]
+        if token["type"] == "link":
+            if self.destination(token, state) is not None:
+                return None
+            anchor = id(token)
+        if token["type"] == "inline_html" and html_anchors is not None and html_anchors.read(token):
+            return []
+        if token["type"] == "inline_html" and (STYLE_HTML.fullmatch(token["raw"])
+                or token["raw"].startswith("<!--") and token["raw"].endswith("-->")):
+            return []
+        if token["type"] in {"strong", "emphasis", "strikethrough", "mark", "insert", "link"}:
+            parts = []
+            for child in token["children"]:
+                values = self.text_parts(child, state, anchor, html_anchors)
+                if values is None:
+                    return None
+                parts.extend(values)
+            return parts
+        return None
+
+    @classmethod
+    def replace_text(cls, token, values, links):
+        if token["type"] == "text":
+            raw = values[id(token)]
+            return {"type": "publication_text", "raw": raw} if raw else None
+        if "children" in token:
+            children = [value for child in token["children"] if (value := cls.replace_text(child, values, links)) is not None]
+            if token["type"] == "link":
+                if not children and id(token) in links:
+                    children = [{"type": "publication_text", "raw": " reference "}]
+                return {**token, "children": children}
+            return {**token, "children": children} if children else None
+        parts = token.get("publication_anchor_parts")
+        if parts and not any(values.get(id(part), part["raw"]).strip() for part in parts):
+            return {**token, "raw": " reference " + token["raw"]}
+        return token
+
+    def prose_tokens(self, tokens, state):
+        parts = [part for _token, values in tokens for part in values]
+        html = state.env["publication_html"]
+        anchors = [anchor for _token, _value, anchor in parts]
+        resolved = self.display.resolved_parts([value for _token, value, _anchor in parts], state.env["publication_trail"], anchors) if not html.literal and not html.suppress else None
+        if resolved is not None:
+            values = {id(token): value for (token, _old, _anchor), value in zip(parts, resolved)}
+            links = set(anchors) - {None}
+            for token, _parts in tokens:
+                rendered = self.replace_text(token, values, links)
+                if rendered is not None:
+                    yield self.render_token(rendered, state)
+            return
+        pending = []
+        for token, _parts in tokens:
+            if token["type"] == "text":
+                pending.append(token["raw"])
+                continue
+            if pending:
+                yield self.render_token({"type": "text", "raw": "".join(pending)}, state)
+                pending = []
+            yield self.render_token(token, state)
+        if pending:
+            yield self.render_token({"type": "text", "raw": "".join(pending)}, state)
+
+    def iter_tokens(self, tokens, state):
+        pending = []
+        html_anchors = _PublicationHTMLAnchor(self.display, state.env["publication_trail"], state.env["publication_destinations"])
+        for token in tokens:
+            parts = self.text_parts(token, state, html_anchors=html_anchors)
+            if parts is not None:
+                pending.append((token, parts))
+                continue
+            yield from self.prose_tokens(pending, state)
+            pending = []
+            yield self.render_token(token, state)
+        yield from self.prose_tokens(pending, state)
+
+    def render_token(self, token, state):
+        html = state.env["publication_html"]
+        if html.suppress and token["type"] not in {"inline_html", "block_html"}:
+            return self.render_children(token, state) if "children" in token else ""
+        return super().render_token(token, state)
+
+    def inline_html(self, token, state):
+        return state.env["publication_html"].fragment(token["raw"], markdown=True)
+
+    def block_html(self, token, state):
+        return state.env["publication_html"].fragment(token["raw"]) + "\n\n"
+
+    @classmethod
+    def url_literal(cls, text):
+        return cls.literal(text) if re.fullmatch(EMAIL, text) else text
+
+    def publication_url(self, token, state):
+        return self.url_literal(token["raw"])
+
+    @classmethod
+    def prose_literal(cls, text):
+        return "".join(cls.url_literal(value) if url else cls.literal(value) for value, url in _PublicationText.segments(text))
+
+    def publication_text(self, token, state):
+        return self.prose_literal(token["raw"])
+
+    def text(self, token, state):
+        if state.env["publication_html"].literal:
+            return token["raw"]
+        return "".join(self.url_literal(value) if url else self.literal(value) for value, url in self.display.pieces(
+            self.display.decode_text(token["raw"]), state.env["publication_trail"]))
+
+    def link(self, token, state):
+        replacement = self.destination(token, state)
+        if replacement is not None:
+            return self.literal(replacement)
+        # Inline destinations need no hidden reference names or definitions.
+        rendered = {key: value for key, value in token.items() if key not in {"label", "ref"}}
+        rendered["attrs"] = self.external_attrs(token["attrs"], state.env["publication_trail"])
+        return super().link(rendered, state)
+
+    def external_attrs(self, attrs, trail):
+        rendered = dict(attrs)
+        rendered["url"] = escape(rendered["url"], quote=False)
+        if rendered.get("title"):
+            rendered["title"] = escape(self.display.plain(unescape(rendered["title"]), trail), quote=False)
+        return rendered
+
+    def image(self, token, state):
+        replacement = self.destination(token, state)
+        return self.literal(replacement) if replacement is not None else super().image(token, state)
+
+    def codespan(self, token, state):
+        raw = token["raw"].strip()
+        if self.display.pattern.fullmatch(raw):
+            rendered = self.display.plain(raw, state.env["publication_trail"])
+            if rendered != raw:
+                return self.literal(rendered)
+        return super().codespan(token, state)
+
+    def inline_math(self, token, state):
+        return "$" + token["raw"] + "$"
+
+    def block_math(self, token, state):
+        return "$$\n" + token["raw"] + "\n$$\n\n"
+
+    def footnote_key(self, key, state):
+        names = state.env["publication_footnote_names"]
+        if key not in names:
+            names[key] = state.env["publication_footnotes"].key(key)
+        return names[key]
+
+    def footnote_ref(self, token, state):
+        return "[^" + self.footnote_key(token["raw"], state) + "]"
+
+    def footnotes(self, token, state):
+        return "\n" + self.render_children(token, state)
+
+    def footnote_item(self, token, state):
+        lines = self.render_children(token, state).rstrip("\n").splitlines() or [""]
+        return "[^" + self.footnote_key(token["attrs"]["key"], state) + "]: " + lines[0] + "\n" + "".join("    " + line + "\n" for line in lines[1:]) + "\n"
+
+    def render_referrences(self, state):
+        return ()
 
 
 def _marker(workspace, record):
     return f"<!-- plan:{workspace.id}:{record['id']} -->"
 
 
-def _body(workspace, record, current="", criteria=()):
+def _body(workspace, record, display, current="", criteria=()):
+    with _naming(record):
+        return _managed_body(workspace, record, display, current, criteria)
+
+
+def _managed_body(workspace, record, display, current, criteria):
     marker = _marker(workspace, record)
     start, end = marker.replace(" -->", ":start -->"), marker.replace(" -->", ":end -->")
     if current.count(start) != current.count(end) or current.count(start) > 1:
         raise PlanError(f"{record['id']}: issue has an invalid managed section")
+    if start in current:
+        before, _, rest = current.partition(start)
+        old, _, after = rest.partition(end)
+        if end in before or start in old:
+            raise PlanError(f"{record['id']}: issue has an invalid managed section")
+        human = before + after
+    else:
+        # Adopt an existing identity-only marker without copying it a second time.
+        human = current.replace(marker, "")
     fields = record["fields"]
     text = record.get("body", "").strip()
     description = fields.get("description", "").strip()
     if record.get("path"):
         legacy = re.compile(r"<!--\s*okf:\s*" + re.escape(record["path"]) + r"\s*-->")
         text, description = legacy.sub("", text).strip(), legacy.sub("", description).strip()
-    parts = [description] if description and description != text else []
-    parts.append(text)
+    source = [description] if description and description != text else []
+    source.append(text)
+    footnotes = _PublicationFootnotes()
+    if "[^" in human:
+        _tokens, state = display.title_markdown.parse(human)
+        footnotes.used.update(state.env.get("ref_footnotes", {}))
+    references = {}
+    parts = [display.render("\n\n".join(part for part in source if part), footnotes=footnotes, references=references)]
     if (fields.get("owner") or "").startswith("agent:"):
         parts.append(f"Plan owner: `{fields['owner']}`")
     if criteria:
-        parts.append("## Acceptance criteria\n\n" + "\n".join(f"- [ ] {identifier}: {title}" for identifier, title in criteria))
-    # These are source fields, never credentials or a claim token.
+        parts.append("## Acceptance criteria\n\n" + "\n".join(f"- [ ] {display.render(title, footnotes=footnotes, references=references)}" for _identifier, title in criteria))
     if fields.get("traces"):
-        parts.append("## Traces\n\n" + "\n".join(f"- {entry['to']}" for entry in fields["traces"]))
+        parts.append("## Requirements\n\n" + "\n".join(f"- {_PublicationMarkdown.literal(display.trace(entry['to']))}" for entry in fields["traces"]))
+    parts.append(display.retained_references(human, references))
     content = "\n\n".join(x for x in parts if x)
     if re.search(r"<!--\s*plan:", content):
         raise PlanError(f"{record['id']}: source text contains a publisher marker")
     managed = start + "\n" + content + "\n" + marker + "\n" + end
     if start in current:
-        before, _, rest = current.partition(start)
-        old, _, after = rest.partition(end)
-        if end in before or start in old:
-            raise PlanError(f"{record['id']}: issue has an invalid managed section")
         return before + managed + after
-    # Adopt an existing identity-only marker without copying it a second time.
-    current = current.replace(marker, "")
-    return current.rstrip() + ("\n\n" if current.strip() else "") + managed + "\n"
+    return human.rstrip() + ("\n\n" if human.strip() else "") + managed + "\n"
 
 
 def _find(workspace, record, snapshot, writer):
@@ -737,7 +1543,7 @@ def _selection(workspace, records, snapshot, config):
     return selected, found
 
 
-def _desired(workspace, records, selected, found, snapshot, config):
+def _desired(workspace, records, selected, found, snapshot, config, display):
     records = model.Records(records)
     criteria_by_item = {}
     for record in records:
@@ -753,8 +1559,9 @@ def _desired(workspace, records, selected, found, snapshot, config):
         if fields.get("protected"):
             raise PlanError(f"{identifier}: protected work cannot be published automatically")
         if milestone:
-            desired[identifier] = {"title": _title(record), "description": _body(workspace, record, (issue or {}).get("description") or ""),
-                                   "due_on": fields.get("target_date") + "T00:00:00Z" if fields.get("target_date") else None}
+            with _naming(record):
+                desired[identifier] = {"title": display.title(record), "description": _body(workspace, record, display, (issue or {}).get("description") or ""),
+                                       "due_on": fields.get("target_date") + "T00:00:00Z" if fields.get("target_date") else None}
             continue
         if issue and issue.get("viewerCanUpdate") is not True:
             raise PlanError(f"{identifier}: GitHub does not permit issue updates")
@@ -798,7 +1605,9 @@ def _desired(workspace, records, selected, found, snapshot, config):
         if wanted - set(snapshot["labels"]):
             raise PlanError(f"{identifier}: required labels are missing in GitHub; configure them before publication")
         criteria = sorted(criteria_by_item.get(identifier, []))
-        payload = {"title": _title(record), "body": _body(workspace, record, (issue or {}).get("body") or "", criteria),
+        with _naming(record):
+            title = display.title(record)
+        payload = {"title": title, "body": _body(workspace, record, display, (issue or {}).get("body") or "", criteria),
                    "state": "closed" if state in CLOSED else "open",
                    "state_reason": "not_planned" if state == "cancelled" else "completed" if state in CLOSED else "reopened",
                    "assignees": [owner[6:]] if owner and owner.startswith("human:") else [], "labels": sorted((labels - previous) | wanted)}
@@ -848,8 +1657,9 @@ def _read(workspace, client):
         bound["fields"]["github"] = copy.deepcopy(intent["github"])
         effective = model.Records(bound if record["id"] == bound["id"] else record for record in records)
     selected, found = _selection(workspace, effective, snapshot, config)
-    desired = _desired(workspace, effective, selected, found, snapshot, config)
-    return records, config, snapshot, selected, found, desired, publication, active
+    display = _PublicationText(workspace, effective)
+    desired = _desired(workspace, effective, selected, found, snapshot, config, display)
+    return records, config, snapshot, selected, found, desired, publication, active, display
 
 
 def _comparable(key, value):
@@ -959,8 +1769,8 @@ def _changes(record, issue, wanted, found, snapshot, config):
 
 def preview(workspace, client=None):
     """Read a source and live board. No mutation and no token-bearing record output."""
-    records, config, snapshot, selected, found, desired, _publication, active = _read(workspace, client or Gh())
-    source = _source(records)
+    records, config, snapshot, selected, found, desired, _publication, active, display = _read(workspace, client or Gh())
+    source = _source(records, display.prd_hash)
     revisions = {r["id"]: r.get("revision", 0) for r in records}
     fingerprint = _fingerprint(source, revisions, snapshot, desired, active)
     same_source = active and _same_source(active, source, revisions)
@@ -1080,11 +1890,11 @@ def _identity(issue):
     return {"number": number, "node_id": node, "url": issue.get("url") or issue.get("html_url")}
 
 
-def _create(client, workspace, config, snapshot, record, body, active):
+def _create(client, workspace, config, snapshot, record, body, title, active):
     """Create 1 issue or milestone. After a rate-limit refusal, wait, look for the marker, then create 1 more time."""
     pacer = client.pacer
     try:
-        return client.create(config, snapshot, record, body)
+        return client.create(config, snapshot, record, body, title)
     except GhFailure as failure:
         if failure.kind not in RATE_KINDS:
             raise
@@ -1096,7 +1906,7 @@ def _create(client, workspace, config, snapshot, record, body, active):
     try:
         found = client.marker_issue(config, _marker(workspace, record), active["pending_at"][record["id"]],
                                     record["fields"]["type"] == "Milestone")
-        return found if found else client.create(config, snapshot, record, body)
+        return found if found else client.create(config, snapshot, record, body, title)
     except PartEnd:
         raise RefusedCreate(first) from None  # the first create was sent, so its outcome stays unknown
     except GhFailure as failure:
@@ -1136,7 +1946,7 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
     client = client or Gh()
     pacer = client.pacer
     started = pacer.monotonic()
-    records, config, snapshot, selected, found, desired, publication, active = _read(workspace, client)
+    records, config, snapshot, selected, found, desired, publication, active, display = _read(workspace, client)
     read_time = pacer.monotonic() - started  # the check read starts only when a read of this length ends inside the budget
     records = list(records)  # Binding commits replace records; keep the read index immutable.
     if writer != config["writer"] or snapshot["login"] != config["writer"]:
@@ -1144,7 +1954,7 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
     pacer.load(workspace.control().get("github_pace") or [])
     pacer.sent, pacer.limit = 0, ((max_writes or PART_WRITES) if part else None)
     pacer.deadline = started + PART_SECONDS if part else None
-    source = _source(records)
+    source = _source(records, display.prd_hash)
     revisions = {r["id"]: r.get("revision", 0) for r in records}
     if active:
         if fingerprint != _fingerprint(source, revisions, snapshot, desired, active):
@@ -1230,8 +2040,9 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
                 active["pending_at"][identifier] = client.github_now()  # GitHub time, or None when no reply of this call had a valid Date
                 _checkpoint(workspace, publication, active, pacer.times())
                 try:
+                    wanted = desired[identifier] if record["fields"]["type"] == "Milestone" else desired[identifier]["issue"]
                     created = _create(client, workspace, config, snapshot, record,
-                                      desired[identifier].get("description") or desired[identifier]["issue"]["body"], active)
+                                      wanted.get("description", wanted.get("body", "")), wanted["title"], active)
                 except (PartEnd, RefusedCreate) as stop:
                     active["pending_creates"].remove(identifier)
                     active["pending_at"].pop(identifier, None)
@@ -1269,7 +2080,7 @@ def apply(workspace, fingerprint, writer, client=None, part=False, max_writes=No
         selected, found = _selection(workspace, records, snapshot, config)
         if any(found[r["id"]] is None for r in selected):
             raise PlanError("a created identity cannot be read back; inspect before retry")
-        desired = _desired(workspace, records, selected, found, snapshot, config)
+        desired = _desired(workspace, records, selected, found, snapshot, config, display)
         # The values before the writes. An item is saved in `unverified` only when all its writes were sent (PLAN-STORY-676).
         written = {r["id"]: _written(r, found[r["id"]], desired[r["id"]], found, snapshot, config) for r in selected}
 

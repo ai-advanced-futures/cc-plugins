@@ -17,5 +17,4 @@ allowed-tools: AskUserQuestion, Read, Bash
 
 ## Instructions
 
-1. Use the 2 references for the selected workspace and requested owner; ask only for missing item or owner information.
-2. Return 1 verified assignment from Plan's `assign` and `show` commands: item ID, stored owner, and unchanged work state, or the exact CLI refusal.
+Return 1 verified assignment from Plan's `assign` and `show` commands in the selected workspace: item presented under the command reference's user-facing text rule, stored owner, and unchanged work state, or the CLI refusal. Ask only for missing item or owner information.

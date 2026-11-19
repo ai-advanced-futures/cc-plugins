@@ -19,4 +19,4 @@ This skill answers from the selected store and its PRD source. A request to chan
 
 ## Instructions
 
-Return 1 evidence-based answer to the requested question through the read commands in the 2 references, with the selected workspace, relevant Plan or PRD IDs, stored or effective state when relevant, and any warning or exact CLI refusal; ask for a missing target only when the question cannot identify one.
+Return 1 evidence-based answer to the requested question through the read commands in the 2 references, with the selected workspace, evidence described under the command reference's user-facing text rule, stored or effective state when relevant, and any warning or CLI refusal; ask for a missing target only when the question cannot identify one.

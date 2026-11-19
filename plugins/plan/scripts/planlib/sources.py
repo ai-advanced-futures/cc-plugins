@@ -14,6 +14,10 @@ from . import PlanError
 from .model import TYPES, body_hash, digest, validate
 
 
+TRACE_TYPES = frozenset({"Problem", "Persona", "Need", "Journey", "Capability", "Experience", "Scope",
+                         "Metric", "Business", "GTM", "Risk", "Constraint", "Decision", "Question"})
+
+
 def _json_value(value):
     if isinstance(value, (date, datetime)):
         return value.isoformat()
@@ -54,28 +58,43 @@ class PRD:
     def __init__(self, root: Path):
         self.root = root.resolve()
         self.bundle = self.root / "docs/product/prd"
-        self._cache = None
+        self._cache: list[dict] | None = None
+        self._indexes: list[dict] = []
 
     def pages(self) -> list[dict]:
         if self._cache is not None:
             return self._cache
         if not (self.bundle / "index.md").is_file() or not (self.bundle / "product.md").is_file():
             raise PlanError("a Product-format PRD bundle is required; prepare it with product:explore or migrate legacy input with product:migrate")
-        result = []
+        result, indexes = [], []
         for path in sorted(self.bundle.rglob("*.md")):
             safe = _inside(self.bundle, path)
             text = safe.read_bytes().decode("utf-8")
-            if not text.startswith(("---\n", "---\r\n")):
+            relative = path.relative_to(self.bundle).as_posix()
+            frontmatter = text.startswith(("---\n", "---\r\n"))
+            fields, body = parse_page(text, relative) if frontmatter else ({}, text)
+            if path.name == "index.md":
+                heading = re.search(r"(?m)^# ([^\r\n]+)", body)
+                title = fields.get("title") or ("Product requirements" if path.parent == self.bundle
+                                               else heading[1].strip() if heading else "")
+                indexes.append({"id": path.stem, "path": "prd:/" + relative,
+                                "fields": {**fields, "type": "Context", "title": title}, "body": body,
+                                "hash": body_hash(body, path.stem)})
+            if not frontmatter:
                 if path.parent == self.bundle and path.name in {"index.md", "lenses.md"}:
                     result.append({"id": path.stem, "path": "prd:/" + path.name,
                                    "fields": {"type": "Context", "title": path.stem}, "body": text,
                                    "hash": body_hash(text, path.stem)})
                 continue
-            fields, body = parse_page(text, str(path.relative_to(self.bundle)))
-            result.append({"id": path.stem, "path": "prd:/" + path.relative_to(self.bundle).as_posix(),
+            result.append({"id": path.stem, "path": "prd:/" + relative,
                            "fields": fields, "body": body, "hash": body_hash(body, path.stem)})
-        self._cache = result
+        self._cache, self._indexes = result, indexes
         return result
+
+    def indexes(self) -> list[dict]:
+        """Read existing index pages for publication only."""
+        self.pages()
+        return self._indexes
 
     def get(self, value: str) -> dict:
         if ":/" in value and not value.startswith("prd:/"):
@@ -94,9 +113,7 @@ class PRD:
 
     def trace(self, value: str) -> dict:
         page = self.get(value)
-        permitted = {"Problem", "Persona", "Need", "Journey", "Capability", "Experience", "Scope",
-                     "Metric", "Business", "GTM", "Risk", "Constraint", "Decision", "Question"}
-        if page["fields"].get("type") not in permitted:
+        if page["fields"].get("type") not in TRACE_TYPES:
             raise PlanError("a trace must target a typed PRD requirement page, not an index or summary")
         return {"to": page["path"], "hash": page["hash"]}
 

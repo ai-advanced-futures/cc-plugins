@@ -60,9 +60,13 @@ The following table lists the skills:
 
 The generation command is `/plan:generate`, not `/plan:plan`.
 
+Plan explains references in plain English in questions, reports, summaries, and saved prose. Only Milestones, Features, and Stories show IDs, each with its English title. Capabilities, needs, requirements, personas, and other concepts appear as descriptions, not source numbers. Stored references and internal helper results keep their actual source IDs, paths, and hashes.
+
 ## Publish a GitHub Project
 
 Configure one existing board and one named publisher through `github configure`. `/plan:publish` previews the Plan-to-board changes before an approved apply. Imported issue bindings stay attached to their Plan items. Publication uses the current `gh` authentication, including Sofa's wrapper when present. Apply paces its writes (1 second apart, 400 an hour) and can run in parts with `--part`.
+
+Published issue and board text follows the same display rule as Plan replies. Epic and Task titles have no IDs. Acceptance criteria show their text, and requirement references show their source titles rather than IDs or paths. Hidden publication markers and stored bindings retain their identities. Publication needs the PRD bundle and readable source titles; a source change needs a fresh accepted preview.
 
 The board is a view of Plan, not another work store. Publication does not pull issue state or assignees into Plan. A partial result remains visible and must complete through a checked retry. See the [command reference](references/cli.md) for configuration, fingerprints, and refusals.
 

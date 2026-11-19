@@ -19,4 +19,4 @@ A request without a target state is read-only. Ownership uses `plan:assign`; tak
 
 ## Instructions
 
-Return 1 verified status from Plan's `show` and, when a change is requested, `status` commands, using the 2 references, selected workspace, executing actor, actual required approval, and exact current token for held work: item ID, requested and stored state, and blockers, or the exact CLI refusal for missing approval, spec, or other evidence.
+Return 1 verified status from Plan's `show` and, when a change is requested, `status` commands, using the 2 references, selected workspace, executing actor, actual required approval, and exact current token for held work: item and blockers presented under the command reference's user-facing text rule, requested and stored state, or the CLI refusal for missing approval, spec, or other evidence.

@@ -22,7 +22,6 @@ A standalone run needs 1 existing Milestone. `plan:generate` supplies milestones
 
 ## Instructions
 
-1. Read the 3 references and the selected Milestone, its existing Epics, and its relevant PRD capabilities and scope; ask for 1 Milestone when the caller and argument name none.
-2. Agree 3 to 6 themes with the user using the reference's value, dependency, risk, and scope questions, or record the user's reason for a smaller set.
-3. Store 1 Epic per confirmed missing theme through Plan, with its Milestone and at least 1 PRD trace; resolve untraced proposals with the user before storing them.
-4. Return each Epic ID, Milestone, trace, and uncovered capability; run 1 Plan check for a standalone run or return these fields to develop for its final check.
+Return 3 to 6 confirmed themes for 1 Milestone through Plan CLI writes under the 3 reference contracts, or record the user's reason for a smaller set. Each missing theme becomes 1 Epic with its Milestone and at least 1 PRD trace. Existing Epics and PRD evidence remain the starting point; ask for a missing Milestone or source evidence before storing work.
+
+The develop handoff contains the saved Epics, Milestone, traces, and uncovered capabilities with their source identities. Develop owns the final check; a standalone run includes 1 Plan check and presents its result under the command reference's user-facing text rule.

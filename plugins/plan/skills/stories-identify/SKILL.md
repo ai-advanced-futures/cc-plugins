@@ -22,8 +22,6 @@ The selected Feature's criteria and PRD traces define this run's scope. Under th
 
 ## Instructions
 
-1. Read the 3 references and resolve 1 Feature with its existing Stories, Criteria, PRD traces, and Personas; ask which Feature to divide when the caller and argument name none.
-2. Agree an ordered Story set through the reference's action, failure, success, 6 story tests, split choices, and full-feature coverage questions; use the persona/action/benefit form in each description and body.
-3. Store 1 Story per confirmed missing outcome through Plan with the Feature parent, inherited or agreed Milestone, and a direct trace only when it narrows the Feature's requirement coverage.
-4. Store 1 distinct Criterion item per agreed missing Story criterion, linked to that Story and separate from the Feature's criteria.
-5. Return every Story ID, parent, Milestone, criterion ID and count, and reason for each narrower trace; run 1 Plan check for a standalone run or return these fields to develop for its final check.
+Return a confirmed, ordered Story set for 1 Feature through Plan CLI writes under the 3 reference contracts: persona/action/benefit text, full-feature coverage, inherited or agreed Milestones, narrower traces when needed, and separate Story Criteria. Existing Stories, Criteria, PRD traces, and Personas remain the starting point; ask for a missing Feature.
+
+The develop handoff contains the saved Stories, parents, Milestones, Criteria, criterion counts, and reasons for narrower traces with their source identities. Develop owns the final check; a standalone run includes 1 Plan check and presents its result under the command reference's user-facing text rule.

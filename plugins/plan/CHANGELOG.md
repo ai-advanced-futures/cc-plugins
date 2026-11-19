@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.13.0
+
+- Plan explains PRD concepts and other references in plain English in all user-facing text, including published GitHub issue and board text. Only Milestones, Features, and Stories show IDs, each with its English title.
+- Saved references and internal helper results keep the actual source IDs, paths, and hashes. Questions and saved prose do not expose those IDs. GitHub's hidden publication markers and existing bindings stay intact.
+- Publication reads the PRD to describe source references and includes that evidence in its preview fingerprint. A changed source needs a fresh accepted preview, including after a partial publication.
+- Publication uses Mistune to read Markdown. It preserves external link destinations, ordinary project files, and code contents, including code in quotes and lists. It resolves reference-style source links, complete imported Run IDs, relative PRD links, and bare source filenames. Markdown formatting can change; stored bodies stay unchanged. HTML text and links follow the display rule; HTML code keeps its contents. Issue titles remain plain text. Ordinary-word aliases stay as English words in prose. Source paths resolve as whole paths, and imported headings keep one title.
+- Publication resolves escaped source IDs and sibling filenames. It keeps brackets in titles from breaking links. Bare source filenames must match one page, and parent-relative paths into PRD folders identify PRD sources.
+- Publication reads references across text formatting and supports lowercase source aliases. It keeps footnotes and HTML code contents. Requirement lists escape source titles, and an unclosed HTML source link stops publication before a write.
+- Publication keeps unrelated text formatting when it replaces a split reference. Comments cannot hide a visible reference. URL text keeps its characters, encoded source paths resolve, and work IDs use the same case lookup as Plan.
+- Publication reads titles as plain text and shares Markdown definitions between descriptions and bodies. Existing PRD indexes have readable names and enter the preview evidence. Character references follow Markdown rules, external destinations receive one decode, and HTML text tags cannot hide references.
+- Publication reads bare URLs before Markdown formatting. Source destinations resolve with fragments, query strings, and dot segments. External destinations remain unchanged.
+- Ordinary source aliases resolve in link destinations without changing prose. Web addresses that start with `www.` keep their text. Braces remain outside source paths, and malformed external links do not cause source parsing errors.
+- Inline HTML source labels keep literal punctuation. Repository-root PRD paths and ordinary Plan aliases resolve. References split across external link labels become readable text, and the links keep their destinations.
+- Math expressions keep their contents, and independent footnotes use distinct keys. HTML anchors preserve complete references and external destinations. Plan aliases follow Plan's case lookup. Imported headings keep one readable title.
+- Adjacent source paths resolve separately. Generated footnotes avoid definitions in human text outside the managed section. Literal dollar signs in source labels do not become math.
+- Email addresses keep their text and literal punctuation. Unused aliases do not stop publication or replace actual item IDs. Missing PRD links remain source references after normalization. Human text outside the managed section can still use external link definitions from Plan text. A local source link in that text stops publication until it has an external destination.
+- Publication stops for a missing or ambiguous source that Plan data or the PRD names (a trace, a link, a path with a PRD prefix or `../`), and for a title that cannot describe the reference without a cycle. The error names the record and the reference. An ID that no Plan record, PRD page or alias holds (for example `RUN-01` or `MILESTONE-1` in an example) and a bare path such as `questions/QUESTION-06.md` in prose or code stay text.
+- Publication reads a text of 100 KB in linear time. A run of `|`, `&#` or `../` took minutes in the store lock before (issue 3088). An email local part of more than 64 characters, a URL scheme of more than 31 characters and a run of more than 16 `../` steps are not read as one reference.
+- A minor step: publication needs the PRD bundle. Earlier versions could publish without that evidence.
+
 ## 0.12.0
 
 The wait after a rate limit of `github apply` is in GitHub time (PLAN-STORY-648).
