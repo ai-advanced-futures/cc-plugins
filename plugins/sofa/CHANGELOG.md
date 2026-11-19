@@ -1,5 +1,14 @@
 # Changelog
 
+## 15.1.0
+
+The roles table of the ADLC template gives the merger `claude-sonnet-5-5` with a `300k` context, in place of `claude-haiku-5-5` with `200k`. The effort stays `medium`.
+
+- A new team gets the new merger row.
+- A team file keeps its merger row. The template version does not change, and this version adds no migration step. To use the new values, change the merger row of `docs/adlc.md`. A merger session takes the row at its next start by `dispatch.sh`, not at a resume.
+- No run stops: a team file does not change, and the roles hitl and requests of the template already use Sonnet.
+- `tests/template.test.sh` reads the roles table by the names of its header. It checks the merger row, and it checks that each row with a `Compact at` value has the value of its model.
+
 ## 15.0.1
 
 `sofa-publish` no longer shows the text of a Plan error that is not JSON.
