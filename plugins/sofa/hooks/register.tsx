@@ -8,8 +8,7 @@ const COLOURS = new Set(['red', 'blue', 'green', 'yellow', 'purple', 'orange', '
 const PANE = 'sofa-dashboard'
 // Change the tag when Report changes: it declines what an earlier version stored.
 const report = atom({ plugin: 'sofa', key: 'report' } as const, { text: '', at: '' }, { shape: 'report-1' })
-// The team session name, kept from SessionStart for the Stop hook, which has
-// no session_title. In $.state, because a reload resets the module variables.
+// The team session name, kept from session.start for the turn.complete hook. In $.state, because a reload resets the module variables.
 const session = atom({ plugin: 'sofa', key: 'session' } as const, { name: '' }, { shape: 'session-1' })
 
 // The team prefix in section 1 of an ADLC file, or null. A Markdown formatter
@@ -91,35 +90,49 @@ export function colourArgs(name: string, colour: string): string[] {
   return ['session', 'colour', '--name', name, '--colour', colour]
 }
 
+// The name of the session row with this id in the output of `sofa-state session list --json`, or ''.
+// The fallback of a session that has no SOFA_SESSION_NAME in its env.
+export function nameById(listJson: string, id: string): string {
+  try {
+    const rows: unknown = JSON.parse(listJson)
+    if (!Array.isArray(rows)) return ''
+    const row = rows.find((r: unknown) => typeof r === 'object' && r !== null && (r as { id?: unknown }).id === id)
+    const name = (row as { name?: unknown } | undefined)?.name
+    return typeof name === 'string' ? name : ''
+  } catch {
+    return ''
+  }
+}
+
 export const register: Register = on => {
   let timer: { cancel: () => void } | undefined
+  // The hooks are 'session.start' and 'turn.complete', not the classic.SessionStart and classic.Stop
+  // events: a managed-settings machine (cc-plugin-sec-default) skips each classic.* hook of a plugin.
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: PANE, description: 'Show the sofa team dashboard in a pane' })
-    return next(e)
-  })
-
-  on('classic.SessionStart', async ($, e, next) => {
     const result = await next(e)
-    if (e.source === 'compact' || e.session_title === undefined) return result
     const log = (error: unknown) =>
       $.ui.log(`sofa: ${error instanceof Error ? error.message : String(error)}`, { to: 'debug' })
+    // dispatch.sh puts the session name in the env of --settings. A session with no name is not a team session.
+    const name = await $.env.get('SOFA_SESSION_NAME').catch(() => undefined)
+    if (name === undefined || name === '') return result
     const fs: Fs = { exists: path => $.fs.exists(path), read: path => $.fs.read(path) }
-    const member = await memberOf(fs, e.cwd, e.session_title, $.plugin.root).catch((error: unknown) => {
+    const member = await memberOf(fs, e.cwd, name, $.plugin.root).catch((error: unknown) => {
       log(error)
       return null
     })
     if (member === null) {
       // A folder with docs/adlc.md and a session that is not of the team: say so, so the next fault shows.
       if (await $.fs.exists(`${e.cwd}/docs/adlc.md`).catch(() => false))
-        log(new Error(`${e.session_title} is not a team session of ${e.cwd} (no team prefix, or the name does not match)`))
+        log(new Error(`${name} is not a team session of ${e.cwd} (no team prefix, or the name does not match)`))
       return result
     }
-    const name = e.session_title
     await update($, session, () => ({ name })).catch(log)
     const state = async (args: string[]) => {
       const run = await $.process.run([`${$.plugin.root}/scripts/sofa-state`, ...args], { cwd: e.cwd, timeoutMs: 10_000 })
       if (run.exitCode !== 0) throw new Error(`sofa-state ${args.slice(0, 2).join(' ')}: ${run.stderr.trim()}`)
     }
+    const id = await $.session.id()
     // Not awaited: the run waits until the session is idle, and this hook must not.
     // The store gets the colour only when /color is done, so the orchestrator
     // sees a session that has no colour.
@@ -129,26 +142,44 @@ export const register: Register = on => {
         .run({ command: 'color', args: colour })
         .then(() => state(colourArgs(name, colour)))
         .catch(log)
-    state(upsertArgs(name, e.session_id, member)).catch(log)
+    state(upsertArgs(name, id, member)).catch(log)
     return result
   })
 
   // A heartbeat at each turn end of a team session, so the dashboard and the
-  // orchestrator see a live session. The Stop event has no session_title: the
-  // name comes from SessionStart, through $.state.
-  on('classic.Stop', async ($, e, next) => {
+  // orchestrator see a live session. Only the main loop counts: a subagent turn has an agentId.
+  // The name is from session.start ($.state). With no saved name (a session that has no
+  // SOFA_SESSION_NAME), the name is the row of this session id in the state store.
+  on('turn.complete', async ($, e, next) => {
     const result = await next(e)
+    if (e.agentId !== undefined) return result
     const log = (error: unknown) =>
       $.ui.log(`sofa: heartbeat: ${error instanceof Error ? error.message : String(error)}`, { to: 'debug' })
-    const { name } = await read($, session).catch(error => {
+    const cwd = await $.session.cwd().catch(() => undefined)
+    const sofaState = `${$.plugin.root}/scripts/sofa-state`
+    let { name } = await read($, session).catch(error => {
       log(error)
       return { name: '' }
     })
-    // No store check: the name is set only when SessionStart made the store
-    // (sofa-state puts it in the main folder, which is not always e.cwd).
-    if (name === '') return result
+    if (name === '') {
+      const env = await $.env.get('SOFA_SESSION_NAME').catch(() => undefined)
+      if (env !== undefined && env !== '') {
+        name = env
+      } else {
+        const id = await $.session.id().catch(() => '')
+        if (id === '') return result
+        const run = await $.process.run([sofaState, 'session', 'list', '--json'], { cwd, timeoutMs: 10_000 }).catch(() => undefined)
+        name = run !== undefined && run.exitCode === 0 ? nameById(run.stdout, id) : ''
+      }
+      // No row for this id: not a team session, or the station has not written its row yet. Look again at the next turn end.
+      if (name === '') return result
+      const found = name
+      await update($, session, () => ({ name: found })).catch(log)
+    }
+    // No store check: the name is set only when the store has this session
+    // (sofa-state puts it in the main folder, which is not always the cwd).
     $.process
-      .run([`${$.plugin.root}/scripts/sofa-state`, 'session', 'heartbeat', '--name', name], { cwd: e.cwd, timeoutMs: 10_000 })
+      .run([sofaState, 'session', 'heartbeat', '--name', name], { cwd, timeoutMs: 10_000 })
       .then(run => {
         if (run.exitCode !== 0) throw new Error(run.stderr.trim())
       })

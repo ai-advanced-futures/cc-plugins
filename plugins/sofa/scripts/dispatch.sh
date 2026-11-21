@@ -18,6 +18,9 @@
 # exit of sofa-github stops the script, so a team never starts as the person when
 # the App setup is broken. DISPATCH_SOFA_GITHUB names another command in tests.
 #
+# The value always holds env.SOFA_SESSION_NAME=<session name> on a fresh start: the mod reads it
+# at session.start (the classic.* hooks do not run under managed settings).
+#
 # Exit 0 when the session started (or on --dry-run), 1 when claude gave no
 # session id, 2 on a bad argument, a bad ADLC file or a broken App setup.
 set -euo pipefail
@@ -131,7 +134,14 @@ else
   if [ -n "$plan_workspace" ]; then
     settings="$plan_settings"
   fi
-  [ -z "$settings" ] || cmd+=(--settings "$settings")
+  # The env object of --settings gets SOFA_SESSION_NAME. The mod of sofa (hooks/register.tsx) reads it
+  # with $.env.get at session.start, to give the session its colour and its row. Other keys stay.
+  settings="$(python3 -c '
+import json, sys
+s = json.loads(sys.argv[1]) if sys.argv[1] else {}
+s.setdefault("env", {})["SOFA_SESSION_NAME"] = sys.argv[2]
+print(json.dumps(s, separators=(",", ":")))' "$settings" "$name")" || fail "could not add SOFA_SESSION_NAME to the settings"
+  cmd+=(--settings "$settings")
   cmd+=(--permission-mode bypassPermissions)
   cmd+=("$prompt")
 fi

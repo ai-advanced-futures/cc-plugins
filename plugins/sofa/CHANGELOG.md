@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+The mod of sofa no longer uses classic hooks. On a machine with managed settings, `cc-plugin-sec-default` skips each `classic.*` hook of a user-tier plugin, so the colour, the start upsert and the heartbeat did not run.
+
+- `hooks/register.tsx` has no `classic.SessionStart` and no `classic.Stop` hook. In `session.start`, after `next(e)`, the mod reads the name with `$.env.get('SOFA_SESSION_NAME')`. For a team member it keeps the name in the session atom, runs `sofa-state session upsert` with the id of `$.session.id()`, runs `/color`, and then runs `sofa-state session colour`. It does not await these calls.
+- A new `turn.complete` hook sends the heartbeat with the saved name. It acts only when `e.agentId` is not set, so a subagent turn sends none.
+- With no `SOFA_SESSION_NAME`, the `turn.complete` hook finds the name in `sofa-state session list --json` by `$.session.id()`.
+- `scripts/dispatch.sh` adds `"SOFA_SESSION_NAME": "<name>"` to the `env` object of the `--settings` JSON of each fresh start, the orchestrator start of `sofa:start` included (it uses `dispatch.sh`). A `--resume` keeps the saved options of its session.
+- `tests/register.test.ts` tests the 2 hooks (run `claude plugin test plugins/sofa`).
+- No run stops. A session that dispatch started before this version has no `SOFA_SESSION_NAME`: its heartbeat uses the fallback, and it gets no colour until it starts again.
+
 ## 15.3.0
 
 hitl can post each product PR in the Slack channel as a courtesy, after the first verdict of the reviewer. The reviewer gives the attention value (1 to 5) and the focus files of the post.
