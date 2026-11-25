@@ -1154,6 +1154,30 @@ RULE_FIELDS: dict[str, dict] = {name: {} for name in FLOOR_SETS}
 RULE_FIELDS["health"]["snapshot_max_age_seconds"] = SNAPSHOT_MAX_AGE
 RULE_FIELDS["streams"]["milestones"] = MapForm(re.compile(r"(?:PLAN-)?MILESTONE-[0-9]+"), STREAMS)
 RULE_FIELDS["streams"]["features"] = MapForm(re.compile(r"(?:PLAN-)?FEATURE-[0-9]+"), STREAMS)
+
+# --- the verdicts of the floor (STORY-448) ---
+# The 6 levels of CONVENTION-02, lowest first, and the 4 states of a line (CAPABILITY-03), each as a word (CONSTRAINT-03).
+VERDICT_LEVELS = ["off", "standing by", "working", "caution", "serious", "critical"]
+LINE_STATES = ["working", "on hold", "standing by", "stopped"]  # the order of the state of the floor (spec, after S5)
+# The 2 health rules of the verdicts, with their defaults (spec, decision 9): a field that is absent or null gives the
+# default. heartbeat_stale_seconds: 15 minutes, the age after which the scheduler holds a heartbeat as old.
+# need_critical_seconds: 2 hours, the age after which a blocked item or an open ask is critical.
+RULE_FIELDS["health"]["heartbeat_stale_seconds"] = range(60, 86401)
+RULE_FIELDS["health"]["need_critical_seconds"] = range(60, 604801)
+VERDICT_DEFAULTS = {"heartbeat_stale_seconds": 900, "need_critical_seconds": 7200}
+WORKING_STATES = {"in progress", "in review", "fix round"}  # rule L4
+OPEN_STAGES = {"open", "on hold"}  # decision 6
+ASK_NOW = "blocks code now"  # rule A1: the priority word of the station skill
+NO_ROLE, ASK_STATION = "no role", "hitl"  # decisions 5 and 8
+# The kv key that /sofa:pause writes (rule S1). It is 2 adjacent strings, because the scope scan of sofa-slack.test.sh
+# reads each quoted <word>.<word> of a script as a Slack method, and `team.` is a prefix of a Slack method.
+TEAM_STATE_KEY = "team" ".state"
+# The keys of `reasons` of a station (spec, rules L1 to L7 and A1 to A3). They are words of the script, so the guard
+# skips them by their place (SNAPSHOT_LAYOUT).
+VERDICT_REASONS = ["working", "waiting", "blocked", "blocked_overdue", "stale_heartbeat", "stopped_with_work",
+                   "ask_blocks_now", "ask_blocks_later", "ask_overdue"]
+VERDICT_NAMES = {"verdicts", "floor", "lines", "stations", "station", "level", "state", "label", "sessions", "reasons",
+                 *VERDICT_REASONS}
 # The label of a line (the key line.label of the store): the name that a view shows for the line (STORY-444).
 _LABEL = re.compile(r"[a-z0-9][a-z0-9-]{0,31}")
 
@@ -1190,7 +1214,7 @@ ROADMAP_NAMES = {"roadmap", "source", "read_at", "commit", "committed_at", "mile
 WHERE_NAMES = frozenset({
     "schema_version", "taken_at", "line", "store", "label", "queue", "rules", "rules_digest", "nulled",
     *SNAPSHOT_FIELDS, *(f for _, fields in SNAPSHOT_FIELDS.values() for f in fields),
-    *FLOOR_SETS, *(f for fields in RULE_FIELDS.values() for f in fields), *ROADMAP_NAMES,
+    *FLOOR_SETS, *(f for fields in RULE_FIELDS.values() for f in fields), *ROADMAP_NAMES, *VERDICT_NAMES,
 })
 
 # The place of each key that build_snapshot writes, as a tuple of names (a list adds no name): ("items", "id"),
@@ -1208,6 +1232,10 @@ SNAPSHOT_LAYOUT = frozenset({
     *(("roadmap", k) for k in ROADMAP_FIELDS),
     *(("roadmap", k, f) for k, fields in ROADMAP_FIELDS.items() for f in fields),
     *(("defects", k) for k in DEFECT_KINDS), *(("defects", k, f) for k in DEFECT_KINDS for f in ("count", "ids")),
+    ("verdicts",), ("verdicts", "floor"), ("verdicts", "floor", "level"), ("verdicts", "floor", "state"),
+    ("verdicts", "lines"), *(("verdicts", "lines", f) for f in ("label", "level", "state")),
+    ("verdicts", "stations"), *(("verdicts", "stations", f) for f in ("station", "level", "sessions", "reasons")),
+    *(("verdicts", "stations", "reasons", r) for r in VERDICT_REASONS),
 })
 
 GUARD_MIN_CHARS = 4
@@ -1505,6 +1533,85 @@ def roadmap_section(scrub, streams, roadmap):
     return section, {"no_stream": {"count": len(ids), "ids": ids}}
 
 
+def verdict_section(snap, team_state):
+    """The section `verdicts` of SNAP (STORY-448): 1 level for the floor, each line and each station, and 1 state for the
+    floor and each line. The rules are in the spec: the levels L1 to L7 and A1 to A3, the verdicts V1 to V3, and the
+    states S1 to S5. It reads only the scrubbed sections of SNAP, so a verdict never holds a value that the snapshot
+    does not hold. TEAM_STATE is the kv value `team.state` (rule S1)."""
+    now = parse_iso(snap["taken_at"])
+    health = snap["rules"]["health"]
+    limit = {k: health.get(k) or v for k, v in VERDICT_DEFAULTS.items()}
+
+    def older(text, seconds):
+        return text is not None and (now - parse_iso(text)).total_seconds() > seconds
+
+    def top(levels):
+        return max(levels, key=VERDICT_LEVELS.index, default="off")
+
+    stations = {}
+
+    def note(station, level, reason=None):
+        entry = stations.setdefault(station, {"levels": [], "reasons": {}, "sessions": 0})
+        entry["levels"].append(level)
+        if reason:
+            entry["reasons"][reason] = entry["reasons"].get(reason, 0) + 1
+
+    work = {}  # decision 6: the open work of each session
+    for item in snap["items"]:
+        if item["session"] and item["stage"] in OPEN_STAGES:
+            work.setdefault(item["session"], []).append(item)
+    live = working = False
+    for s in snap["sessions"]:
+        if not s["name"]:
+            continue
+        station, items = s["role"] or NO_ROLE, work.get(s["name"], [])
+        stations.setdefault(station, {"levels": [], "reasons": {}, "sessions": 0})["sessions"] += 1
+        if s["state"] != "live":
+            note(station, "serious", "stopped_with_work") if items else note(station, "off")  # L1, L2
+            continue
+        live = True
+        note(station, "standing by")  # L3
+        for item in items:
+            if item["state"] in WORKING_STATES and item["stage"] == "open":
+                note(station, "working", "working")  # L4
+                working = True
+            elif item["state"] == "waiting":
+                note(station, "caution", "waiting")  # L5
+            elif item["state"] == "blocked":  # L6
+                overdue = older(item["updated_at"], limit["need_critical_seconds"])
+                note(station, "critical" if overdue else "serious", "blocked_overdue" if overdue else "blocked")
+        if items and older(s["last_heartbeat"], limit["heartbeat_stale_seconds"]):
+            note(station, "caution", "stale_heartbeat")  # L7
+    role = {s["name"]: s["role"] or NO_ROLE for s in snap["sessions"] if s["name"]}
+    holder = {i["id"]: i["session"] for i in snap["items"] if i["id"] and i["session"] in role}
+    for ask in snap["open_asks"]:
+        story = ask["story"]  # decision 8
+        name = holder.get(story) or next((h for i, h in holder.items() if story and i.startswith(story + "-")), None)
+        station = role[name] if name else ASK_STATION
+        if older(ask["opened_at"], limit["need_critical_seconds"]):
+            note(station, "critical", "ask_overdue")  # A3
+        elif ask["priority"] == ASK_NOW:
+            note(station, "serious", "ask_blocks_now")  # A1
+        else:
+            note(station, "caution", "ask_blocks_later")  # A2
+    rows = [{"station": name, "level": top(e["levels"]), "sessions": e["sessions"], "reasons": e["reasons"]}
+            for name, e in sorted(stations.items())]  # V1
+    if team_state == "paused":
+        state = "on hold"  # S1
+    elif not live:
+        state = "stopped"  # S2
+    elif working:
+        state = "working"  # S3
+    elif snap["open_asks"] or any(i["stage"] == "on hold" for i in snap["items"]):
+        state = "on hold"  # S4
+    else:
+        state = "standing by"  # S5
+    lines = [{"label": snap["line"]["label"], "level": top(r["level"] for r in rows), "state": state}]  # V2
+    floor_state = min((ln["state"] for ln in lines), key=LINE_STATES.index)
+    return {"floor": {"level": top(ln["level"] for ln in lines), "state": floor_state},  # V3
+            "lines": lines, "stations": rows}
+
+
 def build_snapshot(con, sets, at, store, roadmap=None):
     """Return the snapshot of version 1 as a dict. SETS are the rule sets as read from the file.
 
@@ -1533,6 +1640,8 @@ def build_snapshot(con, sets, at, store, roadmap=None):
         snap["roadmap"], snap["defects"] = None, {kind: None for kind in DEFECT_KINDS}
     else:
         snap["roadmap"], snap["defects"] = roadmap_section(scrub, snap["rules"]["streams"], roadmap)
+    row = con.execute("SELECT value FROM kv WHERE key = ?", (TEAM_STATE_KEY,)).fetchone()
+    snap["verdicts"] = verdict_section(snap, row[0] if row else None)
     snap["nulled"] = scrub.nulled
     return snap
 

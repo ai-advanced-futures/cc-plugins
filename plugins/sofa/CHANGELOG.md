@@ -1,5 +1,14 @@
 # Changelog
 
+## 15.4.0
+
+STORY-448: the snapshot gives 1 verdict for the floor, each line and each station, and the state of each line (FEATURE-49, CAPABILITY-01, CAPABILITY-03, CONSTRAINT-02, CONSTRAINT-03).
+
+- `sofa-state snapshot take` has the new key `verdicts`: `floor` and `lines` with a level and a state, and `stations` (1 for each role) with a level, the count of its sessions, and the count of each reason of its level. `schema_version` stays 1.
+- The levels are the 6 words of CONVENTION-02 (`off`, `standing by`, `working`, `caution`, `serious`, `critical`); a verdict is the highest level under it, so 1 open need of a station lifts its line and the floor. The states are the 4 words of CAPABILITY-03 (`working`, `on hold`, `standing by`, `stopped`). The spec gives each rule.
+- 2 new health rules of `.claude/sofa-floor.json`, each with a default: `heartbeat_stale_seconds` (900) and `need_critical_seconds` (7200). A bad value is null and counts in `nulled`.
+- No run stops: a floor configuration with no new field gives the defaults, and no other key of the snapshot changes.
+
 ## 15.3.0
 
 hitl can post each product PR in the Slack channel as a courtesy, after the first verdict of the reviewer. The reviewer gives the attention value (1 to 5) and the focus files of the post.
