@@ -191,17 +191,16 @@ The command `/gtm:run` calls the skills `enterprise-search` and `customer-suppor
 |---|---|
 | `enterprise-search` | `/gtm:run` calls its skill to search the knowledge base, and gives the answer to the knowledge agent. |
 | `customer-support` | `/gtm:run` calls its skill for churn signals and ticket summaries, and gives the answer to the knowledge agent. |
-| `value-ip` | No call. The plugin reads its output files: the survived IP claims that anchor the positioning (brand agent and integrity agent). |
 | `sales` | No call. The sales agent does the account research and the prospecting itself, and its output names `sales:call-prep` and `sales:prospect-research` as options. |
 | `marketing` | No call. The marketing agent writes the content drafts and the performance summary itself, and its output names `marketing:draft-content` and `marketing:performance-report` as options. |
 | `data` | No call. The funnel agent estimates the conversion rates itself, and its output names the `data` plugin as an option for SQL queries. |
 | `tech-contracts` | No call. The sales agent reviews the redlines of a vendor contract itself, says that no `tech-contracts` review ran, and names `tech-contracts:review` and `tech-contracts:negotiate` as options. |
 
-Two of these plugins, `value-ip` and `tech-contracts`, are optional plugins from outside this marketplace. The plugin works without them. This README gives no install line for `value-ip`.
+`tech-contracts` is an optional plugin from outside this marketplace. The plugin works without it.
 
 ### Plugins of this marketplace
 
-`competitive-intelligence` and `jtbd-market-discovery` save a knowledge graph that this plugin reads. `pricing` writes a file that this plugin reads. `aiml` writes the `p15-trigger-event` file. Run them before `/gtm:run`. To read a graph, this plugin needs the plugin that wrote it, and its Python dependencies (`uv` gives them). Set `GTM_GRAPH_PYTHON` to the Python that runs the save code when you do not use `uv`.
+`competitive-intelligence` and `jtbd-market-discovery` save a knowledge graph that this plugin reads. `pricing` writes a file that this plugin reads. `aiml` writes the `p15-trigger-event` file. Run them before `/gtm:run`. To read a graph, this plugin needs the plugin that wrote it, and its Python dependencies (`uv` gives them). Set `GTM_GRAPH_PYTHON` to the Python that runs the save code when you do not use `uv`. `value-ip` is optional and is in this marketplace: it saves the brain of its runs, and this plugin reads the survived IP claims of its latest run, which the brand agent and the integrity agent use to anchor the positioning. Install it with `claude plugin install value-ip@cc-plugins`.
 
 ## Grants that a caller must give
 

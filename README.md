@@ -48,6 +48,8 @@ claude plugin install <name>@cc-plugins
 | `business-case` | Coach a thin business case into one a funder can trust. Check it against a rubric, fill each gap, plan evidence runs of other plugins, work out the numbers from the figures you confirm, and have an independent review check the case. Use build. |
 | `value-ip` | Find the true differentiating value and IP claims in an artifact (a plan, a PRD, code, an analysis, or M&A due diligence). Four framework agents (Helmer 7 Powers, Blue Ocean ERRC, Christensen disruption, Moore core and context) analyze it, debate, and give a scorecard and a devil's advocate report. Use analyze, challenge, and guard. |
 
+The Brain Studio is the set of plugins that people use to build and shape the brains of a project. The tag `brain-studio` in `.claude-plugin/marketplace.json` marks its members. See [the Brain Studio page](plugins/knowledge/docs/brain-studio.md).
+
 ## Skills
 
 The `skills/` folder holds plain skills. They are not in a plugin. Install one with `npx skills add`:

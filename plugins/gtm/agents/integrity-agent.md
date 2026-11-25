@@ -44,7 +44,7 @@ Read exact paths from `get_draft_paths(target_agent)`. A glob pattern can match 
 ## Input (from file system)
 
 - Draft artifact files from `.gtm/working/{target_agent}/` — see manifest above
-- `gtm-context.json` — reads `product.capabilities[]`, `learned_knowledge`, and `plugin_inputs.value_ip.survived_claims` when it exists (value-ip is an optional plugin from outside this marketplace; without it, the evidence of each claim is in `product.capabilities[]` and `learned_knowledge`)
+- `gtm-context.json` — reads `product.capabilities[]`, `learned_knowledge`, and `plugin_inputs.value_ip.survived_claims` when it exists (value-ip is an optional plugin of this marketplace; without it, the evidence of each claim is in `product.capabilities[]` and `learned_knowledge`)
 - `brief.md` at the project root, when it exists: the facts that the person states about the product
 - The list of claims asserted in each artifact
 

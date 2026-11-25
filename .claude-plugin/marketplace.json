@@ -6,26 +6,38 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.21.0"
+    "version": "2.21.1"
   },
   "plugins": [
     {
       "name": "architecture",
       "description": "The architecture decisions of a repository as an OKF graph on the brain standard: architecture:setup makes or migrates the corpus, architecture:learn writes one ADR, architecture:ask answers from past decisions, and /architecture:check reviews a diff against them.",
       "source": "./plugins/architecture",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-writer"
+      ]
     },
     {
       "name": "business-domain",
       "description": "The domain model of a repository as one OKF graph on the brain standard: bounded contexts, terms, aggregates, events, and relationships, with business-domain:setup, business-domain:learn, and business-domain:ask, and a hook that runs regen and both checks",
       "source": "./plugins/business-domain",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-writer"
+      ]
     },
     {
       "name": "product",
       "description": "Product discovery and roadmap planning in two OKF graphs on the brain standard: one page for each requirement and each work item, typed links, product:setup, product:learn, product:ask, and a script that assigns IDs, checks the graph, and finds requirement drift",
       "source": "./plugins/product",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-writer"
+      ]
     },
     {
       "name": "plan",
@@ -37,7 +49,11 @@
       "name": "system-design",
       "description": "The architecture of a repository as one OKF graph on the brain standard, with system-design:setup, system-design:learn, and system-design:ask. It replaces the system-design skill of the product plugin.",
       "source": "./plugins/system-design",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-writer"
+      ]
     },
     {
       "name": "thinktank",
@@ -61,7 +77,11 @@
       "name": "knowledge",
       "description": "The base of every brain: the brain standard, the generic OKF knowledge graph, the registry of graphs, the general check, and the generic skills knowledge:setup, knowledge:learn, knowledge:ask, knowledge:ponder, and knowledge:forget. It was the wiki plugin.",
       "source": "./plugins/knowledge",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-writer"
+      ]
     },
     {
       "name": "prompt",
@@ -85,19 +105,31 @@
       "name": "grounded-synthesis",
       "description": "Audit a draft against its primary source files. Find the facts that a source holds and the draft does not, and write a gap report.",
       "source": "./plugins/grounded-synthesis",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-feeder"
+      ]
     },
     {
       "name": "aiml",
       "description": "Help a software engineer build an AI or ML feature, from the choice of approach (LLM, classical ML or hybrid) through design, plan, simulation, code scaffold, training guidance, evaluation and MLOps.",
       "source": "./plugins/aiml",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-feeder"
+      ]
     },
     {
       "name": "competitive-intelligence",
       "description": "Map the competitors of a market, gather public facts about them, and analyze one competitor through six lenses. Writes a SWOT, recommendations, and a result file for business-case.",
       "source": "./plugins/competitive-intelligence",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-writer"
+      ]
     },
     {
       "name": "prose-authenticity",
@@ -109,67 +141,111 @@
       "name": "ux-hci-design",
       "description": "Guide a person through UX design with the Design Thinking phases: research, personas, journey maps, design concepts, wireframes, and evaluation, with built-in accessibility (WCAG 2.2) and AI interaction guidelines.",
       "source": "./plugins/ux-hci-design",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-writer"
+      ]
     },
     {
       "name": "data-strategy",
       "description": "Assess the data strategy of a software company: business alignment, the data platform, and the data product portfolio. Write a strategy report, a platform ADR, and a data roadmap.",
       "source": "./plugins/data-strategy",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-feeder"
+      ]
     },
     {
       "name": "strategic-partnerships",
       "description": "Find, design and decide on partnerships in a software ecosystem. Runs six phases: readiness, partner candidates, deal structure, technical integration, revenue model, and a go or no-go recommendation.",
       "source": "./plugins/strategic-partnerships",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-feeder"
+      ]
     },
     {
       "name": "corporate-development",
       "description": "Run an M&A pipeline on one target company: readiness, sourcing, assessment, operational and financial due diligence, integration plan, and a go or no-go recommendation.",
       "source": "./plugins/corporate-development",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-feeder"
+      ]
     },
     {
       "name": "jtbd-market-discovery",
       "description": "Find market opportunities with Jobs To Be Done and numbers. Ten phases lead from one job statement to ranked opportunities, customer segments and a validated price. Use discover, quick-validate and wtp-check.",
       "source": "./plugins/jtbd-market-discovery",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-writer"
+      ]
     },
     {
       "name": "pricing",
       "description": "Find the right price for an AI product. Classify a feature, compute its price from willingness to pay and cost, design Good, Better, and Best packages, and audit a price. Use price, audit, package, and value-metric.",
       "source": "./plugins/pricing",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-feeder"
+      ]
     },
     {
       "name": "gtm",
       "description": "Plan the go-to-market work of a product. Build the brand identity, the marketing plans, the sales playbooks, and the revenue funnel from the real abilities of the product. Check each claim against a five-tier truth scale.",
       "source": "./plugins/gtm",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-feeder"
+      ]
     },
     {
       "name": "product-finance",
       "description": "Run financial analysis for a product team: market size, feature ROI, AI cost and ROI, unit economics, financial health, an instrumentation plan, a services model, and a cost-coverage readout. Use discover, setup, feature-roi, ai-economics, unit-economics, health-check, instrumentation, services-model, and cost-coverage.",
       "source": "./plugins/product-finance",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-feeder"
+      ]
     },
     {
       "name": "architecture-assess",
       "description": "Assess an existing software architecture, design a new one, review one decision, check agentic delivery readiness, and classify the cost of a new agentic feature. Saves each decision through the architecture plugin and each design page through the system-design plugin.",
       "source": "./plugins/architecture-assess",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-feeder"
+      ]
     },
     {
       "name": "business-case",
       "description": "Coach a thin business case into one a funder can trust. Check it against a rubric, fill each gap, plan evidence runs of other plugins, work out the numbers from the figures you confirm, and have an independent review check the case. Use build.",
       "source": "./plugins/business-case",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-writer"
+      ]
     },
     {
       "name": "value-ip",
       "description": "Find the true differentiating value and IP claims in an artifact (a plan, a PRD, code, an analysis, or M&A due diligence). Four framework agents (Helmer 7 Powers, Blue Ocean ERRC, Christensen disruption, Moore core and context) analyze it, debate, and give a scorecard and a devil's advocate report. Use analyze, challenge, and guard.",
       "source": "./plugins/value-ip",
-      "strict": false
+      "strict": false,
+      "tags": [
+        "brain-studio",
+        "brain-writer"
+      ]
     }
   ]
 }

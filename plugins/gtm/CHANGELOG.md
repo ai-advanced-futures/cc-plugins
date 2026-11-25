@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.7
+
+- Text only: `value-ip` is now a plugin of this marketplace, so the README and two agents no longer call it a plugin from outside, and the README gives its install line. Nothing that runs has changed.
+
 ## 1.12.6
 
 - **feat:** `scripts/brain_read.py` also reads the latest run of the optional `value-ip` graph (`vip_graph.py results`) and writes it to `.gtm/upstream/value-ip/results.json`. `plugin_integrator.py` gives the path under the key `value_ip_graph`, and the orchestrator takes the survived claims from it, Tier 3, before it looks for the scorecard. A missing plugin, a missing graph or a run with no differentiator gives no note. The scorecard path stays.

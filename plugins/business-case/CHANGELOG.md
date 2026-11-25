@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.1
+
+- Text only: `value-ip` is now a plugin of this marketplace, so the README, the build command and the strategy analyst no longer call it a plugin from outside. Nothing that runs has changed.
+
 ## 0.12.0
 
 - Use `knowledge:ask` as the normal evidence reader before domain page reads. Requires knowledge 2.0.0 or later; the manifest dependency remains `knowledge` because it has no version floor field. The shared reader takes a question only and searches local registered graphs. No plugin-specific ponder is added.

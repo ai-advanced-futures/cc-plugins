@@ -133,7 +133,7 @@ card sets that input, in its recommended option too, unless the answers
 file already settles it.
 
 - `value-ip:analyze` is a run the person starts. `value-ip` is an optional
-  plugin from outside this marketplace. Name the run in `runs` only when
+  plugin of this marketplace. Name the run in `runs` only when
   `installs` reports `value-ip` as `available`, and the coach asks the person
   to run it.
 - Set no input of `value-ip:analyze` on a card: the person chooses what it
@@ -271,7 +271,7 @@ brief.
   "brief_sha256": "<the value of your brief's sha256: line>",
   "schema": "plugin-result/1",
   "plugin": "business-case",
-  "plugin_version": "0.12.0",
+  "plugin_version": "0.12.1",
   "command": "business-case:case-strategy-analyst",
   "run": {
     "started_at": "2026-10-27T12:00:00Z",

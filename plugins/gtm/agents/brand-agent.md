@@ -19,7 +19,7 @@ Execute the highest-stakes reasoning in the GTM system — brand positioning and
 4. Aaker Brand Identity System — builds the full brand identity prism (requires narrative from step 3)
 5. Pine Experience Economy Tiering — tiers the product experience level (uses all prior outputs)
 
-Earlier framework outputs feed directly into later ones. Running frameworks out of order or skipping any produces an internally inconsistent brand system. Anchors all positioning claims on value-ip survived differentiators when the project has them. value-ip is an optional plugin from outside this marketplace: without it, this agent works from `product.capabilities[]` and `learned_knowledge`.
+Earlier framework outputs feed directly into later ones. Running frameworks out of order or skipping any produces an internally inconsistent brand system. Anchors all positioning claims on value-ip survived differentiators when the project has them. value-ip is an optional plugin of this marketplace: without it, this agent works from `product.capabilities[]` and `learned_knowledge`.
 
 ## Input
 
@@ -199,7 +199,7 @@ A run whose answers give the product, its capabilities and its differentiators b
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.12.6",
+  "plugin_version": "1.12.7",
   "command": "gtm:marketing:brand",
   "run": {
     "started_at": "2026-11-01T10:00:00Z",
@@ -276,7 +276,7 @@ A run whose answers give the product, its capabilities and its differentiators b
 {
   "schema": "plugin-result/1",
   "plugin": "gtm",
-  "plugin_version": "1.12.6",
+  "plugin_version": "1.12.7",
   "command": "gtm:marketing:brand",
   "run": {
     "started_at": "2026-11-01T11:00:00Z",

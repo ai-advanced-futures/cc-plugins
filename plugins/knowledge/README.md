@@ -100,6 +100,8 @@ its different CLI and implementation prevent a clean historical speed comparison
 page, the schema, the links, the manifest, the skills, the save code, the
 checks, the reports, `forget`, and writes to a remote graph.
 
+`docs/brain-studio.md` names the plugins that people use to build brains (the Brain Studio), and shows how their work reaches the next plugin and `sofa`.
+
 ## Scripts
 
 | Script | Use |

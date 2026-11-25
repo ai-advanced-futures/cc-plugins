@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1
+
+- Add `docs/brain-studio.md`: what the Brain Studio is, its members, the hand-offs between them, and how `sofa` uses the brains. No code changes.
+
 ## 2.1.0
 
 - `value-ip` is a known brain: `knowledgelib/probe.py` has the pair `("value-ip", "scripts/vip_graph.py")`, so the general check accepts the manifest of the value-ip graph.
