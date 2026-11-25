@@ -46,6 +46,7 @@ claude plugin install <name>@cc-plugins
 | `product-finance` | Run financial analysis for a product team: market size, feature ROI, AI cost and ROI, unit economics, financial health, an instrumentation plan, a services model, and a cost-coverage readout. Use discover, setup, feature-roi, ai-economics, unit-economics, health-check, instrumentation, services-model, and cost-coverage. |
 | `architecture-assess` | Assess an existing software architecture, design a new one, review one decision, check agentic delivery readiness, and classify the cost of a new agentic feature. Saves each decision through the architecture plugin and each design page through the system-design plugin. |
 | `business-case` | Coach a thin business case into one a funder can trust. Check it against a rubric, fill each gap, plan evidence runs of other plugins, work out the numbers from the figures you confirm, and have an independent review check the case. Use build. |
+| `value-ip` | Find the true differentiating value and IP claims in an artifact (a plan, a PRD, code, an analysis, or M&A due diligence). Four framework agents (Helmer 7 Powers, Blue Ocean ERRC, Christensen disruption, Moore core and context) analyze it, debate, and give a scorecard and a devil's advocate report. Use analyze, challenge, and guard. |
 
 ## Skills
 

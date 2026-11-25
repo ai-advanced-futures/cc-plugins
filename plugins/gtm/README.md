@@ -102,7 +102,7 @@ The plugin has 33 skills. A skill gives a framework or a rule to an agent or to 
   - If a graph is absent, the run goes on with no input from it. The plugin writes one line that starts with `NO-GRAPH:` or `GRAPH-READ-FAILED:` to `.gtm-graph-notes.txt` in the project folder (outside `.gtm/`, so the lines reach you also when `.gtm` is a link), and `/gtm:run` shows each line of that file.
   - The plugin reads no old output file of these two plugins. If you have such a file, run the discover command again to make the graph.
   - `pricing`: the file `right-price` that the plugin finds in the project.
-  - `value-ip`: the scorecard at `.value-ip/<run>/output/value-ip-scorecard.md`. This plugin is optional. The GTM steps work without it.
+  - `value-ip`: the differentiators of the latest run in the `value-ip` graph (`.gtm/upstream/value-ip/results.json`), or else the scorecard at `.value-ip/<run>/output/value-ip-scorecard.md`. This plugin is optional. The GTM steps work without it, and a missing value-ip graph gives no note.
   - `aiml`: the `p15-trigger-event` file that `agentic-pricing-comms` reads.
 
 ## Outputs

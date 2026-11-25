@@ -1,0 +1,8 @@
+{
+  "schema": "plugin-questions/1",
+  "command": "value-ip:analyze",
+  "questions": [
+    {"input": "artifact", "question": "Which file should the analysis read: a plan, a PRD, code or an analysis?", "type": "path"},
+    {"input": "commit_output", "question": "Should the run commit the scorecard to the repository?", "type": "boolean", "default": false}
+  ]
+}

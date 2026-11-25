@@ -28,6 +28,7 @@ BRAINS = {
     "product": "scripts/prd.py",
     "system-design": "scripts/system_design.py",
     "ux-hci-design": "scripts/ux_graph.py",
+    "value-ip": "scripts/vip_graph.py",
 }
 
 

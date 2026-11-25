@@ -61,7 +61,10 @@ This agent starts no other agent and runs no shell command. The command `/gtm:ru
      file when it has none), and /gtm:run shows them from that file. This is not an error of the
      script. Do not change or delete that file.
    - value-ip step (value-ip is optional — the run works without it):
-       - If the object has no value_ip key: write no value_ip entry. Go on to step 4.
+       - If the object has a value_ip_graph key: read its file `results.json`. Each item of its `differentiators` list is one survived claim: its text is `frontmatter.claim`. Write the claims to
+         gtm-context.json.plugin_inputs.value_ip.survived_claims, and skip the scorecard read below, because the graph is the newer record.
+         Give each claim tier 3 (COMMITTED), whether its `status` is `draft` or `stable`: a run of value-ip is the judgement of a model. Then go on to step 4.
+       - If the object has no value_ip and no value_ip_graph key: write no value_ip entry. Go on to step 4.
        - If the object has a value_ip key: read each value_ip path that is a file.
          Write its survived claims (each list line) to
          gtm-context.json.plugin_inputs.value_ip.survived_claims.

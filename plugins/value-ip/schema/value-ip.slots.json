@@ -1,0 +1,114 @@
+{
+  "statuses": [
+    "draft",
+    "stable",
+    "deprecated"
+  ],
+  "types": {
+    "Run": {
+      "prefix": "RUN",
+      "directory": "runs",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "command",
+        "subject",
+        "run_id",
+        "mode",
+        "case",
+        "started_at",
+        "finished_at",
+        "plugin_version",
+        "result_file",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Differentiator": {
+      "prefix": "DIFF",
+      "directory": "differentiators",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "label",
+        "claim",
+        "result_id",
+        "method",
+        "grade",
+        "sources",
+        "rests_on_default",
+        "defaults",
+        "detail",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Verdict": {
+      "prefix": "VERDICT",
+      "directory": "verdicts",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "label",
+        "claim",
+        "recommendation",
+        "powers",
+        "mean_score",
+        "result_id",
+        "method",
+        "grade",
+        "sources",
+        "rests_on_default",
+        "defaults",
+        "detail",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    },
+    "Gap": {
+      "prefix": "GAP",
+      "directory": "gaps",
+      "key_order": [
+        "type",
+        "title",
+        "description",
+        "status",
+        "tags",
+        "gap_kind",
+        "label",
+        "why",
+        "run",
+        "aliases",
+        "generated",
+        "verified",
+        "protected"
+      ]
+    }
+  },
+  "edges": {
+    "run": {
+      "targets": [
+        "Run"
+      ],
+      "multivalued": false,
+      "inverse_label": "wrote"
+    }
+  }
+}

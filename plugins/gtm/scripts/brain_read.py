@@ -1,4 +1,4 @@
-"""Read the graphs of jtbd-market-discovery and competitive-intelligence.
+"""Read the graphs of jtbd-market-discovery, competitive-intelligence and value-ip.
 
 gtm reads each graph through the save code of its writer, as a subprocess. It
 never reads a file in the folder of another plugin. read_graphs(root) runs the
@@ -160,6 +160,11 @@ def _ci(root: Path) -> _Graph:
                   "to make the graph.")
 
 
+def _value_ip(root: Path) -> _Graph:
+    return _Graph(root, "value_ip_graph", "value-ip", "value-ip", "vip_graph.py",
+                  "Run /value-ip:analyze, then /value-ip:learn to make the graph.")
+
+
 def _read_jtbd(graph: _Graph) -> list[Path]:
     """The newest finished discover run: its Run page, Outcome, Segment and Result pages."""
     runs = [page for page in graph.read("pages", "Run")
@@ -193,8 +198,20 @@ def _read_ci(graph: _Graph) -> list[Path]:
     return written
 
 
+def _read_value_ip(graph: _Graph) -> list[Path]:
+    """The latest run of value-ip: its Run page, differentiators, verdicts and gaps, as `results` prints them."""
+    data = graph.read("results")
+    if not data.get("differentiators"):
+        raise graph.no_graph("the latest value-ip run has no differentiator that survived the debate.")
+    return [graph.write("results", data)]
+
+
 def read_graphs(root) -> tuple[dict[str, list[str]], list[str]]:
-    """Read both graphs. It gives (inputs, notes).
+    """Read the three graphs. It gives (inputs, notes).
+
+    value-ip is an optional plugin from outside the evidence set: a missing plugin, a missing graph or a run
+    with no surviving differentiator gives no note, because most projects have none. A read that fails gives
+    its GRAPH-READ-FAILED line.
 
     inputs holds a key only when its graph gave 1 or more snapshot files. notes
     is the list of the lines for stderr. The same lines go to NOTES_FILE in the
@@ -210,12 +227,13 @@ def read_graphs(root) -> tuple[dict[str, list[str]], list[str]]:
         for graph in (_jtbd(root), _ci(root)):
             notes.append(f"GRAPH-READ-FAILED: {graph.graph}: {unsafe} {graph._continues()}")
     else:
-        for graph, reader in ((_jtbd(root), _read_jtbd), (_ci(root), _read_ci)):
+        for graph, reader in ((_jtbd(root), _read_jtbd), (_ci(root), _read_ci), (_value_ip(root), _read_value_ip)):
             try:
                 graph.prepare()
                 paths = reader(graph)
             except _Stop as stop:
-                notes.append(str(stop))
+                if graph.key != "value_ip_graph" or not str(stop).startswith("NO-GRAPH:"):
+                    notes.append(str(stop))
                 continue
             if paths:
                 inputs[graph.key] = [str(path) for path in paths]

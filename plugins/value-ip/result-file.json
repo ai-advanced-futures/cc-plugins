@@ -1,0 +1,20 @@
+{
+  "schema": "plugin-result-adoption/1",
+  "plugin": "value-ip",
+  "commands": {
+    "value-ip:analyze": {"writer": "agents/synthesizer.md"}
+  },
+  "defaults": [
+    {"command": ["value-ip:analyze"], "input": "artifact", "marker": "artifact = the first artifact auto-detected in the working directory", "file": "config/pipeline-defaults.json", "anchor": "auto_answers.artifact_selection"}
+  ],
+  "not_defaults": [
+    {"file": "config/pipeline-defaults.json", "anchor": "auto_mode", "why": "the automation switch of a person's run; the invocation block wins over it, and no result rests on it"},
+    {"file": "config/pipeline-defaults.json", "anchor": "auto_answers.multiple_artifacts_policy", "why": "how the run picks among several auto-detected artifacts; the artifact default's marker records the pick"},
+    {"file": "config/pipeline-defaults.json", "anchor": "auto_answers.continue_rounds_policy", "why": "when the debate stops; a setting of the debate, not an input anyone answers"},
+    {"file": "config/pipeline-defaults.json", "anchor": "auto_answers.framework_failure_policy", "why": "what the run does when a framework agent fails; each skipped framework is a gap, not a default"},
+    {"file": "config/pipeline-defaults.json", "anchor": "auto_answers.commit_output", "why": "whether a person's run commits the scorecard; no result rests on it, and a plugin run commits nothing"},
+    {"file": "config/pipeline-defaults.json", "anchor": "auto_answers.output_format", "why": "which reports the run writes; no result rests on it"},
+    {"file": "config/pipeline-defaults.json", "anchor": "pipeline.max_rounds", "why": "the most debate rounds; a fixed setting of the debate, not an input anyone answers"},
+    {"file": "config/pipeline-defaults.json", "anchor": "pipeline.min_rounds", "why": "the fewest debate rounds; a fixed setting of the debate, not an input anyone answers"}
+  ]
+}

@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.20.0"
+    "version": "2.21.0"
   },
   "plugins": [
     {
@@ -163,6 +163,12 @@
       "name": "business-case",
       "description": "Coach a thin business case into one a funder can trust. Check it against a rubric, fill each gap, plan evidence runs of other plugins, work out the numbers from the figures you confirm, and have an independent review check the case. Use build.",
       "source": "./plugins/business-case",
+      "strict": false
+    },
+    {
+      "name": "value-ip",
+      "description": "Find the true differentiating value and IP claims in an artifact (a plan, a PRD, code, an analysis, or M&A due diligence). Four framework agents (Helmer 7 Powers, Blue Ocean ERRC, Christensen disruption, Moore core and context) analyze it, debate, and give a scorecard and a devil's advocate report. Use analyze, challenge, and guard.",
+      "source": "./plugins/value-ip",
       "strict": false
     }
   ]

@@ -1,0 +1,15 @@
+{
+  "auto_mode": false,
+  "auto_answers": {
+    "artifact_selection": "auto-detect",
+    "multiple_artifacts_policy": "ask",
+    "continue_rounds_policy": "stop_if_no_tensions",
+    "framework_failure_policy": "skip_and_continue",
+    "commit_output": false,
+    "output_format": "both"
+  },
+  "pipeline": {
+    "max_rounds": 4,
+    "min_rounds": 2
+  }
+}

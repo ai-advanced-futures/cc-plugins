@@ -1,0 +1,53 @@
+{
+  "webCompatible": true,
+  "test": "uv run pytest tests/",
+  "packageExclude": [
+    "__pycache__",
+    ".pyc",
+    ".pytest_cache",
+    ".coverage",
+    "htmlcov",
+    "tests/",
+    ".DS_Store",
+    "pytest.ini",
+    "docs/plans",
+    "output/"
+  ],
+  "mission_control_integration": {
+    "supports_automated_mode": true,
+    "dpo_reporting_protocol": "file-based",
+    "preferred_invocation": "value-ip:analyze-runner",
+    "done_signal": "DONE: value-ip",
+    "yolo_safe": true,
+    "handoff_file": ".value-ip/value-ip-handoff.json"
+  },
+  "version": "1.4.0",
+  "release_notes": {
+    "v1.4.0": [
+      "feat: the result of each run is a graph. `scripts/vip_graph.py` is the save code and the brain check of the value-ip graph (docs/value-ip/): `ingest` turns a result file of `value-ip:analyze` into one Run page, one page for each differentiator, verdict and gap, with typed `run` links; `verify-run` is a person's confirmation; `results` reads one run",
+      "feat: the skills `setup`, `learn` and `ask`, the brain hook, the schema, and `knowledge` as a dependency",
+      "docs: the result file `.value-ip/results/` stays as it was"
+    ],
+    "v1.3.1": [
+      "fix: when the dispatch gives a `ran` list and it is empty, the run stops with a halted result file that names the gap, and does not start the debate (#112)",
+      "fix: the runner reads the synthesizer's reply: when the reply says `no result file:` or does not end with a result path, the runner says there is no result file and why; a stop because the result name is taken still writes the handoff, marked halted, with no result file (#113)",
+      "fix: the debate coordinator reads and challenges only the frameworks that ran, and all four when no list is given; with guard or challenge it reads the analyses given in the dispatch; the synthesizer reads the same way (#171)",
+      "test: an empty `ran` halts; the runner trusts the synthesizer's reply; the coordinator and the synthesizer work only on `ran`, or on all four with no list"
+    ],
+    "v1.3.0": [
+      "feat: `value-ip:analyze` writes the shared result file to `.value-ip/results/` at the end of every run, a halt and a partial run too, and a person's run too (repo standard `docs/standards/PLUGIN_RESULT_FILE.md`, ADR-002)",
+      "feat: `mission_control_integration` block: `preferred_invocation` `value-ip:analyze-runner`, `done_signal` `DONE: value-ip`, `handoff_file` `.value-ip/value-ip-handoff.json`",
+      "feat: new `agents/analyze-runner.md`, the route a coach dispatches with the `plugin-run` block; it reads the start time and `plugin.json` first, runs the command, and prints `DONE: value-ip` last",
+      "feat: the synthesizer's `## Result file` section writes one `differentiator` result per surviving IP claim and one `right_to_win` result from the verdict, each a `model` judgement naming its frameworks; each skipped framework is a gap; it writes the handoff",
+      "fix(state): a person's run keeps its work in `.value-ip/<started_at as YYYYMMDDTHHMMSSZ>/`, never the project root, and `detail` points there; a halt writes only the result file and the handoff",
+      "feat: `questions/analyze.json` (the `artifact` input) and `result-file.json`, whose one default is the auto-detected artifact",
+      "fix: the invocation block wins over the config's `auto_mode`; the config, lens and method files are read by their rooted paths; the command no longer offers an inline `python3 -c` call",
+      "docs: ADR-002 records the adoption",
+      "fix(execution): `scripts/result_name.py` builds the result file name; analyze grants only the plugin's scripts and says to run nothing else, with no inline code, and asks for its artifact in one chat message; a picked default or a value from another file is a `default` source",
+      "fix(execution): a person's run waits for each agent in the foreground, so the result file is written in the command's turn; a denied call never loses the result file, and a denied name call names it `<time>-<command part>-name-call-denied`; each body reads its writer with the Read tool and maps the plugin root",
+      "fix(execution): a denied or failed `date` call falls back to `scripts/result_name.py now`, which prints the UTC time",
+      "fix: a debate round is one questions-and-responses pass; the coordinator runs at least 2 and writes `debate_rounds: <N>`, counting its `round-N-responses.md` files, and the command keeps that number for the partial-status gate",
+      "fix: the analyze runner reads the start time and the version once, not again in the command's Step 0"
+    ]
+  }
+}

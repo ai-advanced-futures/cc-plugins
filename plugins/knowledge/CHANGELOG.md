@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.0
+
+- `value-ip` is a known brain: `knowledgelib/probe.py` has the pair `("value-ip", "scripts/vip_graph.py")`, so the general check accepts the manifest of the value-ip graph.
+
 ## 2.0.0
 
 - Make `knowledge:ask` the bounded local search with one Sonnet reader, page citations, and relevant context.

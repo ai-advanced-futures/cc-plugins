@@ -1,0 +1,28 @@
+{
+  "name": "value-ip",
+  "version": "1.4.0",
+  "dependencies": [
+    "knowledge"
+  ],
+  "description": "Multi-agent debate system that detects true differentiating value and IP claims from any artifact — plans, PRDs, code, analyses, or M&A due diligence — using Helmer 7 Powers, Blue Ocean ERRC, Christensen Disruption Theory, and Moore Core vs. Context frameworks. Saves the result of each run as an OKF graph that other plugins and /knowledge:ask can read.",
+  "author": {
+    "name": "ai-advanced-futures"
+  },
+  "license": "MIT",
+  "keywords": [
+    "value-differentiation",
+    "intellectual-property",
+    "ip-detection",
+    "helmer-7-powers",
+    "blue-ocean",
+    "christensen-disruption",
+    "moore-core-context",
+    "competitive-moat",
+    "devil-advocate",
+    "strategic-analysis",
+    "product-strategy",
+    "ma-due-diligence"
+  ],
+  "homepage": "https://github.com/ai-advanced-futures/cc-plugins",
+  "repository": "https://github.com/ai-advanced-futures/cc-plugins"
+}

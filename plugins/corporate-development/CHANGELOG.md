@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.20.4
+
+- `deal-advisor` reads the pages of a run of the optional `value-ip` graph when a run is about the target, and writes the `status` of each page next to the claim that it uses. With no such run, it names value-ip as not used, as before.
+
 ## 0.20.3
 
 - Docs: `docs/adr/ADR-001-corporate-development-plugin-architecture.md` named a function `run_investigation()` in `main.py`. `main.py` has only `run_pipeline()`, so the ADR now names 1 entry point, and the 2 scripts and `python -m corporate_development` that call it.

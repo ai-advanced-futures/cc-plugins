@@ -1,0 +1,132 @@
+# The page types of the value-ip graph.
+#
+# Two generated files come from this one:
+#   schema/value-ip.schema.json   the JSON Schema of rule VIP-schema
+#   schema/value-ip.slots.json    the types and the edges
+# Run scripts/gen-schema.sh after a change, and commit both outputs.
+#
+# Annotations, read by scripts/gen_slots.py:
+#   class  id_prefix      the ID prefix of the page type
+#   class  directory      the folder of the page type
+#   slot   targets        the page types that a link can point to
+#   slot   inverse_label  the label of the derived line in the LINKS block
+id: https://ai-advanced-futures.github.io/cc-plugins/value-ip
+name: value_ip
+title: The value-ip graph
+description: >-
+  The frontmatter of each page type of the value-ip graph. A page holds one
+  record of a result file that value-ip:analyze wrote: the run, one
+  differentiator, one verdict, or one gap.
+default_range: string
+default_prefix: vip
+prefixes:
+  linkml: https://w3id.org/linkml/
+  vip: https://ai-advanced-futures.github.io/cc-plugins/value-ip/
+imports:
+  - linkml:types
+  - ../../knowledge/schema/base
+
+types:
+  RunLink: {typeof: string, pattern: '^/runs/RUN-\d{2,}\.md$'}
+
+enums:
+  RunMode:
+    permissible_values: {interactive: {}, automated: {}}
+  Grade:
+    description: A result of the debate is the judgement of the model. No result is validated or measured.
+    permissible_values: {model: {}}
+  Recommendation:
+    permissible_values: {PASS: {}, CONDITIONAL: {}, FAIL: {}}
+  GapKind:
+    permissible_values: {differentiator: {}, right_to_win: {}}
+
+classes:
+  AnyValue:
+    description: Any YAML value. The source list keeps the shape of the result file.
+    class_uri: linkml:Any
+  Run:
+    description: "One run of value-ip:analyze: the result file that it wrote."
+    annotations: {id_prefix: RUN, directory: runs}
+    slots: [type, title, description, status, tags, command, subject, run_id, mode, case, started_at, finished_at, plugin_version, result_file, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Run}
+      command: {required: true}
+      subject: {required: true}
+      result_file: {required: true}
+  Differentiator:
+    description: "One IP claim that survived the debate."
+    annotations: {id_prefix: DIFF, directory: differentiators}
+    slots: [type, title, description, status, tags, label, claim, result_id, method, grade, sources, rests_on_default, defaults, detail, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Differentiator}
+      label: {required: true}
+      claim: {required: true}
+      grade: {required: true}
+      run: {required: true}
+  Verdict:
+    description: "The overall verdict of one debate: the right to win."
+    annotations: {id_prefix: VERDICT, directory: verdicts}
+    slots: [type, title, description, status, tags, label, claim, recommendation, powers, mean_score, result_id, method, grade, sources, rests_on_default, defaults, detail, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Verdict}
+      label: {required: true}
+      claim: {required: true}
+      grade: {required: true}
+      run: {required: true}
+  Gap:
+    description: "One result that the run did not produce, and why."
+    annotations: {id_prefix: GAP, directory: gaps}
+    slots: [type, title, description, status, tags, gap_kind, label, why, run, aliases, generated, verified, protected]
+    slot_usage:
+      type: {equals_string: Gap}
+      gap_kind: {required: true}
+      why: {required: true}
+      run: {required: true}
+
+slots:
+  run:
+    range: RunLink
+    annotations: {targets: "Run", inverse_label: wrote}
+  command:
+    description: The command of the run, as the result file names it.
+  subject:
+    description: The subject of the run, at most five words.
+  run_id:
+    description: The run_id that a coach gave, when there is one.
+  mode:
+    range: RunMode
+  case:
+    description: The case that a coach named, when there is one.
+  started_at:
+    pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
+  finished_at:
+    pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
+  plugin_version:
+  result_file:
+    description: The path of the result file, relative to the project root. It is the identity of the run.
+  label:
+  claim:
+    description: The text of the claim or of the verdict, as the result file writes it.
+  result_id:
+    description: The id of the result in the result file.
+  method:
+  grade:
+    range: Grade
+  sources:
+    range: AnyValue
+    multivalued: true
+  rests_on_default:
+    range: boolean
+  defaults:
+    multivalued: true
+  detail:
+  recommendation:
+    range: Recommendation
+  powers:
+  mean_score:
+    range: float
+    minimum_value: 0
+    maximum_value: 5
+  gap_kind:
+    range: GapKind
+  why:

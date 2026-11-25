@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.6
+
+- **feat:** `scripts/brain_read.py` also reads the latest run of the optional `value-ip` graph (`vip_graph.py results`) and writes it to `.gtm/upstream/value-ip/results.json`. `plugin_integrator.py` gives the path under the key `value_ip_graph`, and the orchestrator takes the survived claims from it, Tier 3, before it looks for the scorecard. A missing plugin, a missing graph or a run with no differentiator gives no note. The scorecard path stays.
+
 ## 1.12.5
 
 - **fix:** the 3 runner skills (`marketing-brand-runner`, `marketing-funnel-runner` and `marketing-launch-runner`) grant `Edit(/.gtm/**)` in place of `Write`, so a plugin run writes files with the file tools only in `.gtm/`, and each other file tool write asks. Before, the bare `Write` let a route write any path in the project with no question. The 3 commands keep `Write(*)`. Step 9 of each runner says that a write outside `.gtm/` asks in a person's run (issue 1598, STORY-378).

@@ -106,3 +106,7 @@ material, and the Apache License does not replace them.
 19. test-audit, by OpenClaw Foundation (https://github.com/openclaw/openclaw), MIT License.
     The skill skills/test-audit is a copy of it, with changes.
     The MIT notice is in skills/test-audit/NOTICE.
+
+20. value-ip, by Luis F. Amadeo, MIT License.
+    The value-ip plugin ports it, with changes.
+    The MIT notice is in plugins/value-ip/NOTICE.
