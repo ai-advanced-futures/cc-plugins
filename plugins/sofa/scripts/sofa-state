@@ -69,6 +69,14 @@ CREATE TABLE IF NOT EXISTS asks (
     id TEXT PRIMARY KEY, story TEXT, priority TEXT, opened_at TEXT, closed_at TEXT);
 CREATE TABLE IF NOT EXISTS usage (
     session TEXT, item TEXT, tokens INTEGER, at TEXT, UNIQUE(session, item));
+-- STORY-445: each Claude Code session id of a station (a restart gives the station a new id), 1 row for each priced
+-- API call of a station (the message id is the key, so a call is counted 1 time across the log of the session and
+-- the logs of its subagents), and the read offset of each log file (the key is the sha256 of the path).
+CREATE TABLE IF NOT EXISTS usage_logs (name TEXT, id TEXT, at TEXT, UNIQUE(name, id));
+CREATE TABLE IF NOT EXISTS usage_calls (
+    message_id TEXT PRIMARY KEY, session TEXT, item TEXT, model TEXT, input INTEGER, output INTEGER,
+    cache_read INTEGER, cache_write INTEGER, at TEXT);
+CREATE TABLE IF NOT EXISTS usage_files (file TEXT PRIMARY KEY, offset INTEGER);
 CREATE TABLE IF NOT EXISTS heartbeats (name TEXT, at TEXT);
 CREATE TABLE IF NOT EXISTS queue (position INTEGER PRIMARY KEY, item TEXT);
 CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
@@ -289,6 +297,9 @@ def cmd_session_upsert(con, a):
             for item_id in ids:
                 if not _ROADMAP_ID.fullmatch(item_id):
                     con.execute("UPDATE items SET left_over_at = ? WHERE id = ?", (at, item_id))
+        # STORY-445: the station keeps each of its session ids, so `usage scan` reads the logs of each start.
+        if a.id and _UUID.fullmatch(a.id):
+            con.execute("INSERT OR IGNORE INTO usage_logs (name, id, at) VALUES (?, ?, ?)", (a.name, a.id, at))
         con.commit()
     except BaseException:
         con.rollback()
@@ -933,6 +944,127 @@ def cmd_usage_set(con, a):
     con.commit()
 
 
+# --- usage scan (STORY-445) ---
+# The 4 token counts of a call: the column of usage_calls and the key of `message.usage` in a Claude Code log.
+USAGE_COUNTS = {"input": "input_tokens", "output": "output_tokens", "cache_read": "cache_read_input_tokens",
+                "cache_write": "cache_creation_input_tokens"}
+# The model of a line that Claude Code writes itself (no API call), so it has no price.
+NO_CALL_MODEL = "<synthetic>"
+
+
+def logs_root():
+    """The folder of the Claude Code session logs: SOFA_LOGS_DIR (the tests), else <config folder>/projects."""
+    if os.environ.get("SOFA_LOGS_DIR"):
+        return Path(os.environ["SOFA_LOGS_DIR"])
+    return Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude") / "projects"
+
+
+def session_log_files(root, sid):
+    """The log of session SID (<root>/<project>/<sid>.jsonl) and the logs of its subagents
+    (<root>/<project>/<sid>/subagents/*.jsonl). SID has the form _UUID, so it holds no glob character."""
+    return sorted(root.glob(f"*/{sid}.jsonl")) + sorted(root.glob(f"*/{sid}/subagents/*.jsonl"))
+
+
+def log_time(text, default):
+    """The time of a log line as YYYY-MM-DDTHH:MM:SSZ, or DEFAULT when the line has no time of that kind."""
+    try:
+        t = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except (AttributeError, TypeError, ValueError):
+        return default
+    if t.tzinfo is None:
+        return default
+    return t.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def read_calls(path, offset, default_at):
+    """The priced API calls in the log PATH after byte OFFSET, and the offset of the end of its last full line.
+
+    A half-written last line stays for the next scan. A file that is shorter than OFFSET was cut or replaced, so it is
+    read again from 0 (the message id keeps each call 1 time). A line that is not JSON, or has no message id or usage,
+    is skipped. Return (calls, offset); each call is (message id, model, {column: count}, at)."""
+    with open(path, "rb") as f:
+        size = os.fstat(f.fileno()).st_size
+        if size < offset:
+            offset = 0
+        f.seek(offset)
+        data = f.read(size - offset)
+    end = data.rfind(b"\n") + 1
+    calls = []
+    for line in data[:end].splitlines():
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        m = d.get("message") if isinstance(d, dict) else None
+        usage = m.get("usage") if isinstance(m, dict) else None
+        mid, model = (m.get("id"), m.get("model")) if isinstance(m, dict) else (None, None)
+        if not isinstance(usage, dict) or not isinstance(mid, str) or not mid or model == NO_CALL_MODEL:
+            continue
+        counts = {col: (v if type(v) is int and v >= 0 else 0) for col, key in USAGE_COUNTS.items()
+                  for v in [usage.get(key)]}
+        calls.append((mid, model if isinstance(model, str) else None, counts, log_time(d.get("timestamp"), default_at)))
+    return calls, offset + end
+
+
+def cmd_usage_scan(con, a):
+    """Write the priced API calls of the logs of station --name to usage_calls (STORY-445, Done when 1 and 2).
+
+    --id adds 1 session id of the station first (the Stop hook of the mod gives its own id). The scan reads each log of
+    each session id of the station, from the offset of the last scan. A call is 1 row (the message id is the key):
+    a log line that repeats a call keeps the largest count of each kind. A new call gets the work order of the
+    station: its started work order that was updated last, when the call is not older than that order. Else the call
+    has no work order, and counts as the overhead of the line (STORY-520 charges it by role)."""
+    if a.id is not None and not _UUID.fullmatch(a.id):
+        raise UsageError("usage scan: --id does not have the form of a session id; no change", 2)
+    con.execute("BEGIN IMMEDIATE")
+    refuse_retired(con, a, "sessions", a.name, "--name")
+    if a.id is not None:
+        con.execute("INSERT OR IGNORE INTO usage_logs (name, id, at) VALUES (?, ?, ?)", (a.name, a.id, a.at))
+    sids = [r[0] for r in con.execute("SELECT id FROM usage_logs WHERE name = ? ORDER BY at, id", (a.name,))]
+    con.commit()
+    root, found = logs_root(), []
+    for sid in sids:
+        if not _UUID.fullmatch(sid or ""):
+            continue
+        for path in session_log_files(root, sid):
+            key = hashlib.sha256(str(path).encode("utf-8", "surrogateescape")).hexdigest()
+            row = con.execute("SELECT offset FROM usage_files WHERE file = ?", (key,)).fetchone()
+            try:
+                calls, end = read_calls(path, row[0] if row else 0, a.at)
+            except OSError:
+                continue
+            found.append((key, calls, end))
+    marks = ", ".join("?" for _ in STARTED_STATES)
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        order = con.execute(
+            f"SELECT id, picked_up_at FROM items WHERE session = ? AND state IN ({marks}) "
+            "ORDER BY updated_at DESC, id LIMIT 1", [a.name, *STARTED_STATES]).fetchone()
+        if order is not None and _ROADMAP_ID.fullmatch(order["id"]):
+            order = None
+        new = 0
+        for key, calls, end in found:
+            for mid, model, counts, at in calls:
+                item = order["id"] if order is not None and (order["picked_up_at"] or "") <= at else None
+                new += con.execute("SELECT 1 FROM usage_calls WHERE message_id = ?", (mid,)).fetchone() is None
+                con.execute("""
+                    INSERT INTO usage_calls (message_id, session, item, model, input, output, cache_read, cache_write, at)
+                    VALUES (:mid, :session, :item, :model, :input, :output, :cache_read, :cache_write, :at)
+                    ON CONFLICT(message_id) DO UPDATE SET
+                        input = MAX(usage_calls.input, excluded.input),
+                        output = MAX(usage_calls.output, excluded.output),
+                        cache_read = MAX(usage_calls.cache_read, excluded.cache_read),
+                        cache_write = MAX(usage_calls.cache_write, excluded.cache_write)
+                """, dict(mid=mid, session=a.name, item=item, model=model, at=at, **counts))
+            con.execute("INSERT INTO usage_files (file, offset) VALUES (?, ?) "
+                        "ON CONFLICT(file) DO UPDATE SET offset = MAX(usage_files.offset, excluded.offset)", (key, end))
+        con.commit()
+    except BaseException:
+        con.rollback()
+        raise
+    print(f"usage scan: {new} new calls from {len(found)} logs")
+
+
 def cmd_queue_set(con, a):
     """Replace the queue with the given items, in order."""
     con.execute("BEGIN IMMEDIATE")  # T1: the check and the write under 1 write lock
@@ -1178,6 +1310,15 @@ VERDICT_REASONS = ["working", "waiting", "blocked", "blocked_overdue", "stale_he
                    "ask_blocks_now", "ask_blocks_later", "ask_overdue"]
 VERDICT_NAMES = {"verdicts", "floor", "lines", "stations", "station", "level", "state", "label", "sessions", "reasons",
                  *VERDICT_REASONS}
+
+# --- the token usage of the line (STORY-445, Done when 3) ---
+# The totals of a group of calls, the 3 periods that end at taken_at (in days), and the groups of the section
+# `usage`. A feature or a milestone comes from the roadmap prefix of the work order (roadmap_prefix, or a bare
+# roadmap id); a work order with no such prefix counts only in `line` and its period (STORY-520 gives it a stream).
+USAGE_TOTALS = ["calls", "input", "output", "cache_read", "cache_write"]
+USAGE_PERIODS = {"day": 1, "week": 7, "month": 30}
+USAGE_GROUPS = {"periods": "period", "models": "model", "features": "feature", "milestones": "milestone"}
+USAGE_NAMES = {"usage", "overhead", *USAGE_TOTALS, *USAGE_GROUPS, *USAGE_GROUPS.values()}
 # The label of a line (the key line.label of the store): the name that a view shows for the line (STORY-444).
 _LABEL = re.compile(r"[a-z0-9][a-z0-9-]{0,31}")
 
@@ -1215,6 +1356,7 @@ WHERE_NAMES = frozenset({
     "schema_version", "taken_at", "line", "store", "label", "queue", "rules", "rules_digest", "nulled",
     *SNAPSHOT_FIELDS, *(f for _, fields in SNAPSHOT_FIELDS.values() for f in fields),
     *FLOOR_SETS, *(f for fields in RULE_FIELDS.values() for f in fields), *ROADMAP_NAMES, *VERDICT_NAMES,
+    *USAGE_NAMES,
 })
 
 # The place of each key that build_snapshot writes, as a tuple of names (a list adds no name): ("items", "id"),
@@ -1236,6 +1378,9 @@ SNAPSHOT_LAYOUT = frozenset({
     ("verdicts", "lines"), *(("verdicts", "lines", f) for f in ("label", "level", "state")),
     ("verdicts", "stations"), *(("verdicts", "stations", f) for f in ("station", "level", "sessions", "reasons")),
     *(("verdicts", "stations", "reasons", r) for r in VERDICT_REASONS),
+    ("usage",), *(("usage", k) for k in ("line", "overhead", *USAGE_GROUPS)),
+    *(("usage", k, f) for k in ("line", "overhead") for f in USAGE_TOTALS),
+    *(("usage", k, f) for k, name in USAGE_GROUPS.items() for f in (name, *USAGE_TOTALS)),
 })
 
 GUARD_MIN_CHARS = 4
@@ -1612,6 +1757,52 @@ def verdict_section(snap, team_state):
             "lines": lines, "stations": rows}
 
 
+def usage_section(con, scrub, at, roadmap):
+    """The section `usage` (STORY-445, Done when 3): the token totals of the line, of its overhead (the calls with no
+    work order), of each period that ends at AT, of each model, and of each feature and milestone of ROADMAP (the
+    section `roadmap` of the snapshot; None gives null for both). Each group is a list of objects, so no key of the
+    section comes from the store, and each model and id is scrubbed by its form."""
+    cols = "COUNT(*), " + ", ".join(f"COALESCE(SUM({c}), 0)" for c in USAGE_TOTALS[1:])
+
+    def totals(row):
+        return dict(zip(USAGE_TOTALS, (int(v or 0) for v in row)))
+
+    def add(into, key, row):
+        old = into.setdefault(key, dict.fromkeys(USAGE_TOTALS, 0))
+        for k, v in totals(row).items():
+            old[k] += v
+
+    end = parse_iso(at)
+    periods = [{"period": name, **totals(con.execute(f"SELECT {cols} FROM usage_calls WHERE at > ?", (
+        (end - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ"),)).fetchone())}
+        for name, days in USAGE_PERIODS.items()]
+    models = {}
+    for row in con.execute(f"SELECT model, {cols} FROM usage_calls GROUP BY model ORDER BY model"):
+        add(models, scrub.value(_MODEL, row[0]), row[1:])
+    section = {"line": totals(con.execute(f"SELECT {cols} FROM usage_calls").fetchone()),
+               "overhead": totals(con.execute(f"SELECT {cols} FROM usage_calls WHERE item IS NULL").fetchone()),
+               "periods": periods,
+               "models": [{"model": m, **t} for m, t in sorted(models.items(), key=lambda x: (x[0] is None, x[0] or ""))],
+               "features": None, "milestones": None}
+    if roadmap is None:
+        return section
+    story_of = {x["id"]: (x["feature"], x["milestone"]) for x in roadmap["stories"] if x["id"]}
+    feature_of = {x["id"]: x["milestone"] for x in roadmap["features"] if x["id"]}
+    features, milestones = {}, {}
+    for row in con.execute(f"SELECT item, {cols} FROM usage_calls WHERE item IS NOT NULL GROUP BY item"):
+        rid = roadmap_prefix(row[0]).rstrip("-") or (row[0] if _ROADMAP_ID.fullmatch(row[0]) else "")
+        feature, milestone = story_of.get(rid) or (
+            (rid, feature_of.get(rid)) if rid in feature_of else (None, rid if _MILESTONE_ID.fullmatch(rid) else None))
+        if feature:
+            add(features, feature, row[1:])
+        if milestone:
+            add(milestones, milestone, row[1:])
+    order = lambda x: (int(x[0].rsplit("-", 1)[1]), x[0])  # noqa: E731
+    section["features"] = [{"feature": k, **t} for k, t in sorted(features.items(), key=order)]
+    section["milestones"] = [{"milestone": k, **t} for k, t in sorted(milestones.items(), key=order)]
+    return section
+
+
 def build_snapshot(con, sets, at, store, roadmap=None):
     """Return the snapshot of version 1 as a dict. SETS are the rule sets as read from the file.
 
@@ -1642,6 +1833,7 @@ def build_snapshot(con, sets, at, store, roadmap=None):
         snap["roadmap"], snap["defects"] = roadmap_section(scrub, snap["rules"]["streams"], roadmap)
     row = con.execute("SELECT value FROM kv WHERE key = ?", (TEAM_STATE_KEY,)).fetchone()
     snap["verdicts"] = verdict_section(snap, row[0] if row else None)
+    snap["usage"] = usage_section(con, scrub, at, snap["roadmap"])
     snap["nulled"] = scrub.nulled
     return snap
 
@@ -1662,6 +1854,8 @@ def private_values(con, db_path_arg, limit=None):
     # form of a UUID is a real session id (issue 2097), so it stays on the list also when it is its own name.
     add("a session id", [sid for sid, name in con.execute("SELECT id, name FROM sessions")
                          if (sid or "").strip() != (name or "").strip() or _UUID.fullmatch((sid or "").strip())])
+    # The earlier session ids of each station (STORY-445): a restart replaces sessions.id, not these.
+    add("a session id", [sid for (sid,) in con.execute("SELECT id FROM usage_logs")])
     paths = [r[0] for r in con.execute("SELECT worktree FROM items")]
     paths.append(os.environ.get("HOME"))
     paths.append(os.path.realpath(os.path.dirname(os.path.abspath(db_path_arg))))
@@ -1828,12 +2022,12 @@ ROW_TABLES = {
     "items": {"key": "id", "form": _ID, "label": "item",
               "places": [("sessions", "item"), ("queue", "item"), ("open_asks", "story"), ("decisions_24h", "story")],
               "refs": [("sessions", "item"), ("queue", "item"), ("trips", "item"), ("usage", "item"),
-                         ("messages", "subject"), ("asks", "story"), ("decisions", "story"),
+                         ("usage_calls", "item"), ("messages", "subject"), ("asks", "story"), ("decisions", "story"),
                          ("interactions", "story")]},
     "sessions": {"key": "name", "form": _NAME, "label": "session",
                  "places": [("items", "session")],
                  "refs": [("items", "session"), ("heartbeats", "name"), ("usage", "session"),
-                            ("messages", "from_name"), ("messages", "to_name")]},
+                            ("usage_calls", "session"), ("usage_logs", "name"), ("messages", "from_name"), ("messages", "to_name")]},
 }
 # The rows of each section of the snapshot: the query of build_snapshot (decisions_24h takes the time 24 hours ago).
 PLACE_QUERIES = {"queue": "SELECT item FROM queue ORDER BY position",
@@ -2297,6 +2491,10 @@ def build_parser():
     sp.add_argument("--session", required=True)
     sp.add_argument("--item", required=True)
     sp.add_argument("--tokens", required=True, type=int)
+    sp = leaf(u, "scan", cmd_usage_scan, "write the priced API calls of the session logs of a station to usage_calls "
+              "(the Stop hook runs it after each turn)")
+    sp.add_argument("--name", required=True, help="the station (the session name)")
+    sp.add_argument("--id", help="a Claude Code session id of the station to add before the scan")
 
     q = group("queue", "the item queue")
     sp = leaf(q, "set", cmd_queue_set, "replace the queue")

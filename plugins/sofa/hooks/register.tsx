@@ -91,6 +91,14 @@ export function colourArgs(name: string, colour: string): string[] {
   return ['session', 'colour', '--name', name, '--colour', colour]
 }
 
+// The sofa-state arguments that write the priced API calls of the logs of a
+// station (STORY-445). The id of this session goes first into the ids of the
+// station, so the scan also reads the log of a resumed session.
+export function usageArgs(name: string, id: string | undefined): string[] {
+  const args = ['usage', 'scan', '--name', name]
+  return id ? [...args, '--id', id] : args
+}
+
 export const register: Register = on => {
   let timer: { cancel: () => void } | undefined
   on('session.start', async ($, e, next) => {
@@ -147,12 +155,13 @@ export const register: Register = on => {
     // No store check: the name is set only when SessionStart made the store
     // (sofa-state puts it in the main folder, which is not always e.cwd).
     if (name === '') return result
-    $.process
-      .run([`${$.plugin.root}/scripts/sofa-state`, 'session', 'heartbeat', '--name', name], { cwd: e.cwd, timeoutMs: 10_000 })
-      .then(run => {
+    const state = (args: string[], timeoutMs: number) =>
+      $.process.run([`${$.plugin.root}/scripts/sofa-state`, ...args], { cwd: e.cwd, timeoutMs }).then(run => {
         if (run.exitCode !== 0) throw new Error(run.stderr.trim())
       })
-      .catch(log)
+    state(['session', 'heartbeat', '--name', name], 10_000).catch(log)
+    // The token usage of the turn (STORY-445). A failure only goes to the debug log, as the heartbeat does.
+    state(usageArgs(name, e.session_id), 30_000).catch(log)
     return result
   })
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## 15.5.0
+
+STORY-445: the team store records the token usage of each session and each work order (FEATURE-48, PROBLEM-29, DECISION-06, CAPABILITY-08).
+
+- New leaf `sofa-state usage scan --name <station> [--id <session id>]`: it writes each priced API call of the Claude Code session logs of the station (the session log and its subagent logs) to the new table `usage_calls`, 1 row for each message id, with the model, the input, output, cache read and cache write tokens, the time, and the work order that the station held (else no work order: the overhead of the line).
+- The Stop hook of the sofa mod runs it after each turn of a team session, next to the heartbeat. A failure goes to the debug log only.
+- The new table `usage_logs` keeps each session id of a station (`session upsert` and `--id` add them), so the counts of a station stay after a restart. The new table `usage_files` keeps the read offset of each log by a digest of its path, not the path.
+- `sofa-state snapshot take` has the new key `usage`: the token totals of the line, its overhead, the day, week and month that end at `taken_at`, each model, and each feature and milestone of the roadmap. `schema_version` stays 1.
+- The old session ids of `usage_logs` are private values of the snapshot guard, and `session rename` and `item rename` change their references in the new tables.
+- No run stops: the table `usage` and `usage set` stay as they are, and no other key of the snapshot changes.
+
 ## 15.4.0
 
 STORY-448: the snapshot gives 1 verdict for the floor, each line and each station, and the state of each line (FEATURE-49, CAPABILITY-01, CAPABILITY-03, CONSTRAINT-02, CONSTRAINT-03).
