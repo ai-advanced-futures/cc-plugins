@@ -1,6 +1,6 @@
 # ADLC — Agent Development Life Cycle
 
-<!-- sofa-template-version: 14 -->
+<!-- sofa-template-version: 15 -->
 
 This file defines the agent team for this repository.
 The `sofa:start` skill reads this file to start the team.
@@ -341,46 +341,49 @@ Types:
 
 ## 7. HITL card
 
-Always use this layout, in this order:
+A card has these parts, in this order:
 
-1. The header: `from <role> → "<title>"`. The title tells the topic of the question in a few plain words.
-2. The related line: `Related: <background in plain words>`. Write it only when there is useful background.
-3. The question, in 1 sentence.
-4. The decides block, for a rule card only (section 4, "Ask the Rule"): the line `This answer decides:` and at most 5 lines below it.
-5. The options list: 1 bullet for each option, with the pros and the cons indented below it.
-6. For a card that `decision-judge` escalated: the line `Judge: <level>, <confidence>, <reversibility>, <visibility>, band <band>` and its recommended option.
+1. The title: the topic of the question in a few plain words.
+2. The question, in 1 sentence.
+3. The context: the line `Related: <background in plain words>`, only when there is useful background. For a rule card only (section 4, "Ask the Rule"), also the line `This answer decides:` and at most 5 lines below it.
+4. The options: 2 or 3 options. Each option has a short bold name, 1 line of description, and 1 or 2 pros and 1 or 2 cons.
 
-Example (markdown source):
+The card has no ID. These lines stay in the `ASK` message and the state store, and hitl keeps them out of the text that a human sees: the question ID, the routing line (the priority, the area, the owner names), the `Judge: <level>, <confidence>, <reversibility>, <visibility>, band <band>` line of `decision-judge`, and each line that tells why the question goes to a human.
+
+In Slack, hitl posts the card as a thread (`<skill folder>/references/roles/hitl.md`, "With Slack"):
+
+1. The top message in the channel: the title in bold, the question, and the mention of the owner. Nothing more.
+2. In the thread: the context, when the card has one.
+3. In the thread: 1 short message for each option. A ✅ reaction of a person of the human team on 1 option message is the answer.
+
+Example of the option messages (markdown source):
 
 ```markdown
-from specifier → "The label for standard input"
+**Only the output code:** print "(standard input)" for a result from standard input, with a unit test now. [recommended]
+- **Pros:** ✅
+  - This work stays small
+  - The standard input code is not written 2 times
+- **Cons:** ❌
+  - Only the later end-to-end test fully proves the label
+```
 
-Related: A search needs a path until the team adds search of standard input.
-
-What do we build now for the "(standard input)" label?
-
-- **Only the output code:** a result can come from a file or from standard input, and standard input prints "(standard input)". A unit test checks it. The end-to-end test comes later. [recommended]
-  - **Pros:** ✅
-    - This work stays small
-    - The standard input code is not written 2 times
-  - **Cons:** ❌
-    - Only the later end-to-end test fully proves the label
-- **The full standard input search now:** read standard input and print the label, with an end-to-end test.
-  - **Pros:** ✅
-    - The label is fully proven now
-  - **Cons:** ❌
-    - This work gets much larger
+```markdown
+**The full standard input search now:** read standard input and print the label, with an end-to-end test.
+- **Pros:** ✅
+  - The label is fully proven now
+- **Cons:** ❌
+  - This work gets much larger
 ```
 
 Rules:
-- Plain words: Write the header, the related line, the question and the options in plain English. Do not use IDs of features, stories, decisions, constraints or criteria. Say what the item does in plain words.
-- Question IDs: Hitl keeps the question ID for itself. It uses the ID in the `ANSWER` message, but not in the card.
-- Options: Start each option with a short bold name and a colon, then the description, with no number in front. Do not use tables, because tables do not show correctly on a mobile screen or in Slack.
-- Recommended option: Put the text `[recommended]` at the end of the option. This is the only place of the recommendation.
-- Pros and cons: Write `**Pros:** ✅` and `**Cons:** ❌`. Give each option 1 or more pros and 1 or more cons, each on its own indented bullet.
-- Emojis: Use only ✅ and ❌, and only on the Pros and Cons lines.
+- Plain words: Write the title, the question, the context and the options in plain English. Do not use IDs of features, stories, decisions, constraints or criteria, also not in the title. Say what the item does in plain words.
+- Question IDs: Hitl keeps the question ID for itself. It uses the ID in the `ANSWER` message and in the store, but not in the card.
+- Options: Start each option with a short bold name and a colon, then 1 line of description, with no number in front. Do not use tables, because tables do not show correctly on a mobile screen or in Slack.
+- Pros and cons: Write `**Pros:** ✅` and `**Cons:** ❌`. Give each option 1 or 2 pros and 1 or 2 cons, each on its own indented bullet.
+- Recommended option: Put the text `[recommended]` at the end of the description line of the option. This is the only place of the recommendation: the card has no `Judge:` line and no other line that recommends an option.
+- Emojis: In the card text, use only ✅ and ❌, and only on the Pros and Cons lines.
 - Number of options: Use 2 or 3 options.
-- `AskUserQuestion`: Use the short bold name of each option as its label. In Slack, the card is the top message of a thread, and the options are the bullets.
+- `AskUserQuestion`: With no Slack, use the short bold name of each option as its label, and the description line as its description.
 
 ## 8. Start commands
 
@@ -419,4 +422,4 @@ The orchestrator start prompt is in the `sofa:start` skill. It gives the machine
 
 | Date | Change | Why |
 |---|---|---|
-| `<date>` | Created from the sofa template version 14 | Team setup for `<repo>` |
+| `<date>` | Created from the sofa template version 15 | Team setup for `<repo>` |

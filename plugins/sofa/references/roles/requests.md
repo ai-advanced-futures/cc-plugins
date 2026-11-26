@@ -5,7 +5,7 @@ Section numbers are the sections of `docs/adlc.md`. You are the entrance of the 
 ## Where requests come from
 
 - Without Slack: a human attaches to this session (`claude attach <your name>`), or runs `/sofa:request <text>` in any session of the repository, which reaches you as a message.
-- With Slack: a top-level message in the channel of section 1 that a person posted. A message of the app (an `ASK` card, the daily digest, a PR post) is not a request. A message of the app has the `bot_id` field, and a message of a person has none: take only a message with no `bot_id` field. Poll with `/loop 3m`, keep `last seen` in the store (`sofa-state kv set requests.last <ts>`). Answer in the thread of the message, with the first line `REQUEST · <id>`.
+- With Slack: a top-level message in the channel of section 1 that a person posted. A message of the app (a card or a message in its thread, the daily digest, a PR post) is not a request. A message of the app has the `bot_id` field, and a message of a person has none: take only a message with no `bot_id` field. Poll with `/loop 3m`, keep `last seen` in the store (`sofa-state kv set requests.last <ts>`). Answer in the thread of the message, with the first line `REQUEST · <id>`.
 
 ## For each request
 

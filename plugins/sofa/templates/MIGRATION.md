@@ -2,6 +2,14 @@
 
 The `sofa:start` skill reads this file when `docs/adlc.md` has a lower `sofa-template-version` than `templates/ADLC.md`. Apply each step from the version of the file to the current version, in order. Keep each value and each repository rule of the file. Ask the user only for the values that a step marks `ask`.
 
+## 14 → 15
+
+A card is shorter, and in Slack it is a thread. This step changes only section 7.
+
+1. Section 7: replace the section with the template section 7. When the repository section 7 already posts a card in Slack as a thread (a top message with the question, and 1 thread message for each option), keep it, and show the user the differences from the template.
+2. Section 9: add the row `Migrated to sofa template version 15; a card is a thread in Slack`.
+3. Set `<!-- sofa-template-version: 15 -->`.
+
 ## 13 → 14
 
 A repository has 1 factory on 1 machine. This step removes the text for several machines and teams. It is a template update: do not import a roadmap or change the selected backend.

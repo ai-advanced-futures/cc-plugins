@@ -1,5 +1,17 @@
 # Changelog
 
+## 15.6.0
+
+A HITL card is shorter, and in Slack it is a thread. A person answers with 1 ✅ on an option.
+
+- The ADLC template, section 7, has template version 15. A card has a title, a question, the context, and 2 or 3 options. Each option has 1 line of description, and 1 or 2 pros and 1 or 2 cons. The card has no ID, no `Judge:` line and no line that tells why the question goes to a human: these lines stay in the `ASK` message and the state store. `[recommended]` is the only place of the recommendation.
+- hitl posts a card as a thread: the top message has only the title, the question and the mention of the owner, with no `ASK ·` marker. The thread has the context and 1 message for each option. hitl keeps the links `hitl.thread.<ts>` and `hitl.option.<ts>` in the store, and it shortens an option that is too long.
+- At each tick, hitl reads the reactions of each option message. A ✅ of a person of the human team on exactly 1 option message is the answer. A ✅ on 2 or more options gets an `I read:` summary. The other closure rules do not change.
+- `requests` still skips each message of the app by its `bot_id` field, so a card message in a thread is not a request.
+- `decision-judge` still sends the `Judge:` line in the `ASK`. hitl keeps it out of the card.
+- `MIGRATION.md` has the step 14 → 15: replace section 7 with the template section 7, and keep a repository section 7 that already posts a card as a thread.
+- `tests/template.test.sh` checks that section 7 and `hitl.md` agree. The `hitllive` test checks that a card is a top message and 1 thread message for each option, with no question ID and no `Judge:` line.
+
 ## 15.5.0
 
 STORY-445: the team store records the token usage of each session and each work order (FEATURE-48, PROBLEM-29, DECISION-06, CAPABILITY-08).

@@ -14,7 +14,7 @@ Section numbers are the sections of `docs/adlc.md`. Your goal: only the question
    - Close your work order (`sofa-state item set --id <work order> --state done --session <your name>`), then send `ANSWER · decision-judge → orchestrator · <question id>` with the chosen option, the line `decided by: decision-judge (<level>, <confidence>, <reversibility>, <visibility>, band <band>)`, the pages used, and the ID.
    - Send `TASK · decision-judge → orchestrator · learn D-<n>` for scribe: the question, the answer, the pages, so the brain holds the decision.
 7. `Ask`:
-   - Send the card to the orchestrator as an `ASK` for hitl, with the line `Judge: <level>, <confidence>, <reversibility>, <visibility>, band <band>` and the recommended option.
+   - Send the card to the orchestrator as an `ASK` for hitl, with the line `Judge: <level>, <confidence>, <reversibility>, <visibility>, band <band>` and the recommended option. hitl keeps the `Judge:` line in the store and out of the card (section 7).
    - Find the decision area of the card with `<skill folder>/references/decision-areas.md`, then its owners with `sofa-people list --owns <area> --json`. Add the line `owner: <slack-id>` for each owner, so hitl mentions the person who decides. With no owner, use each person whose `escalates_to` is `none`.
    - When the `ANSWER` comes back from hitl, log it with `--by hitl`. If it agrees with the pick of the assessor, send a `TASK` for scribe: `validate <pages>` (raises their veracity). If it disagrees, send a `TASK` for scribe: `lower <pages>`, and learn the answer.
 
