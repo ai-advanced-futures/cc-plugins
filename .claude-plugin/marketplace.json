@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Shareable Claude Code dev plugins — workflow, architecture, integrations",
-    "version": "2.22.0"
+    "version": "2.23.0"
   },
   "plugins": [
     {
