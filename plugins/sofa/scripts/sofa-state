@@ -23,6 +23,7 @@ file would hold a known private value (a session id, a path, a person login or a
 """
 
 import argparse
+import bisect
 import hashlib
 import json
 import math
@@ -75,7 +76,7 @@ CREATE TABLE IF NOT EXISTS usage (
 CREATE TABLE IF NOT EXISTS usage_logs (name TEXT, id TEXT, at TEXT, UNIQUE(name, id));
 CREATE TABLE IF NOT EXISTS usage_calls (
     message_id TEXT PRIMARY KEY, session TEXT, item TEXT, model TEXT, input INTEGER, output INTEGER,
-    cache_read INTEGER, cache_write INTEGER, at TEXT);
+    cache_read INTEGER, cache_write INTEGER, at TEXT, job TEXT);
 CREATE TABLE IF NOT EXISTS usage_files (file TEXT PRIMARY KEY, offset INTEGER);
 CREATE TABLE IF NOT EXISTS heartbeats (name TEXT, at TEXT);
 CREATE TABLE IF NOT EXISTS queue (position INTEGER PRIMARY KEY, item TEXT);
@@ -236,6 +237,8 @@ def open_db(path):
     add_column(con, "sessions", "colour", "TEXT")
     add_column(con, "items", "left_over_at", "TEXT")
     add_column(con, "items", "state_was", "TEXT")
+    # A store of sofa 15.5.0 has usage_calls with no job (STORY-520).
+    add_column(con, "usage_calls", "job", "TEXT")
     return con
 
 
@@ -1042,20 +1045,28 @@ def cmd_usage_scan(con, a):
             "ORDER BY updated_at DESC, id LIMIT 1", [a.name, *STARTED_STATES]).fetchone()
         if order is not None and _ROADMAP_ID.fullmatch(order["id"]):
             order = None
+        # The job of a call is the subject of the last TASK that the station received at the time of the call
+        # (STORY-520, Done when 1). A call before the first TASK has no job.
+        tasks = con.execute("SELECT at, subject FROM messages WHERE type = 'TASK' AND to_name = ? AND at IS NOT NULL "
+                            "ORDER BY at, id", (a.name,)).fetchall()
+        task_times = [t["at"] for t in tasks]
         new = 0
         for key, calls, end in found:
             for mid, model, counts, at in calls:
                 item = order["id"] if order is not None and (order["picked_up_at"] or "") <= at else None
+                last = bisect.bisect_right(task_times, at)
+                job = tasks[last - 1]["subject"] if last else None
                 new += con.execute("SELECT 1 FROM usage_calls WHERE message_id = ?", (mid,)).fetchone() is None
                 con.execute("""
-                    INSERT INTO usage_calls (message_id, session, item, model, input, output, cache_read, cache_write, at)
-                    VALUES (:mid, :session, :item, :model, :input, :output, :cache_read, :cache_write, :at)
+                    INSERT INTO usage_calls (message_id, session, item, model, input, output, cache_read, cache_write, at,
+                                             job)
+                    VALUES (:mid, :session, :item, :model, :input, :output, :cache_read, :cache_write, :at, :job)
                     ON CONFLICT(message_id) DO UPDATE SET
                         input = MAX(usage_calls.input, excluded.input),
                         output = MAX(usage_calls.output, excluded.output),
                         cache_read = MAX(usage_calls.cache_read, excluded.cache_read),
                         cache_write = MAX(usage_calls.cache_write, excluded.cache_write)
-                """, dict(mid=mid, session=a.name, item=item, model=model, at=at, **counts))
+                """, dict(mid=mid, session=a.name, item=item, model=model, at=at, job=job, **counts))
             con.execute("INSERT INTO usage_files (file, offset) VALUES (?, ?) "
                         "ON CONFLICT(file) DO UPDATE SET offset = MAX(usage_files.offset, excluded.offset)", (key, end))
         con.commit()
@@ -1286,6 +1297,27 @@ RULE_FIELDS: dict[str, dict] = {name: {} for name in FLOOR_SETS}
 RULE_FIELDS["health"]["snapshot_max_age_seconds"] = SNAPSHOT_MAX_AGE
 RULE_FIELDS["streams"]["milestones"] = MapForm(re.compile(r"(?:PLAN-)?MILESTONE-[0-9]+"), STREAMS)
 RULE_FIELDS["streams"]["features"] = MapForm(re.compile(r"(?:PLAN-)?FEATURE-[0-9]+"), STREAMS)
+# STORY-520, Done when 3: the stream of the area of a landed change with no roadmap item (the scope of its conventional
+# commit subject, or `test` for a commit of the type test), and the stream of a role. The file sets them; an area or a
+# role that the file does not name takes its default here, then AREA_OTHER or ROLE_OTHER.
+_AREA = re.compile(r"[a-z][a-z0-9-]{0,39}")
+RULE_FIELDS["streams"]["areas"] = MapForm(_AREA, STREAMS)
+RULE_FIELDS["streams"]["roles"] = MapForm(re.compile(r"[a-z][a-z0-9-]{0,39}"), STREAMS)
+STREAM_DEFAULTS = {
+    "areas": {**dict.fromkeys(["adlc", "review", "roadmap", "product", "prd", "knowledge", "domain", "adr",
+                               "architecture", "system-design"], "operations"), "test": "quality"},
+    "roles": {"tester": "quality", "security": "quality"},
+}
+AREA_OTHER, ROLE_OTHER, FIX_STREAM = "product", "operations", "quality"
+# The fix rule (Done when 3): a job or a landed change whose text names a fix or a bug is quality. The conventional
+# commit types fix and bug count too.
+_FIX = re.compile(r"(?<![a-z])(fix|fixes|fixed|bug|bugs|bugfix|hotfix)(?![a-z])", re.IGNORECASE)
+# A PR in any form of the subject of a job (Done when 2): `PR 2237`, `PR-2237`, `PR2237`, `#2237`.
+_JOB_PR = re.compile(r"(?:(?<![A-Za-z0-9])PR[ -]?|#)([0-9]{1,9})(?![0-9])", re.IGNORECASE)
+_JOB_ITEM = re.compile(r"(?<![A-Za-z0-9])((?:PLAN-)?(?:STORY|FEATURE)-[0-9]+)(?![0-9])")
+# A landed change: the subject of a commit of origin/main, `type(scope)!: text (#N)` (the squash form of GitHub).
+_LANDED = re.compile(r"([a-z]+)(?:\(([^)]*)\))?!?: .*\(#([0-9]{1,9})\)\s*")
+LANDED_LIMIT = 5000  # the commits of origin/main that the snapshot reads, newest first
 
 # --- the verdicts of the floor (STORY-448) ---
 # The 6 levels of CONVENTION-02, lowest first, and the 4 states of a line (CAPABILITY-03), each as a word (CONSTRAINT-03).
@@ -1318,7 +1350,15 @@ VERDICT_NAMES = {"verdicts", "floor", "lines", "stations", "station", "level", "
 USAGE_TOTALS = ["calls", "input", "output", "cache_read", "cache_write"]
 USAGE_PERIODS = {"day": 1, "week": 7, "month": 30}
 USAGE_GROUPS = {"periods": "period", "models": "model", "features": "feature", "milestones": "milestone"}
-USAGE_NAMES = {"usage", "overhead", *USAGE_TOTALS, *USAGE_GROUPS, *USAGE_GROUPS.values()}
+# STORY-520: the stream of each call (`streams`), the overhead that the role rule charged (`roles`), each rule that
+# charged a call (`charges`), the calls that no rule charged (`not_tied`, Done when 4: always 0 calls), and the state of
+# the cost data of the line (`state`).
+USAGE_CHARGE_RULES = ["fix", "story", "pr", "row", "area", "role"]
+USAGE_STATES = ["measured", "not measured"]
+USAGE_GROUPS["streams"] = "stream"
+USAGE_GROUPS["roles"] = "role"
+USAGE_NAMES = {"usage", "overhead", "not_tied", "state", "charges", "rule", *USAGE_TOTALS, *USAGE_GROUPS,
+               *USAGE_GROUPS.values()}
 # The label of a line (the key line.label of the store): the name that a view shows for the line (STORY-444).
 _LABEL = re.compile(r"[a-z0-9][a-z0-9-]{0,31}")
 
@@ -1378,8 +1418,9 @@ SNAPSHOT_LAYOUT = frozenset({
     ("verdicts", "lines"), *(("verdicts", "lines", f) for f in ("label", "level", "state")),
     ("verdicts", "stations"), *(("verdicts", "stations", f) for f in ("station", "level", "sessions", "reasons")),
     *(("verdicts", "stations", "reasons", r) for r in VERDICT_REASONS),
-    ("usage",), *(("usage", k) for k in ("line", "overhead", *USAGE_GROUPS)),
-    *(("usage", k, f) for k in ("line", "overhead") for f in USAGE_TOTALS),
+    ("usage",), *(("usage", k) for k in ("line", "overhead", "not_tied", "state", "charges", *USAGE_GROUPS)),
+    *(("usage", k, f) for k in ("line", "overhead", "not_tied") for f in USAGE_TOTALS),
+    *(("usage", "charges", f) for f in ("rule", "stream", *USAGE_TOTALS)),
     *(("usage", k, f) for k, name in USAGE_GROUPS.items() for f in (name, *USAGE_TOTALS)),
 })
 
@@ -1501,17 +1542,10 @@ def page_fields(text):
     return fields
 
 
-def read_roadmap(db_path):
-    """The roadmap of the store at DB_PATH: (commit, committed_at, pages), or None (STORY-519, rows 2, 5 and 12).
-
-    PAGES is a list of (kind, id, fields), with KIND one of the keys of ROADMAP_PAGES and FIELDS from `page_fields`.
-    The result is None in 3 cases only: the store is not `<top level of a repository>/.sofa/state.db`, the repository
-    has no `refs/remotes/origin/main`, or its commit holds no page. A git call that fails, or that does not end in
-    `SOFA_GIT_TIMEOUT`, raises UsageError (exit 1), also a blob that git does not hold with exit 0. That holds for
-    the first call too: the form `<folder>/.sofa/state.db` is checked with no git, and then `rev-parse
-    --show-toplevel` runs through `Git.run`. Only the answer `not a git repository` (the folder is in no repository)
-    and a top level that is another folder give None; each other failure (for example `dubious ownership`, exit 128)
-    raises (fix round 1)."""
+def origin_main(db_path, failed):
+    """(Git, commit) of `refs/remotes/origin/main` in the repository of the store at DB_PATH, or None when the store is
+    not `<top level of a repository>/.sofa/state.db` or the repository has no such ref. FAILED starts the text of a
+    git error (UsageError, exit 1). See read_roadmap for the rules of each step."""
     sofa = os.path.dirname(os.path.realpath(db_path))
     if os.path.basename(sofa) != ".sofa":
         return None
@@ -1537,6 +1571,48 @@ def read_roadmap(db_path):
     if exact[0][1] != "commit":
         raise git.failure("for-each-ref", 0, "the ref names no commit")
     commit = exact[0][2]
+    return git, commit
+
+
+LANDED_FAILED = "cannot read the landed changes"
+
+
+def read_landed(db_path):
+    """The landed changes of origin/main (STORY-520, Done when 3): {PR number: (type, area, roadmap ids)} from the
+    subjects of its last LANDED_LIMIT commits, newest first, or None as `origin_main` gives None. Only a subject of the
+    form `type(scope): text (#N)` is a landed change. The area is the first scope, or `test` for the type test. A PR
+    keeps its newest commit."""
+    found = origin_main(db_path, LANDED_FAILED)
+    if found is None:
+        return None
+    git, commit = found
+    out = git.must("log", "--no-show-signature", f"-n{LANDED_LIMIT}", "--format=%s", commit, extra=NO_LAZY_FETCH)
+    landed = {}
+    for line in out.split("\n"):
+        m = _LANDED.fullmatch(line.strip())
+        if not m or m.group(3) in landed:
+            continue
+        kind = m.group(1).lower()
+        area = "test" if kind == "test" else (m.group(2) or "").split(",")[0].strip().lower()
+        landed[m.group(3)] = (kind, area, _JOB_ITEM.findall(line))
+    return landed
+
+
+def read_roadmap(db_path):
+    """The roadmap of the store at DB_PATH: (commit, committed_at, pages), or None (STORY-519, rows 2, 5 and 12).
+
+    PAGES is a list of (kind, id, fields), with KIND one of the keys of ROADMAP_PAGES and FIELDS from `page_fields`.
+    The result is None in 3 cases only: the store is not `<top level of a repository>/.sofa/state.db`, the repository
+    has no `refs/remotes/origin/main`, or its commit holds no page. A git call that fails, or that does not end in
+    `SOFA_GIT_TIMEOUT`, raises UsageError (exit 1), also a blob that git does not hold with exit 0. That holds for
+    the first call too: the form `<folder>/.sofa/state.db` is checked with no git, and then `rev-parse
+    --show-toplevel` runs through `Git.run`. Only the answer `not a git repository` (the folder is in no repository)
+    and a top level that is another folder give None; each other failure (for example `dubious ownership`, exit 128)
+    raises (fix round 1)."""
+    found = origin_main(db_path, ROADMAP_FAILED)
+    if found is None:
+        return None
+    git, commit = found
     # --no-show-signature: with `log.showSignature=true` git prints the lines of gpg on stdout before the format, and
     # GitHub signs the merge commits of main (fix round 1).
     stamp = git.must("show", "-s", "--no-show-signature", "--format=%ct", commit, extra=NO_LAZY_FETCH).strip()
@@ -1757,7 +1833,81 @@ def verdict_section(snap, team_state):
             "lines": lines, "stations": rows}
 
 
-def usage_section(con, scrub, at, roadmap):
+def charge_calls(con, scrub, rules, roadmap, landed, totals, add):
+    """The keys `streams`, `roles`, `charges`, `not_tied` and `state` of the section `usage` (STORY-520).
+
+    Each call goes to 1 stream by the rules C1 to C7 of the spec, from its job (the subject of the last TASK of its
+    station, `usage_calls.job`) and the role of its station. RULES is the scrubbed `rules.streams`; ROADMAP the section
+    `roadmap` (or None); LANDED the result of `read_landed` (or None)."""
+    areas = {**STREAM_DEFAULTS["areas"], **(rules.get("areas") or {})}
+    role_map = {**STREAM_DEFAULTS["roles"], **(rules.get("roles") or {})}
+    item_stream = {}
+    for kind in ("features", "stories"):
+        for x in (roadmap or {}).get(kind) or []:
+            if x["id"] and x["stream"]:
+                item_stream[x["id"]] = x["stream"]
+                item_stream.setdefault(x["id"].removeprefix("PLAN-"), x["stream"])
+    landed = landed or {}
+    rows = {r["id"]: r["pr"] for r in con.execute("SELECT id, pr FROM items")}
+    pr_items = {}
+    for rid, pr in rows.items():
+        key = roadmap_prefix(rid).rstrip("-") or (rid if _ROADMAP_ID.fullmatch(rid) else "")
+        if pr and key:
+            pr_items.setdefault(str(pr).strip(), []).append(key)
+
+    def stream_of(rid):
+        return item_stream.get(rid) or item_stream.get(rid.removeprefix("PLAN-"))
+
+    def story_of_pr(n):
+        for rid in pr_items.get(n, []) + (landed[n][2] if n in landed else []):
+            if stream_of(rid):
+                return stream_of(rid)
+        return None
+
+    def charge(job, role):
+        if not job:
+            return "role", role_map.get(role, ROLE_OTHER)  # C7: the spend before the first job
+        prs = _JOB_PR.findall(job)
+        row_pr = str(rows.get(job.strip()) or "").strip()
+        row_prs = [row_pr] if row_pr.isdigit() else []
+        # C1: a job that names a fix or a bug, and a landed change of a fix type, for the PR of C3 or C4.
+        if _FIX.search(job) or any(n in landed and _FIX.fullmatch(landed[n][0]) for n in prs + row_prs):
+            return "fix", FIX_STREAM
+        for rid in _JOB_ITEM.findall(job):
+            if stream_of(rid):
+                return "story", stream_of(rid)  # C2
+        for rule, numbers in (("pr", prs), ("row", row_prs)):
+            for n in numbers:
+                if story_of_pr(n):
+                    return rule, story_of_pr(n)  # C3, C4
+        for n in prs + row_prs:
+            if n in landed:
+                return "area", areas.get(landed[n][1], AREA_OTHER)  # C5
+        return "role", role_map.get(role, ROLE_OTHER)  # C6
+
+    cols = "COUNT(*), " + ", ".join(f"COALESCE(SUM(c.{c}), 0)" for c in USAGE_TOTALS[1:])
+    streams, roles, charges = {}, {}, {}
+    for row in con.execute(f"SELECT c.job, s.role, {cols} FROM usage_calls c LEFT JOIN sessions s ON s.name = c.session "
+                           "GROUP BY c.job, s.role"):
+        role = row[1] if row[1] else NO_ROLE
+        rule, stream = charge(row[0], role)
+        add(streams, stream, row[2:])
+        add(charges, (rule, stream), row[2:])
+        if rule == "role":
+            add(roles, role, row[2:])
+    zero = dict.fromkeys(USAGE_TOTALS, 0)
+    order = ["product", "quality", "operations"]
+    return {
+        "streams": [{"stream": k, **streams.get(k, zero)} for k in order],
+        "roles": [{"role": k if k == NO_ROLE else scrub.value(_ROLE, k), **t} for k, t in sorted(roles.items())],
+        "charges": [{"rule": r, "stream": st, **t} for (r, st), t in
+                    sorted(charges.items(), key=lambda x: (USAGE_CHARGE_RULES.index(x[0][0]), order.index(x[0][1])))],
+        # A call whose rule gave no stream word (Done when 4 wants none): each rule ends in a word of STREAMS.
+        "not_tied": {k: sum(t[k] for st, t in streams.items() if st not in order) for k in USAGE_TOTALS},
+    }
+
+
+def usage_section(con, scrub, at, roadmap, rules=None, landed=None):
     """The section `usage` (STORY-445, Done when 3): the token totals of the line, of its overhead (the calls with no
     work order), of each period that ends at AT, of each model, and of each feature and milestone of ROADMAP (the
     section `roadmap` of the snapshot; None gives null for both). Each group is a list of objects, so no key of the
@@ -1784,6 +1934,8 @@ def usage_section(con, scrub, at, roadmap):
                "periods": periods,
                "models": [{"model": m, **t} for m, t in sorted(models.items(), key=lambda x: (x[0] is None, x[0] or ""))],
                "features": None, "milestones": None}
+    section.update(charge_calls(con, scrub, rules or {}, roadmap, landed, totals, add))
+    section["state"] = USAGE_STATES[0] if section["line"]["calls"] else USAGE_STATES[1]  # Done when 4
     if roadmap is None:
         return section
     story_of = {x["id"]: (x["feature"], x["milestone"]) for x in roadmap["stories"] if x["id"]}
@@ -1803,7 +1955,7 @@ def usage_section(con, scrub, at, roadmap):
     return section
 
 
-def build_snapshot(con, sets, at, store, roadmap=None):
+def build_snapshot(con, sets, at, store, roadmap=None, landed=None):
     """Return the snapshot of version 1 as a dict. SETS are the rule sets as read from the file.
 
     ROADMAP is the result of `read_roadmap` (None: the section `roadmap` and `defects.no_stream` are null).
@@ -1833,7 +1985,7 @@ def build_snapshot(con, sets, at, store, roadmap=None):
         snap["roadmap"], snap["defects"] = roadmap_section(scrub, snap["rules"]["streams"], roadmap)
     row = con.execute("SELECT value FROM kv WHERE key = ?", (TEAM_STATE_KEY,)).fetchone()
     snap["verdicts"] = verdict_section(snap, row[0] if row else None)
-    snap["usage"] = usage_section(con, scrub, at, snap["roadmap"])
+    snap["usage"] = usage_section(con, scrub, at, snap["roadmap"], snap["rules"]["streams"], landed)
     snap["nulled"] = scrub.nulled
     return snap
 
@@ -1977,11 +2129,12 @@ def snapshot_text(con, a):
     # The roadmap comes from origin/main with local git calls, before the read transaction, so that transaction does not
     # wait for git (STORY-519, row 2). A failed git call stops here with exit 1 and no output.
     roadmap = read_selected_roadmap(a.db_path)
+    landed = read_landed(a.db_path)  # STORY-520: the landed changes of origin/main, with the same git rules
     # 1 read transaction for each read below (WAL): the sections and the guard show 1 state of the store, also when
     # another session writes while this command runs.
     con.execute("BEGIN")
     try:
-        snap = build_snapshot(con, sets, a.at, store, roadmap)
+        snap = build_snapshot(con, sets, a.at, store, roadmap, landed)
         guard_snapshot(con, a, snap, sets)
         return dump(snap) + "\n"
     except RecursionError:
@@ -2022,7 +2175,7 @@ ROW_TABLES = {
     "items": {"key": "id", "form": _ID, "label": "item",
               "places": [("sessions", "item"), ("queue", "item"), ("open_asks", "story"), ("decisions_24h", "story")],
               "refs": [("sessions", "item"), ("queue", "item"), ("trips", "item"), ("usage", "item"),
-                         ("usage_calls", "item"), ("messages", "subject"), ("asks", "story"), ("decisions", "story"),
+                         ("usage_calls", "item"), ("usage_calls", "job"), ("messages", "subject"), ("asks", "story"), ("decisions", "story"),
                          ("interactions", "story")]},
     "sessions": {"key": "name", "form": _NAME, "label": "session",
                  "places": [("items", "session")],

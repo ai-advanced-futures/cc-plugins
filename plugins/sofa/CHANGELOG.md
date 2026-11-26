@@ -1,5 +1,15 @@
 # Changelog
 
+## 15.7.0
+
+STORY-520: each priced API call is charged to the stream of the job that the session held (FEATURE-47, DECISION-06).
+
+- `sofa-state usage scan` also writes the job of each call: the subject of the last `TASK` that the station received at the time of the call.
+- `sofa-state snapshot take` gives each call 1 stream, by the fix rule, then the STORY or FEATURE id of the job, a PR of the job in any form (`PR 2237`, `PR-2237`, `#2237`) and its story, a store row whose id is the job, the area of a landed PR with no story, and the role of the station. The key `usage` has the new keys `streams`, `roles`, `charges`, `not_tied` and `state` (`not measured` for a line with no call). No job subject goes into the snapshot.
+- The landed changes come from the subjects `type(scope): text (#N)` of `origin/main`, with the git rules of the roadmap.
+- 2 new maps of the rule set `streams` of `.claude/sofa-floor.json`: `areas` and `roles`. The script holds the defaults (the process, roadmap and record areas are operations, `test` is quality; the roles tester and security are quality), and an entry of the file wins.
+- No run stops: a store of sofa 15.5.0 gets the column `job` at its next open, and its old calls go by the role of their station.
+
 ## 15.6.0
 
 A HITL card is shorter, and in Slack it is a thread. A person answers with 1 ✅ on an option.
