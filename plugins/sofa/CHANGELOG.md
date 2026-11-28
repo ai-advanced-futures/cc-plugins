@@ -1,5 +1,14 @@
 # Changelog
 
+## 15.9.0
+
+STORY-446: the team store keeps the history of each work order, and a bug work type (FEATURE-48, CAPABILITY-10, PROBLEM-32).
+
+- New table `item_history`: `item set` adds 1 row (the old state, the new state, the time and the role) when it makes a row or changes its state. The row of `items` stays as it is.
+- New option `item set --type` (`feature`, `bug`, `issue` or `operations`) and column `items.work_type`. The station skill says who gives it: `bug` for the work that fixes a defect, `feature` for the work of a roadmap story, `operations` for factory work.
+- `sofa-state snapshot take` has the new key `bugs`: for the day, the week and the month that end at `taken_at`, the bug work orders found and addressed, with their times. `schema_version` stays 1.
+- No run stops: an old store gets the table and the column at its next open, and a work order with no type is no bug.
+
 ## 15.8.0
 
 STORY-452: the terminal view, the published artifact and the local live page read the same snapshot (FEATURE-50, CAPABILITY-12, CONSTRAINT-01 to CONSTRAINT-03).

@@ -78,6 +78,9 @@ CREATE TABLE IF NOT EXISTS usage_calls (
     message_id TEXT PRIMARY KEY, session TEXT, item TEXT, model TEXT, input INTEGER, output INTEGER,
     cache_read INTEGER, cache_write INTEGER, at TEXT, job TEXT);
 CREATE TABLE IF NOT EXISTS usage_files (file TEXT PRIMARY KEY, offset INTEGER);
+-- STORY-446: 1 row for each change of state of an item (and 1 for its first state), with the role that made it.
+CREATE TABLE IF NOT EXISTS item_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, item TEXT, old_state TEXT, new_state TEXT, at TEXT, role TEXT);
 CREATE TABLE IF NOT EXISTS heartbeats (name TEXT, at TEXT);
 CREATE TABLE IF NOT EXISTS queue (position INTEGER PRIMARY KEY, item TEXT);
 CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
@@ -106,6 +109,11 @@ STATE_STAGES = {"backlog": "open", "ready": "open", "in progress": "open", "in r
                 "released": "shipped",
                 "done": "closed", "merged": "closed", "cancelled": "closed", "superseded": "closed"}
 _FIX_ROUND = re.compile(r"fix round( [0-9]+)?")
+# The work types of a work order (STORY-446 adds the column and `bug`; the 4 words are the words of STORY-461, Done
+# when 1). The station that makes the work order gives it with `item set --type`.
+WORK_TYPES = ["feature", "bug", "issue", "operations"]
+# A bug is addressed when its work order reaches 1 of these states (CAPABILITY-10).
+ADDRESSED_STATES = ["done", "merged", "released"]
 _ROADMAP_ID = re.compile(r"(?:PLAN-)?(STORY|FEATURE|MILESTONE)-[0-9]+")
 # The values of the decision tables (docs/adlc.md, section 4).
 DECISION_LEVELS = ["detail", "middle", "direction"]
@@ -239,6 +247,8 @@ def open_db(path):
     add_column(con, "items", "state_was", "TEXT")
     # A store of sofa 15.5.0 has usage_calls with no job (STORY-520).
     add_column(con, "usage_calls", "job", "TEXT")
+    # The work type of a work order (STORY-446, STORY-461).
+    add_column(con, "items", "work_type", "TEXT")
     return con
 
 
@@ -455,6 +465,8 @@ def cmd_item_set(con, a):
                          + (f' (use "{hint}")' if hint else ""), 2)
     if a.take_over and a.session is None:
         raise UsageError("--take-over needs --session <your name>", 2)
+    if a.work_type is not None and a.work_type not in WORK_TYPES and a.work_type != "":
+        raise UsageError(f"--type {plain(a.work_type)} is not a work type; use 1 of: {', '.join(WORK_TYPES)}", 2)
     # 1 write transaction: the reads and the write are 1 step. A refusal rolls back and writes nothing.
     con.execute("BEGIN IMMEDIATE")
     try:
@@ -464,7 +476,9 @@ def cmd_item_set(con, a):
         refuse_retired(con, a, "items", a.id, "--id")
         refuse_retired(con, a, "sessions", a.session, "--session")
         check_item_set(con, a)
+        old = con.execute("SELECT state FROM items WHERE id = ?", (a.id,)).fetchone()
         write_item(con, a)
+        record_history(con, a, old["state"] if old else None, old is None)
         con.commit()
     except BaseException:
         con.rollback()
@@ -472,13 +486,30 @@ def cmd_item_set(con, a):
     report_map(changed, a.id)
 
 
+def record_history(con, a, old_state, new):
+    """Add 1 row of item_history when item set made the row (NEW) or changed its state (STORY-446, Done when 1). The
+    role is the role of the caller (CLAUDE_CODE_SESSION_ID), else the role of the session that holds the row, else
+    null. The caller holds the write lock."""
+    row = con.execute("SELECT state, session FROM items WHERE id = ?", (a.id,)).fetchone()
+    if not new and row["state"] == old_state:
+        return
+    names = sorted(caller_names(con)) or ([row["session"]] if row["session"] else [])
+    role = None
+    if names:
+        found = con.execute(f"SELECT role FROM sessions WHERE name IN ({','.join('?' * len(names))}) ORDER BY name",
+                            names).fetchone()
+        role = found["role"] if found else None
+    con.execute("INSERT INTO item_history (item, old_state, new_state, at, role) VALUES (?, ?, ?, ?, ?)",
+                (a.id, old_state, row["state"], a.at, role))
+
+
 def write_item(con, a):
     """The upsert of item set. The caller checked the refusals and holds the write lock."""
     con.execute("""
         INSERT INTO items (id, state, pr, branch, worktree, waits_for, session,
-                           picked_up_at, released_at, updated_at)
+                           picked_up_at, released_at, updated_at, work_type)
         VALUES (:id, :state, :pr, :branch, :worktree, :waits_for, :session,
-                :at, CASE WHEN :state = 'released' THEN :at END, :at)
+                :at, CASE WHEN :state = 'released' THEN :at END, :at, :work_type)
         ON CONFLICT(id) DO UPDATE SET
             state = CASE WHEN :state_given THEN excluded.state ELSE items.state END,
             pr = CASE WHEN :pr_given THEN excluded.pr ELSE items.pr END,
@@ -486,6 +517,7 @@ def write_item(con, a):
             worktree = CASE WHEN :worktree_given THEN excluded.worktree ELSE items.worktree END,
             waits_for = CASE WHEN :waits_for_given THEN excluded.waits_for ELSE items.waits_for END,
             session = CASE WHEN :session_given THEN excluded.session ELSE items.session END,
+            work_type = CASE WHEN :work_type_given THEN excluded.work_type ELSE items.work_type END,
             released_at = CASE WHEN excluded.state = 'released'
                                THEN COALESCE(items.released_at, excluded.updated_at)
                                ELSE items.released_at END,
@@ -497,7 +529,8 @@ def write_item(con, a):
               branch=blank_to_none(a.branch), branch_given=a.branch is not None,
               worktree=blank_to_none(a.worktree), worktree_given=a.worktree is not None,
               waits_for=blank_to_none(a.waits_for), waits_for_given=a.waits_for is not None,
-              session=blank_to_none(a.session), session_given=a.session is not None))
+              session=blank_to_none(a.session), session_given=a.session is not None,
+              work_type=blank_to_none(a.work_type), work_type_given=a.work_type is not None))
 
 
 def cmd_item_migrate(con, a):
@@ -1359,6 +1392,9 @@ USAGE_GROUPS = {"periods": "period", "models": "model", "features": "feature", "
 # the cost data of the line (`state`).
 USAGE_CHARGE_RULES = ["fix", "story", "pr", "row", "area", "role"]
 USAGE_STATES = ["measured", "not measured"]
+# STORY-446, Done when 3: the key `bugs`: for each period of USAGE_PERIODS, the bug work orders found (the time of
+# their first history row) and addressed (the time of their last change to a state of ADDRESSED_STATES).
+BUG_NAMES = {"bugs", "periods", "period", "found", "addressed", "id", "found_at", "addressed_at"}
 USAGE_GROUPS["streams"] = "stream"
 USAGE_GROUPS["roles"] = "role"
 USAGE_NAMES = {"usage", "overhead", "not_tied", "state", "charges", "rule", *USAGE_TOTALS, *USAGE_GROUPS,
@@ -1400,7 +1436,7 @@ WHERE_NAMES = frozenset({
     "schema_version", "taken_at", "line", "store", "label", "queue", "rules", "rules_digest", "nulled",
     *SNAPSHOT_FIELDS, *(f for _, fields in SNAPSHOT_FIELDS.values() for f in fields),
     *FLOOR_SETS, *(f for fields in RULE_FIELDS.values() for f in fields), *ROADMAP_NAMES, *VERDICT_NAMES,
-    *USAGE_NAMES, *FACTORY_NAMES,
+    *USAGE_NAMES, *FACTORY_NAMES, *BUG_NAMES,
 })
 
 # The place of each key that build_snapshot writes, as a tuple of names (a list adds no name): ("items", "id"),
@@ -1426,6 +1462,9 @@ SNAPSHOT_LAYOUT = frozenset({
     ("usage",), *(("usage", k) for k in ("line", "overhead", "not_tied", "state", "charges", *USAGE_GROUPS)),
     *(("usage", k, f) for k in ("line", "overhead", "not_tied") for f in USAGE_TOTALS),
     *(("usage", "charges", f) for f in ("rule", "stream", *USAGE_TOTALS)),
+    ("bugs",), ("bugs", "periods"), ("bugs", "periods", "period"),
+    *(("bugs", "periods", k) for k in ("found", "addressed")),
+    *(("bugs", "periods", k, f) for k in ("found", "addressed") for f in ("id", "found_at", "addressed_at")),
     *(("usage", k, f) for k, name in USAGE_GROUPS.items() for f in (name, *USAGE_TOTALS)),
 })
 
@@ -1960,6 +1999,35 @@ def usage_section(con, scrub, at, roadmap, rules=None, landed=None):
     return section
 
 
+def bug_section(con, scrub, at):
+    """The key `bugs` (STORY-446, Done when 3). A bug is a work order with the work type bug. It is found at the time
+    of its first history row (else its picked_up_at), and addressed at the time of its last history row with a new
+    state of ADDRESSED_STATES. A bug found in a period that ends at AT is in `found` of the period; a bug addressed in
+    it is in `addressed`. Each entry has the id, found_at and addressed_at (null when not addressed)."""
+    marks = ", ".join("?" for _ in ADDRESSED_STATES)
+    rows = con.execute(f"""
+        SELECT i.id,
+               COALESCE((SELECT MIN(h.at) FROM item_history h WHERE h.item = i.id), i.picked_up_at) AS found_at,
+               (SELECT MAX(h.at) FROM item_history h WHERE h.item = i.id AND h.new_state IN ({marks})) AS addressed_at,
+               i.state
+        FROM items i WHERE i.work_type = 'bug' ORDER BY i.id""", ADDRESSED_STATES).fetchall()
+    end = parse_iso(at)
+    periods = []
+    for name, days in USAGE_PERIODS.items():
+        start = (end - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        def entry(r):
+            addressed = r["addressed_at"] if r["state"] in ADDRESSED_STATES else None
+            return {"id": scrub.value(_ID, r["id"]), "found_at": scrub.value(_TIME, r["found_at"]),
+                    "addressed_at": scrub.value(_TIME, addressed)}
+        found = [entry(r) for r in rows if r["found_at"] and start < r["found_at"] <= at]
+        addressed = [entry(r) for r in rows if r["state"] in ADDRESSED_STATES and r["addressed_at"]
+                     and start < r["addressed_at"] <= at]
+        periods.append({"period": name, "found": sorted(found, key=lambda x: (x["found_at"] or "", x["id"] or "")),
+                        "addressed": sorted(addressed, key=lambda x: (x["addressed_at"] or "", x["id"] or ""))})
+    return {"periods": periods}
+
+
 def build_snapshot(con, sets, at, store, roadmap=None, landed=None):
     """Return the snapshot of version 1 as a dict. SETS are the rule sets as read from the file.
 
@@ -1997,6 +2065,7 @@ def build_snapshot(con, sets, at, store, roadmap=None, landed=None):
     last = con.execute("SELECT MAX(at) FROM messages").fetchone()[0]
     snap["factory"] = {"run": run, "last_handoff_at": scrub.value(_TIME, last)}
     snap["usage"] = usage_section(con, scrub, at, snap["roadmap"], snap["rules"]["streams"], landed)
+    snap["bugs"] = bug_section(con, scrub, at)
     snap["nulled"] = scrub.nulled
     return snap
 
@@ -2186,7 +2255,7 @@ ROW_TABLES = {
     "items": {"key": "id", "form": _ID, "label": "item",
               "places": [("sessions", "item"), ("queue", "item"), ("open_asks", "story"), ("decisions_24h", "story")],
               "refs": [("sessions", "item"), ("queue", "item"), ("trips", "item"), ("usage", "item"),
-                         ("usage_calls", "item"), ("usage_calls", "job"), ("messages", "subject"), ("asks", "story"), ("decisions", "story"),
+                         ("usage_calls", "item"), ("usage_calls", "job"), ("item_history", "item"), ("messages", "subject"), ("asks", "story"), ("decisions", "story"),
                          ("interactions", "story")]},
     "sessions": {"key": "name", "form": _NAME, "label": "session",
                  "places": [("items", "session")],
@@ -2574,6 +2643,8 @@ def build_parser():
     sp.add_argument("--waits-for", dest="waits_for")
     sp.add_argument("--session")
     sp.add_argument("--reopen", action="store_true")
+    sp.add_argument("--type", dest="work_type",
+                    help="the work type of a work order: feature, bug, issue or operations (an empty value clears it)")
     sp.add_argument("--take-over", dest="take_over", action="store_true",
                     help="write a work order of another session; give it only when a TASK gives you that work order (a plain flag: no check of who gave it)")
     sp = leaf(i, "migrate", cmd_item_migrate, "change the old state words of the items to the new words")
