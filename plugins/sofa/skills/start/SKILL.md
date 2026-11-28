@@ -23,7 +23,7 @@ The skill folder is the root of the `sofa` plugin: two folders up from this file
 - `references/colours.md` — the session colour of each role. The mod sets it, and the orchestrator checks it.
 - `skills/station/` — the base behavior of every session.
 - `skills/readiness/`, `skills/setup/`, `skills/maturity/` — check, fix and score the repository.
-- `commands/` — `/sofa:status`, `/sofa:request`, `/sofa:pause`, `/sofa:resume`, `/sofa:handoff`, `/sofa:stop`.
+- `commands/` — `/sofa:status`, `/sofa:floor`, `/sofa:request`, `/sofa:pause`, `/sofa:resume`, `/sofa:handoff`, `/sofa:stop`.
 - `scripts/dispatch.sh` — starts 1 session of 1 role from the roles table.
 - `scripts/sofa-state` — the state store CLI (`.sofa/state.db`).
 - `hooks/register.tsx` — the mod: role colours, state store hooks, and the dashboard pane.
@@ -81,7 +81,7 @@ The result: `docs/adlc.md` and `docs/adlc/roles/` on `main` meet the current `te
 4. Wait for the `DONE` message from the orchestrator. It names the live sessions: the orchestrator, each `always` role, and monitoring when section 1 `Environments` names logs or metrics. The other roles are `on demand`: the orchestrator starts each one at its first trigger.
 5. Tell the user which sessions run (the names from the `DONE`), and how to work with the team:
    - `claude agents --cwd <main folder>` shows the sessions of this repository in their role colours. Open the orchestrator, hitl or requests from there, or with `claude attach <name>`.
-   - `/sofa:status` opens the dashboard; `/sofa:request <text>` gives the team new work.
+   - `/sofa:status` opens the dashboard; `/sofa:floor` publishes the floor artifact or opens its live page; `/sofa:request <text>` gives the team new work.
    - The readiness items that are still missing, and `/sofa:setup` to fix them.
 
    Then this session has no more work.

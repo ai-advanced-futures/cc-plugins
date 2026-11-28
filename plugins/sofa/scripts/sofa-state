@@ -1342,6 +1342,10 @@ VERDICT_REASONS = ["working", "waiting", "blocked", "blocked_overdue", "stale_he
                    "ask_blocks_now", "ask_blocks_later", "ask_overdue"]
 VERDICT_NAMES = {"verdicts", "floor", "lines", "stations", "station", "level", "state", "label", "sessions", "reasons",
                  *VERDICT_REASONS}
+# STORY-452: the key `factory` of the snapshot, the data of the factory band of each surface (design record of
+# PLAN-STORY-666, sections 2 and 4): the run state, and the time of the last hand-off (the last row of `messages`).
+FACTORY_RUNS = ["running", "paused", "not running"]
+FACTORY_NAMES = {"factory", "run", "last_handoff_at"}
 
 # --- the token usage of the line (STORY-445, Done when 3) ---
 # The totals of a group of calls, the 3 periods that end at taken_at (in days), and the groups of the section
@@ -1396,7 +1400,7 @@ WHERE_NAMES = frozenset({
     "schema_version", "taken_at", "line", "store", "label", "queue", "rules", "rules_digest", "nulled",
     *SNAPSHOT_FIELDS, *(f for _, fields in SNAPSHOT_FIELDS.values() for f in fields),
     *FLOOR_SETS, *(f for fields in RULE_FIELDS.values() for f in fields), *ROADMAP_NAMES, *VERDICT_NAMES,
-    *USAGE_NAMES,
+    *USAGE_NAMES, *FACTORY_NAMES,
 })
 
 # The place of each key that build_snapshot writes, as a tuple of names (a list adds no name): ("items", "id"),
@@ -1418,6 +1422,7 @@ SNAPSHOT_LAYOUT = frozenset({
     ("verdicts", "lines"), *(("verdicts", "lines", f) for f in ("label", "level", "state")),
     ("verdicts", "stations"), *(("verdicts", "stations", f) for f in ("station", "level", "sessions", "reasons")),
     *(("verdicts", "stations", "reasons", r) for r in VERDICT_REASONS),
+    ("factory",), ("factory", "run"), ("factory", "last_handoff_at"),
     ("usage",), *(("usage", k) for k in ("line", "overhead", "not_tied", "state", "charges", *USAGE_GROUPS)),
     *(("usage", k, f) for k in ("line", "overhead", "not_tied") for f in USAGE_TOTALS),
     *(("usage", "charges", f) for f in ("rule", "stream", *USAGE_TOTALS)),
@@ -1985,6 +1990,12 @@ def build_snapshot(con, sets, at, store, roadmap=None, landed=None):
         snap["roadmap"], snap["defects"] = roadmap_section(scrub, snap["rules"]["streams"], roadmap)
     row = con.execute("SELECT value FROM kv WHERE key = ?", (TEAM_STATE_KEY,)).fetchone()
     snap["verdicts"] = verdict_section(snap, row[0] if row else None)
+    # The run state (STORY-452): not running when no session is live, also when the team is paused (`/sofa:stop`
+    # pauses, then stops each session), else paused when /sofa:pause holds the team, else running.
+    live = any(x["state"] == "live" for x in snap["sessions"])
+    run = FACTORY_RUNS[2] if not live else FACTORY_RUNS[1] if (row[0] if row else None) == "paused" else FACTORY_RUNS[0]
+    last = con.execute("SELECT MAX(at) FROM messages").fetchone()[0]
+    snap["factory"] = {"run": run, "last_handoff_at": scrub.value(_TIME, last)}
     snap["usage"] = usage_section(con, scrub, at, snap["roadmap"], snap["rules"]["streams"], landed)
     snap["nulled"] = scrub.nulled
     return snap

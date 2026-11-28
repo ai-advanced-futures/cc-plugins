@@ -1,5 +1,15 @@
 # Changelog
 
+## 15.8.0
+
+STORY-452: the terminal view, the published artifact and the local live page read the same snapshot (FEATURE-50, CAPABILITY-12, CONSTRAINT-01 to CONSTRAINT-03).
+
+- New script `sofa-floor` with 3 views of 1 snapshot: `terminal` (the text view), `artifact --out FILE` (1 self-contained HTML page for the Artifact tool, with only the scrubbed snapshot and the line that it is not live) and `serve` (the local live page on 127.0.0.1: a new snapshot each 10 seconds and each new hand-off of the message log by server-sent events, with no message subject).
+- New command `/sofa:floor [artifact | live | terminal]`: it publishes the artifact (the default), opens the live page, or prints the terminal view.
+- The `/sofa-dashboard` pane shows the terminal view of the floor. When no snapshot can be taken, it shows why and the report of the store.
+- Each view shows the factory band (running, paused at a safe point, not running), the alert rows of an old snapshot and of a factory that is not running, the verdict with its sentence, the line, and each station with the shape and the word of its level. Only caution, serious and critical have a colour; green is only the running state.
+- `sofa-state snapshot take` has the new key `factory`: `run` and `last_handoff_at`. `schema_version` stays 1.
+
 ## 15.7.0
 
 STORY-520: each priced API call is charged to the stream of the job that the session held (FEATURE-47, DECISION-06).

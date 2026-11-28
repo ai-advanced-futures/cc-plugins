@@ -91,6 +91,12 @@ export function colourArgs(name: string, colour: string): string[] {
   return ['session', 'colour', '--name', name, '--colour', colour]
 }
 
+// The sofa-floor arguments of the pane: the terminal view with no colour, because
+// the pane prints plain text, and each level keeps its shape and word (STORY-452).
+export function floorArgs(): string[] {
+  return ['terminal', '--no-color']
+}
+
 // The sofa-state arguments that write the priced API calls of the logs of a
 // station (STORY-445). The id of this session goes first into the ids of the
 // station, so the scan also reads the log of a resumed session.
@@ -166,9 +172,15 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: PANE }, async ($, e) => {
+    // The pane is the terminal view of the floor (STORY-452): 1 snapshot, each level with its shape and its word.
+    // When no snapshot can be taken (no floor configuration), it shows why and the report of the store.
     const refresh = async () => {
-      const run = await $.process.run([`${$.plugin.root}/scripts/sofa-state`, 'report'], { cwd: e.cwd, timeoutMs: 10_000 })
-      const text = run.exitCode === 0 ? run.stdout : `sofa-state report failed: ${run.stderr.trim()}`
+      const floor = await $.process.run([`${$.plugin.root}/scripts/sofa-floor`, ...floorArgs()], { cwd: e.cwd, timeoutMs: 20_000 })
+      let text = floor.stdout
+      if (floor.exitCode !== 0) {
+        const run = await $.process.run([`${$.plugin.root}/scripts/sofa-state`, 'report'], { cwd: e.cwd, timeoutMs: 10_000 })
+        text = `${floor.stderr.trim()}\n\n${run.exitCode === 0 ? run.stdout : `sofa-state report failed: ${run.stderr.trim()}`}`
+      }
       await update($, report, () => ({ text, at: new Date().toISOString() }))
     }
     await refresh().catch(async (error: unknown) => {
@@ -177,8 +189,8 @@ export const register: Register = on => {
     // One timer only: a second /sofa-dashboard replaces the first timer.
     timer?.cancel()
     timer = $.clock.every(30_000, () => void refresh().catch(() => undefined))
-    await $.ui.open({ id: PANE, title: 'sofa team' })
-    return { text: 'sofa dashboard opened. It refreshes every 30 seconds.' }
+    await $.ui.open({ id: PANE, title: 'sofa floor' })
+    return { text: 'sofa floor opened (the terminal view). It refreshes every 30 seconds. /sofa:floor publishes the artifact or opens the live page.' }
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {

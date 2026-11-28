@@ -1,0 +1,547 @@
+#!/usr/bin/env python3
+"""sofa-floor: the 3 views of the factory floor (STORY-452). Each view reads 1 snapshot of `sofa-state snapshot take`.
+
+  terminal   the terminal view (the /sofa-dashboard pane shows it with --no-color)
+  artifact   1 self-contained HTML page for the Artifact tool; it holds only the scrubbed snapshot
+  serve      the local live page on 127.0.0.1: a new snapshot and each new hand-off reach it by server-sent events
+
+Each view shows the levels and the words that the snapshot gives, and computes none of them (CONVENTION-04). The 1
+exception is the age of the snapshot against its age limit (CONVENTION-04, STORY-450). The spec is
+docs/superpowers/specs/2026-11-26-STORY-452-the-terminal-view-the-published-artifact-and-the-local-live-page-read-the-same-snapshot-design.md.
+"""
+import argparse
+import html
+import importlib.machinery
+import importlib.util
+import json
+import os
+import sqlite3
+import subprocess
+import sys
+import threading
+import time
+from datetime import datetime, timezone
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+HERE = os.path.dirname(os.path.realpath(__file__))
+STATE = os.path.join(HERE, "sofa-state")
+_loader = importlib.machinery.SourceFileLoader("sofa_state", STATE)
+sofa_state = importlib.util.module_from_spec(importlib.util.spec_from_loader("sofa_state", _loader))
+_loader.exec_module(sofa_state)
+
+LEVELS = sofa_state.VERDICT_LEVELS  # off, standing by, working, caution, serious, critical (CONVENTION-02)
+# The shape of each level (CONVENTION-02): the terminal glyph, and the glyph of the HTML views.
+TERMINAL_SHAPES = {"off": "·", "standing by": "○", "working": "●", "caution": "◆", "serious": "▲", "critical": "■"}
+HTML_SHAPES = {**TERMINAL_SHAPES, "off": "◌"}
+# The colour of a level on the terminal view (CONVENTION-01 and 02): only caution, serious and critical have a hue;
+# green is only the running word.
+ANSI = {"caution": "33", "serious": "38;5;208", "critical": "31", "running": "32"}
+# The plain words of each reason of a station (the keys of `verdicts.stations.reasons`, STORY-448).
+REASON_WORDS = {
+    "working": "working", "waiting": "waiting", "blocked": "blocked", "blocked_overdue": "blocked too long",
+    "stale_heartbeat": "no heartbeat", "stopped_with_work": "stopped with open work",
+    "ask_blocks_now": "a question blocks work now", "ask_blocks_later": "a question for later",
+    "ask_overdue": "a question waits too long",
+}
+RUN_WORDS = {"running": "Running", "paused": "Paused at a safe point", "not running": "Not running"}
+DEFAULT_MAX_AGE = 1800  # seconds, when the snapshot carries no `health.snapshot_max_age_seconds` (STORY-444)
+TIME_FORM = "%Y-%m-%dT%H:%M:%SZ"
+
+
+class FloorError(Exception):
+    """A failure that the command reports in 1 line, with exit 1."""
+
+
+# --- the snapshot ---
+
+def take_snapshot(a):
+    """Take 1 snapshot with sofa-state. --snapshot FILE reads that file instead."""
+    if getattr(a, "snapshot", None):
+        try:
+            with open(a.snapshot, encoding="utf-8") as f:
+                return json.load(f)
+        except (OSError, ValueError) as e:
+            raise FloorError(f"cannot read the snapshot file: {type(e).__name__}") from None
+    cmd = [sys.executable, STATE, "snapshot", "take"]
+    if a.db:
+        cmd += ["--db", a.db]
+    if a.config:
+        cmd += ["--config", a.config]
+    run = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    if run.returncode != 0:
+        lines = run.stderr.strip().splitlines()
+        raise FloorError(lines[-1] if lines else f"sofa-state snapshot take exited {run.returncode}")
+    return json.loads(run.stdout)
+
+
+def parse_time(text):
+    try:
+        return datetime.strptime(text, TIME_FORM).replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        return None
+
+
+def age_words(seconds):
+    """An age as 1 short phrase: 45 s, 12 min, 3 h, 2 d."""
+    if seconds < 60:
+        return f"{int(seconds)} s"
+    if seconds < 3600:
+        return f"{int(seconds // 60)} min"
+    if seconds < 86400:
+        return f"{int(seconds // 3600)} h"
+    return f"{int(seconds // 86400)} d"
+
+
+# --- the view model: 1 model for the 3 views ---
+
+def view_model(snap, now, mode):
+    """The view model of SNAP at the time NOW, for MODE (terminal, artifact or live). It copies the levels, the states
+    and the run state of the snapshot, and adds only the words and the age (CONVENTION-04)."""
+    verdicts = snap.get("verdicts") or {}
+    floor = verdicts.get("floor") or {"level": "off", "state": "stopped"}
+    lines = verdicts.get("lines") or []
+    stations = verdicts.get("stations") or []
+    factory = snap.get("factory") or {}
+    run = factory.get("run") if factory.get("run") in RUN_WORDS else "not running"
+    taken = parse_time(snap.get("taken_at"))
+    age = max(0.0, (now - taken).total_seconds()) if taken else None
+    limit = ((snap.get("rules") or {}).get("health") or {}).get("snapshot_max_age_seconds") or DEFAULT_MAX_AGE
+    old = age is not None and age > limit
+    alerts = []
+    since = factory.get("last_handoff_at") or snap.get("taken_at")
+    if run == "not running":
+        alerts.append({"level": "serious", "text": f"The factory is not running. Nothing has moved since "
+                       f"{show_time(since)}. Start the team with /sofa:start."})
+    if old:
+        alerts.append({"level": "caution", "text": f"The snapshot is {age_words(age)} old (limit {age_words(limit)}). "
+                       f"Each figure is as of {show_time(snap.get('taken_at'))}."})
+    if mode == "artifact":
+        alerts.append({"level": "standing by", "text": f"This published page is not live. It shows the snapshot of "
+                       f"{show_time(snap.get('taken_at'))}."})
+    return {
+        "mode": mode,
+        "taken_at": snap.get("taken_at"),
+        "age": age, "limit": limit, "old": old,
+        "run": run, "run_word": RUN_WORDS[run], "last_handoff_at": factory.get("last_handoff_at"),
+        "handoff_age": (max(0.0, (now - parse_time(factory.get("last_handoff_at"))).total_seconds())
+                        if parse_time(factory.get("last_handoff_at")) else None),
+        "alerts": alerts,
+        "dim": old or run == "not running",
+        "floor": {"level": level_of(floor), "state": floor.get("state"),
+                  "sentence": verdict_sentence(level_of(floor), stations, run)},
+        "lines": [{"label": x.get("label"), "level": level_of(x), "state": x.get("state")} for x in lines],
+        "stations": [{"station": x.get("station"), "level": level_of(x), "sessions": x.get("sessions") or 0,
+                      "reasons": reason_phrases(x.get("reasons") or {})} for x in stations],
+    }
+
+
+def level_of(x):
+    return x.get("level") if x.get("level") in LEVELS else "off"
+
+
+def show_time(text):
+    t = parse_time(text)
+    return t.strftime("%Y-%m-%d %H:%M UTC") if t else "an unknown time"
+
+
+def reason_phrases(reasons):
+    return [f"{n} {REASON_WORDS.get(k, k.replace('_', ' '))}" for k, n in reasons.items() if n]
+
+
+def verdict_sentence(level, stations, run):
+    """1 sentence that names the scope of the verdict (design record, section 2, part 2)."""
+    working = sum((x.get("reasons") or {}).get("working", 0) for x in stations)
+    sessions = f"{working} session{'s' if working != 1 else ''} work{'s' if working == 1 else ''}."
+    worst = [x for x in stations if level_of(x) == level]
+    if LEVELS.index(level) >= LEVELS.index("caution") and worst:
+        where = " and ".join(f"the {x.get('station')}" for x in worst[:2]) + (" and more" if len(worst) > 2 else "")
+        why = ", ".join(reason_phrases({k: v for k, v in (worst[0].get("reasons") or {}).items() if k != "working"}))
+        tail = " The factory has not stopped." if run != "not running" else ""
+        return f"{level.capitalize()} at {where}: {why or level}. {sessions}{tail}"
+    return f"{level.capitalize()}. {sessions}"
+
+
+# --- the terminal view ---
+
+def paint(text, key, color):
+    return f"\033[{ANSI[key]}m{text}\033[0m" if color and key in ANSI else text
+
+
+def render_text(m, color):
+    """The terminal view. Each level has its shape and its word, so the view reads the same with no colour."""
+    out = []
+    run_mark = paint("● " + m["run_word"], "running", color) if m["run"] == "running" else \
+        ("○ " if m["run"] == "paused" else "· ") + m["run_word"]
+    handoff = f"last hand-off {show_time(m['last_handoff_at'])}" if m["last_handoff_at"] else "no hand-off yet"
+    age = f"{age_words(m['age'])} old" if m["age"] is not None else "age unknown"
+    out.append(f"FACTORY  {run_mark}  ·  {handoff}  ·  snapshot {show_time(m['taken_at'])} ({age})")
+    for alert in m["alerts"]:
+        out.append(f"  {paint(TERMINAL_SHAPES[alert['level']] + ' ' + alert['level'].upper(), alert['level'], color)}  "
+                   f"{alert['text']}")
+    f = m["floor"]
+    out.append("")
+    out.append(f"VERDICT  {paint(TERMINAL_SHAPES[f['level']] + ' ' + f['level'], f['level'], color)}  {f['sentence']}")
+    for line in m["lines"]:
+        out.append(f"LINE     {paint(TERMINAL_SHAPES[line['level']] + ' ' + line['level'], line['level'], color)}  "
+                   f"{line['label']} ({line['state']})")
+    out.append("")
+    out.append("STATIONS")
+    if not m["stations"]:
+        out.append("  (no station)")
+    for x in m["stations"]:
+        word = f"{TERMINAL_SHAPES[x['level']]} {x['level']}"
+        pad = " " * max(1, 13 - len(word))
+        out.append(f"  {paint(word, x['level'], color)}{pad}{x['station']:<18} {x['sessions']} session"
+                   f"{'s' if x['sessions'] != 1 else ''}  {', '.join(x['reasons'])}".rstrip())
+    out.append("")
+    out.append("Levels: · off  ○ standing by  ● working  ◆ caution  ▲ serious  ■ critical")
+    return "\n".join(out) + "\n"
+
+
+# --- the HTML views ---
+
+CSS = """
+:root { --bg:#f7f7f5; --panel:#ffffff; --ink:#1d1d1b; --muted:#6b6b66; --line:#dcdcd6; --running:#1f8a3b;
+  --caution:#a77a00; --serious:#c2570c; --critical:#c0261d; --tint-caution:#fbf3dc; --tint-serious:#fcebdd;
+  --tint-critical:#fbe4e2; --tint-standing:#eef0f2; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#141413; --panel:#1e1e1c; --ink:#ececea;
+  --muted:#a3a39d; --line:#34342f; --running:#3fbf62; --caution:#e2b93b; --serious:#f08a3c; --critical:#f0645a;
+  --tint-caution:#3a3216; --tint-serious:#3d2614; --tint-critical:#3f1c19; --tint-standing:#25272a; } }
+:root[data-theme="dark"] { --bg:#141413; --panel:#1e1e1c; --ink:#ececea; --muted:#a3a39d; --line:#34342f;
+  --running:#3fbf62; --caution:#e2b93b; --serious:#f08a3c; --critical:#f0645a; --tint-caution:#3a3216;
+  --tint-serious:#3d2614; --tint-critical:#3f1c19; --tint-standing:#25272a; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 system-ui, -apple-system, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 18px; margin: 0 0 12px; } h2 { font-size: 15px; margin: 20px 0 8px; color: var(--muted); }
+.band, .verdict, .panel { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 14px; }
+.band { display:flex; flex-wrap:wrap; gap:6px 18px; align-items:center; }
+.run-running .dot { color: var(--running); } .muted { color: var(--muted); }
+.alert { margin-top:8px; padding:10px 12px; border-left:6px solid var(--muted); border-radius:6px; font-size:16px;
+  background: var(--tint-standing); }
+.alert.lvl-caution { border-color: var(--caution); background: var(--tint-caution); }
+.alert.lvl-serious { border-color: var(--serious); background: var(--tint-serious); }
+.alert.lvl-critical { border-color: var(--critical); background: var(--tint-critical); }
+.verdict { margin-top: 12px; font-size: 17px; }
+.shape { display:inline-block; width:1.2em; text-align:center; }
+.lvl-caution > .shape, .shape.lvl-caution { color: var(--caution); }
+.lvl-serious > .shape, .shape.lvl-serious { color: var(--serious); }
+.lvl-critical > .shape, .shape.lvl-critical { color: var(--critical); }
+.word { font-weight: 600; }
+.dimmed { opacity: .55; }
+table { width:100%; border-collapse: collapse; } th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+.bays { display:flex; flex-wrap:wrap; gap:10px; position:relative; }
+.bay { min-width: 140px; min-height: 64px; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
+.lvl-working > .shape { animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+.handoff { position:absolute; width:10px; height:10px; border-radius:50%; background: var(--ink);
+  transition: transform 1s ease-in-out, opacity .4s; pointer-events:none; }
+.legend { margin-top: 16px; font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .lvl-working > .shape { animation: none; } .handoff { display:none; } }
+@media (max-width: 600px) { .bay { min-width: 100%; } th:nth-child(4), td:nth-child(4) { display:none; } }
+"""
+
+LIVE_JS = """
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var es = new EventSource('events');
+  es.addEventListener('snapshot', function (e) {
+    var d = JSON.parse(e.data);
+    document.getElementById('floor').innerHTML = d.html;
+    stamp();
+  });
+  es.addEventListener('handoff', function (e) {
+    var d = JSON.parse(e.data);
+    var tick = document.getElementById('ticker');
+    if (tick) { var li = document.createElement('li'); li.textContent = d.at.slice(11, 19) + ' UTC  ' + d.type +
+      '  ' + d.from + ' \\u2192 ' + d.to; tick.insertBefore(li, tick.firstChild);
+      while (tick.children.length > 8) { tick.removeChild(tick.lastChild); } }
+    var last = document.getElementById('last-handoff');
+    if (last) { last.setAttribute('data-time', d.at); }
+    if (reduce) { return; }
+    var a = document.querySelector('.bay[data-station="' + CSS.escape(d.from) + '"]');
+    var b = document.querySelector('.bay[data-station="' + CSS.escape(d.to) + '"]');
+    var box = document.querySelector('.bays');
+    if (!a || !b || !box) { return; }
+    var r = box.getBoundingClientRect(), ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+    var dot = document.createElement('span'); dot.className = 'handoff';
+    dot.style.left = (ra.left - r.left + ra.width / 2) + 'px'; dot.style.top = (ra.top - r.top + ra.height / 2) + 'px';
+    box.appendChild(dot);
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      dot.style.transform = 'translate(' + (rb.left - ra.left) + 'px,' + (rb.top - ra.top) + 'px)'; }); });
+    setTimeout(function () { dot.style.opacity = '0'; }, 1100);
+    setTimeout(function () { dot.remove(); }, 1600);
+  });
+  es.onerror = function () { var s = document.getElementById('conn'); if (s) { s.textContent = 'Reconnecting'; } };
+  es.onopen = function () { var s = document.getElementById('conn'); if (s) { s.textContent = 'Live'; } };
+})();
+"""
+
+AGE_JS = """
+function stamp() {
+  var now = Date.now();
+  document.querySelectorAll('[data-time]').forEach(function (el) {
+    var t = Date.parse(el.getAttribute('data-time')); if (isNaN(t)) { return; }
+    var s = Math.max(0, (now - t) / 1000);
+    el.textContent = s < 60 ? Math.floor(s) + ' s' : s < 3600 ? Math.floor(s / 60) + ' min' :
+      s < 86400 ? Math.floor(s / 3600) + ' h' : Math.floor(s / 86400) + ' d';
+  });
+}
+stamp(); setInterval(stamp, 15000);
+"""
+
+
+def e(text):
+    return html.escape(str(text), quote=True)
+
+
+def level_html(level, scope, extra=""):
+    """The shape and the word of a level, with the attributes that a test and a screen reader read."""
+    return (f'<span class="lvl lvl-{e(level.replace(" ", "-"))}" data-scope="{e(scope)}" data-level="{e(level)}">'
+            f'<span class="shape" aria-hidden="true">{HTML_SHAPES[level]}</span> '
+            f'<span class="word">{e(level)}</span>{extra}</span>')
+
+
+def render_floor(m):
+    """The part of the page that a new snapshot replaces: the band, the alerts, the verdict, the line, the stations
+    and the bays."""
+    run_cls = f"run-{m['run'].replace(' ', '-')}"
+    dot = {"running": "●", "paused": "○", "not running": "◌"}[m["run"]]
+    if m["mode"] == "live":
+        live = (f'<span><span id="conn">Live</span> · last hand-off '
+                + (f'<span id="last-handoff" data-time="{e(m["last_handoff_at"])}">{e(age_words(m["handoff_age"] or 0))}</span> ago'
+                   if m["last_handoff_at"] else '<span id="last-handoff">none yet</span>') + '</span>')
+    else:
+        live = (f'<span>Snapshot of {e(show_time(m["taken_at"]))} · <span data-time="{e(m["taken_at"])}">'
+                f'{e(age_words(m["age"] or 0))}</span> old</span>')
+    parts = [f'<section class="band {run_cls}" aria-label="Factory">'
+             f'<span class="run" data-run="{e(m["run"])}"><span class="dot" aria-hidden="true">{dot}</span> '
+             f'<strong>{e(m["run_word"])}</strong></span>{live}</section>']
+    for alert in m["alerts"]:
+        parts.append(f'<div class="alert lvl-{e(alert["level"].replace(" ", "-"))}" role="status">'
+                     f'<span class="shape" aria-hidden="true">{HTML_SHAPES[alert["level"]]}</span> {e(alert["text"])}</div>')
+    f = m["floor"]
+    parts.append(f'<section class="figures{" dimmed" if m["dim"] else ""}"><div class="verdict">{level_html(f["level"], "floor")} '
+                 f'<span class="sentence">{e(f["sentence"])}</span></div>')
+    for line in m["lines"]:
+        parts.append(f'<p>Line {e(line["label"])}: {level_html(line["level"], "line:" + str(line["label"]))} '
+                     f'<span class="muted">({e(line["state"])})</span></p>')
+    parts.append('<h2>Stations</h2><div class="panel"><table><thead><tr><th>Level</th><th>Station</th>'
+                 '<th>Sessions</th><th>Why</th></tr></thead><tbody>')
+    if not m["stations"]:
+        parts.append('<tr><td colspan="4" class="muted">No station.</td></tr>')
+    for x in m["stations"]:
+        parts.append(f'<tr><td>{level_html(x["level"], "station:" + str(x["station"]))}</td><td>{e(x["station"])}</td>'
+                     f'<td>{e(x["sessions"])}</td><td>{e(", ".join(x["reasons"]))}</td></tr>')
+    parts.append('</tbody></table></div><h2>The floor</h2><div class="bays">')
+    for x in m["stations"]:
+        parts.append(f'<div class="bay lvl-{e(x["level"].replace(" ", "-"))}" data-station="{e(x["station"])}">'
+                     f'<span class="shape" aria-hidden="true">{HTML_SHAPES[x["level"]]}</span> '
+                     f'<strong>{e(x["station"])}</strong><div class="muted">{e(x["level"])}</div></div>')
+    parts.append('</div></section>')
+    return "".join(parts)
+
+
+def render_html(m, snap):
+    """The HTML page of MODE artifact or live. The artifact holds the snapshot as given, and no other data."""
+    live = m["mode"] == "live"
+    title = "Factory Floor"
+    ticker = '<h2>Hand-offs</h2><ul id="ticker" class="panel muted"></ul>' if live else ""
+    data = json.dumps(snap, sort_keys=True).replace("</", "<\\/")
+    legend = " ".join(f'<span class="lvl-{k.replace(" ", "-")}"><span class="shape" aria-hidden="true">{v}</span> {k}</span>'
+                      for k, v in HTML_SHAPES.items())
+    script = AGE_JS + (LIVE_JS if live else "")
+    return (f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
+            f'<meta name="viewport" content="width=device-width, initial-scale=1"><title>{title}</title>'
+            f'<style>{CSS}</style></head><body><main data-mode="{e(m["mode"])}">'
+            f'<h1>{title}</h1><div id="floor">{render_floor(m)}</div>{ticker}'
+            f'<p class="legend muted">Levels: {legend}</p></main>'
+            f'<script type="application/json" id="snapshot">{data}</script>'
+            f'<script>{script}</script></body></html>\n')
+
+
+# --- the local live page ---
+
+def store_path(a):
+    if a.db:
+        return a.db
+    if os.environ.get("SOFA_STATE_DB"):
+        return os.environ["SOFA_STATE_DB"]
+    return os.path.join(sofa_state.main_folder(), ".sofa", "state.db")
+
+
+class Live:
+    """The state of the live page: the last snapshot, and the hand-offs of the message log (only the type, the sender
+    station and the receiver station of a row; never its subject)."""
+
+    def __init__(self, a):
+        self.a, self.lock = a, threading.Lock()
+        self.snap, self.error, self.version = None, None, 0
+        self.db = store_path(a)
+
+    def refresh(self):
+        try:
+            snap = take_snapshot(self.a)
+            with self.lock:
+                if self.snap is None or snap != self.snap:
+                    self.snap, self.version = snap, self.version + 1
+                self.error = None
+        except (FloorError, subprocess.TimeoutExpired, ValueError) as err:
+            with self.lock:
+                self.error = str(err) if isinstance(err, FloorError) else type(err).__name__
+
+    def loop(self, interval):
+        while True:
+            time.sleep(interval)
+            self.refresh()
+
+    def page(self):
+        with self.lock:
+            snap = self.snap
+        if snap is None:
+            return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Factory Floor</title>'
+                    f'<style>{CSS}</style></head><body><main><h1>Factory Floor</h1><div id="floor">'
+                    '<div class="alert">Loading the snapshot</div></div></main>'
+                    f'<script>{AGE_JS}{LIVE_JS}</script></body></html>\n')
+        return render_html(view_model(snap, datetime.now(timezone.utc), "live"), snap)
+
+    def handoffs(self, after):
+        """The rows of `messages` after the row id AFTER, as (id, event dict), with the station of each name."""
+        try:
+            con = sqlite3.connect(f"file:{self.db}?mode=ro", uri=True, timeout=2)
+        except sqlite3.Error:
+            return []
+        try:
+            roles = dict(con.execute("SELECT name, role FROM sessions").fetchall())
+            rows = con.execute("SELECT id, type, from_name, to_name, at FROM messages WHERE id > ? ORDER BY id",
+                               (after,)).fetchall()
+            return [(i, {"type": t or "", "from": roles.get(f) or "", "to": roles.get(to) or "", "at": at or ""})
+                    for i, t, f, to, at in rows]
+        except sqlite3.Error:
+            return []
+        finally:
+            con.close()
+
+    def last_id(self):
+        rows = self.handoffs(0)
+        return rows[-1][0] if rows else 0
+
+
+def make_handler(live):
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            return
+
+        def do_GET(self):
+            if self.path in ("/", "/index.html"):
+                body = live.page().encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            elif self.path == "/events":
+                self.events()
+            else:
+                self.send_error(404)
+
+        def send_event(self, name, data):
+            self.wfile.write(f"event: {name}\ndata: {json.dumps(data)}\n\n".encode("utf-8"))
+            self.wfile.flush()
+
+        def events(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            seen, last, beat = -1, live.last_id(), time.monotonic()
+            try:
+                while True:
+                    with live.lock:
+                        version, snap = live.version, live.snap
+                    if snap is not None and version != seen:
+                        model = view_model(snap, datetime.now(timezone.utc), "live")
+                        self.send_event("snapshot", {"taken_at": snap.get("taken_at"), "html": render_floor(model)})
+                        seen = version
+                    for row_id, event in live.handoffs(last):
+                        self.send_event("handoff", event)
+                        last = row_id
+                    if time.monotonic() - beat > 15:
+                        self.wfile.write(b": beat\n\n")
+                        self.wfile.flush()
+                        beat = time.monotonic()
+                    time.sleep(0.5)
+            except (BrokenPipeError, ConnectionResetError):
+                return
+    return Handler
+
+
+def cmd_serve(a):
+    live = Live(a)
+    live.refresh()
+    threading.Thread(target=live.loop, args=(a.interval,), daemon=True).start()
+    server = ThreadingHTTPServer(("127.0.0.1", a.port), make_handler(live))
+    server.daemon_threads = True
+    print(f"floor page: http://127.0.0.1:{server.server_address[1]}/", flush=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    return 0
+
+
+def cmd_terminal(a):
+    snap = take_snapshot(a)
+    color = not a.no_color and sys.stdout.isatty() and not os.environ.get("NO_COLOR")
+    sys.stdout.write(render_text(view_model(snap, now_of(a), "terminal"), color))
+    return 0
+
+
+def cmd_artifact(a):
+    snap = take_snapshot(a)
+    page = render_html(view_model(snap, now_of(a), "artifact"), snap)
+    folder = os.path.dirname(os.path.abspath(a.out))
+    os.makedirs(folder, exist_ok=True)
+    with open(a.out, "w", encoding="utf-8") as f:
+        f.write(page)
+    print(f"artifact: {a.out}")
+    return 0
+
+
+def now_of(a):
+    if a.now:
+        t = parse_time(a.now)
+        if t is None:
+            raise FloorError("--now must be YYYY-MM-DDTHH:MM:SSZ")
+        return t
+    return datetime.now(timezone.utc)
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser(prog="sofa-floor", description="The 3 views of the sofa factory floor (STORY-452).")
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--db", help="the state store (else $SOFA_STATE_DB, else <main folder>/.sofa/state.db)")
+    common.add_argument("--config", help="the floor configuration (else <main folder>/.claude/sofa-floor.json)")
+    common.add_argument("--snapshot", help="read this snapshot file instead of taking a snapshot")
+    common.add_argument("--now", help="the time of the view, YYYY-MM-DDTHH:MM:SSZ (default: now)")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    t = sub.add_parser("terminal", parents=[common], help="print the terminal view")
+    t.add_argument("--no-color", action="store_true", help="no colour; each level keeps its shape and its word")
+    t.set_defaults(func=cmd_terminal)
+    r = sub.add_parser("artifact", parents=[common], help="write the HTML page of the published artifact")
+    r.add_argument("--out", required=True, help="the HTML file to write")
+    r.set_defaults(func=cmd_artifact)
+    s = sub.add_parser("serve", parents=[common], help="serve the local live page on 127.0.0.1")
+    s.add_argument("--port", type=int, default=0, help="the port (default: a free port)")
+    s.add_argument("--interval", type=float, default=10.0, help="seconds between 2 snapshots (default 10)")
+    s.set_defaults(func=cmd_serve)
+    a = p.parse_args(argv)
+    try:
+        return a.func(a)
+    except FloorError as err:
+        print(f"sofa-floor: {err}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
